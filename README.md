@@ -195,11 +195,3 @@ Pour toute question ou problème, n'hésitez pas à nous contacter :
 ---
 
 *Créé avec ❤️ par MrBartou.*
-
----
-
-**Notes supplémentaires :**
-
-- **Mises à jour** : Assurez-vous de synchroniser les fonctionnalités du frontend avec celles du backend pour une expérience utilisateur cohérente.
-- **Documentation** : Consultez la documentation du backend pour comprendre les schémas GraphQL et les endpoints disponibles.
-- **Contributions** : Si vous souhaitez ajouter de nouvelles fonctionnalités ou améliorer l'interface utilisateur, veuillez vous référer aux directives de contribution ci-dessus.
