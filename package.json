@@ -17,6 +17,7 @@
     "@radix-ui/react-label": "^2.1.0",
     "@radix-ui/react-slot": "^1.1.0",
     "axios": "^1.7.7",
+    "chart.js": "^4.4.4",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "graphql": "^16.9.0",
@@ -31,9 +32,11 @@
     "next-themes": "^0.3.0",
     "next-translate": "^2.6.2",
     "react": "^18",
+    "react-chartjs-2": "^5.2.0",
     "react-dom": "^18",
     "react-i18next": "^15.0.3",
-    "tailwind-merge": "^2.5.3"
+    "tailwind-merge": "^2.5.3",
+    "vaul": "^1.1.0"
   },
   "devDependencies": {
     "@types/node": "^20",
