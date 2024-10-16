@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server';
 
 export function middleware(req: NextRequest) {
   const token = req.cookies.get('token');
-  const publicPaths = ['/', '/2fa', '/forgot-password', '/reset-password', '/new-account', '/system/notconnected', '/system/unauthorized'];
+  const publicPaths = ['/', '/auth/2fa', '/auth/forgot-password', '/auth/reset-password', '/auth/new-account', '/system/notconnected', '/system/unauthorized'];
   const isStaticFile = req.nextUrl.pathname.startsWith('/_next') || req.nextUrl.pathname.includes('/static');
   const isPublicPath = publicPaths.includes(req.nextUrl.pathname);
 
