@@ -25,7 +25,7 @@ const menuItems = [
     icon: Plane,
     path: '/fleet',
     subItems: [
-      { name: 'État des avions', path: '/fleet/status' },
+      { name: 'Réservation', path: '/fleet/reservation' },
       { name: 'Historique', path: '/fleet/history' },
       { name: 'Maintenance', path: '/fleet/maintenance' },
     ],
