@@ -44,7 +44,7 @@ export default function ConfirmEmailPage() {
       });
       setSuccess(true);
       setTimeout(() => {
-        router.push('/login'); // Redirige vers la page de connexion après un court délai
+        router.push('/');
       }, 3000);
     } catch (error) {
       setError('Le lien est invalide ou a expiré.');
