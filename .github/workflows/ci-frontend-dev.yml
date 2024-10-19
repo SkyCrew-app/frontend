@@ -23,11 +23,11 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
       - name: Install dependencies
-        working-directory: ./frontend
+        working-directory: frontend
         run: npm install
 
       - name: Run frontend tests
-        working-directory: ./frontend
+        working-directory: frontend
         run: npm run test
 
       - name: Upload coverage to CodeCov
