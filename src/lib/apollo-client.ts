@@ -1,7 +1,8 @@
-import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client';
+import { ApolloClient, InMemoryCache } from '@apollo/client';
+import { createUploadLink } from 'apollo-upload-client';
 import { setContext } from '@apollo/client/link/context';
 
-const httpLink = createHttpLink({
+const uploadLink = createUploadLink({
   uri: process.env.NEXT_PUBLIC_API_URL,
   credentials: 'include',
 });
@@ -13,12 +14,14 @@ const authLink = setContext((_, { headers }) => {
     headers: {
       ...headers,
       authorization: token ? `Bearer ${token}` : '',
+      'x-apollo-operation-name': 'MyOperation',
+      'apollo-require-preflight': 'true',
     },
   };
 });
 
 const client = new ApolloClient({
-  link: authLink.concat(httpLink),
+  link: authLink.concat(uploadLink),
   cache: new InMemoryCache(),
 });
 
