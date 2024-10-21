@@ -5,7 +5,6 @@ import localFont from 'next/font/local';
 import './globals.css';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import Providers from '@/components/providers/providers';
-import ToggleThemeButton from '@/components/ui/ToggleThemeButton';
 
 const geistSans = localFont({
   src: './fonts/GeistVF.woff',
@@ -35,7 +34,6 @@ export default function RootLayout({
       >
         <Providers>
           <div className='absolute top-4 right-4'>
-            <ToggleThemeButton />
           </div>
           {children}
         </Providers>
