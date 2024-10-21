@@ -25,7 +25,6 @@ const menuItems = [
     icon: Plane,
     path: '/fleet',
     subItems: [
-      { name: 'Réservation', path: '/fleet/reservation' },
       { name: 'Historique', path: '/fleet/history' },
       { name: 'Maintenance', path: '/fleet/maintenance' },
     ],
@@ -35,9 +34,8 @@ const menuItems = [
     icon: Calendar,
     path: '/reservations',
     subItems: [
-      { name: 'Planification des vols', path: '/reservations/schedule' },
       { name: 'Mes réservations', path: '/reservations/my' },
-      { name: 'Gestion des réservations', path: '/reservations/manage' },
+      { name: 'Mes plans de vol', path: '/reservations/flight-plans' },
     ],
   },
   {
@@ -78,7 +76,6 @@ export default function Sidebar() {
       {/* Logo */}
       <div className="p-4 mb-2 flex items-center">
         <Link href="/dashboard">
-          {/* Remplacez par votre logo réel */}
           <img src="/path/to/logo.png" alt="SkyCrew Logo" className="h-8 w-auto" />
         </Link>
       </div>
