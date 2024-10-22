@@ -29,7 +29,7 @@ jobs:
         run: npm install -g jest
 
       - name: Run frontend tests
-        run: npm run test
+        run: npm run test:cov
 
       - name: Upload coverage to CodeCov
         uses: codecov/codecov-action@v3

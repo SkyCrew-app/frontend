@@ -5,7 +5,7 @@ import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
 import { useState } from 'react';
 
-const GET_FLIGHT_HISTORY = gql`
+export const GET_FLIGHT_HISTORY = gql`
   query GetFlightHistory {
     getHistoryAircraft {
       id

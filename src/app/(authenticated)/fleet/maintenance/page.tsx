@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/carousel";
 import { type CarouselApi } from "@/components/ui/carousel";
 
-const GET_ALL_MAINTENANCES = gql`
+export const GET_ALL_MAINTENANCES = gql`
   query GetAllMaintenances {
     getAllMaintenances {
       id

@@ -20,7 +20,7 @@ import {
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-const GET_AIRCRAFTS = gql`
+export const GET_AIRCRAFTS = gql`
   query GetAircrafts {
     getAircrafts {
       id
