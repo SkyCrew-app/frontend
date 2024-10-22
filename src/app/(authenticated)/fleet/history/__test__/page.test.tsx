@@ -1,9 +1,11 @@
-// page.test.tsx
 import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import AircraftHistory from '../page';
 import { MockedProvider } from '@apollo/client/testing';
 import { GET_FLIGHT_HISTORY } from '../page';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
+
 
 describe('AircraftHistory Component', () => {
   const mockData = {
@@ -75,7 +77,6 @@ describe('AircraftHistory Component', () => {
       expect(screen.getByText(/F-ABCD - Airbus A320/i)).toBeInTheDocument();
     });
 
-    // Vérifier que les sections de l'accordéon sont présentes
     expect(screen.getByText(/Historique des Réservations/i)).toBeInTheDocument();
     expect(screen.getByText(/Historique des Maintenances/i)).toBeInTheDocument();
   });
@@ -94,8 +95,18 @@ describe('AircraftHistory Component', () => {
     const reservationTrigger = screen.getByText(/Historique des Réservations/i);
     fireEvent.click(reservationTrigger);
 
+    const startDate = '2023-10-01T00:00:00Z';
+    const endDate = '2023-10-05T00:00:00Z';
+
+    const formattedStartDate = format(new Date(startDate), 'dd/MM/yyyy', { locale: fr });
+    const formattedEndDate = format(new Date(endDate), 'dd/MM/yyyy', { locale: fr });
+
     await waitFor(() => {
-      expect(screen.getByText(/Du 01\/10\/2023 au 05\/10\/2023 - Réservé par John Doe/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          new RegExp(`Du ${formattedStartDate} au ${formattedEndDate} - Réservé par John Doe`, 'i')
+        )
+      ).toBeInTheDocument();
     });
   });
 

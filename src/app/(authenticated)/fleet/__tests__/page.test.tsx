@@ -60,13 +60,10 @@ describe('FleetDashboard Component', () => {
       </MockedProvider>
     );
 
-    // Attendre que les données soient chargées
     await waitFor(() => expect(screen.getByText(/F-ABCD/i)).toBeInTheDocument());
 
-    // Cliquer sur le bouton "Voir"
     fireEvent.click(screen.getByText(/Voir/i));
 
-    // Vérifier que le drawer s'ouvre avec les détails
     const drawer = await waitFor(() => screen.getByRole('dialog'));
 
     const drawerContent = within(drawer);

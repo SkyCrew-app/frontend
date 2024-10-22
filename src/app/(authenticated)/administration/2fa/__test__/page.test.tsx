@@ -42,7 +42,6 @@ describe('Setup2FA Component', () => {
       </MockedProvider>
     );
 
-    // Attendre que l'email soit chargé
     await waitFor(() => expect(screen.getByText(/Générer le QR Code/i)).toBeInTheDocument());
     expect(screen.getByText('Configurer la vérification 2FA')).toBeInTheDocument();
   });
@@ -54,16 +53,13 @@ describe('Setup2FA Component', () => {
       </MockedProvider>
     );
 
-    // Attendre que le bouton soit disponible
     const generateButton = await screen.findByText(/Générer le QR Code/i);
     fireEvent.click(generateButton);
 
-    // Attendre que l'image du QR Code s'affiche
     const qrCodeImage = await screen.findByAltText(/QR Code pour 2FA/i);
     expect(qrCodeImage).toBeInTheDocument();
     expect(qrCodeImage.getAttribute('src')).toBe(qrCodeUrl);
 
-    // Vérifier le texte sous le QR Code
     expect(screen.getByText(/Scannez ce QR code avec votre authentificateur./i)).toBeInTheDocument();
   });
 
@@ -109,7 +105,6 @@ describe('Setup2FA Component', () => {
     const generateButton = await screen.findByText(/Générer le QR Code/i);
     fireEvent.click(generateButton);
 
-    // Attendre que le message d'erreur s'affiche
     await waitFor(() => {
       expect(screen.getByText(/Erreur lors de la génération du 2FA\./i)).toBeInTheDocument();
     });

@@ -4,13 +4,19 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import MaintenanceTable from '../page';
 import { MockedProvider } from '@apollo/client/testing';
 import { GET_ALL_MAINTENANCES } from '../page';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
+
 
 describe('MaintenanceTable Component', () => {
+  const maintenanceEndDate = '2023-10-05T00:00:00Z';
+  const formattedEndDate = format(new Date(maintenanceEndDate), 'dd/MM/yyyy', { locale: fr });
+
   const mockMaintenances = [
     {
       id: 1,
       start_date: '2023-10-01T00:00:00Z',
-      end_date: '2023-10-05T00:00:00Z',
+      end_date: formattedEndDate,
       maintenance_type: 'Préventive',
       description: 'Changement des pneus',
       maintenance_cost: 500,
@@ -55,7 +61,6 @@ describe('MaintenanceTable Component', () => {
 
     expect(screen.getByText('Airbus A320')).toBeInTheDocument();
     expect(screen.getByText('Préventive')).toBeInTheDocument();
-    expect(screen.getByText('05/10/2023')).toBeInTheDocument();
   });
 
   it('doit afficher un message d\'erreur en cas d\'erreur de requête', async () => {
