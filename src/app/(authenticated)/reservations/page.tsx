@@ -52,7 +52,7 @@ enum ReservationStatus {
   CANCELLED = 'CANCELLED'
 }
 
-const GET_USER_BY_EMAIL = gql`
+export const GET_USER_BY_EMAIL = gql`
   query GetUserByEmail($email: String!) {
     userByEmail(email: $email) {
       id
@@ -61,7 +61,7 @@ const GET_USER_BY_EMAIL = gql`
   }
 `;
 
-const GET_FILTERED_RESERVATIONS = gql`
+export const GET_FILTERED_RESERVATIONS = gql`
   query FilteredReservations($startDate: String!, $endDate: String!) {
     filteredReservations(start_date: $startDate, end_date: $endDate) {
       id
@@ -83,7 +83,7 @@ const GET_FILTERED_RESERVATIONS = gql`
   }
 `;
 
-const GET_AIRCRAFTS = gql`
+export const GET_AIRCRAFTS = gql`
   query GetAircrafts {
     getAircrafts {
       id
@@ -92,7 +92,7 @@ const GET_AIRCRAFTS = gql`
   }
 `;
 
-const CREATE_RESERVATION = gql`
+export const CREATE_RESERVATION = gql`
   mutation CreateReservation($input: CreateReservationInput!) {
     createReservation(createReservationInput: $input) {
       id
@@ -110,7 +110,7 @@ const CREATE_RESERVATION = gql`
   }
 `;
 
-const UPDATE_RESERVATION = gql`
+export const UPDATE_RESERVATION = gql`
   mutation UpdateReservation($id: Int!, $input: UpdateReservationInput!) {
     updateReservation(id: $id, updateReservationInput: $input) {
       id
@@ -123,7 +123,7 @@ const UPDATE_RESERVATION = gql`
   }
 `;
 
-const DELETE_RESERVATION = gql`
+export const DELETE_RESERVATION = gql`
   mutation DeleteReservation($id: Int!) {
     deleteReservation(id: $id) {
       id
