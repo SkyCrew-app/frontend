@@ -14,7 +14,7 @@ import { X } from 'lucide-react';
 import { Alert } from '@/components/ui/alert';
 import axios from 'axios';
 
-const GET_USER_BY_EMAIL = gql`
+export const GET_USER_BY_EMAIL = gql`
   query GetUserByEmail($email: String!) {
     userByEmail(email: $email) {
       first_name
@@ -31,7 +31,7 @@ const GET_USER_BY_EMAIL = gql`
   }
 `;
 
-const UPDATE_USER = gql`
+export const UPDATE_USER = gql`
   mutation UpdateUser(
     $first_name: String!,
     $last_name: String!,
@@ -63,7 +63,7 @@ const UPDATE_USER = gql`
   }
 `;
 
-const UPDATE_PASSWORD = gql`
+export const UPDATE_PASSWORD = gql`
   mutation UpdatePassword($currentPassword: String!, $newPassword: String!) {
     updatePassword(currentPassword: $currentPassword, newPassword: $newPassword) {
       id
@@ -369,6 +369,7 @@ export default function ProfilePage() {
       {expandedCard === 'licenses' && (
         <div className="absolute inset-0 bg-white dark:bg-gray-800 z-40 p-8 shadow-lg rounded-lg pb-14">
           <button
+            aria-label="Fermer"
             className="absolute top-4 right-4 text-gray-500 dark:text-gray-200"
             onClick={() => setExpandedCard(null)}
           >
@@ -404,6 +405,7 @@ export default function ProfilePage() {
       {expandedCard === 'profile' && (
       <div className="absolute inset-0 bg-white dark:bg-gray-800 z-40 p-8 shadow-lg rounded-lg pb-14">
         <button
+          aria-label="Fermer"
           className="absolute top-4 right-4 text-gray-500 dark:text-gray-200"
           onClick={() => setExpandedCard(null)}
         >
@@ -534,6 +536,7 @@ export default function ProfilePage() {
       {expandedCard === 'notifications' && (
         <div className="absolute inset-0 bg-white dark:bg-gray-800 z-40 p-8 shadow-lg rounded-lg pb-14">
           <button
+            aria-label="Fermer"
             className="absolute top-4 right-4 text-gray-500 dark:text-gray-200"
             onClick={() => setExpandedCard(null)}
           >
@@ -570,6 +573,7 @@ export default function ProfilePage() {
       {expandedCard === 'password' && (
         <div className="absolute inset-0 bg-white dark:bg-gray-800 z-40 p-8 shadow-lg rounded-lg pb-14">
           <button
+            aria-label="Fermer"
             className="absolute top-4 right-4 text-gray-500 dark:text-gray-200"
             onClick={() => setExpandedCard(null)}
           >
