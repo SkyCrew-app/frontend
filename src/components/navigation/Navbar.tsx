@@ -32,6 +32,7 @@ const GET_USER_PROFILE = gql`
       first_name
       last_name
       profile_picture
+      user_account_balance
     }
   }
 `;
@@ -42,6 +43,7 @@ export default function Navbar() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [initials, setInitials] = useState<string | null>(null);
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
+  const [userAccountBalance, setUserAccountBalance] = useState<number | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -62,8 +64,9 @@ export default function Navbar() {
 
   useEffect(() => {
     if (data && data.userByEmail) {
-      const { first_name, last_name, profile_picture } = data.userByEmail;
+      const { first_name, last_name, profile_picture, user_account_balance } = data.userByEmail;
       setInitials(`${first_name[0]}${last_name[0]}`);
+      setUserAccountBalance(user_account_balance);
       if (profile_picture) {
         setProfilePicture(profile_picture);
       }
@@ -122,7 +125,7 @@ export default function Navbar() {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={handleProfile}>Mon Profil</DropdownMenuItem>
-          <DropdownMenuItem>Portefeuille : 100 €</DropdownMenuItem>
+          <DropdownMenuItem>Mon Solde: { userAccountBalance } €</DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleLogout}>
             Déconnexion
