@@ -4,11 +4,11 @@ import Sidebar from './navigation/Sidebar';
 
 export default function MainLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="flex h-screen">
+    <div className="flex w-screen h-screen">
       <Sidebar />
-      <div className="flex flex-col flex-1">
+      <div className="w-full overflow-x-hidden">
         <Navbar />
-        <main className="flex-1 p-4 overflow-auto">{children}</main>
+        <main className="p-4">{children}</main>
       </div>
     </div>
   );
