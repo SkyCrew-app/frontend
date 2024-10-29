@@ -105,18 +105,18 @@ export default function FleetDashboard() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-background">
+    <div className="flex flex-col items-center justify-center bg-background">
       <h1 className="text-3xl font-bold mb-8">Dashboard de la Flotte</h1>
 
-      <div className="flex justify-between space-x-4 w-full max-w-8xl mb-8">
-        <Card className="shadow-md w-1/3">
+      <div className="flex justify-between space-x-4 w-full mb-8">
+        <Card className="shadow-md w-full md:w-1/2 mb-4">
           <CardHeader>
             <CardTitle className='mx-auto'>Disponibilité des Avions</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="w-[400px] mx-auto">
+            <div className="w-full md:w-[400px] mx-auto">
               {loading ? (
-                <Skeleton className="w-[400px] h-[400px]" />
+                <Skeleton className="w-full h-[400px]" />
               ) : (
                 <Pie
                   data={{
@@ -139,14 +139,14 @@ export default function FleetDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-md w-1/3">
+        <Card className="shadow-md w-full md:w-1/2 mb-4">
           <CardHeader>
             <CardTitle className='mx-auto'>Types de Maintenance</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="w-[400px] mx-auto">
+            <div className="w-full md:w-[400px] mx-auto">
               {loading ? (
-                <Skeleton className="w-[400px] h-[400px]" />
+                <Skeleton className="w-full h-[400px]" />
               ) : (
                 <Pie
                   data={{
@@ -160,42 +160,6 @@ export default function FleetDashboard() {
                         ],
                         backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
                         hoverBackgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
-                      },
-                    ],
-                  }}
-                />
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-md w-1/3">
-          <CardHeader>
-            <CardTitle className='mx-auto'>Avions par Année de Fabrication</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="w-[400px] mx-auto">
-              {loading ? (
-                <Skeleton className="w-[400px] h-[400px]" />
-              ) : (
-                <Pie
-                  data={{
-                    labels: [
-                      'Avant 2000',
-                      '2000 - 2010',
-                      '2011 - 2020',
-                      '2021 - Présent',
-                    ],
-                    datasets: [
-                      {
-                        data: [
-                          data?.getAircrafts.filter((a) => a.year_of_manufacture < 2000).length,
-                          data?.getAircrafts.filter((a) => a.year_of_manufacture >= 2000 && a.year_of_manufacture <= 2010).length,
-                          data?.getAircrafts.filter((a) => a.year_of_manufacture > 2010 && a.year_of_manufacture <= 2020).length,
-                          data?.getAircrafts.filter((a) => a.year_of_manufacture > 2020).length,
-                        ],
-                        backgroundColor: ['#9C27B0', '#00BCD4', '#FF9800', '#4CAF50'],
-                        hoverBackgroundColor: ['#BA68C8', '#26C6DA', '#FFB74D', '#66BB6A'],
                       },
                     ],
                   }}
@@ -275,7 +239,7 @@ export default function FleetDashboard() {
       <Drawer open={isDrawerOpen} onClose={closeDrawer}>
         <DrawerOverlay />
         <DrawerContent className="p-4 w-full h-1/2">
-          <div className="p-6 flex flex-row items-center justify-between">
+          <div className="p-6 flex flex-col md:flex-row items-center justify-between">
             {loading ? (
               <Skeleton className="w-full h-1/2" />
             ) : (
@@ -289,24 +253,24 @@ export default function FleetDashboard() {
                   <p><strong>Coût Horaire :</strong> {selectedAircraft?.hourly_cost} €</p>
                   <p><strong>Année de fabrication :</strong> {selectedAircraft?.year_of_manufacture}</p>
                   <p><strong>Heures de vol totales :</strong> {selectedAircraft?.total_flight_hours} heures</p>
-                  </div>
+                </div>
 
-                  <div className="flex-1 mt-4">
-                    <h3 className="text-xl font-bold">Documents</h3>
-                    {selectedAircraft?.documents_url?.length ? (
-                      <ul className="list-disc list-inside mt-2">
-                        {selectedAircraft.documents_url.map((url, index) => (
-                          <li key={index}>
-                            <a href={`http://localhost:3000${url}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">
-                              Document {index + 1}
-                            </a>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="text-gray-600">Aucun document disponible</p>
-                    )}
-                  </div>
+                <div className="flex-1 mt-4">
+                  <h3 className="text-xl font-bold">Documents</h3>
+                  {selectedAircraft?.documents_url?.length ? (
+                    <ul className="list-disc list-inside mt-2">
+                      {selectedAircraft.documents_url.map((url, index) => (
+                        <li key={index}>
+                          <a href={`http://localhost:3000${url}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">
+                            Document {index + 1}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-gray-600">Aucun document disponible</p>
+                  )}
+                </div>
 
                 <div className="flex-1 flex justify-center items-center">
                   {selectedAircraft?.image_url ? (
