@@ -175,64 +175,73 @@ export default function MaintenanceTable() {
             <h2 className="text-xl font-bold mb-4">Filtres</h2>
             <div className="space-y-4">
               <Select onValueChange={handleTypeFilterChange}>
-                <SelectTrigger>Type de Maintenance</SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tous</SelectItem>
-                  <SelectItem value="Préventive">Préventive</SelectItem>
-                  <SelectItem value="Corrective">Corrective</SelectItem>
-                </SelectContent>
+          <SelectTrigger>Type de Maintenance</SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tous</SelectItem>
+            <SelectItem value="Préventive">Préventive</SelectItem>
+            <SelectItem value="Corrective">Corrective</SelectItem>
+          </SelectContent>
               </Select>
 
               <Select onValueChange={handleTechnicianFilterChange}>
-                <SelectTrigger>Technicien</SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tous</SelectItem>
-                  {Array.from(new Set(maintenances.map(m => m.technician?.email || 'non_assigned')))
-                    .filter(email => email && email !== '')
-                    .map(email => (
-                      <SelectItem key={email} value={email}>
-                        {email === 'non_assigned' ? 'Non assigné' : email}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
+          <SelectTrigger>Technicien</SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tous</SelectItem>
+            {Array.from(new Set(maintenances.map(m => m.technician?.email || 'non_assigned')))
+              .filter(email => email && email !== '')
+              .map(email => (
+                <SelectItem key={email} value={email}>
+            {email === 'non_assigned' ? 'Non assigné' : email}
+                </SelectItem>
+              ))}
+          </SelectContent>
               </Select>
 
               {/* Date Picker */}
               <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start text-left font-normal"
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dateRange && dateRange.from ? (
-                      dateRange.to ? (
-                        <>
-                          {format(dateRange.from, 'LLL dd, y')} - {format(dateRange.to, 'LLL dd, y')}
-                        </>
-                      ) : (
-                        format(dateRange.from, 'LLL dd, y')
-                      )
-                    ) : (
-                      <span>Sélectionnez une plage de dates</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    initialFocus
-                    mode="range"
-                    defaultMonth={dateRange?.from}  // Vérification que `dateRange` existe
-                    selected={dateRange}  // Vérification que `dateRange` existe
-                    onSelect={(range) => {
-                      if (range?.from || range?.to) {
-                        setDateRange({ from: range?.from || undefined, to: range?.to || undefined });
-                      }
-                    }}
-                    numberOfMonths={2}
-                  />
-                </PopoverContent>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className="w-full justify-start text-left font-normal"
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {dateRange && dateRange.from ? (
+                dateRange.to ? (
+            <>
+              {format(dateRange.from, 'LLL dd, y')} - {format(dateRange.to, 'LLL dd, y')}
+            </>
+                ) : (
+            format(dateRange.from, 'LLL dd, y')
+                )
+              ) : (
+                <span>Sélectionnez une plage de dates</span>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar
+              initialFocus
+              mode="range"
+              defaultMonth={dateRange?.from}
+              selected={dateRange}
+              onSelect={(range) => {
+                if (range?.from || range?.to) {
+            setDateRange({ from: range?.from || undefined, to: range?.to || undefined });
+                }
+              }}
+              numberOfMonths={2}
+            />
+          </PopoverContent>
               </Popover>
+            </div>
+            <div className="mt-4 flex justify-end space-x-2">
+              <Button onClick={() => setIsFilterDialogOpen(false)}>Valider</Button>
+              <Button variant="outline" onClick={() => {
+          setFilterType('all');
+          setFilterTechnician('all');
+          setDateRange({ from: undefined, to: undefined });
+          setIsFilterDialogOpen(false);
+              }}>Supprimer</Button>
             </div>
           </DialogContent>
         </Dialog>

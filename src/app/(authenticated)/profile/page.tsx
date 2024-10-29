@@ -403,7 +403,7 @@ export default function ProfilePage() {
       )}
 
       {expandedCard === 'profile' && (
-      <div className="absolute inset-0 bg-white dark:bg-gray-800 z-40 p-8 shadow-lg rounded-lg pb-14">
+      <div className="absolute inset-0 bg-white dark:bg-gray-800 z-40 p-8 shadow rounded pb-14">
         <button
           aria-label="Fermer"
           className="absolute top-4 right-4 text-gray-500 dark:text-gray-200"
@@ -411,10 +411,11 @@ export default function ProfilePage() {
         >
           <X size={24} />
         </button>
-        <h2 className="text-center text-2xl font-semibold mb-4">Modifier le profil</h2>
+        <h2 className="text-center text-2xl font-semibold mb-4">Modifier votre profil</h2>
         <div className="mt-12">
           <div className="grid gap-4">
-            <div className="grid w-full max-w-sm items-center gap-3">
+            <Label htmlFor="picture">Photo de profil</Label>
+            <div className="flex items-center gap-3">
             {previewImage ? (
                 <img
                   src={previewImage}
@@ -432,7 +433,6 @@ export default function ProfilePage() {
                   {formData.first_name[0]}{formData.last_name[0]}
                 </div>
               )}
-              <Label htmlFor="picture">Photo de profil</Label>
               <Input
                 id="picture"
                 type="file"
@@ -527,11 +527,11 @@ export default function ProfilePage() {
               {errors.date_of_birth && <p className="text-red-500">{errors.date_of_birth}</p>}
             </div>
 
-            <Button className='mb-16' onClick={saveChanges}>Enregistrer les modifications</Button>
           </div>
+          <Button className='mb-16 mt-8' onClick={saveChanges}>Enregistrer les modifications</Button>
         </div>
       </div>
-    )}
+      )}
 
       {expandedCard === 'notifications' && (
         <div className="absolute inset-0 bg-white dark:bg-gray-800 z-40 p-8 shadow-lg rounded-lg pb-14">
@@ -563,9 +563,8 @@ export default function ProfilePage() {
                 />
                 <Label htmlFor="sms_notifications_enabled">Notifications par SMS</Label>
               </div>
-
-              <Button onClick={saveChanges}>Enregistrer les modifications</Button>
             </div>
+            <Button className="mb-16 mt-8" onClick={saveChanges}>Enregistrer les modifications</Button>
           </div>
         </div>
       )}
@@ -581,47 +580,48 @@ export default function ProfilePage() {
           </button>
           <h2 className="text-center text-2xl font-semibold">Modifier votre mot de passe</h2>
 
-          <div className="max-w-md mx-auto mt-8">
-          <h2 className="text-xl font-semibold text-center mb-4">Changer le mot de passe</h2>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="currentPassword">Mot de passe actuel</Label>
-              <Input
-                type="password"
-                id="currentPassword"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                className={errors.currentPassword ? 'border-red-500' : ''}
-              />
-              {errors.currentPassword && <p className="text-red-500">{errors.currentPassword}</p>}
-            </div>
+          <div className="mt-12">
+            <div className='grid gap-4'>
+              <h2 className="text-xl font-semibold text-center mb-4">Changer le mot de passe</h2>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="currentPassword">Mot de passe actuel</Label>
+                  <Input
+                    type="password"
+                    id="currentPassword"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    className={errors.currentPassword ? 'border-red-500' : ''}
+                  />
+                  {errors.currentPassword && <p className="text-red-500">{errors.currentPassword}</p>}
+                </div>
 
-            <div>
-              <Label htmlFor="newPassword">Nouveau mot de passe</Label>
-              <Input
-                type="password"
-                id="newPassword"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className={errors.newPassword ? 'border-red-500' : ''}
-              />
-              {errors.newPassword && <p className="text-red-500">{errors.newPassword}</p>}
-            </div>
+                <div>
+                  <Label htmlFor="newPassword">Nouveau mot de passe</Label>
+                  <Input
+                    type="password"
+                    id="newPassword"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className={errors.newPassword ? 'border-red-500' : ''}
+                  />
+                  {errors.newPassword && <p className="text-red-500">{errors.newPassword}</p>}
+                </div>
 
-            <div>
-              <Label htmlFor="confirmPassword">Confirmer le nouveau mot de passe</Label>
-              <Input
-                type="password"
-                id="confirmPassword"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className={errors.confirmPassword ? 'border-red-500' : ''}
-              />
-              {errors.confirmPassword && <p className="text-red-500">{errors.confirmPassword}</p>}
+                <div>
+                  <Label htmlFor="confirmPassword">Confirmer le nouveau mot de passe</Label>
+                  <Input
+                    type="password"
+                    id="confirmPassword"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className={errors.confirmPassword ? 'border-red-500' : ''}
+                  />
+                  {errors.confirmPassword && <p className="text-red-500">{errors.confirmPassword}</p>}
+                </div>
+              </div>
             </div>
-
-            <Button onClick={handleSubmit}>Changer le mot de passe</Button>
-          </div>
+          <Button className="mb-16 mt-8" onClick={handleSubmit}>Changer le mot de passe</Button>
         </div>
         </div>
       )}
