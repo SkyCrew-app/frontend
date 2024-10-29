@@ -111,8 +111,8 @@ export const CREATE_RESERVATION = gql`
 `;
 
 export const UPDATE_RESERVATION = gql`
-  mutation UpdateReservation($id: Int!, $input: UpdateReservationInput!) {
-    updateReservation(id: $id, updateReservationInput: $input) {
+  mutation UpdateReservation($input: UpdateReservationInput!) {
+    updateReservation(updateReservationInput: $input) {
       id
       start_time
       end_time
@@ -162,7 +162,6 @@ export default function ReservationCalendar() {
       try {
         const decodedToken = jwtDecode<TokenPayload>(token);
         setUserEmail(decodedToken.email);
-        console.log('Email récupéré depuis le token:', decodedToken.email);
       } catch (error) {
         console.log('Erreur lors du décodage du token:', error);
       }
@@ -177,13 +176,8 @@ export default function ReservationCalendar() {
   });
 
   useEffect(() => {
-    if (userData) {
-      console.log('Réponse de GraphQL pour GetUserByEmail:', userData);
-    }
-
     if (userData && userData.userByEmail) {
       setUserId(userData.userByEmail.id);
-      console.log('User ID récupéré:', userData.userByEmail.id);
     }
 
     if (errorUser) {
@@ -295,14 +289,14 @@ export default function ReservationCalendar() {
           title: "Réservation créée avec succès!",
           description: `La réservation pour l'avion ${selectedAircraft} a été ajoutée.`,
         });
-        setIsCreateDialogOpen(false);
       } catch (error) {
-        setIsCreateDialogOpen(false);
         toast({
           variant: "destructive",
           title: "Erreur lors de la création",
           description: "Une erreur est survenue lors de la création de la réservation.",
         });
+      } finally {
+        setIsCreateDialogOpen(false);
       }
     } else {
       setIsCreateDialogOpen(false);
@@ -319,8 +313,8 @@ export default function ReservationCalendar() {
         try {
             const response = await updateReservation({
                 variables: {
-                    id: selectedReservation.id,
                     input: {
+                        id: selectedReservation.id,
                         purpose: editPurpose || selectedReservation.purpose,
                         notes: editNotes || selectedReservation.notes,
                         flight_category: editFlightCategory || selectedReservation.flight_category,
@@ -413,7 +407,7 @@ export default function ReservationCalendar() {
             return (
               <TableCell
                 key={index}
-                className={`text-center p-2 cursor-pointer ${isSelectedRange ? 'bg-blue-500' : ''}`}
+                className={`text-center p-2 cursor-pointer select-none ${isSelectedRange ? 'bg-blue-500' : ''}`}
                 onMouseDown={() => handleMouseDown(aircraft.id, format(hour, 'HH:mm'))}
                 onMouseEnter={() => handleMouseEnter(hour)}
                 onMouseUp={handleMouseUp}
@@ -432,7 +426,7 @@ export default function ReservationCalendar() {
   if (errorReservations || errorAircrafts) return <Alert variant="destructive"><AlertTitle>Erreur</AlertTitle><AlertDescription>Erreur lors du chargement des données.</AlertDescription></Alert>;
 
   return (
-    <div className="flex flex-col items-center justify-center p-3 dark:text-white">
+    <div className="flex flex-col items-center justify-center p-3 dark:text-white overflow-hidden">
       <h1 className="text-3xl font-bold mb-8">Calendrier des Réservations</h1>
 
       {alertMessage && (
@@ -504,7 +498,7 @@ export default function ReservationCalendar() {
       </div>
 
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="bg-white p-6 rounded-md">
+        <DialogContent className="p-6 rounded-md">
           <DialogTitle>Créer une réservation</DialogTitle>
           <div className="flex flex-col gap-4">
             <p>
