@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { useToast } from "@/components/hooks/use-toast";
 import { Label } from '@/components/ui/label';
 import { jwtDecode } from 'jwt-decode';
@@ -51,6 +52,32 @@ enum ReservationStatus {
   CONFIRMED = 'CONFIRMED',
   CANCELLED = 'CANCELLED'
 }
+
+enum FlightCategory {
+  LOCAL = 'local',
+  CROSS_COUNTRY = 'cross_country',
+  INSTRUCTION = 'instruction',
+  TOURISM = 'tourism',
+  TRAINING = 'training',
+  MAINTENANCE = 'maintenance',
+  PRIVATE = 'private',
+  CORPORATE = 'corporate',
+}
+
+const flightCategoryMapping = {
+  LOCAL: 'Local',
+  CROSS_COUNTRY: 'Vol longue distance',
+  INSTRUCTION: 'Instruction',
+  TOURISM: 'Tourisme',
+  TRAINING: 'Entraînement',
+  MAINTENANCE: 'Maintenance',
+  PRIVATE: 'Privé',
+  CORPORATE: 'Affaires',
+};
+
+const flightCategoryReverseMapping = Object.fromEntries(
+  Object.entries(flightCategoryMapping).map(([key, value]) => [value, key])
+);
 
 export const GET_USER_BY_EMAIL = gql`
   query GetUserByEmail($email: String!) {
@@ -150,6 +177,7 @@ export default function ReservationCalendar() {
   const [editPurpose, setEditPurpose] = useState('');
   const [editNotes, setEditNotes] = useState('');
   const [editFlightCategory, setEditFlightCategory] = useState('');
+  const [selectedCategoryFr, setSelectedCategoryFr] = useState<string | undefined>(undefined);
 
   const formattedDate = currentDate ? format(currentDate, 'yyyy-MM-dd') : '';
   const nextDate = format(addDays(currentDate || new Date(), 1), 'yyyy-MM-dd');
@@ -407,7 +435,7 @@ export default function ReservationCalendar() {
             return (
               <TableCell
                 key={index}
-                className={`text-center p-2 cursor-pointer select-none ${isSelectedRange ? 'bg-blue-500' : ''}`}
+                className={`text-center p-2 cursor-pointer select-none ${isSelectedRange ? 'bg-teal-400' : ''}`}
                 onMouseDown={() => handleMouseDown(aircraft.id, format(hour, 'HH:mm'))}
                 onMouseEnter={() => handleMouseEnter(hour)}
                 onMouseUp={handleMouseUp}
@@ -522,11 +550,24 @@ export default function ReservationCalendar() {
               onChange={(e) => setNotes(e.target.value)}
             />
 
-            <Input
-              placeholder="Catégorie de vol"
-              value={flightCategory}
-              onChange={(e) => setFlightCategory(e.target.value)}
-            />
+            <Select
+              value={selectedCategoryFr} // Display the French name
+              onValueChange={(value) => {
+                setSelectedCategoryFr(value); // Set the French name for display
+                setFlightCategory(flightCategoryReverseMapping[value]); // Set the English name for backend
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Catégorie de vol" />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.values(flightCategoryMapping).map((categoryFr) => (
+                  <SelectItem key={categoryFr} value={categoryFr}>
+                    {categoryFr}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
             <Button onClick={handleCreateReservation}>
               <Plus className="mr-2" />
@@ -589,12 +630,23 @@ export default function ReservationCalendar() {
                       defaultValue={selectedReservation.notes}
                   />
                   <Label htmlFor="catégorie">Catégorie de vol</Label>
-                  <Input
-                      placeholder="Catégorie de vol"
-                      value={editFlightCategory}
-                      onChange={(e) => setEditFlightCategory(e.target.value)}
-                      defaultValue={selectedReservation.flight_category}
-                  />
+                    <Select
+                      value={flightCategoryMapping[editFlightCategory as keyof typeof flightCategoryMapping]}
+                      onValueChange={(value) => {
+                        setEditFlightCategory(flightCategoryReverseMapping[value]);
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Catégorie de vol" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.values(flightCategoryMapping).map((categoryFr) => (
+                          <SelectItem key={categoryFr} value={categoryFr}>
+                            {categoryFr}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
 
                   <div className="flex justify-end mt-4">
                       <Button onClick={handleUpdateReservation} className="mr-2">

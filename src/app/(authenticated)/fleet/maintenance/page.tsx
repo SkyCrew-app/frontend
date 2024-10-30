@@ -50,6 +50,15 @@ export const GET_ALL_MAINTENANCES = gql`
   }
 `;
 
+enum MaintenanceType {
+  INSPECTION = 'Inspection',
+  REPAIR = 'Réparation',
+  OVERHAUL = 'Révision',
+  SOFTWARE_UPDATE = 'Mise à jour logicielle',
+  CLEANING = 'Nettoyage',
+  OTHER = 'Autre',
+}
+
 type Maintenance = {
   id: number;
   start_date: Date;
@@ -128,7 +137,6 @@ export default function MaintenanceTable() {
     setCurrentPage(page);
   };
 
-  // Filtrer les maintenances par recherche, filtres et plage de dates
   const filteredMaintenances = maintenances.filter((maintenance) => {
     const matchesSearchTerm =
       maintenance.aircraft.registration_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -140,7 +148,6 @@ export default function MaintenanceTable() {
       filterTechnician === 'all' ||
       (maintenance.technician ? maintenance.technician.email : 'non_assigned') === filterTechnician;
 
-    // Vérification que dateRange n'est pas undefined avant de faire les comparaisons
     const matchesDate =
       (!dateRange || !dateRange.from || new Date(maintenance.start_date) >= dateRange.from) &&
       (!dateRange || !dateRange.to || new Date(maintenance.start_date) <= dateRange.to);
@@ -262,7 +269,7 @@ export default function MaintenanceTable() {
             <TableRow key={maintenance.id}>
               <TableCell>{maintenance.aircraft.registration_number}</TableCell>
               <TableCell>{maintenance.aircraft.model}</TableCell>
-              <TableCell>{maintenance.maintenance_type || 'N/A'}</TableCell>
+                <TableCell>{MaintenanceType[maintenance.maintenance_type as keyof typeof MaintenanceType] || 'N/A'}</TableCell>
               <TableCell>{new Date(maintenance.end_date).toLocaleDateString()}</TableCell>
               <TableCell>
                 <Dialog>
@@ -275,7 +282,7 @@ export default function MaintenanceTable() {
                       <div>
                         <h3 className="text-xl font-bold mb-4">Détails de la Maintenance</h3>
                         <p><strong>Date :</strong> {new Date(selectedMaintenance.start_date).toLocaleDateString()} - {new Date(selectedMaintenance.end_date).toLocaleDateString()}</p>
-                        <p><strong>Type :</strong> {selectedMaintenance.maintenance_type || 'N/A'}</p>
+                        <p><strong>Type :</strong> {MaintenanceType[selectedMaintenance.maintenance_type as keyof typeof MaintenanceType] || 'N/A'}</p>
                         <p><strong>Description :</strong> {selectedMaintenance.description || 'N/A'}</p>
                         <p><strong>Coût :</strong> {selectedMaintenance.maintenance_cost ? `${selectedMaintenance.maintenance_cost} €` : 'N/A'}</p>
                         <p><strong>Technicien :</strong> {selectedMaintenance.technician ? selectedMaintenance.technician.email : 'Non assigné'}</p>
