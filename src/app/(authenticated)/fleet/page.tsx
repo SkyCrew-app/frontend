@@ -33,9 +33,28 @@ export const GET_AIRCRAFTS = gql`
       total_flight_hours
       image_url
       documents_url
+      maintenances {
+        id
+        maintenance_type
+      }
     }
   }
 `;
+
+enum MaintenanceType {
+  INSPECTION = 'INSPECTION',
+  REPAIR = 'REPAIR',
+  OVERHAUL = 'OVERHAUL',
+  SOFTWARE_UPDATE = 'SOFTWARE_UPDATE',
+  CLEANING = 'CLEANING',
+  OTHER = 'OTHER',
+}
+
+enum AvailabilityStatus {
+  AVAILABLE = 'AVAILABLE',
+  UNAVAILABLE = 'UNAVAILABLE',
+  RESERVED = 'RESERVED',
+}
 
 type Aircraft = {
   id: number;
@@ -48,6 +67,10 @@ type Aircraft = {
   total_flight_hours: number;
   image_url?: string;
   documents_url?: string[];
+  maintenances?: {
+    id: number;
+    maintenance_type: MaintenanceType;
+  }[];
 };
 
 type AircraftData = {
@@ -124,9 +147,9 @@ export default function FleetDashboard() {
                     datasets: [
                       {
                         data: [
-                          data?.getAircrafts.filter((a) => a.availability_status === 'available').length,
-                          data?.getAircrafts.filter((a) => a.availability_status === 'maintenance').length,
-                          data?.getAircrafts.filter((a) => a.availability_status === 'reserved').length,
+                          data?.getAircrafts.filter((a) => a.availability_status === AvailabilityStatus.AVAILABLE).length,
+                          data?.getAircrafts.filter((a) => a.availability_status === AvailabilityStatus.UNAVAILABLE).length,
+                          data?.getAircrafts.filter((a) => a.availability_status === AvailabilityStatus.RESERVED).length,
                         ],
                         backgroundColor: ['#4CAF50', '#FFC107', '#F44336'],
                         hoverBackgroundColor: ['#66BB6A', '#FFD54F', '#E57373'],
@@ -150,16 +173,26 @@ export default function FleetDashboard() {
               ) : (
                 <Pie
                   data={{
-                    labels: ['Corrective', 'Préventive', 'Inspection'],
+                    labels: [
+                      'Inspection',
+                      'Réparation',
+                      'Révision',
+                      'Mise à jour logicielle',
+                      'Nettoyage',
+                      'Autre'
+                    ],
                     datasets: [
                       {
                         data: [
-                          data?.getAircrafts.filter((a) => a.maintenance_status === 'Corrective').length,
-                          data?.getAircrafts.filter((a) => a.maintenance_status === 'Préventive').length,
-                          data?.getAircrafts.filter((a) => a.maintenance_status === 'Inspection').length,
+                          data?.getAircrafts.filter((a) => a.maintenances?.some((m) => m.maintenance_type === 'INSPECTION')).length,
+                          data?.getAircrafts.filter((a) => a.maintenances?.some((m) => m.maintenance_type === 'REPAIR')).length,
+                          data?.getAircrafts.filter((a) => a.maintenances?.some((m) => m.maintenance_type === 'OVERHAUL')).length,
+                          data?.getAircrafts.filter((a) => a.maintenances?.some((m) => m.maintenance_type === 'SOFTWARE_UPDATE')).length,
+                          data?.getAircrafts.filter((a) => a.maintenances?.some((m) => m.maintenance_type === 'CLEANING')).length,
+                          data?.getAircrafts.filter((a) => a.maintenances?.some((m) => m.maintenance_type === 'OTHER')).length,
                         ],
-                        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
-                        hoverBackgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
+                        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#FF9F40', '#4BC0C0', '#9966FF'],
+                        hoverBackgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#FF9F40', '#4BC0C0', '#9966FF'],
                       },
                     ],
                   }}
