@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { gql, useQuery } from '@apollo/client';
+import { useQuery } from '@apollo/client';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/carousel";
 import { type CarouselApi } from "@/components/ui/carousel";
 import { GET_ALL_MAINTENANCES } from '@/graphql/maintenance';
+import { Maintenance } from '@/interfaces/maintenance';
 
 enum MaintenanceType {
   INSPECTION = 'Inspection',
@@ -34,27 +35,6 @@ enum MaintenanceType {
   CLEANING = 'Nettoyage',
   OTHER = 'Autre',
 }
-
-type Maintenance = {
-  id: number;
-  start_date: Date;
-  end_date: Date;
-  maintenance_type: string;
-  description: string;
-  maintenance_cost: number;
-  images_url?: string[];
-  documents_url?: string[];
-  aircraft: {
-    id: number;
-    registration_number: string;
-    model: string;
-  };
-  technician?: {
-    id: number;
-    first_name: string;
-    email: string;
-  };
-};
 
 export default function MaintenanceTable() {
   const { data, loading, error } = useQuery(GET_ALL_MAINTENANCES);

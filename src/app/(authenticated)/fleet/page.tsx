@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { gql, useQuery } from '@apollo/client';
+import { useQuery } from '@apollo/client';
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Pie } from 'react-chartjs-2';
@@ -18,44 +18,9 @@ import {
   PaginationLink,
 } from '@/components/ui/pagination';
 import { GET_AIRCRAFTS } from '@/graphql/planes';
+import { Aircraft, AircraftData, AvailabilityStatus } from '@/interfaces/aircraft';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
-
-enum MaintenanceType {
-  INSPECTION = 'INSPECTION',
-  REPAIR = 'REPAIR',
-  OVERHAUL = 'OVERHAUL',
-  SOFTWARE_UPDATE = 'SOFTWARE_UPDATE',
-  CLEANING = 'CLEANING',
-  OTHER = 'OTHER',
-}
-
-enum AvailabilityStatus {
-  AVAILABLE = 'AVAILABLE',
-  UNAVAILABLE = 'UNAVAILABLE',
-  RESERVED = 'RESERVED',
-}
-
-type Aircraft = {
-  id: number;
-  registration_number: string;
-  model: string;
-  availability_status: string;
-  maintenance_status: string;
-  hourly_cost: number;
-  year_of_manufacture: number;
-  total_flight_hours: number;
-  image_url?: string;
-  documents_url?: string[];
-  maintenances?: {
-    id: number;
-    maintenance_type: MaintenanceType;
-  }[];
-};
-
-type AircraftData = {
-  getAircrafts: Aircraft[];
-};
 
 export default function FleetDashboard() {
   const { data, loading, error } = useQuery<AircraftData>(GET_AIRCRAFTS);

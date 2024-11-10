@@ -1,9 +1,9 @@
 'use client';
 
-import { gql, useMutation, useQuery } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client';
 import { useState, useEffect } from 'react';
 import { format, addDays, subDays, eachHourOfInterval, addWeeks, subWeeks, isBefore } from 'date-fns';
-import { fr } from 'date-fns/locale'; 
+import { fr } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ArrowLeft, ArrowRight, Calendar as CalendarIcon, Trash, Edit, Plus } from 'lucide-react';
@@ -22,24 +22,7 @@ import { jwtDecode } from 'jwt-decode';
 import { GET_USER_BY_EMAIL } from '@/graphql/user';
 import { CREATE_RESERVATION, DELETE_RESERVATION, GET_FILTERED_RESERVATIONS, UPDATE_RESERVATION } from '@/graphql/reservation';
 import { GET_AIRCRAFTS } from '@/graphql/planes';
-
-interface Reservation {
-  id: number;
-  start_time: string;
-  end_time: string;
-  estimated_flight_hours: number;
-  status: ReservationStatus;
-  notes: string;
-  flight_category: string;
-  aircraft: {
-    id: number;
-    registration_number: string;
-  };
-  purpose: string;
-  user: {
-    first_name: string;
-  };
-}
+import { Reservation, ReservationStatus } from '@/interfaces/reservation';
 
 interface Aircraft {
   id: number;
@@ -48,12 +31,6 @@ interface Aircraft {
 
 interface TokenPayload {
   email: string;
-}
-
-enum ReservationStatus {
-  PENDING = 'PENDING',
-  CONFIRMED = 'CONFIRMED',
-  CANCELLED = 'CANCELLED'
 }
 
 const flightCategoryMapping = {
