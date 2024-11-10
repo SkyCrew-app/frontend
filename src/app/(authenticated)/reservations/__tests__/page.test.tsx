@@ -3,11 +3,9 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import ReservationCalendar from '../page';
 import { MockedProvider } from '@apollo/client/testing';
-import {
-  GET_USER_BY_EMAIL,
-  GET_FILTERED_RESERVATIONS,
-  GET_AIRCRAFTS,
-} from '../page';
+import { GET_FILTERED_RESERVATIONS } from '@/graphql/reservation';
+import { GET_AIRCRAFTS } from '@/graphql/planes';
+import { GET_USER_BY_EMAIL } from '@/graphql/user';
 
 jest.mock('jwt-decode', () => () => ({ email: 'test@example.com' }));
 

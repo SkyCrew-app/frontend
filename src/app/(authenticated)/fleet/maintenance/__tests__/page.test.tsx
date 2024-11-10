@@ -1,9 +1,8 @@
-// page.test.tsx
 import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import MaintenanceTable from '../page';
 import { MockedProvider } from '@apollo/client/testing';
-import { GET_ALL_MAINTENANCES } from '../page';
+import { GET_ALL_MAINTENANCES } from '@/graphql/maintenance';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 

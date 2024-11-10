@@ -1,9 +1,8 @@
-// page.test.tsx
 import React from 'react';
 import { render, screen, waitFor, fireEvent, within } from '@testing-library/react';
 import FleetDashboard from '../page';
 import { MockedProvider } from '@apollo/client/testing';
-import { GET_AIRCRAFTS } from '../page';
+import { GET_AIRCRAFTS } from '@/graphql/planes';
 
 jest.mock('react-chartjs-2', () => ({
   Pie: () => <div>Mocked Pie Chart</div>,

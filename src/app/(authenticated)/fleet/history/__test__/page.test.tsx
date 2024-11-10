@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import AircraftHistory from '../page';
 import { MockedProvider } from '@apollo/client/testing';
-import { GET_FLIGHT_HISTORY } from '../page';
+import { GET_FLIGHT_HISTORY } from '@/graphql/planes';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 

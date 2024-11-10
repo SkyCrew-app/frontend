@@ -1,8 +1,9 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import LoginPage, { LOGIN_MUTATION } from '../page';
+import LoginPage from '../page';
 import { MockedProvider } from '@apollo/client/testing';
 import { useRouter } from 'next/navigation';
+import { LOGIN_MUTATION } from '@/graphql/system';
 
 jest.mock('next/navigation', () => ({
   useRouter: jest.fn(),
