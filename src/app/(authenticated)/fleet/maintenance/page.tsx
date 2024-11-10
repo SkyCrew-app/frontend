@@ -24,31 +24,7 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { type CarouselApi } from "@/components/ui/carousel";
-
-export const GET_ALL_MAINTENANCES = gql`
-  query GetAllMaintenances {
-    getAllMaintenances {
-      id
-      start_date
-      end_date
-      maintenance_type
-      description
-      maintenance_cost
-      images_url
-      documents_url
-      aircraft {
-        id
-        registration_number
-        model
-      }
-      technician {
-        id
-        first_name
-        email
-      }
-    }
-  }
-`;
+import { GET_ALL_MAINTENANCES } from '@/graphql/maintenance';
 
 enum MaintenanceType {
   INSPECTION = 'Inspection',

@@ -4,35 +4,7 @@ import { gql, useQuery } from '@apollo/client';
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
 import { useState } from 'react';
-
-export const GET_FLIGHT_HISTORY = gql`
-  query GetFlightHistory {
-    getHistoryAircraft {
-      id
-      registration_number
-      model
-      reservations {
-        id
-        start_time
-        end_time
-        user {
-          first_name
-          last_name
-        }
-      }
-      maintenances {
-        id
-        maintenance_type
-        start_date
-        end_date
-        technician {
-          first_name
-          last_name
-        }
-      }
-    }
-  }
-`;
+import { GET_FLIGHT_HISTORY } from '@/graphql/planes';
 
 export default function AircraftHistory() {
   const { data, loading, error } = useQuery(GET_FLIGHT_HISTORY);

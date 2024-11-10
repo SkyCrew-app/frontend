@@ -8,12 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, CheckCircle } from 'lucide-react';
-
-const CONFIRM_EMAIL_AND_SET_PASSWORD = gql`
-  mutation ConfirmEmailAndSetPassword($token: String!, $password: String!) {
-    confirmEmailAndSetPassword(token: $token, password: $password)
-  }
-`;
+import { CONFIRM_EMAIL_AND_SET_PASSWORD } from '@/graphql/user';
 
 export default function ConfirmEmailPage() {
   const [password, setPassword] = useState('');

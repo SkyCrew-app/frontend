@@ -16,13 +16,11 @@ export default function ForgotPasswordPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Validation basique
     if (!email) {
       setError('Veuillez saisir votre adresse e-mail.');
       return;
     }
     setError('');
-    // Pour le moment, simuler l'envoi de l'e-mail
     console.log('Demande de réinitialisation pour :', email);
     setSuccess(true);
   };

@@ -19,23 +19,8 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-
-const LOGOUT_MUTATION = gql`
-  mutation Logout {
-    logout
-  }
-`;
-
-const GET_USER_PROFILE = gql`
-  query GetUserProfile($email: String!) {
-    userByEmail(email: $email) {
-      first_name
-      last_name
-      profile_picture
-      user_account_balance
-    }
-  }
-`;
+import { GET_USER_PROFILE } from '@/graphql/user';
+import { LOGOUT_MUTATION } from '@/graphql/system';
 
 export default function Navbar() {
   const router = useRouter();

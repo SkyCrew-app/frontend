@@ -21,7 +21,6 @@ export default function ResetPasswordPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Validation basique
     if (!password || !confirmPassword) {
       setError('Veuillez remplir tous les champs.');
       return;
@@ -31,7 +30,6 @@ export default function ResetPasswordPage() {
       return;
     }
     setError('');
-    // Pour le moment, simuler la réinitialisation du mot de passe
     console.log('Nouveau mot de passe:', password);
     console.log('Token:', token);
     setSuccess(true);

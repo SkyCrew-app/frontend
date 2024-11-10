@@ -6,18 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
-
-export const GET_EMAIL_QUERY = gql`
-  query GetEmailFromCookie {
-    getEmailFromCookie
-  }
-`;
-
-export const GENERATE_2FA_SECRET_MUTATION = gql`
-  mutation Generate2FASecret($email: String!) {
-    generate2FASecret(email: $email)
-  }
-`;
+import { GET_EMAIL_QUERY, GENERATE_2FA_SECRET_MUTATION } from '@/graphql/user';
 
 export default function Setup2FA() {
   const [qrCodeUrl, setQrCodeUrl] = useState('');

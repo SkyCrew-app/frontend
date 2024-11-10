@@ -10,15 +10,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-
-export const LOGIN_MUTATION = gql`
-  mutation Login($email: String!, $password: String!) {
-    login(loginInput: { email: $email, password: $password }) {
-      access_token
-      is2FAEnabled
-    }
-  }
-`;
+import { LOGIN_MUTATION } from '@/graphql/system';
 
 export default function LoginPage() {
   const router = useRouter();

@@ -17,29 +17,9 @@ import {
   PaginationNext,
   PaginationLink,
 } from '@/components/ui/pagination';
+import { GET_AIRCRAFTS } from '@/graphql/planes';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
-
-export const GET_AIRCRAFTS = gql`
-  query GetAircrafts {
-    getAircrafts {
-      id
-      registration_number
-      model
-      availability_status
-      maintenance_status
-      hourly_cost
-      year_of_manufacture
-      total_flight_hours
-      image_url
-      documents_url
-      maintenances {
-        id
-        maintenance_type
-      }
-    }
-  }
-`;
 
 enum MaintenanceType {
   INSPECTION = 'INSPECTION',

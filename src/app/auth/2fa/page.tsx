@@ -14,7 +14,7 @@ export default function TwoFAPage() {
   const [resendSuccess, setResendSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [canResend, setCanResend] = useState(true);
-  const [countdown, setCountdown] = useState(30); // Délai de renvoi en secondes
+  const [countdown, setCountdown] = useState(30);
   const router = useRouter();
 
   useEffect(() => {
@@ -27,7 +27,7 @@ export default function TwoFAPage() {
 
     if (countdown === 0) {
       setCanResend(true);
-      setCountdown(30); // Remet le délai à 30 secondes pour un prochain envoi
+      setCountdown(30);
     }
 
     return () => clearInterval(interval);
@@ -43,14 +43,9 @@ export default function TwoFAPage() {
     setIsLoading(true);
     setError('');
 
-    // Simuler la vérification du code (remplace par un appel API)
     try {
-      // Simuler un délai
       await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      // Simuler une redirection après la vérification
-      console.log('Code 2FA validé:', code);
-      router.push('/dashboard'); // Redirige vers le tableau de bord après succès
+      router.push('/dashboard');
     } catch (err) {
       setError('Code incorrect ou erreur de validation.');
     } finally {
@@ -60,11 +55,8 @@ export default function TwoFAPage() {
 
   const handleResendCode = () => {
     if (!canResend) return;
-
-    // Simuler le renvoi du code
-    console.log('Code 2FA renvoyé');
     setResendSuccess(true);
-    setCanResend(false); // Désactiver le renvoi temporairement
+    setCanResend(false);
     setTimeout(() => setResendSuccess(false), 5000);
   };
 
@@ -100,7 +92,7 @@ export default function TwoFAPage() {
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 required
-                disabled={isLoading} // Désactive l'input pendant le chargement
+                disabled={isLoading}
               />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
@@ -111,7 +103,7 @@ export default function TwoFAPage() {
             <Button
               variant="link"
               onClick={handleResendCode}
-              disabled={!canResend} // Désactive le bouton pendant le délai
+              disabled={!canResend}
             >
               {canResend ? 'Renvoyer le code' : `Renvoyer dans ${countdown}s`}
             </Button>
