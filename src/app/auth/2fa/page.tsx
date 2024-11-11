@@ -1,115 +1,103 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from "@/components/hooks/use-toast";
+import { Toaster } from "@/components/ui/toaster";
+import { useMutation, useQuery } from '@apollo/client';
+import { GET_EMAIL_QUERY, GENERATE_2FA_SECRET_MUTATION } from '@/graphql/user';
 
-export default function TwoFAPage() {
-  const [code, setCode] = useState('');
-  const [error, setError] = useState('');
-  const [resendSuccess, setResendSuccess] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [canResend, setCanResend] = useState(true);
-  const [countdown, setCountdown] = useState(30);
-  const router = useRouter();
+export default function Setup2FA() {
+  const [qrCodeUrl, setQrCodeUrl] = useState('');
+  const [isPageLoading, setIsPageLoading] = useState(true);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const { toast } = useToast();
+
+  const { data: emailData, loading: emailLoading } = useQuery(GET_EMAIL_QUERY, {
+    fetchPolicy: 'network-only',
+  });
+
+  const [generate2FASecret] = useMutation(GENERATE_2FA_SECRET_MUTATION);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (!canResend) {
-      interval = setInterval(() => {
-        setCountdown((prev) => (prev > 0 ? prev - 1 : 0));
-      }, 1000);
+    setTimeout(() => setIsPageLoading(false), 1000);
+  }, []);
+
+  useEffect(() => {
+    if (emailData && emailData.getEmailFromCookie) {
+      handleGenerate2FA(emailData.getEmailFromCookie);
     }
+  }, [emailData]);
 
-    if (countdown === 0) {
-      setCanResend(true);
-      setCountdown(30);
-    }
-
-    return () => clearInterval(interval);
-  }, [canResend, countdown]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!code) {
-      setError('Veuillez saisir le code de vérification.');
-      return;
-    }
-
-    setIsLoading(true);
-    setError('');
-
+  const handleGenerate2FA = async (email: string) => {
+    setIsGenerating(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      router.push('/dashboard');
+      const response = await generate2FASecret({ variables: { email } });
+      setQrCodeUrl(response.data.generate2FASecret);
+      toast({
+        title: "QR Code généré",
+        description: "Veuillez scanner le QR code avec votre application d'authentification.",
+      });
     } catch (err) {
-      setError('Code incorrect ou erreur de validation.');
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Erreur lors de la génération du 2FA.",
+      });
     } finally {
-      setIsLoading(false);
+      setIsGenerating(false);
     }
   };
 
-  const handleResendCode = () => {
-    if (!canResend) return;
-    setResendSuccess(true);
-    setCanResend(false);
-    setTimeout(() => setResendSuccess(false), 5000);
-  };
+  if (isPageLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <Skeleton className="h-8 w-3/4 mx-auto" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-4 w-full mb-4" />
+            <Skeleton className="h-10 w-full mb-4" />
+            <Skeleton className="h-10 w-full" />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
       <Card className="w-full max-w-md">
         <CardHeader className="flex flex-col items-center">
-          <CardTitle className="text-center">Vérification en deux étapes</CardTitle>
+          <CardTitle className="text-center">Configurer la vérification 2FA</CardTitle>
         </CardHeader>
         <CardContent>
-          {error && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Erreur</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-          {resendSuccess && (
-            <Alert variant="default" className="mb-4">
-              <AlertTitle>Succès</AlertTitle>
-              <AlertDescription>Un nouveau code a été envoyé.</AlertDescription>
-            </Alert>
-          )}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <p className="text-center">
-              Un code de vérification a été envoyé à votre appareil.
-            </p>
-            <div>
-              <Input
-                id="code"
-                type="text"
-                placeholder="Entrez le code"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                required
-                disabled={isLoading}
-              />
-            </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Vérification en cours...' : 'Vérifier'}
-            </Button>
-          </form>
-          <div className="text-center mt-4">
-            <Button
-              variant="link"
-              onClick={handleResendCode}
-              disabled={!canResend}
-            >
-              {canResend ? 'Renvoyer le code' : `Renvoyer dans ${countdown}s`}
-            </Button>
+          <div className="text-center">
+            {emailLoading ? (
+              <Skeleton className="h-10 w-full mb-4" />
+            ) : (
+              <>
+                <Button
+                  onClick={() => handleGenerate2FA(emailData.getEmailFromCookie)}
+                  disabled={isGenerating}
+                >
+                  {isGenerating ? <Skeleton className="h-5 w-20 mx-auto" /> : 'Générer le QR Code'}
+                </Button>
+                {qrCodeUrl && (
+                  <div className="mt-4">
+                    <img src={qrCodeUrl} alt="QR Code pour 2FA" className="mx-auto" />
+                    <p className="mt-2">Scannez ce QR code avec votre authentificateur.</p>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </CardContent>
       </Card>
+      <Toaster />
     </div>
   );
 }

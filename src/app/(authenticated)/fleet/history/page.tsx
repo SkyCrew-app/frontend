@@ -5,15 +5,34 @@ import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
 import { useState } from 'react';
 import { GET_FLIGHT_HISTORY } from '@/graphql/planes';
+import { useToast } from '@/components/hooks/use-toast';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function AircraftHistory() {
-  const { data, loading, error } = useQuery(GET_FLIGHT_HISTORY);
+  const { data, loading, error } = useQuery(GET_FLIGHT_HISTORY, {
+    onError: (error) => {
+      toast({
+        variant: 'destructive',
+        title: 'Erreur',
+        description: "Impossible de charger l'historique des avions.",
+      });
+    }
+  });
   const [reservationPage, setReservationPage] = useState(1);
   const [maintenancePage, setMaintenancePage] = useState(1);
   const itemsPerPage = 5;
 
-  if (loading) return <p>Chargement des données...</p>;
-  if (error) return <p>Erreur lors du chargement des données : {error.message}</p>;
+  const { toast } = useToast();
+
+  if (loading) return <Skeleton className='w-full h-64' />;
+  if (error) {
+    toast({
+      variant: "destructive",
+      title: "Erreur",
+      description: "Impossible de charger les maintenances. Veuillez réessayer plus tard.",
+    });
+    return null;
+  }
 
   if (!data || !data.getHistoryAircraft) {
     return <p>Aucun avion trouvé.</p>;

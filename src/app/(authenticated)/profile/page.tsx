@@ -11,9 +11,9 @@ import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { X } from 'lucide-react';
-import { Alert } from '@/components/ui/alert';
 import axios from 'axios';
 import { UPDATE_USER, UPDATE_PASSWORD, GET_USER_BY_EMAIL } from '@/graphql/user';
+import { useToast } from "@/components/hooks/use-toast";
 
 export default function ProfilePage() {
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
@@ -25,7 +25,9 @@ export default function ProfilePage() {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [isUpdating, setIsUpdating] = useState(false);
   const router = useRouter();
+  const { toast } = useToast();
 
   const [updateProfile] = useMutation(UPDATE_USER);
   const [updatePassword] = useMutation(UPDATE_PASSWORD);
@@ -63,7 +65,11 @@ export default function ProfilePage() {
         const decodedToken = jwtDecode<{ email: string }>(token);
         setUserEmail(decodedToken.email);
       } catch (error) {
-        console.log('Erreur lors du décodage du token:', error);
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Erreur lors de la récupération de l'email de l'utilisateur",
+        });
       }
     }
   }, []);
@@ -186,22 +192,28 @@ export default function ProfilePage() {
 
   const handleSubmit = async () => {
     if (!validateForm()) return;
-
     try {
       const { data } = await updatePassword({
-        variables: {
-          currentPassword,
-          newPassword,
-        },
+        variables: { currentPassword, newPassword },
       });
-
       if (data.updatePassword.success) {
-        <Alert title="Success">Votre mot de passe vient d'être modifier</Alert>
+        toast({
+          title: "Succès",
+          description: "Votre mot de passe a été modifié avec succès.",
+        });
       } else {
-        <Alert title="Erreur">Erreur lors du chargement de votre mot de passe.</Alert>
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Erreur lors de la modification du mot de passe.",
+        });
       }
     } catch (error) {
-        <Alert title="Erreur">Erreur lors du chargement de votre mot de passe.</Alert>
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Erreur lors de la modification du mot de passe.",
+      });
     }
   };
 
@@ -214,7 +226,11 @@ export default function ProfilePage() {
         const suggestions = response.data.features.map((feature: any) => feature.properties.label);
         setAddressSuggestions(suggestions);
       } catch (error) {
-        console.error('Erreur lors de la récupération des suggestions d’adresses:', error);
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Erreur lors de la récupération des suggestions d'adresse.",
+        });
       }
     } else {
       setAddressSuggestions([]);
@@ -232,7 +248,7 @@ export default function ProfilePage() {
 
   const saveChanges = async () => {
     if (!validateForm()) return;
-
+    setIsUpdating(true);
     try {
       await updateProfile({
         variables: {
@@ -246,14 +262,40 @@ export default function ProfilePage() {
         },
       });
 
-      console.log('Profil mis à jour avec succès');
+      toast({
+        title: "Succès",
+        description: "Profil mis à jour avec succès",
+      });
     } catch (error) {
-      console.error('Erreur lors de la mise à jour du profil', error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Erreur lors de la mise à jour du profil",
+      });
+    } finally {
+      setIsUpdating(false);
     }
   };
 
-  if (loading) return <Skeleton className="h-40 w-full" />;
-  if (errorUser) return <Alert title="Erreur">Erreur lors du chargement des données utilisateur.</Alert>;
+  if (loading) {
+    return (
+      <div className="p-4 space-y-4">
+        <Skeleton className="h-8 w-1/2" />
+        <div className="grid grid-cols-2 grid-rows-2 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} className="h-40 w-full" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+  if (errorUser) {
+    toast({
+      variant: "destructive",
+      title: "Erreur",
+      description: "Erreur lors de la récupération des données utilisateur",
+    });
+  } ;
 
   return (
     <div className="p-4 relative">
@@ -470,7 +512,11 @@ export default function ProfilePage() {
             </div>
 
           </div>
-          <Button className='mb-16 mt-8' onClick={saveChanges}>Enregistrer les modifications</Button>
+          {isUpdating ? (
+            <Skeleton className="h-10 w-full" />
+          ) : (
+            <Button className='mb-16 mt-8' onClick={saveChanges}>Enregistrer les modifications</Button>
+          )}
         </div>
       </div>
       )}
@@ -506,7 +552,11 @@ export default function ProfilePage() {
                 <Label htmlFor="sms_notifications_enabled">Notifications par SMS</Label>
               </div>
             </div>
-            <Button className="mb-16 mt-8" onClick={saveChanges}>Enregistrer les modifications</Button>
+            {isUpdating ? (
+              <Skeleton className="h-10 w-full" />
+            ) : (
+              <Button className='mb-16 mt-8' onClick={saveChanges}>Enregistrer les modifications</Button>
+            )}
           </div>
         </div>
       )}

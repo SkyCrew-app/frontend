@@ -19,11 +19,20 @@ import {
 } from '@/components/ui/pagination';
 import { GET_AIRCRAFTS } from '@/graphql/planes';
 import { Aircraft, AircraftData, AvailabilityStatus } from '@/interfaces/aircraft';
+import { useToast } from '@/components/hooks/use-toast';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 export default function FleetDashboard() {
-  const { data, loading, error } = useQuery<AircraftData>(GET_AIRCRAFTS);
+  const { data, loading, error } = useQuery<AircraftData>(GET_AIRCRAFTS, {
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de charger les données des avions.",
+      });
+    },
+  });
   const [selectedAircraft, setSelectedAircraft] = useState<Aircraft | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -35,6 +44,8 @@ export default function FleetDashboard() {
   const currentAircrafts = data?.getAircrafts.slice(indexOfFirstItem, indexOfLastItem) || [];
 
   const totalPages = Math.ceil((data?.getAircrafts.length || 0) / itemsPerPage);
+
+  const { toast } = useToast();
 
   const handleAircraftClick = (aircraft: Aircraft) => {
     setSelectedAircraft(aircraft);

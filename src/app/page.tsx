@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation } from '@apollo/client';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,6 +11,7 @@ import { AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { LOGIN_MUTATION } from '@/graphql/system';
+import { useToast } from "@/components/hooks/use-toast";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -18,14 +19,25 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [login, { loading }] = useMutation(LOGIN_MUTATION);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      router.push('/dashboard');
+    }
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
-      setError('Veuillez remplir tous les champs.');
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Veuillez remplir tous les champs.",
+      });
       return;
     }
-    setError('');
 
     try {
       const response = await login({ variables: { email, password } });
@@ -33,13 +45,22 @@ export default function LoginPage() {
 
       localStorage.setItem('token', access_token);
 
+      toast({
+        title: "Connexion réussie",
+        description: is2FAEnabled ? "Redirection vers la 2FA..." : "Redirection vers le tableau de bord...",
+      });
+
       if (is2FAEnabled) {
         router.push('/auth/2fa');
       } else {
         router.push('/dashboard');
       }
     } catch (err) {
-      setError('Identifiants incorrects.');
+      toast({
+        variant: "destructive",
+        title: "Erreur de connexion",
+        description: "Identifiants incorrects.",
+      });
     }
   };
 
