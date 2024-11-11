@@ -5,26 +5,45 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
 import Link from 'next/link';
+import { useToast } from "@/components/hooks/use-toast";
+import { Toaster } from "@/components/ui/toaster";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [success, setSuccess] = useState(false);
-  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Validation basique
     if (!email) {
-      setError('Veuillez saisir votre adresse e-mail.');
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Veuillez saisir votre adresse e-mail.",
+      });
       return;
     }
-    setError('');
-    // Pour le moment, simuler l'envoi de l'e-mail
-    console.log('Demande de réinitialisation pour :', email);
-    setSuccess(true);
+
+    setIsLoading(true);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      toast({
+        title: "E-mail envoyé",
+        description: `Un e-mail de réinitialisation a été envoyé à ${email}.`,
+      });
+      setSuccess(true);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Une erreur est survenue lors de l'envoi de l'e-mail.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -34,13 +53,6 @@ export default function ForgotPasswordPage() {
           <CardTitle className="text-center">Mot de passe oublié</CardTitle>
         </CardHeader>
         <CardContent>
-          {error && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Erreur</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
           {success ? (
             <div className="space-y-4">
               <p className="text-center">
@@ -63,13 +75,18 @@ export default function ForgotPasswordPage() {
                   required
                 />
               </div>
-              <Button type="submit" className="w-full">
-                Réinitialiser le mot de passe
-              </Button>
+              {isLoading ? (
+                <Skeleton className="h-10 w-full" />
+              ) : (
+                <Button type="submit" className="w-full">
+                  Réinitialiser le mot de passe
+                </Button>
+              )}
             </form>
           )}
         </CardContent>
       </Card>
+      <Toaster />
     </div>
   );
 }

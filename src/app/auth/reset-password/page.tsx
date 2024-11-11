@@ -1,14 +1,15 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
 import Link from 'next/link';
+import { useToast } from "@/components/hooks/use-toast";
+import { Toaster } from "@/components/ui/toaster";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ResetPasswordPage() {
   const searchParams = useSearchParams();
@@ -17,25 +18,70 @@ export default function ResetPasswordPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [success, setSuccess] = useState(false);
-  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    setTimeout(() => setIsLoading(false), 1000);
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Validation basique
     if (!password || !confirmPassword) {
-      setError('Veuillez remplir tous les champs.');
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Veuillez remplir tous les champs.",
+      });
       return;
     }
     if (password !== confirmPassword) {
-      setError('Les mots de passe ne correspondent pas.');
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Les mots de passe ne correspondent pas.",
+      });
       return;
     }
-    setError('');
-    // Pour le moment, simuler la réinitialisation du mot de passe
-    console.log('Nouveau mot de passe:', password);
-    console.log('Token:', token);
-    setSuccess(true);
+
+    setIsLoading(true);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      console.log('Nouveau mot de passe:', password);
+      console.log('Token:', token);
+      setSuccess(true);
+      toast({
+        title: "Succès",
+        description: "Votre mot de passe a été réinitialisé avec succès.",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la réinitialisation du mot de passe.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <Skeleton className="h-8 w-3/4 mx-auto" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-4 w-full mb-4" />
+            <Skeleton className="h-10 w-full mb-4" />
+            <Skeleton className="h-10 w-full mb-4" />
+            <Skeleton className="h-10 w-full" />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
@@ -44,13 +90,6 @@ export default function ResetPasswordPage() {
           <CardTitle className="text-center">Réinitialiser le mot de passe</CardTitle>
         </CardHeader>
         <CardContent>
-          {error && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Erreur</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
           {success ? (
             <div className="space-y-4">
               <p className="text-center">
@@ -84,13 +123,14 @@ export default function ResetPasswordPage() {
                   required
                 />
               </div>
-              <Button type="submit" className="w-full">
-                Réinitialiser le mot de passe
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? <Skeleton className="h-5 w-20 mx-auto" /> : 'Réinitialiser le mot de passe'}
               </Button>
             </form>
           )}
         </CardContent>
       </Card>
+      <Toaster />
     </div>
   );
 }

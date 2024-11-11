@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { gql, useQuery } from '@apollo/client';
+import { useQuery } from '@apollo/client';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,12 +9,11 @@ import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, Pagi
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
 import { Dialog, DialogTrigger, DialogContent, DialogClose } from '@/components/ui/dialog';
 import { Select, SelectTrigger, SelectContent, SelectItem } from '@/components/ui/select';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, TriangleAlert } from 'lucide-react';
+import { Calendar as CalendarIcon } from 'lucide-react';
 import { DateRange } from "react-day-picker";
 import {
   Carousel,
@@ -24,31 +23,9 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { type CarouselApi } from "@/components/ui/carousel";
-
-export const GET_ALL_MAINTENANCES = gql`
-  query GetAllMaintenances {
-    getAllMaintenances {
-      id
-      start_date
-      end_date
-      maintenance_type
-      description
-      maintenance_cost
-      images_url
-      documents_url
-      aircraft {
-        id
-        registration_number
-        model
-      }
-      technician {
-        id
-        first_name
-        email
-      }
-    }
-  }
-`;
+import { GET_ALL_MAINTENANCES } from '@/graphql/maintenance';
+import { Maintenance } from '@/interfaces/maintenance';
+import { useToast } from '@/components/hooks/use-toast';
 
 enum MaintenanceType {
   INSPECTION = 'Inspection',
@@ -59,29 +36,16 @@ enum MaintenanceType {
   OTHER = 'Autre',
 }
 
-type Maintenance = {
-  id: number;
-  start_date: Date;
-  end_date: Date;
-  maintenance_type: string;
-  description: string;
-  maintenance_cost: number;
-  images_url?: string[];
-  documents_url?: string[];
-  aircraft: {
-    id: number;
-    registration_number: string;
-    model: string;
-  };
-  technician?: {
-    id: number;
-    first_name: string;
-    email: string;
-  };
-};
-
 export default function MaintenanceTable() {
-  const { data, loading, error } = useQuery(GET_ALL_MAINTENANCES);
+  const { data, loading, error } = useQuery(GET_ALL_MAINTENANCES, {
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de charger les maintenances. Veuillez réessayer plus tard.",
+      });
+    }
+  });
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [filterTechnician, setFilterTechnician] = useState('all');
@@ -95,6 +59,8 @@ export default function MaintenanceTable() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [imageCount, setImageCount] = useState(0);
 
+  const { toast } = useToast();
+
   useEffect(() => {
     if (!api) return;
     setImageCount(api.scrollSnapList().length);
@@ -106,15 +72,14 @@ export default function MaintenanceTable() {
   }, [api]);
 
   if (loading) return <Skeleton className="w-full h-64" />;
-  if (error) return (
-    <Alert variant="destructive">
-      <TriangleAlert className="h-5 w-5 text-red-500 mr-2" />
-      <div>
-        <AlertTitle>Erreur</AlertTitle>
-        <AlertDescription>Impossible de charger les maintenances. Veuillez réessayer plus tard.</AlertDescription>
-      </div>
-    </Alert>
-  );
+  if (error) {
+    toast({
+      variant: "destructive",
+      title: "Erreur",
+      description: "Impossible de charger les maintenances. Veuillez réessayer plus tard.",
+    });
+    return null;
+  }
 
   const maintenances: Maintenance[] = data?.getAllMaintenances || [];
 

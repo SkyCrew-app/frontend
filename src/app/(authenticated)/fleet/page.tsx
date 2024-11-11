@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { gql, useQuery } from '@apollo/client';
+import { useQuery } from '@apollo/client';
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Pie } from 'react-chartjs-2';
@@ -17,68 +17,22 @@ import {
   PaginationNext,
   PaginationLink,
 } from '@/components/ui/pagination';
+import { GET_AIRCRAFTS } from '@/graphql/planes';
+import { Aircraft, AircraftData, AvailabilityStatus } from '@/interfaces/aircraft';
+import { useToast } from '@/components/hooks/use-toast';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-export const GET_AIRCRAFTS = gql`
-  query GetAircrafts {
-    getAircrafts {
-      id
-      registration_number
-      model
-      availability_status
-      maintenance_status
-      hourly_cost
-      year_of_manufacture
-      total_flight_hours
-      image_url
-      documents_url
-      maintenances {
-        id
-        maintenance_type
-      }
-    }
-  }
-`;
-
-enum MaintenanceType {
-  INSPECTION = 'INSPECTION',
-  REPAIR = 'REPAIR',
-  OVERHAUL = 'OVERHAUL',
-  SOFTWARE_UPDATE = 'SOFTWARE_UPDATE',
-  CLEANING = 'CLEANING',
-  OTHER = 'OTHER',
-}
-
-enum AvailabilityStatus {
-  AVAILABLE = 'AVAILABLE',
-  UNAVAILABLE = 'UNAVAILABLE',
-  RESERVED = 'RESERVED',
-}
-
-type Aircraft = {
-  id: number;
-  registration_number: string;
-  model: string;
-  availability_status: string;
-  maintenance_status: string;
-  hourly_cost: number;
-  year_of_manufacture: number;
-  total_flight_hours: number;
-  image_url?: string;
-  documents_url?: string[];
-  maintenances?: {
-    id: number;
-    maintenance_type: MaintenanceType;
-  }[];
-};
-
-type AircraftData = {
-  getAircrafts: Aircraft[];
-};
-
 export default function FleetDashboard() {
-  const { data, loading, error } = useQuery<AircraftData>(GET_AIRCRAFTS);
+  const { data, loading, error } = useQuery<AircraftData>(GET_AIRCRAFTS, {
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de charger les données des avions.",
+      });
+    },
+  });
   const [selectedAircraft, setSelectedAircraft] = useState<Aircraft | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -90,6 +44,8 @@ export default function FleetDashboard() {
   const currentAircrafts = data?.getAircrafts.slice(indexOfFirstItem, indexOfLastItem) || [];
 
   const totalPages = Math.ceil((data?.getAircrafts.length || 0) / itemsPerPage);
+
+  const { toast } = useToast();
 
   const handleAircraftClick = (aircraft: Aircraft) => {
     setSelectedAircraft(aircraft);

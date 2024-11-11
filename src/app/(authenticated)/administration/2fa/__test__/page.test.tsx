@@ -1,9 +1,8 @@
-// page.test.tsx
 import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import Setup2FA from '../page';
 import { MockedProvider } from '@apollo/client/testing';
-import { GET_EMAIL_QUERY, GENERATE_2FA_SECRET_MUTATION } from '../page';
+import { GET_EMAIL_QUERY, GENERATE_2FA_SECRET_MUTATION } from '@/graphql/user';
 
 describe('Setup2FA Component', () => {
   const email = 'test@example.com';

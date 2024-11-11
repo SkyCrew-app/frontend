@@ -1,9 +1,8 @@
-// profile.test.tsx
 import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import ProfilePage from '../page';
 import { MockedProvider } from '@apollo/client/testing';
-import { GET_USER_BY_EMAIL } from '../page';
+import { GET_USER_BY_EMAIL } from '@/graphql/user';
 import {jwtDecode} from 'jwt-decode';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';

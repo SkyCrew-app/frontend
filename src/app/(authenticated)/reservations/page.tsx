@@ -1,12 +1,12 @@
 'use client';
 
-import { gql, useMutation, useQuery } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client';
 import { useState, useEffect } from 'react';
 import { format, addDays, subDays, eachHourOfInterval, addWeeks, subWeeks, isBefore } from 'date-fns';
-import { fr } from 'date-fns/locale'; 
+import { fr } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, ArrowRight, Calendar as CalendarIcon, Trash, Edit, Plus } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Calendar as CalendarIcon, Trash, Edit } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
@@ -14,29 +14,14 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/h
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { useToast } from "@/components/hooks/use-toast";
 import { Label } from '@/components/ui/label';
 import { jwtDecode } from 'jwt-decode';
-
-interface Reservation {
-  id: number;
-  start_time: string;
-  end_time: string;
-  estimated_flight_hours: number;
-  status: ReservationStatus;
-  notes: string;
-  flight_category: string;
-  aircraft: {
-    id: number;
-    registration_number: string;
-  };
-  purpose: string;
-  user: {
-    first_name: string;
-  };
-}
+import { GET_USER_BY_EMAIL } from '@/graphql/user';
+import { CREATE_RESERVATION, DELETE_RESERVATION, GET_FILTERED_RESERVATIONS, UPDATE_RESERVATION } from '@/graphql/reservation';
+import { GET_AIRCRAFTS } from '@/graphql/planes';
+import { Reservation, ReservationStatus } from '@/interfaces/reservation';
 
 interface Aircraft {
   id: number;
@@ -45,23 +30,6 @@ interface Aircraft {
 
 interface TokenPayload {
   email: string;
-}
-
-enum ReservationStatus {
-  PENDING = 'PENDING',
-  CONFIRMED = 'CONFIRMED',
-  CANCELLED = 'CANCELLED'
-}
-
-enum FlightCategory {
-  LOCAL = 'local',
-  CROSS_COUNTRY = 'cross_country',
-  INSTRUCTION = 'instruction',
-  TOURISM = 'tourism',
-  TRAINING = 'training',
-  MAINTENANCE = 'maintenance',
-  PRIVATE = 'private',
-  CORPORATE = 'corporate',
 }
 
 const flightCategoryMapping = {
@@ -79,85 +47,6 @@ const flightCategoryReverseMapping = Object.fromEntries(
   Object.entries(flightCategoryMapping).map(([key, value]) => [value, key])
 );
 
-export const GET_USER_BY_EMAIL = gql`
-  query GetUserByEmail($email: String!) {
-    userByEmail(email: $email) {
-      id
-      first_name
-    }
-  }
-`;
-
-export const GET_FILTERED_RESERVATIONS = gql`
-  query FilteredReservations($startDate: String!, $endDate: String!) {
-    filteredReservations(start_date: $startDate, end_date: $endDate) {
-      id
-      start_time
-      end_time
-      purpose
-      estimated_flight_hours
-      status
-      notes
-      flight_category
-      user {
-        first_name
-      }
-      aircraft {
-        id
-        registration_number
-      }
-    }
-  }
-`;
-
-export const GET_AIRCRAFTS = gql`
-  query GetAircrafts {
-    getAircrafts {
-      id
-      registration_number
-    }
-  }
-`;
-
-export const CREATE_RESERVATION = gql`
-  mutation CreateReservation($input: CreateReservationInput!) {
-    createReservation(createReservationInput: $input) {
-      id
-      start_time
-      end_time
-      purpose
-      aircraft {
-        id
-        registration_number
-      }
-      user {
-        first_name
-      }
-    }
-  }
-`;
-
-export const UPDATE_RESERVATION = gql`
-  mutation UpdateReservation($input: UpdateReservationInput!) {
-    updateReservation(updateReservationInput: $input) {
-      id
-      start_time
-      end_time
-      purpose
-      notes
-      flight_category
-    }
-  }
-`;
-
-export const DELETE_RESERVATION = gql`
-  mutation DeleteReservation($id: Int!) {
-    deleteReservation(id: $id) {
-      id
-    }
-  }
-`;
-
 export default function ReservationCalendar() {
   const [currentDate, setCurrentDate] = useState<Date | undefined>(new Date());
   const [selectedTimeRange, setSelectedTimeRange] = useState<{ start: string | null; end: string | null }>({ start: null, end: null });
@@ -172,12 +61,12 @@ export default function ReservationCalendar() {
   const [flightCategory, setFlightCategory] = useState('');
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userId, setUserId] = useState<number | null>(null);
-  const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editPurpose, setEditPurpose] = useState('');
   const [editNotes, setEditNotes] = useState('');
   const [editFlightCategory, setEditFlightCategory] = useState('');
   const [selectedCategoryFr, setSelectedCategoryFr] = useState<string | undefined>(undefined);
+  const [isCreating, setIsCreating] = useState(false);
 
   const formattedDate = currentDate ? format(currentDate, 'yyyy-MM-dd') : '';
   const nextDate = format(addDays(currentDate || new Date(), 1), 'yyyy-MM-dd');
@@ -206,10 +95,15 @@ export default function ReservationCalendar() {
   useEffect(() => {
     if (userData && userData.userByEmail) {
       setUserId(userData.userByEmail.id);
+      console.log(userData);
     }
 
     if (errorUser) {
-      console.log('Erreur lors de la récupération de l\'utilisateur:', errorUser);
+      toast({
+        variant: "destructive",
+        title: "Erreur lors de la récupération des données",
+        description: "Une erreur est survenue lors de la récupération des informations de l'utilisateur.",
+      });
     }
   }, [userData, errorUser]);
 
@@ -283,7 +177,11 @@ export default function ReservationCalendar() {
 
   const handleCreateReservation = async () => {
     if (!userId) {
-      console.log('Erreur : user_id non défini.');
+      toast({
+        variant: "destructive",
+        title: "Erreur lors de la création",
+        description: "Impossible de trouver l'utilisateur actuel.",
+      });
       return;
     }
 
@@ -324,6 +222,7 @@ export default function ReservationCalendar() {
           description: "Une erreur est survenue lors de la création de la réservation.",
         });
       } finally {
+        setIsCreating(false);
         setIsCreateDialogOpen(false);
       }
     } else {
@@ -349,11 +248,17 @@ export default function ReservationCalendar() {
                     },
                 },
             });
-            console.log('Réservation mise à jour avec succès !', response);
             setIsEditDialogOpen(false);
-            setAlertMessage('Réservation créée avec succès !');
+            toast({
+                title: "Réservation mise à jour avec succès!",
+                description: `La réservation pour l'avion ${selectedReservation.aircraft.registration_number} a été mise à jour.`,
+            });
         } catch (error) {
-            console.log('Erreur lors de la mise à jour de la réservation :', error);
+          toast({
+            variant: "destructive",
+            title: "Erreur lors de la mise à jour",
+            description: "Une erreur est survenue lors de la mise à jour de la réservation.",
+          });
         }
     }
   };
@@ -366,11 +271,17 @@ export default function ReservationCalendar() {
                     id: selectedReservation.id,
                 },
             });
-            console.log('Réservation supprimée avec succès !', response);
             setIsReservationDialogOpen(false);
-            setAlertMessage('Réservation supprimée avec succès !');
+            toast({
+                title: "Réservation supprimée avec succès!",
+                description: `La réservation pour l'avion ${selectedReservation.aircraft.registration_number} a été supprimée.`,
+            });
         } catch (error) {
-            console.log('Erreur lors de la suppression de la réservation :', error);
+          toast({
+            variant: "destructive",
+            title: "Erreur lors de la suppression",
+            description: "Une erreur est survenue lors de la suppression de la réservation.",
+          });
         }
     }
   }
@@ -450,19 +361,29 @@ export default function ReservationCalendar() {
     });
   };
 
-  if (loadingReservations || loadingAircrafts) return <Skeleton className="h-20" />;
-  if (errorReservations || errorAircrafts) return <Alert variant="destructive"><AlertTitle>Erreur</AlertTitle><AlertDescription>Erreur lors du chargement des données.</AlertDescription></Alert>;
+  if (loadingReservations || loadingAircrafts) {
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-8 w-64" />
+        <div className="grid grid-cols-7 gap-4">
+          {[...Array(7)].map((_, i) => (
+            <Skeleton key={i} className="h-40 w-full" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+  if (errorReservations || errorAircrafts) {
+    toast({
+      variant: "destructive",
+      title: "Erreur lors de la récupération des données",
+      description: "Une erreur est survenue lors de la récupération des réservations.",
+    });
+  };
 
   return (
     <div className="flex flex-col items-center justify-center p-3 dark:text-white overflow-hidden">
       <h1 className="text-3xl font-bold mb-8">Calendrier des Réservations</h1>
-
-      {alertMessage && (
-        <Alert variant="destructive">
-          <AlertTitle>Attention</AlertTitle>
-          <AlertDescription>{alertMessage}</AlertDescription>
-        </Alert>
-      )}
 
       <div className="flex items-center justify-between mb-8 w-full max-w-lg">
         <Button variant="outline" onClick={handlePreviousDay} className="flex items-center mr-4">
@@ -551,10 +472,10 @@ export default function ReservationCalendar() {
             />
 
             <Select
-              value={selectedCategoryFr} // Display the French name
+              value={selectedCategoryFr}
               onValueChange={(value) => {
-                setSelectedCategoryFr(value); // Set the French name for display
-                setFlightCategory(flightCategoryReverseMapping[value]); // Set the English name for backend
+                setSelectedCategoryFr(value);
+                setFlightCategory(flightCategoryReverseMapping[value]);
               }}
             >
               <SelectTrigger>
@@ -569,9 +490,8 @@ export default function ReservationCalendar() {
               </SelectContent>
             </Select>
 
-            <Button onClick={handleCreateReservation}>
-              <Plus className="mr-2" />
-              Créer
+            <Button onClick={handleCreateReservation} disabled={isCreating}>
+              {isCreating ? <Skeleton className="h-5 w-20" /> : "Créer la réservation"}
             </Button>
           </div>
         </DialogContent>
