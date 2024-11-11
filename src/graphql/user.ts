@@ -32,6 +32,7 @@ export const GENERATE_2FA_SECRET_MUTATION = gql`
 export const GET_USER_BY_EMAIL = gql`
   query GetUserByEmail($email: String!) {
     userByEmail(email: $email) {
+      id
       first_name
       last_name
       email
