@@ -1,5 +1,17 @@
 import { gql } from '@apollo/client';
 
+export const CREATE_USER = gql`
+  mutation CreateUser($first_name: String!, $last_name: String!, $email: String!, $date_of_birth: DateTime!) {
+    createUser(first_name: $first_name, last_name: $last_name, email: $email, date_of_birth: $date_of_birth) {
+      id
+      first_name
+      last_name
+      email
+      date_of_birth
+    }
+  }
+`;
+
 export const GET_USER_PROFILE = gql`
   query GetUserProfile($email: String!) {
     userByEmail(email: $email) {
@@ -12,8 +24,11 @@ export const GET_USER_PROFILE = gql`
 `;
 
 export const CONFIRM_EMAIL_AND_SET_PASSWORD = gql`
-  mutation ConfirmEmailAndSetPassword($token: String!, $password: String!) {
-    confirmEmailAndSetPassword(token: $token, password: $password)
+  mutation ConfirmEmailAndSetPassword($validation_token: String!, $password: String!) {
+    confirmEmailAndSetPassword(validation_token: $validation_token, password: $password){
+      validation_token,
+      password
+    }
   }
 `;
 
@@ -48,26 +63,8 @@ export const GET_USER_BY_EMAIL = gql`
 `;
 
 export const UPDATE_USER = gql`
-  mutation UpdateUser(
-    $first_name: String!,
-    $last_name: String!,
-    $email: String!,
-    $phone_number: String!,
-    $address: String!,
-    $date_of_birth: DateTime!,
-    $file: Upload
-  ) {
-    updateUser(
-      updateUserInput: {
-        first_name: $first_name,
-        last_name: $last_name,
-        email: $email,
-        phone_number: $phone_number,
-        address: $address,
-        date_of_birth: $date_of_birth
-      },
-      image: $file
-    ) {
+  mutation UpdateUser($updateUserInput: UpdateUserInput!, $image: Upload) {
+    updateUser(updateUserInput: $updateUserInput, image: $image) {
       first_name
       last_name
       email
@@ -85,5 +82,57 @@ export const UPDATE_PASSWORD = gql`
       id
       email
     }
+  }
+`;
+
+export const GET_USERS = gql`
+  query GetUsers {
+    getUsers {
+      id
+      first_name
+      last_name
+      email
+      phone_number
+      date_of_birth
+      is2FAEnabled
+      isEmailConfirmed
+    }
+  }
+`;
+
+export const GET_USER_DETAILS = gql`
+  query GetUserDetails($id: Int!) {
+    getUserDetails(id: $id) {
+      id
+      first_name
+      last_name
+      email
+      phone_number
+      address
+      date_of_birth
+      total_flight_hours
+      user_account_balance
+      reservations {
+        id
+        start_time
+        end_time
+        aircraft {
+          registration_number
+          model
+        }
+      }
+      licenses {
+        id
+        license_type
+        issue_date
+        expiration_date
+      }
+    }
+  }
+`;
+
+export const VERIFY_2FA_SECRET = gql`
+  mutation Verify2FA($email: String!, $token: String!) {
+    verify2FA(email: $email, token: $token)
   }
 `;
