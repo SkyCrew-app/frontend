@@ -53,10 +53,11 @@ const menuItems = [
     icon: Settings,
     path: '/administration',
     subItems: [
-      { name: 'Membres', path: '/administration/members' },
+      { name: 'Membres', path: '/administration/users' },
       { name: 'Facturation', path: '/administration/billing' },
       { name: 'Sécurité', path: '/administration/security' },
       { name: 'Personnel', path: '/administration/staff' },
+      { name: 'Paramètres', path: '/administration/settings' },
     ],
   },
 ];

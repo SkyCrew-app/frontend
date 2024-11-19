@@ -22,7 +22,7 @@ export default function LoginPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = document.cookie.split('; ').find(row => row.startsWith('token='))?.split('=')[1];
     if (token) {
       router.push('/dashboard');
     }

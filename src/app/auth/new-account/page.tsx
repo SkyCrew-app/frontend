@@ -21,7 +21,7 @@ export default function ConfirmEmailPage() {
 
   const [confirmEmailAndSetPassword, { loading }] = useMutation(CONFIRM_EMAIL_AND_SET_PASSWORD);
 
-  const token = searchParams.get('token');
+  const validation_token = searchParams.get('token');
 
   useEffect(() => {
     setTimeout(() => setIsLoading(false), 1000);
@@ -42,7 +42,7 @@ export default function ConfirmEmailPage() {
     try {
       await confirmEmailAndSetPassword({
         variables: {
-          token,
+          validation_token,
           password,
         },
       });
