@@ -1,10 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  webpack: (config) => {
-    // Résoudre les problèmes liés à l'utilisation de modules CommonJS
-    config.resolve.fallback = { fs: false };
-    return config;
-  },
+  reactStrictMode: true,
 };
 
 export default nextConfig;
