@@ -92,7 +92,7 @@ Assurez-vous d'avoir les éléments suivants installés :
 
 ## 🎮 Utilisation
 
-Une fois le frontend en cours d'exécution, accédez à `http://localhost:3000` dans votre navigateur pour utiliser l'interface de SkyCrew.
+Une fois le frontend en cours d'exécution, accédez à `http://localhost:8080` dans votre navigateur pour utiliser l'interface de SkyCrew.
 
 - **Connexion** : Utilisez vos identifiants pour vous connecter, ou inscrivez-vous si l'enregistrement des nouveaux utilisateurs est activé.
 - **Exploration** : Naviguez à travers le suivi des aéronefs, les réservations, les profils pilotes, et bien plus via une interface intuitive.
