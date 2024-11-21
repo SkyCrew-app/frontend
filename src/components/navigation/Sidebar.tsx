@@ -56,7 +56,7 @@ const menuItems = [
       { name: 'Membres', path: '/administration/users' },
       { name: 'Facturation', path: '/administration/billing' },
       { name: 'Sécurité', path: '/administration/security' },
-      { name: 'Personnel', path: '/administration/staff' },
+      { name: 'Articles', path: '/administration/articles' },
       { name: 'Paramètres', path: '/administration/settings' },
     ],
   },
