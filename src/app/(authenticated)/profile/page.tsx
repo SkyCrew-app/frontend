@@ -14,6 +14,9 @@ import { X } from 'lucide-react';
 import axios from 'axios';
 import { UPDATE_USER, UPDATE_PASSWORD, GET_USER_BY_EMAIL } from '@/graphql/user';
 import { useToast } from "@/components/hooks/use-toast";
+import { AerodromeCombobox } from '@/components/ui/comboboAerodrome';
+import { TimezoneCombobox } from '@/components/ui/timezoneCombobox';
+import Flag from 'react-world-flags';
 
 export default function ProfilePage() {
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
@@ -44,6 +47,10 @@ export default function ProfilePage() {
     email_notifications_enabled: false,
     sms_notifications_enabled: false,
     licenses: [],
+    language: '',
+    speed_unit: '',
+    distance_unit: '',
+    timezone: '',
   });
 
   const [errors, setErrors] = useState({
@@ -93,6 +100,10 @@ export default function ProfilePage() {
         email_notifications_enabled: userData.userByEmail.email_notifications_enabled,
         sms_notifications_enabled: userData.userByEmail.sms_notifications_enabled,
         licenses: userData.userByEmail.licenses,
+        language: '',
+        speed_unit: '',
+        distance_unit: '',
+        timezone: '',
       });
     }
   }, [userData]);
@@ -109,12 +120,20 @@ export default function ProfilePage() {
     router.push('/administration/2fa');
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement> | { name: string; value: string }
+  ) => {
+    let name: string;
+    let value: string;
+    if ('target' in e) {
+      name = e.target.name;
+      value = e.target.value;
+    } else {
+      name = e.name;
+      value = e.value;
+    }
     setFormData((prev) => ({ ...prev, [name]: value }));
-
     setErrors((prev) => ({ ...prev, [name]: '' }));
-
     if (name === 'address') {
       fetchAddressSuggestions(value);
     }
@@ -318,6 +337,15 @@ export default function ProfilePage() {
             <CardContent>
               <p>Notifications par email: {formData.email_notifications_enabled ? 'Activé' : 'Désactivé'}</p>
               <p>Notifications par SMS: {formData.sms_notifications_enabled ? 'Activé' : 'Désactivé'}</p>
+            </CardContent>
+          </Card>
+
+          <Card className="h-40 cursor-pointer" onClick={() => handleCardClick('preferences')}>
+            <CardHeader>
+              <CardTitle>Modifier mes préférences</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>Modifier les préférences utilisateur pour le site.</p>
             </CardContent>
           </Card>
 
@@ -615,6 +643,133 @@ export default function ProfilePage() {
             </div>
           <Button className="mb-16 mt-8" onClick={handleSubmit}>Changer le mot de passe</Button>
         </div>
+        </div>
+      )}
+
+      {expandedCard === 'preferences' && (
+        <div className="absolute inset-0 bg-white dark:bg-gray-800 z-40 p-8 shadow-lg rounded-lg pb-14">
+          <button
+            aria-label="Fermer"
+            className="absolute top-4 right-4 text-gray-500 dark:text-gray-200"
+            onClick={() => setExpandedCard(null)}
+          >
+            <X size={24} />
+          </button>
+          <h2 className="text-center text-2xl font-semibold">Modifier les préférences</h2>
+
+          <div className="mt-12">
+            <div className="grid gap-4">
+              <div className="mt-6">
+                <Label htmlFor="preferred_aerodrome">Aérodrome préféré</Label>
+                <div className="flex items-center space-x-4">
+                <AerodromeCombobox
+                  onAerodromeChange={(value) =>
+                    handleChange({ name: 'preferred_aerodrome', value })
+                  }
+                />
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <Label htmlFor="timezone">Fuseau horaire</Label>
+                <div className="flex items-center space-x-4">
+                  <TimezoneCombobox
+                    onTimezoneChange={(value) => handleChange({ name: 'timezone', value })}
+                    selectedTimezone={formData.timezone}
+                  />
+                </div>
+              </div>
+
+
+              <div className="mt-6">
+                <Label htmlFor="language">Langue</Label>
+                <div className="flex items-center space-x-4">
+                  <Button
+                    variant={formData.language === 'fr' ? 'default' : 'outline'}
+                    onClick={() => handleChange({ name: 'language', value: 'fr' })}
+                    className="flex items-center"
+                  >
+                    <Flag code="FR" className="w-5 h-5 mr-2" />
+                    Français
+                  </Button>
+                  <Button
+                    variant={formData.language === 'en' ? 'default' : 'outline'}
+                    onClick={() => handleChange({ name: 'language', value: 'en' })}
+                    className="flex items-center"
+                  >
+                    <Flag code="GB" className="w-5 h-5 mr-2" />
+                    English
+                  </Button>
+                  <Button
+                    variant={formData.language === 'es' ? 'default' : 'outline'}
+                    onClick={() => handleChange({ name: 'language', value: 'es' })}
+                    className="flex items-center"
+                  >
+                    <Flag code="ES" className="w-5 h-5 mr-2" />
+                    Español
+                  </Button>
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <Label htmlFor="speed_unit">Unité de vitesse</Label>
+                <div className="flex items-center space-x-4">
+                  <Button
+                    variant={formData.speed_unit === 'kmh' ? 'default' : 'outline'}
+                    onClick={() => handleChange({ name: 'speed_unit', value: 'kmh' })}
+                  >
+                    km/h
+                  </Button>
+                  <Button
+                    variant={formData.speed_unit === 'mph' ? 'default' : 'outline'}
+                    onClick={() => handleChange({ name: 'speed_unit', value: 'mph' })}
+                  >
+                    mph
+                  </Button>
+                  <Button
+                    variant={formData.speed_unit === 'knots' ? 'default' : 'outline'}
+                    onClick={() => handleChange({ name: 'speed_unit', value: 'knots' })}
+                  >
+                    Knots
+                  </Button>
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <Label htmlFor="distance_unit">Unité de distance</Label>
+                <div className="flex items-center space-x-4">
+                  <Button
+                    variant={formData.distance_unit === 'km' ? 'default' : 'outline'}
+                    onClick={() => handleChange({ name: 'distance_unit', value: 'km' })}
+                  >
+                    Kilomètres
+                  </Button>
+                  <Button
+                    variant={formData.distance_unit === 'miles' ? 'default' : 'outline'}
+                    onClick={() => handleChange({ name: 'distance_unit', value: 'miles' })}
+                  >
+                    Miles
+                  </Button>
+                  <Button
+                    variant={formData.distance_unit === 'nautical_miles' ? 'default' : 'outline'}
+                    onClick={() =>
+                      handleChange({ name: 'distance_unit', value: 'nautical_miles' })
+                    }
+                  >
+                    Nautical Miles
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {isUpdating ? (
+              <Skeleton className="h-10 w-full" />
+            ) : (
+              <Button className="mb-16 mt-8" onClick={saveChanges}>
+                Enregistrer les modifications
+              </Button>
+            )}
+          </div>
         </div>
       )}
     </div>
