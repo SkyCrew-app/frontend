@@ -14,6 +14,8 @@ import { X } from 'lucide-react';
 import axios from 'axios';
 import { UPDATE_USER, UPDATE_PASSWORD, GET_USER_BY_EMAIL } from '@/graphql/user';
 import { useToast } from "@/components/hooks/use-toast";
+import { Badge } from '@/components/ui/badge';
+import { Award, CheckCircle, AlertCircle, Calendar, FileText, Hash } from 'lucide-react';
 
 export default function ProfilePage() {
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
@@ -43,7 +45,16 @@ export default function ProfilePage() {
     total_flight_hours: 0,
     email_notifications_enabled: false,
     sms_notifications_enabled: false,
-    licenses: [],
+    licenses: [] as {
+      issue_date: string | number | Date;
+      certification_authority:  string;
+      license_number: string;
+      status: string;
+      is_valid: string;
+      id: string;
+      license_type: string;
+      expiration_date: string
+}[],
   });
 
   const [errors, setErrors] = useState({
@@ -59,29 +70,32 @@ export default function ProfilePage() {
   });
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      try {
-        const decodedToken = jwtDecode<{ email: string }>(token);
-        setUserEmail(decodedToken.email);
-      } catch (error) {
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "Erreur lors de la récupération de l'email de l'utilisateur",
-        });
+    if (!userEmail) {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const decodedToken = jwtDecode<{ email: string }>(token);
+          setUserEmail(decodedToken.email);
+        } catch (error) {
+          toast({
+            variant: "destructive",
+            title: "Erreur",
+            description: "Erreur lors de la récupération de l'email de l'utilisateur",
+          });
+        }
       }
     }
-  }, []);
+  }, [userEmail]);
 
   const { data: userData, loading, error: errorUser } = useQuery(GET_USER_BY_EMAIL, {
     variables: { email: userEmail || '' },
     skip: !userEmail,
+    fetchPolicy: 'cache-first',
   });
 
   useEffect(() => {
     if (userData && userData.userByEmail) {
-      setFormData({
+      const newFormData = {
         first_name: userData.userByEmail.first_name,
         last_name: userData.userByEmail.last_name,
         email: userData.userByEmail.email,
@@ -93,9 +107,12 @@ export default function ProfilePage() {
         email_notifications_enabled: userData.userByEmail.email_notifications_enabled,
         sms_notifications_enabled: userData.userByEmail.sms_notifications_enabled,
         licenses: userData.userByEmail.licenses,
-      });
+      };
+      if (JSON.stringify(formData) !== JSON.stringify(newFormData)) {
+        setFormData(newFormData);
+      }
     }
-  }, [userData]);
+  }, [userData, formData]);
 
   const handleCardClick = (cardName: string) => {
     setExpandedCard(expandedCard === cardName ? null : cardName);
@@ -252,13 +269,15 @@ export default function ProfilePage() {
     try {
       await updateProfile({
         variables: {
-          first_name: formData.first_name,
-          last_name: formData.last_name,
-          email: formData.email,
-          phone_number: formData.phone_number,
-          address: formData.address,
-          date_of_birth: new Date(formData.date_of_birth),
-          file: selectedImage,
+          updateUserInput: {
+            first_name: formData.first_name,
+            last_name: formData.last_name,
+            email: formData.email,
+            phone_number: formData.phone_number,
+            address: formData.address,
+            date_of_birth: formData.date_of_birth ? new Date(formData.date_of_birth) : null,
+          },
+          image: selectedImage,
         },
       });
 
@@ -326,7 +345,11 @@ export default function ProfilePage() {
               <CardTitle>Licences</CardTitle>
             </CardHeader>
             <CardContent>
-              {/* <p>{formData.licenses.length > 0 ? `${formData.licenses.length} licences` : 'Aucune licence disponible'}</p> */}
+                {formData.licenses && formData.licenses.length > 0 ? (
+                <p>{formData.licenses.length} licences</p>
+                ) : (
+                <p>Aucune licence</p>
+                )}
             </CardContent>
           </Card>
 
@@ -351,25 +374,66 @@ export default function ProfilePage() {
       )}
 
       {expandedCard === 'licenses' && (
-        <div className="absolute inset-0 bg-white dark:bg-gray-800 z-40 p-8 shadow-lg rounded-lg pb-14">
+        <div className="absolute inset-0 z-40 p-8 shadow-lg rounded-lg pb-14">
           <button
             aria-label="Fermer"
-            className="absolute top-4 right-4 text-gray-500 dark:text-gray-200"
+            className="absolute top-4 right-4"
             onClick={() => setExpandedCard(null)}
           >
             <X size={24} />
           </button>
-          <h2 className="text-center text-2xl font-semibold">Liste des licences</h2>
+          <h2 className="text-center text-2xl font-semibold mb-12">Vos licences</h2>
 
-          <div className="text-center">
-            <ul>
-              {/* {formData.licenses.map((license) => (
-                <li key={license.id}>
-                  {license.license_type} - Expire le {new Date(license.expiration_date).toLocaleDateString()}
-                </li>
-              ))} */}
-              <h1>Rien ici pour le moment</h1>
-            </ul>
+          <div className="grid gap-6 md:grid-cols-2">
+            {formData.licenses && formData.licenses.length > 0 ? (
+              formData.licenses.map((license) => (
+                <Card key={license.id} className="flex flex-col shadow-md hover:shadow-lg transition-shadow duration-300">
+                  <CardHeader>
+                    <CardTitle className="flex items-center text-lg">
+                      <Award className="mr-2 text-blue-500" />
+                      {license.license_type}
+                    </CardTitle>
+                    <Badge
+                      variant={license.is_valid ? "default" : "destructive"}
+                      className="ml-auto"
+                    >
+                      {license.status}
+                    </Badge>
+                  </CardHeader>
+                  <CardContent className="flex-grow space-y-2">
+                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
+                      <Hash className="mr-2 text-gray-400" size={16} />
+                      Numéro: {license.license_number}
+                    </div>
+                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
+                      <FileText className="mr-2 text-gray-400" size={16} />
+                      Autorité: {license.certification_authority}
+                    </div>
+                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
+                      <Calendar className="mr-2 text-green-500" size={16} />
+                      Délivrée le: {new Date(license.issue_date).toLocaleDateString()}
+                    </div>
+                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-300">
+                      <Calendar className="mr-2 text-red-500" size={16} />
+                      Expire le: {new Date(license.expiration_date).toLocaleDateString()}
+                    </div>
+                    <div className="flex items-center text-sm">
+                      {license.is_valid ? (
+                        <CheckCircle className="mr-2 text-green-500" size={16} />
+                      ) : (
+                        <AlertCircle className="mr-2 text-red-500" size={16} />
+                      )}
+                      {license.is_valid ? "Valide" : "Non valide"}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              <div className="col-span-full text-center text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 p-6 rounded-lg">
+                <h3 className="text-lg font-semibold mb-2">Aucune licence</h3>
+                <p>Vous n'avez pas encore de licence enregistrée.</p>
+              </div>
+            )}
           </div>
         </div>
       )}
