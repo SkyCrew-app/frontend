@@ -58,6 +58,16 @@ export const GET_USER_BY_EMAIL = gql`
       total_flight_hours
       email_notifications_enabled
       sms_notifications_enabled
+      licenses {
+        id
+        certification_authority
+        license_number
+        license_type
+        issue_date
+        expiration_date
+        is_valid
+        status
+      }
     }
   }
 `;
@@ -123,9 +133,12 @@ export const GET_USER_DETAILS = gql`
       }
       licenses {
         id
+        certification_authority
+        license_number
         license_type
         issue_date
         expiration_date
+        documents_url
       }
     }
   }
