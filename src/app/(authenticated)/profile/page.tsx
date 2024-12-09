@@ -48,20 +48,21 @@ export default function ProfilePage() {
     total_flight_hours: 0,
     email_notifications_enabled: false,
     sms_notifications_enabled: false,
-    licenses: [] as {
-      issue_date: string | number | Date;
-      certification_authority:  string;
-      license_number: string;
-      status: string;
-      is_valid: string;
-      id: string;
-      license_type: string;
-      expiration_date: string
-      language: '',
-      speed_unit: '',
-      distance_unit: '',
-      timezone: '',
-  }), [];
+  licenses: [] as {
+    issue_date: string | number | Date;
+    certification_authority: string;
+    license_number: string;
+    status: string;
+    is_valid: string;
+    id: string;
+    license_type: string;
+    expiration_date: string;
+  }[],
+  language: '',
+  speed_unit: '',
+  distance_unit: '',
+  timezone: '',
+  });
 
   const [errors, setErrors] = useState({
     first_name: '',
@@ -101,7 +102,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (userData && userData.userByEmail) {
-      const newFormData = {
+      const newFormData: typeof formData = {
         first_name: userData.userByEmail.first_name,
         last_name: userData.userByEmail.last_name,
         email: userData.userByEmail.email,
@@ -113,14 +114,15 @@ export default function ProfilePage() {
         email_notifications_enabled: userData.userByEmail.email_notifications_enabled,
         sms_notifications_enabled: userData.userByEmail.sms_notifications_enabled,
         licenses: userData.userByEmail.licenses,
-        if (JSON.stringify(formData) !== JSON.stringify(newFormData)) {
-          setFormData(newFormData);
-        }
         language: '',
         speed_unit: '',
         distance_unit: '',
         timezone: '',
-      });
+      };
+
+      if (JSON.stringify(formData) !== JSON.stringify(newFormData)) {
+        setFormData(newFormData);
+      }
     }
   }, [userData, formData]);
 

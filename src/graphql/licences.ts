@@ -10,7 +10,6 @@ export const CREATE_LICENSE = gql`
       license_type
       issue_date
       expiration_date
-      license_number
       certification_authority
       status
       documents_url
