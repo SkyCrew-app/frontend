@@ -11,7 +11,7 @@ interface CustomJwtPayload {
 const publicPaths = new Set(['/', '/auth/2fa', '/auth/forgot-password', '/auth/reset-password', '/auth/new-account', '/system/notconnected', '/system/unauthorized']);
 
 const roleBasedRoutes = {
-  '/admin': ['user'],
+  '/admin': ['Administrateur'],
   '/user-management': ['user', 'user']
 };
 
