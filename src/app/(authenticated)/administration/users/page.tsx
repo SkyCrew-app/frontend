@@ -28,6 +28,7 @@ import { CREATE_USER, GET_USERS, UPDATE_USER, GET_USER_DETAILS } from "@/graphql
 import { CREATE_LICENSE } from "@/graphql/licences";
 import { cn } from '@/lib/utils';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { GET_ROLES } from '@/graphql/roles';
 
 interface User {
   id: string;
@@ -38,12 +39,13 @@ interface User {
   is2FAEnabled: boolean;
   isEmailConfirmed: boolean;
   phone_number: string;
-  // roles: Role[] | null;
+  role: Role | null;
 }
 
-// interface Role {
-//   role_name: string;
-// }
+interface Role {
+  id: number;
+  role_name: string;
+}
 
 interface UserDetails extends User {
   phone_number: string;
@@ -76,6 +78,8 @@ interface License {
 
 export default function AdministrationPage() {
   const [users, setUsers] = useState<User[]>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -101,6 +105,9 @@ export default function AdministrationPage() {
       setUsers(data.getUsers || []);
     },
     fetchPolicy: "cache-and-network",
+  });
+  const { data: rolesData } = useQuery(GET_ROLES, {
+    onCompleted: (data) => setRoles(data.roles),
   });
   const [createUser] = useMutation(CREATE_USER);
   const [updateUser] = useMutation(UPDATE_USER);
@@ -128,7 +135,14 @@ export default function AdministrationPage() {
 
   const handleUpdateUser = async (userData: { first_name: string; last_name: string; email: string; date_of_birth: string; phone_number: string }) => {
     try {
-      await updateUser({ variables: { updateUserInput: userData } });
+      await updateUser({
+        variables: {
+          updateUserInput: {
+            ...userData,
+            roleId: selectedRole,
+          },
+        },
+      });
       toast({ title: "Utilisateur mis à jour avec succès" });
       setIsEditDialogOpen(false);
       refetch();
@@ -493,13 +507,14 @@ export default function AdministrationPage() {
           </DialogContent>
         </Dialog>
       </div>
-    </div><Table>
+    </div>
+      <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Nom</TableHead>
             <TableHead>Email</TableHead>
             <TableHead>Date de naissance</TableHead>
-            {/* <TableHead>Rôles</TableHead> */}
+            <TableHead>Rôles</TableHead>
             <TableHead>2FA</TableHead>
             <TableHead>Email confirmé</TableHead>
             <TableHead>Actions</TableHead>
@@ -511,7 +526,7 @@ export default function AdministrationPage() {
               <TableCell>{`${user.first_name} ${user.last_name}`}</TableCell>
               <TableCell>{user.email}</TableCell>
               <TableCell>{new Date(user.date_of_birth).toLocaleDateString()}</TableCell>
-              {/* <TableCell>{user.roles?.map(role => role.role_name).join(', ') ?? 'Aucun rôle'}</TableCell> */}
+              <TableCell>{user.role?.role_name ?? 'Aucun rôle'}</TableCell>
               <TableCell>
                 <Checkbox
                   checked={user.is2FAEnabled}
@@ -595,6 +610,26 @@ export default function AdministrationPage() {
                     Date de naissance
                   </Label>
                   <Input id="edit_date_of_birth" name="date_of_birth" type="date" defaultValue={new Date(selectedUser.date_of_birth).toISOString().split('T')[0]} className="col-span-3" />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="edit_role" className="text-right">
+                    Rôle
+                  </Label>
+                  <Select
+                    onValueChange={(value) => setSelectedRole(value)}
+                    defaultValue={selectedUser.role?.id.toString() || ''}
+                  >
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Sélectionnez un rôle" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {roles.map((role) => (
+                        <SelectItem key={role.id} value={role.id.toString()}>
+                          {role.role_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               <DialogFooter>
