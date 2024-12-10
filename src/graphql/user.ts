@@ -58,6 +58,10 @@ export const GET_USER_BY_EMAIL = gql`
       total_flight_hours
       email_notifications_enabled
       sms_notifications_enabled
+      role {
+        id
+        role_name
+      }
       licenses {
         id
         certification_authority
@@ -106,6 +110,10 @@ export const GET_USERS = gql`
       date_of_birth
       is2FAEnabled
       isEmailConfirmed
+      role {
+        id
+        role_name
+      }
     }
   }
 `;
@@ -139,6 +147,10 @@ export const GET_USER_DETAILS = gql`
         issue_date
         expiration_date
         documents_url
+      }
+      role {
+        id
+        role_name
       }
     }
   }
