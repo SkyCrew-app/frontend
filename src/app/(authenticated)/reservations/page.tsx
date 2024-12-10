@@ -206,59 +206,52 @@ export default function ReservationCalendar() {
     if (!userId) {
       toast({
         variant: "destructive",
-        title: "Erreur lors de la création",
+        title: "Erreur",
         description: "Impossible de trouver l'utilisateur actuel.",
       });
       return;
     }
 
-    if (
-      selectedAircraft &&
-      selectedTimeRange.start &&
-      selectedTimeRange.end &&
-      isBefore(new Date(`${formattedDate}T${selectedTimeRange.start}`), new Date(`${formattedDate}T${selectedTimeRange.end}`))
-    ) {
-      try {
-        const startTime = new Date(`${formattedDate}T${selectedTimeRange.start}`);
-        const endTime = new Date(`${formattedDate}T${selectedTimeRange.end}`);
-        const estimatedFlightHours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
+    try {
+      const startTime = new Date(`${formattedDate}T${selectedTimeRange.start}`);
+      const endTime = new Date(`${formattedDate}T${selectedTimeRange.end}`);
+      const estimatedFlightHours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
 
-        const response = await createReservation({
-          variables: {
-            input: {
-              aircraft_id: selectedAircraft,
-              start_time: startTime,
-              end_time: endTime,
-              purpose,
-              user_id: userId,
-              estimated_flight_hours: estimatedFlightHours,
-              status: ReservationStatus.PENDING,
-              notes,
-              flight_category: flightCategory,
-            },
+      const response = await createReservation({
+        variables: {
+          input: {
+            aircraft_id: selectedAircraft,
+            start_time: startTime,
+            end_time: endTime,
+            purpose,
+            user_id: userId,
+            estimated_flight_hours: estimatedFlightHours,
+            status: ReservationStatus.PENDING,
+            notes,
+            flight_category: flightCategory,
           },
-        });
-        toast({
-          title: "Réservation créée avec succès!",
-          description: `La réservation pour l'avion ${selectedAircraft} a été ajoutée.`,
-        });
-      } catch (error) {
-        toast({
-          variant: "destructive",
-          title: "Erreur lors de la création",
-          description: "Une erreur est survenue lors de la création de la réservation.",
-        });
-      } finally {
-        setIsCreating(false);
-        setIsCreateDialogOpen(false);
+        },
+      });
+
+      if (response.errors) {
+        const errorMessage = response.errors[0]?.message || "Une erreur inconnue est survenue.";
+        throw new Error(errorMessage);
       }
-    } else {
-      setIsCreateDialogOpen(false);
+
+      toast({
+        title: "Réservation créée avec succès",
+        description: "Votre réservation a été ajoutée.",
+      });
+    } catch (error) {
+      console.error("Erreur Apollo Client:", error);
       toast({
         variant: "destructive",
         title: "Erreur lors de la création",
-        description: "Paramètres de réservation invalides.",
+        description: (error as any).message || "Une erreur inconnue est survenue.",
       });
+    } finally {
+      setIsCreateDialogOpen(false);
+      setIsCreating(false);
     }
   };
 
