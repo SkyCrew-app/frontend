@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useForm, FormProvider, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -21,6 +21,7 @@ import { useMutation, useQuery } from '@apollo/client';
 import { Skeleton } from "@/components/ui/skeleton";
 import { GET_ADMINISTRATION, UPDATE_ADMINISTRATION } from '@/graphql/settings';
 import { GET_AIRCRAFTS } from '@/graphql/planes';
+import { RoleManager } from '@/components/ui/RoleManager';
 
 const formSchema = z.object({
   clubName: z.string().min(2, { message: "Le nom de l'aéroclub doit contenir au moins 2 caractères" }),
@@ -61,8 +62,10 @@ export default function SettingsPage() {
     defaultValues: {},
   });
 
+  const isResetRef = useRef(false);
+
   useEffect(() => {
-    if (administrationData?.getAllAdministrations?.length && aircraftData?.getAircrafts?.length) {
+    if (!isResetRef.current && administrationData?.getAllAdministrations?.length && aircraftData?.getAircrafts?.length) {
       form.reset({
         clubName: administrationData.getAllAdministrations[0].clubName,
         contactEmail: administrationData.getAllAdministrations[0].contactEmail,
@@ -93,6 +96,7 @@ export default function SettingsPage() {
         },
         pilotLicenses: administrationData.getAllAdministrations[0].pilotLicenses || [],
       });
+      isResetRef.current = true;
     }
   }, [administrationData, aircraftData, form]);
 
@@ -177,11 +181,12 @@ export default function SettingsPage() {
       <FormProvider {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <Tabs defaultValue="general" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-1 md:grid-cols-5">
+            <TabsList className="grid w-full grid-cols-1 md:grid-cols-6">
               <TabsTrigger value="general">Général</TabsTrigger>
               <TabsTrigger value="operations">Opérations</TabsTrigger>
               <TabsTrigger value="aircraft">Avions</TabsTrigger>
               <TabsTrigger value="members">Membres</TabsTrigger>
+              <TabsTrigger value="roles">Rôles</TabsTrigger>
               <TabsTrigger value="taxonomy">Taxonomie</TabsTrigger>
             </TabsList>
 
@@ -454,6 +459,18 @@ export default function SettingsPage() {
                       className="h-32"
                     />
                   </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="roles">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Gestion des rôles</CardTitle>
+                  <CardDescription>Créez, modifiez et supprimez les rôles de l'aéroclub.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <RoleManager />
                 </CardContent>
               </Card>
             </TabsContent>
