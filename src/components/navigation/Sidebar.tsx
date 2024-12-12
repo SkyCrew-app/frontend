@@ -73,7 +73,7 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className="bg-background border-r">
+    <aside className="bg-gray-50 dark:bg-gray-800 border-r">
       {/* Logo */}
       <div className="p-4 mb-2 flex items-center justify-center">
         <Link href="/dashboard">
