@@ -76,7 +76,7 @@ export default function Navbar() {
   if (error) return <div>Erreur lors du chargement des informations utilisateur.</div>;
 
   return (
-    <header className="w-full flex items-center justify-end p-4 border-b bg-background space-x-3">
+    <header className="w-full flex items-center justify-end p-4 border-b bg-gray-50 dark:bg-gray-800 space-x-3">
       {/* Bouton de basculement de thème */}
       <ToggleThemeButton />
 
