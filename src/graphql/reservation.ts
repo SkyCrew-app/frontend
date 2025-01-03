@@ -78,6 +78,9 @@ export const GET_USER_RESERVATIONS = gql`
         first_name
         last_name
       }
+      flights {
+        id
+      }
     }
   }
 `;
