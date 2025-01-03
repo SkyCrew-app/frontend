@@ -8,7 +8,12 @@ import { Toaster } from '../ui/toaster';
 
 export default function Providers({ children }: { children: ReactNode }) {
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
+    >
       <ApolloProvider client={client}>
         {children}
         <Toaster />
