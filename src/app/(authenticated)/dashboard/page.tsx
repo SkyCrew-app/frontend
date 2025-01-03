@@ -15,7 +15,6 @@ import Link from 'next/link'
 import { GET_ARTICLES } from '@/graphql/articles'
 
 export default function ActualitesAeroclub() {
-  const [currentIndex, setCurrentIndex] = useState(0)
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [first_name, setFirstName] = useState<string | null>(null)
   const [weatherData, setWeatherData] = useState<any | null>(null)
@@ -23,31 +22,31 @@ export default function ActualitesAeroclub() {
 
   const { data: articlesData, loading: articlesLoading, error: articlesError } = useQuery(GET_ARTICLES)
 
-  useEffect(() => {
-    const fetchWeather = async () => {
-      try {
-        const latitude = 48.866667
-        const longitude = 2.333333
-        const response = await fetch(
-          `https://api.api-ninjas.com/v1/weather?lat=${latitude}&lon=${longitude}`,
-          {
-            headers: {
-              'X-Api-Key': 'KX6n/kOCJpKDEl+/mF+5/g==p9iHRQBed2N8KbiU',
-            },
-          }
-        )
-        const data = await response.json()
-        setWeatherData(data)
-      } catch (error) {
-        toast({
-          title: "Erreur",
-          description: "Impossible de charger les données météo.",
-          variant: "destructive",
-        })
-        console.error('Erreur lors de la récupération des données météo:', error)
-      }
+  const fetchWeather = async () => {
+    try {
+      const latitude = 48.866667
+      const longitude = 2.333333
+      const response = await fetch(
+        `https://api.api-ninjas.com/v1/weather?lat=${latitude}&lon=${longitude}`,
+        {
+          headers: {
+            'X-Api-Key': 'KX6n/kOCJpKDEl+/mF+5/g==p9iHRQBed2N8KbiU',
+          },
+        }
+      )
+      const data = await response.json()
+      setWeatherData(data)
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les données météo.",
+        variant: "destructive",
+      })
+      console.error('Erreur lors de la récupération des données météo:', error)
     }
+  }
 
+  useEffect(() => {
     fetchWeather()
   }, [])
 
@@ -78,6 +77,16 @@ export default function ActualitesAeroclub() {
   }, [userData])
 
   useEffect(() => {
+    if (userError) {
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les données utilisateur.",
+        variant: "destructive",
+      });
+    }
+  }, [userError, toast]);
+
+  useEffect(() => {
     if (articlesError) {
       toast({
         title: "Erreur",
@@ -88,6 +97,10 @@ export default function ActualitesAeroclub() {
   }, [articlesError, toast])
 
   const articles = articlesData?.articles || []
+
+  const refreshWeather = () => {
+    fetchWeather();
+  };
 
   return (
     <div className="container mx-auto p-4">
@@ -140,7 +153,7 @@ export default function ActualitesAeroclub() {
         </Card>
       </div>
 
-      <h2 className="text-2xl font-bold mb-4">Découvrez nos dernières actualités</h2>
+      <h2 className="text-2xl font-bold mb-4 mt-8">Découvrez nos dernières actualités</h2>
       {articlesLoading ? (
         <Skeleton className="h-64 w-full" />
       ) : articles.length === 0 ? (
@@ -151,18 +164,19 @@ export default function ActualitesAeroclub() {
             {articles.map((article: any, index: number) => (
               <CarouselItem key={article.id}>
                 <Card className="border-0 shadow-none">
-                    <CardHeader className="relative p-0">
+                  <CardHeader className="relative p-0">
                     <img
                       src={article.photo_url ? `http://localhost:3000${article.photo_url}` : 'https://via.placeholder.com/800x400'}
                       alt={article.title}
                       className="w-full h-48 object-cover rounded-t-lg"
+                      loading="lazy"
                     />
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
                       <CardTitle className="text-xl font-bold text-white">
-                      {article.title}
+                        {article.title}
                       </CardTitle>
                     </div>
-                    </CardHeader>
+                  </CardHeader>
                   <CardContent className="pt-4">
                     <div className="flex justify-between items-center mb-2">
                       <Badge variant="secondary">
@@ -171,7 +185,7 @@ export default function ActualitesAeroclub() {
                       </Badge>
                       {article.tags && article.tags.length > 0 && (
                         <div className="flex space-x-2">
-                          {article.tags.map((tag: string) => (
+                          {article.tags.slice(0, 2).map((tag: string) => (
                             <Badge
                               key={tag}
                               style={{
@@ -182,16 +196,19 @@ export default function ActualitesAeroclub() {
                               {tag}
                             </Badge>
                           ))}
+                          {article.tags.length > 2 && (
+                            <Badge variant="secondary">+{article.tags.length - 2}</Badge>
+                          )}
                         </div>
                       )}
                     </div>
-                    <p className="text-sm">{article.description.substring(0, 100)}...</p>
+                    <p className="text-sm line-clamp-3">{article.description}</p>
                   </CardContent>
                   <CardFooter>
-                    <Button variant="outline" className="w-full" onClick={() => setCurrentIndex(index)}>
-                    <Link href={`/articles/${article.id}`}>
-                      Lire plus
-                    </Link>
+                    <Button variant="outline" className="w-full">
+                      <Link href={`/articles/${article.id}`}>
+                        Lire plus
+                      </Link>
                     </Button>
                   </CardFooter>
                 </Card>
