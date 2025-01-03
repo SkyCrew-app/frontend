@@ -26,14 +26,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Providers>
-          <div className='absolute top-4 right-4'>
+          <div className='dark:bg-gray-900 bg-gray-100'>
+            {children}
           </div>
-          {children}
         </Providers>
       </body>
     </html>

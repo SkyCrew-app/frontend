@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery } from '@apollo/client';
 import { useState, useEffect } from 'react';
-import { format, addDays, subDays, eachHourOfInterval, addWeeks, subWeeks, isBefore } from 'date-fns';
+import { format, addDays, subDays, eachHourOfInterval, addWeeks, subWeeks, isBefore, isAfter } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -22,6 +22,7 @@ import { GET_USER_BY_EMAIL } from '@/graphql/user';
 import { CREATE_RESERVATION, DELETE_RESERVATION, GET_FILTERED_RESERVATIONS, UPDATE_RESERVATION } from '@/graphql/reservation';
 import { GET_AIRCRAFTS } from '@/graphql/planes';
 import { Reservation, ReservationStatus } from '@/interfaces/reservation';
+import { GET_SETTINGS } from '@/graphql/settings';
 
 interface Aircraft {
   id: number;
@@ -67,11 +68,52 @@ export default function ReservationCalendar() {
   const [editFlightCategory, setEditFlightCategory] = useState('');
   const [selectedCategoryFr, setSelectedCategoryFr] = useState<string | undefined>(undefined);
   const [isCreating, setIsCreating] = useState(false);
-
   const formattedDate = currentDate ? format(currentDate, 'yyyy-MM-dd') : '';
   const nextDate = format(addDays(currentDate || new Date(), 1), 'yyyy-MM-dd');
-
+  const [disabledDays, setDisabledDays] = useState<string[]>([]);
+  const [hours, setHours] = useState<Date[]>([]);
   const { toast } = useToast();
+  const [createReservation] = useMutation(CREATE_RESERVATION);
+  const [updateReservation] = useMutation(UPDATE_RESERVATION);
+  const [deleteReservation] = useMutation(DELETE_RESERVATION);
+
+
+  const { data: settingsData, loading: loadingSettings, error: errorSettings, refetch: refetchSettings } = useQuery(
+    GET_SETTINGS,
+    {
+      fetchPolicy: 'network-only',
+    }
+  );
+
+  const { data: userData, error: errorUser } = useQuery(GET_USER_BY_EMAIL, {
+    variables: { email: userEmail || '' },
+    skip: !userEmail,
+  });
+
+  const { data: aircraftData, loading: loadingAircrafts, error: errorAircrafts } = useQuery(GET_AIRCRAFTS);
+
+  const { data: reservationData, loading: loadingReservations, error: errorReservations } = useQuery(
+    GET_FILTERED_RESERVATIONS,
+    {
+      variables: { startDate: formattedDate, endDate: nextDate },
+    }
+  );
+
+  useEffect(() => {
+    if (settingsData?.getAllAdministrations?.length > 0) {
+      const { closureDays, reservationStartTime, reservationEndTime } = settingsData.getAllAdministrations[0];
+
+      const formattedDate = currentDate ? format(currentDate, 'yyyy-MM-dd') : '';
+      const newHours = eachHourOfInterval({
+        start: new Date(`${formattedDate}T${reservationStartTime}`),
+        end: new Date(`${formattedDate}T${reservationEndTime}`),
+      });
+
+      setHours(newHours);
+      setDisabledDays(closureDays);
+    }
+  }, [settingsData, currentDate]);
+
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -87,15 +129,9 @@ export default function ReservationCalendar() {
     }
   }, []);
 
-  const { data: userData, error: errorUser } = useQuery(GET_USER_BY_EMAIL, {
-    variables: { email: userEmail || '' },
-    skip: !userEmail,
-  });
-
   useEffect(() => {
     if (userData && userData.userByEmail) {
       setUserId(userData.userByEmail.id);
-      console.log(userData);
     }
 
     if (errorUser) {
@@ -107,22 +143,13 @@ export default function ReservationCalendar() {
     }
   }, [userData, errorUser]);
 
-  const { data: reservationData, loading: loadingReservations, error: errorReservations } = useQuery(
-    GET_FILTERED_RESERVATIONS,
-    {
-      variables: { startDate: formattedDate, endDate: nextDate },
-    }
-  );
+  const normalizeDayName = (day: string) => day.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
-  const { data: aircraftData, loading: loadingAircrafts, error: errorAircrafts } = useQuery(GET_AIRCRAFTS);
-  const [createReservation] = useMutation(CREATE_RESERVATION);
-  const [updateReservation] = useMutation(UPDATE_RESERVATION);
-  const [deleteReservation] = useMutation(DELETE_RESERVATION);
-
-  const hours = eachHourOfInterval({
-    start: new Date(`${formattedDate}T00:00`),
-    end: new Date(`${formattedDate}T23:00`),
-  });
+  const isDayClosed = () => {
+    const dayName = normalizeDayName(format(currentDate || new Date(), 'EEEE', { locale: fr }));
+    const normalizedDisabledDays = disabledDays.map(normalizeDayName);
+    return normalizedDisabledDays.includes(dayName);
+  };
 
   const handlePreviousDay = () => {
     setCurrentDate((prevDate) => subDays(prevDate || new Date(), 1));
@@ -179,59 +206,52 @@ export default function ReservationCalendar() {
     if (!userId) {
       toast({
         variant: "destructive",
-        title: "Erreur lors de la création",
+        title: "Erreur",
         description: "Impossible de trouver l'utilisateur actuel.",
       });
       return;
     }
 
-    if (
-      selectedAircraft &&
-      selectedTimeRange.start &&
-      selectedTimeRange.end &&
-      isBefore(new Date(`${formattedDate}T${selectedTimeRange.start}`), new Date(`${formattedDate}T${selectedTimeRange.end}`))
-    ) {
-      try {
-        const startTime = new Date(`${formattedDate}T${selectedTimeRange.start}`);
-        const endTime = new Date(`${formattedDate}T${selectedTimeRange.end}`);
-        const estimatedFlightHours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
+    try {
+      const startTime = new Date(`${formattedDate}T${selectedTimeRange.start}`);
+      const endTime = new Date(`${formattedDate}T${selectedTimeRange.end}`);
+      const estimatedFlightHours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
 
-        const response = await createReservation({
-          variables: {
-            input: {
-              aircraft_id: selectedAircraft,
-              start_time: startTime,
-              end_time: endTime,
-              purpose,
-              user_id: userId,
-              estimated_flight_hours: estimatedFlightHours,
-              status: ReservationStatus.PENDING,
-              notes,
-              flight_category: flightCategory,
-            },
+      const response = await createReservation({
+        variables: {
+          input: {
+            aircraft_id: selectedAircraft,
+            start_time: startTime,
+            end_time: endTime,
+            purpose,
+            user_id: userId,
+            estimated_flight_hours: estimatedFlightHours,
+            status: ReservationStatus.PENDING,
+            notes,
+            flight_category: flightCategory,
           },
-        });
-        toast({
-          title: "Réservation créée avec succès!",
-          description: `La réservation pour l'avion ${selectedAircraft} a été ajoutée.`,
-        });
-      } catch (error) {
-        toast({
-          variant: "destructive",
-          title: "Erreur lors de la création",
-          description: "Une erreur est survenue lors de la création de la réservation.",
-        });
-      } finally {
-        setIsCreating(false);
-        setIsCreateDialogOpen(false);
+        },
+      });
+
+      if (response.errors) {
+        const errorMessage = response.errors[0]?.message || "Une erreur inconnue est survenue.";
+        throw new Error(errorMessage);
       }
-    } else {
-      setIsCreateDialogOpen(false);
+
+      toast({
+        title: "Réservation créée avec succès",
+        description: "Votre réservation a été ajoutée.",
+      });
+    } catch (error) {
+      console.error("Erreur Apollo Client:", error);
       toast({
         variant: "destructive",
         title: "Erreur lors de la création",
-        description: "Paramètres de réservation invalides.",
+        description: (error as any).message || "Une erreur inconnue est survenue.",
       });
+    } finally {
+      setIsCreateDialogOpen(false);
+      setIsCreating(false);
     }
   };
 
@@ -298,6 +318,12 @@ export default function ReservationCalendar() {
           <TableCell className="text-sm font-semibold">{aircraft.registration_number}</TableCell>
 
           {hours.map((hour, index) => {
+              if (
+                isBefore(hour, new Date(`${formattedDate}T${settingsData?.getAdministrationSettings?.reservationStartTime}`)) ||
+                isAfter(hour, new Date(`${formattedDate}T${settingsData?.getAdministrationSettings?.reservationEndTime}`))
+              ) {
+                return <TableCell key={index} className="bg-gray-200 cursor-not-allowed">-</TableCell>;
+              }
             if (skipHours > 0) {
               skipHours--;
               return null;
@@ -385,6 +411,12 @@ export default function ReservationCalendar() {
     <div className="flex flex-col items-center justify-center p-3 dark:text-white overflow-hidden">
       <h1 className="text-3xl font-bold mb-8">Calendrier des Réservations</h1>
 
+      {isDayClosed() && (
+        <div className="p-4 mb-4 bg-yellow-100 text-yellow-800 rounded-lg text-center">
+          Votre aéroclub est fermé ce jour ({currentDate && format(currentDate, 'EEEE', { locale: fr })}).
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-8 w-full max-w-lg">
         <Button variant="outline" onClick={handlePreviousDay} className="flex items-center mr-4">
           <ArrowLeft className="mr-2" />
@@ -405,13 +437,17 @@ export default function ReservationCalendar() {
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0">
-            <Calendar
-              mode="single"
-              locale={fr}
-              selected={currentDate}
-              onSelect={setCurrentDate}
-              initialFocus
-            />
+          <Calendar
+            mode="single"
+            locale={fr}
+            selected={currentDate}
+            onSelect={setCurrentDate}
+            initialFocus
+            disabled={(date) => {
+              const dayName = format(date, 'EEEE', { locale: fr });
+              return disabledDays.includes(dayName);
+            }}
+          />
           </PopoverContent>
         </Popover>
 
@@ -430,6 +466,7 @@ export default function ReservationCalendar() {
         </Button>
       </div>
 
+      {!isDayClosed() && (
       <div className="overflow-x-auto w-full max-w-8xl shadow-lg rounded-lg border border-gray-300 dark:border-gray-700">
         <Table>
           <TableHeader>
@@ -445,6 +482,7 @@ export default function ReservationCalendar() {
           <TableBody>{renderCalendarGrid()}</TableBody>
         </Table>
       </div>
+      )}
 
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent className="p-6 rounded-md">

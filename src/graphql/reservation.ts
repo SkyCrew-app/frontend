@@ -44,8 +44,6 @@ export const UPDATE_RESERVATION = gql`
   mutation UpdateReservation($input: UpdateReservationInput!) {
     updateReservation(updateReservationInput: $input) {
       id
-      start_time
-      end_time
       purpose
       notes
       flight_category
@@ -57,6 +55,32 @@ export const DELETE_RESERVATION = gql`
   mutation DeleteReservation($id: Int!) {
     deleteReservation(id: $id) {
       id
+    }
+  }
+`;
+
+export const GET_USER_RESERVATIONS = gql`
+  query GetUserReservations($userId: Int!) {
+    userReservations(userId: $userId) {
+      id
+      start_time
+      end_time
+      purpose
+      flight_category
+      status
+      notes
+      aircraft {
+        id
+        registration_number
+      }
+      user {
+        id
+        first_name
+        last_name
+      }
+      flights {
+        id
+      }
     }
   }
 `;

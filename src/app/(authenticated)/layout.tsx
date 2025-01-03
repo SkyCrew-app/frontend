@@ -1,6 +1,5 @@
 import MainLayout from '@/components/MainLayout';
-import { ReactNode } from 'react';
 
-export default function AuthenticatedLayout({ children }: { children: ReactNode }) {
+export default function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   return <MainLayout>{children}</MainLayout>;
 }

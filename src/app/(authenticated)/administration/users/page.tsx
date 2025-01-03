@@ -20,12 +20,15 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { format } from "date-fns";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Check, ChevronsUpDown } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { fr } from "date-fns/locale";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { CREATE_USER, GET_USERS, UPDATE_USER, GET_USER_DETAILS } from "@/graphql/user";
 import { CREATE_LICENSE } from "@/graphql/licences";
+import { cn } from '@/lib/utils';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { GET_ROLES } from '@/graphql/roles';
 
 interface User {
   id: string;
@@ -36,12 +39,13 @@ interface User {
   is2FAEnabled: boolean;
   isEmailConfirmed: boolean;
   phone_number: string;
-  // roles: Role[] | null;
+  role: Role | null;
 }
 
-// interface Role {
-//   role_name: string;
-// }
+interface Role {
+  id: number;
+  role_name: string;
+}
 
 interface UserDetails extends User {
   phone_number: string;
@@ -63,14 +67,19 @@ interface Reservation {
 }
 
 interface License {
+  certification_authority: string;
+  license_number: string;
   id: string;
   license_type: string;
   issue_date: string;
-  expiry_date: string;
+  expiration_date: string;
+  documents_url: string[];
 }
 
 export default function AdministrationPage() {
   const [users, setUsers] = useState<User[]>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -83,19 +92,30 @@ export default function AdministrationPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [expirationDate, setExpirationDate] = useState<Date | null>(null);
   const [issueDate, setIssueDate] = useState<Date | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const itemsPerPage = 3;
   const [usersPerPage] = useState(10);
+  const [open, setOpen] = useState(false);
+
 
   const { toast } = useToast();
 
-  const { loading, error, data, refetch } = useQuery(GET_USERS);
+  const { loading, error, data, refetch } = useQuery(GET_USERS, {
+    onCompleted: (data) => {
+      setUsers(data.getUsers || []);
+    },
+    fetchPolicy: "cache-and-network",
+  });
+  const { data: rolesData } = useQuery(GET_ROLES, {
+    onCompleted: (data) => setRoles(data.roles),
+  });
   const [createUser] = useMutation(CREATE_USER);
   const [updateUser] = useMutation(UPDATE_USER);
   const [onAddLicense] = useMutation(CREATE_LICENSE);
-  const [getUserDetails, { loading: detailsLoading, data: userDetails }] = useLazyQuery<{ getUserDetails: UserDetails }>(GET_USER_DETAILS);
+  const [getUserDetails] = useLazyQuery<{ getUserDetails: UserDetails }>(GET_USER_DETAILS);
 
   useEffect(() => {
-    if (data && data.getUsers) {
+    if (data?.getUsers) {
       setUsers(data.getUsers);
     }
   }, [data]);
@@ -115,7 +135,14 @@ export default function AdministrationPage() {
 
   const handleUpdateUser = async (userData: { first_name: string; last_name: string; email: string; date_of_birth: string; phone_number: string }) => {
     try {
-      await updateUser({ variables: { updateUserInput: userData } });
+      await updateUser({
+        variables: {
+          updateUserInput: {
+            ...userData,
+            roleId: selectedRole,
+          },
+        },
+      });
       toast({ title: "Utilisateur mis à jour avec succès" });
       setIsEditDialogOpen(false);
       refetch();
@@ -133,7 +160,7 @@ export default function AdministrationPage() {
         setSelectedUserDetails(data.getUserDetails);
         setIsDetailsDialogOpen(true);
       },
-      onError: (error) => {
+      onError: () => {
         toast({
           title: "Erreur",
           description: "Impossible de charger les détails de l'utilisateur.",
@@ -143,19 +170,45 @@ export default function AdministrationPage() {
     });
   };
 
-  const handleSubmitLicences = (e: React.FormEvent) => {
+  const handleSubmitLicences = async (e: React.FormEvent) => {
     e.preventDefault();
     const formData = new FormData(e.target as HTMLFormElement);
+
+    if (!selectedUserId) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez sélectionner un utilisateur.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const files = formData.getAll("documents") as File[];
+    const validFiles = files.filter((file) => file);
+
     onAddLicense({
       variables: {
-        license_type: formData.get("license_type") as string,
-        expiration_date: expirationDate?.toISOString(),
-        issue_date: issueDate?.toISOString(),
-        certification_authority: formData.get("certification_authority") as string,
-        is_valid: formData.get("is_valid") === "on",
-      }
-    });
-    setIsDialogOpen(false);
+        createLicenseInput: {
+          user_id: parseInt(selectedUserId),
+          license_type: formData.get("license_type") as string,
+          license_number: formData.get("license_number") as string,
+          expiration_date: expirationDate?.toISOString(),
+          issue_date: issueDate?.toISOString(),
+          certification_authority: formData.get("certification_authority") as string || null,
+          status: formData.get("status") as string || "active",
+        },
+        documents: validFiles.length > 0 ? validFiles : null,
+      },
+    })
+      .then(() => {
+        toast({ title: "Licence ajoutée avec succès" });
+        setIsDialogOpen(false);
+      })
+      .catch((error) => {
+        if (error instanceof Error) {
+          toast({ title: "Erreur lors de l'ajout de la licence", description: error.message, variant: "destructive" });
+        }
+      });
   };
 
   const filteredUsers = users.filter(user =>
@@ -275,7 +328,57 @@ export default function AdministrationPage() {
             </DialogHeader>
             <form onSubmit={handleSubmitLicences}>
               <div className="grid gap-4 py-4">
+
                 <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="user" className="text-right font-semibold">
+                  Utilisateur
+                </Label>
+                <Popover open={open} onOpenChange={setOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={open}
+                      className="col-span-3 justify-between"
+                    >
+                      {selectedUserId && users.length > 0
+                        ? users.find((user) => user.id === selectedUserId)?.email ?? "Sélectionnez un utilisateur..."
+                        : "Sélectionnez un utilisateur..."}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[300px] p-0">
+                    {loading ? (
+                      <Skeleton className="w-full h-16" />
+                    ) : users.length > 0 ? (
+                      <Command>
+                        <CommandInput placeholder="Rechercher un utilisateur..." />
+                        <CommandEmpty>Aucun utilisateur trouvé.</CommandEmpty>
+                        <CommandGroup>
+                          {users.map((user) => (
+                            <CommandItem
+                              key={String(user.id)}
+                              onSelect={() => {
+                                setSelectedUserId(user.id === selectedUserId ? null : user.id);
+                                setOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  selectedUserId === user.id ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              {user.first_name} {user.last_name} ({user.email})
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </Command>
+                    ) : (
+                      <CommandEmpty>Aucun utilisateur trouvé.</CommandEmpty>
+                    )}
+                  </PopoverContent>
+                </Popover>
                   <Label htmlFor="license_type" className="text-right font-semibold">
                     Type de licence
                   </Label>
@@ -290,6 +393,19 @@ export default function AdministrationPage() {
                       <SelectItem value="FI">FI</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="license_number" className="text-right font-semibold">
+                    Numéro de licence
+                  </Label>
+                  <Input
+                    id="license_number"
+                    name="license_number"
+                    className="col-span-3"
+                    placeholder="Numéro de licence"
+                    required
+                  />
                 </div>
 
                 <div className="space-y-6">
@@ -354,10 +470,32 @@ export default function AdministrationPage() {
                 </div>
 
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="is_valid" className="text-right font-semibold">
-                    Valide
+                  <Label htmlFor="documents" className="text-right font-semibold">
+                    Documents
                   </Label>
-                  <Checkbox id="is_valid" name="is_valid" defaultChecked className="col-span-3" />
+                  <Input
+                    id="documents"
+                    name="documents"
+                    type="file"
+                    multiple
+                    className="col-span-3 border border-gray-300 dark:border-gray-700 rounded-md"
+                  />
+                </div>
+
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="status" className="text-right font-semibold">
+                    Statut
+                  </Label>
+                  <Select name="status" defaultValue="active">
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Sélectionnez le statut" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="expired">Expirée</SelectItem>
+                      <SelectItem value="pending">En attente</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               <DialogFooter>
@@ -369,13 +507,14 @@ export default function AdministrationPage() {
           </DialogContent>
         </Dialog>
       </div>
-    </div><Table>
+    </div>
+      <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Nom</TableHead>
             <TableHead>Email</TableHead>
             <TableHead>Date de naissance</TableHead>
-            {/* <TableHead>Rôles</TableHead> */}
+            <TableHead>Rôles</TableHead>
             <TableHead>2FA</TableHead>
             <TableHead>Email confirmé</TableHead>
             <TableHead>Actions</TableHead>
@@ -387,7 +526,7 @@ export default function AdministrationPage() {
               <TableCell>{`${user.first_name} ${user.last_name}`}</TableCell>
               <TableCell>{user.email}</TableCell>
               <TableCell>{new Date(user.date_of_birth).toLocaleDateString()}</TableCell>
-              {/* <TableCell>{user.roles?.map(role => role.role_name).join(', ') ?? 'Aucun rôle'}</TableCell> */}
+              <TableCell>{user.role?.role_name ?? 'Aucun rôle'}</TableCell>
               <TableCell>
                 <Checkbox
                   checked={user.is2FAEnabled}
@@ -471,6 +610,26 @@ export default function AdministrationPage() {
                     Date de naissance
                   </Label>
                   <Input id="edit_date_of_birth" name="date_of_birth" type="date" defaultValue={new Date(selectedUser.date_of_birth).toISOString().split('T')[0]} className="col-span-3" />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="edit_role" className="text-right">
+                    Rôle
+                  </Label>
+                  <Select
+                    onValueChange={(value) => setSelectedRole(value)}
+                    defaultValue={selectedUser.role?.id.toString() || ''}
+                  >
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Sélectionnez un rôle" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {roles.map((role) => (
+                        <SelectItem key={role.id} value={role.id.toString()}>
+                          {role.role_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               <DialogFooter>
@@ -573,32 +732,93 @@ export default function AdministrationPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead className="text-left border-b">Type de licence</TableHead>
+                      <TableHead className="text-left border-b">Numéro</TableHead>
+                      <TableHead className="text-left border-b">Autorité</TableHead>
                       <TableHead className="text-left border-b">Date d'émission</TableHead>
                       <TableHead className="text-left border-b">Date d'expiration</TableHead>
+                      <TableHead className="text-left border-b">Statut</TableHead>
+                      <TableHead className="text-left border-b">Documents</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {paginatedLicenses?.map((license) => (
                       <TableRow key={license.id} className="border-b">
                         <TableCell>{license.license_type}</TableCell>
+                        <TableCell>{license.license_number || 'Non spécifié'}</TableCell>
+                        <TableCell>{license.certification_authority || 'Non spécifiée'}</TableCell>
                         <TableCell>{new Date(license.issue_date).toLocaleDateString()}</TableCell>
-                        <TableCell>{new Date(license.expiry_date).toLocaleDateString()}</TableCell>
+                        <TableCell>{new Date(license.expiration_date).toLocaleDateString()}</TableCell>
+                        <TableCell>
+                          <span
+                            className={`${
+                              license.expiration_date && new Date(license.expiration_date) < new Date()
+                                ? 'text-red-500'
+                                : 'text-green-500'
+                            }`}
+                          >
+                            {license.expiration_date && new Date(license.expiration_date) < new Date()
+                              ? 'Expirée'
+                              : 'Valide'}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          {license.documents_url && license.documents_url.length > 0 ? (
+                            <div className="flex flex-col space-y-2">
+                              {license.documents_url.map((doc, index) => (
+                                <a
+                                  key={index}
+                                  href={`http://localhost:3000${doc}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-500 underline"
+                                >
+                                  Document {index + 1}
+                                </a>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-gray-500">Aucun document</span>
+                          )}
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
 
                 <Pagination className="flex justify-end">
-                  <PaginationPrevious onClick={() => setCurrentLicensePage(currentLicensePage - 1)} />
-                  {Array.from({ length: Math.ceil((selectedUserDetails?.licenses.length || 0) / itemsPerPage) }, (_, index) => (
-                    <PaginationLink
-                      onClick={() => setCurrentLicensePage(index + 1)}
-                      isActive={currentLicensePage === index + 1}
-                    >
-                      {index + 1}
-                    </PaginationLink>
-                  ))}
-                  <PaginationNext onClick={() => setCurrentLicensePage(currentLicensePage + 1)} />
+                  <PaginationPrevious
+                    onClick={() =>
+                      setCurrentLicensePage((prev) => Math.max(prev - 1, 1))
+                    }
+                  />
+                  {Array.from(
+                    {
+                      length: Math.ceil(
+                        (selectedUserDetails?.licenses.length || 0) / itemsPerPage
+                      ),
+                    },
+                    (_, index) => (
+                      <PaginationLink
+                        key={index}
+                        onClick={() => setCurrentLicensePage(index + 1)}
+                        isActive={currentLicensePage === index + 1}
+                      >
+                        {index + 1}
+                      </PaginationLink>
+                    )
+                  )}
+                  <PaginationNext
+                    onClick={() =>
+                      setCurrentLicensePage((prev) =>
+                        Math.min(
+                          prev + 1,
+                          Math.ceil(
+                            (selectedUserDetails?.licenses.length || 0) / itemsPerPage
+                          )
+                        )
+                      )
+                    }
+                  />
                 </Pagination>
               </TabsContent>
             </Tabs>

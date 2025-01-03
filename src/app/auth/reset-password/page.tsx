@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { Suspense, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,7 +11,7 @@ import { useToast } from "@/components/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export default function ResetPasswordPage() {
+function ResetPasswordComponent() {
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
 
@@ -65,25 +65,21 @@ export default function ResetPasswordPage() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <Skeleton className="h-8 w-3/4 mx-auto" />
-          </CardHeader>
-          <CardContent>
-            <Skeleton className="h-4 w-full mb-4" />
-            <Skeleton className="h-10 w-full mb-4" />
-            <Skeleton className="h-10 w-full mb-4" />
-            <Skeleton className="h-10 w-full" />
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  return (
+  return isLoading ? (
+    <div className="flex min-h-screen items-center justify-center bg-background">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <Skeleton className="h-8 w-3/4 mx-auto" />
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-4 w-full mb-4" />
+          <Skeleton className="h-10 w-full mb-4" />
+          <Skeleton className="h-10 w-full mb-4" />
+          <Skeleton className="h-10 w-full" />
+        </CardContent>
+      </Card>
+    </div>
+  ) : (
     <div className="flex min-h-screen items-center justify-center bg-background">
       <Card className="w-full max-w-md">
         <CardHeader className="flex flex-col items-center">
@@ -132,5 +128,13 @@ export default function ResetPasswordPage() {
       </Card>
       <Toaster />
     </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ResetPasswordComponent />
+    </Suspense>
   );
 }

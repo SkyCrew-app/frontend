@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useMutation } from '@apollo/client';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,7 @@ import { useToast } from "@/components/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 import { CONFIRM_EMAIL_AND_SET_PASSWORD } from '@/graphql/user';
 
-export default function ConfirmEmailPage() {
+function ConfirmEmailComponent() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -119,5 +119,13 @@ export default function ConfirmEmailPage() {
       </Card>
       <Toaster />
     </div>
+  );
+}
+
+export default function ConfirmEmailPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ConfirmEmailComponent />
+    </Suspense>
   );
 }
