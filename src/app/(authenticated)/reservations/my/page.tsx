@@ -15,7 +15,7 @@ import { Label } from '@/components/ui/label';
 import { jwtDecode } from 'jwt-decode';
 import { GET_USER_BY_EMAIL } from '@/graphql/user';
 import { GET_USER_RESERVATIONS, UPDATE_RESERVATION } from '@/graphql/reservation';
-import { Reservation, ReservationStatus } from '@/interfaces/reservation';
+import { ReservationStatus } from '@/interfaces/reservation';
 import {
   Pagination,
   PaginationContent,
@@ -25,9 +25,28 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination"
 import { Badge } from "@/components/ui/badge";
+import Link from 'next/link';
 
 interface TokenPayload {
   email: string;
+}
+
+interface Reservation {
+  id: number;
+  user_id: number;
+  aircraft_id: number;
+  start_time: string;
+  end_time: string;
+  purpose: string;
+  notes?: string;
+  status: ReservationStatus;
+  flight_category: string;
+  aircraft: {
+    registration_number: string;
+  };
+  flights?: {
+    id: number
+  }[];
 }
 
 const flightCategoryMapping = {
@@ -299,6 +318,16 @@ export default function MyReservations() {
                   </p>
                   <div className="flex justify-end space-x-2">
                     <Button size="sm" onClick={() => handleUpdate(reservation)}>Modifier</Button>
+                    {reservation.flights && reservation.flights.length > 0 && (
+                        <Link href={`flight-plans/${reservation.flights[0].id}`}>
+                        <Button size="sm" variant="outline">Plan de vol</Button>
+                        </Link>
+                    )}
+                  {!reservation.flights || reservation.flights.length === 0 ? (
+                    <Link href={`flight-plans/create/${reservation.id}`}>
+                    <Button size="sm" variant="outline">Créer un plan de vol</Button>
+                    </Link>
+                  ) : null}
                   </div>
                 </CardContent>
               </Card>
@@ -307,17 +336,11 @@ export default function MyReservations() {
           <div className="mt-8">
             <Pagination>
               <PaginationContent>
-                <PaginationItem>
-                  {currentPage > 1 ? (
+                {currentPage > 1 && (
+                  <PaginationItem>
                     <PaginationPrevious onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))} />
-                  ) : (
-                    <PaginationItem>
-                      <div className="opacity-50 cursor-not-allowed">
-                        <PaginationPrevious />
-                      </div>
-                    </PaginationItem>
-                  )}
-                </PaginationItem>
+                  </PaginationItem>
+                )}
                 {[...Array(totalPages)].map((_, index) => (
                   <PaginationItem key={index}>
                     <PaginationLink
@@ -328,17 +351,11 @@ export default function MyReservations() {
                     </PaginationLink>
                   </PaginationItem>
                 ))}
-                <PaginationItem>
-                  {currentPage < totalPages ? (
+                {currentPage < totalPages && (
+                  <PaginationItem>
                     <PaginationNext onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))} />
-                  ) : (
-                    <PaginationItem>
-                      <div className="opacity-50 cursor-not-allowed">
-                        <PaginationNext />
-                      </div>
-                    </PaginationItem>
-                  )}
-                </PaginationItem>
+                  </PaginationItem>
+                )}
               </PaginationContent>
             </Pagination>
           </div>
