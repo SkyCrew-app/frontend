@@ -72,6 +72,10 @@ export default function Navbar() {
     router.push('/profile/');
   };
 
+  const handleAmount = () => {
+    router.push('/profile/money_account');
+  };
+
   if (loading) return <div>Chargement...</div>;
   if (error) return <div>Erreur lors du chargement des informations utilisateur.</div>;
 
@@ -110,7 +114,7 @@ export default function Navbar() {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={handleProfile}>Mon Profil</DropdownMenuItem>
-          <DropdownMenuItem>Mon Solde: { userAccountBalance } €</DropdownMenuItem>
+          <DropdownMenuItem onClick={handleAmount}>Mon Solde: { userAccountBalance } €</DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleLogout}>
             Déconnexion
