@@ -22,6 +22,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { GET_ADMINISTRATION, UPDATE_ADMINISTRATION } from '@/graphql/settings';
 import { GET_AIRCRAFTS } from '@/graphql/planes';
 import { RoleManager } from '@/components/ui/RoleManager';
+import { format, parseISO } from 'date-fns';
 
 const formSchema = z.object({
   clubName: z.string().min(2, { message: "Le nom de l'aéroclub doit contenir au moins 2 caractères" }),
@@ -47,6 +48,9 @@ const formSchema = z.object({
   guestPilotFee: z.number().min(0),
   fuelManagement: z.enum(['self-service', 'staff-only', 'external']),
   taxonomies: z.record(z.array(z.string())).optional(),
+  isMaintenanceActive: z.boolean(),
+  maintenanceMessage: z.string().optional(),
+  maintenanceTime: z.string().nullable().transform((val) => val ? new Date(val).toISOString() : null),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -66,6 +70,8 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (!isResetRef.current && administrationData?.getAllAdministrations?.length && aircraftData?.getAircrafts?.length) {
+      const adminData = administrationData.getAllAdministrations[0];
+
       form.reset({
         clubName: administrationData.getAllAdministrations[0].clubName,
         contactEmail: administrationData.getAllAdministrations[0].contactEmail,
@@ -95,6 +101,9 @@ export default function SettingsPage() {
           flightTypes: [],
         },
         pilotLicenses: administrationData.getAllAdministrations[0].pilotLicenses || [],
+        isMaintenanceActive: administrationData.getAllAdministrations[0].isMaintenanceActive,
+        maintenanceMessage: administrationData.getAllAdministrations[0].maintenanceMessage,
+        maintenanceTime: adminData.maintenanceTime ? format(parseISO(adminData.maintenanceTime), "yyyy-MM-dd'T'HH:mm") : null,
       });
       isResetRef.current = true;
     }
@@ -125,6 +134,10 @@ export default function SettingsPage() {
             allowGuestPilots: data.allowGuestPilots,
             guestPilotFee: data.guestPilotFee,
             fuelManagement: data.fuelManagement,
+            taxonomies: data.taxonomies,
+            isMaintenanceActive: data.isMaintenanceActive,
+            maintenanceMessage: data.maintenanceMessage,
+            maintenanceTime: data.maintenanceTime,
           },
         },
       });
@@ -225,6 +238,35 @@ export default function SettingsPage() {
                       <p className="text-sm text-red-500">{form.formState.errors.address.message}</p>
                     )}
                   </div>
+                  <Separator className="my-4" />
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Maintenance du site</h3>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="is-maintenance-active"
+                    checked={form.watch('isMaintenanceActive')}
+                    onCheckedChange={(checked) => form.setValue('isMaintenanceActive', !!checked)}
+                  />
+                  <Label htmlFor="is-maintenance-active">Activer le mode maintenance</Label>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="maintenance-message">Message de maintenance</Label>
+                  <Textarea
+                    id="maintenance-message"
+                    {...form.register('maintenanceMessage')}
+                    placeholder="Message à afficher pendant la maintenance..."
+                    className="h-24"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="maintenance-time">Date et heure de fin de maintenance</Label>
+                  <Input
+                    id="maintenance-time"
+                    type="datetime-local"
+                    {...form.register('maintenanceTime')}
+                  />
+                </div>
+              </div>
                 </CardContent>
               </Card>
             </TabsContent>
