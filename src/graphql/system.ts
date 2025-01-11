@@ -14,3 +14,9 @@ mutation Logout {
   logout
 }
 `;
+
+export const MAINTENANCE_QUERY = gql`
+  query {
+    getMaintenanceDetails
+  }
+`

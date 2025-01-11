@@ -30,6 +30,9 @@ export const GET_ADMINISTRATION = gql`
       allowGuestPilots
       guestPilotFee
       fuelManagement
+      isMaintenanceActive
+      maintenanceMessage
+      maintenanceTime
     }
   }
 `;
