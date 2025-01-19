@@ -44,8 +44,8 @@ const menuItems = [
     path: '/instruction',
     subItems: [
       { name: 'Mes cours', path: '/instruction/courses' },
-      { name: 'Mes évaluations', path: '/instruction/evaluations' },
-      { name: 'E-learning', path: '/instruction/evaluations' },
+      { name: 'Mes évaluations', path: '/instruction/evaluation' },
+      { name: 'E-learning', path: '/instruction/e-learning' },
     ],
   },
   {
@@ -57,6 +57,7 @@ const menuItems = [
       { name: 'Facturation', path: '/administration/billing' },
       { name: 'Sécurité', path: '/administration/security' },
       { name: 'Articles', path: '/administration/articles' },
+      { name: 'E-learning', path: '/administration/e-learning' },
       { name: 'Paramètres', path: '/administration/settings' },
     ],
   },
