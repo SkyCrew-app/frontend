@@ -12,8 +12,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { useToast } from "@/components/hooks/use-toast";
 import { Label } from '@/components/ui/label';
-import { jwtDecode } from 'jwt-decode';
-import { GET_USER_BY_EMAIL } from '@/graphql/user';
 import { GET_USER_RESERVATIONS, UPDATE_RESERVATION } from '@/graphql/reservation';
 import { ReservationStatus } from '@/interfaces/reservation';
 import {
@@ -26,6 +24,7 @@ import {
 } from "@/components/ui/pagination"
 import { Badge } from "@/components/ui/badge";
 import Link from 'next/link';
+import { useDecodedToken, useUserData } from '@/components/hooks/userHooks';
 
 interface TokenPayload {
   email: string;
@@ -84,8 +83,9 @@ const getStatusVariant = (status: ReservationStatus) => {
 };
 
 export default function MyReservations() {
-  const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [userId, setUserId] = useState<number | null>(null);
+  const userEmail = useDecodedToken();
+  const userData = useUserData(userEmail);
+  const [userId, setUserId] = useState<string | null>(null);
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editPurpose, setEditPurpose] = useState('');
@@ -101,37 +101,10 @@ export default function MyReservations() {
 
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      try {
-        const decodedToken = jwtDecode<TokenPayload>(token);
-        setUserEmail(decodedToken.email);
-      } catch (error) {
-        console.log('Erreur lors du décodage du token:', error);
-      }
-    } else {
-      console.log('Aucun token trouvé dans le localStorage.');
+    if (userData) {
+      setUserId(userData.id);
     }
-  }, []);
-
-  const { data: userData, error: errorUser } = useQuery(GET_USER_BY_EMAIL, {
-    variables: { email: userEmail || '' },
-    skip: !userEmail,
-  });
-
-  useEffect(() => {
-    if (userData && userData.userByEmail) {
-      setUserId(userData.userByEmail.id);
-    }
-
-    if (errorUser) {
-      toast({
-        variant: "destructive",
-        title: "Erreur lors de la récupération des données",
-        description: "Une erreur est survenue lors de la récupération des informations de l'utilisateur.",
-      });
-    }
-  }, [userData, errorUser, toast]);
+  }, [userData]);
 
   const { data: reservationsData, loading, error } = useQuery(
     GET_USER_RESERVATIONS,

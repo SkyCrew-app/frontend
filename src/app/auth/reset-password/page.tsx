@@ -47,8 +47,6 @@ function ResetPasswordComponent() {
     setIsLoading(true);
     try {
       await new Promise(resolve => setTimeout(resolve, 1500));
-      console.log('Nouveau mot de passe:', password);
-      console.log('Token:', token);
       setSuccess(true);
       toast({
         title: "Succès",
