@@ -14,9 +14,8 @@ import { WaypointSearch } from "@/components/flight/WaypointSearch"
 import { Spinner } from "@/components/ui/spinner"
 import { Sparkles } from 'lucide-react'
 import { CREATE_FLIGHT, GENERATE_FLIGHT_PLAN } from '@/graphql/flights'
-import { GET_USER_BY_EMAIL } from '@/graphql/user'
 import { toast } from '@/components/hooks/use-toast'
-import { jwtDecode } from 'jwt-decode'
+import { useDecodedToken, useUserData } from '@/components/hooks/userHooks';
 
 enum FlightCategory {
   VFR = "VFR",
@@ -30,46 +29,16 @@ const steps = [
   "Confirmation"
 ]
 
-interface TokenPayload {
-  email: string;
-}
-
 export default function CreateCustomFlightPlan() {
-  const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [userId, setUserId] = useState<number | null>(null);
+  const userEmail = useDecodedToken();
+  const userData = useUserData(userEmail);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      try {
-        const decodedToken = jwtDecode<TokenPayload>(token);
-        setUserEmail(decodedToken.email);
-      } catch (error) {
-        console.log('Erreur lors du décodage du token:', error);
-      }
-    } else {
-      console.log('Aucun token trouvé dans le localStorage.');
+    if (userData) {
+      setUserId(userData.id);
     }
-  }, []);
-
-  const { data: userData, error: errorUser } = useQuery(GET_USER_BY_EMAIL, {
-    variables: { email: userEmail || '' },
-    skip: !userEmail,
-  });
-
-  useEffect(() => {
-    if (userData && userData.userByEmail) {
-      setUserId(userData.userByEmail.id);
-    }
-
-    if (errorUser) {
-      toast({
-        variant: "destructive",
-        title: "Erreur lors de la récupération des données",
-        description: "Une erreur est survenue lors de la récupération des informations de l'utilisateur.",
-      });
-    }
-  }, [userData, errorUser, toast]);
+  }, [userData]);
 
   const [currentStep, setCurrentStep] = useState(0)
   const [flightPlan, setFlightPlan] = useState({

@@ -15,7 +15,7 @@ export default function AdminELearningPage() {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-4xl font-bold mb-8 text-center">Administration E-Learning</h1>
-        
+
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
           <TabsList className="grid w-full grid-cols-4 gap-4">
             <TabsTrigger value="courses" className="flex items-center justify-center">
@@ -35,19 +35,19 @@ export default function AdminELearningPage() {
               Évaluations
             </TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="courses" className="space-y-8">
             <CourseManagement />
           </TabsContent>
-          
+
           <TabsContent value="modules" className="space-y-8">
             <ModuleManagement />
           </TabsContent>
-          
+
           <TabsContent value="lessons" className="space-y-8">
             <LessonManagement />
           </TabsContent>
-          
+
           <TabsContent value="evaluations" className="space-y-8">
             <EvaluationManagement />
           </TabsContent>

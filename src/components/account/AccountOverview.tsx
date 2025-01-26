@@ -6,10 +6,22 @@ import { GET_USER_DATA } from '@/graphql/account';
 import { Skeleton } from "@/components/ui/skeleton"
 import { AlertCircle } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { useEffect, useState } from "react";
+import { useDecodedToken, useUserData } from "../hooks/userHooks";
 
 export default function AccountOverview() {
+  const userEmail = useDecodedToken();
+  const userData = useUserData(userEmail);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (userData) {
+      setUserId(userData.id);
+    }
+  }, [userData]);
+
   const { data, loading, error } = useQuery(GET_USER_DATA, {
-    variables: { userId: 2 },
+    variables: { userId },
     fetchPolicy: 'network-only',
   });
 

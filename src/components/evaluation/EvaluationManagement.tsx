@@ -16,7 +16,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { PlusCircle, Trash2, Check, Book, Award, HelpCircle, Edit, X } from 'lucide-react';
+import { Trash2, Check, Book, HelpCircle, Edit } from 'lucide-react';
 import { toast } from "@/components/hooks/use-toast";
 
 export function EvaluationManagement() {

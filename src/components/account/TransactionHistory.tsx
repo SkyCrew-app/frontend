@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useQuery } from '@apollo/client'
 import { format } from 'date-fns'
 import {
@@ -25,6 +25,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { GET_USER_DATA } from '@/graphql/account'
+import { useDecodedToken, useUserData } from '../hooks/userHooks'
 
 interface Transaction {
   id: string
@@ -58,9 +59,18 @@ export default function TransactionHistory() {
   const [searchTerm, setSearchTerm] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
+  const userEmail = useDecodedToken();
+  const userData = useUserData(userEmail);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (userData) {
+      setUserId(userData.id);
+    }
+  }, [userData]);
 
   const { data, loading, error } = useQuery(GET_USER_DATA, {
-    variables: { userId: 2 },
+    variables: { userId },
     fetchPolicy: 'network-only',
   })
 

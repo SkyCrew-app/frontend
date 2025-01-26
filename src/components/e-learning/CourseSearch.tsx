@@ -25,8 +25,8 @@ export function CourseSearch({ searchTerm, setSearchTerm, category, setCategory 
           <Search className="h-4 w-4" />
         </Button>
       </div>
-      <Select 
-        value={category} 
+      <Select
+        value={category}
         onValueChange={setCategory}
       >
         <SelectTrigger className="w-full">

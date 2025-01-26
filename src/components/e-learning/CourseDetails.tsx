@@ -68,9 +68,9 @@ export function CourseDetails({ course, courseProgress, progressLoading, progres
             </div>
           )}
         </div>
-        <Accordion 
-          type="single" 
-          collapsible 
+        <Accordion
+          type="single"
+          collapsible
           className="w-full"
           value={expandedModule}
           onValueChange={setExpandedModule}
@@ -84,9 +84,9 @@ export function CourseDetails({ course, courseProgress, progressLoading, progres
                   {module.title}
                 </AccordionTrigger>
                 <AccordionContent>
-                  <ModuleContent 
-                    module={module} 
-                    setSelectedLesson={setSelectedLesson} 
+                  <ModuleContent
+                    module={module}
+                    setSelectedLesson={setSelectedLesson}
                     isExpanded={expandedModule === module.id}
                   />
                 </AccordionContent>

@@ -9,9 +9,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, ArrowRight, CheckCircle, Paperclip, BookOpen } from 'lucide-react';
 import Link from 'next/link';
-import { AwaitedReactNode, JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal, useState } from 'react';
+import { AwaitedReactNode, JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal, useEffect, useState } from 'react';
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useDecodedToken, useUserData } from '@/components/hooks/userHooks';
 
 export default function LessonPage() {
   const params = useParams();
@@ -19,8 +20,15 @@ export default function LessonPage() {
   const courseId = params.courseId as string;
   const lessonId = params.lessonId as string;
   const [isCompleting, setIsCompleting] = useState(false);
+  const userEmail = useDecodedToken();
+  const userData = useUserData(userEmail);
+  const [userId, setUserId] = useState<string | null>(null);
 
-  const userId = 2; // TODO: Replace with actual user authentication
+  useEffect(() => {
+    if (userData) {
+      setUserId(userData.id);
+    }
+  }, [userData]);
 
   const { data, loading, error } = useQuery(GET_LESSON_CONTENT, {
     variables: { lessonId: parseInt(lessonId, 10), userId },
