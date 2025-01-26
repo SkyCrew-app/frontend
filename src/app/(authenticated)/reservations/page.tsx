@@ -17,20 +17,15 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { useToast } from "@/components/hooks/use-toast";
 import { Label } from '@/components/ui/label';
-import { jwtDecode } from 'jwt-decode';
-import { GET_USER_BY_EMAIL } from '@/graphql/user';
 import { CREATE_RESERVATION, DELETE_RESERVATION, GET_FILTERED_RESERVATIONS, UPDATE_RESERVATION } from '@/graphql/reservation';
 import { GET_AIRCRAFTS } from '@/graphql/planes';
 import { Reservation, ReservationStatus } from '@/interfaces/reservation';
 import { GET_SETTINGS } from '@/graphql/settings';
+import { useDecodedToken, useUserData } from '@/components/hooks/userHooks';
 
 interface Aircraft {
   id: number;
   registration_number: string;
-}
-
-interface TokenPayload {
-  email: string;
 }
 
 const flightCategoryMapping = {
@@ -60,8 +55,6 @@ export default function ReservationCalendar() {
   const [purpose, setPurpose] = useState('');
   const [notes, setNotes] = useState('');
   const [flightCategory, setFlightCategory] = useState('');
-  const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [userId, setUserId] = useState<number | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editPurpose, setEditPurpose] = useState('');
   const [editNotes, setEditNotes] = useState('');
@@ -72,6 +65,9 @@ export default function ReservationCalendar() {
   const nextDate = format(addDays(currentDate || new Date(), 1), 'yyyy-MM-dd');
   const [disabledDays, setDisabledDays] = useState<string[]>([]);
   const [hours, setHours] = useState<Date[]>([]);
+  const userEmail = useDecodedToken();
+  const userData = useUserData(userEmail);
+  const [userId, setUserId] = useState<string | null>(null);
   const { toast } = useToast();
   const [createReservation] = useMutation(CREATE_RESERVATION);
   const [updateReservation] = useMutation(UPDATE_RESERVATION);
@@ -85,10 +81,11 @@ export default function ReservationCalendar() {
     }
   );
 
-  const { data: userData, error: errorUser } = useQuery(GET_USER_BY_EMAIL, {
-    variables: { email: userEmail || '' },
-    skip: !userEmail,
-  });
+  useEffect(() => {
+    if (userData) {
+      setUserId(userData.id);
+    }
+  }, [userData]);
 
   const { data: aircraftData, loading: loadingAircrafts, error: errorAircrafts } = useQuery(GET_AIRCRAFTS);
 
@@ -113,35 +110,6 @@ export default function ReservationCalendar() {
       setDisabledDays(closureDays);
     }
   }, [settingsData, currentDate]);
-
-
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      try {
-        const decodedToken = jwtDecode<TokenPayload>(token);
-        setUserEmail(decodedToken.email);
-      } catch (error) {
-        console.log('Erreur lors du décodage du token:', error);
-      }
-    } else {
-      console.log('Aucun token trouvé dans le localStorage.');
-    }
-  }, []);
-
-  useEffect(() => {
-    if (userData && userData.userByEmail) {
-      setUserId(userData.userByEmail.id);
-    }
-
-    if (errorUser) {
-      toast({
-        variant: "destructive",
-        title: "Erreur lors de la récupération des données",
-        description: "Une erreur est survenue lors de la récupération des informations de l'utilisateur.",
-      });
-    }
-  }, [userData, errorUser]);
 
   const normalizeDayName = (day: string) => day.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 

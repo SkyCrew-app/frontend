@@ -10,6 +10,7 @@ import { LessonContent } from '@/components/e-learning/LessonContent';
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Menu } from 'lucide-react';
+import { useDecodedToken, useUserData } from '@/components/hooks/userHooks';
 
 interface Lesson {
   id: string;
@@ -44,8 +45,15 @@ export default function ELearningPage() {
   const [category, setCategory] = useState('all');
   const [courseProgress, setCourseProgress] = useState<number>(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const userEmail = useDecodedToken();
+  const userData = useUserData(userEmail);
+  const [userId, setUserId] = useState<string | null>(null);
 
-  const userId = 2; // TODO: Replace with actual user authentication
+  useEffect(() => {
+    if (userData) {
+      setUserId(userData.id);
+    }
+  }, [userData]);
 
   const { data: coursesData, loading: coursesLoading, error: coursesError, refetch: refetchCourses } = useQuery(GET_COURSES, {
     variables: {

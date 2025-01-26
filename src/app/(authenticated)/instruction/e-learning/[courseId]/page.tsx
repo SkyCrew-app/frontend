@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery } from '@apollo/client';
 import { GET_COURSE_DETAILS } from '@/graphql/instruction';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { useParams } from 'next/navigation';
+import { useDecodedToken, useUserData } from '@/components/hooks/userHooks';
 
 interface Module {
   id: string;
@@ -25,8 +26,15 @@ export default function CourseDetailPage() {
   const params = useParams();
   const courseId = params.courseId as string;
   const [selectedModule, setSelectedModule] = useState<string | null>(null);
+  const userEmail = useDecodedToken();
+  const userData = useUserData(userEmail);
+  const [userId, setUserId] = useState<string | null>(null);
 
-  const userId = 2; // TODO: Remplacer par la logique d'authentification réelle
+  useEffect(() => {
+    if (userData) {
+      setUserId(userData.id);
+    }
+  }, [userData]);
 
   const { data, loading, error } = useQuery<{ getCourseById: Course }>(GET_COURSE_DETAILS, {
     variables: { courseId: parseFloat(courseId), userId: userId },

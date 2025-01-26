@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useMutation } from "@apollo/client";
 import dynamic from "next/dynamic";
 
@@ -29,6 +29,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useDecodedToken, useUserData } from "../hooks/userHooks";
 
 export function ClientPayPalProvider({ children }: { children: React.ReactNode }) {
   return (
@@ -159,7 +160,6 @@ function CheckoutForm({
       }
 
       if (paymentIntent?.status === "succeeded") {
-        console.log(paymentIntent.id)
         await updatePaymentStatus({
           variables: {
             paymentId: paymentIntent.id,
@@ -219,7 +219,15 @@ export default function TopUpAccount() {
   const { toast } = useToast();
   const [processPayment] = useMutation(PROCESS_PAYMENT);
 
-  const userId = 2;
+  const userEmail = useDecodedToken();
+  const userData = useUserData(userEmail);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (userData) {
+      setUserId(userData.id);
+    }
+  }, [userData]);
 
   const handleInitStripeIntent = async () => {
     try {
@@ -313,7 +321,7 @@ export default function TopUpAccount() {
                     clientSecret={clientSecret}
                     amount={amount}
                     setAmount={setAmount}
-                    userId={userId}
+                    userId={userId ? parseInt(userId) : 0}
                   />
                 </Elements>
               )}
@@ -323,7 +331,7 @@ export default function TopUpAccount() {
               <div className="mt-4">
                 <PayPalButtonsWrapper
                   amount={amount}
-                  userId={userId}
+                  userId={userId ? parseInt(userId) : 0}
                   setAmount={setAmount}
                 />
               </div>

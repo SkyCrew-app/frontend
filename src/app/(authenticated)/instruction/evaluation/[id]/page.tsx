@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, use } from 'react'
+import { useState, use, useEffect } from 'react'
 import { useQuery, useMutation } from '@apollo/client'
 import { GET_EVALUATION_BY_ID, VALIDATE_ANSWERS } from '@/graphql/evaluation'
 import { Button } from "@/components/ui/button"
@@ -16,6 +16,7 @@ import confetti from 'canvas-confetti'
 import Image from 'next/image'
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle } from 'lucide-react'
+import { useDecodedToken, useUserData } from '@/components/hooks/userHooks'
 
 export interface Question {
   id: number;
@@ -45,6 +46,15 @@ export default function EvaluationPage({ params }: { params: Promise<{ id: strin
   const [result, setResult] = useState<{ score: number; passed: boolean } | null>(null)
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [showWarning, setShowWarning] = useState(false)
+  const userEmail = useDecodedToken();
+  const userData = useUserData(userEmail);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (userData) {
+      setUserId(userData.id);
+    }
+  }, [userData]);
 
   const { data, loading, error } = useQuery(GET_EVALUATION_BY_ID, {
     variables: { id: evaluationId },
@@ -67,7 +77,7 @@ export default function EvaluationPage({ params }: { params: Promise<{ id: strin
       const { data } = await validateAnswers({
         variables: {
           evaluationId,
-          userId: 2, // TODO: Replace with actual user ID
+          userId,
           userAnswers: Object.entries(userAnswers).map(([questionId, answer]) => ({
             questionId: parseFloat(questionId),
             answer,

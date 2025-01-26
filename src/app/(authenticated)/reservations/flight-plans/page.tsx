@@ -12,8 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { useToast } from "@/components/hooks/use-toast";
 import { Label } from '@/components/ui/label';
-import { jwtDecode } from 'jwt-decode';
-import { GET_USER_BY_EMAIL, GET_USER_FLIGHT_PLANS, UPDATE_FLIGHT_PLAN } from '@/graphql/flights';
+import { GET_USER_FLIGHT_PLANS, UPDATE_FLIGHT_PLAN } from '@/graphql/flights';
 import {
   Pagination,
   PaginationContent,
@@ -24,10 +23,7 @@ import {
 } from "@/components/ui/pagination"
 import { Badge } from "@/components/ui/badge";
 import Link from 'next/link';
-
-interface TokenPayload {
-  email: string;
-}
+import { useDecodedToken, useUserData } from '@/components/hooks/userHooks';
 
 interface Flight {
   id: number;
@@ -92,8 +88,9 @@ const getStatusVariant = (status: string) => {
 };
 
 export default function MyFlightPlans() {
-  const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [userId, setUserId] = useState<number | null>(null);
+  const userEmail = useDecodedToken();
+  const userData = useUserData(userEmail);
+  const [userId, setUserId] = useState<string | null>(null);
   const [selectedFlight, setSelectedFlight] = useState<Flight | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editFlightType, setEditFlightType] = useState('');
@@ -107,37 +104,10 @@ export default function MyFlightPlans() {
   const itemsPerPage = 6;
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      try {
-        const decodedToken = jwtDecode<TokenPayload>(token);
-        setUserEmail(decodedToken.email);
-      } catch (error) {
-        console.log('Erreur lors du décodage du token:', error);
-      }
-    } else {
-      console.log('Aucun token trouvé dans le localStorage.');
+    if (userData) {
+      setUserId(userData.id);
     }
-  }, []);
-
-  const { data: userData, error: errorUser } = useQuery(GET_USER_BY_EMAIL, {
-    variables: { email: userEmail || '' },
-    skip: !userEmail,
-  });
-
-  useEffect(() => {
-    if (userData && userData.userByEmail) {
-      setUserId(userData.userByEmail.id);
-    }
-
-    if (errorUser) {
-      toast({
-        variant: "destructive",
-        title: "Erreur lors de la récupération des données",
-        description: "Une erreur est survenue lors de la récupération des informations de l'utilisateur.",
-      });
-    }
-  }, [userData, errorUser, toast]);
+  }, [userData]);
 
   const { data: flightPlansData, loading, error } = useQuery(
     GET_USER_FLIGHT_PLANS,

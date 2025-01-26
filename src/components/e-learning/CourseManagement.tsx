@@ -211,8 +211,8 @@ export function CourseManagement() {
                         value={editingCourse?.category}
                         onChange={(e) => setEditingCourse({...editingCourse, category: e.target.value})}
                       />
-                      <Select 
-                        value={editingCourse?.required_license} 
+                      <Select
+                        value={editingCourse?.required_license}
                         onValueChange={(value) => setEditingCourse({...editingCourse, required_license: value})}
                       >
                         <SelectTrigger>

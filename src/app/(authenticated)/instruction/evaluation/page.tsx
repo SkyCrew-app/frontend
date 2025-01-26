@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery } from '@apollo/client';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -14,6 +14,7 @@ import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { GET_USER_EVALUATION_RESULTS } from "@/graphql/evaluation";
+import { useDecodedToken, useUserData } from '@/components/hooks/userHooks';
 
 interface Module {
   id: number;
@@ -40,7 +41,15 @@ export default function EvaluationsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
   const [filterStatus, setFilterStatus] = useState('all');
-  const userId = 2; // TODO: Remplacer par l'ID de l'utilisateur authentifié
+  const userEmail = useDecodedToken();
+  const userData = useUserData(userEmail);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (userData) {
+      setUserId(userData.id);
+    }
+  }, [userData]);
 
   const { data, loading, error } = useQuery(GET_USER_EVALUATION_RESULTS, {
     variables: { userId },
