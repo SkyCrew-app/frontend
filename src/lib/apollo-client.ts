@@ -11,7 +11,7 @@ const uploadLink = createUploadLink({
 const authLink = setContext((_, { headers }) => {
   let token;
   if (typeof window !== 'undefined') {
-    token = localStorage.getItem('token');
+    token = document.cookie.split('; ').find(row => row.startsWith('token='))?.split('=')[1]
   }
   return {
     headers: {

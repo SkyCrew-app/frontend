@@ -31,7 +31,7 @@ export default function Navbar() {
   const [userAccountBalance, setUserAccountBalance] = useState<number | null>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = document.cookie.split('; ').find(row => row.startsWith('token='))?.split('=')[1]
     if (token) {
       try {
         const decodedToken = jwtDecode<{ email: string }>(token);
@@ -61,7 +61,6 @@ export default function Navbar() {
   const handleLogout = async () => {
     try {
       await logout();
-      localStorage.removeItem('token');
       router.push('/');
     } catch (error) {
       console.error('Erreur lors de la déconnexion:', error);
