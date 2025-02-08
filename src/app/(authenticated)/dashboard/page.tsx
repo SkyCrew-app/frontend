@@ -10,14 +10,16 @@ import { useToast } from '@/components/hooks/use-toast'
 import { Skeleton } from "@/components/ui/skeleton"
 import { useQuery } from '@apollo/client'
 import { GET_USER_PROFILE } from '@/graphql/user'
-import { jwtDecode } from 'jwt-decode'
 import Link from 'next/link'
 import { GET_ARTICLES } from '@/graphql/articles'
+import { useCurrentUser, useUserData } from '@/components/hooks/userHooks';
 
 export default function ActualitesAeroclub() {
-  const [userEmail, setUserEmail] = useState<string | null>(null)
-  const [first_name, setFirstName] = useState<string | null>(null)
   const [weatherData, setWeatherData] = useState<any | null>(null)
+  const userEmail = useCurrentUser();
+  const userData = useUserData(userEmail);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [first_name, setFirstName] = useState<string | null>(null);
   const { toast } = useToast()
 
   const { data: articlesData, loading: articlesLoading, error: articlesError } = useQuery(GET_ARTICLES)
@@ -51,31 +53,24 @@ export default function ActualitesAeroclub() {
   }, [])
 
   useEffect(() => {
-    const token = document.cookie.split('; ').find(row => row.startsWith('token='))?.split('=')[1]
-
-    if (token) {
-      try {
-        const decodedToken = jwtDecode<{ email: string }>(token)
-        setUserEmail(decodedToken.email)
-      } catch (error) {
-        console.error('Erreur lors du décodage du token:', error)
-      }
+    if (userData) {
+      setUserId(userData.id);
     }
-  }, [])
+  }, [userData]);
 
-  const { data: userData, loading: userLoading, error: userError } = useQuery(GET_USER_PROFILE, {
+  const { data: userInfo, loading: userLoading, error: userError } = useQuery(GET_USER_PROFILE, {
     variables: { email: userEmail },
     skip: !userEmail,
   })
 
   useEffect(() => {
-    if (userData && userData.userByEmail) {
-      const { first_name } = userData.userByEmail
+    if (userInfo && userInfo.userByEmail) {
+      const { first_name } = userInfo.userByEmail
       if (first_name) {
         setFirstName(first_name)
       }
     }
-  }, [userData])
+  }, [userInfo])
 
   useEffect(() => {
     if (userError) {

@@ -22,7 +22,7 @@ import { fr } from "date-fns/locale"
 import { Star, Clock, Plus, User, Book, MessageSquare, CheckCircle, Calendar } from "lucide-react"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
-import { useDecodedToken, useUserData } from "@/components/hooks/userHooks"
+import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
 
 export default function CourseDetails() {
   const { id } = useParams()
@@ -30,7 +30,7 @@ export default function CourseDetails() {
   const [newCompetency, setNewCompetency] = useState({ name: "", description: "" })
   const [newFeedback, setNewFeedback] = useState("")
   const [newRating, setNewRating] = useState(0)
-  const userEmail = useDecodedToken();
+  const userEmail = useCurrentUser();
   const userData = useUserData(userEmail);
   const [userId, setUserId] = useState<number | null>(null);
 

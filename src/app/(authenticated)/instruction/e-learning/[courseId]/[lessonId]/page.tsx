@@ -12,7 +12,7 @@ import Link from 'next/link';
 import { AwaitedReactNode, JSXElementConstructor, Key, ReactElement, ReactNode, ReactPortal, useEffect, useState } from 'react';
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useDecodedToken, useUserData } from '@/components/hooks/userHooks';
+import { useCurrentUser, useUserData } from '@/components/hooks/userHooks';
 
 export default function LessonPage() {
   const params = useParams();
@@ -20,7 +20,7 @@ export default function LessonPage() {
   const courseId = params.courseId as string;
   const lessonId = params.lessonId as string;
   const [isCompleting, setIsCompleting] = useState(false);
-  const userEmail = useDecodedToken();
+  const userEmail = useCurrentUser();
   const userData = useUserData(userEmail);
   const [userId, setUserId] = useState<string | null>(null);
 

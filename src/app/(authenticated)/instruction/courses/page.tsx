@@ -11,13 +11,13 @@ import CourseList from "@/components/courses/CourseList"
 import CourseCalendar from "@/components/courses/CourseCalendar"
 import NewCourseModal from "@/components/courses/NewCourseModal"
 import { GET_COURSE_BY_USER_ID } from "@/graphql/course"
-import { useDecodedToken, useUserData } from "@/components/hooks/userHooks"
+import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
 
 export default function Home() {
   const [viewMode, setViewMode] = useState<"list" | "calendar">("list")
   const [filter, setFilter] = useState("all")
   const [isNewCourseModalOpen, setIsNewCourseModalOpen] = useState(false)
-  const userEmail = useDecodedToken();
+  const userEmail = useCurrentUser();
   const userData = useUserData(userEmail);
   const [userId, setUserId] = useState<number | null>(null);
 

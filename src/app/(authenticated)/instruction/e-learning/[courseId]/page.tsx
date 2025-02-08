@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { useParams } from 'next/navigation';
-import { useDecodedToken, useUserData } from '@/components/hooks/userHooks';
+import { useCurrentUser, useUserData } from '@/components/hooks/userHooks';
 
 interface Module {
   id: string;
@@ -26,7 +26,7 @@ export default function CourseDetailPage() {
   const params = useParams();
   const courseId = params.courseId as string;
   const [selectedModule, setSelectedModule] = useState<string | null>(null);
-  const userEmail = useDecodedToken();
+  const userEmail = useCurrentUser();
   const userData = useUserData(userEmail);
   const [userId, setUserId] = useState<string | null>(null);
 

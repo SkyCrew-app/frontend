@@ -21,7 +21,7 @@ import { CREATE_RESERVATION, DELETE_RESERVATION, GET_FILTERED_RESERVATIONS, UPDA
 import { GET_AIRCRAFTS } from '@/graphql/planes';
 import { Reservation, ReservationStatus } from '@/interfaces/reservation';
 import { GET_SETTINGS } from '@/graphql/settings';
-import { useDecodedToken, useUserData } from '@/components/hooks/userHooks';
+import { useCurrentUser, useUserData } from '@/components/hooks/userHooks';
 
 interface Aircraft {
   id: number;
@@ -65,7 +65,7 @@ export default function ReservationCalendar() {
   const nextDate = format(addDays(currentDate || new Date(), 1), 'yyyy-MM-dd');
   const [disabledDays, setDisabledDays] = useState<string[]>([]);
   const [hours, setHours] = useState<Date[]>([]);
-  const userEmail = useDecodedToken();
+  const userEmail = useCurrentUser();
   const userData = useUserData(userEmail);
   const [userId, setUserId] = useState<string | null>(null);
   const { toast } = useToast();

@@ -10,7 +10,7 @@ import { LessonContent } from '@/components/e-learning/LessonContent';
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Menu } from 'lucide-react';
-import { useDecodedToken, useUserData } from '@/components/hooks/userHooks';
+import { useCurrentUser, useUserData } from '@/components/hooks/userHooks';
 
 interface Lesson {
   id: string;
@@ -45,7 +45,7 @@ export default function ELearningPage() {
   const [category, setCategory] = useState('all');
   const [courseProgress, setCourseProgress] = useState<number>(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const userEmail = useDecodedToken();
+  const userEmail = useCurrentUser();
   const userData = useUserData(userEmail);
   const [userId, setUserId] = useState<string | null>(null);
 
