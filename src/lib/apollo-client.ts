@@ -1,5 +1,4 @@
 import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client';
-import { setContext } from '@apollo/client/link/context';
 import { onError } from "@apollo/client/link/error";
 import { createUploadLink } from 'apollo-upload-client';
 
@@ -8,29 +7,17 @@ const uploadLink = createUploadLink({
   credentials: 'include',
 });
 
-const authLink = setContext((_, { headers }) => {
-  let token;
-  if (typeof window !== 'undefined') {
-    token = document.cookie.split('; ').find(row => row.startsWith('token='))?.split('=')[1]
-  }
-  return {
-    headers: {
-      ...headers,
-      authorization: token ? `Bearer ${token}` : '',
-      'x-apollo-operation-name': 'MyOperation',
-      'apollo-require-preflight': 'true',
-    },
-  };
-});
-
 const errorLink = onError(({ graphQLErrors, networkError }) => {
-  if (graphQLErrors)
+  if (graphQLErrors) {
     graphQLErrors.forEach(({ message, locations, path }) =>
       console.log(
         `[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}`
       )
     );
-  if (networkError) console.log(`[Network error]: ${networkError}`);
+  }
+  if (networkError) {
+    console.log(`[Network error]: ${networkError}`);
+  }
 });
 
 const cache = new InMemoryCache({
@@ -39,7 +26,7 @@ const cache = new InMemoryCache({
       fields: {
         paginatedData: {
           keyArgs: ["filter"],
-          merge(existing, incoming, { args }) {
+          merge(existing, incoming) {
             return {
               ...incoming,
               data: existing ? [...existing.data, ...incoming.data] : incoming.data,
@@ -52,7 +39,7 @@ const cache = new InMemoryCache({
 });
 
 const client = new ApolloClient({
-  link: errorLink.concat(authLink.concat(uploadLink)),
+  link: errorLink.concat(uploadLink),
   cache,
   defaultOptions: {
     watchQuery: {

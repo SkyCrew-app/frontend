@@ -25,7 +25,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { GET_USER_DATA } from '@/graphql/account'
-import { useDecodedToken, useUserData } from '../hooks/userHooks'
+import { useCurrentUser, useUserData } from '../hooks/userHooks'
 
 interface Transaction {
   id: string
@@ -59,7 +59,7 @@ export default function TransactionHistory() {
   const [searchTerm, setSearchTerm] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
-  const userEmail = useDecodedToken();
+  const userEmail = useCurrentUser();
   const userData = useUserData(userEmail);
   const [userId, setUserId] = useState<string | null>(null);
 

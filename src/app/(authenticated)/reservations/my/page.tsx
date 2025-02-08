@@ -24,11 +24,7 @@ import {
 } from "@/components/ui/pagination"
 import { Badge } from "@/components/ui/badge";
 import Link from 'next/link';
-import { useDecodedToken, useUserData } from '@/components/hooks/userHooks';
-
-interface TokenPayload {
-  email: string;
-}
+import { useCurrentUser, useUserData } from '@/components/hooks/userHooks';
 
 interface Reservation {
   id: number;
@@ -83,7 +79,7 @@ const getStatusVariant = (status: ReservationStatus) => {
 };
 
 export default function MyReservations() {
-  const userEmail = useDecodedToken();
+  const userEmail = useCurrentUser();
   const userData = useUserData(userEmail);
   const [userId, setUserId] = useState<string | null>(null);
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);

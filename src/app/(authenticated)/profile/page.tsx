@@ -19,11 +19,14 @@ import { Award, CheckCircle, AlertCircle, Calendar, FileText, Hash } from 'lucid
 import { AerodromeCombobox } from '@/components/ui/comboboAerodrome';
 import { TimezoneCombobox } from '@/components/ui/timezoneCombobox';
 import Flag from 'react-world-flags';
+import { useCurrentUser, useUserData } from '@/components/hooks/userHooks';
 
 export default function ProfilePage() {
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
   const [show2FAAlert, setShow2FAAlert] = useState(false);
-  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const userEmail = useCurrentUser();
+  const userConnexion = useUserData(userEmail);
+  const [userId, setUserId] = useState<string | null>(null);
   const [addressSuggestions, setAddressSuggestions] = useState<string[]>([]);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -77,23 +80,10 @@ export default function ProfilePage() {
   });
 
   useEffect(() => {
-    if (!userEmail) {
-      const token = document.cookie.split('; ').find(row => row.startsWith('token='))?.split('=')[1]
-
-      if (token) {
-        try {
-          const decodedToken = jwtDecode<{ email: string }>(token);
-          setUserEmail(decodedToken.email);
-        } catch (error) {
-          toast({
-            variant: "destructive",
-            title: "Erreur",
-            description: "Erreur lors de la récupération de l'email de l'utilisateur",
-          });
-        }
-      }
+    if (userConnexion) {
+      setUserId(userConnexion.id);
     }
-  }, [userEmail]);
+  }, [userConnexion]);
 
   const { data: userData, loading, error: errorUser } = useQuery(GET_USER_BY_EMAIL, {
     variables: { email: userEmail || '' },

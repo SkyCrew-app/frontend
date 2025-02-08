@@ -21,26 +21,23 @@ import {
 import { Button } from '@/components/ui/button';
 import { GET_USER_PROFILE } from '@/graphql/user';
 import { LOGOUT_MUTATION } from '@/graphql/system';
+import { useCurrentUser, useUserData } from '@/components/hooks/userHooks';
 
 export default function Navbar() {
   const router = useRouter();
   const [logout] = useMutation(LOGOUT_MUTATION);
-  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [initials, setInitials] = useState<string | null>(null);
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
   const [userAccountBalance, setUserAccountBalance] = useState<number | null>(null);
+  const userEmail = useCurrentUser();
+  const userData = useUserData(userEmail);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    const token = document.cookie.split('; ').find(row => row.startsWith('token='))?.split('=')[1]
-    if (token) {
-      try {
-        const decodedToken = jwtDecode<{ email: string }>(token);
-        setUserEmail(decodedToken.email);
-      } catch (error) {
-        console.error('Erreur lors du décodage du token:', error);
-      }
+    if (userData) {
+      setUserId(userData.id);
     }
-  }, []);
+  }, [userData]);
 
   const { data, loading, error } = useQuery(GET_USER_PROFILE, {
     variables: { email: userEmail },

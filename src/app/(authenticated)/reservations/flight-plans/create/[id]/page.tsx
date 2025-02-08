@@ -15,7 +15,7 @@ import { Spinner } from "@/components/ui/spinner"
 import { Sparkles } from 'lucide-react'
 import { CREATE_FLIGHT, GENERATE_FLIGHT_PLAN } from '@/graphql/flights'
 import { toast } from '@/components/hooks/use-toast'
-import { useDecodedToken, useUserData } from '@/components/hooks/userHooks';
+import { useCurrentUser, useUserData } from '@/components/hooks/userHooks';
 
 enum FlightCategory {
   VFR = "VFR",
@@ -30,7 +30,7 @@ const steps = [
 ]
 
 export default function CreateCustomFlightPlan() {
-  const userEmail = useDecodedToken();
+  const userEmail = useCurrentUser();
   const userData = useUserData(userEmail);
   const [userId, setUserId] = useState<string | null>(null);
 
