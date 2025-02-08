@@ -7,10 +7,10 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { AlertCircle } from 'lucide-react'
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useEffect, useState } from "react";
-import { useDecodedToken, useUserData } from "../hooks/userHooks";
+import { useCurrentUser, useUserData } from "../hooks/userHooks";
 
 export default function AccountOverview() {
-  const userEmail = useDecodedToken();
+  const userEmail = useCurrentUser();
   const userData = useUserData(userEmail);
   const [userId, setUserId] = useState<string | null>(null);
 
