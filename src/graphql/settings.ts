@@ -33,6 +33,7 @@ export const GET_ADMINISTRATION = gql`
       isMaintenanceActive
       maintenanceMessage
       maintenanceTime
+      fuelPrice
     }
   }
 `;

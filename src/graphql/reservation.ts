@@ -84,3 +84,19 @@ export const GET_USER_RESERVATIONS = gql`
     }
   }
 `;
+
+export const GET_RESERVATIONS = gql`
+  query GetReservations {
+    reservations {
+      id
+      aircraft {
+        id
+        registration_number
+        hourly_cost
+      }
+      start_time
+      end_time
+      status
+    }
+  }
+`
