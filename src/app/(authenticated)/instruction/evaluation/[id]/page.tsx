@@ -16,7 +16,7 @@ import confetti from 'canvas-confetti'
 import Image from 'next/image'
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle } from 'lucide-react'
-import { useDecodedToken, useUserData } from '@/components/hooks/userHooks'
+import { useCurrentUser, useUserData } from '@/components/hooks/userHooks'
 
 export interface Question {
   id: number;
@@ -46,7 +46,7 @@ export default function EvaluationPage({ params }: { params: Promise<{ id: strin
   const [result, setResult] = useState<{ score: number; passed: boolean } | null>(null)
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [showWarning, setShowWarning] = useState(false)
-  const userEmail = useDecodedToken();
+  const userEmail = useCurrentUser();
   const userData = useUserData(userEmail);
   const [userId, setUserId] = useState<string | null>(null);
 

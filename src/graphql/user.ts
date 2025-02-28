@@ -161,3 +161,12 @@ export const VERIFY_2FA_SECRET = gql`
     verify2FA(email: $email, token: $token)
   }
 `;
+
+export const GET_ME = gql`
+  query {
+    me {
+      id
+      email
+    }
+  }
+`;

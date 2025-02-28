@@ -43,7 +43,7 @@ export default function LoginPage() {
       const response = await login({ variables: { email, password } });
       const { access_token, is2FAEnabled } = response.data.login;
 
-      localStorage.setItem('token', access_token);
+      document.cookie = `token=${access_token}; path=/`;
 
       toast({
         title: "Connexion réussie",

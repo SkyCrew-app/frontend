@@ -80,6 +80,8 @@
     "react-i18next": "^15.0.3",
     "react-quill": "^2.0.0",
     "react-world-flags": "^1.6.0",
+    "recharts": "^2.15.1",
+    "socket.io-client": "^4.8.1",
     "tailwind-merge": "^2.5.3",
     "tiptap-extension-font-size": "^1.2.0",
     "vaul": "^1.1.0",

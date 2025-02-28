@@ -13,6 +13,7 @@ export const GET_AIRCRAFTS = gql`
       total_flight_hours
       image_url
       documents_url
+      consumption
       maintenances {
         id
         maintenance_type

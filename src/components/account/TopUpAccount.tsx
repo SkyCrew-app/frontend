@@ -29,7 +29,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { useDecodedToken, useUserData } from "../hooks/userHooks";
+import { useCurrentUser, useUserData } from "../hooks/userHooks";
 
 export function ClientPayPalProvider({ children }: { children: React.ReactNode }) {
   return (
@@ -219,7 +219,7 @@ export default function TopUpAccount() {
   const { toast } = useToast();
   const [processPayment] = useMutation(PROCESS_PAYMENT);
 
-  const userEmail = useDecodedToken();
+  const userEmail = useCurrentUser();
   const userData = useUserData(userEmail);
   const [userId, setUserId] = useState<string | null>(null);
 

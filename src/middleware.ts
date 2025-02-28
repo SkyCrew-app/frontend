@@ -15,9 +15,9 @@ const roleBasedRoutes = {
   '/user-management': ['user', 'user']
 };
 
-async function isInMaintenanceMode() {
+async function isInMaintenanceMode(req: NextRequest) {
   try {
-    const response = await fetch('http://localhost:3000/graphql', {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/graphql`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -33,33 +33,23 @@ async function isInMaintenanceMode() {
     });
 
     const result = await response.json();
-
-    if (result.data && typeof result.data.getSiteStatus === 'boolean') {
-      return result.data.getSiteStatus;
-    } else {
-      console.error('Unexpected response structure:', result);
-      return false;
-    }
+    return result.data?.getSiteStatus ?? false;
   } catch (error) {
-    console.error('Erreur lors de la vérification du mode maintenance:', error);
+    console.error('Erreur maintenance:', error);
     return false;
   }
 }
 
 export async function middleware(req: NextRequest) {
+  const response = NextResponse.next();
   const isStaticFile = req.nextUrl.pathname.startsWith('/_next') || req.nextUrl.pathname.includes('/static');
-  if (isStaticFile) {
-    return NextResponse.next();
-  }
 
-  const maintenance = await isInMaintenanceMode();
-  if (maintenance && req.nextUrl.pathname !== '/system/maintenance') {
-    const maintenanceUrl = new URL('/system/maintenance', req.url);
-    return NextResponse.redirect(maintenanceUrl);
-  }
+  if (isStaticFile) return response;
 
-  if (maintenance && req.nextUrl.pathname === '/system/maintenance') {
-    return NextResponse.next();
+  const maintenance = await isInMaintenanceMode(req);
+  if (maintenance && !req.nextUrl.pathname.startsWith('/system/maintenance')) {
+    response.cookies.delete('token');
+    return NextResponse.redirect(new URL('/system/maintenance', req.url));
   }
 
   const isPublicPath = publicPaths.has(req.nextUrl.pathname);
@@ -67,38 +57,46 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  const token = req.cookies.get('token');
+  const token = req.cookies.get('token')?.value;
   if (!token) {
-    const loginUrl = new URL('/system/notconnected', req.url);
-    return NextResponse.redirect(loginUrl);
+    return NextResponse.redirect(new URL('/system/notconnected', req.url));
   }
 
   try {
-    const decodedToken = jwtDecode<CustomJwtPayload>(token.value);
-    if (decodedToken.exp * 1000 < Date.now()) {
-      const loginUrl = new URL('/system/notconnected', req.url);
-      return NextResponse.redirect(loginUrl);
+    const decodedToken = jwtDecode<CustomJwtPayload>(token);
+
+    if ((decodedToken.exp * 1000) < Date.now()) {
+      response.cookies.delete('token');
+      return NextResponse.redirect(new URL('/system/notconnected', req.url));
     }
 
     const userRole = decodedToken.role;
-
     if (userRole) {
       for (const [route, allowedRoles] of Object.entries(roleBasedRoutes)) {
         if (req.nextUrl.pathname.startsWith(route) && !allowedRoles.includes(userRole)) {
-          const unauthorizedUrl = new URL('/system/unauthorized', req.url);
-          return NextResponse.redirect(unauthorizedUrl);
+          return NextResponse.redirect(new URL('/system/unauthorized', req.url));
         }
       }
     }
+
+    response.cookies.set({
+      name: 'token',
+      value: token,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+      maxAge: 3600
+    });
+
   } catch (error) {
-    const loginUrl = new URL('/system/notconnected', req.url);
-    return NextResponse.redirect(loginUrl);
+    response.cookies.delete('token');
+    return NextResponse.redirect(new URL('/system/notconnected', req.url));
   }
 
-  return NextResponse.next();
+  return response;
 }
 
 export const config = {
   matcher: ['/:path*'],
 };
-
