@@ -129,7 +129,7 @@ export default function CreateCustomFlightPlan() {
       const { data } = await generateFlightPlan({
         variables: {
           ...aiPrompt,
-          user_id: parseInt(aiPrompt.user_id.toString()),
+          user_id: parseInt(userData.id),
           reservation_id: aiPrompt.reservation_id
         }
       })
