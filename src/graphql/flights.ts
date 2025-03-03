@@ -125,3 +125,61 @@ export const GENERATE_FLIGHT_PLAN = gql`
     }
   }
 `;
+
+export const GET_FLIGHT = gql`
+  query GetFlight($id: Int!) {
+    getFlightById(id: $id) {
+      id
+      flight_hours
+      flight_type
+      origin_icao
+      destination_icao
+      weather_conditions
+      number_of_passengers
+      encoded_polyline
+      distance_km
+      estimated_flight_time
+      waypoints
+      detailed_waypoints
+      reservation {
+        id
+        start_time
+        end_time
+        purpose
+        aircraft {
+          id
+          registration_number
+          model
+          image_url
+        }
+      }
+      user {
+        id
+        first_name
+        last_name
+        role {
+          role_name
+        }
+      }
+    }
+  }
+`;
+
+export const UPDATE_FLIGHT = gql`
+  mutation UpdateFlight($updateFlightInput: UpdateFlightInput!) {
+    updateFlight(updateFlightInput: $updateFlightInput) {
+      id
+      flight_hours
+      flight_type
+      origin_icao
+      destination_icao
+      weather_conditions
+      number_of_passengers
+      encoded_polyline
+      distance_km
+      estimated_flight_time
+      waypoints
+      detailed_waypoints
+    }
+  }
+`;
