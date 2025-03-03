@@ -15,83 +15,11 @@ import { Separator } from "@/components/ui/separator"
 import FlightDetailsForm from "@/components/close_flight/FlightDetailsForm"
 import IncidentForm from "@/components/close_flight/IncidentForm"
 import FlightNotesForm from "@/components/close_flight/FlightNotesForm"
-import { useMutation, useQuery, gql } from "@apollo/client"
+import { useMutation, useQuery } from "@apollo/client"
 import { useParams, useRouter } from "next/navigation"
 import { ScrollArea } from "@/components/ui/scroll-area"
-
-const GET_FLIGHT = gql`
-  query GetFlight($id: Int!) {
-    getFlightById(id: $id) {
-      id
-      flight_hours
-      flight_type
-      origin_icao
-      destination_icao
-      weather_conditions
-      number_of_passengers
-      encoded_polyline
-      distance_km
-      estimated_flight_time
-      waypoints
-      detailed_waypoints
-      reservation {
-        id
-        start_time
-        end_time
-        purpose
-        aircraft {
-          id
-          registration_number
-          model
-          image_url
-        }
-      }
-      user {
-        id
-        first_name
-        last_name
-        role {
-          role_name
-        }
-      }
-    }
-  }
-`
-
-const UPDATE_FLIGHT = gql`
-  mutation UpdateFlight($updateFlightInput: UpdateFlightInput!) {
-    updateFlight(updateFlightInput: $updateFlightInput) {
-      id
-      flight_hours
-      flight_type
-      origin_icao
-      destination_icao
-      weather_conditions
-      number_of_passengers
-      encoded_polyline
-      distance_km
-      estimated_flight_time
-      waypoints
-      detailed_waypoints
-    }
-  }
-`
-
-const CREATE_INCIDENT = gql`
-  mutation CreateIncident($incident: IncidentInput!) {
-    createIncident(incident: $incident) {
-      id
-      date
-      severity_level
-      description
-      damage_report
-      corrective_actions
-      status
-      priority
-      category
-    }
-  }
-`
+import { GET_FLIGHT, UPDATE_FLIGHT } from "@/graphql/flights"
+import { CREATE_INCIDENT } from "@/graphql/incident"
 
 const flightRecapSchema = z.object({
   flight_hours: z.number().min(0, "Les heures de vol ne peuvent pas être négatives"),
@@ -193,8 +121,6 @@ export default function FlightRecap() {
         },
       })
 
-      console.log("Flight updated:", flightData.updateFlight)
-
       if (formData.incidentOccurred) {
         const { data: incidentData } = await createIncident({
           variables: {
@@ -211,21 +137,19 @@ export default function FlightRecap() {
             },
           },
         })
-
-        console.log("Incident created:", incidentData.createIncident)
       }
 
       setIsSubmitted(true)
     } catch (error) {
       console.error("Error submitting flight recap:", error)
-      // Handle error (e.g., show error message to user)
+      //TODO: Handle error (e.g., show error message to user)
     } finally {
       setIsSubmitting(false)
     }
   }
 
   const handleExportPDF = () => {
-    // Logique pour exporter en PDF
+    //TODO: Export flight recap to PDF
     console.log("Exporting to PDF...")
   }
 
