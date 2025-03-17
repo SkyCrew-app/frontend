@@ -186,8 +186,8 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
             >
               <Bell className="h-5 w-5 text-slate-700 dark:text-slate-300" />
               {unreadNotificationsCount > 0 && (
-                <span className="absolute top-0 right-0 inline-flex items-center justify-center h-5 w-5 text-xs font-bold text-white bg-gradient-to-r from-red-500 to-pink-500 rounded-full border-2 border-white dark:border-slate-900">
-                  {unreadNotificationsCount}
+                <span className="absolute top-0 right-0 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 text-[10px] font-bold text-white bg-gradient-to-r from-red-500 to-pink-500 rounded-full border-2 border-white dark:border-slate-900">
+                  {unreadNotificationsCount > 99 ? "99+" : unreadNotificationsCount}
                 </span>
               )}
               <span className="sr-only">Notifications</span>
@@ -200,7 +200,7 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
             <h3 className="font-semibold">Notifications</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">
               {unreadNotificationsCount > 0
-                ? `Vous avez ${unreadNotificationsCount} nouvelle${unreadNotificationsCount > 1 ? "s" : ""} notification${unreadNotificationsCount > 1 ? "s" : ""}`
+                ? `Vous avez ${unreadNotificationsCount > 99 ? "99+" : unreadNotificationsCount} nouvelle${unreadNotificationsCount > 1 ? "s" : ""} notification${unreadNotificationsCount > 1 ? "s" : ""}`
                 : "Aucune nouvelle notification"}
             </p>
           </div>
