@@ -1,0 +1,119 @@
+@media print {
+  /* Masquer les éléments qui ne doivent pas être imprimés */
+  button,
+  .no-print,
+  [role="dialog"],
+  nav,
+  footer,
+  .tabs-list {
+    display: none !important;
+  }
+
+  /* Assurer que le contenu s'affiche correctement */
+  body {
+    background-color: white !important;
+    color: black !important;
+    font-size: 12pt !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  /* Forcer l'affichage de tous les éléments importants */
+  .print-force-display {
+    display: block !important;
+    position: relative !important;
+    opacity: 1 !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Assurer que tous les contenus sont visibles */
+  .container {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Forcer l'affichage de tous les onglets pour l'impression */
+  [role="tabpanel"] {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    height: auto !important;
+    overflow: visible !important;
+    margin-bottom: 20px !important;
+  }
+
+  /* Ajuster les marges et la taille du papier */
+  @page {
+    size: A4;
+    margin: 1cm;
+  }
+
+  /* Assurer que les cartes s'affichent correctement */
+  .map-container {
+    page-break-inside: avoid;
+    height: 400px !important;
+    width: 100% !important;
+    border: 1px solid #ccc;
+    margin-bottom: 20px !important;
+  }
+
+  /* Styles pour les tableaux et listes */
+  table,
+  ul,
+  ol {
+    page-break-inside: avoid;
+  }
+
+  /* Éviter les sauts de page indésirables */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    page-break-after: avoid;
+  }
+
+  /* Assurer que les liens sont visibles */
+  a {
+    color: black !important;
+    text-decoration: underline;
+  }
+
+  /* Ajouter un pied de page avec la date d'impression */
+  .container::after {
+    content: "Imprimé le " attr(data-print-date);
+    display: block;
+    text-align: center;
+    font-size: 10pt;
+    margin-top: 2cm;
+  }
+
+  /* Ajuster la mise en page pour l'impression */
+  .grid {
+    display: block !important;
+  }
+
+  .grid > * {
+    width: 100% !important;
+    margin-bottom: 20px !important;
+  }
+
+  /* Assurer que les cartes et autres éléments importants sont visibles */
+  .h-\[600px\] {
+    height: 400px !important;
+    page-break-inside: avoid;
+  }
+
+  /* Forcer l'affichage des éléments animés */
+  .motion-div {
+    opacity: 1 !important;
+    transform: none !important;
+    position: static !important;
+  }
+}
