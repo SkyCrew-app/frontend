@@ -160,3 +160,52 @@ export const GET_USER_EVALUATION_RESULTS = gql`
     }
   }
 `;
+
+export const GET_USER_INSTRUCTION_SUMMARY = gql`
+  query GetUserInstructionSummary($userId: Int!) {
+    getUserInstructionSummary(userId: $userId) {
+      upcomingCourses {
+        id
+        title
+        date
+        instructor {
+          id
+          name
+          avatar
+        }
+        status
+      }
+      recentCourses {
+        id
+        title
+        date
+        instructor {
+          id
+          name
+          avatar
+        }
+        status
+      }
+      learningProgress {
+        completedCourses
+        totalCourses
+        completedLessons
+        totalLessons
+      }
+      evaluations {
+        completed
+        upcoming
+        averageScore
+      }
+      eLearningCourses {
+        id
+        title
+        category
+        progress
+        completedLessons
+        totalLessons
+        lastAccessedDate
+      }
+    }
+  }
+`
