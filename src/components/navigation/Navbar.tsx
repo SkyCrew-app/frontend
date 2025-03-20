@@ -22,6 +22,7 @@ interface NavbarProps {
 export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
   const router = useRouter()
   const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
   const [logout] = useMutation(LOGOUT_MUTATION)
   const [initials, setInitials] = useState<string | null>(null)
   const [profilePicture, setProfilePicture] = useState<string | null>(null)
@@ -32,6 +33,10 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
   const [userId, setUserId] = useState<number | null>(null)
   const [notifications, setNotifications] = useState<any[]>([])
   const [socket, setSocket] = useState<Socket | null>(null)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const { data: notificationsData, refetch: refetchNotifications } = useQuery(GET_NOTIFICATIONS, {
     variables: { userId: userId || 0 },
@@ -166,13 +171,23 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
 
       {/* Right section */}
       <div className="flex items-center space-x-4">
+        {/* Theme toggle button with hydration fix */}
         <Button
           variant="ghost"
           size="icon"
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
           className="rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700"
+          suppressHydrationWarning
         >
-          {theme === "dark" ? <Sun className="h-5 w-5 text-amber-500" /> : <Moon className="h-5 w-5 text-slate-700" />}
+          {mounted ? (
+            theme === "dark" ? (
+              <Sun className="h-5 w-5 text-amber-500" />
+            ) : (
+              <Moon className="h-5 w-5 text-slate-700" />
+            )
+          ) : (
+            <div className="h-5 w-5" />
+          )}
           <span className="sr-only">Toggle theme</span>
         </Button>
 
@@ -336,4 +351,3 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
     </header>
   )
 }
-
