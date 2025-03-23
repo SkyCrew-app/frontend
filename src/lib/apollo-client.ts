@@ -5,6 +5,9 @@ import { createUploadLink } from 'apollo-upload-client';
 const uploadLink = createUploadLink({
   uri: process.env.NEXT_PUBLIC_API_URL,
   credentials: 'include',
+  headers: {
+    "Apollo-Require-Preflight": "true",
+  }
 });
 
 const errorLink = onError(({ graphQLErrors, networkError }) => {

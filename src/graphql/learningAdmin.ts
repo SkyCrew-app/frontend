@@ -55,6 +55,7 @@ export const GET_LESSONS = gql`
       title
       description
       video_url
+      attachments
       module {
         id
         title
@@ -71,6 +72,7 @@ export const CREATE_LESSON = gql`
       description
       content
       video_url
+      attachments
       module {
         id
         title
@@ -96,6 +98,7 @@ export const GET_LESSONS_BY_MODULE = gql`
       title
       description
       video_url
+      attachments
     }
   }
 `;
@@ -114,8 +117,8 @@ export const CREATE_EVALUATION = gql`
 `;
 
 export const CREATE_QUESTION = gql`
-  mutation CreateQuestion($createQuestionInput: CreateQuestionDTO!, $evaluationId: Float!) {
-    createQuestion(createQuestionInput: $createQuestionInput, evaluationId: $evaluationId) {
+  mutation CreateQuestion($evaluationId: Float!, $createQuestionInput: CreateQuestionDTO!) {
+    createQuestion(evaluationId: $evaluationId, createQuestionInput: $createQuestionInput) {
       id
       content
       options
@@ -180,16 +183,16 @@ export const DELETE_QUESTION = gql`
 `;
 
 export const UPDATE_COURSE = gql`
-  mutation UpdateCourse($updateCourseInput: UpdateCourseDTO!) {
-    updateCourse(updateCourseInput: $updateCourseInput) {
+  mutation UpdateCourse($id: Float!, $updateCourseInput: UpdateCourseDTO!) {
+    updateCourse(id: $id, updateCourseInput: $updateCourseInput) {
       id
       title
-      description
       category
       required_license
     }
   }
 `;
+
 
 export const DELETE_COURSE = gql`
   mutation DeleteCourse($id: Float!) {
@@ -198,15 +201,11 @@ export const DELETE_COURSE = gql`
 `;
 
 export const UPDATE_MODULE = gql`
-  mutation UpdateModule($updateModuleInput: UpdateModuleDTO!) {
-    updateModule(updateModuleInput: $updateModuleInput) {
+  mutation UpdateModule($id: Float!, $updateModuleInput: UpdateModuleDTO!) {
+    updateModule(id: $id, updateModuleInput: $updateModuleInput) {
       id
       title
       description
-      course {
-        id
-        title
-      }
     }
   }
 `;
@@ -225,6 +224,7 @@ export const UPDATE_LESSON = gql`
       description
       content
       video_url
+      attachments
       module {
         id
         title
