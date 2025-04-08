@@ -338,7 +338,7 @@ export default function ActualitesAeroclub() {
                           src={
                             article.photo_url
                               ? `http://localhost:3000${article.photo_url}`
-                              : "https://via.placeholder.com/800x400?text=Aéroclub"
+                              : "https://placehold.co/600x400"
                           }
                           alt={article.title}
                           className="w-full h-full object-cover transition-transform hover:scale-105 duration-500"
@@ -358,20 +358,20 @@ export default function ActualitesAeroclub() {
                           )}
                         </div>
                       </div>
-                      <CardContent className="p-4">
+                        <CardContent className="p-4 h-44 flex flex-col">
                         <Badge
                           variant="outline"
                           className="mb-2 text-xs flex w-fit items-center gap-1 text-gray-600 dark:text-gray-400"
                         >
                           <Calendar className="w-3 h-3" />
                           {new Date(article.createdAt).toLocaleDateString("fr-FR", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
                           })}
                         </Badge>
                         <h3 className="font-bold text-lg mb-2 line-clamp-2">{article.title}</h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 mb-4">
+                        <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 mb-4 flex-1">
                           {article.description}
                         </p>
                         <Link
@@ -381,15 +381,15 @@ export default function ActualitesAeroclub() {
                           Lire l'article complet
                           <ArrowRight className="ml-1 h-4 w-4" />
                         </Link>
-                      </CardContent>
+                        </CardContent>
                     </Card>
                   </CarouselItem>
                 ))}
               </CarouselContent>
-              <div className="absolute -left-4 top-1/2 -translate-y-1/2">
+              <div className="absolute -left-1 top-1/2 -translate-y-1/2">
                 <CarouselPrevious className="bg-white/80 backdrop-blur-sm hover:bg-white dark:bg-gray-800/80 dark:hover:bg-gray-800" />
               </div>
-              <div className="absolute -right-4 top-1/2 -translate-y-1/2">
+              <div className="absolute -right-1 top-1/2 -translate-y-1/2">
                 <CarouselNext className="bg-white/80 backdrop-blur-sm hover:bg-white dark:bg-gray-800/80 dark:hover:bg-gray-800" />
               </div>
             </Carousel>
