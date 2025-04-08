@@ -1,14 +1,14 @@
-'use client';
+"use client"
 
-import { useState } from 'react';
-import { useQuery } from '@apollo/client';
-import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Pie } from 'react-chartjs-2';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
-import { Drawer, DrawerContent, DrawerOverlay } from '@/components/ui/drawer';
-import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
-import { Skeleton } from '@/components/ui/skeleton';
+import type React from "react"
+
+import { useState } from "react"
+import { useQuery } from "@apollo/client"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Badge } from "@/components/ui/badge"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import {
   Pagination,
   PaginationContent,
@@ -16,141 +16,279 @@ import {
   PaginationPrevious,
   PaginationNext,
   PaginationLink,
-} from '@/components/ui/pagination';
-import { GET_AIRCRAFTS } from '@/graphql/planes';
-import { Aircraft, AircraftData, AvailabilityStatus } from '@/interfaces/aircraft';
-import { useToast } from '@/components/hooks/use-toast';
+} from "@/components/ui/pagination"
+import { Doughnut, Bar } from "react-chartjs-2"
+import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title } from "chart.js"
+import { GET_AIRCRAFTS } from "@/graphql/planes"
+import { type Aircraft, type AircraftData, AvailabilityStatus } from "@/interfaces/aircraft"
+import { useToast } from "@/components/hooks/use-toast"
+import { Wrench, Calendar, Clock, Search, Filter, RefreshCw, CheckCircle } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Skeleton } from "@/components/ui/skeleton"
+import { StatusBadge } from "@/components/fleet/status-badge"
+import { StatCard } from "@/components/fleet/stats-card"
+import { AircraftDetailDialog } from "@/components/fleet/aircraft-detail-dialog"
 
-ChartJS.register(ArcElement, Tooltip, Legend);
+ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title)
 
 export default function FleetDashboard() {
-  const { data, loading, error } = useQuery<AircraftData>(GET_AIRCRAFTS, {
+  const { data, loading, error, refetch } = useQuery<AircraftData>(GET_AIRCRAFTS, {
     onError: (error) => {
       toast({
         variant: "destructive",
         title: "Erreur",
         description: "Impossible de charger les données des avions.",
-      });
+      })
     },
-  });
-  const [selectedAircraft, setSelectedAircraft] = useState<Aircraft | null>(null);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  })
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const [selectedAircraft, setSelectedAircraft] = useState<Aircraft | null>(null)
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [filterStatus, setFilterStatus] = useState("all")
+  const [activeTab, setActiveTab] = useState("all")
 
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentAircrafts = data?.getAircrafts.slice(indexOfFirstItem, indexOfLastItem) || [];
+  const itemsPerPage = 8
+  const { toast } = useToast()
 
-  const totalPages = Math.ceil((data?.getAircrafts.length || 0) / itemsPerPage);
+  const filteredAircrafts =
+    data?.getAircrafts.filter((aircraft) => {
+      const matchesSearch =
+        aircraft.registration_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        aircraft.model.toLowerCase().includes(searchTerm.toLowerCase())
 
-  const { toast } = useToast();
+      const matchesStatus = filterStatus === "all" || aircraft.availability_status === filterStatus
+
+      const matchesTab =
+        activeTab === "all" ||
+        (activeTab === "available" && aircraft.availability_status === AvailabilityStatus.AVAILABLE) ||
+        (activeTab === "maintenance" && aircraft.availability_status === AvailabilityStatus.UNAVAILABLE) ||
+        (activeTab === "reserved" && aircraft.availability_status === AvailabilityStatus.RESERVED)
+
+      return matchesSearch && matchesStatus && matchesTab
+    }) || []
+
+  const indexOfLastItem = currentPage * itemsPerPage
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage
+  const currentAircrafts = filteredAircrafts.slice(indexOfFirstItem, indexOfLastItem)
+  const totalPages = Math.ceil(filteredAircrafts.length / itemsPerPage)
+
+  const availableCount =
+    data?.getAircrafts.filter((a) => a.availability_status === AvailabilityStatus.AVAILABLE).length || 0
+  const maintenanceCount =
+    data?.getAircrafts.filter((a) => a.availability_status === AvailabilityStatus.UNAVAILABLE).length || 0
+  const reservedCount =
+    data?.getAircrafts.filter((a) => a.availability_status === AvailabilityStatus.RESERVED).length || 0
+
+  const totalAircrafts = data?.getAircrafts.length || 0
+  const availablePercentage = totalAircrafts ? Math.round((availableCount / totalAircrafts) * 100) : 0
+  const maintenancePercentage = totalAircrafts ? Math.round((maintenanceCount / totalAircrafts) * 100) : 0
+  const reservedPercentage = totalAircrafts ? Math.round((reservedCount / totalAircrafts) * 100) : 0
+
+  const availabilityChartData = {
+    labels: ["Disponible", "En maintenance", "Réservé"],
+    datasets: [
+      {
+        data: [availableCount, maintenanceCount, reservedCount],
+        backgroundColor: ["#10b981", "#f59e0b", "#3b82f6"],
+        hoverBackgroundColor: ["#34d399", "#fbbf24", "#60a5fa"],
+        borderWidth: 0,
+      },
+    ],
+  }
+
+  const maintenanceChartData = {
+    labels: ["Inspection", "Réparation", "Révision", "Mise à jour", "Nettoyage", "Autre"],
+    datasets: [
+      {
+        label: "Nombre d'avions",
+        data: [
+          data?.getAircrafts.filter((a) => a.maintenances?.some((m) => m.maintenance_type === "INSPECTION")).length ||
+            0,
+          data?.getAircrafts.filter((a) => a.maintenances?.some((m) => m.maintenance_type === "REPAIR")).length || 0,
+          data?.getAircrafts.filter((a) => a.maintenances?.some((m) => m.maintenance_type === "OVERHAUL")).length || 0,
+          data?.getAircrafts.filter((a) => a.maintenances?.some((m) => m.maintenance_type === "SOFTWARE_UPDATE"))
+            .length || 0,
+          data?.getAircrafts.filter((a) => a.maintenances?.some((m) => m.maintenance_type === "CLEANING")).length || 0,
+          data?.getAircrafts.filter((a) => a.maintenances?.some((m) => m.maintenance_type === "OTHER")).length || 0,
+        ],
+        backgroundColor: [
+          "rgba(255, 99, 132, 0.7)",
+          "rgba(54, 162, 235, 0.7)",
+          "rgba(255, 206, 86, 0.7)",
+          "rgba(75, 192, 192, 0.7)",
+          "rgba(153, 102, 255, 0.7)",
+          "rgba(255, 159, 64, 0.7)",
+        ],
+        borderColor: [
+          "rgba(255, 99, 132, 1)",
+          "rgba(54, 162, 235, 1)",
+          "rgba(255, 206, 86, 1)",
+          "rgba(75, 192, 192, 1)",
+          "rgba(153, 102, 255, 1)",
+          "rgba(255, 159, 64, 1)",
+        ],
+        borderWidth: 1,
+      },
+    ],
+  }
 
   const handleAircraftClick = (aircraft: Aircraft) => {
-    setSelectedAircraft(aircraft);
-    setIsDrawerOpen(true);
-  };
+    setSelectedAircraft(aircraft)
+    setIsDetailModalOpen(true)
+  }
 
-  const closeDrawer = () => {
-    setIsDrawerOpen(false);
-    setSelectedAircraft(null);
-  };
+  const handleRefresh = () => {
+    refetch()
+    toast({
+      title: "Actualisation",
+      description: "Les données ont été actualisées.",
+    })
+  }
 
   const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
+    setCurrentPage(page)
+  }
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value)
+    setCurrentPage(1)
+  }
+
+  const handleStatusFilterChange = (value: string) => {
+    setFilterStatus(value)
+    setCurrentPage(1)
+  }
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value)
+    setCurrentPage(1)
+  }
 
   const renderPageNumbers = () => {
-    const pageNumbers = [];
-
-    const startPage = Math.max(1, currentPage - 2);
-    const endPage = Math.min(totalPages, currentPage + 2);
+    const pageNumbers = []
+    const startPage = Math.max(1, currentPage - 2)
+    const endPage = Math.min(totalPages, currentPage + 2)
 
     for (let i = startPage; i <= endPage; i++) {
       pageNumbers.push(
         <PaginationItem key={i}>
           <PaginationLink
             onClick={() => handlePageChange(i)}
-            className={i === currentPage ? 'bg-slate-200 text-black' : ''}
+            isActive={i === currentPage}
+            aria-current={i === currentPage ? "page" : undefined}
           >
             {i}
           </PaginationLink>
-        </PaginationItem>
-      );
+        </PaginationItem>,
+      )
     }
 
-    return pageNumbers;
-  };
+    return pageNumbers
+  }
 
   return (
-    <div className="flex flex-col items-center justify-center bg-background">
-      <h1 className="text-3xl font-bold mb-8">Dashboard de la Flotte</h1>
+    <div className="container mx-auto py-6 space-y-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Tableau de Bord de la Flotte</h1>
+          <p className="text-muted-foreground mt-1">Gérez et surveillez l'état de votre flotte d'aéronefs</p>
+        </div>
+        <div>
+          <Button variant="outline" size="sm" onClick={handleRefresh} aria-label="Actualiser les données">
+            <RefreshCw className="h-4 w-4 mr-2" aria-hidden="true" />
+            Actualiser
+          </Button>
+        </div>
+      </div>
 
-      <div className="flex justify-between space-x-4 w-full mb-8">
-        <Card className="shadow-md w-full md:w-1/2 mb-4">
+      {/* Cartes de statistiques */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <StatCard
+          title="Disponibles"
+          value={availableCount}
+          percentage={availablePercentage}
+          icon={CheckCircle}
+          color="text-green-500"
+        />
+        <StatCard
+          title="En Maintenance"
+          value={maintenanceCount}
+          percentage={maintenancePercentage}
+          icon={Wrench}
+          color="text-amber-500"
+        />
+        <StatCard
+          title="Réservés"
+          value={reservedCount}
+          percentage={reservedPercentage}
+          icon={Calendar}
+          color="text-blue-500"
+        />
+      </div>
+
+      {/* Graphiques */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card>
           <CardHeader>
-            <CardTitle className='mx-auto'>Disponibilité des Avions</CardTitle>
+            <CardTitle>Disponibilité des Aéronefs</CardTitle>
+            <CardDescription>Répartition de l'état actuel de la flotte</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="w-full md:w-[400px] mx-auto">
+            <div className="h-[300px] flex items-center justify-center">
               {loading ? (
-                <Skeleton className="w-full h-[400px]" />
+                <Skeleton className="w-[300px] h-[300px] rounded-full" />
               ) : (
-                <Pie
-                  data={{
-                    labels: ['Disponible', 'Maintenance', 'Réservé'],
-                    datasets: [
-                      {
-                        data: [
-                          data?.getAircrafts.filter((a) => a.availability_status === AvailabilityStatus.AVAILABLE).length,
-                          data?.getAircrafts.filter((a) => a.availability_status === AvailabilityStatus.UNAVAILABLE).length,
-                          data?.getAircrafts.filter((a) => a.availability_status === AvailabilityStatus.RESERVED).length,
-                        ],
-                        backgroundColor: ['#4CAF50', '#FFC107', '#F44336'],
-                        hoverBackgroundColor: ['#66BB6A', '#FFD54F', '#E57373'],
+                <div className="w-[300px]">
+                  <Doughnut
+                    data={availabilityChartData}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: true,
+                      plugins: {
+                        legend: {
+                          position: "bottom",
+                        },
                       },
-                    ],
-                  }}
-                />
+                      cutout: "65%",
+                    }}
+                  />
+                </div>
               )}
             </div>
           </CardContent>
         </Card>
 
-        <Card className="shadow-md w-full md:w-1/2 mb-4">
+        <Card>
           <CardHeader>
-            <CardTitle className='mx-auto'>Types de Maintenance</CardTitle>
+            <CardTitle>Types de Maintenance</CardTitle>
+            <CardDescription>Répartition des types de maintenance effectués</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="w-full md:w-[400px] mx-auto">
+            <div className="h-[300px] flex items-center justify-center">
               {loading ? (
-                <Skeleton className="w-full h-[400px]" />
+                <Skeleton className="w-full h-[300px]" />
               ) : (
-                <Pie
-                  data={{
-                    labels: [
-                      'Inspection',
-                      'Réparation',
-                      'Révision',
-                      'Mise à jour logicielle',
-                      'Nettoyage',
-                      'Autre'
-                    ],
-                    datasets: [
-                      {
-                        data: [
-                          data?.getAircrafts.filter((a) => a.maintenances?.some((m) => m.maintenance_type === 'INSPECTION')).length,
-                          data?.getAircrafts.filter((a) => a.maintenances?.some((m) => m.maintenance_type === 'REPAIR')).length,
-                          data?.getAircrafts.filter((a) => a.maintenances?.some((m) => m.maintenance_type === 'OVERHAUL')).length,
-                          data?.getAircrafts.filter((a) => a.maintenances?.some((m) => m.maintenance_type === 'SOFTWARE_UPDATE')).length,
-                          data?.getAircrafts.filter((a) => a.maintenances?.some((m) => m.maintenance_type === 'CLEANING')).length,
-                          data?.getAircrafts.filter((a) => a.maintenances?.some((m) => m.maintenance_type === 'OTHER')).length,
-                        ],
-                        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#FF9F40', '#4BC0C0', '#9966FF'],
-                        hoverBackgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#FF9F40', '#4BC0C0', '#9966FF'],
+                <Bar
+                  data={maintenanceChartData}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: {
+                        display: false,
                       },
-                    ],
+                    },
+                    scales: {
+                      y: {
+                        beginAtZero: true,
+                        ticks: {
+                          precision: 0,
+                        },
+                      },
+                    },
                   }}
                 />
               )}
@@ -159,127 +297,162 @@ export default function FleetDashboard() {
         </Card>
       </div>
 
-      <div className="w-full max-w-8xl">
-        <Card className="shadow-md">
-          <CardHeader>
-            <CardTitle>Liste des Avions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <Skeleton className="w-full h-56" />
-            ) : (
-              <>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableCell>Immatriculation</TableCell>
-                      <TableCell>Modèle</TableCell>
-                      <TableCell>Disponibilité</TableCell>
-                      <TableCell>Maintenance</TableCell>
-                      <TableCell>Coût Horaire (€)</TableCell>
-                      <TableCell>Actions</TableCell>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {currentAircrafts.map((aircraft) => (
-                      <TableRow key={aircraft.id}>
-                        <TableCell>{aircraft.registration_number}</TableCell>
-                        <TableCell>{aircraft.model}</TableCell>
-                        <TableCell>{aircraft.availability_status}</TableCell>
-                        <TableCell>{aircraft.maintenance_status}</TableCell>
-                        <TableCell>{aircraft.hourly_cost.toFixed(2)}</TableCell>
-                        <TableCell>
-                          <Button onClick={() => handleAircraftClick(aircraft)}>Voir</Button>
+      {/* Liste des aéronefs */}
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <CardTitle>Liste des Aéronefs</CardTitle>
+            <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Rechercher..."
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                  className="pl-8 w-full sm:w-[200px]"
+                />
+              </div>
+              <Select value={filterStatus} onValueChange={handleStatusFilterChange}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Filtrer par statut" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Tous les statuts</SelectItem>
+                  <SelectItem value={AvailabilityStatus.AVAILABLE}>Disponible</SelectItem>
+                  <SelectItem value={AvailabilityStatus.UNAVAILABLE}>En maintenance</SelectItem>
+                  <SelectItem value={AvailabilityStatus.RESERVED}>Réservé</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="all" value={activeTab} onValueChange={handleTabChange} className="w-full">
+            <TabsList className="grid grid-cols-4 mb-4">
+              <TabsTrigger value="all">
+                Tous
+                <Badge variant="secondary" className="ml-2">
+                  {totalAircrafts}
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger value="available">
+                Disponibles
+                <Badge variant="secondary" className="ml-2">
+                  {availableCount}
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger value="maintenance">
+                En Maintenance
+                <Badge variant="secondary" className="ml-2">
+                  {maintenanceCount}
+                </Badge>
+              </TabsTrigger>
+              <TabsTrigger value="reserved">
+                Réservés
+                <Badge variant="secondary" className="ml-2">
+                  {reservedCount}
+                </Badge>
+              </TabsTrigger>
+            </TabsList>
+
+            <div className="rounded-md border overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[15%]">Immatriculation</TableHead>
+                    <TableHead className="w-[15%]">Modèle</TableHead>
+                    <TableHead className="w-[15%]">Disponibilité</TableHead>
+                    <TableHead className="w-[15%]">Maintenance</TableHead>
+                    <TableHead className="w-[15%]">Heures de vol</TableHead>
+                    <TableHead className="w-[15%]">Coût Horaire</TableHead>
+                    <TableHead className="w-[10%] text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {loading ? (
+                    Array.from({ length: 5 }).map((_, index) => (
+                      <TableRow key={index}>
+                        <TableCell colSpan={7}>
+                          <Skeleton className="h-10 w-full" />
                         </TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-
-                <div className="flex justify-center mt-4 space-x-4">
-                  <Pagination>
-                    <PaginationContent>
-                      <PaginationItem>
-                        {currentPage > 1 && (
-                          <PaginationPrevious
-                            onClick={() => handlePageChange(currentPage - 1)}
-                          />
-                        )}
-                      </PaginationItem>
-                      {renderPageNumbers()}
-                      <PaginationItem>
-                        <PaginationNext
-                          onClick={() => {
-                            if (currentPage < totalPages) {
-                              handlePageChange(currentPage + 1);
-                            }
-                          }}
-                        />
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      <Drawer open={isDrawerOpen} onClose={closeDrawer}>
-        <DrawerOverlay />
-        <DrawerContent className="p-4 w-full h-1/2">
-          <div className="p-6 flex flex-col md:flex-row items-center justify-between">
-            {loading ? (
-              <Skeleton className="w-full h-1/2" />
-            ) : (
-              <>
-                <div className="flex-1 pr-6 space-y-4">
-                  <h2 className="text-2xl font-bold">Détails de l'avion</h2>
-                  <p><strong>Immatriculation :</strong> {selectedAircraft?.registration_number}</p>
-                  <p><strong>Modèle :</strong> {selectedAircraft?.model}</p>
-                  <p><strong>Disponibilité :</strong> {selectedAircraft?.availability_status}</p>
-                  <p><strong>État de Maintenance :</strong> {selectedAircraft?.maintenance_status}</p>
-                  <p><strong>Coût Horaire :</strong> {selectedAircraft?.hourly_cost} €</p>
-                  <p><strong>Année de fabrication :</strong> {selectedAircraft?.year_of_manufacture}</p>
-                  <p><strong>Heures de vol totales :</strong> {selectedAircraft?.total_flight_hours} heures</p>
-                </div>
-
-                <div className="flex-1 mt-4">
-                  <h3 className="text-xl font-bold">Documents</h3>
-                  {selectedAircraft?.documents_url?.length ? (
-                    <ul className="list-disc list-inside mt-2">
-                      {selectedAircraft.documents_url.map((url, index) => (
-                        <li key={index}>
-                          <a href={`http://localhost:3000${url}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">
-                            Document {index + 1}
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
+                    ))
+                  ) : currentAircrafts.length > 0 ? (
+                    currentAircrafts.map((aircraft) => (
+                      <TableRow key={aircraft.id}>
+                        <TableCell className="font-medium">{aircraft.registration_number}</TableCell>
+                        <TableCell>{aircraft.model}</TableCell>
+                        <TableCell>
+                          <StatusBadge status={aircraft.availability_status} type="availability" />
+                        </TableCell>
+                        <TableCell>
+                          <StatusBadge status={aircraft.maintenance_status} type="maintenance" />
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center">
+                            <Clock className="h-4 w-4 mr-1 text-muted-foreground" />
+                            {aircraft.total_flight_hours} h
+                          </div>
+                        </TableCell>
+                        <TableCell>{aircraft.hourly_cost.toFixed(2)} €</TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleAircraftClick(aircraft)}
+                            aria-label={`Voir les détails de ${aircraft.registration_number}`}
+                          >
+                            Détails
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
                   ) : (
-                    <p className="text-gray-600">Aucun document disponible</p>
+                    <TableRow>
+                      <TableCell colSpan={7} className="h-24 text-center">
+                        <div className="flex flex-col items-center justify-center text-muted-foreground">
+                          <p>Aucun aéronef trouvé</p>
+                          <p className="text-sm">Ajustez vos filtres ou ajoutez un nouvel aéronef</p>
+                        </div>
+                      </TableCell>
+                    </TableRow>
                   )}
-                </div>
+                </TableBody>
+              </Table>
+            </div>
 
-                <div className="flex-1 flex justify-center items-center">
-                  {selectedAircraft?.image_url ? (
-                    <img
-                      src={`http://localhost:3000${selectedAircraft.image_url}`}
-                      alt={selectedAircraft.model}
-                      className="max-w-xs h-auto object-cover rounded-md shadow"
-                    />
-                  ) : (
-                    <div className="w-48 h-32 bg-gray-300 flex items-center justify-center rounded-md shadow">
-                      <span className="text-gray-600">Incoming</span>
-                    </div>
-                  )}
-                </div>
-              </>
+            {totalPages > 1 && (
+              <div className="flex justify-center mt-4">
+                <Pagination>
+                  <PaginationContent>
+                    {currentPage > 1 && (
+                      <PaginationItem>
+                        <PaginationPrevious onClick={() => handlePageChange(currentPage - 1)} />
+                      </PaginationItem>
+                    )}
+
+                    {renderPageNumbers()}
+
+                    {currentPage < totalPages && (
+                      <PaginationItem>
+                        <PaginationNext onClick={() => handlePageChange(currentPage + 1)} />
+                      </PaginationItem>
+                    )}
+                  </PaginationContent>
+                </Pagination>
+              </div>
             )}
-            <Button className="absolute bottom-6 right-6" onClick={closeDrawer}>Fermer</Button>
-          </div>
-        </DrawerContent>
-      </Drawer>
+          </Tabs>
+        </CardContent>
+      </Card>
+
+      {/* Modal de détails */}
+      <AircraftDetailDialog
+        aircraft={selectedAircraft}
+        isOpen={isDetailModalOpen}
+        onOpenChange={setIsDetailModalOpen}
+      />
     </div>
-  );
+  )
 }

@@ -108,6 +108,7 @@ export const ADD_COMMENT = gql`
     }
   }
 `
+
 export const CREATE_COURSE = gql`
   mutation CreateCourseInstruction($input: CreateCourseInstructionInput!) {
     createCourseInstruction(input: $input) {
@@ -179,5 +180,22 @@ export const UPDATE_COURSE = gql`
         first_name
       }
     }
+  }
+`
+
+
+export const GET_COMPETENCIES = gql`
+  query GetAllCompetencies {
+    getAllCompetencies {
+      id
+      name
+      description
+    }
+  }
+`
+
+export const DELETE_COURSE = gql`
+  mutation DeleteCourse($id: Int!) {
+    deleteCourse(id: $id)
   }
 `

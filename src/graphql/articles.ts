@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client';
+import { gql } from "@apollo/client"
 
 export const GET_ARTICLE_BY_ID = gql`
   query GetArticleById($id: Int!) {
@@ -14,7 +14,7 @@ export const GET_ARTICLE_BY_ID = gql`
       documents_url
     }
   }
-`;
+`
 
 export const GET_ARTICLES = gql`
 query GetArticles {
@@ -29,7 +29,7 @@ query GetArticles {
     eventDate
   }
 }
-`;
+`
 
 export const CREATE_ARTICLE = gql`
   mutation CreateArticle(
@@ -57,11 +57,11 @@ export const CREATE_ARTICLE = gql`
       createdAt
     }
   }
-`;
+`
 
 export const UPDATE_ARTICLE = gql`
   mutation UpdateArticle(
-    $id: ID!
+    $id: Float!
     $title: String!
     $description: String!
     $text: String!
@@ -83,7 +83,7 @@ export const UPDATE_ARTICLE = gql`
       updatedAt
     }
   }
-`;
+`
 
 export const DELETE_ARTICLE = gql`
   mutation RemoveArticle($id: Int!) {
@@ -92,4 +92,4 @@ export const DELETE_ARTICLE = gql`
       title
     }
   }
-`;
+`

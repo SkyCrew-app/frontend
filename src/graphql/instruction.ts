@@ -11,7 +11,7 @@ export const GET_COURSES = gql`
 `;
 
 export const GET_COURSE_DETAILS = gql`
-  query GetCourseDetails($id: Float!, $userId: Float!) {
+  query GetCourseDetails($id: Float!, $userId: Float) {
     getCourseById(id: $id, userId: $userId) {
       id
       title
@@ -21,26 +21,21 @@ export const GET_COURSE_DETAILS = gql`
       modules {
         id
         title
+        description
         lessons {
           id
           title
+          description
+          video_url
+        }
+        evaluations {
+          id
+          pass_score
         }
       }
     }
   }
-`;
-
-export const GET_LESSON_CONTENT = gql`
-  query GetLessonContent($lessonId: Float!, $userId: Float!) {
-    getLessonContent(lessonId: $lessonId, userId: $userId) {
-      id
-      title
-      description
-      video_url
-      content
-    }
-  }
-`;
+`
 
 export const MARK_LESSON_COMPLETED = gql`
   mutation MarkLessonCompleted($lessonId: Float!, $userId: Float!) {
@@ -53,3 +48,28 @@ export const GET_COURSE_PROGRESS = gql`
     getCourseProgress(userId: $userId, courseId: $courseId)
   }
 `;
+
+export const GET_LESSON_CONTENT = gql`
+  query GetLessonContent($lessonId: Float!, $userId: Float!) {
+    getLessonContent(lessonId: $lessonId, userId: $userId) {
+      id
+      title
+      description
+      content
+      video_url
+      attachments
+    }
+  }
+`
+
+export const COMPLETE_LESSON = gql`
+  mutation CompleteLesson($lessonId: Float!, $userId: Float!) {
+    completeLesson(lessonId: $lessonId, userId: $userId)
+  }
+`
+
+export const GET_LESSON_PROGRESS = gql`
+  query GetUserProgress($userId: Float!, $lessonId: Float!) {
+    getUserProgress(userId: $userId, lessonId: $lessonId)
+  }
+`

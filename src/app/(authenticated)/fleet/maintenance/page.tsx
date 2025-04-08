@@ -1,337 +1,340 @@
-'use client';
+"use client"
 
-import { useState, useEffect } from 'react';
-import { useQuery } from '@apollo/client';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationNext, PaginationLink } from '@/components/ui/pagination';
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
-import { Dialog, DialogTrigger, DialogContent, DialogClose } from '@/components/ui/dialog';
-import { Select, SelectTrigger, SelectContent, SelectItem } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { format } from 'date-fns';
-import { Calendar as CalendarIcon } from 'lucide-react';
-import { DateRange } from "react-day-picker";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
-import { type CarouselApi } from "@/components/ui/carousel";
-import { GET_ALL_MAINTENANCES } from '@/graphql/maintenance';
-import { Maintenance } from '@/interfaces/maintenance';
-import { useToast } from '@/components/hooks/use-toast';
+import { useState } from "react"
+import { useQuery, useMutation } from "@apollo/client"
+import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
+import { RefreshCwIcon, PlusIcon } from "lucide-react"
+import { GET_ALL_MAINTENANCES, CREATE_MAINTENANCE, UPDATE_MAINTENANCE, DELETE_MAINTENANCE } from "@/graphql/maintenance"
+import { GET_USERS } from "@/graphql/user"
+import { GET_AIRCRAFTS } from "@/graphql/planes"
+import type { Maintenance } from "@/interfaces/maintenance"
+import { useToast } from "@/components/hooks/use-toast"
+import { SearchFilter } from "@/components/maintenance/search-filter"
+import { MaintenanceTabs } from "@/components/maintenance/maintenance-tabs"
+import { MaintenanceTable } from "@/components/maintenance/maintenance-table"
+import { MaintenanceDetailDialog } from "@/components/maintenance/maintenance-detail-dialog"
+import { MaintenanceFormDialog } from "@/components/maintenance/maintenance-form-dialog"
+import type { DateRange } from "react-day-picker"
 
 enum MaintenanceType {
-  INSPECTION = 'Inspection',
-  REPAIR = 'Réparation',
-  OVERHAUL = 'Révision',
-  SOFTWARE_UPDATE = 'Mise à jour logicielle',
-  CLEANING = 'Nettoyage',
-  OTHER = 'Autre',
+  INSPECTION = "Inspection",
+  REPAIR = "Réparation",
+  OVERHAUL = "Révision",
+  SOFTWARE_UPDATE = "Mise à jour logicielle",
+  CLEANING = "Nettoyage",
+  OTHER = "Autre",
 }
 
-export default function MaintenanceTable() {
-  const { data, loading, error } = useQuery(GET_ALL_MAINTENANCES, {
+enum MaintenanceStatus {
+  PLANNED = "Planifiée",
+  IN_PROGRESS = "En cours",
+  COMPLETED = "Terminée",
+  CANCELLED = "Annulée",
+}
+
+export default function MaintenanceTablePage() {
+  const { data, loading, error, refetch } = useQuery(GET_ALL_MAINTENANCES, {
     onError: (error) => {
       toast({
         variant: "destructive",
         title: "Erreur",
         description: "Impossible de charger les maintenances. Veuillez réessayer plus tard.",
-      });
-    }
-  });
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState('all');
-  const [filterTechnician, setFilterTechnician] = useState('all');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [selectedMaintenance, setSelectedMaintenance] = useState<Maintenance | null>(null);
-  const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
-  const [dateRange, setDateRange] = useState<DateRange | undefined>({ from: undefined, to: undefined });
-  const itemsPerPage = 5;
+      })
+    },
+  })
 
-  const [api, setApi] = useState<CarouselApi | undefined>(undefined);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [imageCount, setImageCount] = useState(0);
+  const [createMaintenance] = useMutation(CREATE_MAINTENANCE)
+  const [updateMaintenance] = useMutation(UPDATE_MAINTENANCE)
+  const [deleteMaintenance] = useMutation(DELETE_MAINTENANCE)
 
-  const { toast } = useToast();
+  const [searchTerm, setSearchTerm] = useState("")
+  const [filterType, setFilterType] = useState("all")
+  const [filterStatus, setFilterStatus] = useState("all")
+  const [filterTechnician, setFilterTechnician] = useState("all")
+  const [currentPage, setCurrentPage] = useState(1)
+  const [selectedMaintenance, setSelectedMaintenance] = useState<Maintenance | null>(null)
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({ from: undefined, to: undefined })
+  const [activeTab, setActiveTab] = useState("all")
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false)
+  const [isFormDialogOpen, setIsFormDialogOpen] = useState(false)
+  const [maintenanceToEdit, setMaintenanceToEdit] = useState<Maintenance | null>(null)
 
-  useEffect(() => {
-    if (!api) return;
-    setImageCount(api.scrollSnapList().length);
-    setCurrentImageIndex(api.selectedScrollSnap() + 1);
+  const itemsPerPage = 10
 
-    api.on("select", () => {
-      setCurrentImageIndex(api.selectedScrollSnap() + 1);
-    });
-  }, [api]);
+  const { toast } = useToast()
 
-  if (loading) return <Skeleton className="w-full h-64" />;
+  const { data: usersData } = useQuery(GET_USERS)
+  const { data: aircraftsData } = useQuery(GET_AIRCRAFTS)
+
+  const aircrafts = aircraftsData?.getAircrafts || []
+  const technicians = usersData?.getUsers.filter((user: { role: { role_name: string } }) => user.role?.role_name === "TECHNICIAN") || []
+
+  if (loading)
+    return (
+      <div className="w-full p-8 space-y-4" aria-busy="true" aria-label="Chargement des données de maintenance">
+        <div className="flex justify-between items-center">
+          <Skeleton className="h-10 w-64" />
+          <Skeleton className="h-10 w-32" />
+        </div>
+        <Skeleton className="h-12 w-full" />
+        <Skeleton className="h-[500px] w-full" />
+      </div>
+    )
+
   if (error) {
     toast({
       variant: "destructive",
       title: "Erreur",
       description: "Impossible de charger les maintenances. Veuillez réessayer plus tard.",
-    });
-    return null;
+    })
+    return null
   }
 
-  const maintenances: Maintenance[] = data?.getAllMaintenances || [];
+  const maintenances: Maintenance[] = data?.getAllMaintenances || []
 
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(event.target.value);
-    setCurrentPage(1);
-  };
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value)
+    setCurrentPage(1)
+  }
 
   const handleTypeFilterChange = (value: string) => {
-    setFilterType(value);
-    setCurrentPage(1);
-  };
+    setFilterType(value)
+    setCurrentPage(1)
+  }
+
+  const handleStatusFilterChange = (value: string) => {
+    setFilterStatus(value)
+    setCurrentPage(1)
+  }
 
   const handleTechnicianFilterChange = (value: string) => {
-    setFilterTechnician(value);
-    setCurrentPage(1);
-  };
+    setFilterTechnician(value)
+    setCurrentPage(1)
+  }
+
+  const handleDateRangeChange = (range: DateRange | undefined) => {
+    setDateRange(range)
+    setCurrentPage(1)
+  }
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value)
+    setCurrentPage(1)
+  }
 
   const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
+    setCurrentPage(page)
+  }
+
+  const handleRefresh = () => {
+    refetch()
+    toast({
+      title: "Actualisation",
+      description: "Les données ont été actualisées.",
+    })
+  }
+
+  const handleSelectMaintenance = (maintenance: Maintenance) => {
+    setSelectedMaintenance(maintenance)
+    setIsDetailDialogOpen(true)
+  }
+
+  const handleCreateMaintenance = () => {
+    setMaintenanceToEdit(null)
+    setIsFormDialogOpen(true)
+  }
+
+  const handleEditMaintenance = (maintenance: Maintenance) => {
+    setMaintenanceToEdit(maintenance)
+    setIsFormDialogOpen(true)
+  }
+
+  const handleDeleteMaintenance = async (maintenanceId: string) => {
+    try {
+      await deleteMaintenance({
+        variables: { id: maintenanceId },
+        refetchQueries: [{ query: GET_ALL_MAINTENANCES }],
+      })
+      toast({
+        title: "Maintenance supprimée",
+        description: "La maintenance a été supprimée avec succès.",
+      })
+    } catch (error) {
+      console.error("Erreur lors de la suppression:", error)
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la suppression de la maintenance.",
+      })
+    }
+  }
+
+  const handleSubmitMaintenanceForm = async (formData: any) => {
+    try {
+      if (formData.id) {
+        await updateMaintenance({
+          variables: {
+            updateMaintenanceInput: {
+              id: parseInt(formData.id, 10),
+              aircraft_id: formData.aircraft_id,
+              maintenance_type: formData.maintenance_type,
+              status: formData.status,
+              start_date: formData.start_date,
+              end_date: formData.end_date,
+              description: formData.description,
+              maintenance_cost: Number.parseFloat(formData.maintenance_cost) || 0,
+              technician_id: formData.technician_id ? parseInt(formData.technician_id, 10) : null,
+            }
+          },
+          refetchQueries: [{ query: GET_ALL_MAINTENANCES }],
+        })
+      } else {
+        await createMaintenance({
+          variables: {
+            input: {
+              aircraft_id: formData.aircraft_id,
+              maintenance_type: formData.maintenance_type,
+              status: formData.status,
+              start_date: formData.start_date,
+              end_date: formData.end_date,
+              description: formData.description,
+              maintenance_cost: Number.parseFloat(formData.maintenance_cost) || 0,
+              technician_id: formData.technician_id || null,
+            },
+          },
+          refetchQueries: [{ query: GET_ALL_MAINTENANCES }],
+        })
+      }
+
+      return Promise.resolve()
+    } catch (error) {
+      console.error("Erreur lors de la soumission:", error)
+      return Promise.reject(error)
+    }
+  }
 
   const filteredMaintenances = maintenances.filter((maintenance) => {
     const matchesSearchTerm =
       maintenance.aircraft.registration_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      maintenance.aircraft.model.toLowerCase().includes(searchTerm.toLowerCase());
+      maintenance.aircraft.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (maintenance.description && maintenance.description.toLowerCase().includes(searchTerm.toLowerCase()))
 
-    const matchesType = filterType === 'all' || maintenance.maintenance_type === filterType;
+    const matchesType = filterType === "all" || maintenance.maintenance_type === filterType
+
+    const matchesStatus = filterStatus === "all" || maintenance.status === filterStatus
 
     const matchesTechnician =
-      filterTechnician === 'all' ||
-      (maintenance.technician ? maintenance.technician.email : 'non_assigned') === filterTechnician;
+      filterTechnician === "all" ||
+      (maintenance.technician ? maintenance.technician.email : "non_assigned") === filterTechnician
 
     const matchesDate =
       (!dateRange || !dateRange.from || new Date(maintenance.start_date) >= dateRange.from) &&
-      (!dateRange || !dateRange.to || new Date(maintenance.start_date) <= dateRange.to);
+      (!dateRange || !dateRange.to || new Date(maintenance.start_date) <= dateRange.to)
 
-    return matchesSearchTerm && matchesType && matchesTechnician && matchesDate;
-  });
+    const matchesTab =
+      activeTab === "all" ||
+      (activeTab === "upcoming" && maintenance.status === "PLANNED") ||
+      (activeTab === "inProgress" && maintenance.status === "IN_PROGRESS") ||
+      (activeTab === "completed" && maintenance.status === "COMPLETED")
 
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentMaintenances = filteredMaintenances.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredMaintenances.length / itemsPerPage);
+    return matchesSearchTerm && matchesType && matchesStatus && matchesTechnician && matchesDate && matchesTab
+  })
+
+  const indexOfLastItem = currentPage * itemsPerPage
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage
+  const currentMaintenances = filteredMaintenances.slice(indexOfFirstItem, indexOfLastItem)
+  const totalPages = Math.ceil(filteredMaintenances.length / itemsPerPage)
+
+  // Obtenir les statistiques pour les badges des onglets
+  const upcomingCount = maintenances.filter((m) => m.status === "PLANNED").length
+  const inProgressCount = maintenances.filter((m) => m.status === "IN_PROGRESS").length
+  const completedCount = maintenances.filter((m) => m.status === "COMPLETED").length
 
   return (
-    <div className="flex flex-col items-center justify-center">
-      <h1 className="text-3xl font-bold mb-8">Liste des Maintenances</h1>
-
-      <div className="mb-4 w-full max-w-3xl flex space-x-4">
-        <Input
-          placeholder="Rechercher par immatriculation ou modèle"
-          value={searchTerm}
-          onChange={handleSearchChange}
-          className="flex-1"
-        />
-
-        {/* Dialog pour les filtres */}
-        <Dialog open={isFilterDialogOpen} onOpenChange={setIsFilterDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>Ouvrir les filtres</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogClose />
-            <h2 className="text-xl font-bold mb-4">Filtres</h2>
-            <div className="space-y-4">
-              <Select onValueChange={handleTypeFilterChange}>
-          <SelectTrigger>Type de Maintenance</SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tous</SelectItem>
-            <SelectItem value="Préventive">Préventive</SelectItem>
-            <SelectItem value="Corrective">Corrective</SelectItem>
-          </SelectContent>
-              </Select>
-
-              <Select onValueChange={handleTechnicianFilterChange}>
-          <SelectTrigger>Technicien</SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tous</SelectItem>
-            {Array.from(new Set(maintenances.map(m => m.technician?.email || 'non_assigned')))
-              .filter(email => email && email !== '')
-              .map(email => (
-                <SelectItem key={email} value={email}>
-            {email === 'non_assigned' ? 'Non assigné' : email}
-                </SelectItem>
-              ))}
-          </SelectContent>
-              </Select>
-
-              {/* Date Picker */}
-              <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className="w-full justify-start text-left font-normal"
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {dateRange && dateRange.from ? (
-                dateRange.to ? (
-            <>
-              {format(dateRange.from, 'LLL dd, y')} - {format(dateRange.to, 'LLL dd, y')}
-            </>
-                ) : (
-            format(dateRange.from, 'LLL dd, y')
-                )
-              ) : (
-                <span>Sélectionnez une plage de dates</span>
-              )}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              initialFocus
-              mode="range"
-              defaultMonth={dateRange?.from}
-              selected={dateRange}
-              onSelect={(range) => {
-                if (range?.from || range?.to) {
-            setDateRange({ from: range?.from || undefined, to: range?.to || undefined });
-                }
-              }}
-              numberOfMonths={2}
-            />
-          </PopoverContent>
-              </Popover>
-            </div>
-            <div className="mt-4 flex justify-end space-x-2">
-              <Button onClick={() => setIsFilterDialogOpen(false)}>Valider</Button>
-              <Button variant="outline" onClick={() => {
-          setFilterType('all');
-          setFilterTechnician('all');
-          setDateRange({ from: undefined, to: undefined });
-          setIsFilterDialogOpen(false);
-              }}>Supprimer</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+    <div className="container mx-auto py-6 space-y-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Gestion des Maintenances</h1>
+          <p className="text-muted-foreground mt-1">Suivez et gérez les maintenances de votre flotte d'aéronefs</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handleRefresh} aria-label="Actualiser les données">
+            <RefreshCwIcon className="h-4 w-4 mr-2" aria-hidden="true" />
+            Actualiser
+          </Button>
+          <Button size="sm" onClick={handleCreateMaintenance} aria-label="Créer une nouvelle maintenance">
+            <PlusIcon className="h-4 w-4 mr-2" aria-hidden="true" />
+            Nouvelle Maintenance
+          </Button>
+        </div>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Immatriculation</TableHead>
-            <TableHead>Modèle</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead>Date de fin</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {currentMaintenances.map((maintenance) => (
-            <TableRow key={maintenance.id}>
-              <TableCell>{maintenance.aircraft.registration_number}</TableCell>
-              <TableCell>{maintenance.aircraft.model}</TableCell>
-                <TableCell>{MaintenanceType[maintenance.maintenance_type as keyof typeof MaintenanceType] || 'N/A'}</TableCell>
-              <TableCell>{new Date(maintenance.end_date).toLocaleDateString()}</TableCell>
-              <TableCell>
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button onClick={() => setSelectedMaintenance(maintenance)}>Voir plus</Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-lg p-4">
-                    <DialogClose />
-                    {selectedMaintenance && (
-                      <div>
-                        <h3 className="text-xl font-bold mb-4">Détails de la Maintenance</h3>
-                        <p><strong>Date :</strong> {new Date(selectedMaintenance.start_date).toLocaleDateString()} - {new Date(selectedMaintenance.end_date).toLocaleDateString()}</p>
-                        <p><strong>Type :</strong> {MaintenanceType[selectedMaintenance.maintenance_type as keyof typeof MaintenanceType] || 'N/A'}</p>
-                        <p><strong>Description :</strong> {selectedMaintenance.description || 'N/A'}</p>
-                        <p><strong>Coût :</strong> {selectedMaintenance.maintenance_cost ? `${selectedMaintenance.maintenance_cost} €` : 'N/A'}</p>
-                        <p><strong>Technicien :</strong> {selectedMaintenance.technician ? selectedMaintenance.technician.email : 'Non assigné'}</p>
+      <div className="space-y-4">
+        {/* Barre de recherche et filtres */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <SearchFilter
+            searchTerm={searchTerm}
+            onSearchChange={handleSearchChange}
+            filterType={filterType}
+            onFilterTypeChange={handleTypeFilterChange}
+            filterStatus={filterStatus}
+            onFilterStatusChange={handleStatusFilterChange}
+            filterTechnician={filterTechnician}
+            onFilterTechnicianChange={handleTechnicianFilterChange}
+            dateRange={dateRange}
+            onDateRangeChange={handleDateRangeChange}
+            maintenanceTypes={MaintenanceType}
+            maintenanceStatuses={MaintenanceStatus}
+            technicians={maintenances.map((m) => m.technician || { email: "non_assigned" })}
+          />
+        </div>
 
-                        {/* Accordions for Images and Documents */}
-                        <Accordion type="single" collapsible>
-                          <AccordionItem value="images">
-                            <AccordionTrigger>Images</AccordionTrigger>
-                            <AccordionContent>
-                              {selectedMaintenance.images_url?.length ? (
-                                <Carousel setApi={setApi}>
-                                  <CarouselContent>
-                                    {selectedMaintenance.images_url.map((url, index) => (
-                                      <CarouselItem key={index}>
-                                        <img
-                                          src={`http://localhost:3000${url}`}
-                                          alt={`Image ${index + 1}`}
-                                          className="w-full h-auto mb-2"
-                                        />
-                                      </CarouselItem>
-                                    ))}
-                                  </CarouselContent>
-                                  <CarouselPrevious />
-                                  <CarouselNext />
-                                </Carousel>
-                              ) : (
-                                <p>Aucune image disponible</p>
-                              )}
-                            </AccordionContent>
-                          </AccordionItem>
-                          <AccordionItem value="documents">
-                            <AccordionTrigger>Documents</AccordionTrigger>
-                            <AccordionContent>
-                              {selectedMaintenance.documents_url?.length ? (
-                                selectedMaintenance.documents_url.map((url, index) => (
-                                  <a key={index} href={`http://localhost:3000${url}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline block mb-2">
-                                    Document {index + 1}
-                                  </a>
-                                ))
-                              ) : (
-                                <p>Aucun document disponible</p>
-                              )}
-                            </AccordionContent>
-                          </AccordionItem>
-                        </Accordion>
-                      </div>
-                    )}
-                  </DialogContent>
-                </Dialog>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+        {/* Onglets */}
+        <MaintenanceTabs
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+          counts={{
+            all: maintenances.length,
+            upcoming: upcomingCount,
+            inProgress: inProgressCount,
+            completed: completedCount,
+          }}
+        >
+          <MaintenanceTable
+            maintenances={currentMaintenances}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            itemsPerPage={itemsPerPage}
+            totalItems={filteredMaintenances.length}
+            onPageChange={handlePageChange}
+            onSelectMaintenance={handleSelectMaintenance}
+            maintenanceTypes={MaintenanceType}
+          />
+        </MaintenanceTabs>
+      </div>
 
-      {/* Pagination */}
-      <Pagination>
-        <PaginationContent>
-          <PaginationItem>
-            {currentPage > 1 && (
-              <PaginationPrevious
-                onClick={() => handlePageChange(currentPage - 1)}
-              />
-            )}
-          </PaginationItem>
-          {Array.from({ length: totalPages }, (_, index) => (
-            <PaginationItem key={index}>
-              <PaginationLink
-                onClick={() => handlePageChange(index + 1)}
-                className={currentPage === index + 1 ? 'bg-slate-200 text-black' : ''}
-              >
-                {index + 1}
-              </PaginationLink>
-            </PaginationItem>
-          ))}
-          <PaginationItem>
-            {currentPage < totalPages && (
-              <PaginationNext
-                onClick={() => handlePageChange(currentPage + 1)}
-              />
-            )}
-          </PaginationItem>
-        </PaginationContent>
-      </Pagination>
+      {/* Modales */}
+      <MaintenanceDetailDialog
+        maintenance={selectedMaintenance}
+        maintenanceTypes={MaintenanceType}
+        maintenanceStatuses={MaintenanceStatus}
+        isOpen={isDetailDialogOpen}
+        onOpenChange={setIsDetailDialogOpen}
+        onEdit={handleEditMaintenance}
+        onDelete={handleDeleteMaintenance}
+      />
+
+      <MaintenanceFormDialog
+        isOpen={isFormDialogOpen}
+        onOpenChange={setIsFormDialogOpen}
+        maintenance={maintenanceToEdit}
+        maintenanceTypes={MaintenanceType}
+        maintenanceStatuses={MaintenanceStatus}
+        aircrafts={aircrafts}
+        technicians={technicians}
+        onSubmit={handleSubmitMaintenanceForm}
+      />
     </div>
-  );
+  )
 }

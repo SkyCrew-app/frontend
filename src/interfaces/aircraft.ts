@@ -1,6 +1,7 @@
 import { MaintenanceType } from './maintenance';
 
 export type Aircraft = {
+  consumption: string;
   id: number;
   registration_number: string;
   model: string;
