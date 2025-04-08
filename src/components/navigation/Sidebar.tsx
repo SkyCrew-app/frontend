@@ -46,6 +46,7 @@ const menuItems = [
     icon: Settings,
     path: "/administration",
     subItems: [
+      { name: "Flotte", path: "/administration/planes" },
       { name: "Membres", path: "/administration/users" },
       { name: "Finance", path: "/administration/finance" },
       { name: "Sécurité", path: "/administration/security" },
