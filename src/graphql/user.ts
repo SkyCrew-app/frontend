@@ -72,6 +72,11 @@ export const GET_USER_BY_EMAIL = gql`
         is_valid
         status
       }
+      language
+      speed_unit
+      distance_unit
+      timezone
+      preferred_aerodrome
     }
   }
 `;
@@ -167,6 +172,19 @@ export const GET_ME = gql`
     me {
       id
       email
+    }
+  }
+`;
+
+export const UPDATE_USER_PREFERENCES = gql`
+  mutation updateUserPreferences($userId: Float!, $preference: UpdateUserPreferencesInput!) {
+    updateUserPreferences(userId: $userId, preference: $preference) {
+      id
+      language
+      speed_unit
+      distance_unit
+      timezone
+      preferred_aerodrome
     }
   }
 `;

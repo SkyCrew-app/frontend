@@ -61,7 +61,7 @@ export const CREATE_ARTICLE = gql`
 
 export const UPDATE_ARTICLE = gql`
   mutation UpdateArticle(
-    $id: ID!
+    $id: Float!
     $title: String!
     $description: String!
     $text: String!
