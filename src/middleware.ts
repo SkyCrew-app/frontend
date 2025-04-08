@@ -36,7 +36,7 @@ async function isInMaintenanceMode(req: NextRequest) {
     return result.data?.getSiteStatus ?? false;
   } catch (error) {
     console.error('Erreur maintenance:', error);
-    return false;
+    return NextResponse.redirect(new URL('/system/sitedown', req.url))
   }
 }
 
@@ -47,6 +47,9 @@ export async function middleware(req: NextRequest) {
   if (isStaticFile) return response;
 
   const maintenance = await isInMaintenanceMode(req);
+  if (maintenance.status === 307) {
+    return NextResponse.rewrite(new URL('/system/sitedown', req.url));
+  }
   if (maintenance && !req.nextUrl.pathname.startsWith('/system/maintenance')) {
     response.cookies.delete('token');
     return NextResponse.redirect(new URL('/system/maintenance', req.url));
