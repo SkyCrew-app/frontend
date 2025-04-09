@@ -3,7 +3,7 @@ import { Plane } from "lucide-react"
 
 type AircraftDetailsFormProps = {
   aircraft: {
-    registration: string
+    registration_number: string
     model: string
     year_of_manufacture: number
     maxAltitude: number
@@ -28,7 +28,7 @@ export default function AircraftDetailsForm({ aircraft }: AircraftDetailsFormPro
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <p className="text-sm font-medium text-muted-foreground">Numéro d'immatriculation</p>
-            <p className="text-lg font-semibold">{aircraft.registration}</p>
+            <p className="text-lg font-semibold">{aircraft.registration_number}</p>
           </div>
           <div>
             <p className="text-sm font-medium text-muted-foreground">Modèle</p>
