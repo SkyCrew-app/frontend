@@ -49,7 +49,7 @@ const menuItems = [
       { name: "Flotte", path: "/administration/planes" },
       { name: "Membres", path: "/administration/users" },
       { name: "Finance", path: "/administration/finance" },
-      { name: "Sécurité", path: "/administration/security" },
+      { name: "Sécurité", path: "/administration/audits" },
       { name: "Articles", path: "/administration/articles" },
       { name: "E-learning", path: "/administration/e-learning" },
       { name: "Paramètres", path: "/administration/settings" },
