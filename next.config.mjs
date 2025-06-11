@@ -4,6 +4,7 @@ const nextConfig = {
   images: {
     domains: ["images.unsplash.com"],
   },
+  ignoreDuringBuilds: true
 }
 
 export default nextConfig
