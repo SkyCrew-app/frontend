@@ -21,16 +21,83 @@ export default function ActualitesAeroclub() {
   const userEmail = useCurrentUser()
   const userData = useUserData(userEmail)
   const [userId, setUserId] = useState<string | null>(null)
+  const [userAirport, setUserAirport] = useState<string | null>(null)
   const [first_name, setFirstName] = useState<string | null>(null)
   const { toast } = useToast()
 
   const { data: articlesData, loading: articlesLoading, error: articlesError } = useQuery(GET_ARTICLES)
 
+  useEffect(() => {
+    if (userData) {
+      setUserId(userData.id)
+    }
+  }, [userData])
+
+  const {
+    data: userInfo,
+    loading: userLoading,
+    error: userError,
+  } = useQuery(GET_USER_PROFILE, {
+    variables: { email: userEmail },
+    skip: !userEmail,
+  })
+
+  useEffect(() => {
+    if (userInfo && userInfo.userByEmail) {
+      const { first_name, preferred_aerodrome } = userInfo.userByEmail
+      if (first_name) {
+        setFirstName(first_name)
+      }
+      if (preferred_aerodrome) {
+        setUserAirport(preferred_aerodrome)
+      }
+    }
+  }, [userInfo])
+
+  useEffect(() => {
+    if (userAirport) {
+      fetchWeather()
+    }
+  }, [userAirport])
+
+    const airportInformation = async (aeroport: string) => {
+    try {
+      const response = await fetch(`https://api.api-ninjas.com/v1/airports?icao=${aeroport}`, {
+        headers: {
+          "X-Api-Key": "KX6n/kOCJpKDEl+/mF+5/g==p9iHRQBed2N8KbiU",
+        },
+      })
+      if (!response.ok) {
+        throw new Error("Erreur lors de la récupération des informations de l'aéroport")
+      }
+      const data = await response.json()
+      return data[0] || null
+    } catch (error) {
+      console.error("Erreur lors de la récupération des informations de l'aéroport:", error)
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les informations de l'aéroport.",
+        variant: "destructive",
+      })
+      return null
+    }
+  }
+
   const fetchWeather = async () => {
     setIsRefreshing(true)
+    if (!userAirport) {
+      toast({
+        title: "Erreur",
+        description: "Aéroport utilisateur non défini.",
+        variant: "destructive",
+      })
+      setIsRefreshing(false)
+      return
+    }
     try {
-      const latitude = 48.866667
-      const longitude = 2.333333
+      const airportInfo = await airportInformation(userAirport)
+      const latitude = airportInfo?.latitude
+      const longitude = airportInfo?.longitude
       const response = await fetch(`https://api.api-ninjas.com/v1/weather?lat=${latitude}&lon=${longitude}`, {
         headers: {
           "X-Api-Key": "KX6n/kOCJpKDEl+/mF+5/g==p9iHRQBed2N8KbiU",
@@ -54,34 +121,6 @@ export default function ActualitesAeroclub() {
       setIsRefreshing(false)
     }
   }
-
-  useEffect(() => {
-    fetchWeather()
-  }, [])
-
-  useEffect(() => {
-    if (userData) {
-      setUserId(userData.id)
-    }
-  }, [userData])
-
-  const {
-    data: userInfo,
-    loading: userLoading,
-    error: userError,
-  } = useQuery(GET_USER_PROFILE, {
-    variables: { email: userEmail },
-    skip: !userEmail,
-  })
-
-  useEffect(() => {
-    if (userInfo && userInfo.userByEmail) {
-      const { first_name } = userInfo.userByEmail
-      if (first_name) {
-        setFirstName(first_name)
-      }
-    }
-  }, [userInfo])
 
   useEffect(() => {
     if (userError) {
@@ -172,7 +211,7 @@ export default function ActualitesAeroclub() {
             className="px-3 py-1 flex items-center gap-1 bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800"
           >
             <Plane className="h-3.5 w-3.5 rotate-45" />
-            <span>Toulouse, France</span>
+            <span>{userAirport}</span>
           </Badge>
           <Button
             variant="outline"
