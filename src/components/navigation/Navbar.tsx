@@ -28,6 +28,7 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
   const [profilePicture, setProfilePicture] = useState<string | null>(null)
   const [userAccountBalance, setUserAccountBalance] = useState<number | null>(null)
   const [userName, setUserName] = useState<string | null>(null)
+  const [userRole, setUserRole] = useState<string | null>(null)
   const userEmail = useCurrentUser()
   const userData = useUserData(userEmail)
   const [userId, setUserId] = useState<number | null>(null)
@@ -90,6 +91,7 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
       const { first_name, last_name, profile_picture, user_account_balance } = data.userByEmail
       setInitials(`${first_name[0]}${last_name[0]}`)
       setUserName(`${first_name} ${last_name}`)
+      setUserRole(data.userByEmail.role?.role_name || "Utilisateur")
       setUserAccountBalance(user_account_balance)
       if (profile_picture) {
         setProfilePicture(profile_picture)
@@ -317,7 +319,7 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
               </Avatar>
               <div>
                 <p className="font-medium text-slate-800 dark:text-slate-200">{userName}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Membre</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{userRole}</p>
               </div>
             </div>
           </div>
