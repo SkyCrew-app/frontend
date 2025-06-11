@@ -36,7 +36,7 @@ export function AerodromeCombobox({ onAerodromeChange, defaultValue }: Aerodrome
 
   const fetchAerodromeName = async (aerodromeId: string) => {
     if (!aerodromeId) return;
-    
+
     try {
       // Try to fetch the specific aerodrome by ID or code
       const response = await fetch(`https://api.api-ninjas.com/v1/airports?icao=${aerodromeId}`, {
@@ -59,7 +59,7 @@ export function AerodromeCombobox({ onAerodromeChange, defaultValue }: Aerodrome
             "X-Api-Key": "KX6n/kOCJpKDEl+/mF+5/g==p9iHRQBed2N8KbiU",
           },
         });
-        
+
         if (iataResponse.ok) {
           const iataData = await iataResponse.json();
           if (iataData && iataData.length > 0) {
