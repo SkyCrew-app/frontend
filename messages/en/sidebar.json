@@ -1,0 +1,26 @@
+{
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "fleet": "Fleet",
+    "reservations": "Reservations",
+    "instructions": "Instructions",
+    "administration": "Administration",
+    "history": "History",
+    "maintenance": "Maintenance",
+
+    "booking": "My Reservations",
+    "flightsPlan": "My Flight Plans",
+    "courses": "My Courses",
+    "assessments": "My Assessments",
+    "elearning": "E-Learning",
+
+    "users": "Users",
+    "financial": "Finance",
+    "security": "Security",
+
+    "articles": "Articles",
+    "settings": "Settings",
+    "profile": "My Profile",
+    "logout": "Log out"
+  }
+}

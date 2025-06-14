@@ -1,0 +1,40 @@
+{
+  "dashboard": {
+    "airportError": "Could not load airport information.",
+    "userNotFound": "Could not load user data.",
+    "articleNotFound": "Could not load articles.",
+    "error": "Error",
+    "unknown": "Unknown",
+
+    "welcome": "Welcome, {name}",
+    "weather": "Here are the latest news and weather conditions",
+    "refresh": "Refresh weather",
+
+    "temperature": "Temperature",
+    "conditions": "Conditions",
+    "weatherStats": "Clouds: {cloud_pct}% • Humidity: {humidity}%",
+    "feelsLike": "Feels like: {feels_like}°C",
+    "updatedWeather": "Weather updated",
+    "weatherUpdated": "Weather data has been updated.",
+    "weatherUpdateError": "Error updating weather data.",
+
+    "sun": "Sun",
+    "up": "Sunrise",
+    "down": "Sunset",
+
+    "wind": "Wind",
+    "direction": "Direction: {wind_deg}°",
+
+    "sunny": "Sunny",
+    "cloudy": "Cloudy",
+    "partlyCloudy": "Partly cloudy",
+
+    "news": "Aeroclub news",
+    "seeNews": "See all news",
+    "noNews": "No news available at the moment.",
+    "seeNewsHere": "Aeroclub news will appear here",
+    "readMore": "Read full article",
+
+    "noAirportSelected": "No user airport selected."
+  }
+}

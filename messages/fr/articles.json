@@ -1,0 +1,45 @@
+{
+  "articles": {
+    "error": "Erreur de chargement.",
+
+    "news": "Actualités",
+    "discover": "Découvrez les dernières actualités et événements.",
+
+    "search": "Rechercher un article...",
+    "filters": "Filtres",
+    "filtersDate": "Filtrez les articles par tags ou date.",
+    "tags": "Tags",
+    "sortByDate": "Tri par date",
+    "newest": "Plus récent",
+    "oldest": "Plus ancien",
+    "resetFilters": "Réinitialiser les filtres",
+    "activeFilters": "Filtres actifs",
+
+    "noArticles": "Aucun article trouvé.",
+    "changeFilters": "Essayez de modifier vos critères de recherche ou de supprimer les filtres.",
+
+    "eventLabel": "Événement : {date}",
+    "publishedLabel": "Publié : {date}",
+    "readingTime": "{time} min de lecture",
+
+    "readArticle": "Lire l'article",
+    "back": "Retour aux articles",
+
+    "notFoundTitle": "Article introuvable",
+    "notFoundDescription": "Nous n'avons pas pu trouver l'article que vous recherchez. Il a peut-être été supprimé ou déplacé.",
+
+    "copyLink": "Copier le lien",
+    "share": "Partager",
+    "print": "Imprimer",
+
+    "linkCopiedTitle": "Lien copié",
+    "linkCopiedDescription": "Le lien de l'article a été copié dans le presse-papier.",
+
+    "addToCalendar": "Ajouter au calendrier",
+    "googleCalendar": "Google Calendar",
+    "appleCalendar": "Apple Calendar",
+    "outlookCalendar": "Outlook",
+
+    "relatedArticles": "Articles similaires"
+  }
+}
