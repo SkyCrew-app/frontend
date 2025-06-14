@@ -14,6 +14,7 @@ import Link from "next/link"
 import { GET_ARTICLES } from "@/graphql/articles"
 import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
 import { motion } from "framer-motion"
+import {useTranslations} from 'next-intl';
 
 export default function ActualitesAeroclub() {
   const [weatherData, setWeatherData] = useState<any | null>(null)
@@ -23,6 +24,7 @@ export default function ActualitesAeroclub() {
   const [userId, setUserId] = useState<string | null>(null)
   const [userAirport, setUserAirport] = useState<string | null>(null)
   const [first_name, setFirstName] = useState<string | null>(null)
+  const t = useTranslations('dashboard');
   const { toast } = useToast()
 
   const { data: articlesData, loading: articlesLoading, error: articlesError } = useQuery(GET_ARTICLES)
@@ -75,8 +77,8 @@ export default function ActualitesAeroclub() {
     } catch (error) {
       console.error("Erreur lors de la récupération des informations de l'aéroport:", error)
       toast({
-        title: "Erreur",
-        description: "Impossible de charger les informations de l'aéroport.",
+        title: t('error'),
+        description: t('airportError'),
         variant: "destructive",
       })
       return null
@@ -87,8 +89,8 @@ export default function ActualitesAeroclub() {
     setIsRefreshing(true)
     if (!userAirport) {
       toast({
-        title: "Erreur",
-        description: "Aéroport utilisateur non défini.",
+        title: t('error'),
+        description: t('noAirportSelected'),
         variant: "destructive",
       })
       setIsRefreshing(false)
@@ -106,14 +108,14 @@ export default function ActualitesAeroclub() {
       const data = await response.json()
       setWeatherData(data)
       toast({
-        title: "Météo mise à jour",
-        description: "Les données météorologiques ont été actualisées.",
+        title: t('updatedWeather'),
+        description: t('weatherUpdated'),
         variant: "default",
       })
     } catch (error) {
       toast({
-        title: "Erreur",
-        description: "Impossible de charger les données météo.",
+        title: t('error'),
+        description: t('weatherUpdateError'),
         variant: "destructive",
       })
       console.error("Erreur lors de la récupération des données météo:", error)
@@ -125,8 +127,8 @@ export default function ActualitesAeroclub() {
   useEffect(() => {
     if (userError) {
       toast({
-        title: "Erreur",
-        description: "Impossible de charger les données utilisateur.",
+        title: t('error'),
+        description: t('userNotFound'),
         variant: "destructive",
       })
     }
@@ -135,8 +137,8 @@ export default function ActualitesAeroclub() {
   useEffect(() => {
     if (articlesError) {
       toast({
-        title: "Erreur",
-        description: "Impossible de charger les articles.",
+        title: t('error'),
+        description: t('articleNotFound'),
         variant: "destructive",
       })
     }
@@ -181,13 +183,13 @@ export default function ActualitesAeroclub() {
   }
 
   const getWeatherConditionText = () => {
-    if (!weatherData) return "Inconnu"
+    if (!weatherData) return t('unknown')
 
     const cloudPct = weatherData.cloud_pct || 0
 
-    if (cloudPct < 30) return "Ensoleillé"
-    if (cloudPct < 70) return "Partiellement nuageux"
-    return "Nuageux"
+    if (cloudPct < 30) return t('sunny')
+    if (cloudPct < 70) return t('partlyCloudy')
+    return t('cloudy')
   }
 
   return (
@@ -197,13 +199,13 @@ export default function ActualitesAeroclub() {
           <h1 className="text-2xl sm:text-3xl font-bold">
             {first_name ? (
               <span className="bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent">
-                Bienvenue, {first_name}
+                {t('welcome', { name: first_name })}
               </span>
             ) : (
               <Skeleton className="h-8 w-48" />
             )}
           </h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">Voici les dernières actualités et conditions météo</p>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">{t('weather')}</p>
         </div>
         <div className="flex items-center gap-2">
           <Badge
@@ -221,7 +223,7 @@ export default function ActualitesAeroclub() {
             className="flex items-center gap-1"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
-            <span className="hidden sm:inline">Actualiser la météo</span>
+            <span className="hidden sm:inline">{t('refresh')}</span>
           </Button>
         </div>
       </div>
@@ -235,12 +237,12 @@ export default function ActualitesAeroclub() {
         <motion.div variants={itemVariants}>
           <Card className="overflow-hidden border-t-4 border-t-blue-500 hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Température</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('temperature')}</CardTitle>
               <Sun className="h-4 w-4 text-yellow-500" />
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{weatherData?.temp || "--"}°C</div>
-              <p className="text-xs text-muted-foreground">Ressenti {weatherData?.feels_like || "--"}°C</p>
+              <p className="text-xs text-muted-foreground">{t('feelsLike', {feels_like: weatherData?.feels_like || "--"})}</p>
             </CardContent>
           </Card>
         </motion.div>
@@ -248,13 +250,16 @@ export default function ActualitesAeroclub() {
         <motion.div variants={itemVariants}>
           <Card className="overflow-hidden border-t-4 border-t-indigo-500 hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Conditions</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('conditions')}</CardTitle>
               {getWeatherConditionIcon()}
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{getWeatherConditionText()}</div>
               <p className="text-xs text-muted-foreground">
-                Nuages: {weatherData?.cloud_pct || "--"}% • Humidité: {weatherData?.humidity || "--"}%
+                {t('weatherStats', {
+                  cloud_pct: weatherData?.cloud_pct ?? '--',
+                  humidity: weatherData?.humidity ?? '--'
+                })}
               </p>
             </CardContent>
           </Card>
@@ -263,13 +268,13 @@ export default function ActualitesAeroclub() {
         <motion.div variants={itemVariants}>
           <Card className="overflow-hidden border-t-4 border-t-amber-500 hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Soleil</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('sun')}</CardTitle>
               <Sun className="h-4 w-4 text-amber-500" />
             </CardHeader>
             <CardContent>
               <div className="flex justify-between items-center">
                 <div>
-                  <div className="text-sm font-semibold">Lever</div>
+                  <div className="text-sm font-semibold">{t('up')}</div>
                   <div className="text-xl font-bold">
                     {weatherData?.sunrise
                       ? new Date(weatherData.sunrise * 1000).toLocaleTimeString("fr-FR", {
@@ -281,7 +286,7 @@ export default function ActualitesAeroclub() {
                   </div>
                 </div>
                 <div>
-                  <div className="text-sm font-semibold text-right">Coucher</div>
+                  <div className="text-sm font-semibold text-right">{t('down')}</div>
                   <div className="text-xl font-bold">
                     {weatherData?.sunset
                       ? new Date(weatherData.sunset * 1000).toLocaleTimeString("fr-FR", {
@@ -300,7 +305,7 @@ export default function ActualitesAeroclub() {
         <motion.div variants={itemVariants}>
           <Card className="overflow-hidden border-t-4 border-t-cyan-500 hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Vent</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('wind')}</CardTitle>
               <Wind className="h-4 w-4 text-cyan-500" />
             </CardHeader>
             <CardContent>
@@ -317,7 +322,9 @@ export default function ActualitesAeroclub() {
                     />
                   </div>
                 </div>
-                <span>Direction: {weatherData?.wind_degrees || "--"}°</span>
+                <span>{t('direction', {
+                  wind_deg: weatherData?.wind_degrees ?? '--',
+                })}</span>
               </div>
             </CardContent>
           </Card>
@@ -328,13 +335,13 @@ export default function ActualitesAeroclub() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
           <h2 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
             <Info className="h-5 w-5 text-blue-500" />
-            Actualités de l'aéroclub
+            {t('news')}
           </h2>
           <Link
             href="/articles"
             className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium flex items-center"
           >
-            Voir toutes les actualités
+            {t('seeNews')}
             <ArrowRight className="ml-1 h-4 w-4" />
           </Link>
         </div>
@@ -358,10 +365,10 @@ export default function ActualitesAeroclub() {
             <CardContent className="flex flex-col items-center justify-center py-10">
               <Info className="h-10 w-10 text-gray-400 mb-2" />
               <p className="text-center text-lg text-gray-600 dark:text-gray-400 font-medium">
-                Aucun article pour le moment
+                {t('noNews')}
               </p>
               <p className="text-center text-sm text-gray-500 dark:text-gray-500 mt-1">
-                Les actualités de l'aéroclub seront affichées ici
+                {t('noNewsHere')}
               </p>
             </CardContent>
           </Card>
@@ -417,7 +424,7 @@ export default function ActualitesAeroclub() {
                           href={`/articles/${article.id}`}
                           className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium flex items-center"
                         >
-                          Lire l'article complet
+                          {t('readMore')}
                           <ArrowRight className="ml-1 h-4 w-4" />
                         </Link>
                         </CardContent>

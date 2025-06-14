@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useTranslations } from "next-intl"
 
 interface Article {
   id: string
@@ -31,6 +32,7 @@ export default function ArticlesPage() {
   const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest")
   const [allTags, setAllTags] = useState<string[]>([])
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
+  const t = useTranslations('articles');
 
   useEffect(() => {
     if (data?.articles) {
@@ -92,7 +94,7 @@ export default function ArticlesPage() {
     return (
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="rounded-lg bg-red-50 p-6 text-red-800 dark:bg-red-950 dark:text-red-200">
-          <h3 className="text-lg font-medium">Erreur de chargement</h3>
+          <h3 className="text-lg font-medium">{t('error')}</h3>
           <p className="mt-2">{error.message}</p>
         </div>
       </div>
@@ -105,16 +107,16 @@ export default function ArticlesPage() {
           <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
             <h1 className="flex items-center gap-2 text-3xl font-bold sm:text-4xl">
               <Newspaper className="h-8 w-8 text-primary" />
-              Actualités
+              {t('news')}
             </h1>
-            <p className="mt-2 text-muted-foreground">Découvrez les dernières actualités et événements</p>
+            <p className="mt-2 text-muted-foreground">{t('discover')}</p>
           </motion.div>
 
           <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="relative w-full max-w-md">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Rechercher un article..."
+                placeholder= {t('search')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -126,7 +128,7 @@ export default function ArticlesPage() {
                 <SheetTrigger asChild>
                   <Button variant="outline" size="sm" className="sm:hidden">
                     <Filter className="mr-2 h-4 w-4" />
-                    Filtres
+                    {t('filters')}
                     {selectedTags.length > 0 && (
                       <Badge variant="secondary" className="ml-2">
                         {selectedTags.length}
@@ -136,14 +138,14 @@ export default function ArticlesPage() {
                 </SheetTrigger>
                 <SheetContent side="right">
                   <SheetHeader>
-                    <SheetTitle>Filtres</SheetTitle>
-                    <SheetDescription>Filtrez les articles par tags ou date</SheetDescription>
+                    <SheetTitle>{t('filters')}</SheetTitle>
+                    <SheetDescription>{t('filtersDate')}</SheetDescription>
                   </SheetHeader>
                   <div className="mt-6 space-y-6">
                     <div>
                       <h3 className="mb-3 flex items-center gap-2 font-medium">
                         <Tag className="h-4 w-4 text-primary" />
-                        Tags
+                        {t('tags')}
                       </h3>
                       <div className="flex flex-wrap gap-2">
                         {allTags.map((tag) => (
@@ -161,7 +163,7 @@ export default function ArticlesPage() {
                     <div>
                       <h3 className="mb-3 flex items-center gap-2 font-medium">
                         <Calendar className="h-4 w-4 text-primary" />
-                        Tri par date
+                        {t('sortByDate')}
                       </h3>
                       <div className="flex gap-2">
                         <Button
@@ -169,20 +171,20 @@ export default function ArticlesPage() {
                           size="sm"
                           onClick={() => setSortOrder("newest")}
                         >
-                          Plus récents
+                          {t('newest')}
                         </Button>
                         <Button
                           variant={sortOrder === "oldest" ? "default" : "outline"}
                           size="sm"
                           onClick={() => setSortOrder("oldest")}
                         >
-                          Plus anciens
+                          {t('oldest')}
                         </Button>
                       </div>
                     </div>
                     {(selectedTags.length > 0 || searchTerm || sortOrder !== "newest") && (
                       <Button variant="ghost" size="sm" className="w-full" onClick={clearFilters}>
-                        Réinitialiser les filtres
+                        {t('resetFilters')}
                       </Button>
                     )}
                   </div>
@@ -226,12 +228,12 @@ export default function ArticlesPage() {
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="sm">
                       <ArrowUpDown className="mr-2 h-4 w-4" />
-                      {sortOrder === "newest" ? "Plus récents" : "Plus anciens"}
+                      {sortOrder === "newest" ? t('newest') : t('oldest')}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => setSortOrder("newest")}>Plus récents</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setSortOrder("oldest")}>Plus anciens</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setSortOrder("newest")}>{t('newest')}</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setSortOrder("oldest")}>{t('oldest')}</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
 
@@ -282,7 +284,7 @@ export default function ArticlesPage() {
 
                 {(selectedTags.length > 0 || searchTerm || sortOrder !== "newest") && (
                   <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8 px-2">
-                    Réinitialiser
+                    {t('resetFilters')}
                   </Button>
                 )}
               </div>
@@ -291,7 +293,7 @@ export default function ArticlesPage() {
 
           {selectedTags.length > 0 && (
             <div className="mt-4 flex flex-wrap items-center gap-2">
-              <span className="text-sm text-muted-foreground">Filtres actifs:</span>
+              <span className="text-sm text-muted-foreground">{t('activeFilters')} :</span>
               {selectedTags.map((tag) => (
                 <Badge key={tag} variant="secondary" className="flex items-center gap-1" onClick={() => toggleTag(tag)}>
                   {tag}
@@ -341,13 +343,13 @@ export default function ArticlesPage() {
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
               <Newspaper className="h-6 w-6 text-primary" />
             </div>
-            <h3 className="mt-4 text-lg font-medium">Aucun article trouvé</h3>
+            <h3 className="mt-4 text-lg font-medium">{t('noArticles')}</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              Essayez de modifier vos critères de recherche ou de supprimer les filtres.
+              {t('changeFilters')}
             </p>
             {(selectedTags.length > 0 || searchTerm) && (
               <Button variant="outline" size="sm" onClick={clearFilters} className="mt-4">
-                Réinitialiser les filtres
+                {t('resetFilters')}
               </Button>
             )}
           </div>

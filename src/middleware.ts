@@ -11,13 +11,13 @@ interface CustomJwtPayload {
 const publicPaths = new Set(['/', '/auth/2fa', '/auth/forgot-password', '/auth/reset-password', '/auth/new-account', '/system/notconnected', '/system/unauthorized', '/system/maintenance']);
 
 const roleBasedRoutes = {
-  '/admin': ['Administrateur'],
+  '/administration': ['Administrateur'],
   '/user-management': ['user', 'user']
 };
 
 async function isInMaintenanceMode(req: NextRequest) {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/graphql`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

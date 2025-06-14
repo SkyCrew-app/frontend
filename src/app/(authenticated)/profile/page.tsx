@@ -17,6 +17,7 @@ import { PreferencesForm } from "@/components/profile/preferences-form"
 import { PasswordForm } from "@/components/profile/password-form"
 import { LicensesSection } from "@/components/profile/licenses-section"
 import { motion } from "framer-motion"
+import { useTranslations } from "next-intl"
 
 const ProfileCard = ({
   icon,
@@ -55,6 +56,7 @@ export default function ProfilePage() {
   const router = useRouter()
   const { toast } = useToast()
   const isMobile = useMediaQuery("(max-width: 768px)")
+  const t = useTranslations("profile")
 
   useEffect(() => {
     if (userConnexion) {
@@ -101,21 +103,21 @@ export default function ProfilePage() {
   if (errorUser) {
     toast({
       variant: "destructive",
-      title: "Erreur",
-      description: "Erreur lors de la récupération des données utilisateur",
+      title: t('error'),
+      description: t('userError'),
     })
   }
 
   if (isMobile) {
     return (
       <div className="container mx-auto p-4">
-        <h1 className="text-2xl font-bold text-center mb-6">Mon Profil</h1>
+        <h1 className="text-2xl font-bold text-center mb-6">{t('myProfile')}</h1>
 
         <Tabs defaultValue="profile" className="w-full" onValueChange={setActiveTab} value={activeTab}>
           <TabsList className="grid grid-cols-3 mb-6">
-            <TabsTrigger value="profile">Profil</TabsTrigger>
-            <TabsTrigger value="settings">Paramètres</TabsTrigger>
-            <TabsTrigger value="security">Sécurité</TabsTrigger>
+            <TabsTrigger value="profile">{t('profile')}</TabsTrigger>
+            <TabsTrigger value="settings">{t('parameters')}</TabsTrigger>
+            <TabsTrigger value="security">{t('security')}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="profile" className="space-y-4">
@@ -134,12 +136,12 @@ export default function ProfilePage() {
             <PasswordForm userId={userId} />
 
             <div className="border rounded-lg p-4 shadow-sm">
-              <h3 className="text-xl font-semibold mb-2">Authentification à deux facteurs (2FA)</h3>
+              <h3 className="text-xl font-semibold mb-2">{t('2fa')}</h3>
               <p className="mb-4 text-muted-foreground">
-                Renforcez la sécurité de votre compte en activant l'authentification à deux facteurs.
+                {t('2faDescription')}
               </p>
               <Button className="w-full" onClick={handleActivate2FA}>
-                Activer le 2FA
+                {t('activate2fa')}
               </Button>
             </div>
           </TabsContent>
@@ -152,11 +154,11 @@ export default function ProfilePage() {
               animate={{ scale: 1, opacity: 1 }}
               className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg text-center max-w-sm mx-auto"
             >
-              <p className="text-lg mb-4">Voulez-vous vraiment activer le 2FA ?</p>
+              <p className="text-lg mb-4">{t('2faQuestion')}</p>
               <div className="flex justify-center space-x-4">
-                <Button onClick={confirmActivate2FA}>Oui</Button>
+                <Button onClick={confirmActivate2FA}>{t('yes')}</Button>
                 <Button variant="secondary" onClick={() => setShow2FAAlert(false)}>
-                  Non
+                  {t('no')}
                 </Button>
               </div>
             </motion.div>
@@ -168,7 +170,7 @@ export default function ProfilePage() {
 
   return (
     <div className="container mx-auto p-4 relative">
-      <h1 className="text-3xl font-bold text-center mb-8">Mon Profil</h1>
+      <h1 className="text-3xl font-bold text-center mb-8">{t('myProfile')}</h1>
 
       {!activeSection && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
@@ -178,51 +180,51 @@ export default function ProfilePage() {
             description={
               userData?.userByEmail
                 ? `${userData.userByEmail.first_name} ${userData.userByEmail.last_name} - ${userData.userByEmail.email}`
-                : "Informations personnelles"
+                : t('personalInformation')
             }
             onClick={() => handleCardClick("profile")}
           />
 
           <ProfileCard
             icon={<Bell className="h-6 w-6" />}
-            title="Notifications"
+            title={t('notifications')}
             description={
               userData?.userByEmail
-                ? `Email: ${userData.userByEmail.email_notifications_enabled ? "Activé" : "Désactivé"} - SMS: ${userData.userByEmail.sms_notifications_enabled ? "Activé" : "Désactivé"}`
-                : "Paramètres de notifications"
+                ? `${t('email')}: ${userData.userByEmail.email_notifications_enabled ? t('activated') : t('desactivated')} - ${t('sms')}: ${userData.userByEmail.sms_notifications_enabled ? t('activated') : t('desactivated')}`
+                : t('parameterNotification')
             }
             onClick={() => handleCardClick("notifications")}
           />
 
           <ProfileCard
             icon={<Settings className="h-6 w-6" />}
-            title="Préférences"
-            description="Modifier les préférences utilisateur pour le site."
+            title={t('preferences')}
+            description={t('editPreferences')}
             onClick={() => handleCardClick("preferences")}
           />
 
           <ProfileCard
             icon={<Award className="h-6 w-6" />}
-            title="Licences"
+            title={t('licences')}
             description={
               userData?.userByEmail?.licenses && userData.userByEmail.licenses.length > 0
-                ? `${userData.userByEmail.licenses.length} licences`
-                : "Aucune licence"
+                ? `${userData.userByEmail.licenses.length} ${t('licences')}`
+                : t('noLicences')
             }
             onClick={() => handleCardClick("licenses")}
           />
 
           <ProfileCard
             icon={<Lock className="h-6 w-6" />}
-            title="Mot de passe"
-            description="Changez votre mot de passe pour sécuriser votre compte."
+            title={t('password')}
+            description={t('changePassword')}
             onClick={() => handleCardClick("password")}
           />
 
           <ProfileCard
             icon={<Shield className="h-6 w-6" />}
-            title="Activer le 2FA"
-            description="Renforcez la sécurité de votre compte en activant le 2FA."
+            title={t('activate2fa')}
+            description={t('2faDescription')}
             onClick={handleActivate2FA}
           />
         </div>
@@ -237,9 +239,9 @@ export default function ProfilePage() {
         >
           <div className="mb-6">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-semibold">Modifier votre profil</h2>
+              <h2 className="text-2xl font-semibold">{t('updateProfile')}</h2>
               <Button variant="outline" onClick={() => setActiveSection(null)}>
-                Retour
+                {t('back')}
               </Button>
             </div>
             <ProfileForm userData={userData?.userByEmail} userId={userId} refetch={refetch} />
@@ -256,9 +258,9 @@ export default function ProfilePage() {
         >
           <div className="mb-6">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-semibold">Paramètres de notifications</h2>
+              <h2 className="text-2xl font-semibold">{t('notificationSettings')}</h2>
               <Button variant="outline" onClick={() => setActiveSection(null)}>
-                Retour
+                {t('back')}
               </Button>
             </div>
             <NotificationForm userData={userData?.userByEmail} userId={userId} refetch={refetch} />
@@ -275,9 +277,9 @@ export default function ProfilePage() {
         >
           <div className="mb-6">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-semibold">Préférences utilisateur</h2>
+              <h2 className="text-2xl font-semibold">{t('userPreferences')}</h2>
               <Button variant="outline" onClick={() => setActiveSection(null)}>
-                Retour
+                {t('back')}
               </Button>
             </div>
             <PreferencesForm userData={userData?.userByEmail} userId={userId} refetch={refetch} />
@@ -294,9 +296,9 @@ export default function ProfilePage() {
         >
           <div className="mb-6">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-semibold">Vos licences</h2>
+              <h2 className="text-2xl font-semibold">{t('yourLicences')}</h2>
               <Button variant="outline" onClick={() => setActiveSection(null)}>
-                Retour
+                {t('back')}
               </Button>
             </div>
             <LicensesSection licenses={userData?.userByEmail?.licenses || []} />
@@ -313,9 +315,9 @@ export default function ProfilePage() {
         >
           <div className="mb-6">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-semibold">Modifier votre mot de passe</h2>
+              <h2 className="text-2xl font-semibold">{t('updatePassword')}</h2>
               <Button variant="outline" onClick={() => setActiveSection(null)}>
-                Retour
+                {t('back')}
               </Button>
             </div>
             <PasswordForm userId={userId} />
@@ -330,12 +332,12 @@ export default function ProfilePage() {
             animate={{ scale: 1, opacity: 1 }}
             className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg text-center max-w-md"
           >
-            <h3 className="text-xl font-semibold mb-4">Activation du 2FA</h3>
-            <p className="mb-6">Voulez-vous vraiment activer l'authentification à deux facteurs ?</p>
+            <h3 className="text-xl font-semibold mb-4">{t('activate2fa')}</h3>
+            <p className="mb-6">{t('2faQuestion')}</p>
             <div className="flex justify-center space-x-4">
-              <Button onClick={confirmActivate2FA}>Oui, activer</Button>
+              <Button onClick={confirmActivate2FA}>{t('yes')}</Button>
               <Button variant="outline" onClick={() => setShow2FAAlert(false)}>
-                Annuler
+                {t('no')}
               </Button>
             </div>
           </motion.div>

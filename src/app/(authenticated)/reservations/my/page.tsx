@@ -21,23 +21,26 @@ import { EmptyState } from "@/components/my-reservation/empty-state"
 import { StatsCards } from "@/components/my-reservation/stats-cards"
 import { AlertCircle } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-
-const flightCategoryMapping = {
-  LOCAL: "Local",
-  CROSS_COUNTRY: "Vol longue distance",
-  INSTRUCTION: "Instruction",
-  TOURISM: "Tourisme",
-  TRAINING: "Entraînement",
-  MAINTENANCE: "Maintenance",
-  PRIVATE: "Privé",
-  CORPORATE: "Affaires",
-}
-
-const flightCategoryReverseMapping = Object.fromEntries(
-  Object.entries(flightCategoryMapping).map(([key, value]) => [value, key]),
-)
+import { useTranslations } from "next-intl"
 
 export default function MyReservations() {
+  const t = useTranslations("reservation")
+
+  const flightCategoryMapping = {
+    LOCAL: t('local'),
+    CROSS_COUNTRY: t('crossCountry'),
+    INSTRUCTION: t('instruction'),
+    TOURISM: t('tourism'),
+    TRAINING: t('training'),
+    MAINTENANCE: t('maintenance'),
+    PRIVATE: t('private'),
+    CORPORATE: t('corporate'),
+  }
+
+  const flightCategoryReverseMapping = Object.fromEntries(
+    Object.entries(flightCategoryMapping).map(([key, value]) => [value, key]),
+  )
+
   const userEmail = useCurrentUser()
   const userData = useUserData(userEmail)
   const [userId, setUserId] = useState<string | null>(null)
@@ -122,14 +125,14 @@ export default function MyReservations() {
 
       setIsEditDialogOpen(false)
       toast({
-        title: "Réservation mise à jour",
-        description: `La réservation pour l'avion ${selectedReservation.aircraft.registration_number} a été mise à jour.`,
+        title: t('reservationUpdated'),
+        description: t('reservationUpdatedDescription', { aircraft: selectedReservation.aircraft.registration_number }),
       })
     } catch (error) {
       toast({
         variant: "destructive",
-        title: "Erreur lors de la mise à jour",
-        description: "Une erreur est survenue lors de la mise à jour de la réservation.",
+        title: t('errorUpdatingReservation'),
+        description: t('errorUpdatingReservationUnknown'),
       })
     }
   }
@@ -160,7 +163,7 @@ export default function MyReservations() {
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">Mes Réservations</h1>
+        <h1 className="text-3xl font-bold mb-8">{t('myReservations')}</h1>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
             <Skeleton key={i} className="h-64 w-full" />
@@ -173,12 +176,12 @@ export default function MyReservations() {
   if (error) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">Mes Réservations</h1>
+        <h1 className="text-3xl font-bold mb-8">{t('myReservations')}</h1>
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Erreur</AlertTitle>
+          <AlertTitle>{t('error')}</AlertTitle>
           <AlertDescription>
-            Une erreur est survenue lors du chargement des réservations. Veuillez réessayer plus tard.
+            {t('errorUpdatingReservationUnknown')}
           </AlertDescription>
         </Alert>
       </div>
@@ -190,7 +193,7 @@ export default function MyReservations() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-        <h1 className="text-3xl font-bold">Mes Réservations</h1>
+        <h1 className="text-3xl font-bold">{t('myReservations')}</h1>
       </div>
 
       {allReservations.length > 0 && <StatsCards reservations={allReservations} />}
@@ -246,8 +249,8 @@ export default function MyReservations() {
         <EmptyState
           message={
             hasActiveFilters
-              ? "Aucune réservation ne correspond à vos critères de recherche."
-              : "Vous n'avez pas encore de réservations."
+              ? t('noReservations')
+              : t('noReservationsForMoment')
           }
           hasFilters={hasActiveFilters}
           onResetFilters={resetFilters}
