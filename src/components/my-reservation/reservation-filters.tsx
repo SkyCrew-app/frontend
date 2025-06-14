@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Search, Filter, SortAsc, SortDesc, X } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 interface ReservationFiltersProps {
   searchTerm: string
@@ -34,6 +35,7 @@ export function ReservationFilters({
   resetFilters,
   hasActiveFilters,
 }: ReservationFiltersProps) {
+  const t = useTranslations("reservation")
   return (
     <Card className="mb-6">
       <CardContent className="pt-6">
@@ -41,12 +43,12 @@ export function ReservationFilters({
           <div className="space-y-2">
             <Label htmlFor="search" className="flex items-center gap-2">
               <Search className="h-4 w-4" />
-              Recherche
+              {t("search")}
             </Label>
             <div className="relative">
               <Input
                 id="search"
-                placeholder="But ou immatriculation"
+                placeholder={t('searchPlaceholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pr-8"
@@ -66,17 +68,17 @@ export function ReservationFilters({
           <div className="space-y-2">
             <Label htmlFor="status" className="flex items-center gap-2">
               <Filter className="h-4 w-4" />
-              Statut
+              {t("status")}
             </Label>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger id="status">
-                <SelectValue placeholder="Tous les statuts" />
+                <SelectValue placeholder={t('allStatus')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ALL">Tous les statuts</SelectItem>
-                <SelectItem value="PENDING">En attente</SelectItem>
-                <SelectItem value="CONFIRMED">Confirmé</SelectItem>
-                <SelectItem value="CANCELLED">Annulé</SelectItem>
+                <SelectItem value="ALL">{t('allStatus')}</SelectItem>
+                <SelectItem value="PENDING">{t('pending')}</SelectItem>
+                <SelectItem value="CONFIRMED">{t('confirmated')}</SelectItem>
+                <SelectItem value="CANCELLED">{t('cancelled')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -84,14 +86,14 @@ export function ReservationFilters({
           <div className="space-y-2">
             <Label htmlFor="category" className="flex items-center gap-2">
               <Filter className="h-4 w-4" />
-              Catégorie
+              {t("flightCategory")}
             </Label>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
               <SelectTrigger id="category">
-                <SelectValue placeholder="Toutes les catégories" />
+                <SelectValue placeholder={t('allCategories')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ALL">Toutes les catégories</SelectItem>
+                <SelectItem value="ALL">{t('allCategories')}</SelectItem>
                 {Object.entries(flightCategoryMapping).map(([key, value]) => (
                   <SelectItem key={key} value={key}>
                     {value}
@@ -113,7 +115,7 @@ export function ReservationFilters({
                 className="flex-1"
                 onClick={() => setSortOrder("newest")}
               >
-                Plus récent
+                {t('newest')}
               </Button>
               <Button
                 variant={sortOrder === "oldest" ? "default" : "outline"}
@@ -121,7 +123,7 @@ export function ReservationFilters({
                 className="flex-1"
                 onClick={() => setSortOrder("oldest")}
               >
-                Plus ancien
+                {t('oldest')}
               </Button>
             </div>
           </div>
@@ -131,7 +133,7 @@ export function ReservationFilters({
           <div className="mt-4 flex justify-end">
             <Button variant="ghost" size="sm" onClick={resetFilters} className="text-muted-foreground">
               <X className="h-4 w-4 mr-1" />
-              Réinitialiser les filtres
+              {t('resetFilters')}
             </Button>
           </div>
         )}

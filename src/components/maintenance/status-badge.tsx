@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge"
+import { useTranslations } from "next-intl"
 
 type MaintenanceStatus = "PLANNED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED"
 
@@ -7,6 +8,7 @@ interface StatusBadgeProps {
 }
 
 export function StatusBadge({ status }: StatusBadgeProps) {
+  const t = useTranslations('fleet');
   const getStatusBadgeVariant = (status: MaintenanceStatus) => {
     switch (status) {
       case "PLANNED":
@@ -24,10 +26,10 @@ export function StatusBadge({ status }: StatusBadgeProps) {
 
   const getStatusLabel = (status: MaintenanceStatus) => {
     const statusMap = {
-      PLANNED: "Planifiée",
-      IN_PROGRESS: "En cours",
-      COMPLETED: "Terminée",
-      CANCELLED: "Annulée",
+      PLANNED: t('plannedMaintenances'),
+      IN_PROGRESS: t('inProgress'),
+      COMPLETED: t('completedMaintenances'),
+      CANCELLED: t('cancelledMaintenances'),
     }
     return statusMap[status] || status
   }

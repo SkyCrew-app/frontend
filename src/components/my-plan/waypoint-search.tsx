@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Check, ChevronsUpDown, Navigation2, X, Loader2, AlertTriangle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { aviationAPI, formatWaypoint, type Waypoint } from "@/lib/aviation-api"
+import { useTranslations } from "next-intl"
 
 interface WaypointSearchProps {
   waypoints: string[]
@@ -16,6 +17,7 @@ interface WaypointSearchProps {
 }
 
 export function WaypointSearch({ waypoints, onChange }: WaypointSearchProps) {
+  const t = useTranslations("reservation")
   const [open, setOpen] = useState(false)
   const [searchResults, setSearchResults] = useState<Waypoint[]>([])
   const [searchQuery, setSearchQuery] = useState("")
@@ -32,10 +34,10 @@ export function WaypointSearch({ waypoints, onChange }: WaypointSearchProps) {
           const results = await aviationAPI.searchWaypoints(searchQuery)
           setSearchResults(results)
           if (results.length === 0) {
-            setError("Aucun waypoint trouvé pour cette recherche")
+            setError(t('noWaypoints'))
           }
         } catch (err) {
-          setError("Erreur lors de la recherche des waypoints. Vérifiez votre connexion API.")
+          setError(t('waypointError'))
           console.error(err)
         } finally {
           setLoading(false)
@@ -74,7 +76,7 @@ export function WaypointSearch({ waypoints, onChange }: WaypointSearchProps) {
         setError(null)
       } catch (err) {
         console.error("Erreur lors du chargement des waypoints:", err)
-        setError("Impossible de charger certains waypoints. Vérifiez votre connexion API.")
+        setError(t('waypointError'))
       } finally {
         setLoading(false)
       }
@@ -110,7 +112,7 @@ export function WaypointSearch({ waypoints, onChange }: WaypointSearchProps) {
           <Button variant="outline" role="combobox" aria-expanded={open} className="w-full justify-between">
             <div className="flex items-center">
               <Navigation2 className="mr-2 h-4 w-4" />
-              Ajouter un waypoint
+              {t('addWaypoint')}
             </div>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
@@ -123,7 +125,7 @@ export function WaypointSearch({ waypoints, onChange }: WaypointSearchProps) {
                 {loading ? (
                   <div className="flex items-center justify-center p-4">
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Recherche en cours...
+                    {t('searchWaypoint')}
                   </div>
                 ) : error ? (
                   <div className="flex items-center justify-center p-4 text-amber-500">
@@ -131,7 +133,7 @@ export function WaypointSearch({ waypoints, onChange }: WaypointSearchProps) {
                     {error}
                   </div>
                 ) : (
-                  "Aucun waypoint trouvé."
+                  t('noWaypoint')
                 )}
               </CommandEmpty>
               <CommandGroup className="max-h-[300px] overflow-y-auto">

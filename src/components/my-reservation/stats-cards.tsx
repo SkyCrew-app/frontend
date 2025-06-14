@@ -3,12 +3,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { CalendarCheck, CalendarClock, CalendarX, Calendar } from "lucide-react"
 import type { Reservation } from "@/interfaces/reservation"
+import { useTranslations } from "next-intl"
 
 interface StatsCardsProps {
   reservations: Reservation[]
 }
 
 export function StatsCards({ reservations }: StatsCardsProps) {
+  const t = useTranslations("reservation")
   const totalReservations = reservations.length
   const confirmedReservations = reservations.filter((r) => r.status === "CONFIRMED").length
   const pendingReservations = reservations.filter((r) => r.status === "PENDING").length
@@ -16,28 +18,28 @@ export function StatsCards({ reservations }: StatsCardsProps) {
 
   const stats = [
     {
-      title: "Total",
+      title: t("total"),
       value: totalReservations,
       icon: Calendar,
       color: "text-blue-500",
       bgColor: "bg-blue-100 dark:bg-blue-950",
     },
     {
-      title: "Confirmées",
+      title: t("confirmated"),
       value: confirmedReservations,
       icon: CalendarCheck,
       color: "text-green-500",
       bgColor: "bg-green-100 dark:bg-green-950",
     },
     {
-      title: "En attente",
+      title: t('pending'),
       value: pendingReservations,
       icon: CalendarClock,
       color: "text-amber-500",
       bgColor: "bg-amber-100 dark:bg-amber-950",
     },
     {
-      title: "Annulées",
+      title: t("cancelled"),
       value: cancelledReservations,
       icon: CalendarX,
       color: "text-red-500",

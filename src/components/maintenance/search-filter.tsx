@@ -20,6 +20,7 @@ import { format } from "date-fns"
 import { fr } from "date-fns/locale"
 import type { DateRange } from "react-day-picker"
 import { FilterIcon, SearchIcon, CalendarIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 interface SearchFilterProps {
   searchTerm: string
@@ -52,6 +53,7 @@ export function SearchFilter({
   maintenanceStatuses,
   technicians,
 }: SearchFilterProps) {
+  const t = useTranslations('fleet');
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false)
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -70,7 +72,7 @@ export function SearchFilter({
       <div className="relative flex-1">
         <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" aria-hidden="true" />
         <Input
-          placeholder="Rechercher..."
+          placeholder={t('search')}
           value={searchTerm}
           onChange={handleSearchChange}
           className="pl-8 w-full"
@@ -81,24 +83,24 @@ export function SearchFilter({
         <DialogTrigger asChild>
           <Button variant="outline" aria-label="Ouvrir les filtres avancés">
             <FilterIcon className="h-4 w-4 mr-2" aria-hidden="true" />
-            Filtres
+            {t('filters')}
           </Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-md">
-          <DialogTitle>Filtres avancés</DialogTitle>
-          <DialogDescription>Affinez votre recherche de maintenances avec les filtres ci-dessous.</DialogDescription>
+          <DialogTitle>{t('advancedFilters')}</DialogTitle>
+          <DialogDescription>{t('filterDescription')}</DialogDescription>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-1 gap-4">
               <div className="space-y-2">
                 <label htmlFor="maintenance-type" className="font-medium text-sm">
-                  Type de maintenance
+                  {t('maintenanceType')}
                 </label>
                 <Select value={filterType} onValueChange={onFilterTypeChange} name="maintenance-type">
                   <SelectTrigger id="maintenance-type">
-                    <SelectValue placeholder="Tous les types" />
+                    <SelectValue placeholder={t('allTypes')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Tous les types</SelectItem>
+                    <SelectItem value="all">{t('allTypes')}</SelectItem>
                     {Object.entries(maintenanceTypes).map(([key, value]) => (
                       <SelectItem key={key} value={key}>
                         {value}
@@ -110,14 +112,14 @@ export function SearchFilter({
 
               <div className="space-y-2">
                 <label htmlFor="maintenance-status" className="font-medium text-sm">
-                  Statut
+                  {t('status')}
                 </label>
                 <Select value={filterStatus} onValueChange={onFilterStatusChange} name="maintenance-status">
                   <SelectTrigger id="maintenance-status">
-                    <SelectValue placeholder="Tous les statuts" />
+                    <SelectValue placeholder={t('allStatus')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Tous les statuts</SelectItem>
+                    <SelectItem value="all">{t('allStatus')}</SelectItem>
                     {Object.entries(maintenanceStatuses).map(([key, value]) => (
                       <SelectItem key={key} value={key}>
                         {value}
@@ -129,14 +131,14 @@ export function SearchFilter({
 
               <div className="space-y-2">
                 <label htmlFor="maintenance-technician" className="font-medium text-sm">
-                  Technicien
+                  {t('technician')}
                 </label>
                 <Select value={filterTechnician} onValueChange={onFilterTechnicianChange} name="maintenance-technician">
                   <SelectTrigger id="maintenance-technician">
-                    <SelectValue placeholder="Tous les techniciens" />
+                    <SelectValue placeholder={t('allTechnicians')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Tous les techniciens</SelectItem>
+                    <SelectItem value="all">{t('allTechnicians')}</SelectItem>
                     {Array.from(new Set(technicians.map((t) => t.email || "non_assigned")))
                       .filter((email) => email && email !== "")
                       .map((email) => (
@@ -150,7 +152,7 @@ export function SearchFilter({
 
               <div className="space-y-2">
                 <span id="date-range-label" className="font-medium text-sm">
-                  Période
+                  {t('period')}
                 </span>
                 <Popover>
                   <PopoverTrigger asChild>
@@ -170,7 +172,7 @@ export function SearchFilter({
                           format(dateRange.from, "dd MMM yyyy", { locale: fr })
                         )
                       ) : (
-                        <span>Sélectionnez une période</span>
+                        <span>{t('selectPeriod')}</span>
                       )}
                     </Button>
                   </PopoverTrigger>
@@ -195,9 +197,9 @@ export function SearchFilter({
           </div>
           <DialogFooter className="sm:justify-between">
             <Button variant="outline" onClick={resetFilters} aria-label="Réinitialiser tous les filtres">
-              Réinitialiser
+              {t('reset')}
             </Button>
-            <Button onClick={() => setIsFilterDialogOpen(false)}>Appliquer les filtres</Button>
+            <Button onClick={() => setIsFilterDialogOpen(false)}>{t('applyFilters')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
