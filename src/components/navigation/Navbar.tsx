@@ -14,6 +14,7 @@ import { GET_NOTIFICATIONS, SEEN_NOTIFICATION } from "@/graphql/notifications"
 import { getNotificationTypeInFrench } from "@/interfaces/notification"
 import { useTheme } from "next-themes"
 import { CustomDropdown, CustomDropdownItem, CustomDropdownSeparator } from "@/components/ui/custom-dropdown"
+import { useTranslations } from "next-intl"
 
 interface NavbarProps {
   onToggleMobileMenu: () => void
@@ -34,6 +35,7 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
   const [userId, setUserId] = useState<number | null>(null)
   const [notifications, setNotifications] = useState<any[]>([])
   const [socket, setSocket] = useState<Socket | null>(null)
+  const t = useTranslations('navbar');
 
   useEffect(() => {
     setMounted(true)
@@ -146,7 +148,7 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
   if (error)
     return (
       <div className="h-[86px] w-full flex items-center justify-center bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
-        <div className="text-red-500">Erreur lors du chargement des informations utilisateur.</div>
+        <div className="text-red-500">{t('userError')}</div>
       </div>
     )
 
@@ -167,7 +169,7 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
           </svg>
-          <span className="sr-only">Toggle menu</span>
+          <span className="sr-only">{t('toggleMenu')}</span>
         </button>
       </div>
 
@@ -190,7 +192,7 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
           ) : (
             <div className="h-5 w-5" />
           )}
-          <span className="sr-only">Toggle theme</span>
+          <span className="sr-only">{t('toggleTheme')}</span>
         </Button>
 
         {/* Notifications - Custom Dropdown */}
@@ -207,18 +209,17 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
                   {unreadNotificationsCount > 99 ? "99+" : unreadNotificationsCount}
                 </span>
               )}
-              <span className="sr-only">Notifications</span>
+              <span className="sr-only">{t('notifications')}</span>
             </Button>
           }
           align="end"
           className="w-80 max-h-[70vh] overflow-y-auto p-0 rounded-xl"
         >
           <div className="p-4 border-b border-slate-200 dark:border-slate-700">
-            <h3 className="font-semibold">Notifications</h3>
+            <h3 className="font-semibold">{t('notifications')}</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              {unreadNotificationsCount > 0
-                ? `Vous avez ${unreadNotificationsCount > 99 ? "99+" : unreadNotificationsCount} nouvelle${unreadNotificationsCount > 1 ? "s" : ""} notification${unreadNotificationsCount > 1 ? "s" : ""}`
-                : "Aucune nouvelle notification"}
+              {t('notificationCount', { count: unreadNotificationsCount > 99 ? 99 : unreadNotificationsCount })}
+              {unreadNotificationsCount > 99 ? '+' : ''}
             </p>
           </div>
 
@@ -267,7 +268,7 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
                 onClick={() => router.push("/notifications")}
                 className="flex items-center justify-center p-4 text-blue-600 dark:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
               >
-                Toutes les notifications
+                {t('allNotifications')}
                 <ChevronRight className="ml-2 h-4 w-4" />
               </div>
             </>
@@ -276,7 +277,7 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
               <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 mb-4">
                 <Bell className="h-6 w-6 text-slate-500" />
               </div>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Pas de nouvelles notifications</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{t('noNotifications')}</p>
             </div>
           )}
         </CustomDropdown>
@@ -328,7 +329,7 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
             className="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
           >
             <User className="h-4 w-4 text-slate-500" />
-            <span>Mon Profil</span>
+            <span>{t('my')}</span>
           </CustomDropdownItem>
           <CustomDropdownItem
             onClick={handleAmount}
@@ -336,7 +337,7 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
           >
             <CreditCard className="h-4 w-4 text-slate-500" />
             <div className="flex flex-col">
-              <span>Mon Solde</span>
+              <span>{t('money')}</span>
               <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">{userAccountBalance} €</span>
             </div>
           </CustomDropdownItem>
@@ -346,7 +347,7 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
             className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
           >
             <LogOut className="h-4 w-4" />
-            <span>Déconnexion</span>
+            <span>{t('logout')}</span>
           </CustomDropdownItem>
         </CustomDropdown>
       </div>

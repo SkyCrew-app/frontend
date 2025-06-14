@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import type { Reservation } from "@/interfaces/reservation"
 import { Clock, User, Plane, FileText, Tag, CalendarClock } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 interface ReservationDetailProps {
   reservation: Reservation
@@ -16,28 +17,29 @@ interface ReservationDetailProps {
 }
 
 export function ReservationDetail({ reservation, onEdit, onDelete, canEdit }: ReservationDetailProps) {
+  const t = useTranslations("reservation")
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "CONFIRMED":
-        return <Badge className="bg-green-500">Confirmée</Badge>
+        return <Badge className="bg-green-500">{t('confirmated')}</Badge>
       case "PENDING":
-        return <Badge className="bg-amber-500">En attente</Badge>
+        return <Badge className="bg-amber-500">{t('pending')}</Badge>
       case "CANCELLED":
-        return <Badge className="bg-red-500">Annulée</Badge>
+        return <Badge className="bg-red-500">{t('cancelled')}</Badge>
       default:
         return <Badge>{status}</Badge>
     }
   }
 
   const flightCategoryMapping = {
-    LOCAL: "Local",
-    CROSS_COUNTRY: "Vol longue distance",
-    INSTRUCTION: "Instruction",
-    TOURISM: "Tourisme",
-    TRAINING: "Entraînement",
-    MAINTENANCE: "Maintenance",
-    PRIVATE: "Privé",
-    CORPORATE: "Affaires",
+    LOCAL: t('local'),
+    CROSS_COUNTRY: t('crossCountry'),
+    INSTRUCTION: t('instruction'),
+    TOURISM: t('tourism'),
+    TRAINING: t('training'),
+    MAINTENANCE: t('maintenance'),
+    PRIVATE: t('private'),
+    CORPORATE: t('corporate'),
   }
 
   return (
@@ -51,7 +53,7 @@ export function ReservationDetail({ reservation, onEdit, onDelete, canEdit }: Re
         <div className="flex items-start gap-3">
           <Plane className="h-5 w-5 mt-0.5 text-muted-foreground" />
           <div>
-            <p className="text-sm font-medium">Avion</p>
+            <p className="text-sm font-medium">{t('plane')}</p>
             <p>{reservation.aircraft.registration_number}</p>
           </div>
         </div>
@@ -59,7 +61,7 @@ export function ReservationDetail({ reservation, onEdit, onDelete, canEdit }: Re
         <div className="flex items-start gap-3">
           <User className="h-5 w-5 mt-0.5 text-muted-foreground" />
           <div>
-            <p className="text-sm font-medium">Pilote</p>
+            <p className="text-sm font-medium">{t('pilote')}</p>
             <p>
               {reservation.user?.first_name} {reservation.user?.last_name}
             </p>
@@ -74,9 +76,9 @@ export function ReservationDetail({ reservation, onEdit, onDelete, canEdit }: Re
         <div className="flex items-start gap-3">
           <Clock className="h-5 w-5 mt-0.5 text-muted-foreground" />
           <div>
-            <p className="text-sm font-medium">Horaires</p>
-            <p>Début: {format(new Date(reservation.start_time), "HH:mm", { locale: fr })}</p>
-            <p>Fin: {format(new Date(reservation.end_time), "HH:mm", { locale: fr })}</p>
+            <p className="text-sm font-medium">{t('hourly')}</p>
+            <p>{t('start')} : {format(new Date(reservation.start_time), "HH:mm", { locale: fr })}</p>
+            <p>{t('end')} : {format(new Date(reservation.end_time), "HH:mm", { locale: fr })}</p>
             <p className="text-sm text-muted-foreground">
               {format(new Date(reservation.start_time), "EEEE d MMMM yyyy", { locale: fr })}
             </p>
@@ -86,8 +88,8 @@ export function ReservationDetail({ reservation, onEdit, onDelete, canEdit }: Re
         <div className="flex items-start gap-3">
           <CalendarClock className="h-5 w-5 mt-0.5 text-muted-foreground" />
           <div>
-            <p className="text-sm font-medium">Durée estimée</p>
-            <p>{reservation.estimated_flight_hours} heure(s)</p>
+            <p className="text-sm font-medium">{t('estimatedDate')}</p>
+            <p>{reservation.estimated_flight_hours} {t('hours')}</p>
           </div>
         </div>
       </div>
@@ -98,7 +100,7 @@ export function ReservationDetail({ reservation, onEdit, onDelete, canEdit }: Re
         <div className="flex items-start gap-3">
           <Tag className="h-5 w-5 mt-0.5 text-muted-foreground" />
           <div>
-            <p className="text-sm font-medium">Catégorie de vol</p>
+            <p className="text-sm font-medium">{t('flightCategory')}</p>
             <p>
               {flightCategoryMapping[reservation.flight_category as keyof typeof flightCategoryMapping] ||
                 reservation.flight_category}
@@ -111,7 +113,7 @@ export function ReservationDetail({ reservation, onEdit, onDelete, canEdit }: Re
         <div className="flex items-start gap-3">
           <FileText className="h-5 w-5 mt-0.5 text-muted-foreground" />
           <div>
-            <p className="text-sm font-medium">Notes</p>
+            <p className="text-sm font-medium">{t('notes')}</p>
             <p className="whitespace-pre-wrap">{reservation.notes}</p>
           </div>
         </div>
@@ -120,10 +122,10 @@ export function ReservationDetail({ reservation, onEdit, onDelete, canEdit }: Re
       {canEdit && (
         <div className="flex justify-end gap-2 pt-4">
           <Button variant="outline" onClick={onEdit}>
-            Modifier
+            {t('edit')}
           </Button>
           <Button variant="destructive" onClick={onDelete}>
-            Supprimer
+            {t('delete')}
           </Button>
         </div>
       )}
