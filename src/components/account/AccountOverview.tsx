@@ -9,11 +9,13 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
 import { GET_USER_DATA } from "@/graphql/account"
 import { motion } from "framer-motion"
+import { useTranslations } from "next-intl"
 
 export default function AccountOverview() {
   const userEmail = useCurrentUser()
   const userData = useUserData(userEmail)
   const [userId, setUserId] = useState<string | null>(null)
+  const t = useTranslations("profile")
 
   useEffect(() => {
     if (userData) {
@@ -49,8 +51,8 @@ export default function AccountOverview() {
     return (
       <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Erreur</AlertTitle>
-        <AlertDescription>{error.message || "Impossible de charger les données du compte."}</AlertDescription>
+        <AlertTitle>{t('error')}</AlertTitle>
+        <AlertDescription>{error.message || t('errorAccountFetch')}</AlertDescription>
       </Alert>
     )
   }
@@ -72,21 +74,21 @@ export default function AccountOverview() {
         <CardHeader className="pb-2">
           <CardTitle className="text-xl font-semibold flex items-center">
             <Wallet className="mr-2 h-5 w-5 text-primary" />
-            Solde du Compte
+            {t('accountBalance')}
           </CardTitle>
-          <CardDescription>Votre solde actuel et statistiques financières</CardDescription>
+          <CardDescription>{t('balanceStats')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-baseline">
             <p className="text-4xl font-bold text-primary">€{userBalance.toFixed(2)}</p>
-            <p className="ml-2 text-sm text-muted-foreground">Solde disponible</p>
+            <p className="ml-2 text-sm text-muted-foreground">{t('balanceDisponible')}</p>
           </div>
 
           <div className="space-y-4 mt-6">
             <div className="bg-muted/50 p-4 rounded-lg border">
               <div className="flex items-center text-sm font-medium text-muted-foreground mb-1">
                 <TrendingUp className="mr-1 h-4 w-4 text-green-500" />
-                Total Rechargé
+                {t('totalAdded')}
               </div>
               <p className="text-2xl font-semibold text-green-600">€{totalDeposits.toFixed(2)}</p>
             </div>
@@ -94,7 +96,7 @@ export default function AccountOverview() {
             <div className="bg-muted/50 p-4 rounded-lg border">
               <div className="flex items-center text-sm font-medium text-muted-foreground mb-1">
                 <CreditCard className="mr-1 h-4 w-4 text-red-500" />
-                Total Dépensé
+                {t('totalSpent')}
               </div>
               <p className="text-2xl font-semibold text-red-600">€{totalSpent.toFixed(2)}</p>
             </div>

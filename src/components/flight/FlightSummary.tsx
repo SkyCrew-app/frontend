@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Plane, Clock, Users, Navigation } from "lucide-react"
 import type { Weather } from "@/interfaces/weather"
+import { useTranslations } from "next-intl"
 
 interface FlightSummaryProps {
   departure: string
@@ -63,6 +64,8 @@ export function FlightSummary({
     return "🌤️"
   }
 
+  const t = useTranslations("reservation")
+
   return (
     <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
       <CardContent className="p-6">
@@ -92,7 +95,7 @@ export function FlightSummary({
               <div className="flex items-center">
                 <Users className="h-4 w-4 mr-1 text-muted-foreground" />
                 <span>
-                  {passengers} passager{passengers > 1 ? "s" : ""}
+                  {passengers} {t('passenger')} {passengers > 1 ? "s" : ""}
                 </span>
               </div>
             )}
@@ -105,7 +108,7 @@ export function FlightSummary({
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="col-span-1 space-y-2">
-            <p className="text-sm text-muted-foreground">Départ</p>
+            <p className="text-sm text-muted-foreground">{t('start')}</p>
             <div className="flex items-center">
               <div className="bg-green-100 dark:bg-green-900 p-2 rounded-full mr-3">
                 <span className="text-green-700 dark:text-green-300 font-bold">{departure}</span>
@@ -134,7 +137,7 @@ export function FlightSummary({
           </div>
 
           <div className="col-span-1 space-y-2">
-            <p className="text-sm text-muted-foreground">Arrivée</p>
+            <p className="text-sm text-muted-foreground">{t('arrival')}</p>
             <div className="flex items-center">
               <div className="bg-red-100 dark:bg-red-900 p-2 rounded-full mr-3">
                 <span className="text-red-700 dark:text-red-300 font-bold">{arrival}</span>
