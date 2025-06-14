@@ -16,6 +16,7 @@ import { ClockIcon, UserIcon } from "lucide-react"
 import { StatusBadge } from "./status-badge"
 import { MaintenanceTypeIcon } from "./maintenance-type-icon"
 import type { Maintenance } from "@/interfaces/maintenance"
+import { useTranslations } from "next-intl"
 
 interface MaintenanceTableProps {
   maintenances: Maintenance[]
@@ -40,6 +41,7 @@ export function MaintenanceTable({
 }: MaintenanceTableProps) {
   const indexOfFirstItem = (currentPage - 1) * itemsPerPage + 1
   const indexOfLastItem = Math.min(currentPage * itemsPerPage, totalItems)
+  const t = useTranslations('fleet');
 
   return (
     <Card>
@@ -47,12 +49,12 @@ export function MaintenanceTable({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Aéronef</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Statut</TableHead>
-              <TableHead>Période</TableHead>
-              <TableHead>Technicien</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>{t('aircraft')}</TableHead>
+              <TableHead>{t('type')}</TableHead>
+              <TableHead>{t('status')}</TableHead>
+              <TableHead>{t('period')}</TableHead>
+              <TableHead>{t('technician')}</TableHead>
+              <TableHead className="text-right">{t('actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -90,7 +92,7 @@ export function MaintenanceTable({
                         <span>{maintenance.technician.email}</span>
                       </div>
                     ) : (
-                      <span className="text-muted-foreground">Non assigné</span>
+                      <span className="text-muted-foreground">{t('noAssigned')}</span>
                     )}
                   </TableCell>
                   <TableCell className="text-right">
@@ -102,7 +104,7 @@ export function MaintenanceTable({
                           onClick={() => onSelectMaintenance(maintenance)}
                           aria-label={`Voir les détails de la maintenance pour ${maintenance.aircraft.registration_number}`}
                         >
-                          Détails
+                          {t('details')}
                         </Button>
                       </DialogTrigger>
                     </Dialog>
@@ -113,8 +115,8 @@ export function MaintenanceTable({
               <TableRow>
                 <TableCell colSpan={6} className="h-24 text-center">
                   <div className="flex flex-col items-center justify-center text-muted-foreground">
-                    <p>Aucune maintenance trouvée</p>
-                    <p className="text-sm">Ajustez vos filtres ou créez une nouvelle maintenance</p>
+                    <p>{t('noMaintenanceFound')}</p>
+                    <p className="text-sm">{t('adjustMaintenanceFilters')}</p>
                   </div>
                 </TableCell>
               </TableRow>
@@ -126,14 +128,18 @@ export function MaintenanceTable({
         <div className="text-sm text-muted-foreground">
           {totalItems > 0 ? (
             <span>
-              Affichage de {indexOfFirstItem} à {indexOfLastItem} sur {totalItems} maintenances
+              {t('itemCount', {
+                indexOfFirstItem: indexOfFirstItem,
+                indexOfLastItem: indexOfLastItem,
+                totalItems: totalItems,
+              })}
             </span>
           ) : (
-            <span>Aucune maintenance</span>
+            <span>{t('noMaintenanceFound')}</span>
           )}
         </div>
         {totalPages > 1 && (
-          <Pagination aria-label="Navigation des pages de maintenance">
+          <Pagination aria-label={t('navigationMaintenancePage')}>
             <PaginationContent>
               <PaginationItem>
                 {currentPage > 1 && (

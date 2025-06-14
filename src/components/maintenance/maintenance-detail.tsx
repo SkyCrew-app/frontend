@@ -12,6 +12,7 @@ import type { CarouselApi } from "@/components/ui/carousel"
 import { StatusBadge } from "./status-badge"
 import { MaintenanceTypeIcon } from "./maintenance-type-icon"
 import type { Maintenance } from "@/interfaces/maintenance"
+import { useTranslations } from "next-intl"
 
 interface MaintenanceDetailProps {
   maintenance: Maintenance | null
@@ -23,6 +24,7 @@ export function MaintenanceDetail({ maintenance, maintenanceTypes, maintenanceSt
   const [api, setApi] = useState<CarouselApi | undefined>(undefined)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [imageCount, setImageCount] = useState(0)
+  const t = useTranslations('fleet');
 
   useEffect(() => {
     if (!api) return

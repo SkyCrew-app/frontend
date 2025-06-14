@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Search, Filter, SortAsc, SortDesc, X } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 interface FlightPlanFiltersProps {
   searchTerm: string
@@ -30,6 +31,7 @@ export function FlightPlanFilters({
   resetFilters,
   hasActiveFilters,
 }: FlightPlanFiltersProps) {
+  const t = useTranslations("reservation")
   return (
     <Card className="mb-6">
       <CardContent className="pt-6">
@@ -37,12 +39,12 @@ export function FlightPlanFilters({
           <div className="space-y-2">
             <Label htmlFor="search" className="flex items-center gap-2">
               <Search className="h-4 w-4" />
-              Recherche
+              {t('search')}
             </Label>
             <div className="relative">
               <Input
                 id="search"
-                placeholder="OACI de départ ou d'arrivée"
+                placeholder={t('searchPlaceholderFlightPlan')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pr-8"
@@ -51,7 +53,7 @@ export function FlightPlanFilters({
                 <button
                   className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   onClick={() => setSearchTerm("")}
-                  aria-label="Effacer la recherche"
+                  aria-label={t('deleteSearch')}
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -62,14 +64,14 @@ export function FlightPlanFilters({
           <div className="space-y-2">
             <Label htmlFor="flightType" className="flex items-center gap-2">
               <Filter className="h-4 w-4" />
-              Type de vol
+              {t('flightType')}
             </Label>
             <Select value={flightTypeFilter} onValueChange={setFlightTypeFilter}>
               <SelectTrigger id="flightType">
-                <SelectValue placeholder="Tous les types" />
+                <SelectValue placeholder={t('allTypes')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ALL">Tous les types</SelectItem>
+                <SelectItem value="ALL">{t('allTypes')}</SelectItem>
                 {Object.entries(flightTypeTranslations).map(([key, value]) => (
                   <SelectItem key={key} value={key}>
                     {value}
@@ -91,7 +93,7 @@ export function FlightPlanFilters({
                 className="flex-1"
                 onClick={() => setSortOrder("newest")}
               >
-                Plus récent
+                {t('newest')}
               </Button>
               <Button
                 variant={sortOrder === "oldest" ? "default" : "outline"}
@@ -99,7 +101,7 @@ export function FlightPlanFilters({
                 className="flex-1"
                 onClick={() => setSortOrder("oldest")}
               >
-                Plus ancien
+                {t('oldest')}
               </Button>
             </div>
           </div>
@@ -109,7 +111,7 @@ export function FlightPlanFilters({
           <div className="mt-4 flex justify-end">
             <Button variant="ghost" size="sm" onClick={resetFilters} className="text-muted-foreground">
               <X className="h-4 w-4 mr-1" />
-              Réinitialiser les filtres
+              {t('resetFilters')}
             </Button>
           </div>
         )}

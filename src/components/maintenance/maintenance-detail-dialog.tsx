@@ -30,6 +30,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { useTranslations } from "next-intl"
 
 interface MaintenanceDetailDialogProps {
   maintenance: Maintenance | null
@@ -50,6 +51,7 @@ export function MaintenanceDetailDialog({
   onEdit,
   onDelete,
 }: MaintenanceDetailDialogProps) {
+  const t = useTranslations('fleet');
   const [api, setApi] = useState<CarouselApi | undefined>(undefined)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [imageCount, setImageCount] = useState(0)
@@ -81,27 +83,27 @@ export function MaintenanceDetailDialog({
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogTitle>Détails de la Maintenance</DialogTitle>
+        <DialogTitle>{t('maintenanceDetails')}</DialogTitle>
         <DialogDescription>
-          Informations complètes sur la maintenance de l'aéronef {maintenance.aircraft.registration_number}
+          {t('maintenanceDetailsDescription', { aircraft: maintenance.aircraft.registration_number })}
         </DialogDescription>
 
         <div className="mt-4 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Informations générales</CardTitle>
+                <CardTitle className="text-lg">{t('allInformation')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between items-cente">
-                  <span className="text-muted-foreground">Aéronef:</span>
+                  <span className="text-muted-foreground">{t('aircraft')} :</span>
                   <span className="font-medium text-end">
                     {maintenance.aircraft.registration_number} ({maintenance.aircraft.model})
                   </span>
                 </div>
                 <Separator />
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Type:</span>
+                  <span className="text-muted-foreground">{t('type')} :</span>
                   <MaintenanceTypeIcon
                     type={maintenance.maintenance_type as any}
                     label={maintenanceTypes[maintenance.maintenance_type] || "N/A"}
@@ -114,7 +116,7 @@ export function MaintenanceDetailDialog({
                 </div>
                 <Separator />
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Période:</span>
+                  <span className="text-muted-foreground">{t('period')} :</span>
                   <span className="font-medium">
                     {new Date(maintenance.start_date).toLocaleDateString("fr-FR")} -{" "}
                     {new Date(maintenance.end_date).toLocaleDateString("fr-FR")}
@@ -122,7 +124,7 @@ export function MaintenanceDetailDialog({
                 </div>
                 <Separator />
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Coût:</span>
+                  <span className="text-muted-foreground">{t('coast')} :</span>
                   <div className="flex items-center">
                     <span className="font-medium">
                       {maintenance.maintenance_cost ? `${maintenance.maintenance_cost} €` : "Non défini"}
@@ -131,7 +133,7 @@ export function MaintenanceDetailDialog({
                 </div>
                 <Separator />
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Technicien:</span>
+                  <span className="text-muted-foreground">{t('technician')} :</span>
                   <span className="font-medium">
                     {maintenance.technician ? maintenance.technician.email : "Non assigné"}
                   </span>
@@ -141,7 +143,7 @@ export function MaintenanceDetailDialog({
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Description</CardTitle>
+                <CardTitle className="text-lg">{t('descriptionText')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="whitespace-pre-wrap">{maintenance.description || "Aucune description disponible."}</p>
@@ -153,11 +155,11 @@ export function MaintenanceDetailDialog({
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="images">
                 <ImageIcon className="h-4 w-4 mr-2" aria-hidden="true" />
-                Images
+                {t('picture')}
               </TabsTrigger>
               <TabsTrigger value="documents">
                 <FileTextIcon className="h-4 w-4 mr-2" aria-hidden="true" />
-                Documents
+                {t('documents')}
               </TabsTrigger>
             </TabsList>
             <TabsContent value="images" className="mt-4">
@@ -185,13 +187,13 @@ export function MaintenanceDetailDialog({
                         <CarouselNext aria-label="Image suivante" />
                       </Carousel>
                       <div className="text-center text-sm text-muted-foreground" aria-live="polite">
-                        Image {currentImageIndex} sur {imageCount}
+                        {t('pictureCount', { count: currentImageIndex, total: imageCount })}
                       </div>
                     </div>
                   ) : (
                     <div className="text-center py-8 text-muted-foreground">
                       <ImageIcon className="h-12 w-12 mx-auto mb-2 opacity-20" aria-hidden="true" />
-                      <p>Aucune image disponible pour cette maintenance</p>
+                      <p>{t('noPicture')}</p>
                     </div>
                   )}
                 </CardContent>
@@ -214,7 +216,7 @@ export function MaintenanceDetailDialog({
                             >
                               <FileTextIcon className="h-8 w-8 mr-4 text-blue-500" aria-hidden="true" />
                               <div>
-                                <div className="font-medium">Document {index + 1}</div>
+                                <div className="font-medium">{t('documents')} {index + 1}</div>
                                 <div className="text-sm text-muted-foreground">{url.split("/").pop()}</div>
                               </div>
                             </a>
@@ -225,7 +227,7 @@ export function MaintenanceDetailDialog({
                   ) : (
                     <div className="text-center py-8 text-muted-foreground">
                       <FileTextIcon className="h-12 w-12 mx-auto mb-2 opacity-20" aria-hidden="true" />
-                      <p>Aucun document disponible pour cette maintenance</p>
+                      <p>{t('noDocuments')}</p>
                     </div>
                   )}
                 </CardContent>
@@ -239,24 +241,23 @@ export function MaintenanceDetailDialog({
             <AlertDialogTrigger asChild>
               <Button variant="destructive">
                 <Trash2 className="h-4 w-4 mr-2" />
-                Supprimer
+                {t('delete')}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Êtes-vous sûr de vouloir supprimer cette maintenance ?</AlertDialogTitle>
+                <AlertDialogTitle>{t('deleteQuestion')}</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Cette action est irréversible. Toutes les données associées à cette maintenance seront définitivement
-                  supprimées.
+                  {t('deleteConfirmation')}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Annuler</AlertDialogCancel>
+                <AlertDialogCancel>{t('cancelled')}</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={handleDelete}
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 >
-                  Supprimer
+                  {t('delete')}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -264,10 +265,10 @@ export function MaintenanceDetailDialog({
 
           <Button variant="outline" onClick={handleEdit}>
             <Pencil className="h-4 w-4 mr-2" />
-            Modifier
+            {t('edit')}
           </Button>
           <DialogClose asChild>
-            <Button>Fermer</Button>
+            <Button>{t('close')}</Button>
           </DialogClose>
         </DialogFooter>
       </DialogContent>
