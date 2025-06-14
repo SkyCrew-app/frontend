@@ -20,6 +20,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { motion } from "framer-motion"
+import { useTranslations } from "next-intl"
 
 interface LicensesSectionProps {
   licenses: Array<{
@@ -35,6 +36,7 @@ interface LicensesSectionProps {
 }
 
 export function LicensesSection({ licenses = [] }: LicensesSectionProps) {
+  const t = useTranslations("profile")
   const [sortBy, setSortBy] = useState("expiration_date")
   const [filterBy, setFilterBy] = useState("all")
 
@@ -73,7 +75,7 @@ export function LicensesSection({ licenses = [] }: LicensesSectionProps) {
       <Card className="w-full shadow-md">
         <CardHeader className="pb-4">
           <div className="flex justify-between items-center">
-            <CardTitle className="text-xl font-semibold">Mes licences</CardTitle>
+            <CardTitle className="text-xl font-semibold">{t('yourLicences')}</CardTitle>
             <div className="flex items-center space-x-2">
               <TooltipProvider>
                 <Tooltip>
@@ -86,7 +88,7 @@ export function LicensesSection({ licenses = [] }: LicensesSectionProps) {
                       }
                     >
                       <Calendar className="mr-2 h-4 w-4" />
-                      Trier par date
+                      {t('sortByDate')}
                       {sortBy === "expiration_date" ? (
                         <ChevronUp className="ml-2 h-4 w-4" />
                       ) : (
@@ -95,7 +97,7 @@ export function LicensesSection({ licenses = [] }: LicensesSectionProps) {
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>Trier par date d'expiration</p>
+                    <p>{t('sortedByDate')}</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -104,22 +106,22 @@ export function LicensesSection({ licenses = [] }: LicensesSectionProps) {
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm">
                     <Filter className="mr-2 h-4 w-4" />
-                    Filtrer
+                    {t('filter')}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>Filtrer par</DropdownMenuLabel>
-                  <DropdownMenuItem onClick={() => setFilterBy("all")}>Toutes les licences</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setFilterBy("valid")}>Licences valides</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setFilterBy("expired")}>Licences expirées</DropdownMenuItem>
+                  <DropdownMenuLabel>{t('filterBy')}</DropdownMenuLabel>
+                  <DropdownMenuItem onClick={() => setFilterBy("all")}>{t('allLicences')}</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setFilterBy("valid")}>{t('validLicences')}</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setFilterBy("expired")}>{t('invalidLicences')}</DropdownMenuItem>
 
                   <DropdownMenuSeparator />
 
-                  <DropdownMenuLabel>Trier par</DropdownMenuLabel>
-                  <DropdownMenuItem onClick={() => setSortBy("type")}>Type de licence</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setSortBy("issue_date")}>Date de délivrance</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setSortBy("expiration_date")}>Date d'expiration</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setSortBy("status")}>Statut</DropdownMenuItem>
+                  <DropdownMenuLabel>{t('filterBy')}</DropdownMenuLabel>
+                  <DropdownMenuItem onClick={() => setSortBy("type")}>{t('licencesType')}</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setSortBy("issue_date")}>{t('dateOfDelivery')}</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setSortBy("expiration_date")}>{t('dateOfExpiration')}</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setSortBy("status")}>{t('status')}</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -133,8 +135,8 @@ export function LicensesSection({ licenses = [] }: LicensesSectionProps) {
               ))
             ) : (
               <div className="col-span-full text-center text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 p-6 rounded-lg">
-                <h3 className="text-lg font-semibold mb-2">Aucune licence</h3>
-                <p>Vous n'avez pas encore de licence enregistrée.</p>
+                <h3 className="text-lg font-semibold mb-2">{t('noLicencesFound')}</h3>
+                <p>{t('noLicencesRegistered')}</p>
               </div>
             )}
           </div>
