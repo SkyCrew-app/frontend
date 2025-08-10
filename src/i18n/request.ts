@@ -2,7 +2,7 @@ import { getRequestConfig } from 'next-intl/server';
 
 export default getRequestConfig(async ({ locale }) => {
   const lang = locale ?? 'fr';
-  const namespaces = ['dashboard', 'navbar', 'sidebar', 'articles', 'fleet', 'reservation', 'profile'];
+  const namespaces = ['dashboard', 'navbar', 'sidebar', 'articles', 'fleet', 'reservation', 'profile', 'notification'];
   const messages = {};
 
   for (const ns of namespaces) {

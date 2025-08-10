@@ -47,8 +47,10 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { motion, AnimatePresence } from "framer-motion"
+import { useTranslations } from "next-intl"
 
 export default function NotificationsPage() {
+  const t = useTranslations("notification")
   const router = useRouter()
   const userEmail = useCurrentUser()
   const userData = useUserData(userEmail)
@@ -60,6 +62,9 @@ export default function NotificationsPage() {
   const [selectedTab, setSelectedTab] = useState("all")
   const [searchQuery, setSearchQuery] = useState("")
   const itemsPerPage = 5
+  const total   = notifications.length;
+  const unread  = notifications.filter(n => !n.is_read).length;
+
 
   const {
     data: notificationsData,
@@ -166,6 +171,7 @@ export default function NotificationsPage() {
   }
 
   const filteredNotifications = getFilteredNotifications()
+  const count = filteredNotifications.length;
 
   const totalPages = Math.ceil(filteredNotifications.length / itemsPerPage)
   const paginatedNotifications = filteredNotifications.slice(
@@ -218,22 +224,22 @@ export default function NotificationsPage() {
     const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
 
     if (diffInSeconds < 60) {
-      return `Il y a ${diffInSeconds} seconde${diffInSeconds !== 1 ? "s" : ""}`
+      return t("second", { count: diffInSeconds });
     }
 
     const diffInMinutes = Math.floor(diffInSeconds / 60)
     if (diffInMinutes < 60) {
-      return `Il y a ${diffInMinutes} minute${diffInMinutes !== 1 ? "s" : ""}`
+      return t("minute", { count: diffInMinutes });
     }
 
     const diffInHours = Math.floor(diffInMinutes / 60)
     if (diffInHours < 24) {
-      return `Il y a ${diffInHours} heure${diffInHours !== 1 ? "s" : ""}`
+      return t("hour", { count: diffInHours });
     }
 
     const diffInDays = Math.floor(diffInHours / 24)
     if (diffInDays < 30) {
-      return `Il y a ${diffInDays} jour${diffInDays !== 1 ? "s" : ""}`
+      return t("day", { count: diffInDays });
     }
 
     return date.toLocaleString("fr-FR", {
@@ -267,9 +273,9 @@ export default function NotificationsPage() {
         <header className="mb-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">Notifications</h1>
+              <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">{t('notificationTitle')}</h1>
               <p className="text-gray-500 dark:text-gray-400">
-                Gérez vos alertes et restez informé des mises à jour importantes
+                {t('notification_description')}
               </p>
             </div>
 
@@ -286,7 +292,7 @@ export default function NotificationsPage() {
                   ) : (
                     <CheckCheck className="mr-2 h-4 w-4" />
                   )}
-                  Tout marquer comme lu
+                  {t('markAllAsRead')}
                 </Button>
               )}
 
@@ -298,26 +304,25 @@ export default function NotificationsPage() {
                       className="bg-white dark:bg-gray-800 text-red-500 border-red-500/30 hover:bg-red-500/10 transition-all duration-300"
                     >
                       <Trash2 className="mr-2 h-4 w-4" />
-                      Tout supprimer
+                      {t('removeAllNotifications')}
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent className="bg-white dark:bg-gray-800">
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
+                      <AlertDialogTitle>{t('removeAllNotificationsQuestion')}</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Cette action supprimera toutes les notifications filtrées actuellement affichées. Cette action
-                        est irréversible.
+                        {t('removeAllNotificationsQuestionDescription')}
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel className="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white transition-all duration-300">
-                        Annuler
+                        {t('cancel')}
                       </AlertDialogCancel>
                       <AlertDialogAction
                         onClick={handleRemoveAllNotifications}
                         className="bg-red-500 hover:bg-red-600 text-white transition-all duration-300"
                       >
-                        Supprimer
+                        {t('delete')}
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
@@ -333,11 +338,15 @@ export default function NotificationsPage() {
               <Bell className="h-5 w-5 text-primary" />
               Centre de notifications
             </CardTitle>
-            <CardDescription>
-              Vous avez {notifications.length} notifications, dont{" "}
-              <span className="font-medium text-blue-500">{notifications.filter((n) => !n.is_read).length}</span> non
-              lues.
-            </CardDescription>
+              <CardDescription>
+                {t.rich("summary", {
+                  total,
+                  unread,
+                  strong: (children) => (
+                    <span className="font-medium text-blue-500">{children}</span>
+                  )
+                })}
+              </CardDescription>
           </CardHeader>
           <CardContent className="pb-1 space-y-4">
             <div className="relative">
@@ -366,7 +375,7 @@ export default function NotificationsPage() {
                   value="all"
                   className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 transition-all duration-300"
                 >
-                  Toutes
+                  {t('allNotifications')}
                   <Badge
                     variant="secondary"
                     className="ml-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200"
@@ -378,7 +387,7 @@ export default function NotificationsPage() {
                   value="unread"
                   className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 transition-all duration-300"
                 >
-                  Non lues
+                  {t('unreadNotification')}
                   <Badge
                     variant="secondary"
                     className="ml-2 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-200"
@@ -390,7 +399,7 @@ export default function NotificationsPage() {
                   value="high"
                   className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 transition-all duration-300"
                 >
-                  Prioritaires
+                  {t('Prioritary')}
                   <Badge
                     variant="secondary"
                     className="ml-2 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-200"
@@ -409,7 +418,7 @@ export default function NotificationsPage() {
                   className="bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300"
                 >
                   <Filter className="mr-2 h-4 w-4" />
-                  Filtrer par priorité
+                  {t('filterPriority')}
                   {filter !== "all" && <Badge className="ml-2 bg-primary/10 text-primary">{filter}</Badge>}
                 </Button>
               </DropdownMenuTrigger>
@@ -418,13 +427,13 @@ export default function NotificationsPage() {
                   className={`${filter === "all" ? "bg-primary/10 text-primary" : ""} cursor-pointer transition-colors duration-200`}
                   onClick={() => setFilter("all")}
                 >
-                  Toutes les priorités
+                  {t('allPriority')}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className={`${filter === "unread" ? "bg-primary/10 text-primary" : ""} cursor-pointer transition-colors duration-200`}
                   onClick={() => setFilter("unread")}
                 >
-                  Non lues
+                  {t('unreadNotification')}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
@@ -432,27 +441,27 @@ export default function NotificationsPage() {
                   onClick={() => setFilter("high")}
                 >
                   <AlertTriangle className="mr-2 h-4 w-4 text-red-500" />
-                  Priorité haute
+                  {t('highPriority')}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className={`${filter === "medium" ? "bg-primary/10 text-primary" : ""} cursor-pointer transition-colors duration-200`}
                   onClick={() => setFilter("medium")}
                 >
                   <Info className="mr-2 h-4 w-4 text-yellow-500" />
-                  Priorité moyenne
+                  {t('mediumPriority')}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className={`${filter === "low" ? "bg-primary/10 text-primary" : ""} cursor-pointer transition-colors duration-200`}
                   onClick={() => setFilter("low")}
                 >
                   <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
-                  Priorité basse
+                  {t('lowPriority')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
             <Badge variant="secondary" className="bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200">
-              {filteredNotifications.length} notification{filteredNotifications.length !== 1 ? "s" : ""}
+              {t("count", { count })}
             </Badge>
           </CardFooter>
         </Card>
@@ -466,11 +475,11 @@ export default function NotificationsPage() {
             <div className="inline-flex h-20 w-20 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 mb-4">
               <Bell className="h-10 w-10 text-gray-400" />
             </div>
-            <h3 className="text-xl font-medium text-gray-900 dark:text-gray-100 mb-2">Aucune notification</h3>
+            <h3 className="text-xl font-medium text-gray-900 dark:text-gray-100 mb-2">{t('noNotifications')}</h3>
             <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto">
               {searchQuery
-                ? "Aucun résultat ne correspond à votre recherche. Essayez avec d'autres termes."
-                : "Vous n'avez aucune notification correspondant à vos critères de filtrage."}
+                ? t('noResultsChangeFilter')
+                : t('noResultFound')}
             </p>
           </motion.div>
         ) : (
@@ -509,7 +518,7 @@ export default function NotificationsPage() {
                           </h3>
                           {!notification.is_read && (
                             <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200">
-                              Nouveau
+                              {t('new')}
                             </Badge>
                           )}
                           <Badge className={`${priorityColor(notification.priority)}`}>
@@ -533,8 +542,8 @@ export default function NotificationsPage() {
                             className="text-blue-500 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:hover:bg-blue-900/30 dark:text-blue-400 dark:hover:text-blue-300 transition-all duration-300"
                           >
                             <Check className="h-4 w-4 mr-1" />
-                            <span className="hidden sm:inline">Marquer comme lu</span>
-                            <span className="inline sm:hidden">Lu</span>
+                            <span className="hidden sm:inline">{t('markAsRead')}</span>
+                            <span className="inline sm:hidden">{t('read')}</span>
                           </Button>
                         )}
                         {notification.action_url && (
@@ -544,7 +553,7 @@ export default function NotificationsPage() {
                             variant="default"
                             className="bg-primary hover:bg-primary/90 text-white transition-all duration-300"
                           >
-                            Voir
+                            {t('see')}
                           </Button>
                         )}
                         <Button
