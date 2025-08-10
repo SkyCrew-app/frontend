@@ -46,9 +46,10 @@ const menuItems = [
     icon: Settings,
     path: "/administration",
     subItems: [
+      { name: "Flotte", path: "/administration/planes" },
       { name: "Membres", path: "/administration/users" },
       { name: "Finance", path: "/administration/finance" },
-      { name: "Sécurité", path: "/administration/security" },
+      { name: "Sécurité", path: "/administration/audits" },
       { name: "Articles", path: "/administration/articles" },
       { name: "E-learning", path: "/administration/e-learning" },
       { name: "Paramètres", path: "/administration/settings" },
@@ -68,6 +69,8 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
   const [initials, setInitials] = React.useState<string | null>(null)
   const [profilePicture, setProfilePicture] = React.useState<string | null>(null)
   const [userName, setUserName] = React.useState<string | null>(null)
+  const [userRole, setUserRole] = React.useState<string | null>(null)
+
 
   const { data } = useQuery(GET_USER_PROFILE, {
     variables: { email: userEmail || "" },
@@ -76,9 +79,10 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
 
   React.useEffect(() => {
     if (data && data.userByEmail) {
-      const { first_name, last_name, profile_picture } = data.userByEmail
+      const { first_name, last_name, profile_picture, } = data.userByEmail
       setInitials(`${first_name[0]}${last_name[0]}`)
       setUserName(`${first_name} ${last_name}`)
+      setUserRole(data.userByEmail.role?.role_name || "Utilisateur")
       if (profile_picture) {
         setProfilePicture(profile_picture)
       }
@@ -278,7 +282,7 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
             </Avatar>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{userName || "Utilisateur"}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 truncate">Membre</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{userRole || 'Utilisateur'}</p>
             </div>
           </div>
         </div>

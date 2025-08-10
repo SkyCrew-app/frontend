@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@apollo/client": "^3.11.8",
+    "@hello-pangea/dnd": "^18.0.1",
     "@hookform/resolvers": "^3.10.0",
     "@paypal/react-paypal-js": "^8.7.0",
     "@radix-ui/react-accordion": "^1.2.1",

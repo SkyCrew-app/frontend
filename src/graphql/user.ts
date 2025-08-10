@@ -19,6 +19,12 @@ export const GET_USER_PROFILE = gql`
       last_name
       profile_picture
       user_account_balance
+      preferred_aerodrome
+      total_flight_hours
+      role {
+        role_name
+        id
+      }
     }
   }
 `;
