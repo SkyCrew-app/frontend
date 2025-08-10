@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import type { Reservation } from "@/interfaces/reservation"
 import { Clock, User, Calendar, Plus } from "lucide-react"
 import { Label } from "@/components/ui/label"
+import { useTranslations } from "next-intl"
 
 interface MobileReservationViewProps {
   currentDate: Date
@@ -30,6 +31,7 @@ export function MobileReservationView({
   onCreateReservation,
   onViewReservation,
 }: MobileReservationViewProps) {
+  const t = useTranslations("reservation")
   const filteredReservations = selectedAircraft
     ? reservations.filter((r) => r.aircraft.id === selectedAircraft)
     : reservations
@@ -67,14 +69,14 @@ export function MobileReservationView({
       <div className="flex flex-col gap-4">
         <div>
           <Label htmlFor="aircraft-select" className="mb-1 block">
-            Sélectionner un avion
+            {t("selectPlane")}
           </Label>
           <Select value={selectedAircraft?.toString() || "-1"} onValueChange={handleAircraftSelection}>
             <SelectTrigger id="aircraft-select">
-              <SelectValue placeholder="Tous les avions" />
+              <SelectValue placeholder={t('allPlanes')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="-1">Tous les avions</SelectItem>
+              <SelectItem value="-1">{t('allPlanes')}</SelectItem>
               {aircrafts.map((aircraft) => (
                 <SelectItem key={aircraft.id} value={aircraft.id.toString()}>
                   {aircraft.registration_number}
@@ -86,13 +88,13 @@ export function MobileReservationView({
 
         <Button onClick={onCreateReservation} className="w-full">
           <Plus className="mr-2 h-4 w-4" />
-          Nouvelle réservation
+          {t("newReservation")}
         </Button>
       </div>
 
       <div className="mt-6">
         <h3 className="text-lg font-medium mb-3">
-          Réservations du {format(currentDate, "EEEE d MMMM yyyy", { locale: fr })}
+          {t('reservationOf', {date: format(currentDate, "EEEE d MMMM yyyy", { locale: fr })})}
         </h3>
 
         {sortedReservations.length > 0 ? (
@@ -125,7 +127,7 @@ export function MobileReservationView({
                     </div>
                     <div className="flex items-center gap-2">
                       <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span>{reservation.estimated_flight_hours} heure(s) estimée(s)</span>
+                      <span>{t("estimatedDuration", { estimatedDuration: reservation.estimated_flight_hours ?? 0 })}</span>
                     </div>
                     {reservation.notes && <p className="text-sm mt-2">{reservation.notes}</p>}
                     <Button
@@ -134,7 +136,7 @@ export function MobileReservationView({
                       className="w-full mt-2"
                       onClick={() => onViewReservation(reservation)}
                     >
-                      Voir détails
+                      {t("viewDetails")}
                     </Button>
                   </div>
                 </AccordionContent>
@@ -145,7 +147,9 @@ export function MobileReservationView({
           <Card>
             <CardContent className="p-6 text-center text-muted-foreground">
               <Calendar className="h-12 w-12 mx-auto mb-2 opacity-20" />
-              <p>Aucune réservation pour {selectedAircraft ? "cet avion" : "cette journée"}</p>
+              <p>{t("reservationNoMessage", {
+                selectedAircraft: selectedAircraft ? t('thisAircraft') : t('thisDay'),
+              })}</p>
             </CardContent>
           </Card>
         )}

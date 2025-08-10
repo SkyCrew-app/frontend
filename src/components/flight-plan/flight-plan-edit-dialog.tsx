@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Loader2, Plane, Cloud, Users } from "lucide-react"
 import type { Flight } from "@/interfaces/flight"
+import { useTranslations } from "next-intl"
 
 interface FlightPlanEditDialogProps {
   isOpen: boolean
@@ -28,6 +29,7 @@ export function FlightPlanEditDialog({
   const [weatherConditions, setWeatherConditions] = useState("")
   const [numberOfPassengers, setNumberOfPassengers] = useState<number | undefined>(undefined)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const t = useTranslations("reservation")
 
   useEffect(() => {
     if (flight) {
@@ -53,7 +55,7 @@ export function FlightPlanEditDialog({
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
-        <DialogTitle>Modifier le plan de vol</DialogTitle>
+        <DialogTitle>{t('editFlightPlan')}</DialogTitle>
         <div className="grid gap-4 py-4">
           <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
             <Plane className="h-5 w-5 text-primary" />
@@ -70,11 +72,11 @@ export function FlightPlanEditDialog({
             <div className="space-y-2">
               <Label htmlFor="flight-type" className="flex items-center gap-2">
                 <Cloud className="h-4 w-4" />
-                Type de vol
+                {t('flightType')}
               </Label>
               <Select value={flightType} onValueChange={setFlightType}>
                 <SelectTrigger id="flight-type">
-                  <SelectValue placeholder="Type de vol" />
+                  <SelectValue placeholder={t('flightType')} />
                 </SelectTrigger>
                 <SelectContent>
                   {Object.entries(flightTypeTranslations).map(([key, value]) => (
@@ -89,20 +91,20 @@ export function FlightPlanEditDialog({
             <div className="space-y-2">
               <Label htmlFor="weather-conditions" className="flex items-center gap-2">
                 <Cloud className="h-4 w-4" />
-                Conditions météo
+                {t('weatherConditions')}
               </Label>
               <Input
                 id="weather-conditions"
                 value={weatherConditions}
                 onChange={(e) => setWeatherConditions(e.target.value)}
-                placeholder="Ex: CAVOK, Nuageux, Pluie légère..."
+                placeholder={t('weatherConditionsPlaceholder')}
               />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="number-of-passengers" className="flex items-center gap-2">
                 <Users className="h-4 w-4" />
-                Nombre de passagers
+                {t('numberOfPassengers')}
               </Label>
               <Input
                 id="number-of-passengers"
@@ -121,11 +123,12 @@ export function FlightPlanEditDialog({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
-            Annuler
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {t('cancel')}
           </Button>
           <Button onClick={handleSave} disabled={isSubmitting}>
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Sauvegarder
+            {t('save')}
           </Button>
         </DialogFooter>
       </DialogContent>

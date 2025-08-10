@@ -1,5 +1,6 @@
 import { AlertTriangle, Calendar, CheckCircle, Info, Wrench } from "lucide-react"
 import { AvailabilityStatus } from "@/interfaces/aircraft"
+import { useTranslations } from "next-intl"
 
 interface StatusBadgeProps {
   status: string
@@ -7,27 +8,28 @@ interface StatusBadgeProps {
 }
 
 export function StatusBadge({ status, type }: StatusBadgeProps) {
+  const t = useTranslations('fleet');
   if (type === "availability") {
     switch (status) {
       case AvailabilityStatus.AVAILABLE:
         return (
           <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
             <CheckCircle className="h-3.5 w-3.5 mr-1" />
-            Disponible
+            {t('available')}
           </div>
         )
       case AvailabilityStatus.UNAVAILABLE:
         return (
           <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
             <AlertTriangle className="h-3.5 w-3.5 mr-1" />
-            En maintenance
+            {t('maintenance')}
           </div>
         )
       case AvailabilityStatus.RESERVED:
         return (
           <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
             <Calendar className="h-3.5 w-3.5 mr-1" />
-            Réservé
+            {t('reserved')}
           </div>
         )
       default:
@@ -44,21 +46,21 @@ export function StatusBadge({ status, type }: StatusBadgeProps) {
         return (
           <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
             <CheckCircle className="h-3.5 w-3.5 mr-1" />
-            Opérationnel
+            {t('operational')}
           </div>
         )
       case "NEEDS_MAINTENANCE":
         return (
           <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
             <AlertTriangle className="h-3.5 w-3.5 mr-1" />
-            Maintenance requise
+            {t('requiresMaintenance')}
           </div>
         )
       case "IN_MAINTENANCE":
         return (
           <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
             <Wrench className="h-3.5 w-3.5 mr-1" />
-            En maintenance
+            {t('maintenance')}
           </div>
         )
       default:

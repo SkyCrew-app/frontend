@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Plane, MapPin, Route, Clock } from "lucide-react"
 import type { Flight } from "@/interfaces/flight"
+import { useTranslations } from "next-intl"
 
 interface StatsCardsProps {
   flights: Flight[]
@@ -25,9 +26,11 @@ export function StatsCards({ flights }: StatsCardsProps) {
     if (flight.destination_icao) uniqueAirports.add(flight.destination_icao)
   })
 
+  const t = useTranslations("reservation")
+
   const stats = [
     {
-      title: "Plans de vol",
+      title: t('flightPlan'),
       value: totalFlights,
       unit: "",
       icon: Plane,
@@ -35,7 +38,7 @@ export function StatsCards({ flights }: StatsCardsProps) {
       bgColor: "bg-blue-100 dark:bg-blue-950",
     },
     {
-      title: "Heures de vol",
+      title: t('hoursFlight'),
       value: totalHours.toFixed(1),
       unit: "h",
       icon: Clock,
@@ -43,7 +46,7 @@ export function StatsCards({ flights }: StatsCardsProps) {
       bgColor: "bg-green-100 dark:bg-green-950",
     },
     {
-      title: "Distance totale",
+      title: t('distanceFlight'),
       value: Math.round(totalDistance),
       unit: "km",
       icon: Route,
@@ -51,7 +54,7 @@ export function StatsCards({ flights }: StatsCardsProps) {
       bgColor: "bg-amber-100 dark:bg-amber-950",
     },
     {
-      title: "Aéroports visités",
+      title: t('airportVisited'),
       value: uniqueAirports.size,
       unit: "",
       icon: MapPin,

@@ -3,6 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Award, Hash, Building, Calendar, CheckCircle, AlertCircle } from 'lucide-react'
 import { motion } from "framer-motion"
+import { useTranslations } from "next-intl"
 
 const formatDate = (date: string | number | Date) => {
   if (!date) return ""
@@ -24,6 +25,7 @@ interface LicenseCardProps {
 }
 
 export function LicenseCard({ license }: LicenseCardProps) {
+  const t = useTranslations("profile")
   return (
     <motion.div
       whileHover={{ scale: 1.02 }}
@@ -46,7 +48,7 @@ export function LicenseCard({ license }: LicenseCardProps) {
             <div className="flex items-center text-base text-gray-600 dark:text-gray-300">
               <Hash className="mr-3 text-gray-400 flex-shrink-0" size={18} />
               <div className="flex-grow">
-                <span className="font-medium">Numéro:</span>
+                <span className="font-medium">{t('number')}:</span>
                 <span className="ml-1 break-all">{license.license_number}</span>
               </div>
             </div>
@@ -54,7 +56,7 @@ export function LicenseCard({ license }: LicenseCardProps) {
             <div className="flex items-center text-base text-gray-600 dark:text-gray-300">
               <Building className="mr-3 text-gray-400 flex-shrink-0" size={18} />
               <div className="flex-grow">
-                <span className="font-medium">Autorité:</span>
+                <span className="font-medium">{t('autority')}:</span>
                 <span className="ml-1 break-all">{license.certification_authority}</span>
               </div>
             </div>
@@ -62,7 +64,7 @@ export function LicenseCard({ license }: LicenseCardProps) {
             <div className="flex items-center text-base text-gray-600 dark:text-gray-300">
               <Calendar className="mr-3 text-green-500 flex-shrink-0" size={18} />
               <div className="flex-grow">
-                <span className="font-medium">Délivrée le:</span>
+                <span className="font-medium">{t('deliveredOn')}:</span>
                 <span className="ml-1">{formatDate(license.issue_date)}</span>
               </div>
             </div>
@@ -70,7 +72,7 @@ export function LicenseCard({ license }: LicenseCardProps) {
             <div className="flex items-center text-base text-gray-600 dark:text-gray-300">
               <Calendar className="mr-3 text-red-500 flex-shrink-0" size={18} />
               <div className="flex-grow">
-                <span className="font-medium">Expire le:</span>
+                <span className="font-medium">{t('deliveredOn')}:</span>
                 <span className="ml-1">{formatDate(license.expiration_date)}</span>
               </div>
             </div>
@@ -82,7 +84,7 @@ export function LicenseCard({ license }: LicenseCardProps) {
             ) : (
               <AlertCircle className="mr-3 text-red-500 flex-shrink-0" size={18} />
             )}
-            <span className="font-medium">{license.is_valid ? "Valide" : "Non valide"}</span>
+            <span className="font-medium">{license.is_valid ? t('valid') : t('notValid')}</span>
           </div>
         </CardContent>
       </Card>

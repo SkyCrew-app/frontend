@@ -1,21 +1,23 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, use } from "react"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
 import { Check, ChevronsUpDown, Plane, Loader2, AlertTriangle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { aviationAPI, type Airport } from "@/lib/aviation-api"
+import { useTranslations } from "next-intl"
 
 interface AirportSearchProps {
   value: string
-  onChange: (value: string) => void
+  onChange: (value: string) =>  void
   label: string
   placeholder?: string
 }
 
 export function AirportSearch({ value, onChange, label, placeholder }: AirportSearchProps) {
+  const t = useTranslations("reservation")
   const [open, setOpen] = useState(false)
   const [airports, setAirports] = useState<Airport[]>([])
   const [searchQuery, setSearchQuery] = useState("")
@@ -33,7 +35,7 @@ export function AirportSearch({ value, onChange, label, placeholder }: AirportSe
           setError(null)
         } catch (err) {
           console.error("Erreur lors du chargement de l'aéroport:", err)
-          setError("Impossible de charger les détails de l'aéroport. Vérifiez votre connexion API.")
+          setError(t('errorAirportDetails'))
         } finally {
           setLoading(false)
         }
@@ -53,10 +55,10 @@ export function AirportSearch({ value, onChange, label, placeholder }: AirportSe
           const results = await aviationAPI.searchAirports(searchQuery)
           setAirports(results)
           if (results.length === 0) {
-            setError("Aucun aéroport trouvé pour cette recherche")
+            setError(t('noAirportsFound'))
           }
         } catch (err) {
-          setError("Erreur lors de la recherche des aéroports. Vérifiez votre connexion API.")
+          setError(t('errorFetchingAirports'))
           console.error(err)
         } finally {
           setLoading(false)
@@ -91,13 +93,13 @@ export function AirportSearch({ value, onChange, label, placeholder }: AirportSe
       </PopoverTrigger>
       <PopoverContent className="w-[400px] p-0">
         <Command>
-          <CommandInput placeholder={placeholder || "Rechercher un aéroport..."} onValueChange={setSearchQuery} />
+          <CommandInput placeholder={placeholder || t('searchAirports')} onValueChange={setSearchQuery} />
           <CommandList>
             <CommandEmpty>
               {loading ? (
                 <div className="flex items-center justify-center p-4">
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Recherche en cours...
+                  {t('searchInProgress')}
                 </div>
               ) : error ? (
                 <div className="flex items-center justify-center p-4 text-amber-500">
@@ -105,7 +107,7 @@ export function AirportSearch({ value, onChange, label, placeholder }: AirportSe
                   {error}
                 </div>
               ) : (
-                "Aucun aéroport trouvé."
+                t('noAirportFound')
               )}
             </CommandEmpty>
             <CommandGroup className="max-h-[300px] overflow-y-auto">

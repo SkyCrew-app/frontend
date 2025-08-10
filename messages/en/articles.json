@@ -1,0 +1,40 @@
+{
+  "articles": {
+    "error": "Error loading.",
+    "noArticles": "No articles found.",
+    "changeFilters": "Try changing your search criteria or removing filters.",
+    "notFoundTitle": "Article not found",
+    "notFoundDescription": "We couldn’t find the article you’re looking for. It may have been removed or relocated.",
+
+    "news": "News",
+    "discover": "Discover the latest news and events.",
+    "relatedArticles": "Related articles",
+
+    "search": "Search for an article...",
+    "filters": "Filters",
+    "filtersDate": "Filter articles by tags or date.",
+    "tags": "Tags",
+    "sortByDate": "Sort by date",
+    "newest": "Newest",
+    "oldest": "Oldest",
+    "resetFilters": "Reset filters",
+    "activeFilters": "Active filters",
+
+    "eventLabel": "Event: {date}",
+    "publishedLabel": "Published: {date}",
+    "readingTime": "{time} min read",
+
+    "readArticle": "Read article",
+    "back": "Back to articles",
+    "copyLink": "Copy link",
+    "linkCopiedTitle": "Link copied",
+    "linkCopiedDescription": "The article link has been copied to your clipboard.",
+    "share": "Share",
+    "print": "Print",
+
+    "addToCalendar": "Add to calendar",
+    "googleCalendar": "Google Calendar",
+    "appleCalendar": "Apple Calendar",
+    "outlookCalendar": "Outlook"
+  }
+}

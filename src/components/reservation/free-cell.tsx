@@ -1,6 +1,7 @@
 "use client"
 
 import { TableCell } from "@/components/ui/table"
+import { useTranslations } from "next-intl"
 
 interface FreeCellProps {
   isSelected: boolean
@@ -10,6 +11,7 @@ interface FreeCellProps {
 }
 
 export function FreeCell({ isSelected, onMouseDown, onMouseEnter, onMouseUp }: FreeCellProps) {
+  const t = useTranslations("reservation")
   return (
     <TableCell
       className={`text-center p-0 cursor-pointer select-none transition-colors ${
@@ -22,7 +24,7 @@ export function FreeCell({ isSelected, onMouseDown, onMouseEnter, onMouseUp }: F
       onMouseUp={onMouseUp}
     >
       <div className="p-2 h-full flex items-center justify-center text-sm">
-        <span className={isSelected ? "text-white" : "text-muted-foreground"}>Libre</span>
+        <span className={isSelected ? "text-white" : "text-muted-foreground"}>{t('free')}</span>
       </div>
     </TableCell>
   )

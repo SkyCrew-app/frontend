@@ -1,7 +1,7 @@
 "use client"
 
-import React from "react"
 import Link from "next/link"
+import React from "react"
 import { usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
@@ -10,52 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useQuery } from "@apollo/client"
 import { GET_USER_PROFILE } from "@/graphql/user"
 import { useCurrentUser } from "@/components/hooks/userHooks"
-
-const menuItems = [
-  { name: "Tableau de bord", icon: LayoutDashboard, path: "/dashboard" },
-  {
-    name: "Flotte",
-    icon: Plane,
-    path: "/fleet",
-    subItems: [
-      { name: "Historique", path: "/fleet/history" },
-      { name: "Maintenance", path: "/fleet/maintenance" },
-    ],
-  },
-  {
-    name: "Réservations",
-    icon: Calendar,
-    path: "/reservations",
-    subItems: [
-      { name: "Mes réservations", path: "/reservations/my" },
-      { name: "Mes plans de vol", path: "/reservations/flight-plans" },
-    ],
-  },
-  {
-    name: "Instruction",
-    icon: GraduationCap,
-    path: "/instruction",
-    subItems: [
-      { name: "Mes cours", path: "/instruction/courses" },
-      { name: "Mes évaluations", path: "/instruction/evaluation" },
-      { name: "E-learning", path: "/instruction/e-learning" },
-    ],
-  },
-  {
-    name: "Administration",
-    icon: Settings,
-    path: "/administration",
-    subItems: [
-      { name: "Flotte", path: "/administration/planes" },
-      { name: "Membres", path: "/administration/users" },
-      { name: "Finance", path: "/administration/finance" },
-      { name: "Sécurité", path: "/administration/audits" },
-      { name: "Articles", path: "/administration/articles" },
-      { name: "E-learning", path: "/administration/e-learning" },
-      { name: "Paramètres", path: "/administration/settings" },
-    ],
-  },
-]
+import { useTranslations } from "next-intl"
 
 interface SidebarProps {
   isMobileOpen: boolean
@@ -64,6 +19,7 @@ interface SidebarProps {
 
 export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarProps) {
   const pathname = usePathname()
+  const t = useTranslations('sidebar');
   const [openMenus, setOpenMenus] = React.useState<string[]>([])
   const userEmail = useCurrentUser()
   const [initials, setInitials] = React.useState<string | null>(null)
@@ -71,6 +27,63 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
   const [userName, setUserName] = React.useState<string | null>(null)
   const [userRole, setUserRole] = React.useState<string | null>(null)
 
+  const menuItems = [
+  { name: t('dashboard'), icon: LayoutDashboard, path: "/dashboard" },
+  {
+    name: t('fleet'),
+    icon: Plane,
+    path: "/fleet",
+    subItems: [
+      { name: t('history'), path: "/fleet/history" },
+      { name: t('maintenance'), path: "/fleet/maintenance" },
+    ],
+  },
+  {
+    name: t('reservations'),
+    icon: Calendar,
+    path: "/reservations",
+    subItems: [
+      { name: t('booking'), path: "/reservations/my" },
+      { name: t('flightsPlan'), path: "/reservations/flight-plans" },
+    ],
+  },
+  {
+    name: t('instructions'),
+    icon: GraduationCap,
+    path: "/instruction",
+    subItems: [
+      { name: t('courses'), path: "/instruction/courses" },
+      { name: t('assessments'), path: "/instruction/evaluation" },
+      { name: t('elearning'), path: "/instruction/e-learning" },
+    ],
+  },
+  {
+    name: t('administration'),
+    icon: Settings,
+    path: "/administration",
+    subItems: [
+      { name: t('fleet'), path: "/administration/planes" },
+      { name: t('users'), path: "/administration/users" },
+      { name: t('financial'), path: "/administration/finance" },
+      { name: t('security'), path: "/administration/audits" },
+      { name: t('articles'), path: "/administration/articles" },
+      { name: t('elearning'), path: "/administration/e-learning" },
+      { name: t('settings'), path: "/administration/settings" },
+    ],
+  },
+]
+
+  const isAdmin = React.useMemo(() => {
+    if (!userRole) return false
+    const role = userRole.toLowerCase()
+    return role === 'administrateur' || role === 'admin'
+  }, [userRole])
+
+  const visibleMenuItems = React.useMemo(
+    () =>
+      isAdmin ? menuItems : menuItems.filter((item) => item.path !== '/administration'),
+    [isAdmin],
+  )
 
   const { data } = useQuery(GET_USER_PROFILE, {
     variables: { email: userEmail || "" },
@@ -90,14 +103,14 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
   }, [data])
 
   React.useEffect(() => {
-    const currentMenu = menuItems.find(
+    const currentMenu = visibleMenuItems.find(
       (item) => pathname.startsWith(item.path) || item.subItems?.some((subItem) => pathname === subItem.path),
     )
 
     if (currentMenu?.subItems && !openMenus.includes(currentMenu.path)) {
       setOpenMenus((prev) => [...prev, currentMenu.path])
     }
-  }, [pathname, openMenus])
+  }, [pathname, openMenus, visibleMenuItems])
 
   React.useEffect(() => {
     const handleResize = () => {
@@ -199,7 +212,7 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
           16 45 45 71 46 8 0 34 -14 58 -31z m516 -29 c-3 -5 -12 -10 -18 -10 -7 0 -6 4
           3 10 19 12 23 12 15 0z m-675 -46 c11 -25 20 -50 20 -55 0 -10 -111 -65 -181
           -89 -51 -18 -85 -7 -98 31 -8 24 -8 36 1 47 16 19 197 110 221 111 12 1 24
-          -14 37 -45z m555 27 c-11 -10 -195 -71 -210 -70 -8 0 196 75 215 78 2 1 0 -3
+          -14 37 -45z m555 27 c-11 -10 -195 -71 -210 -70 -8 0 196 75 215 78 2 10 -3
           -5 -8z m85 5 c0 -10 -586 -226 -613 -226 -29 1 31 25 343 136 52 18 131 47
           175 63 81 30 95 34 95 27z m-560 -162 c-254 -85 -472 -145 -520 -143 -14 0 35
           16 109 34 169 43 339 93 506 150 72 24 137 44 145 44 8 0 -100 -39 -240 -85z
@@ -290,7 +303,7 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto py-4 px-3">
           <ul className="space-y-1">
-            {menuItems.map((item) => {
+            {visibleMenuItems.map((item) => {
               const isActive = pathname.startsWith(item.path)
               const isOpen = openMenus.includes(item.path)
 
@@ -301,7 +314,7 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
                   variants={menuItemVariants}
                   initial="closed"
                   animate="open"
-                  transition={{ delay: menuItems.indexOf(item) * 0.05 }}
+                  transition={{ delay: visibleMenuItems.indexOf(item) * 0.05 }}
                 >
                   <div className="relative">
                     <Link
@@ -398,18 +411,17 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
             className="flex items-center px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 rounded-lg transition-colors duration-150"
           >
             <User className="h-4 w-4 mr-3 text-slate-500 dark:text-slate-500" />
-            <span>Mon profil</span>
+            <span>{t('profile')}</span>
           </Link>
           <Link
             href="/"
             className="flex items-center px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 rounded-lg transition-colors duration-150 mt-1"
           >
             <LogOut className="h-4 w-4 mr-3 text-slate-500 dark:text-slate-500" />
-            <span>Déconnexion</span>
+            <span>{t('logout')}</span>
           </Link>
         </div>
       </aside>
     </>
   )
 }
-

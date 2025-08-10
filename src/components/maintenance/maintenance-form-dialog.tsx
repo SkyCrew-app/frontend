@@ -17,6 +17,7 @@ import { CalendarIcon, Loader2, Upload, FileTextIcon } from "lucide-react"
 import type { Maintenance } from "@/interfaces/maintenance"
 import { useToast } from "@/components/hooks/use-toast"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useTranslations } from "next-intl"
 
 interface Aircraft {
   id: string
@@ -70,6 +71,7 @@ export function MaintenanceFormDialog({
   technicians,
   onSubmit,
 }: MaintenanceFormDialogProps) {
+  const t = useTranslations('fleet');
   const isEditing = !!maintenance
   const { toast } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -127,25 +129,25 @@ export function MaintenanceFormDialog({
     const newErrors: Record<string, string> = {}
 
     if (!formData.aircraft_id) {
-      newErrors.aircraft_id = "Veuillez sélectionner un aéronef"
+      newErrors.aircraft_id = t('noAircraftSelected')
     }
     if (!formData.maintenance_type) {
-      newErrors.maintenance_type = "Veuillez sélectionner un type de maintenance"
+      newErrors.maintenance_type = t('noMaintenanceTypeSelected')
     }
     if (!formData.status) {
-      newErrors.status = "Veuillez sélectionner un statut"
+      newErrors.status = t('noStatusSelected')
     }
     if (!formData.start_date) {
-      newErrors.start_date = "Veuillez sélectionner une date de début"
+      newErrors.start_date = t('noStartDateSelected')
     }
     if (!formData.end_date) {
-      newErrors.end_date = "Veuillez sélectionner une date de fin"
+      newErrors.end_date = t('noEndDateSelected')
     }
     if (formData.start_date && formData.end_date && formData.start_date > formData.end_date) {
-      newErrors.end_date = "La date de fin doit être postérieure à la date de début"
+      newErrors.end_date = t('endDateBeforeStartDate')
     }
     if (formData.maintenance_cost && isNaN(Number(formData.maintenance_cost))) {
-      newErrors.maintenance_cost = "Le coût doit être un nombre valide"
+      newErrors.maintenance_cost = t('invalidMaintenanceCost')
     }
 
     setErrors(newErrors)
@@ -198,17 +200,17 @@ export function MaintenanceFormDialog({
       await onSubmit(submitData)
       onOpenChange(false)
       toast({
-        title: isEditing ? "Maintenance mise à jour" : "Maintenance créée",
+        title: isEditing ? t('maintenanceUpdated') : t('createMaintenance'),
         description: isEditing
-          ? "La maintenance a été mise à jour avec succès."
-          : "La nouvelle maintenance a été créée avec succès.",
+          ? t('maintenanceUpdatedSuccess')
+          : t('maintenanceCreatedSuccess'),
       })
     } catch (error) {
       console.error("Erreur lors de la soumission:", error)
       toast({
         variant: "destructive",
-        title: "Erreur",
-        description: "Une erreur est survenue lors de l'enregistrement de la maintenance.",
+        title: t('error'),
+        description: t('maintenanceSubmitError'),
       })
     } finally {
       setIsSubmitting(false)
@@ -218,30 +220,30 @@ export function MaintenanceFormDialog({
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogTitle>{isEditing ? "Modifier la maintenance" : "Nouvelle maintenance"}</DialogTitle>
+        <DialogTitle>{isEditing ? t('updateMaintenance') : t('createMaintenance') }</DialogTitle>
         <DialogDescription>
           {isEditing
-            ? "Modifiez les informations de maintenance pour cet aéronef."
-            : "Remplissez le formulaire pour créer une nouvelle maintenance."}
+            ? t('updateMaintenanceDescription')
+            : t('createMaintenanceDescription')}
         </DialogDescription>
 
         <div className="grid gap-6 py-4">
           <Tabs defaultValue="general" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="general">Général</TabsTrigger>
-              <TabsTrigger value="details">Détails</TabsTrigger>
-              <TabsTrigger value="attachments">Pièces jointes</TabsTrigger>
+              <TabsTrigger value="general">{t('general')}</TabsTrigger>
+              <TabsTrigger value="details">{t('details')}</TabsTrigger>
+              <TabsTrigger value="attachments">{t('jointPiece')}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="general" className="space-y-4 mt-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="aircraft_id" className={errors.aircraft_id ? "text-destructive" : ""}>
-                    Aéronef <span className="text-destructive">*</span>
+                    {t('aircraft')} <span className="text-destructive">*</span>
                   </Label>
                   <Select value={formData.aircraft_id} onValueChange={(value) => handleChange("aircraft_id", value)}>
                     <SelectTrigger id="aircraft_id" className={errors.aircraft_id ? "border-destructive" : ""}>
-                      <SelectValue placeholder="Sélectionner un aéronef" />
+                      <SelectValue placeholder={t('noAircraftSelected')} />
                     </SelectTrigger>
                     <SelectContent>
                       {aircrafts.map((aircraft) => (
@@ -256,7 +258,7 @@ export function MaintenanceFormDialog({
 
                 <div className="space-y-2">
                   <Label htmlFor="maintenance_type" className={errors.maintenance_type ? "text-destructive" : ""}>
-                    Type de maintenance <span className="text-destructive">*</span>
+                    {t('maintenanceType')} <span className="text-destructive">*</span>
                   </Label>
                   <Select
                     value={formData.maintenance_type}
@@ -299,16 +301,16 @@ export function MaintenanceFormDialog({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="technician_id">Technicien</Label>
+                  <Label htmlFor="technician_id">{t('technician')}</Label>
                   <Select
                     value={formData.technician_id}
                     onValueChange={(value) => handleChange("technician_id", value)}
                   >
                     <SelectTrigger id="technician_id">
-                      <SelectValue placeholder="Sélectionner un technicien" />
+                      <SelectValue placeholder={t('selectTechnician')} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="unassigned">Non assigné</SelectItem>
+                      <SelectItem value="unassigned">{t('noAssigned')}</SelectItem>
                       {technicians.map((technician) => (
                         <SelectItem key={technician.id} value={technician.id}>
                           {technician.first_name && technician.last_name
@@ -322,7 +324,7 @@ export function MaintenanceFormDialog({
 
                 <div className="space-y-2">
                   <Label htmlFor="start_date" className={errors.start_date ? "text-destructive" : ""}>
-                    Date de début <span className="text-destructive">*</span>
+                    {t('startDate')} <span className="text-destructive">*</span>
                   </Label>
                   <Popover>
                     <PopoverTrigger asChild>
@@ -335,7 +337,7 @@ export function MaintenanceFormDialog({
                         {formData.start_date ? (
                           format(formData.start_date, "dd MMMM yyyy", { locale: fr })
                         ) : (
-                          <span>Sélectionner une date</span>
+                          <span>{t('selectDate')}</span>
                         )}
                       </Button>
                     </PopoverTrigger>
@@ -354,7 +356,7 @@ export function MaintenanceFormDialog({
 
                 <div className="space-y-2">
                   <Label htmlFor="end_date" className={errors.end_date ? "text-destructive" : ""}>
-                    Date de fin <span className="text-destructive">*</span>
+                    {t('endDate')} <span className="text-destructive">*</span>
                   </Label>
                   <Popover>
                     <PopoverTrigger asChild>
@@ -367,7 +369,7 @@ export function MaintenanceFormDialog({
                         {formData.end_date ? (
                           format(formData.end_date, "dd MMMM yyyy", { locale: fr })
                         ) : (
-                          <span>Sélectionner une date</span>
+                          <span>{t('selectDate')}</span>
                         )}
                       </Button>
                     </PopoverTrigger>
@@ -389,10 +391,10 @@ export function MaintenanceFormDialog({
 
             <TabsContent value="details" className="space-y-4 mt-4">
               <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="description">{t('description')}</Label>
                 <Textarea
                   id="description"
-                  placeholder="Décrivez la maintenance à effectuer..."
+                  placeholder={t('describeMaintenance')}
                   rows={5}
                   value={formData.description}
                   onChange={(e) => handleChange("description", e.target.value)}
@@ -401,7 +403,7 @@ export function MaintenanceFormDialog({
 
               <div className="space-y-2">
                 <Label htmlFor="maintenance_cost" className={errors.maintenance_cost ? "text-destructive" : ""}>
-                  Coût (€)
+                  {t('coast')} (€)
                 </Label>
                 <Input
                   id="maintenance_cost"
@@ -417,7 +419,7 @@ export function MaintenanceFormDialog({
 
             <TabsContent value="attachments" className="space-y-6 mt-4">
               <div className="space-y-4">
-                <Label>Images</Label>
+                <Label>{t('picture')}</Label>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {imageFiles.map((file, index) => (
                     <div key={index} className="flex items-center justify-between p-2 border rounded-md">
@@ -448,9 +450,9 @@ export function MaintenanceFormDialog({
                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
                       <Upload className="w-8 h-8 mb-2 text-muted-foreground" />
                       <p className="mb-2 text-sm text-muted-foreground">
-                        <span className="font-semibold">Cliquez pour ajouter</span> ou glissez-déposez
+                        <span className="font-semibold">{t('clickAndDrag')}</span> 
                       </p>
-                      <p className="text-xs text-muted-foreground">PNG, JPG ou JPEG (max. 10 Mo)</p>
+                      <p className="text-xs text-muted-foreground">{t('typeFileOption')}</p>
                     </div>
                     <input
                       id="image-upload"
@@ -465,7 +467,7 @@ export function MaintenanceFormDialog({
               </div>
 
               <div className="space-y-4">
-                <Label>Documents</Label>
+                <Label>{t('documents')}</Label>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {documentFiles.map((file, index) => (
                     <div key={index} className="flex items-center justify-between p-2 border rounded-md">
@@ -492,9 +494,9 @@ export function MaintenanceFormDialog({
                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
                       <Upload className="w-8 h-8 mb-2 text-muted-foreground" />
                       <p className="mb-2 text-sm text-muted-foreground">
-                        <span className="font-semibold">Cliquez pour ajouter</span> ou glissez-déposez
+                        <span className="font-semibold"> {t('clickAndDrag')}</span>
                       </p>
-                      <p className="text-xs text-muted-foreground">PDF, DOC, DOCX, XLS, XLSX (max. 10 Mo)</p>
+                      <p className="text-xs text-muted-foreground">{t('typeFileOptionPlural')}</p>
                     </div>
                     <input
                       id="document-upload"
@@ -513,11 +515,11 @@ export function MaintenanceFormDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
-            Annuler
+            {t('cancel')}
           </Button>
           <Button onClick={handleSubmit} disabled={isSubmitting}>
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isEditing ? "Mettre à jour" : "Créer"}
+            {isEditing ? t('update') : t('create')}
           </Button>
         </DialogFooter>
       </DialogContent>

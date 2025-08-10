@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { CalendarClock, Plane, FileText, Tag } from "lucide-react"
 import Link from "next/link"
 import type { Reservation } from "@/interfaces/reservation"
+import { useTranslations } from "next-intl"
 
 interface ReservationCardProps {
   reservation: Reservation
@@ -16,6 +17,7 @@ interface ReservationCardProps {
 }
 
 export function ReservationCard({ reservation, onEdit, flightCategoryMapping }: ReservationCardProps) {
+  const t = useTranslations("reservation")
   const getStatusVariant = (status: string) => {
     switch (status) {
       case "PENDING":
@@ -30,9 +32,9 @@ export function ReservationCard({ reservation, onEdit, flightCategoryMapping }: 
   }
 
   const statusTranslations = {
-    PENDING: "En attente",
-    CONFIRMED: "Confirmé",
-    CANCELLED: "Annulé",
+    PENDING: t("pending"),
+    CONFIRMED: t('confirmated'),
+    CANCELLED: t('cancelled'),
   }
 
   const startDate = new Date(reservation.start_time)
@@ -55,28 +57,28 @@ export function ReservationCard({ reservation, onEdit, flightCategoryMapping }: 
           <CalendarClock className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
           <div className="space-y-1">
             <p className="text-sm">
-              <span className="font-medium">Début:</span> {format(startDate, "PPP", { locale: fr })}
+              <span className="font-medium">{t('start')} :</span> {format(startDate, "PPP", { locale: fr })}
             </p>
             <p className="text-sm">
-              <span className="font-medium">Heure:</span> {format(startDate, "HH:mm", { locale: fr })} -{" "}
+              <span className="font-medium">{t('hours')}:</span> {format(startDate, "HH:mm", { locale: fr })} -{" "}
               {format(endDate, "HH:mm", { locale: fr })}
             </p>
-            <p className="text-xs text-muted-foreground">Durée: {durationHours.toFixed(1)} heure(s)</p>
+            <p className="text-xs text-muted-foreground">{t('estimatedDate')}: {durationHours.toFixed(1)} {t('hours')}</p>
           </div>
         </div>
 
         <div className="flex items-start gap-2">
           <FileText className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
           <div>
-            <p className="text-sm font-medium">But:</p>
-            <p className="text-sm line-clamp-2">{reservation.purpose || "Non spécifié"}</p>
+            <p className="text-sm font-medium">{t('reservationPurpose')}:</p>
+            <p className="text-sm line-clamp-2">{reservation.purpose || t('unknown')}</p>
           </div>
         </div>
 
         <div className="flex items-start gap-2">
           <Tag className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
           <div>
-            <p className="text-sm font-medium">Catégorie:</p>
+            <p className="text-sm font-medium">{t('flightCategory')}:</p>
             <p className="text-sm">
               {flightCategoryMapping[reservation.flight_category] || reservation.flight_category}
             </p>
@@ -85,18 +87,18 @@ export function ReservationCard({ reservation, onEdit, flightCategoryMapping }: 
       </CardContent>
       <CardFooter className="flex justify-end gap-2 pt-2 border-t bg-muted/50">
         <Button size="sm" variant="outline" onClick={() => onEdit(reservation)}>
-          Modifier
+          {t('edit')}
         </Button>
         {reservation.flights && reservation.flights.length > 0 ? (
           <Link href={`flight-plans/${reservation.flights[0].id}`}>
             <Button size="sm" variant="default">
-              Plan de vol
+              {t('flightPlan')}
             </Button>
           </Link>
         ) : (
           <Link href={`flight-plans/create/${reservation.id}`}>
             <Button size="sm" variant="default">
-              Créer un plan
+              {t('createPlan')}
             </Button>
           </Link>
         )}

@@ -1,0 +1,17 @@
+{
+  "navbar": {
+    "userError": "Erreur lors du chargement des informations utilisateur.",
+
+    "toggleMenu": "Basculer le menu",
+    "toggleTheme": "Basculer le thème",
+
+    "notifications": "Notifications",
+    "notificationCount": "{count, plural, =0{Aucune nouvelle notification} one{Vous avez # nouvelle notification} other{Vous avez # nouvelles notifications}}",
+    "allNotifications": "Toutes les notifications",
+    "noNotifications": "Pas de nouvelles notifications",
+
+    "my": "Mon Profil",
+    "money": "Mon Solde",
+    "logout": "Se Déconnecter"
+  }
+}

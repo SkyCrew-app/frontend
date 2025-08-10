@@ -16,30 +16,33 @@ import { MaintenanceTable } from "@/components/maintenance/maintenance-table"
 import { MaintenanceDetailDialog } from "@/components/maintenance/maintenance-detail-dialog"
 import { MaintenanceFormDialog } from "@/components/maintenance/maintenance-form-dialog"
 import type { DateRange } from "react-day-picker"
-
-enum MaintenanceType {
-  INSPECTION = "Inspection",
-  REPAIR = "Réparation",
-  OVERHAUL = "Révision",
-  SOFTWARE_UPDATE = "Mise à jour logicielle",
-  CLEANING = "Nettoyage",
-  OTHER = "Autre",
-}
-
-enum MaintenanceStatus {
-  PLANNED = "Planifiée",
-  IN_PROGRESS = "En cours",
-  COMPLETED = "Terminée",
-  CANCELLED = "Annulée",
-}
+import { useTranslations } from "next-intl"
 
 export default function MaintenanceTablePage() {
+  const t = useTranslations('fleet');
+
+  const MaintenanceType = {
+    INSPECTION: t('inspection'),
+    REPAIR: t('fixing'),
+    OVERHAUL: t('reviewing'),
+    SOFTWARE_UPDATE: t('updating'),
+    CLEANING: t('cleaning'),
+    OTHER: t('other'),
+  } as const;
+
+  const MaintenanceStatus = {
+    PLANNED : t('planned'),
+    IN_PROGRESS : t('inProgress'),
+    COMPLETED : t('completed'),
+    CANCELLED : t('cancelled'),
+  } as const
+
   const { data, loading, error, refetch } = useQuery(GET_ALL_MAINTENANCES, {
     onError: (error) => {
       toast({
         variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de charger les maintenances. Veuillez réessayer plus tard.",
+        title: t('error'),
+        description: t('maintenanceLoadError'),
       })
     },
   })
@@ -72,7 +75,7 @@ export default function MaintenanceTablePage() {
 
   if (loading)
     return (
-      <div className="w-full p-8 space-y-4" aria-busy="true" aria-label="Chargement des données de maintenance">
+      <div className="w-full p-8 space-y-4" aria-busy="true" aria-label={t('loadingMaintenances')}>
         <div className="flex justify-between items-center">
           <Skeleton className="h-10 w-64" />
           <Skeleton className="h-10 w-32" />
@@ -85,8 +88,8 @@ export default function MaintenanceTablePage() {
   if (error) {
     toast({
       variant: "destructive",
-      title: "Erreur",
-      description: "Impossible de charger les maintenances. Veuillez réessayer plus tard.",
+      title: t('error'),
+      description: t('maintenanceLoadError'),
     })
     return null
   }
@@ -130,8 +133,8 @@ export default function MaintenanceTablePage() {
   const handleRefresh = () => {
     refetch()
     toast({
-      title: "Actualisation",
-      description: "Les données ont été actualisées.",
+      title: t('refreshing'),
+      description: t('dataRefreshed'),
     })
   }
 
@@ -157,15 +160,15 @@ export default function MaintenanceTablePage() {
         refetchQueries: [{ query: GET_ALL_MAINTENANCES }],
       })
       toast({
-        title: "Maintenance supprimée",
-        description: "La maintenance a été supprimée avec succès.",
+        title: t('maintenance'),
+        description: t('maintenanceDeleted'),
       })
     } catch (error) {
       console.error("Erreur lors de la suppression:", error)
       toast({
         variant: "destructive",
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la suppression de la maintenance.",
+        title: t('error'),
+        description: t('maintenanceDeleteError'),
       })
     }
   }
@@ -255,17 +258,17 @@ export default function MaintenanceTablePage() {
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Gestion des Maintenances</h1>
-          <p className="text-muted-foreground mt-1">Suivez et gérez les maintenances de votre flotte d'aéronefs</p>
+          <h1 className="text-3xl font-bold tracking-tight">{t('dashboardMaintenance')}</h1>
+          <p className="text-muted-foreground mt-1">{t('maintenanceDescription')}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handleRefresh} aria-label="Actualiser les données">
+          <Button variant="outline" size="sm" onClick={handleRefresh} aria-label={t('upadateData')}>
             <RefreshCwIcon className="h-4 w-4 mr-2" aria-hidden="true" />
-            Actualiser
+            {t('refresh')}
           </Button>
-          <Button size="sm" onClick={handleCreateMaintenance} aria-label="Créer une nouvelle maintenance">
+          <Button size="sm" onClick={handleCreateMaintenance} aria-label={t('createMaintenanceDescription')}>
             <PlusIcon className="h-4 w-4 mr-2" aria-hidden="true" />
-            Nouvelle Maintenance
+            {t('createMaintenance')}
           </Button>
         </div>
       </div>

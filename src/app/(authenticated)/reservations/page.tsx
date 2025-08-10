@@ -28,6 +28,7 @@ import { MobileReservationForm } from "@/components/reservation/mobile-reservati
 import { Card, CardContent } from "@/components/ui/card"
 import { AlertTriangle } from "lucide-react"
 import { useMediaQuery } from "@/hooks/use-media-query"
+import { useTranslations } from "next-intl"
 
 interface Aircraft {
   id: number
@@ -35,6 +36,7 @@ interface Aircraft {
 }
 
 export default function ReservationCalendar() {
+  const t = useTranslations("reservation")
   const [currentDate, setCurrentDate] = useState<Date>(new Date())
   const [selectedTimeRange, setSelectedTimeRange] = useState<{ start: string | null; end: string | null }>({
     start: null,
@@ -163,8 +165,8 @@ export default function ReservationCalendar() {
     if (!userId) {
       toast({
         variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de trouver l'utilisateur actuel.",
+        title: t('error'),
+        description: t('userNotFound'),
       })
       return
     }
@@ -195,8 +197,8 @@ export default function ReservationCalendar() {
       })
 
       toast({
-        title: "Réservation créée avec succès",
-        description: "Votre réservation a été ajoutée.",
+        title: t('reservationCreated'),
+        description: t('reservationSuccess'),
       })
 
       setPurpose("")
@@ -207,8 +209,8 @@ export default function ReservationCalendar() {
       console.error("Erreur Apollo Client:", error)
       toast({
         variant: "destructive",
-        title: "Erreur lors de la création",
-        description: (error as any).message || "Une erreur inconnue est survenue.",
+        title: t('errorCreatingReservation'),
+        description: (error as any).message || t('unknownError'),
       })
     } finally {
       setIsCreating(false)
@@ -219,8 +221,8 @@ export default function ReservationCalendar() {
     if (!userId) {
       toast({
         variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de trouver l'utilisateur actuel.",
+        title: t('error'),
+        description: t('userNotFound'),
       })
       return
     }
@@ -249,8 +251,8 @@ export default function ReservationCalendar() {
       })
 
       toast({
-        title: "Réservation créée avec succès",
-        description: "Votre réservation a été ajoutée.",
+        title: t('reservationCreated'),
+        description: t('reservationSuccess'),
       })
 
       setPurpose("")
@@ -261,8 +263,8 @@ export default function ReservationCalendar() {
       console.error("Erreur Apollo Client:", error)
       toast({
         variant: "destructive",
-        title: "Erreur lors de la création",
-        description: (error as any).message || "Une erreur inconnue est survenue.",
+        title: t('errorCreatingReservation'),
+        description: (error as any).message || t('unknownError'),
       })
     } finally {
       setIsCreating(false)
@@ -288,14 +290,14 @@ export default function ReservationCalendar() {
 
         setIsEditDialogOpen(false)
         toast({
-          title: "Réservation mise à jour",
-          description: `La réservation pour l'avion ${selectedReservation.aircraft.registration_number} a été mise à jour.`,
+          title: t('reservationUpdated'),
+          description: t('reservationUpdateSuccess', { aircraft: selectedReservation.aircraft.registration_number }),
         })
       } catch (error) {
         toast({
           variant: "destructive",
-          title: "Erreur lors de la mise à jour",
-          description: "Une erreur est survenue lors de la mise à jour de la réservation.",
+          title: t('errorUpdatingReservation'),
+          description: t('errorUpdatingReservationUnknown'),
         })
       }
     }
@@ -315,14 +317,14 @@ export default function ReservationCalendar() {
 
         setIsReservationDialogOpen(false)
         toast({
-          title: "Réservation supprimée",
-          description: `La réservation pour l'avion ${selectedReservation.aircraft.registration_number} a été supprimée.`,
+          title: t('reservationDeleted'),
+          description: t('reservationDeleteSuccess', { aircraft: selectedReservation.aircraft.registration_number }),
         })
       } catch (error) {
         toast({
           variant: "destructive",
-          title: "Erreur lors de la suppression",
-          description: "Une erreur est survenue lors de la suppression de la réservation.",
+          title: t('errorDeletingReservation'),
+          description: t('errorDeletingReservationUnknown'),
         })
       }
     }
@@ -426,8 +428,8 @@ export default function ReservationCalendar() {
         <CardContent className="p-6 text-red-800 dark:text-red-300 flex items-center">
           <AlertTriangle className="h-6 w-6 mr-3" />
           <div>
-            <h3 className="font-semibold">Erreur de chargement</h3>
-            <p>Impossible de charger les réservations. Veuillez réessayer plus tard.</p>
+            <h3 className="font-semibold">{t('errorFetching')}</h3>
+            <p>{t('tryAgain')}</p>
           </div>
         </CardContent>
       </Card>
@@ -462,7 +464,7 @@ export default function ReservationCalendar() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="sticky left-0 z-20 bg-muted">Avion</TableHead>
+                    <TableHead className="sticky left-0 z-20 bg-muted">{t('aircraft')}</TableHead>
                     {hours.map((hour, index) => (
                       <TableHead key={index} className="text-center min-w-[80px] p-2">
                         {format(hour, "HH:mm")}
@@ -480,7 +482,7 @@ export default function ReservationCalendar() {
       {/* Dialogue de création de réservation */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent className="sm:max-w-md">
-          <DialogTitle>Créer une réservation</DialogTitle>
+          <DialogTitle>{t('createReservation')}</DialogTitle>
           {isMobile ? (
             <MobileReservationForm
               aircrafts={aircraftData.getAircrafts}
@@ -518,7 +520,7 @@ export default function ReservationCalendar() {
       {selectedReservation && (
         <Dialog open={isReservationDialogOpen} onOpenChange={setIsReservationDialogOpen}>
           <DialogContent className="sm:max-w-md">
-            <DialogTitle>Détails de la réservation</DialogTitle>
+            <DialogTitle>{t('describeReservation')}</DialogTitle>
             <ReservationDetail
               reservation={selectedReservation}
               onEdit={() => handleUpdate(selectedReservation)}
@@ -533,7 +535,7 @@ export default function ReservationCalendar() {
       {selectedReservation && (
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent className="sm:max-w-md">
-            <DialogTitle>Modifier la réservation</DialogTitle>
+            <DialogTitle>{t('updateReservation')}</DialogTitle>
             <ReservationForm
               isEdit={true}
               purpose={editPurpose}

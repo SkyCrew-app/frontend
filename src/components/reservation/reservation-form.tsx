@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
 import { Loader2 } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 interface Aircraft {
   id: number
@@ -33,21 +34,6 @@ interface ReservationFormProps {
   endTime?: string
 }
 
-const flightCategoryMapping = {
-  LOCAL: "Local",
-  CROSS_COUNTRY: "Vol longue distance",
-  INSTRUCTION: "Instruction",
-  TOURISM: "Tourisme",
-  TRAINING: "Entraînement",
-  MAINTENANCE: "Maintenance",
-  PRIVATE: "Privé",
-  CORPORATE: "Affaires",
-}
-
-const flightCategoryReverseMapping = Object.fromEntries(
-  Object.entries(flightCategoryMapping).map(([key, value]) => [value, key]),
-)
-
 export function ReservationForm({
   isEdit = false,
   selectedAircraft,
@@ -65,6 +51,24 @@ export function ReservationForm({
   startTime,
   endTime,
 }: ReservationFormProps) {
+
+    const t = useTranslations("reservation")
+
+    const flightCategoryMapping = {
+      LOCAL: t('local'),
+      CROSS_COUNTRY: t('crossCountry'),
+      INSTRUCTION: t('instruction'),
+      TOURISM: t('tourism'),
+      TRAINING: t('training'),
+      MAINTENANCE: t('maintenance'),
+      PRIVATE: t('private'),
+      CORPORATE: t('corporate'),
+    }
+
+    const flightCategoryReverseMapping = Object.fromEntries(
+      Object.entries(flightCategoryMapping).map(([key, value]) => [value, key]),
+    )
+
   const [selectedCategoryFr, setSelectedCategoryFr] = useState<string | undefined>(
     flightCategory ? flightCategoryMapping[flightCategory as keyof typeof flightCategoryMapping] : undefined,
   )
@@ -89,22 +93,22 @@ export function ReservationForm({
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label className="text-muted-foreground">Avion</Label>
+              <Label className="text-muted-foreground">{t('plane')}</Label>
               <p className="font-medium">{getAircraftName()}</p>
             </div>
             <div>
-              <Label className="text-muted-foreground">Date</Label>
+              <Label className="text-muted-foreground">{t('date')}</Label>
               <p className="font-medium">{formattedDate}</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label className="text-muted-foreground">Heure de début</Label>
+              <Label className="text-muted-foreground">{t('startTime')}</Label>
               <p className="font-medium">{selectedTimeRange?.start || startTime}</p>
             </div>
             <div>
-              <Label className="text-muted-foreground">Heure de fin</Label>
+              <Label className="text-muted-foreground">{t('endTime')}</Label>
               <p className="font-medium">{selectedTimeRange?.end || endTime}</p>
             </div>
           </div>
@@ -115,17 +119,17 @@ export function ReservationForm({
 
       <div className="space-y-4">
         <div>
-          <Label htmlFor="purpose">But de la réservation</Label>
+          <Label htmlFor="purpose">{t('reservationPurpose')}</Label>
           <Input
             id="purpose"
-            placeholder="Ex: Vol d'entraînement, Instruction..."
+            placeholder={t('purposeExample')}
             value={purpose}
             onChange={(e) => setPurpose(e.target.value)}
           />
         </div>
 
         <div>
-          <Label htmlFor="category">Catégorie de vol</Label>
+          <Label htmlFor="category">{t('flightCategory')}</Label>
           <Select
             value={selectedCategoryFr}
             onValueChange={(value) => {
@@ -134,7 +138,7 @@ export function ReservationForm({
             }}
           >
             <SelectTrigger id="category">
-              <SelectValue placeholder="Sélectionner une catégorie" />
+              <SelectValue placeholder={t('selectCategory')}/>
             </SelectTrigger>
             <SelectContent>
               {Object.values(flightCategoryMapping).map((categoryFr) => (
@@ -147,10 +151,10 @@ export function ReservationForm({
         </div>
 
         <div>
-          <Label htmlFor="notes">Notes supplémentaires</Label>
+          <Label htmlFor="notes">{t('notes')}</Label>
           <Textarea
             id="notes"
-            placeholder="Informations complémentaires..."
+            placeholder={t('notesExample')}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={3}
@@ -161,7 +165,7 @@ export function ReservationForm({
       <div className="flex justify-end pt-4">
         <Button onClick={onSubmit} disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isEdit ? "Mettre à jour" : "Créer la réservation"}
+          {isEdit ? t('updateReservation') : t('submitReservation')}
         </Button>
       </div>
     </div>

@@ -18,6 +18,7 @@ import { GET_FLIGHT_PLAN_BY_ID } from "@/graphql/flights"
 import { getWeather } from "@/lib/weather"
 import { AlertTriangle } from "lucide-react"
 import type { Weather } from "@/interfaces/weather"
+import { useTranslations } from "next-intl"
 
 import "@/styles/print.css"
 
@@ -31,6 +32,7 @@ const MapboxMap = dynamic(() => import("@/components/flight/MapboxMap"), {
 })
 
 export default function FlightPlanDetails() {
+  const t = useTranslations("reservation")
   const { id } = useParams()
   const [activeTab, setActiveTab] = useState("overview")
   const [showMap, setShowMap] = useState(false)
@@ -58,8 +60,8 @@ export default function FlightPlanDetails() {
   useEffect(() => {
     if (error) {
       toast({
-        title: "Erreur",
-        description: "Une erreur s'est produite lors du chargement du plan de vol. Veuillez réessayer plus tard.",
+        title: t('error'),
+        description: t('flightPlanError'),
         variant: "destructive",
       })
     }
@@ -68,9 +70,9 @@ export default function FlightPlanDetails() {
   useEffect(() => {
     if (data && data.getFlightById) {
       toast({
-        title: "Avertissement",
+        title: t('warning'),
         description:
-          "Vérifiez les NOTAMs et les conditions météorologiques avant le départ. Assurez-vous d'avoir tous les documents nécessaires pour votre vol.",
+          t('flightPlanWarning'),
         duration: 10000,
       })
 
@@ -118,8 +120,8 @@ export default function FlightPlanDetails() {
         } catch (error) {
           console.error("Error fetching weather data:", error)
           toast({
-            title: "Erreur",
-            description: "Impossible de récupérer les données météorologiques. Veuillez réessayer plus tard.",
+            title: t('error'),
+            description: t('weatherFetchError'),
             variant: "destructive",
           })
           setWeatherData({ departure: null, arrival: null })
@@ -187,7 +189,7 @@ export default function FlightPlanDetails() {
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8 text-center">Chargement du Plan de Vol...</h1>
+        <h1 className="text-3xl font-bold mb-8 text-center">{t('fetchFlightPlan')}</h1>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="space-y-6">
             <Skeleton className="h-[200px] w-full" />
@@ -202,12 +204,12 @@ export default function FlightPlanDetails() {
   if (error || !data || !data.getFlightById) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8 text-center">Plan de Vol</h1>
+        <h1 className="text-3xl font-bold mb-8 text-center">{t('flightPlan')}</h1>
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Erreur</AlertTitle>
+          <AlertTitle>{t('error')}</AlertTitle>
           <AlertDescription>
-            Une erreur s'est produite lors du chargement du plan de vol. Veuillez réessayer plus tard.
+            {t('flightPlanError')}
           </AlertDescription>
         </Alert>
       </div>
@@ -222,7 +224,7 @@ export default function FlightPlanDetails() {
   return (
     <div className="container mx-auto px-4 py-8" data-print-date={new Date().toLocaleString()}>
       <h1 className="text-3xl font-bold mb-8 text-center">
-        Plan de Vol{" "}
+        {t('flightPlan')}{" "}
         <span className="text-primary">
           {departureInfo.ICAO} → {arrivalInfo.ICAO}
         </span>
@@ -261,10 +263,10 @@ export default function FlightPlanDetails() {
         <div className="space-y-6">
           <Tabs value={activeTab} onValueChange={updateActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="overview">Aperçu</TabsTrigger>
-              <TabsTrigger value="departure">Départ</TabsTrigger>
-              <TabsTrigger value="arrival">Arrivée</TabsTrigger>
-              <TabsTrigger value="waypoints">Waypoints</TabsTrigger>
+              <TabsTrigger value="overview">{t('overview')}</TabsTrigger>
+              <TabsTrigger value="departure">{t('start')}</TabsTrigger>
+              <TabsTrigger value="arrival">{t('end')}</TabsTrigger>
+              <TabsTrigger value="waypoints">{t('waypoints')}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview">
@@ -272,49 +274,49 @@ export default function FlightPlanDetails() {
                 <CardContent className="p-6 space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="bg-muted p-4 rounded-lg">
-                      <h3 className="text-lg font-semibold mb-2">Détails du vol</h3>
+                      <h3 className="text-lg font-semibold mb-2">{t('flightDetails')}</h3>
                       <ul className="space-y-2">
                         <li>
-                          <strong>Type de vol:</strong> {flightPlanData.flight_type}
+                          <strong>{t('flightType')}:</strong> {flightPlanData.flight_type}
                         </li>
                         <li>
-                          <strong>Distance:</strong> {flightPlanData.distance_km.toFixed(2)} km
+                          <strong>{t('distance')}:</strong> {flightPlanData.distance_km.toFixed(2)} km
                         </li>
                         <li>
-                          <strong>Durée estimée:</strong> {flightPlanData.estimated_flight_time} heures
+                          <strong>{t('estimatedDate')}:</strong> {flightPlanData.estimated_flight_time} heures
                         </li>
                         <li>
-                          <strong>Passagers:</strong> {flightPlanData.number_of_passengers || "Non spécifié"}
+                          <strong>{t('passengers')}:</strong> {flightPlanData.number_of_passengers || t('unknown')}
                         </li>
                       </ul>
                     </div>
 
                     <div className="bg-muted p-4 rounded-lg">
-                      <h3 className="text-lg font-semibold mb-2">Réservation</h3>
+                      <h3 className="text-lg font-semibold mb-2">{t('reservation')}</h3>
                       {flightPlanData.reservation ? (
                         <ul className="space-y-2">
                           <li>
                             <strong>ID:</strong> {flightPlanData.reservation.id}
                           </li>
                           <li>
-                            <strong>Avion:</strong> {flightPlanData.reservation.aircraft.registration_number}
+                            <strong>{t('plane')}:</strong> {flightPlanData.reservation.aircraft.registration_number}
                           </li>
                           <li>
-                            <strong>Statut:</strong> {flightPlanData.reservation.status}
+                            <strong>{t('status')}:</strong> {flightPlanData.reservation.status}
                           </li>
                           <li>
-                            <strong>But:</strong> {flightPlanData.reservation.purpose || "Non spécifié"}
+                            <strong>{t('reservationPurpose')}:</strong> {flightPlanData.reservation.purpose || t('unknown')}
                           </li>
                         </ul>
                       ) : (
-                        <p className="text-muted-foreground">Aucune réservation associée</p>
+                        <p className="text-muted-foreground">{t('noReservationAssociated')}</p>
                       )}
                     </div>
                   </div>
 
                   {flightPlanData.weather_conditions && (
                     <div className="bg-muted p-4 rounded-lg">
-                      <h3 className="text-lg font-semibold mb-2">Conditions météorologiques</h3>
+                      <h3 className="text-lg font-semibold mb-2">{t('weatherConditions')}</h3>
                       <p>{flightPlanData.weather_conditions}</p>
                     </div>
                   )}

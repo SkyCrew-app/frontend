@@ -21,6 +21,7 @@ import { toast } from "@/components/hooks/use-toast"
 import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
 import { aviationAPI, calculateDistance, calculateEstimatedTime } from "@/lib/aviation-api"
 import type { Airport, Waypoint } from "@/lib/aviation-api"
+import { useTranslations } from "next-intl"
 
 enum FlightCategory {
   VFR = "VFR",
@@ -28,9 +29,9 @@ enum FlightCategory {
   SVFR = "SVFR",
 }
 
-const steps = ["Informations de base", "Route", "Détails du vol", "Confirmation"]
-
 export default function CreateCustomFlightPlan() {
+  const t = useTranslations("reservation")
+  const steps = [t('baseInformation'), t('road'), t('flightDetails'), t('summary')]
   const userEmail = useCurrentUser()
   const userData = useUserData(userEmail)
   const [userId, setUserId] = useState<string | null>(null)
@@ -119,8 +120,8 @@ export default function CreateCustomFlightPlan() {
       if (!flightPlan.origin_icao || !flightPlan.destination_icao) {
         toast({
           variant: "destructive",
-          title: "Erreur de validation",
-          description: "Veuillez sélectionner les aéroports de départ et d'arrivée.",
+          title: t('validationError'),
+          description: t('selectAirports'),
         })
         return
       }
@@ -151,8 +152,12 @@ export default function CreateCustomFlightPlan() {
 
       if (data && data.createFlight) {
         toast({
-          title: "Plan de vol créé",
-          description: "Votre plan de vol a été créé avec succès.",
+          title: t('flightPlanCreated'),
+          description: t('flightPlanCreatedSuccess', {
+            airport1: departureAirport?.name || flightPlan.origin_icao,
+            airport2: arrivalAirport?.name || flightPlan.destination_icao,
+          }),
+          variant: "default",
         })
         router.push(`/flight-plans/${data.createFlight.id}`)
       }
@@ -160,26 +165,26 @@ export default function CreateCustomFlightPlan() {
       console.error("Error creating flight:", error)
       toast({
         variant: "destructive",
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la création du plan de vol.",
+        title: t('error'),
+        description: t('flightCreationError'),
       })
     }
   }
 
   return (
     <div className="container mx-auto py-10">
-      <h1 className="text-4xl font-bold mb-10 text-center">Créer un Plan de Vol Personnalisé</h1>
+      <h1 className="text-4xl font-bold mb-10 text-center">{t('createFlightPlanPersonalized')}</h1>
 
       <Tabs defaultValue="manual" className="mb-10">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="manual">Création Manuelle</TabsTrigger>
-          <TabsTrigger value="ai">Génération IA</TabsTrigger>
+          <TabsTrigger value="manual">{t('manuelCreation')}</TabsTrigger>
+          <TabsTrigger value="ai">{t('generatedByAI')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="manual">
           <Card>
             <CardHeader>
-              <CardTitle>Création Manuelle du Plan de Vol</CardTitle>
+              <CardTitle>{t('manuelCreationTitle')}</CardTitle>
             </CardHeader>
             <CardContent>
               <Stepper steps={steps} currentStep={currentStep} />
@@ -188,27 +193,27 @@ export default function CreateCustomFlightPlan() {
                 {currentStep === 0 && (
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label>Aéroport de départ</Label>
+                      <Label>{t('departureAirport')}</Label>
                       <AirportSearch
                         value={flightPlan.origin_icao}
                         onChange={(value) => setFlightPlan((prev) => ({ ...prev, origin_icao: value }))}
-                        label="Sélectionner l'aéroport de départ"
-                        placeholder="Rechercher par OACI, nom ou ville..."
+                        label={t('selectDepartureAirport')}
+                        placeholder={t('searchByICAONameOrCity')}
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Aéroport d'arrivée</Label>
+                      <Label>{t('arrivalAirport')}</Label>
                       <AirportSearch
                         value={flightPlan.destination_icao}
                         onChange={(value) => setFlightPlan((prev) => ({ ...prev, destination_icao: value }))}
-                        label="Sélectionner l'aéroport d'arrivée"
-                        placeholder="Rechercher par OACI, nom ou ville..."
+                        label={t('selectArrivalAirport')}
+                        placeholder={t('searchByICAONameOrCity')}
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label>Type de vol</Label>
+                      <Label>{t('flightType')}</Label>
                       <Select
                         value={flightPlan.flight_type}
                         onValueChange={(value) =>
@@ -216,7 +221,7 @@ export default function CreateCustomFlightPlan() {
                         }
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Sélectionner le type de vol" />
+                          <SelectValue placeholder={t('selectFlightType')} />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value={FlightCategory.VFR}>VFR</SelectItem>
@@ -238,7 +243,7 @@ export default function CreateCustomFlightPlan() {
                     />
 
                     <div className="space-y-2">
-                      <Label>Waypoints</Label>
+                      <Label>{t('waypoints')}</Label>
                       <WaypointSearch
                         waypoints={flightPlan.waypoints}
                         onChange={(waypoints) => setFlightPlan((prev) => ({ ...prev, waypoints }))}
@@ -247,7 +252,7 @@ export default function CreateCustomFlightPlan() {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label>Vitesse de croisière (kts)</Label>
+                        <Label>{t('speedCruise')}</Label>
                         <Input
                           type="number"
                           value={flightPlan.cruise_speed}
@@ -258,12 +263,12 @@ export default function CreateCustomFlightPlan() {
                             }))
                           }
                           min={60}
-                          max={500}
+                          max={2000}
                         />
                       </div>
 
                       <div className="space-y-2">
-                        <Label>Altitude de croisière (ft)</Label>
+                        <Label>{t('altitudeCruise')}</Label>
                         <Input
                           type="number"
                           value={flightPlan.cruise_altitude}
@@ -284,9 +289,9 @@ export default function CreateCustomFlightPlan() {
                       <Alert>
                         <AlertTriangle className="h-4 w-4" />
                         <AlertDescription>
-                          Distance totale: {flightPlan.distance_km} km
+                          {t('distanceTotal')}: {flightPlan.distance_km} km
                           <br />
-                          Temps de vol estimé: {Math.floor(flightPlan.estimated_flight_time / 60)}h{" "}
+                          {t('estimatedDurationFlight')}: {Math.floor(flightPlan.estimated_flight_time / 60)}h{" "}
                           {flightPlan.estimated_flight_time % 60}min
                         </AlertDescription>
                       </Alert>
@@ -297,7 +302,7 @@ export default function CreateCustomFlightPlan() {
                 {currentStep === 2 && (
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label>Nombre de passagers</Label>
+                      <Label>{t('numberOfPassengers')}</Label>
                       <Input
                         type="number"
                         value={flightPlan.number_of_passengers}
@@ -308,7 +313,7 @@ export default function CreateCustomFlightPlan() {
                           }))
                         }
                         min={1}
-                        max={20}
+                        max={2000}
                       />
                     </div>
                   </div>
@@ -316,48 +321,48 @@ export default function CreateCustomFlightPlan() {
 
                 {currentStep === 3 && (
                   <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Résumé du plan de vol</h3>
+                    <h3 className="text-lg font-semibold">{t('resumeFlightPlan')}</h3>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="font-medium">Départ:</p>
+                        <p className="font-medium">{t('start')}:</p>
                         <p>{departureAirport?.name || flightPlan.origin_icao}</p>
                       </div>
                       <div>
-                        <p className="font-medium">Arrivée:</p>
+                        <p className="font-medium">{t('end')}:</p>
                         <p>{arrivalAirport?.name || flightPlan.destination_icao}</p>
                       </div>
                       <div>
-                        <p className="font-medium">Type de vol:</p>
+                        <p className="font-medium">{t('flightType')}:</p>
                         <p>{flightPlan.flight_type}</p>
                       </div>
                       <div>
-                        <p className="font-medium">Passagers:</p>
+                        <p className="font-medium">{t('passengers')}:</p>
                         <p>{flightPlan.number_of_passengers}</p>
                       </div>
                       <div>
-                        <p className="font-medium">Distance:</p>
+                        <p className="font-medium">{t('distance')}:</p>
                         <p>{flightPlan.distance_km} km</p>
                       </div>
                       <div>
-                        <p className="font-medium">Temps estimé:</p>
+                        <p className="font-medium">{t('estimatedDate')}:</p>
                         <p>
                           {Math.floor(flightPlan.estimated_flight_time / 60)}h {flightPlan.estimated_flight_time % 60}
                           min
                         </p>
                       </div>
                       <div>
-                        <p className="font-medium">Vitesse de croisière:</p>
+                        <p className="font-medium">{t('speedCruise')}:</p>
                         <p>{flightPlan.cruise_speed} kts</p>
                       </div>
                       <div>
-                        <p className="font-medium">Altitude de croisière:</p>
+                        <p className="font-medium">{t('altitudeCruise')}:</p>
                         <p>{flightPlan.cruise_altitude} ft</p>
                       </div>
                     </div>
 
                     {routeWaypoints.length > 0 && (
                       <div>
-                        <p className="font-medium">Waypoints:</p>
+                        <p className="font-medium">{t('waypoints')}:</p>
                         <p>{routeWaypoints.map((w) => w.ident).join(" → ")}</p>
                       </div>
                     )}
@@ -369,7 +374,7 @@ export default function CreateCustomFlightPlan() {
             </CardContent>
             <CardFooter className="flex justify-between">
               <Button onClick={handlePrevious} disabled={currentStep === 0} variant="outline">
-                Précédent
+                {t('previous')}
               </Button>
               {currentStep < steps.length - 1 ? (
                 <Button onClick={handleNext}>Suivant</Button>
@@ -378,10 +383,10 @@ export default function CreateCustomFlightPlan() {
                   {createLoading ? (
                     <>
                       <Spinner className="mr-2" />
-                      Création en cours...
+                      {t('creationInProgress')}
                     </>
                   ) : (
-                    "Créer le plan de vol"
+                    t('createPlan')
                   )}
                 </Button>
               )}
@@ -394,28 +399,28 @@ export default function CreateCustomFlightPlan() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Sparkles className="h-5 w-5" />
-                Génération IA du Plan de Vol
+                {t('generatedByAI')}
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Aéroport de départ</Label>
+                  <Label>{t('departureAirport')}</Label>
                   <AirportSearch
                     value={flightPlan.origin_icao}
                     onChange={(value) => setFlightPlan((prev) => ({ ...prev, origin_icao: value }))}
-                    label="Sélectionner l'aéroport de départ"
-                    placeholder="Rechercher par OACI, nom ou ville..."
+                    label={t('selectDepartureAirport')}
+                    placeholder={t('searchByICAONameOrCity')}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Aéroport d'arrivée</Label>
+                  <Label>{t('arrivalAirport')}</Label>
                   <AirportSearch
                     value={flightPlan.destination_icao}
                     onChange={(value) => setFlightPlan((prev) => ({ ...prev, destination_icao: value }))}
-                    label="Sélectionner l'aéroport d'arrivée"
-                    placeholder="Rechercher par OACI, nom ou ville..."
+                    label={t('selectArrivalAirport')}
+                    placeholder={t('searchByICAONameOrCity')}
                   />
                 </div>
 
@@ -424,8 +429,8 @@ export default function CreateCustomFlightPlan() {
                     if (!flightPlan.origin_icao || !flightPlan.destination_icao) {
                       toast({
                         variant: "destructive",
-                        title: "Erreur",
-                        description: "Veuillez sélectionner les aéroports de départ et d'arrivée.",
+                        title: t('error'),
+                        description: t('selectAirports'),
                       })
                       return
                     }
@@ -442,8 +447,12 @@ export default function CreateCustomFlightPlan() {
 
                       if (data && data.generateFlightPlan) {
                         toast({
-                          title: "Plan de vol généré",
-                          description: "Votre plan de vol a été généré avec succès.",
+                          title: t('flightPlanGenerated'),
+                          description: t('flightPlanGeneratedSuccess', {
+                            airport1: flightPlan.origin_icao,
+                            airport2: flightPlan.destination_icao,
+                          }),
+                          variant: "default",
                         })
                         router.push(`/reservations/flight-plans/${data.generateFlightPlan.id}`)
                       }
@@ -451,8 +460,8 @@ export default function CreateCustomFlightPlan() {
                       console.error("Error generating flight plan:", error)
                       toast({
                         variant: "destructive",
-                        title: "Erreur",
-                        description: "Une erreur est survenue lors de la génération du plan de vol.",
+                        title: t('error'),
+                        description: t('flightPlanGenerationError'),
                       })
                     }
                   }}
@@ -463,11 +472,11 @@ export default function CreateCustomFlightPlan() {
                     <>
                     <div className="flex justify-center items-center mt-4">
                       <Spinner />
-                      <span className="ml-2">Génération du plan de vol en cours...</span>
+                      <span className="ml-2">{t('generationInProgress')}</span>
                     </div>
                     </>
                   ) : (
-                    "Générer un plan de vol"
+                    t('generateFlightPlan')
                   )}
                 </Button>
               </div>

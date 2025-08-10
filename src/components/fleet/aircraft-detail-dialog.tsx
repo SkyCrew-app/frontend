@@ -14,6 +14,7 @@ import { Separator } from "@/components/ui/separator"
 import { ExternalLink, FileText, PlaneTakeoff } from "lucide-react"
 import type { Aircraft } from "@/interfaces/aircraft"
 import { StatusBadge } from "./status-badge"
+import { useTranslations } from "next-intl"
 
 interface AircraftDetailDialogProps {
   aircraft: Aircraft | null
@@ -22,6 +23,7 @@ interface AircraftDetailDialogProps {
 }
 
 export function AircraftDetailDialog({ aircraft, isOpen, onOpenChange }: AircraftDetailDialogProps) {
+  const t = useTranslations('fleet');
   if (!aircraft) return null
 
   return (
@@ -32,39 +34,39 @@ export function AircraftDetailDialog({ aircraft, isOpen, onOpenChange }: Aircraf
             <PlaneTakeoff className="h-6 w-6 mr-2" />
             {aircraft.registration_number} - {aircraft.model}
           </DialogTitle>
-          <DialogDescription>Détails complets de l'aéronef et historique de maintenance</DialogDescription>
+          <DialogDescription>{t('allDetails')}</DialogDescription>
         </DialogHeader>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
           <div className="md:col-span-2 space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Informations générales</CardTitle>
+                <CardTitle className="text-lg">{t('allInformation')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">Immatriculation</p>
+                    <p className="text-sm text-muted-foreground">{t('immatriculation')}</p>
                     <p className="font-medium">{aircraft.registration_number}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Modèle</p>
+                    <p className="text-sm text-muted-foreground">{t('model')}</p>
                     <p className="font-medium">{aircraft.model}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Année de fabrication</p>
+                    <p className="text-sm text-muted-foreground">{t('fabricationYears')}</p>
                     <p className="font-medium">{aircraft.year_of_manufacture}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Heures de vol totales</p>
-                    <p className="font-medium">{aircraft.total_flight_hours} heures</p>
+                    <p className="text-sm text-muted-foreground">{t('hoursAmount')}</p>
+                    <p className="font-medium">{t('flightHours', { time: aircraft.total_flight_hours })}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Coût horaire</p>
+                    <p className="text-sm text-muted-foreground">{t('hoursCoast')}</p>
                     <p className="font-medium">{aircraft.hourly_cost.toFixed(2)} €</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Consommation</p>
+                    <p className="text-sm text-muted-foreground">{t('consommation')}</p>
                     <p className="font-medium">{aircraft.consumption} L/h</p>
                   </div>
                 </div>
@@ -73,13 +75,13 @@ export function AircraftDetailDialog({ aircraft, isOpen, onOpenChange }: Aircraf
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">Disponibilité</p>
+                    <p className="text-sm text-muted-foreground">{t('availability')}</p>
                     <div className="mt-1">
                       <StatusBadge status={aircraft.availability_status} type="availability" />
                     </div>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">État de maintenance</p>
+                    <p className="text-sm text-muted-foreground">{t('maintenanceStatus')}</p>
                     <div className="mt-1">
                       <StatusBadge status={aircraft.maintenance_status} type="maintenance" />
                     </div>
@@ -92,7 +94,7 @@ export function AircraftDetailDialog({ aircraft, isOpen, onOpenChange }: Aircraf
               <CardHeader>
                 <CardTitle className="text-lg flex items-center">
                   <FileText className="h-5 w-5 mr-2" />
-                  Documents
+                  {t('documents')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -103,7 +105,7 @@ export function AircraftDetailDialog({ aircraft, isOpen, onOpenChange }: Aircraf
                         <div className="flex items-center">
                           <FileText className="h-5 w-5 mr-2 text-blue-500" />
                           <span className="truncate max-w-[200px] sm:max-w-[300px]">
-                            Document {index + 1} - {url.split("/").pop()}
+                            {t('documents')} {index + 1} - {url.split("/").pop()}
                           </span>
                         </div>
                         <a
@@ -121,7 +123,7 @@ export function AircraftDetailDialog({ aircraft, isOpen, onOpenChange }: Aircraf
                 ) : (
                   <div className="text-center py-6 text-muted-foreground">
                     <FileText className="h-12 w-12 mx-auto mb-2 opacity-20" />
-                    <p>Aucun document disponible pour cet aéronef</p>
+                    <p>{t('noDocuments')}</p>
                   </div>
                 )}
               </CardContent>
@@ -131,7 +133,7 @@ export function AircraftDetailDialog({ aircraft, isOpen, onOpenChange }: Aircraf
           <div className="md:col-span-1">
             <Card className="h-full">
               <CardHeader>
-                <CardTitle className="text-lg">Image de l'aéronef</CardTitle>
+                <CardTitle className="text-lg">{t('pictureTitle')}</CardTitle>
               </CardHeader>
               <CardContent className="flex items-center justify-center p-4">
                 {aircraft.image_url ? (
@@ -143,7 +145,7 @@ export function AircraftDetailDialog({ aircraft, isOpen, onOpenChange }: Aircraf
                 ) : (
                   <div className="w-full aspect-video bg-muted flex items-center justify-center rounded-md">
                     <PlaneTakeoff className="h-12 w-12 text-muted-foreground opacity-20" />
-                    <span className="text-muted-foreground ml-2">Aucune image disponible</span>
+                    <span className="text-muted-foreground ml-2">{t('noPicture')}</span>
                   </div>
                 )}
               </CardContent>
@@ -153,7 +155,7 @@ export function AircraftDetailDialog({ aircraft, isOpen, onOpenChange }: Aircraf
 
         <DialogFooter className="mt-6">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Fermer
+            {t('close')}
           </Button>
         </DialogFooter>
       </DialogContent>

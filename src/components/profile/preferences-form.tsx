@@ -11,6 +11,7 @@ import { AerodromeCombobox } from "@/components/ui/comboboAerodrome"
 import { TimezoneCombobox } from "@/components/ui/timezoneCombobox"
 import Flag from "react-world-flags"
 import { motion } from "framer-motion"
+import { useTranslations } from "next-intl"
 
 interface PreferencesFormProps {
   userData: any
@@ -26,6 +27,7 @@ export function PreferencesForm({ userData, userId, refetch }: PreferencesFormPr
     timezone: "",
     preferred_aerodrome: "",
   })
+  const t = useTranslations("profile")
 
   const [isUpdating, setIsUpdating] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
@@ -68,8 +70,8 @@ export function PreferencesForm({ userData, userId, refetch }: PreferencesFormPr
 
       if (data?.updateUserPreferences) {
         toast({
-          title: "Succès",
-          description: "Préférences mises à jour avec succès",
+          title: t('success'),
+          description: t('parameterUpdated'),
         })
         setSaveSuccess(true)
         await refetch()
@@ -80,8 +82,8 @@ export function PreferencesForm({ userData, userId, refetch }: PreferencesFormPr
       console.error("Erreur lors de la mise à jour des préférences:", error)
       toast({
         variant: "destructive",
-        title: "Erreur",
-        description: "Erreur lors de la mise à jour des préférences",
+        title: t('error'),
+        description: t('errorPreferences'),
       })
     } finally {
       setIsUpdating(false)
@@ -96,12 +98,12 @@ export function PreferencesForm({ userData, userId, refetch }: PreferencesFormPr
     >
       <Card className="w-full shadow-md">
         <CardHeader className="pb-4">
-          <CardTitle className="text-xl font-semibold">Préférences utilisateur</CardTitle>
+          <CardTitle className="text-xl font-semibold">{t('userPreferences')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="p-4 border rounded-lg">
             <Label htmlFor="preferred_aerodrome" className="block mb-2 font-medium">
-              Aérodrome préféré
+              {t('preferedAirport')}
             </Label>
             <AerodromeCombobox
               onAerodromeChange={(value) => handlePreferenceChange("preferred_aerodrome", value)}
@@ -111,7 +113,7 @@ export function PreferencesForm({ userData, userId, refetch }: PreferencesFormPr
 
           <div className="p-4 border rounded-lg">
             <Label htmlFor="timezone" className="block mb-2 font-medium">
-              Fuseau horaire
+              {t('timezone')}
             </Label>
             <TimezoneCombobox
               onTimezoneChange={(value) => handlePreferenceChange("timezone", value)}
@@ -121,7 +123,7 @@ export function PreferencesForm({ userData, userId, refetch }: PreferencesFormPr
 
           <div className="p-4 border rounded-lg">
             <Label htmlFor="language" className="block mb-2 font-medium">
-              Langue
+              {t('language')}
             </Label>
             <div className="flex flex-wrap gap-3">
               <Button
@@ -131,7 +133,7 @@ export function PreferencesForm({ userData, userId, refetch }: PreferencesFormPr
                 className="flex items-center"
               >
                 <Flag code="FR" className="w-5 h-5 mr-2" />
-                Français
+                {t('french')}
               </Button>
               <Button
                 type="button"
@@ -140,7 +142,7 @@ export function PreferencesForm({ userData, userId, refetch }: PreferencesFormPr
                 className="flex items-center"
               >
                 <Flag code="GB" className="w-5 h-5 mr-2" />
-                English
+                {t('english')}
               </Button>
               <Button
                 type="button"
@@ -149,14 +151,14 @@ export function PreferencesForm({ userData, userId, refetch }: PreferencesFormPr
                 className="flex items-center"
               >
                 <Flag code="ES" className="w-5 h-5 mr-2" />
-                Español
+                {t('spanish')}
               </Button>
             </div>
           </div>
 
           <div className="p-4 border rounded-lg">
             <Label htmlFor="speed_unit" className="block mb-2 font-medium">
-              Unité de vitesse
+              {t('speedUnit')}
             </Label>
             <div className="flex flex-wrap gap-3">
               <Button
@@ -185,7 +187,7 @@ export function PreferencesForm({ userData, userId, refetch }: PreferencesFormPr
 
           <div className="p-4 border rounded-lg">
             <Label htmlFor="distance_unit" className="block mb-2 font-medium">
-              Unité de distance
+              {t('unitDistance')}
             </Label>
             <div className="flex flex-wrap gap-3">
               <Button
@@ -218,7 +220,7 @@ export function PreferencesForm({ userData, userId, refetch }: PreferencesFormPr
               animate={{ opacity: 1, y: 0 }}
               className="bg-green-50 text-green-700 p-3 rounded-md text-sm border border-green-200"
             >
-              Vos préférences ont été enregistrées avec succès.
+              {t('updatedPreferences')}
             </motion.div>
           )}
         </CardContent>
@@ -228,7 +230,7 @@ export function PreferencesForm({ userData, userId, refetch }: PreferencesFormPr
             onClick={savePreferencesChanges}
             disabled={isUpdating}
           >
-            {isUpdating ? "Enregistrement..." : "Enregistrer les modifications"}
+            {isUpdating ? t('savingChanges') : t('saveChanges')}
           </Button>
         </CardFooter>
       </Card>

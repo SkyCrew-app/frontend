@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { Plane, MapPin, ArrowUp, Navigation, Compass } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 interface Waypoint {
   ident: string
@@ -48,14 +49,16 @@ export function WaypointInfo({ waypoints, onFocusWaypoint }: WaypointInfoProps) 
     }
   }
 
+  const t = useTranslations("reservation")
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
           <Navigation className="h-6 w-6 text-primary" />
-          <span>Waypoints</span>
+          <span>{t('waypoints')}</span>
           <Badge variant="outline" className="ml-auto">
-            {waypoints.length} points
+            {waypoints.length} {t('waypoints')}
           </Badge>
         </CardTitle>
       </CardHeader>
@@ -105,7 +108,7 @@ export function WaypointInfo({ waypoints, onFocusWaypoint }: WaypointInfoProps) 
           ) : (
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
               <MapPin className="h-12 w-12 mb-2 opacity-20" />
-              <p>Aucun waypoint disponible</p>
+              <p>{t('noWaypoints')}</p>
             </div>
           )}
         </ScrollArea>
