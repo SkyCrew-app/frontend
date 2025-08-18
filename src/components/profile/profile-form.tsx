@@ -13,6 +13,7 @@ import { useToast } from "@/components/hooks/use-toast"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
 import { motion } from "framer-motion"
+import { useTranslations } from "next-intl"
 
 interface ProfileFormProps {
   userData: any
@@ -30,6 +31,7 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
     date_of_birth: "",
     profile_picture: "",
   })
+  const t = useTranslations("profile")
 
   const [errors, setErrors] = useState({
     first_name: "",
@@ -117,48 +119,48 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
 
     if (!formData.first_name) {
       valid = false
-      newErrors.first_name = "Le prénom est requis."
+      newErrors.first_name = t('firstnameRequired')
     } else if (formData.first_name.length < 2) {
       valid = false
-      newErrors.first_name = "Le prénom doit contenir au moins 2 caractères."
+      newErrors.first_name = t('firstnameMinLength')
     }
 
     if (!formData.last_name) {
       valid = false
-      newErrors.last_name = "Le nom est requis."
+      newErrors.last_name = t('lastnameRequired')
     } else if (formData.last_name.length < 2) {
       valid = false
-      newErrors.last_name = "Le nom doit contenir au moins 2 caractères."
+      newErrors.last_name = t('lastnameMinLength')
     }
 
     if (!formData.email) {
-      newErrors.email = "L'email est requis"
+      newErrors.email = t('emailRequired')
       valid = false
     } else if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(formData.email)) {
-      newErrors.email = "L'email n'est pas valide"
+      newErrors.email = t('emailInvalid')
       valid = false
     }
 
     if (!formData.phone_number) {
-      newErrors.phone_number = "Le numéro de téléphone est requis."
+      newErrors.phone_number = t('phoneRequired')
       valid = false
     } else if (!/^(?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4}$/.test(formData.phone_number)) {
       valid = false
       newErrors.phone_number =
-        "Le numéro de téléphone n'est pas valide. Format attendu: 0X XX XX XX XX ou +33 X XX XX XX XX"
+        t('phoneInvalid') || "Le numéro de téléphone doit être au format International."
     }
 
     if (!formData.address) {
       valid = false
-      newErrors.address = "L'adresse est requise."
+      newErrors.address = t('addressRequired')
     } else if (formData.address.length < 5) {
       valid = false
-      newErrors.address = "L'adresse doit être complète."
+      newErrors.address = t('addressNotComplete')
     }
 
     if (!formData.date_of_birth) {
       valid = false
-      newErrors.date_of_birth = "La date de naissance est requise."
+      newErrors.date_of_birth = t('birthdateRequired')
     } else {
       const birthDate = new Date(formData.date_of_birth)
       const today = new Date()
@@ -166,10 +168,10 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
 
       if (age < 16) {
         valid = false
-        newErrors.date_of_birth = "Vous devez avoir au moins 16 ans."
+        newErrors.date_of_birth = t('16YearsOld')
       } else if (age > 100) {
         valid = false
-        newErrors.date_of_birth = "Veuillez vérifier la date de naissance."
+        newErrors.date_of_birth = t('verifyDate')
       }
     }
 
@@ -205,8 +207,9 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
 
       if (data?.updateUser) {
         toast({
-          title: "Succès",
-          description: "Profil mis à jour avec succès",
+          title: t('success'),
+          description: t('updatedPreferences'),
+          variant: "default",
         })
 
         setSaveSuccess(true)
@@ -230,8 +233,8 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
       console.error("Erreur lors de la mise à jour du profil:", error)
       toast({
         variant: "destructive",
-        title: "Erreur",
-        description: "Erreur lors de la mise à jour du profil",
+        title: t('error'),
+        description: t('errorPreferences'),
       })
     } finally {
       setIsUpdating(false)
@@ -246,18 +249,18 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
     >
       <Card className="w-full shadow-md">
         <CardHeader className="pb-4">
-          <CardTitle className="text-xl font-semibold">Informations personnelles</CardTitle>
+          <CardTitle className="text-xl font-semibold">{t('personalInformation')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex flex-col items-center mb-6">
             <div className="relative mb-4">
               <Avatar className="h-32 w-32 border-4 border-primary/10">
                 {previewImage ? (
-                  <AvatarImage src={previewImage} alt="Aperçu de la photo de profil" />
+                  <AvatarImage src={previewImage} alt={t('pictureAlt')}/>
                 ) : formData.profile_picture ? (
                   <AvatarImage
                     src={`${process.env.NEXT_PUBLIC_API_URL}${formData.profile_picture}`}
-                    alt="Photo de profil"
+                    alt={t('pictureAlt')}
                   />
                 ) : (
                   <AvatarFallback className="text-3xl bg-primary/10 text-primary">
@@ -271,7 +274,7 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
                 className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-2 cursor-pointer shadow-md hover:bg-primary/90 transition-colors"
               >
                 <Camera size={18} />
-                <span className="sr-only">Changer la photo</span>
+                <span className="sr-only">{t('changePicture')}</span>
               </Label>
               <Input
                 id="picture"
@@ -282,7 +285,7 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
               />
             </div>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Cliquez sur l'icône pour changer votre photo de profil
+              {t('clickForChange')}
             </p>
           </div>
 
@@ -290,7 +293,7 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
             <div>
               <Label htmlFor="first_name" className="flex items-center gap-2 text-sm font-medium">
                 <User size={16} className="text-primary/70" />
-                Prénom
+                {t('firstname')}
               </Label>
               <Input
                 id="first_name"
@@ -305,7 +308,7 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
             <div>
               <Label htmlFor="last_name" className="flex items-center gap-2 text-sm font-medium">
                 <User size={16} className="text-primary/70" />
-                Nom
+                {t('lastname')}
               </Label>
               <Input
                 id="last_name"
@@ -320,7 +323,7 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
             <div>
               <Label htmlFor="email" className="flex items-center gap-2 text-sm font-medium">
                 <Mail size={16} className="text-primary/70" />
-                Email
+                {t('email')}
               </Label>
               <Input
                 id="email"
@@ -335,7 +338,7 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
             <div>
               <Label htmlFor="phone_number" className="flex items-center gap-2 text-sm font-medium">
                 <Phone size={16} className="text-primary/70" />
-                Numéro de téléphone
+                {t('phone')}
               </Label>
               <Input
                 id="phone_number"
@@ -350,7 +353,7 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
             <div>
               <Label htmlFor="address" className="flex items-center gap-2 text-sm font-medium">
                 <MapPin size={16} className="text-primary/70" />
-                Adresse
+                {t('address')}
               </Label>
               <Input
                 id="address"
@@ -378,7 +381,7 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
             <div>
               <Label htmlFor="date_of_birth" className="flex items-center gap-2 text-sm font-medium">
                 <Calendar size={16} className="text-primary/70" />
-                Date de naissance
+                {t('birthdate')}
               </Label>
               <Input
                 id="date_of_birth"
@@ -398,7 +401,7 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
               animate={{ opacity: 1, y: 0 }}
               className="bg-green-50 text-green-700 p-3 rounded-md text-sm border border-green-200"
             >
-              Vos informations ont été enregistrées avec succès.
+              {t('personalInformationUpdated')}
             </motion.div>
           )}
         </CardContent>
@@ -408,7 +411,7 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
             onClick={saveProfileChanges}
             disabled={isUpdating}
           >
-            {isUpdating ? "Enregistrement..." : "Enregistrer les modifications"}
+            {isUpdating ? t('savingChanges'): t('saveChanges')}
           </Button>
         </CardFooter>
       </Card>

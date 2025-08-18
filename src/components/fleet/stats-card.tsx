@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import type { LucideIcon } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 interface StatCardProps {
   title: string
@@ -10,6 +11,7 @@ interface StatCardProps {
 }
 
 export function StatCard({ title, value, percentage, icon: Icon, color }: StatCardProps) {
+  const t = useTranslations('fleet');
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -21,7 +23,7 @@ export function StatCard({ title, value, percentage, icon: Icon, color }: StatCa
       <CardContent>
         <div className="flex items-baseline justify-between">
           <div className="text-3xl font-bold">{value}</div>
-          <div className="text-sm text-muted-foreground">{percentage}% de la flotte</div>
+          <div className="text-sm text-muted-foreground">{t('pourcentage', { percentage: percentage })}</div>
         </div>
         <div className="mt-2 h-2 w-full bg-gray-100 rounded-full overflow-hidden">
           <div

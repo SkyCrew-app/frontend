@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch"
 import { UPDATE_USER } from "@/graphql/user"
 import { useToast } from "@/components/hooks/use-toast"
 import { motion } from "framer-motion"
+import { useTranslations } from "next-intl"
 
 interface NotificationFormProps {
   userData: any
@@ -16,6 +17,7 @@ interface NotificationFormProps {
 }
 
 export function NotificationForm({ userData, userId, refetch }: NotificationFormProps) {
+  const t = useTranslations("profile")
   const [notifications, setNotifications] = useState({
     email_notifications_enabled: false,
     sms_notifications_enabled: false,
@@ -54,8 +56,8 @@ export function NotificationForm({ userData, userId, refetch }: NotificationForm
 
       if (data?.updateUser) {
         toast({
-          title: "Succès",
-          description: "Paramètres de notification mis à jour avec succès",
+          title: t('success'),
+          description: t('parameterUpdated'),
         })
         setSaveSuccess(true)
         await refetch()
@@ -66,8 +68,8 @@ export function NotificationForm({ userData, userId, refetch }: NotificationForm
       console.error("Erreur lors de la mise à jour des notifications:", error)
       toast({
         variant: "destructive",
-        title: "Erreur",
-        description: "Erreur lors de la mise à jour des notifications",
+        title: t('error'),
+        description: t('errorNotification'),
       })
 
       setNotifications(prev => ({
@@ -87,15 +89,15 @@ export function NotificationForm({ userData, userId, refetch }: NotificationForm
     >
       <Card className="w-full shadow-md">
         <CardHeader className="pb-4">
-          <CardTitle className="text-xl font-semibold">Paramètres de notifications</CardTitle>
+          <CardTitle className="text-xl font-semibold">{t('notificationSettings')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
             <div>
               <Label htmlFor="email_notifications_enabled" className="text-base font-medium cursor-pointer">
-                Notifications par email
+                {t('notificationsByEmail')}
               </Label>
-              <p className="text-sm text-gray-500 mt-1">Recevez des mises à jour par email</p>
+              <p className="text-sm text-gray-500 mt-1">{t('notificationByEmailDescription')}</p>
             </div>
             <Switch
               id="email_notifications_enabled"
@@ -109,9 +111,9 @@ export function NotificationForm({ userData, userId, refetch }: NotificationForm
           <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
             <div>
               <Label htmlFor="sms_notifications_enabled" className="text-base font-medium cursor-pointer">
-                Notifications par SMS
+                {t('notificationsBySms')}
               </Label>
-              <p className="text-sm text-gray-500 mt-1">Recevez des alertes importantes par SMS</p>
+              <p className="text-sm text-gray-500 mt-1">{t('notificationBySmsDescription')}</p>
             </div>
             <Switch
               id="sms_notifications_enabled"
@@ -128,7 +130,7 @@ export function NotificationForm({ userData, userId, refetch }: NotificationForm
               animate={{ opacity: 1, y: 0 }}
               className="bg-green-50 text-green-700 p-3 rounded-md text-sm border border-green-200"
             >
-              Vos préférences de notification ont été enregistrées avec succès.
+              {t('updatedPreferences')}
             </motion.div>
           )}
         </CardContent>

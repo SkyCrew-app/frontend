@@ -14,8 +14,10 @@ import { CalendarIcon, WrenchIcon, FilterIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useTranslations } from 'next-intl';
 
 export default function AircraftHistory() {
+  const t = useTranslations('fleet');
   const { data, loading, error } = useQuery(GET_FLIGHT_HISTORY);
   const [currentPage, setCurrentPage] = useState<Record<string, number>>({});
   const [filters, setFilters] = useState<Record<string, any>>({});
@@ -27,8 +29,8 @@ export default function AircraftHistory() {
   if (error) {
     toast({
       variant: "destructive",
-      title: "Erreur",
-      description: "Impossible de charger l'historique des avions. Veuillez réessayer plus tard.",
+      title: t('error'),
+      description: t('historyError'),
     });
     return null;
   }
@@ -37,7 +39,7 @@ export default function AircraftHistory() {
     return (
       <Card className="w-full max-w-3xl mx-auto mt-8">
         <CardContent className="text-center py-8">
-          <p className="text-xl font-semibold">Aucun avion trouvé.</p>
+          <p className="text-xl font-semibold">{t('notFound')}</p>
         </CardContent>
       </Card>
     );
@@ -80,7 +82,7 @@ export default function AircraftHistory() {
 
   return (
     <div className="container mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-8 text-center">Historique des Vols et Maintenances</h1>
+      <h1 className="text-3xl font-bold mb-8 text-center">{t('historyTitle')}</h1>
       <div className="space-y-6">
         {data.getHistoryAircraft.map((aircraft: any) => (
           <Card key={aircraft.id} className="shadow-lg hover:shadow-xl transition-shadow duration-300">
@@ -93,8 +95,8 @@ export default function AircraftHistory() {
             <CardContent className="pt-6">
               <Tabs defaultValue="reservations">
                 <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="reservations">Réservations</TabsTrigger>
-                  <TabsTrigger value="maintenances">Maintenances</TabsTrigger>
+                  <TabsTrigger value="reservations">{t('reservation')}</TabsTrigger>
+                  <TabsTrigger value="maintenances">{t('inMaintenance')}</TabsTrigger>
                 </TabsList>
                 <TabsContent value="reservations">
                   <HistoryList
@@ -110,7 +112,10 @@ export default function AircraftHistory() {
                       <div className="flex items-center space-x-2">
                         <CalendarIcon className="h-4 w-4 text-muted-foreground" />
                         <span>
-                          Du {new Date(reservation.start_time).toLocaleDateString()} au {new Date(reservation.end_time).toLocaleDateString()}
+                          {t('forTo', {
+                            startDate: new Date(reservation.start_time).toLocaleDateString(),
+                            endDate: new Date(reservation.end_time).toLocaleDateString()
+                          })}
                         </span>
                         <Badge variant="outline">{reservation.user.first_name} {reservation.user.last_name}</Badge>
                       </div>
@@ -159,6 +164,7 @@ function HistoryList({ items, aircraftId, type, paginate, handlePageChange, item
   setFilters: React.Dispatch<React.SetStateAction<Record<string, any>>>;
   renderItem: (item: any) => React.ReactNode;
 }) {
+  const t = useTranslations('fleet');
   const [currentPage, setCurrentPage] = useState<number>(1);
   const paginatedItems = paginate(items, aircraftId, type);
   const totalPages = Math.ceil(items.length / itemsPerPage);
@@ -174,20 +180,20 @@ function HistoryList({ items, aircraftId, type, paginate, handlePageChange, item
           <PopoverTrigger asChild>
             <Button variant="outline" size="sm">
               <FilterIcon className="h-4 w-4 mr-2" />
-              Filtres
+              {t('filters')}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-80">
             <div className="grid gap-4">
               <div className="space-y-2">
-                <h4 className="font-medium leading-none">Filtres</h4>
+                <h4 className="font-medium leading-none">{t('filters')}</h4>
                 <p className="text-sm text-muted-foreground">
-                  Ajustez les filtres pour affiner les résultats.
+                  {t('filterDescription')}
                 </p>
               </div>
               <div className="grid gap-2">
                 <div className="grid grid-cols-3 items-center gap-4">
-                  <Label htmlFor={`${type}StartDate`}>Début</Label>
+                  <Label htmlFor={`${type}StartDate`}>{t('start')}</Label>
                   <Input
                     id={`${type}StartDate`}
                     type="date"
@@ -197,7 +203,7 @@ function HistoryList({ items, aircraftId, type, paginate, handlePageChange, item
                   />
                 </div>
                 <div className="grid grid-cols-3 items-center gap-4">
-                  <Label htmlFor={`${type}EndDate`}>Fin</Label>
+                  <Label htmlFor={`${type}EndDate`}>{t('end')}</Label>
                   <Input
                     id={`${type}EndDate`}
                     type="date"
@@ -208,26 +214,26 @@ function HistoryList({ items, aircraftId, type, paginate, handlePageChange, item
                 </div>
                 {type === 'reservations' ? (
                   <div className="grid grid-cols-3 items-center gap-4">
-                    <Label htmlFor={`${type}UserName`}>Utilisateur</Label>
+                    <Label htmlFor={`${type}UserName`}>{t('user')}</Label>
                     <Input
                       id={`${type}UserName`}
                       type="text"
                       className="col-span-2 h-8"
                       value={filters[`${type}UserName`] || ''}
                       onChange={(e) => handleFilterChange(`${type}UserName`, e.target.value)}
-                      placeholder="Nom de l'utilisateur"
+                      placeholder={t('userName')}
                     />
                   </div>
                 ) : (
                   <div className="grid grid-cols-3 items-center gap-4">
-                    <Label htmlFor={`${type}Type`}>Type</Label>
+                    <Label htmlFor={`${type}Type`}>{t('type')}</Label>
                     <Input
                       id={`${type}Type`}
                       type="text"
                       className="col-span-2 h-8"
                       value={filters[`${type}Type`] || ''}
                       onChange={(e) => handleFilterChange(`${type}Type`, e.target.value)}
-                      placeholder="Type de maintenance"
+                      placeholder={t('maintenanceType')}
                     />
                   </div>
                 )}
@@ -246,7 +252,7 @@ function HistoryList({ items, aircraftId, type, paginate, handlePageChange, item
             ))}
           </ul>
         ) : (
-          <p className="text-center text-muted-foreground">Aucun élément récent.</p>
+          <p className="text-center text-muted-foreground">{t('noElements')}</p>
         )}
       </ScrollArea>
       {items.length > itemsPerPage && (
@@ -257,10 +263,10 @@ function HistoryList({ items, aircraftId, type, paginate, handlePageChange, item
             onClick={() => handlePageChange(aircraftId, type, currentPage > 1 ? currentPage - 1 : 1)}
             disabled={currentPage === 1}
           >
-            Précédent
+            {t('previous')}
           </Button>
           <span className="text-sm text-muted-foreground">
-            Page {currentPage} sur {totalPages}
+            {t('pageOn', {currentPage: currentPage, totalPages: totalPages})}
           </span>
           <Button
             variant="outline"
@@ -268,7 +274,7 @@ function HistoryList({ items, aircraftId, type, paginate, handlePageChange, item
             onClick={() => handlePageChange(aircraftId, type, currentPage < totalPages ? currentPage + 1 : currentPage)}
             disabled={currentPage >= totalPages}
           >
-            Suivant
+            {t('next')}
           </Button>
         </div>
       )}

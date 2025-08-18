@@ -8,6 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar"
 import { cn } from "@/lib/utils"
 import { Card, CardContent } from "@/components/ui/card"
+import { useTranslations } from "next-intl"
 
 interface ReservationHeaderProps {
   currentDate: Date
@@ -21,13 +22,14 @@ export function ReservationHeader({ currentDate, setCurrentDate, disabledDays, i
   const handleNextDay = () => setCurrentDate(addDays(currentDate, 1))
   const handlePreviousWeek = () => setCurrentDate(subWeeks(currentDate, 1))
   const handleNextWeek = () => setCurrentDate(addWeeks(currentDate, 1))
+  const t = useTranslations("reservation")
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Calendrier des Réservations</h1>
-          <p className="text-muted-foreground mt-1">Gérez et planifiez vos réservations d'aéronefs</p>
+          <h1 className="text-3xl font-bold tracking-tight">{t('calendarReservation')}</h1>
+          <p className="text-muted-foreground mt-1">{t('calendarReservationDescription')}</p>
         </div>
 
         <Popover>
@@ -40,7 +42,7 @@ export function ReservationHeader({ currentDate, setCurrentDate, disabledDays, i
               )}
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
-              {currentDate ? format(currentDate, "EEEE d MMMM yyyy", { locale: fr }) : <span>Choisir une date</span>}
+              {currentDate ? format(currentDate, "EEEE d MMMM yyyy", { locale: fr }) : <span>{t('chooseDate')}</span>}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="end">
@@ -63,7 +65,7 @@ export function ReservationHeader({ currentDate, setCurrentDate, disabledDays, i
         <Card className="border-yellow-200 bg-yellow-50 dark:bg-yellow-950 dark:border-yellow-800">
           <CardContent className="p-4 text-yellow-800 dark:text-yellow-300 flex items-center justify-center">
             <CalendarIcon className="h-5 w-5 mr-2" />
-            <span>Votre aéroclub est fermé ce jour ({format(currentDate, "EEEE", { locale: fr })})</span>
+            <span>{t('closeAiport')} ({format(currentDate, "EEEE", { locale: fr })})</span>
           </CardContent>
         </Card>
       )}
@@ -72,12 +74,12 @@ export function ReservationHeader({ currentDate, setCurrentDate, disabledDays, i
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={handlePreviousDay} className="flex items-center">
             <ChevronLeft className="h-4 w-4 mr-1" />
-            <span className="hidden sm:inline">Jour précédent</span>
-            <span className="sm:hidden">Précédent</span>
+            <span className="hidden sm:inline">{t('previousDay')}</span>
+            <span className="sm:hidden">{t('previous')}</span>
           </Button>
           <Button variant="outline" size="sm" onClick={handleNextDay} className="flex items-center">
-            <span className="hidden sm:inline">Jour suivant</span>
-            <span className="sm:hidden">Suivant</span>
+            <span className="hidden sm:inline">{t('nextDay')}</span>
+            <span className="sm:hidden">{t('next')}</span>
             <ChevronRight className="h-4 w-4 ml-1" />
           </Button>
         </div>
@@ -85,12 +87,12 @@ export function ReservationHeader({ currentDate, setCurrentDate, disabledDays, i
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={handlePreviousWeek} className="flex items-center">
             <ArrowLeft className="h-4 w-4 mr-1" />
-            <span className="hidden sm:inline">Semaine précédente</span>
-            <span className="sm:hidden">Sem. préc.</span>
+            <span className="hidden sm:inline">{t('previousWeek')}</span>
+            <span className="sm:hidden">{t('previousWeekAb')}</span>
           </Button>
           <Button variant="outline" size="sm" onClick={handleNextWeek} className="flex items-center">
-            <span className="hidden sm:inline">Semaine suivante</span>
-            <span className="sm:hidden">Sem. suiv.</span>
+            <span className="hidden sm:inline">{t('nextWeek')}</span>
+            <span className="sm:hidden">{t('nextWeekAb')}</span>
             <ArrowRight className="h-4 w-4 ml-1" />
           </Button>
         </div>

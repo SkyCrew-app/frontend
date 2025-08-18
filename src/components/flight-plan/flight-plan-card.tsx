@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Plane, Calendar, MapPin, Users, Cloud, Clock } from "lucide-react"
 import Link from "next/link"
 import type { Flight } from "@/interfaces/flight"
+import { useTranslations } from "next-intl"
 
 interface FlightPlanCardProps {
   flight: Flight
@@ -35,6 +36,8 @@ export function FlightPlanCard({
     }
   }
 
+  const t = useTranslations("reservation")
+
   return (
     <Card className="h-full flex flex-col shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden">
       <CardHeader className="pb-2 flex flex-row justify-between items-center">
@@ -47,7 +50,7 @@ export function FlightPlanCard({
         <Badge variant={flight.reservation ? getStatusVariant(flight.reservation.status) : "secondary"}>
           {flight.reservation
             ? reservationStatusTranslations[flight.reservation.status as keyof typeof reservationStatusTranslations]
-            : "Sans réservation"}
+            : t('withoutReservation')}
         </Badge>
       </CardHeader>
       <CardContent className="flex-grow space-y-3">
@@ -56,16 +59,16 @@ export function FlightPlanCard({
             <Calendar className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
             <div className="space-y-1">
               <p className="text-sm">
-                <span className="font-medium">Date:</span>{" "}
+                <span className="font-medium">{t('date')}:</span>{" "}
                 {format(new Date(flight.reservation.start_time), "PPP", { locale: fr })}
               </p>
               <p className="text-sm">
-                <span className="font-medium">Heure:</span>{" "}
+                <span className="font-medium">{t('hours')}:</span>{" "}
                 {format(new Date(flight.reservation.start_time), "HH:mm", { locale: fr })} -{" "}
                 {format(new Date(flight.reservation.end_time), "HH:mm", { locale: fr })}
               </p>
               <p className="text-sm">
-                <span className="font-medium">Avion:</span> {flight.reservation.aircraft.registration_number}
+                <span className="font-medium">{t('plane')}:</span> {flight.reservation.aircraft.registration_number}
               </p>
             </div>
           </div>
@@ -75,12 +78,12 @@ export function FlightPlanCard({
           <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
           <div>
             <p className="text-sm">
-              <span className="font-medium">Distance:</span>{" "}
+              <span className="font-medium">{t('distance')}:</span>{" "}
               {flight.distance_km ? `${flight.distance_km.toFixed(0)} km` : "Non spécifiée"}
             </p>
             {flight.waypoints && flight.waypoints.length > 0 && (
               <p className="text-sm">
-                <span className="font-medium">Waypoints:</span> {flight.waypoints.join(", ")}
+                <span className="font-medium">{t('waypoints')}:</span> {flight.waypoints.join(", ")}
               </p>
             )}
           </div>
@@ -91,7 +94,7 @@ export function FlightPlanCard({
             <Clock className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
             <div>
               <p className="text-sm">
-                <span className="font-medium">Heures:</span> {flight.flight_hours.toFixed(1)}h
+                <span className="font-medium">{t('hours')}:</span> {flight.flight_hours.toFixed(1)}h
               </p>
             </div>
           </div>
@@ -100,7 +103,7 @@ export function FlightPlanCard({
             <Users className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
             <div>
               <p className="text-sm">
-                <span className="font-medium">Passagers:</span> {flight.number_of_passengers || "0"}
+                <span className="font-medium">{t('upperPassenger')}:</span> {flight.number_of_passengers || "0"}
               </p>
             </div>
           </div>
@@ -110,12 +113,12 @@ export function FlightPlanCard({
           <Cloud className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
           <div>
             <p className="text-sm">
-              <span className="font-medium">Type:</span>{" "}
+              <span className="font-medium">{t('type')}:</span>{" "}
               {flightTypeTranslations[flight.flight_type as keyof typeof flightTypeTranslations] || flight.flight_type}
             </p>
             {flight.weather_conditions && (
               <p className="text-sm line-clamp-1">
-                <span className="font-medium">Météo:</span> {flight.weather_conditions}
+                <span className="font-medium">{t('weather')}:</span> {flight.weather_conditions}
               </p>
             )}
           </div>
@@ -123,11 +126,11 @@ export function FlightPlanCard({
       </CardContent>
       <CardFooter className="flex justify-end gap-2 pt-2 border-t bg-muted/50">
         <Button size="sm" variant="outline" onClick={() => onEdit(flight)}>
-          Modifier
+          {t('edit')}
         </Button>
         <Link href={`flight-plans/${flight.id}`}>
           <Button size="sm" variant="default">
-            Détails
+            {t('flightDetails')}
           </Button>
         </Link>
       </CardFooter>

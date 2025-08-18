@@ -11,6 +11,7 @@ import { format } from "date-fns"
 import { fr } from "date-fns/locale"
 import { Loader2 } from "lucide-react"
 import type { Reservation } from "@/interfaces/reservation"
+import { useTranslations } from "next-intl"
 
 interface ReservationEditDialogProps {
   isOpen: boolean
@@ -29,6 +30,7 @@ export function ReservationEditDialog({
   flightCategoryMapping,
   flightCategoryReverseMapping,
 }: ReservationEditDialogProps) {
+  const t = useTranslations("reservation")
   const [purpose, setPurpose] = useState("")
   const [notes, setNotes] = useState("")
   const [flightCategory, setFlightCategory] = useState("")
@@ -60,16 +62,16 @@ export function ReservationEditDialog({
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
-        <DialogTitle>Modifier la réservation</DialogTitle>
+        <DialogTitle>{t('editReservation')}</DialogTitle>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-1 gap-2">
-            <Label>Avion</Label>
+            <Label>{t('plane')}</Label>
             <div className="p-2 bg-muted rounded-md">{reservation.aircraft.registration_number}</div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Début</Label>
+              <Label>{t('start')}</Label>
               <div className="p-2 bg-muted rounded-md text-sm">
                 {format(new Date(reservation.start_time), "PPP", { locale: fr })}
                 <br />
@@ -77,7 +79,7 @@ export function ReservationEditDialog({
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Fin</Label>
+              <Label>{t('end')}</Label>
               <div className="p-2 bg-muted rounded-md text-sm">
                 {format(new Date(reservation.end_time), "PPP", { locale: fr })}
                 <br />
@@ -87,17 +89,17 @@ export function ReservationEditDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="purpose">But</Label>
+            <Label htmlFor="purpose">{t('reservationPurpose')}</Label>
             <Input
               id="purpose"
               value={purpose}
               onChange={(e) => setPurpose(e.target.value)}
-              placeholder="Ex: Vol d'entraînement, Instruction..."
+              placeholder={t('reservationPurpose')}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="category">Catégorie</Label>
+            <Label htmlFor="category">{t('flightCategory')}</Label>
             <Select
               value={selectedCategoryFr}
               onValueChange={(value) => {
@@ -106,7 +108,7 @@ export function ReservationEditDialog({
               }}
             >
               <SelectTrigger id="category">
-                <SelectValue placeholder="Catégorie de vol" />
+                <SelectValue placeholder={t('flightCategory')} />
               </SelectTrigger>
               <SelectContent>
                 {Object.values(flightCategoryMapping).map((categoryFr) => (
@@ -119,23 +121,23 @@ export function ReservationEditDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
+            <Label htmlFor="notes">{t('notes')}</Label>
             <Textarea
               id="notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Informations complémentaires..."
+              placeholder={t('notesExample')}
               rows={3}
             />
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
-            Annuler
+            {t('cancel')}
           </Button>
           <Button onClick={handleSave} disabled={isSubmitting}>
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Sauvegarder
+            {t('save')}
           </Button>
         </DialogFooter>
       </DialogContent>

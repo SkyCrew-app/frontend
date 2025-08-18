@@ -6,6 +6,7 @@ import "mapbox-gl/dist/mapbox-gl.css"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AlertTriangle } from "lucide-react"
 import type { Airport, Waypoint } from "@/lib/aviation-api"
+import { useTranslations } from "next-intl"
 
 interface RouteMapProps {
   departure?: Airport | null
@@ -15,6 +16,7 @@ interface RouteMapProps {
 }
 
 export function RouteMap({ departure, arrival, waypoints = [], className = "" }: RouteMapProps) {
+  const t = useTranslations("reservation")
   const mapContainer = useRef<HTMLDivElement>(null)
   const map = useRef<mapboxgl.Map | null>(null)
   const [mapError, setMapError] = useState<string | null>(null)
@@ -40,18 +42,18 @@ export function RouteMap({ departure, arrival, waypoints = [], className = "" }:
 
       map.current.addControl(new mapboxgl.NavigationControl())
 
-      map.current.on("load", () => {
-        console.log("Map loaded")
+      map.current.on("mapLoaded", () => {
+        console.log()
         setMapLoaded(true)
       })
 
       map.current.on("error", (e) => {
         console.error("Mapbox error:", e)
-        setMapError("Erreur lors du chargement de la carte. Vérifiez votre clé API Mapbox et votre connexion internet.")
+        setMapError(t('mapError'))
       })
     } catch (error) {
       console.error("Error initializing map:", error)
-      setMapError("Impossible d'initialiser la carte. Veuillez vérifier votre connexion internet.")
+      setMapError(t('mapError'))
     }
 
     return () => {
@@ -140,7 +142,7 @@ export function RouteMap({ departure, arrival, waypoints = [], className = "" }:
       }
     } catch (error) {
       console.error("Error updating map:", error)
-      setMapError("Erreur lors de la mise à jour de la carte.")
+      setMapError(t('mapError'))
     }
   }, [departure, arrival, waypoints, mapLoaded, mapError])
 

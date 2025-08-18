@@ -11,6 +11,7 @@ import { UPDATE_PASSWORD } from "@/graphql/user"
 import { useToast } from "@/components/hooks/use-toast"
 import { cn } from "@/lib/utils"
 import { motion } from "framer-motion"
+import { useTranslations } from "next-intl"
 
 interface PasswordFormProps {
   userId: string | null
@@ -25,6 +26,7 @@ export function PasswordForm({ userId }: PasswordFormProps) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
+  const t = useTranslations("profile")
 
   const [errors, setErrors] = useState({
     currentPassword: "",
@@ -45,23 +47,23 @@ export function PasswordForm({ userId }: PasswordFormProps) {
 
     if (!currentPassword) {
       valid = false
-      newErrors.currentPassword = "Le mot de passe actuel est requis."
+      newErrors.currentPassword = t('passwordRequired')
     }
 
     if (!newPassword) {
       valid = false
-      newErrors.newPassword = "Le nouveau mot de passe est requis."
+      newErrors.newPassword = t('passwordRequired')
     } else if (newPassword.length < 8) {
       valid = false
-      newErrors.newPassword = "Le nouveau mot de passe doit contenir au moins 8 caractères."
+      newErrors.newPassword = t('passwordMinLength')
     }
 
     if (!confirmPassword) {
       valid = false
-      newErrors.confirmPassword = "La confirmation du mot de passe est requise."
+      newErrors.confirmPassword = t('passwordConfirmationRequired')
     } else if (newPassword !== confirmPassword) {
       valid = false
-      newErrors.confirmPassword = "Les mots de passe ne correspondent pas."
+      newErrors.confirmPassword = t('passwordsDoNotMatch')
     }
 
     setErrors(newErrors)
@@ -83,8 +85,8 @@ export function PasswordForm({ userId }: PasswordFormProps) {
 
       if (data?.updatePassword?.success) {
         toast({
-          title: "Succès",
-          description: "Votre mot de passe a été modifié avec succès.",
+          title: t('success'),
+          description: t('passwordUpdated'),
         })
 
         setCurrentPassword("")
@@ -94,15 +96,15 @@ export function PasswordForm({ userId }: PasswordFormProps) {
       } else {
         toast({
           variant: "destructive",
-          title: "Erreur",
-          description: data?.updatePassword?.message || "Erreur lors de la modification du mot de passe.",
+          title: t('error'),
+          description: data?.updatePassword?.message || t('passwordUpdateError'),
         })
       }
     } catch (error) {
       toast({
         variant: "destructive",
-        title: "Erreur",
-        description: "Erreur lors de la modification du mot de passe.",
+        title: t('error'),
+        description: t('passwordUpdateError'),
       })
     } finally {
       setIsUpdating(false)
@@ -117,11 +119,11 @@ export function PasswordForm({ userId }: PasswordFormProps) {
     >
       <Card className="w-full shadow-md">
         <CardHeader className="pb-4">
-          <CardTitle className="text-xl font-semibold">Changer le mot de passe</CardTitle>
+          <CardTitle className="text-xl font-semibold">{t('changePassword')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="currentPassword" className="text-sm font-medium">Mot de passe actuel</Label>
+            <Label htmlFor="currentPassword" className="text-sm font-medium">{t('actualPassword')}</Label>
             <div className="relative">
               <Input
                 id="currentPassword"
@@ -134,7 +136,7 @@ export function PasswordForm({ userId }: PasswordFormProps) {
                 type="button"
                 onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
-                aria-label={showCurrentPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                aria-label={showCurrentPassword ? t('maskPassword') : t('unmaskPassword')}
               >
                 {showCurrentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
@@ -143,7 +145,7 @@ export function PasswordForm({ userId }: PasswordFormProps) {
           </div>
 
           <div>
-            <Label htmlFor="newPassword" className="text-sm font-medium">Nouveau mot de passe</Label>
+            <Label htmlFor="newPassword" className="text-sm font-medium">{t('newPassword')}</Label>
             <div className="relative">
               <Input
                 id="newPassword"
@@ -156,7 +158,7 @@ export function PasswordForm({ userId }: PasswordFormProps) {
                 type="button"
                 onClick={() => setShowNewPassword(!showNewPassword)}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
-                aria-label={showNewPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                aria-label={showNewPassword ? t('maskPassword') : t('unmaskPassword')}
               >
                 {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
@@ -165,7 +167,7 @@ export function PasswordForm({ userId }: PasswordFormProps) {
           </div>
 
           <div>
-            <Label htmlFor="confirmPassword" className="text-sm font-medium">Confirmer le nouveau mot de passe</Label>
+            <Label htmlFor="confirmPassword" className="text-sm font-medium">{t('confirmPassword')}</Label>
             <div className="relative">
               <Input
                 id="confirmPassword"
@@ -178,7 +180,7 @@ export function PasswordForm({ userId }: PasswordFormProps) {
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
-                aria-label={showConfirmPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                aria-label={showConfirmPassword ? t('markPassword') : t('unmaskPassword')}
               >
                 {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
@@ -192,7 +194,7 @@ export function PasswordForm({ userId }: PasswordFormProps) {
               animate={{ opacity: 1, y: 0 }}
               className="bg-green-50 text-green-700 p-3 rounded-md text-sm border border-green-200"
             >
-              Votre mot de passe a été modifié avec succès.
+              t('passwordUpdated')
             </motion.div>
           )}
         </CardContent>
@@ -202,7 +204,7 @@ export function PasswordForm({ userId }: PasswordFormProps) {
             onClick={handleSubmit}
             disabled={isUpdating}
           >
-            {isUpdating ? "Modification en cours..." : "Changer le mot de passe"}
+            {isUpdating ? t('editInProgress'): t('changePassword')}
           </Button>
         </CardFooter>
       </Card>

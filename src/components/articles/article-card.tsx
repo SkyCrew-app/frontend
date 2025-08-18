@@ -10,6 +10,7 @@ import { Calendar, Clock, ArrowRight } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { useTranslations } from "next-intl"
 
 interface Article {
   id: string
@@ -29,6 +30,7 @@ interface ArticleCardProps {
 
 export function ArticleCard({ article, viewMode }: ArticleCardProps) {
   const [isHovered, setIsHovered] = useState(false)
+  const t = useTranslations('articles');
 
   const item = {
     hidden: { opacity: 0, y: 20 },
@@ -73,12 +75,12 @@ export function ArticleCard({ article, viewMode }: ArticleCardProps) {
                   {article.eventDate ? (
                     <span className="flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
-                      Événement: {formatDate(article.eventDate)}
+                        {t('eventLabel', { date: formatDate(article.eventDate!) })}
                     </span>
                   ) : (
                     <span className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
-                      Publié: {formatDate(article.createdAt)}
+                      {t('publishedLabel', { date: formatDate(article.createdAt)})}
                     </span>
                   )}
                 </div>
@@ -102,7 +104,7 @@ export function ArticleCard({ article, viewMode }: ArticleCardProps) {
                 </div>
                 <Button asChild size="sm" className="group gap-1">
                   <Link href={`/articles/${article.id}`}>
-                    Lire l'article
+                      {t('readArticle')}
                     <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
                   </Link>
                 </Button>
@@ -151,12 +153,12 @@ export function ArticleCard({ article, viewMode }: ArticleCardProps) {
             {article.eventDate ? (
               <span className="flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
-                Événement: {formatDate(article.eventDate)}
+                {t('eventLabel', { date: formatDate(article.eventDate!) })}
               </span>
             ) : (
               <span className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
-                Publié: {formatDate(article.createdAt)}
+                {t('publishedLabel', { date: formatDate(article.createdAt)})}
               </span>
             )}
           </div>
@@ -175,7 +177,7 @@ export function ArticleCard({ article, viewMode }: ArticleCardProps) {
             className="group -ml-2 gap-1 px-2 text-primary hover:bg-primary/10 hover:text-primary"
           >
             <Link href={`/articles/${article.id}`}>
-              Lire l'article
+              {t('readArticle')}
               <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
             </Link>
           </Button>

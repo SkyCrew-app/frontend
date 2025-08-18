@@ -3,6 +3,7 @@ import localFont from 'next/font/local';
 import './globals.css';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import Providers from '@/components/providers/providers';
+import { NextIntlClientProvider } from 'next-intl';
 
 const geistSans = localFont({
   src: './fonts/GeistVF.woff',
@@ -32,7 +33,7 @@ export default function RootLayout({
       >
         <Providers>
           <div className='dark:bg-gray-900 bg-gray-100'>
-            {children}
+            <NextIntlClientProvider>{children}</NextIntlClientProvider>
           </div>
         </Providers>
       </body>

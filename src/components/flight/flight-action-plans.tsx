@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog"
 import { useToast } from "@/components/hooks/use-toast"
 import { Download, Check, Printer, Share2, FileText, Copy } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 interface FlightPlanActionsProps {
   flightPlanId: string | number
@@ -26,6 +27,7 @@ interface FlightPlanActionsProps {
 }
 
 export function FlightPlanActions({ flightPlanId, flightDetails, onExport, onValidate }: FlightPlanActionsProps) {
+  const t = useTranslations("reservation")
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false)
   const [isValidateDialogOpen, setIsValidateDialogOpen] = useState(false)
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false)
@@ -37,8 +39,8 @@ export function FlightPlanActions({ flightPlanId, flightDetails, onExport, onVal
     } else {
       console.log(`Exporting flight plan ${flightPlanId} as ${format}`)
       toast({
-        title: "Exportation réussie",
-        description: `Le plan de vol a été exporté en ${format.toUpperCase()} avec succès.`,
+        title: t('exportationSuccess'),
+        description: t('exportationPlanFormatSuccess', { format: format.toUpperCase() }),
       })
     }
     setIsExportDialogOpen(false)
@@ -50,8 +52,8 @@ export function FlightPlanActions({ flightPlanId, flightDetails, onExport, onVal
     } else {
       console.log(`Validating flight plan ${flightPlanId}`)
       toast({
-        title: "Plan de vol validé",
-        description: "Le plan de vol a été validé avec succès.",
+        title: t('flightPlanValidation'),
+        description: t('flightPlanValidationSuccess'),
         variant: "default",
       })
     }
@@ -60,7 +62,6 @@ export function FlightPlanActions({ flightPlanId, flightDetails, onExport, onVal
   }
 
   const handlePrint = () => {
-    // Utiliser la fonction native d'impression du navigateur
     window.print()
   }
 
@@ -80,15 +81,14 @@ export function FlightPlanActions({ flightPlanId, flightDetails, onExport, onVal
           url: shareUrl,
         })
         toast({
-          title: "Partage réussi",
-          description: "Le plan de vol a été partagé avec succès.",
+          title: t('shareSuccess'),
+          description: t('shareSuccessMessage'),
         })
       } catch (error) {
         console.error("Erreur lors du partage:", error)
         setIsShareDialogOpen(true)
       }
     } else {
-      // Si l'API Web Share n'est pas disponible, ouvrir la boîte de dialogue
       setIsShareDialogOpen(true)
     }
   }
@@ -98,16 +98,16 @@ export function FlightPlanActions({ flightPlanId, flightDetails, onExport, onVal
       .writeText(text)
       .then(() => {
         toast({
-          title: "Copié !",
-          description: "Le lien a été copié dans le presse-papiers.",
+          title: t('copyLinkCopied'),
+          description: t('copyLinkSuccess'),
         })
         setIsShareDialogOpen(false)
       })
       .catch((err) => {
         console.error("Erreur lors de la copie:", err)
         toast({
-          title: "Erreur",
-          description: "Impossible de copier le lien.",
+          title: t('error'),
+          description: t('copyLinkError'),
           variant: "destructive",
         })
       })
@@ -119,13 +119,13 @@ export function FlightPlanActions({ flightPlanId, flightDetails, onExport, onVal
         <DialogTrigger asChild>
           <Button variant="outline" className="px-6 bg-background hover:bg-muted">
             <Download className="mr-2 h-4 w-4" />
-            Exporter
+            {t('export')}
           </Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Exporter le Plan de Vol</DialogTitle>
-            <DialogDescription>Choisissez le format d'exportation pour votre plan de vol.</DialogDescription>
+            <DialogTitle>{t('exportFlightPlan')}</DialogTitle>
+            <DialogDescription>{t('chooseFormat')}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <Button
@@ -134,7 +134,7 @@ export function FlightPlanActions({ flightPlanId, flightDetails, onExport, onVal
               variant="outline"
             >
               <FileText className="mr-2 h-4 w-4" />
-              Exporter en PDF
+              {t('exportPDF')}
             </Button>
             <Button
               onClick={() => handleExport("csv")}
@@ -142,7 +142,7 @@ export function FlightPlanActions({ flightPlanId, flightDetails, onExport, onVal
               variant="outline"
             >
               <FileText className="mr-2 h-4 w-4" />
-              Exporter en CSV
+              {t('exportCSV')}
             </Button>
             <Button
               onClick={() => handleExport("json")}
@@ -150,7 +150,7 @@ export function FlightPlanActions({ flightPlanId, flightDetails, onExport, onVal
               variant="outline"
             >
               <FileText className="mr-2 h-4 w-4" />
-              Exporter en JSON
+              {t('exportJSON')}
             </Button>
           </div>
         </DialogContent>
@@ -158,20 +158,20 @@ export function FlightPlanActions({ flightPlanId, flightDetails, onExport, onVal
 
       <Button variant="outline" className="px-6 bg-background hover:bg-muted" onClick={handlePrint}>
         <Printer className="mr-2 h-4 w-4" />
-        Imprimer
+        {t('print')}
       </Button>
 
       <Button variant="outline" className="px-6 bg-background hover:bg-muted" onClick={handleShare}>
         <Share2 className="mr-2 h-4 w-4" />
-        Partager
+        {t('share')}
       </Button>
 
       {/* Dialogue de partage alternatif si l'API Web Share n'est pas disponible */}
       <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Partager le Plan de Vol</DialogTitle>
-            <DialogDescription>Copiez le lien ci-dessous pour partager ce plan de vol.</DialogDescription>
+            <DialogTitle>{t('shareFlightPlan')}</DialogTitle>
+            <DialogDescription>{t('shareFlightPlanDescription')}</DialogDescription>
           </DialogHeader>
           <div className="flex items-center space-x-2 mt-4">
             <div className="bg-muted p-2 rounded-md flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
@@ -188,22 +188,21 @@ export function FlightPlanActions({ flightPlanId, flightDetails, onExport, onVal
         <DialogTrigger asChild>
           <Button variant="default" className="px-6">
             <Check className="mr-2 h-4 w-4" />
-            Valider le Plan de Vol
+            {t('flightPlanValid')}
           </Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Valider le Plan de Vol</DialogTitle>
+            <DialogTitle>{t('flightPlanValid')}</DialogTitle>
             <DialogDescription>
-              Êtes-vous sûr de vouloir valider ce plan de vol ? Cette action confirmera que vous avez vérifié toutes les
-              informations et que le plan est prêt à être utilisé.
+              {t('flightPlanVildationQuestion')}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="mt-4 flex justify-end space-x-2">
             <Button variant="outline" onClick={() => setIsValidateDialogOpen(false)}>
-              Annuler
+              {t('cancel')}
             </Button>
-            <Button onClick={handleValidate}>Valider</Button>
+            <Button onClick={handleValidate}>{t('valid')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

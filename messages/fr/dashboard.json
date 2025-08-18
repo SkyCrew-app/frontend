@@ -1,0 +1,40 @@
+{
+  "dashboard": {
+    "airportError": "Impossible de charger les informations de l'aéroport.",
+    "userNotFound": "Impossible de charger les données utilisateur.",
+    "articleNotFound": "Impossible de charger les articles.",
+    "error": "Erreur",
+    "unknown": "Inconnu",
+
+    "welcome": "Bienvenue, {name}",
+    "weather": "Voici les dernières actualités et conditions météo",
+    "refresh": "Actualiser la météo",
+
+    "temperature": "Température",
+    "conditions": "Conditions",
+    "weatherStats": "Nuages : {cloud_pct}% • Humidité : {humidity}%",
+    "feelsLike": "Ressenti : {feels_like}°C",
+    "updatedWeather": "Météo mise à jour",
+    "weatherUpdated": "Les données météorologiques ont été actualisées.",
+    "weatherUpdateError": "Erreur lors de la mise à jour des données météorologiques.",
+
+    "sun": "Soleil",
+    "up": "Lever",
+    "down": "Coucher",
+
+    "wind": "Vent",
+    "direction": "Direction: {wind_deg}°",
+
+    "sunny": "Ensoleillé",
+    "cloudy": "Nuageux",
+    "partlyCloudy": "Partiellement nuageux",
+
+    "news": "Actualités de l'aéroclub",
+    "seeNews": "Voir toutes les actualités",
+    "noNews": "Aucune actualité disponible pour le moment.",
+    "seeNewsHere": "Les actualités de l'aéroclub seront affichées ici",
+    "readMore": "Lire l'article complet",
+
+    "noAirportSelected": "Aéroport utilisateur non défini."
+  }
+}

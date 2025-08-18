@@ -13,6 +13,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { TimePickerDemo } from "@/components/ui/time-picker"
 import { Loader2, CalendarIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useTranslations } from "next-intl"
 
 interface Aircraft {
   id: number
@@ -33,21 +34,6 @@ interface MobileReservationFormProps {
   disabledDays: string[]
 }
 
-const flightCategoryMapping = {
-  LOCAL: "Local",
-  CROSS_COUNTRY: "Vol longue distance",
-  INSTRUCTION: "Instruction",
-  TOURISM: "Tourisme",
-  TRAINING: "Entraînement",
-  MAINTENANCE: "Maintenance",
-  PRIVATE: "Privé",
-  CORPORATE: "Affaires",
-}
-
-const flightCategoryReverseMapping = Object.fromEntries(
-  Object.entries(flightCategoryMapping).map(([key, value]) => [value, key]),
-)
-
 export function MobileReservationForm({
   aircrafts,
   currentDate,
@@ -61,6 +47,23 @@ export function MobileReservationForm({
   isSubmitting,
   disabledDays,
 }: MobileReservationFormProps) {
+  const t = useTranslations("reservation")
+
+  const flightCategoryMapping = {
+    LOCAL: t('local'),
+    CROSS_COUNTRY: t('crossCountry'),
+    INSTRUCTION: t('instruction'),
+    TOURISM: t('tourism'),
+    TRAINING: t('training'),
+    MAINTENANCE: t('maintenance'),
+    PRIVATE: t('private'),
+    CORPORATE: t('corporate'),
+  }
+
+  const flightCategoryReverseMapping = Object.fromEntries(
+    Object.entries(flightCategoryMapping).map(([key, value]) => [value, key]),
+  )
+
   const [selectedAircraftId, setSelectedAircraftId] = useState<string>("")
   const [selectedDate, setSelectedDate] = useState<Date>(currentDate)
   const [startTime, setStartTime] = useState<Date>(new Date())
@@ -72,7 +75,7 @@ export function MobileReservationForm({
   // Modifier la fonction handleSubmit pour éviter les mises à jour d'état inutiles
   const handleSubmit = async () => {
     if (!selectedAircraftId) {
-      alert("Veuillez sélectionner un avion")
+      alert(t('errorSelectAircraft'))
       return
     }
 
@@ -85,7 +88,7 @@ export function MobileReservationForm({
 
     // Vérifier que l'heure de fin est après l'heure de début
     if (endDateTime <= startDateTime) {
-      alert("L'heure de fin doit être après l'heure de début")
+      alert(t('errorSelectDate'))
       return
     }
 
@@ -99,10 +102,10 @@ export function MobileReservationForm({
   return (
     <div className="space-y-4">
       <div>
-        <Label htmlFor="aircraft">Avion</Label>
+        <Label htmlFor="aircraft">{t('aircraft')}</Label>
         <Select value={selectedAircraftId} onValueChange={setSelectedAircraftId}>
           <SelectTrigger id="aircraft">
-            <SelectValue placeholder="Sélectionner un avion" />
+            <SelectValue placeholder={t('selectPlane')} />
           </SelectTrigger>
           <SelectContent>
             {aircrafts.map((aircraft) => (
@@ -115,7 +118,7 @@ export function MobileReservationForm({
       </div>
 
       <div>
-        <Label htmlFor="date">Date</Label>
+        <Label htmlFor="date">{t('date')}</Label>
         <Popover>
           <PopoverTrigger asChild>
             <Button
@@ -127,7 +130,7 @@ export function MobileReservationForm({
               {selectedDate ? (
                 format(selectedDate, "EEEE d MMMM yyyy", { locale: fr })
               ) : (
-                <span>Sélectionner une date</span>
+                <span>{t('selectDate')}</span>
               )}
             </Button>
           </PopoverTrigger>
@@ -149,27 +152,27 @@ export function MobileReservationForm({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="start-time">Heure de début</Label>
+          <Label htmlFor="start-time">{t('startTime')}</Label>
           <TimePickerDemo date={startTime} setDate={setStartTime} />
         </div>
         <div>
-          <Label htmlFor="end-time">Heure de fin</Label>
+          <Label htmlFor="end-time">{t('endTime')}</Label>
           <TimePickerDemo date={endTime} setDate={setEndTime} />
         </div>
       </div>
 
       <div>
-        <Label htmlFor="purpose">But de la réservation</Label>
+        <Label htmlFor="purpose">{t('reservationPurpose')}</Label>
         <Input
           id="purpose"
-          placeholder="Ex: Vol d'entraînement, Instruction..."
+          placeholder={t('purposeExample')}
           value={purpose}
           onChange={(e) => setPurpose(e.target.value)}
         />
       </div>
 
       <div>
-        <Label htmlFor="category">Catégorie de vol</Label>
+        <Label htmlFor="category">{t('flightCategory')}</Label>
         <Select
           value={selectedCategoryFr}
           onValueChange={(value) => {
@@ -178,7 +181,7 @@ export function MobileReservationForm({
           }}
         >
           <SelectTrigger id="category">
-            <SelectValue placeholder="Sélectionner une catégorie" />
+            <SelectValue placeholder={t('selectCategory')} />
           </SelectTrigger>
           <SelectContent>
             {Object.values(flightCategoryMapping).map((categoryFr) => (
@@ -191,10 +194,10 @@ export function MobileReservationForm({
       </div>
 
       <div>
-        <Label htmlFor="notes">Notes supplémentaires</Label>
+        <Label htmlFor="notes">{t('notes')}</Label>
         <Textarea
           id="notes"
-          placeholder="Informations complémentaires..."
+          placeholder={t('notesExample')}
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={3}
@@ -203,7 +206,7 @@ export function MobileReservationForm({
 
       <Button onClick={handleSubmit} disabled={isSubmitting} className="w-full">
         {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        Créer la réservation
+            {t('submitReservation')}
       </Button>
     </div>
   )

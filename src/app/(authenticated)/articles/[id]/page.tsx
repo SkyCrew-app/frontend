@@ -25,8 +25,10 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Separator } from "@/components/ui/separator"
 import { useState, useEffect } from "react"
+import { useTranslations } from "next-intl"
 
 export default function ArticlePage() {
+  const t = useTranslations("articles")
   const { id } = useParams()
   const { toast } = useToast()
   const router = useRouter()
@@ -40,8 +42,8 @@ export default function ArticlePage() {
     skip: !id,
     onError: () => {
       toast({
-        title: "Erreur",
-        description: "Impossible de charger l'article.",
+        title: t("error"),
+        description: t("error"),
         variant: "destructive",
       })
     },
@@ -88,15 +90,13 @@ export default function ArticlePage() {
       <div className="container max-w-4xl mx-auto p-6">
         <Button variant="ghost" className="mb-6 flex items-center" onClick={() => router.back()}>
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Retour
+          {t("back")}
         </Button>
 
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Article introuvable</AlertTitle>
-          <AlertDescription>
-            Nous n'avons pas pu trouver l'article que vous recherchez. Il a peut-être été supprimé ou déplacé.
-          </AlertDescription>
+          <AlertTitle>{t("notFoundTitle")}</AlertTitle>
+          <AlertDescription>{t("notFoundDescription")}</AlertDescription>
         </Alert>
       </div>
     )
@@ -133,8 +133,8 @@ export default function ArticlePage() {
     } else {
       navigator.clipboard.writeText(window.location.href)
       toast({
-        title: "Lien copié",
-        description: "Le lien de l'article a été copié dans le presse-papier.",
+        title: t("linkCopiedTitle"),
+        description: t("linkCopiedDescription"),
       })
     }
   }
@@ -142,8 +142,8 @@ export default function ArticlePage() {
   const addToCalendar = (type: "google" | "apple" | "outlook") => {
     if (!article.eventDate) {
       toast({
-        title: "Erreur",
-        description: "Cet article n'a pas de date d'événement associée.",
+        title: t("error"),
+        description: t("error"),
         variant: "destructive",
       })
       return
@@ -187,8 +187,8 @@ END:VCALENDAR`
   const copyToClipboard = () => {
     navigator.clipboard.writeText(window.location.href)
     toast({
-      title: "Lien copié",
-      description: "Le lien de l'article a été copié dans le presse-papier.",
+      title: t("linkCopiedTitle"),
+      description: t("linkCopiedDescription"),
     })
   }
 
@@ -197,7 +197,7 @@ END:VCALENDAR`
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
         <Button variant="ghost" className="mb-6 flex items-center print:hidden" onClick={() => router.back()}>
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Retour aux articles
+          {t("back")}
         </Button>
 
         <Card className="overflow-hidden shadow-lg print:shadow-none">
@@ -235,12 +235,12 @@ END:VCALENDAR`
             <div className="flex flex-wrap items-center gap-3 mb-6 text-sm text-muted-foreground">
               <div className="flex items-center">
                 <Calendar className="w-4 h-4 mr-1" />
-                <span>Publié le {formattedDate}</span>
+                <span>{t("publishedLabel", { date: formattedDate })}</span>
               </div>
 
               <div className="flex items-center">
                 <Clock className="w-4 h-4 mr-1" />
-                <span>{readingTime} min de lecture</span>
+                <span>{t("readingTime", { time: readingTime })}</span>
               </div>
 
               {article.author && (
@@ -261,20 +261,19 @@ END:VCALENDAR`
                 <div className="flex items-start gap-3">
                   <CalendarClock className="w-6 h-6 text-primary mt-1" />
                   <div>
-                    <h3 className="font-semibold text-lg mb-1">Événement à venir</h3>
-                    <p className="text-muted-foreground">{formattedEventDate}</p>
+                    <h3 className="font-semibold text-lg mb-1">{t("eventLabel", { date: formattedEventDate || '--'})}</h3>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="outline" size="sm">
                             <Calendar className="w-4 h-4 mr-2" />
-                            Ajouter au calendrier
+                            {t("addToCalendar")}
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => addToCalendar("google")}>Google Calendar</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => addToCalendar("apple")}>Apple Calendar</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => addToCalendar("outlook")}>Outlook</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => addToCalendar("google")}>{t("googleCalendar")}</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => addToCalendar("apple")}>{t("appleCalendar")}</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => addToCalendar("outlook")}>{t("outlookCalendar")}</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
@@ -314,17 +313,17 @@ END:VCALENDAR`
             <div className="flex flex-wrap gap-2">
               <Button variant="outline" onClick={copyToClipboard}>
                 <Share2 className="w-4 h-4 mr-2" />
-                Copier le lien
+                {t("copyLink")}
               </Button>
 
               <Button variant="outline" onClick={handleShare}>
                 <Share2 className="w-4 h-4 mr-2" />
-                Partager
+                  {t("share")}
               </Button>
 
               <Button variant="secondary" onClick={handlePrint}>
                 <Printer className="w-4 h-4 mr-2" />
-                Imprimer
+                  {t("print")}
               </Button>
             </div>
           </CardFooter>
@@ -337,7 +336,7 @@ END:VCALENDAR`
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.6 }}
           >
-            <h2 className="text-2xl font-bold mb-6">Articles similaires</h2>
+            <h2 className="text-2xl font-bold mb-6">{t("relatedArticles")}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {article.relatedArticles.map((relatedArticle: any) => (
                 <Card key={relatedArticle.id} className="overflow-hidden hover:shadow-lg transition-shadow">
@@ -360,7 +359,7 @@ END:VCALENDAR`
                       className="p-0 mt-2 h-auto"
                       onClick={() => router.push(`/articles/${relatedArticle.id}`)}
                     >
-                      Lire l'article
+                      {t("readArticle")}
                     </Button>
                   </CardContent>
                 </Card>

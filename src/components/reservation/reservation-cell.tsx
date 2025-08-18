@@ -5,6 +5,7 @@ import { TableCell } from "@/components/ui/table"
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card"
 import type { Reservation } from "@/interfaces/reservation"
 import { Clock, User, FileText, Tag } from "lucide-react"
+import { useTranslations } from "next-intl"
 
 interface ReservationCellProps {
   reservation: Reservation
@@ -27,6 +28,8 @@ export function ReservationCell({ reservation, colSpan, onClick }: ReservationCe
   }
 
   const statusColor = getStatusColor(reservation.status)
+
+  const t = useTranslations("reservation")
 
   return (
     <TableCell
@@ -62,7 +65,7 @@ export function ReservationCell({ reservation, colSpan, onClick }: ReservationCe
                   {format(new Date(reservation.end_time), "HH:mm")}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {reservation.estimated_flight_hours} heure(s) estimée(s)
+                    {t("estimatedDuration", { estimatedDuration: reservation.estimated_flight_hours ?? 0 })}
                 </p>
               </div>
             </div>
