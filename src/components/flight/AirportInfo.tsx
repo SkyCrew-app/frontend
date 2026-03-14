@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
-import { MapPin, Radio, ArrowUp, Cloud, Sun, Sunrise, Sunset, Wind, Ruler, Compass } from "lucide-react"
+import { MapPin, Radio, ArrowUp, Cloud, Sun, Sunrise, Sunset, Wind, Ruler, Compass, Plane, Eye, Gauge } from "lucide-react"
 import type { Weather } from "@/interfaces/weather"
 
 interface AirportInfoProps {
@@ -28,6 +28,21 @@ export function AirportInfo({ airportInfo, type, weather }: AirportInfoProps) {
     }
   }
 
+  const fltcatColor = (cat: string | null | undefined) => {
+    switch (cat) {
+      case "VFR":
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+      case "MVFR":
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+      case "IFR":
+        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+      case "LIFR":
+        return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
+      default:
+        return "bg-gray-100 text-gray-800"
+    }
+  }
+
   return (
     <Card className={`border ${borderColor}`}>
       <CardHeader className={`${bgColor}`}>
@@ -37,6 +52,11 @@ export function AirportInfo({ airportInfo, type, weather }: AirportInfoProps) {
           <Badge variant="outline" className={`ml-auto ${textColor} border-current`}>
             {airportInfo.ICAO}
           </Badge>
+          {airportInfo.iata && (
+            <Badge variant="secondary" className="text-xs">
+              {airportInfo.iata}
+            </Badge>
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6 p-6">
@@ -56,13 +76,25 @@ export function AirportInfo({ airportInfo, type, weather }: AirportInfoProps) {
             <TabsTrigger value="frequencies">Fréquences</TabsTrigger>
             <TabsTrigger value="weather">Météo</TabsTrigger>
           </TabsList>
+
           <TabsContent value="general">
             <ScrollArea className="h-48 w-full rounded-md border p-4">
               <div className="space-y-4">
                 <div className="flex items-center space-x-2">
                   <ArrowUp className="h-5 w-5 text-blue-500" />
                   <p>
-                    <strong>Élévation:</strong> {airportInfo.elevation?.toFixed(2) || "N/A"} ft
+                    <strong>Élévation:</strong> {airportInfo.elevation ?? "N/A"} ft
+                  </p>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Plane className="h-5 w-5 text-blue-500" />
+                  <p>
+                    <strong>Type:</strong>{" "}
+                    {airportInfo.type === "large_airport"
+                      ? "Grand aéroport"
+                      : airportInfo.type === "medium_airport"
+                        ? "Aéroport moyen"
+                        : "Petit aéroport"}
                   </p>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -93,6 +125,7 @@ export function AirportInfo({ airportInfo, type, weather }: AirportInfoProps) {
               </div>
             </ScrollArea>
           </TabsContent>
+
           <TabsContent value="runways">
             <ScrollArea className="h-48 w-full rounded-md border p-4">
               {airportInfo.runways && airportInfo.runways.length > 0 ? (
@@ -103,16 +136,23 @@ export function AirportInfo({ airportInfo, type, weather }: AirportInfoProps) {
                         <Badge variant="outline" className="font-bold">
                           {runway.ident}
                         </Badge>
-                        <Badge variant="secondary">{runway.surface || "N/A"}</Badge>
+                        <div className="flex gap-2">
+                          <Badge variant="secondary">{runway.surface || "N/A"}</Badge>
+                          {runway.lighted && (
+                            <Badge variant="default" className="bg-yellow-500 text-white text-xs">
+                              Éclairée
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                       <div className="grid grid-cols-2 gap-2 text-sm">
                         <div className="flex items-center">
                           <Ruler className="h-4 w-4 mr-1 text-muted-foreground" />
-                          <span>Longueur: {(runway.length / 1000).toFixed(2)} km</span>
+                          <span>Longueur: {runway.length} m</span>
                         </div>
                         <div className="flex items-center">
                           <Ruler className="h-4 w-4 mr-1 text-muted-foreground rotate-90" />
-                          <span>Largeur: {runway.width?.toFixed(0) || "N/A"} m</span>
+                          <span>Largeur: {runway.width} m</span>
                         </div>
                       </div>
                     </li>
@@ -123,6 +163,7 @@ export function AirportInfo({ airportInfo, type, weather }: AirportInfoProps) {
               )}
             </ScrollArea>
           </TabsContent>
+
           <TabsContent value="frequencies">
             <ScrollArea className="h-48 w-full rounded-md border p-4">
               {airportInfo.frequencies && airportInfo.frequencies.length > 0 ? (
@@ -130,9 +171,11 @@ export function AirportInfo({ airportInfo, type, weather }: AirportInfoProps) {
                   {airportInfo.frequencies.map((freq: any, index: number) => (
                     <li key={index} className="flex items-center space-x-2 p-2 hover:bg-muted rounded-md">
                       <Radio className="h-4 w-4 text-blue-500" />
-                      <div>
+                      <div className="flex justify-between w-full">
                         <p className="font-medium">{freq.name || "Fréquence"}</p>
-                        <p className="text-sm text-muted-foreground">{(freq.frequency / 1000000).toFixed(3)} MHz</p>
+                        <p className="text-sm font-mono text-muted-foreground">
+                          {(freq.frequency / 1000000).toFixed(3)} MHz
+                        </p>
                       </div>
                     </li>
                   ))}
@@ -142,10 +185,97 @@ export function AirportInfo({ airportInfo, type, weather }: AirportInfoProps) {
               )}
             </ScrollArea>
           </TabsContent>
+
           <TabsContent value="weather">
-            <ScrollArea className="h-48 w-full rounded-md border p-4">
+            <ScrollArea className="h-64 w-full rounded-md border p-4">
               <div className="space-y-4">
-                {weather ? (
+                {/* Flight category badge */}
+                {airportInfo.weather?.fltcat && (
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold">Catégorie de vol:</span>
+                    <Badge className={fltcatColor(airportInfo.weather.fltcat)}>
+                      {airportInfo.weather.fltcat}
+                    </Badge>
+                  </div>
+                )}
+
+                {/* METAR data from aviation weather API */}
+                {airportInfo.weather?.METAR ? (
+                  <div className="bg-muted p-4 rounded-md space-y-3">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <Cloud className="h-5 w-5 text-blue-500" />
+                      <p className="font-semibold">Données METAR</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      {airportInfo.weather.temp != null && (
+                        <div className="flex items-center space-x-2">
+                          <Sun className="h-4 w-4 text-amber-500" />
+                          <p>
+                            <strong>Temp:</strong> {airportInfo.weather.temp}°C
+                          </p>
+                        </div>
+                      )}
+                      {airportInfo.weather.dewp != null && (
+                        <div className="flex items-center space-x-2">
+                          <Cloud className="h-4 w-4 text-blue-400" />
+                          <p>
+                            <strong>Rosée:</strong> {airportInfo.weather.dewp}°C
+                          </p>
+                        </div>
+                      )}
+                      {airportInfo.weather.wspd != null && (
+                        <div className="flex items-center space-x-2">
+                          <Wind className="h-4 w-4 text-blue-500" />
+                          <p>
+                            <strong>Vent:</strong> {airportInfo.weather.wspd} kt
+                            {airportInfo.weather.wgst ? ` (raf ${airportInfo.weather.wgst} kt)` : ""}
+                          </p>
+                        </div>
+                      )}
+                      {airportInfo.weather.wdir != null && (
+                        <div className="flex items-center space-x-2">
+                          <Compass className="h-4 w-4 text-blue-500" />
+                          <p>
+                            <strong>Direction:</strong>{" "}
+                            {typeof airportInfo.weather.wdir === "number"
+                              ? `${airportInfo.weather.wdir}°`
+                              : airportInfo.weather.wdir}
+                          </p>
+                        </div>
+                      )}
+                      {airportInfo.weather.visib != null && (
+                        <div className="flex items-center space-x-2">
+                          <Eye className="h-4 w-4 text-blue-500" />
+                          <p>
+                            <strong>Visibilité:</strong> {airportInfo.weather.visib} SM
+                          </p>
+                        </div>
+                      )}
+                      {airportInfo.weather.altim != null && (
+                        <div className="flex items-center space-x-2">
+                          <Gauge className="h-4 w-4 text-blue-500" />
+                          <p>
+                            <strong>QNH:</strong> {airportInfo.weather.altim} hPa
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {airportInfo.weather.clouds?.length > 0 && (
+                      <div className="mt-2">
+                        <p className="font-medium text-sm mb-1">Couches nuageuses:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {airportInfo.weather.clouds.map((c: any, i: number) => (
+                            <Badge key={i} variant="outline" className="text-xs">
+                              {c.cover} {c.base != null ? `${c.base} ft` : ""}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : weather ? (
                   <div className="bg-muted p-4 rounded-md">
                     <div className="flex items-center space-x-2 mb-3">
                       <Cloud className="h-5 w-5 text-blue-500" />
@@ -186,13 +316,15 @@ export function AirportInfo({ airportInfo, type, weather }: AirportInfoProps) {
                   <p className="text-center text-muted-foreground py-4">Aucune information météo disponible</p>
                 )}
 
+                {/* Raw METAR */}
                 <div>
-                  <p className="font-semibold mb-2">METAR:</p>
+                  <p className="font-semibold mb-2">METAR brut:</p>
                   <p className="text-sm font-mono bg-muted p-2 rounded overflow-x-auto">
                     {airportInfo.weather?.METAR || "Non disponible"}
                   </p>
                 </div>
 
+                {/* TAF */}
                 <div>
                   <p className="font-semibold mb-2">TAF:</p>
                   <p className="text-sm font-mono bg-muted p-2 rounded overflow-x-auto">

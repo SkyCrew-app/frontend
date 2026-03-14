@@ -80,7 +80,10 @@ export function CreateAircraftForm({ isOpen, onClose, onSuccess }: CreateAircraf
         name === "hourly_cost" ||
         name === "maxAltitude" ||
         name === "cruiseSpeed" ||
-        name === "consumption"
+        name === "consumption" ||
+        name === "fuel_capacity" ||
+        name === "empty_weight" ||
+        name === "max_takeoff_weight"
           ? Number.parseFloat(value)
           : value,
     }))
@@ -283,6 +286,54 @@ export function CreateAircraftForm({ isOpen, onClose, onSuccess }: CreateAircraf
                     type="number"
                     step="0.1"
                     value={formData.consumption || ""}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="fuel_capacity">Capacité du réservoir (L)</Label>
+                  <Input
+                    id="fuel_capacity"
+                    name="fuel_capacity"
+                    type="number"
+                    step="0.1"
+                    value={formData.fuel_capacity || ""}
+                    onChange={handleInputChange}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="fuel_type">Type de carburant</Label>
+                  <Input
+                    id="fuel_type"
+                    name="fuel_type"
+                    value={formData.fuel_type || ""}
+                    onChange={handleInputChange}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="empty_weight">Poids à vide (kg)</Label>
+                  <Input
+                    id="empty_weight"
+                    name="empty_weight"
+                    type="number"
+                    step="0.1"
+                    value={formData.empty_weight || ""}
+                    onChange={handleInputChange}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="max_takeoff_weight">Poids max. au décollage (kg)</Label>
+                  <Input
+                    id="max_takeoff_weight"
+                    name="max_takeoff_weight"
+                    type="number"
+                    step="0.1"
+                    value={formData.max_takeoff_weight || ""}
                     onChange={handleInputChange}
                   />
                 </div>

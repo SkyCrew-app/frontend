@@ -1,7 +1,11 @@
 import type { MaintenanceType } from "./maintenance"
 
 export type Aircraft = {
-  consumption: string
+  consumption: number
+  fuel_capacity?: number
+  fuel_type?: string
+  empty_weight?: number
+  max_takeoff_weight?: number
   id: number
   registration_number: string
   model: string
@@ -46,6 +50,10 @@ export interface CreateAircraftInput {
   maxAltitude?: number
   cruiseSpeed?: number
   consumption?: number
+  fuel_capacity?: number
+  fuel_type?: string
+  empty_weight?: number
+  max_takeoff_weight?: number
 }
 
 export interface UpdateAircraftInput {
@@ -62,6 +70,10 @@ export interface UpdateAircraftInput {
   maxAltitude?: number
   cruiseSpeed?: number
   consumption?: number
+  fuel_capacity?: number
+  fuel_type?: string
+  empty_weight?: number
+  max_takeoff_weight?: number
 }
 
 export interface AircraftResponse {

@@ -433,10 +433,11 @@ export default function CreateCustomFlightPlan() {
                     try {
                       const { data } = await generateFlightPlan({
                         variables: {
-                          origin_icao: flightPlan.origin_icao,
-                          destination_icao: flightPlan.destination_icao,
-                          user_id: Number.parseInt(userId || "0", 10),
-                          reservation_id: reservationId ? Number.parseInt(reservationId) : null,
+                          input: {
+                            origin_icao: flightPlan.origin_icao,
+                            destination_icao: flightPlan.destination_icao,
+                            reservation_id: reservationId ? Number.parseInt(reservationId) : null,
+                          },
                         },
                       })
 

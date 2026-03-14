@@ -66,14 +66,21 @@ export const GET_FLIGHT_PLAN_BY_ID = gql`
       encoded_polyline
       distance_km
       estimated_flight_time
+      departure_time
+      arrival_time
       waypoints
       departure_airport_info
       arrival_airport_info
       detailed_waypoints
+      fuel_policy
+      wind_summary
+      performance_profile
+      estimated_fuel_liters
       user {
         id
         first_name
         last_name
+        email
       }
       reservation {
         id
@@ -86,6 +93,12 @@ export const GET_FLIGHT_PLAN_BY_ID = gql`
         aircraft {
           id
           registration_number
+          model
+          cruiseSpeed
+          consumption
+          maxAltitude
+          total_flight_hours
+          image_url
         }
       }
     }
@@ -110,8 +123,8 @@ export const CREATE_FLIGHT = gql`
 `;
 
 export const GENERATE_FLIGHT_PLAN = gql`
-  mutation GenerateFlightPlan($origin_icao: String!, $destination_icao: String!, $user_id: Int!, $reservation_id: Int) {
-    generateFlightPlan(origin_icao: $origin_icao, destination_icao: $destination_icao, user_id: $user_id, reservation_id: $reservation_id) {
+  mutation GenerateFlightPlan($input: GenerateFlightPlanInput!) {
+    generateFlightPlan(input: $input) {
       id
       origin_icao
       destination_icao
@@ -122,6 +135,15 @@ export const GENERATE_FLIGHT_PLAN = gql`
       estimated_flight_time
       waypoints
       encoded_polyline
+      departure_time
+      arrival_time
+      departure_airport_info
+      arrival_airport_info
+      weather_conditions
+      fuel_policy
+      wind_summary
+      performance_profile
+      estimated_fuel_liters
     }
   }
 `;
@@ -139,8 +161,14 @@ export const GET_FLIGHT = gql`
       encoded_polyline
       distance_km
       estimated_flight_time
+      departure_time
+      arrival_time
       waypoints
       detailed_waypoints
+      fuel_policy
+      wind_summary
+      performance_profile
+      estimated_fuel_liters
       reservation {
         id
         start_time

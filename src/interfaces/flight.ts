@@ -13,6 +13,12 @@ export interface Flight {
   departure_airport_info?: string
   arrival_airport_info?: string
   detailed_waypoints?: string[]
+  departure_time?: string
+  arrival_time?: string
+  fuel_policy?: string
+  wind_summary?: string
+  performance_profile?: string
+  estimated_fuel_liters?: number
   user?: {
     id: number | string
     first_name?: string

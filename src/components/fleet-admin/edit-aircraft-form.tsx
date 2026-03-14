@@ -61,6 +61,10 @@ export function EditAircraftForm({ aircraft, isOpen, onClose, onSuccess }: EditA
         ...(aircraft.consumption !== undefined && { consumption: Number(aircraft.consumption) }),
         ...(aircraft.current_location !== undefined && { current_location: aircraft.current_location }),
         ...(aircraft.last_inspection_date !== undefined && { last_inspection_date: aircraft.last_inspection_date }),
+        ...(aircraft.fuel_capacity !== undefined && { fuel_capacity: aircraft.fuel_capacity }),
+        ...(aircraft.fuel_type !== undefined && { fuel_type: aircraft.fuel_type }),
+        ...(aircraft.empty_weight !== undefined && { empty_weight: aircraft.empty_weight }),
+        ...(aircraft.max_takeoff_weight !== undefined && { max_takeoff_weight: aircraft.max_takeoff_weight }),
       })
       setImagePreview(aircraft.image_url || null)
     }
@@ -92,7 +96,10 @@ export function EditAircraftForm({ aircraft, isOpen, onClose, onSuccess }: EditA
         name === "hourly_cost" ||
         name === "maxAltitude" ||
         name === "cruiseSpeed" ||
-        name === "consumption"
+        name === "consumption" ||
+        name === "fuel_capacity" ||
+        name === "empty_weight" ||
+        name === "max_takeoff_weight"
           ? Number.parseFloat(value)
           : value,
     }))
@@ -158,6 +165,11 @@ export function EditAircraftForm({ aircraft, isOpen, onClose, onSuccess }: EditA
       (filteredFormData as any)["current_location"] = formData.current_location
     if (formData.last_inspection_date !== undefined)
       (filteredFormData as any)["last_inspection_date"] = formData.last_inspection_date
+    if (formData.fuel_capacity !== undefined) (filteredFormData as any)["fuel_capacity"] = formData.fuel_capacity
+    if (formData.fuel_type !== undefined) (filteredFormData as any)["fuel_type"] = formData.fuel_type
+    if (formData.empty_weight !== undefined) (filteredFormData as any)["empty_weight"] = formData.empty_weight
+    if (formData.max_takeoff_weight !== undefined)
+      (filteredFormData as any)["max_takeoff_weight"] = formData.max_takeoff_weight
 
     updateAircraft({
       variables: {
@@ -315,6 +327,54 @@ export function EditAircraftForm({ aircraft, isOpen, onClose, onSuccess }: EditA
                     type="number"
                     step="0.1"
                     value={formData.consumption || ""}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="fuel_capacity">Capacité du réservoir (L)</Label>
+                  <Input
+                    id="fuel_capacity"
+                    name="fuel_capacity"
+                    type="number"
+                    step="0.1"
+                    value={formData.fuel_capacity || ""}
+                    onChange={handleInputChange}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="fuel_type">Type de carburant</Label>
+                  <Input
+                    id="fuel_type"
+                    name="fuel_type"
+                    value={formData.fuel_type || ""}
+                    onChange={handleInputChange}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="empty_weight">Poids à vide (kg)</Label>
+                  <Input
+                    id="empty_weight"
+                    name="empty_weight"
+                    type="number"
+                    step="0.1"
+                    value={formData.empty_weight || ""}
+                    onChange={handleInputChange}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="max_takeoff_weight">Poids max. au décollage (kg)</Label>
+                  <Input
+                    id="max_takeoff_weight"
+                    name="max_takeoff_weight"
+                    type="number"
+                    step="0.1"
+                    value={formData.max_takeoff_weight || ""}
                     onChange={handleInputChange}
                   />
                 </div>
