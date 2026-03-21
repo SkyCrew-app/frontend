@@ -4,7 +4,15 @@ import { useMutation, useQuery } from "@apollo/client"
 import { useState, useEffect } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/components/hooks/use-toast"
-import { GET_USER_RESERVATIONS, UPDATE_RESERVATION } from "@/graphql/reservation"
+import {
+  GET_USER_RESERVATIONS,
+  UPDATE_RESERVATION,
+  GET_MY_TEMPLATES,
+  CREATE_RESERVATION_TEMPLATE,
+  UPDATE_RESERVATION_TEMPLATE,
+  DELETE_RESERVATION_TEMPLATE,
+} from "@/graphql/reservation"
+import { GET_AIRCRAFTS } from "@/graphql/planes"
 import {
   Pagination,
   PaginationContent,
@@ -19,8 +27,13 @@ import { ReservationFilters } from "@/components/my-reservation/reservation-filt
 import { ReservationEditDialog } from "@/components/my-reservation/reservation-edit-dialog"
 import { EmptyState } from "@/components/my-reservation/empty-state"
 import { StatsCards } from "@/components/my-reservation/stats-cards"
-import { AlertCircle } from "lucide-react"
+import { TemplateCard } from "@/components/my-reservation/template-card"
+import { TemplateDialog } from "@/components/my-reservation/template-dialog"
+import { AlertCircle, Plus, BookTemplate } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Button } from "@/components/ui/button"
+import { useRouter } from "next/navigation"
+import type { ReservationTemplate } from "@/interfaces/reservation-template"
 
 const flightCategoryMapping = {
   LOCAL: "Local",
@@ -40,9 +53,12 @@ const flightCategoryReverseMapping = Object.fromEntries(
 export default function MyReservations() {
   const userEmail = useCurrentUser()
   const userData = useUserData(userEmail)
+  const router = useRouter()
   const [userId, setUserId] = useState<string | null>(null)
   const [selectedReservation, setSelectedReservation] = useState<any | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false)
+  const [editingTemplate, setEditingTemplate] = useState<ReservationTemplate | null>(null)
   const { toast } = useToast()
 
   const [searchTerm, setSearchTerm] = useState("")
@@ -65,6 +81,12 @@ export default function MyReservations() {
   })
 
   const [updateReservation] = useMutation(UPDATE_RESERVATION)
+
+  const { data: templatesData, refetch: refetchTemplates } = useQuery(GET_MY_TEMPLATES)
+  const { data: aircraftData } = useQuery(GET_AIRCRAFTS)
+  const [createTemplate, { loading: creatingTemplate }] = useMutation(CREATE_RESERVATION_TEMPLATE)
+  const [updateTemplate, { loading: updatingTemplate }] = useMutation(UPDATE_RESERVATION_TEMPLATE)
+  const [deleteTemplate] = useMutation(DELETE_RESERVATION_TEMPLATE)
 
   const resetFilters = () => {
     setSearchTerm("")
@@ -134,6 +156,64 @@ export default function MyReservations() {
     }
   }
 
+  const templates: ReservationTemplate[] = templatesData?.myReservationTemplates ?? []
+  const aircraftList = aircraftData?.getAircrafts ?? []
+
+  const handleCreateTemplate = () => {
+    setEditingTemplate(null)
+    setIsTemplateDialogOpen(true)
+  }
+
+  const handleEditTemplate = (template: ReservationTemplate) => {
+    setEditingTemplate(template)
+    setIsTemplateDialogOpen(true)
+  }
+
+  const handleSaveTemplate = async (data: any) => {
+    try {
+      if (data.id) {
+        await updateTemplate({
+          variables: { input: data },
+          refetchQueries: [{ query: GET_MY_TEMPLATES }],
+        })
+        toast({ title: "Mod\u00e8le mis \u00e0 jour" })
+      } else {
+        await createTemplate({
+          variables: { input: data },
+          refetchQueries: [{ query: GET_MY_TEMPLATES }],
+        })
+        toast({ title: "Mod\u00e8le cr\u00e9\u00e9" })
+      }
+      setIsTemplateDialogOpen(false)
+    } catch (err) {
+      toast({ variant: "destructive", title: "Erreur", description: "Impossible de sauvegarder le mod\u00e8le." })
+    }
+  }
+
+  const handleDeleteTemplate = async (id: number) => {
+    try {
+      await deleteTemplate({
+        variables: { id },
+        refetchQueries: [{ query: GET_MY_TEMPLATES }],
+      })
+      toast({ title: "Mod\u00e8le supprim\u00e9" })
+    } catch (err) {
+      toast({ variant: "destructive", title: "Erreur", description: "Impossible de supprimer le mod\u00e8le." })
+    }
+  }
+
+  const handleUseTemplate = (template: ReservationTemplate) => {
+    // Navigate to reservation page with template data as query params
+    const params = new URLSearchParams()
+    if (template.aircraft?.id) params.set("aircraft_id", template.aircraft.id.toString())
+    if (template.preferred_start_time) params.set("start_time", template.preferred_start_time)
+    if (template.preferred_end_time) params.set("end_time", template.preferred_end_time)
+    if (template.flight_category) params.set("flight_category", template.flight_category)
+    if (template.purpose) params.set("purpose", template.purpose)
+    if (template.notes) params.set("notes", template.notes)
+    router.push(`/reservations?${params.toString()}`)
+  }
+
   const renderPageNumbers = () => {
     const pageNumbers = []
     const maxVisiblePages = 5
@@ -194,6 +274,37 @@ export default function MyReservations() {
       </div>
 
       {allReservations.length > 0 && <StatsCards reservations={allReservations} />}
+
+      {/* Templates section */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold flex items-center gap-2">
+            <BookTemplate className="h-5 w-5" />
+            Mes mod&egrave;les
+          </h2>
+          <Button size="sm" onClick={handleCreateTemplate}>
+            <Plus className="h-4 w-4 mr-1" />
+            Nouveau mod&egrave;le
+          </Button>
+        </div>
+        {templates.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+            {templates.map((template) => (
+              <TemplateCard
+                key={template.id}
+                template={template}
+                onUse={handleUseTemplate}
+                onEdit={handleEditTemplate}
+                onDelete={handleDeleteTemplate}
+              />
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground mb-6">
+            Aucun mod&egrave;le. Cr&eacute;ez-en un pour r&eacute;server plus rapidement.
+          </p>
+        )}
+      </div>
 
       <ReservationFilters
         searchTerm={searchTerm}
@@ -261,6 +372,15 @@ export default function MyReservations() {
         onSave={handleSaveEdit}
         flightCategoryMapping={flightCategoryMapping}
         flightCategoryReverseMapping={flightCategoryReverseMapping}
+      />
+
+      <TemplateDialog
+        open={isTemplateDialogOpen}
+        onOpenChange={setIsTemplateDialogOpen}
+        template={editingTemplate}
+        aircraftList={aircraftList}
+        onSave={handleSaveTemplate}
+        loading={creatingTemplate || updatingTemplate}
       />
     </div>
   )

@@ -129,12 +129,12 @@ export default function ELearningPage() {
 
   if (!mounted) {
     return (
-      <div className="flex flex-col lg:flex-row min-h-screen bg-gray-50 dark:bg-gray-900" suppressHydrationWarning>
+      <div className="flex flex-col lg:flex-row min-h-screen bg-background" suppressHydrationWarning>
         <div className="flex-1 flex flex-col overflow-hidden">
           <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 p-4 flex items-center">
             <h1 className="text-xl font-semibold truncate">Chargement...</h1>
           </header>
-          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 dark:bg-gray-900">
+          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-background">
             <div className="container mx-auto px-4 py-6 max-w-6xl">
               <Skeleton className="h-12 w-3/4" />
               <Skeleton className="h-[200px] w-full mt-4" />
@@ -146,7 +146,7 @@ export default function ELearningPage() {
   }
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="flex flex-col lg:flex-row min-h-screen bg-background">
       {/* Overlay pour mobile quand la sidebar est ouverte */}
       {sidebarOpen && (
         <div className="fixed inset-0 bg-black/50 z-20 lg:hidden" onClick={() => setSidebarOpen(false)} />
@@ -192,7 +192,7 @@ export default function ELearningPage() {
           </h1>
         </header>
 
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 dark:bg-gray-900">
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-background">
           <div className="container mx-auto px-4 py-6 max-w-6xl">
             {courseLoading ? (
               <div className="space-y-4">

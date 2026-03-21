@@ -57,7 +57,7 @@ export default function FinancialDashboard() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-      <Card className="p-6 bg-white shadow-xl rounded-xl border-t-4 border-t-blue-500">
+      <Card className="p-6 bg-card shadow-xl rounded-xl border-t-4 border-t-primary">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 space-y-4 md:space-y-0">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="space-y-2">

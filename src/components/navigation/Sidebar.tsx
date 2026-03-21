@@ -5,7 +5,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
-import { LayoutDashboard, Plane, Calendar, GraduationCap, Settings, ChevronRight, User, LogOut } from "lucide-react"
+import { LayoutDashboard, Plane, Calendar, GraduationCap, Settings, ChevronRight, User, LogOut, ClipboardCheck, BookOpen } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useQuery } from "@apollo/client"
 import { GET_USER_PROFILE } from "@/graphql/user"
@@ -32,6 +32,16 @@ const menuItems = [
     ],
   },
   {
+    name: "Checklists",
+    icon: ClipboardCheck,
+    path: "/checklists",
+  },
+  {
+    name: "Carnet de vol",
+    icon: BookOpen,
+    path: "/logbook",
+  },
+  {
     name: "Instruction",
     icon: GraduationCap,
     path: "/instruction",
@@ -51,6 +61,7 @@ const menuItems = [
       { name: "Finance", path: "/administration/finance" },
       { name: "Sécurité", path: "/administration/audits" },
       { name: "Articles", path: "/administration/articles" },
+      { name: "Checklists", path: "/administration/checklists" },
       { name: "E-learning", path: "/administration/e-learning" },
       { name: "Paramètres", path: "/administration/settings" },
     ],
@@ -158,24 +169,26 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
       {/* Mobile sidebar overlay */}
       {isMobileOpen && (
         <div
-          className="md:hidden fixed inset-0 bg-black/50 z-40 backdrop-blur-sm transition-opacity"
+          className="md:hidden fixed inset-0 bg-primary/30 dark:bg-black/50 z-40 backdrop-blur-sm transition-opacity"
           onClick={onCloseMobileMenu}
         />
       )}
 
       {/* Sidebar */}
       <aside
-        className={`fixed md:sticky top-0 left-0 h-screen w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 shadow-lg flex flex-col overflow-hidden z-50 transition-transform duration-300 ease-in-out ${
+        role="navigation"
+        aria-label="Navigation principale"
+        className={`fixed md:sticky top-0 left-0 h-screen w-64 bg-sidebar text-sidebar-foreground border-r border-sidebar-border shadow-lg flex flex-col overflow-hidden z-50 transition-transform duration-300 ease-in-out ${
           isMobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         }`}
       >
         {/* Logo */}
-        <div className="p-6 h-16 border-b border-slate-200 dark:border-slate-800 flex items-center">
+        <div className="p-6 h-16 border-b border-sidebar-border flex items-center">
           <Link href="/dashboard" className="flex items-center justify-center">
             <svg
               version="1.0"
               xmlns="http://www.w3.org/2000/svg"
-              className="h-12 text-primary"
+              className="h-12 text-sidebar-foreground"
               viewBox="0 0 916.000000 272.000000"
               preserveAspectRatio="xMidYMid meet"
             >
@@ -269,20 +282,20 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
         </div>
 
         {/* User profile */}
-        <div className="p-4 border-b border-slate-200 dark:border-slate-800">
+        <div className="p-4 border-b border-sidebar-border">
           <div className="flex items-center space-x-3">
-            <Avatar className="h-10 w-10 border-2 border-primary/20 dark:border-primary/30">
+            <Avatar className="h-10 w-10 border-2 border-white/20">
               {profilePicture ? (
                 <AvatarImage src={`http://localhost:3000${profilePicture}`} alt={userName || "User Avatar"} />
               ) : (
-                <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-white">
+                <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground">
                   {initials}
                 </AvatarFallback>
               )}
             </Avatar>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{userName || "Utilisateur"}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{userRole || 'Utilisateur'}</p>
+              <p className="text-sm font-medium truncate text-sidebar-foreground">{userName || "Utilisateur"}</p>
+              <p className="text-xs text-sidebar-foreground/60 truncate">{userRole || 'Utilisateur'}</p>
             </div>
           </div>
         </div>
@@ -309,8 +322,8 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
                       className={cn(
                         "flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 ease-in-out group",
                         isActive
-                          ? "bg-gradient-to-r from-primary to-primary/90 text-white shadow-md shadow-primary/20"
-                          : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800/60",
+                          ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md shadow-sidebar-primary/20"
+                          : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                       )}
                     >
                       <div
@@ -318,15 +331,15 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
                           "flex items-center justify-center h-8 w-8 rounded-lg mr-3",
                           isActive
                             ? "bg-white/20"
-                            : "bg-slate-100 dark:bg-slate-800 group-hover:bg-slate-200 dark:group-hover:bg-slate-700",
+                            : "bg-sidebar-accent/50 group-hover:bg-sidebar-accent",
                         )}
                       >
                         <item.icon
                           className={cn(
                             "h-4 w-4",
                             isActive
-                              ? "text-white"
-                              : "text-slate-600 dark:text-slate-400 group-hover:text-primary dark:group-hover:text-primary",
+                              ? "text-sidebar-primary-foreground"
+                              : "text-sidebar-foreground/70 group-hover:text-sidebar-accent-foreground",
                           )}
                         />
                       </div>
@@ -340,8 +353,8 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
                           className={cn(
                             "absolute right-3 p-1 rounded-md",
                             isActive
-                              ? "text-white/80 hover:text-white hover:bg-white/20"
-                              : "text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700",
+                              ? "text-sidebar-primary-foreground/80 hover:text-sidebar-primary-foreground hover:bg-white/20"
+                              : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent",
                           )}
                         >
                           <ChevronRight
@@ -372,8 +385,8 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
                                   className={cn(
                                     "block py-2 px-4 rounded-lg text-sm transition-colors duration-150 ease-in-out",
                                     isSubActive
-                                      ? "bg-primary/10 text-primary font-medium dark:bg-primary/20 dark:text-primary"
-                                      : "text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800/60",
+                                      ? "bg-sidebar-primary/20 text-sidebar-primary-foreground font-medium"
+                                      : "text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                                   )}
                                 >
                                   {subItem.name}
@@ -392,24 +405,29 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-slate-200 dark:border-slate-800">
+        <div className="p-4 border-t border-sidebar-border">
           <Link
             href="/profile"
-            className="flex items-center px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 rounded-lg transition-colors duration-150"
+            className="flex items-center px-4 py-2 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-lg transition-colors duration-150"
           >
-            <User className="h-4 w-4 mr-3 text-slate-500 dark:text-slate-500" />
+            <User className="h-4 w-4 mr-3" />
             <span>Mon profil</span>
           </Link>
           <Link
             href="/"
-            className="flex items-center px-4 py-2 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60 rounded-lg transition-colors duration-150 mt-1"
+            className="flex items-center px-4 py-2 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-lg transition-colors duration-150 mt-1"
           >
-            <LogOut className="h-4 w-4 mr-3 text-slate-500 dark:text-slate-500" />
+            <LogOut className="h-4 w-4 mr-3" />
             <span>Déconnexion</span>
           </Link>
+          <div className="mt-3 px-4 flex items-center justify-center">
+            <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border border-sidebar-border bg-sidebar-accent px-1.5 font-mono text-[10px] font-medium text-sidebar-foreground/50">
+              <span className="text-xs">&#8984;</span>K
+            </kbd>
+            <span className="ml-2 text-[10px] text-sidebar-foreground/40">Recherche rapide</span>
+          </div>
         </div>
       </aside>
     </>
   )
 }
-

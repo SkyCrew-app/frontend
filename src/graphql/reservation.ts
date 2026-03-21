@@ -100,3 +100,53 @@ export const GET_RESERVATIONS = gql`
     }
   }
 `
+
+// === Reservation Templates ===
+
+export const GET_MY_TEMPLATES = gql`
+  query GetMyReservationTemplates {
+    myReservationTemplates {
+      id
+      name
+      aircraft {
+        id
+        registration_number
+        model
+      }
+      day_of_week
+      preferred_start_time
+      preferred_end_time
+      flight_category
+      purpose
+      notes
+      estimated_flight_hours
+      created_at
+    }
+  }
+`
+
+export const CREATE_RESERVATION_TEMPLATE = gql`
+  mutation CreateReservationTemplate($input: CreateReservationTemplateInput!) {
+    createReservationTemplate(input: $input) {
+      id
+      name
+      flight_category
+    }
+  }
+`
+
+export const UPDATE_RESERVATION_TEMPLATE = gql`
+  mutation UpdateReservationTemplate($input: UpdateReservationTemplateInput!) {
+    updateReservationTemplate(input: $input) {
+      id
+      name
+      flight_category
+    }
+  }
+`
+
+export const DELETE_RESERVATION_TEMPLATE = gql`
+  mutation DeleteReservationTemplate($id: Int!) {
+    deleteReservationTemplate(id: $id)
+  }
+`

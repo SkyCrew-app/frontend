@@ -1,6 +1,7 @@
 import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client';
 import { onError } from "@apollo/client/link/error";
 import { createUploadLink } from 'apollo-upload-client';
+import { CachePersistor, LocalStorageWrapper } from 'apollo3-cache-persist';
 
 const uploadLink = createUploadLink({
   uri: process.env.NEXT_PUBLIC_API_URL,
@@ -40,6 +41,17 @@ const cache = new InMemoryCache({
     },
   },
 });
+
+// Persist cache to localStorage for offline support
+if (typeof window !== 'undefined') {
+  const persistor = new CachePersistor({
+    cache,
+    storage: new LocalStorageWrapper(window.localStorage),
+    maxSize: 1048576 * 5, // 5MB
+    key: 'skycrew-apollo-cache',
+  });
+  persistor.restore();
+}
 
 const client = new ApolloClient({
   link: errorLink.concat(uploadLink),

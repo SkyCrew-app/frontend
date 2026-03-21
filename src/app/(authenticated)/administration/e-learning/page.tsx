@@ -45,7 +45,7 @@ export default function AdminELearningPage() {
             </div>
           </div>
 
-          <Card className="border-t-4 border-t-blue-500 shadow-md">
+          <Card className="border-t-4 border-t-primary shadow-md">
             <CardHeader className="pb-2">
               <CardTitle className="text-xl">Tableau de bord</CardTitle>
               <CardDescription>Gérez tous les aspects de votre plateforme e-learning</CardDescription>

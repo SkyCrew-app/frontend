@@ -199,7 +199,7 @@ export default function AdminHomePage() {
           {/* Stats Cards */}
           <motion.div variants={containerVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <motion.div variants={itemVariants}>
-              <Card className="border-t-4 border-t-blue-500 overflow-hidden">
+              <Card className="border-t-4 border-t-primary overflow-hidden">
                 <CardHeader className="pb-2">
                   <CardTitle className="flex items-center text-lg font-medium">
                     <Users className="mr-2 h-5 w-5 text-blue-500" />

@@ -14,8 +14,8 @@ export function FreeCell({ isSelected, onMouseDown, onMouseEnter, onMouseUp }: F
     <TableCell
       className={`text-center p-0 cursor-pointer select-none transition-colors ${
         isSelected
-          ? "bg-teal-400 hover:bg-teal-500"
-          : "bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700"
+          ? "bg-primary hover:bg-primary/90"
+          : "bg-muted/30 hover:bg-muted/50 dark:bg-muted/20 dark:hover:bg-muted/40"
       }`}
       onMouseDown={onMouseDown}
       onMouseEnter={onMouseEnter}

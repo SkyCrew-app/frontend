@@ -27,7 +27,7 @@ export default function Setup2FA() {
         title: "QR Code généré",
         description: "Veuillez scanner le QR code avec votre application d'authentification.",
       });
-    } catch (err) {
+    } catch {
       toast({
         variant: "destructive",
         title: "Erreur",

@@ -33,7 +33,7 @@ export type AircraftData = {
 export enum AvailabilityStatus {
   AVAILABLE = "AVAILABLE",
   UNAVAILABLE = "UNAVAILABLE",
-  RESERVED = "RESERVED",
+  RESERVED = "RESERVATED",
 }
 
 export interface CreateAircraftInput {

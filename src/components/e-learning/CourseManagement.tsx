@@ -422,7 +422,7 @@ export function CourseManagement() {
       </TabsContent>
 
       <TabsContent value="create">
-        <Card className="border-t-4 border-t-blue-500 shadow-md">
+        <Card className="border-t-4 border-t-primary shadow-md">
           <CardHeader>
             <CardTitle className="flex items-center">
               <PlusCircle className="w-5 h-5 mr-2 text-blue-500" />

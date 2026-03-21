@@ -16,7 +16,7 @@ import { motion } from "framer-motion"
 enum AvailabilityStatus {
   AVAILABLE = "AVAILABLE",
   UNAVAILABLE = "UNAVAILABLE",
-  RESERVED = "RESERVED",
+  RESERVED = "RESERVATED",
 }
 
 interface AircraftCardProps {

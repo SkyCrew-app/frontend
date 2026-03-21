@@ -18,6 +18,8 @@ export interface Flight {
   fuel_policy?: string
   wind_summary?: string
   performance_profile?: string
+  remarks?: string | null
+  created_at?: string
   estimated_fuel_liters?: number
   user?: {
     id: number | string
@@ -36,6 +38,7 @@ export interface Flight {
     aircraft: {
       id: number | string
       registration_number: string
+      model?: string
     }
   }
 }

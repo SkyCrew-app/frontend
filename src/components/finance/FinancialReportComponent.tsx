@@ -129,7 +129,7 @@ export default function FinancialReportComponent() {
       {/* Cartes de statistiques */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <motion.div variants={fadeIn}>
-          <Card className="shadow-md hover:shadow-lg transition-shadow border-t-4 border-t-blue-500">
+          <Card className="shadow-md hover:shadow-lg transition-shadow border-t-4 border-t-primary">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg flex items-center justify-between">
                 <span>Revenus Totaux</span>

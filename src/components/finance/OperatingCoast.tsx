@@ -128,9 +128,9 @@ export default function OperatingCosts({ period, date }: OperatingCostsProps) {
   return (
     <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="space-y-8">
       <motion.div variants={fadeIn}>
-        <Card className="shadow-md border-t-4 border-t-cyan-500">
-          <CardHeader className="bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-950/30 dark:to-blue-950/30">
-            <CardTitle className="text-xl font-bold text-cyan-700">
+        <Card className="shadow-md border-t-4 border-t-primary">
+          <CardHeader className="bg-gradient-to-r from-primary/5 to-blue-50 dark:from-primary/10 dark:to-blue-950/30">
+            <CardTitle className="text-xl font-bold text-primary">
               Coûts d'Exploitation {period === "monthly" ? "Mensuels" : "Annuels"}
             </CardTitle>
             <CardDescription>

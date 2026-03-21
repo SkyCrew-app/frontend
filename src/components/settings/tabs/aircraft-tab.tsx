@@ -22,7 +22,7 @@ export function AircraftTab() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-      <Card className="border-t-4 border-t-blue-500 shadow-md">
+      <Card className="border-t-4 border-t-primary shadow-md">
         <CardHeader className="pb-2">
           <CardTitle className="text-xl">Gestion des avions</CardTitle>
           <CardDescription>Configurez les types d'avions et les tarifs.</CardDescription>

@@ -16,7 +16,7 @@ export function OperationsTab() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-      <Card className="border-t-4 border-t-blue-500 shadow-md">
+      <Card className="border-t-4 border-t-primary shadow-md">
         <CardHeader className="pb-2">
           <CardTitle className="text-xl">Opérations</CardTitle>
           <CardDescription>Configurez les paramètres opérationnels de l'aéroclub.</CardDescription>

@@ -20,10 +20,13 @@
   }
 
   body {
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell,
-      "Open Sans", "Helvetica Neue", sans-serif;
+    font-family: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     text-rendering: optimizeLegibility;
     overflow-x: hidden;
+  }
+
+  code, kbd, pre, samp, .font-mono {
+    font-family: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   }
 }
 
@@ -49,8 +52,8 @@
   }
 
   .dark .glass {
-    background: rgba(15, 23, 42, 0.8);
-    border-color: rgba(51, 65, 85, 0.2);
+    background: rgba(15, 27, 45, 0.85);
+    border-color: rgba(74, 144, 217, 0.1);
   }
 
   .no-animation,
@@ -101,74 +104,84 @@
 /* Theme variables */
 @layer base {
   :root {
-    --background: 220 14.3% 95.9%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 210 20% 98%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 210 20% 98%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 174 60% 50%;
-    --primary-foreground: 210 40% 98%;
-    --accent: 174 40% 90%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --secondary: 220 13% 91%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 220 13% 91%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 174 60% 50%;
-    --chart-1: 174 60% 50%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 174 60% 50%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 174 40% 90%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 174 60% 50%;
+    /* Sky Horizon — Light Mode */
+    --background: 216 30% 96%;
+    --foreground: 214 52% 15%;
+    --card: 210 40% 99%;
+    --card-foreground: 214 52% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 214 52% 15%;
+    --primary: 214 52% 25%;
+    --primary-foreground: 0 0% 100%;
+    --accent: 25 81% 54%;
+    --accent-foreground: 0 0% 100%;
+    --secondary: 213 25% 91%;
+    --secondary-foreground: 214 40% 20%;
+    --muted: 215 20% 90%;
+    --muted-foreground: 215 16% 47%;
+    --destructive: 6 78% 57%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 215 20% 88%;
+    --input: 215 20% 88%;
+    --ring: 214 52% 25%;
+    --chart-1: 214 52% 25%;
+    --chart-2: 211 64% 57%;
+    --chart-3: 25 81% 54%;
+    --chart-4: 145 63% 42%;
+    --chart-5: 48 89% 50%;
+    --sidebar-background: 214 52% 25%;
+    --sidebar-foreground: 210 40% 95%;
+    --sidebar-primary: 25 81% 54%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 214 45% 32%;
+    --sidebar-accent-foreground: 210 40% 95%;
+    --sidebar-border: 214 40% 20%;
+    --sidebar-ring: 25 81% 54%;
     --radius: 0.5rem;
+    --warning: 48 89% 50%;
+    --warning-foreground: 214 52% 15%;
+    --success: 145 63% 42%;
+    --success-foreground: 0 0% 100%;
   }
 
   .dark {
-    --background: 215 27.9% 16.9%;
-    --foreground: 210 40% 98%;
-    --card: 215 27.9% 16.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 215 27.9% 16.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 174 45% 55%;
-    --primary-foreground: 210 40% 98%;
-    --accent: 174 45% 55%;
-    --accent-foreground: 210 40% 98%;
-    --secondary: 216.9 19.1% 26.7%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 216.9 19.1% 26.7%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 216.9 19.1% 26.7%;
-    --input: 216.9 19.1% 26.7%;
-    --ring: 174 45% 55%;
-    --chart-1: 174 55% 60%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 174 45% 55%;
+    /* Sky Horizon — Dark Mode (Bleu Nuit) */
+    --background: 216 50% 12%;
+    --foreground: 210 40% 96%;
+    --card: 216 45% 15%;
+    --card-foreground: 210 40% 96%;
+    --popover: 216 45% 15%;
+    --popover-foreground: 210 40% 96%;
+    --primary: 211 64% 57%;
+    --primary-foreground: 0 0% 100%;
+    --accent: 25 81% 54%;
+    --accent-foreground: 0 0% 100%;
+    --secondary: 216 35% 22%;
+    --secondary-foreground: 210 40% 96%;
+    --muted: 216 30% 22%;
+    --muted-foreground: 215 20% 65%;
+    --destructive: 6 70% 45%;
+    --destructive-foreground: 210 40% 96%;
+    --border: 216 30% 22%;
+    --input: 216 30% 22%;
+    --ring: 211 64% 57%;
+    --chart-1: 211 64% 57%;
+    --chart-2: 211 70% 72%;
+    --chart-3: 25 81% 54%;
+    --chart-4: 145 63% 49%;
+    --chart-5: 48 89% 55%;
+    --sidebar-background: 216 55% 8%;
+    --sidebar-foreground: 210 40% 90%;
+    --sidebar-primary: 25 81% 54%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 174 25% 25%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 174 45% 55%;
+    --sidebar-accent: 216 40% 18%;
+    --sidebar-accent-foreground: 210 40% 90%;
+    --sidebar-border: 216 40% 15%;
+    --sidebar-ring: 25 81% 54%;
+    --warning: 48 89% 55%;
+    --warning-foreground: 214 52% 15%;
+    --success: 145 63% 49%;
+    --success-foreground: 0 0% 100%;
   }
 }
 

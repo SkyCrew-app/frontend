@@ -145,7 +145,7 @@ export function AuditStatistics() {
       "#10b981", // émeraude
       "#ec4899", // rose
       "#6366f1", // indigo
-      "#14b8a6", // teal
+      "#1E3A5F", // bleu profond
     ]
     return colors[id % colors.length]
   }

@@ -58,7 +58,7 @@ export function OverviewTab({ data, setActiveTab }: OverviewTabProps) {
         className="grid grid-cols-1 md:grid-cols-2 gap-6"
       >
         <motion.div variants={cardVariant}>
-          <Card className="h-full shadow-md hover:shadow-lg transition-shadow border-t-4 border-t-blue-500 flex flex-col">
+          <Card className="h-full shadow-md hover:shadow-lg transition-shadow border-t-4 border-t-primary flex flex-col">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg flex items-center">
                 <BookOpen className="mr-2 h-5 w-5 text-blue-500" />

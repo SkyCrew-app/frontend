@@ -25,6 +25,12 @@ export const GET_USER_PROFILE = gql`
         role_name
         id
       }
+      dashboard_widgets {
+        widgetId
+        visible
+        order
+        size
+      }
     }
   }
 `;
@@ -83,6 +89,12 @@ export const GET_USER_BY_EMAIL = gql`
       distance_unit
       timezone
       preferred_aerodrome
+      dashboard_widgets {
+        widgetId
+        visible
+        order
+        size
+      }
     }
   }
 `;

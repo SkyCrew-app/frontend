@@ -12,12 +12,14 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { LOGIN_MUTATION } from '@/graphql/system';
 import { useToast } from "@/components/hooks/use-toast";
+import { loginSchema } from '@/lib/validations';
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [login, { loading }] = useMutation(LOGIN_MUTATION);
   const { toast } = useToast();
 
@@ -30,12 +32,16 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Veuillez remplir tous les champs.",
+    setFieldErrors({});
+
+    const result = loginSchema.safeParse({ email, password });
+    if (!result.success) {
+      const errors: Record<string, string> = {};
+      result.error.issues.forEach((issue) => {
+        const field = issue.path[0] as string;
+        errors[field] = issue.message;
       });
+      setFieldErrors(errors);
       return;
     }
 
@@ -51,6 +57,7 @@ export default function LoginPage() {
       });
 
       if (is2FAEnabled) {
+        sessionStorage.setItem('2fa_pending_email', email);
         router.push('/auth/2fa');
       } else {
         router.push('/dashboard');
@@ -87,8 +94,12 @@ export default function LoginPage() {
                 placeholder="votre.email@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                required
+                aria-invalid={!!fieldErrors.email}
+                aria-describedby={fieldErrors.email ? "email-error" : undefined}
               />
+              {fieldErrors.email && (
+                <p id="email-error" className="mt-1 text-sm text-destructive">{fieldErrors.email}</p>
+              )}
             </div>
             <div>
               <Label htmlFor="password">Mot de passe</Label>
@@ -98,8 +109,12 @@ export default function LoginPage() {
                 placeholder="Votre mot de passe"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                required
+                aria-invalid={!!fieldErrors.password}
+                aria-describedby={fieldErrors.password ? "password-error" : undefined}
               />
+              {fieldErrors.password && (
+                <p id="password-error" className="mt-1 text-sm text-destructive">{fieldErrors.password}</p>
+              )}
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'Connexion...' : 'Se connecter'}

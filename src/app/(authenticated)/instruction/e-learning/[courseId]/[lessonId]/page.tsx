@@ -55,7 +55,7 @@ const LessonSkeleton = () => (
     </div>
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="lg:col-span-2 space-y-6">
-        <Card className="shadow-md overflow-hidden border-t-4 border-t-blue-500">
+        <Card className="shadow-md overflow-hidden border-t-4 border-t-primary">
           <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30">
             <Skeleton className="h-12 w-full" />
           </CardHeader>
@@ -255,7 +255,7 @@ export default function LessonPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Colonne principale */}
         <motion.div variants={slideUp} className="lg:col-span-2 space-y-6">
-          <Card className="shadow-md overflow-hidden border-t-4 border-t-blue-500">
+          <Card className="shadow-md overflow-hidden border-t-4 border-t-primary">
             <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30">
               <div className="flex justify-between items-start">
                 <div>

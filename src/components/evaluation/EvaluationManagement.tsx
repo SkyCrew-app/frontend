@@ -798,7 +798,7 @@ export function EvaluationManagement() {
       </TabsContent>
 
       <TabsContent value="create">
-        <Card className="border-t-4 border-t-blue-500 shadow-md">
+        <Card className="border-t-4 border-t-primary shadow-md">
           <CardHeader>
             <CardTitle className="flex items-center">
               {step === 1 ? (
