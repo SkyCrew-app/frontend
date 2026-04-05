@@ -306,8 +306,9 @@ export default function FlightPlanDetails() {
       const fetchWeather = async () => {
         const flight = data.getFlightById
         try {
-          const depInfo = JSON.parse(flight.departure_airport_info)
-          const arrInfo = JSON.parse(flight.arrival_airport_info)
+          const depInfo = safeJsonParse<any>(flight.departure_airport_info)
+          const arrInfo = safeJsonParse<any>(flight.arrival_airport_info)
+          if (!depInfo || !arrInfo) return
 
           const [departureWeather, arrivalWeather] = await Promise.all([
             getWeather(depInfo.lat, depInfo.lon),
@@ -357,19 +358,19 @@ export default function FlightPlanDetails() {
     if (!data?.getFlightById) return
 
     const flight = data.getFlightById
-    const depInfo = JSON.parse(flight.departure_airport_info)
-    const arrInfo = JSON.parse(flight.arrival_airport_info)
-    const wps = JSON.parse(flight.waypoints)
+    const depInfo = safeJsonParse<any>(flight.departure_airport_info)
+    const arrInfo = safeJsonParse<any>(flight.arrival_airport_info)
+    const wps = safeJsonParse<any[]>(flight.waypoints)
 
     switch (tab) {
       case "overview":
         setMapFocus(undefined)
         break
       case "departure":
-        setMapFocus({ center: [depInfo.lon, depInfo.lat], zoom: 10 })
+        if (depInfo) setMapFocus({ center: [depInfo.lon, depInfo.lat], zoom: 10 })
         break
       case "arrival":
-        setMapFocus({ center: [arrInfo.lon, arrInfo.lat], zoom: 10 })
+        if (arrInfo) setMapFocus({ center: [arrInfo.lon, arrInfo.lat], zoom: 10 })
         break
       case "waypoints":
         if (wps?.length > 0) {
@@ -389,7 +390,7 @@ export default function FlightPlanDetails() {
 
   const handleFocusWaypoint = (index: number) => {
     if (!data?.getFlightById) return
-    const wps = JSON.parse(data.getFlightById.waypoints)
+    const wps = safeJsonParse<any[]>(data.getFlightById.waypoints)
     if (wps?.[index]) {
       setMapFocus({ center: [wps[index].lon, wps[index].lat], zoom: 12 })
     }
@@ -425,9 +426,9 @@ export default function FlightPlanDetails() {
   /*  Parse all data                                                     */
   /* ================================================================== */
   const fp = data.getFlightById
-  const departureInfo = JSON.parse(fp.departure_airport_info)
-  const arrivalInfo = JSON.parse(fp.arrival_airport_info)
-  const waypoints = JSON.parse(fp.waypoints)
+  const departureInfo = safeJsonParse<any>(fp.departure_airport_info) || { ICAO: fp.origin_icao, name: fp.origin_icao, city: '', lat: 0, lon: 0 }
+  const arrivalInfo = safeJsonParse<any>(fp.arrival_airport_info) || { ICAO: fp.destination_icao, name: fp.destination_icao, city: '', lat: 0, lon: 0 }
+  const waypoints = safeJsonParse<any[]>(fp.waypoints) || []
 
   const aircraft = fp.reservation?.aircraft
     ? {
@@ -552,7 +553,7 @@ export default function FlightPlanDetails() {
               <StatChip icon={Clock} label="Départ" value={departureTimeStr} />
               <StatChip icon={Clock} label="Arrivée" value={arrivalTimeStr} />
               {durationMin && <StatChip icon={Gauge} label="Durée" value={`${durationMin} min`} />}
-              <StatChip icon={Route} label="Distance" value={`${fp.distance_km.toFixed(0)} km`} />
+              {fp.distance_km != null && <StatChip icon={Route} label="Distance" value={`${fp.distance_km.toFixed(0)} km`} />}
               {fp.number_of_passengers != null && (
                 <StatChip icon={Users} label="PAX" value={`${fp.number_of_passengers}`} />
               )}
@@ -619,7 +620,7 @@ export default function FlightPlanDetails() {
                             <div className="grid grid-cols-2 gap-3">
                               {[
                                 { label: "Type", value: fp.flight_type },
-                                { label: "Distance", value: `${fp.distance_km.toFixed(1)} km` },
+                                { label: "Distance", value: fp.distance_km ? `${fp.distance_km.toFixed(1)} km` : "N/A" },
                                 { label: "Durée", value: durationMin ? `${durationMin} min` : "N/A" },
                                 { label: "Passagers", value: fp.number_of_passengers?.toString() || "N/A" },
                                 ...(fp.performance_profile

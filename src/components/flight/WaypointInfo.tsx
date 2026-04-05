@@ -19,7 +19,8 @@ interface WaypointInfoProps {
   onFocusWaypoint?: (index: number) => void
 }
 
-export function WaypointInfo({ waypoints, onFocusWaypoint }: WaypointInfoProps) {
+export function WaypointInfo({ waypoints: rawWaypoints, onFocusWaypoint }: WaypointInfoProps) {
+  const waypoints = rawWaypoints || []
   const getWaypointTypeColor = (type: string) => {
     switch (type) {
       case "APT":

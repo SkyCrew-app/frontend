@@ -8,6 +8,7 @@ import Breadcrumbs from "./navigation/Breadcrumbs"
 import { SidebarProvider } from "@/components/ui/sidebar"
 import CommandPalette from "@/components/command/CommandPalette"
 import OfflineIndicator from "@/components/ui/OfflineIndicator"
+import DemoBanner from "@/components/ui/DemoBanner"
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts"
 
 interface MainLayoutProps {
@@ -43,6 +44,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
       <div className="flex h-screen w-full overflow-hidden">
         <Sidebar isMobileOpen={isMobileOpen} onCloseMobileMenu={handleCloseMobileMenu} />
         <div className="flex flex-col flex-1 h-screen overflow-hidden">
+          <DemoBanner />
           <Navbar onToggleMobileMenu={handleToggleMobileMenu} />
           <OfflineIndicator />
           <main id="main-content" role="main" aria-label="Contenu principal" className="flex-1 overflow-y-auto overflow-x-hidden" tabIndex={-1}>
