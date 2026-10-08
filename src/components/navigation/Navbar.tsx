@@ -147,7 +147,7 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
 
       {/* Right section */}
       <div className="flex items-center space-x-4">
-        {loading ? (
+        {loading && (
           <div className="animate-pulse flex items-center space-x-4">
             <div className="rounded-full bg-muted h-10 w-10"></div>
             <div className="hidden md:block space-y-2">
@@ -155,11 +155,13 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
               <div className="h-2 w-16 bg-muted rounded"></div>
             </div>
           </div>
-        ) : error ? (
+        )}
+        {!loading && error && (
           <div className="text-sm text-destructive">
             Erreur lors du chargement des informations utilisateur.
           </div>
-        ) : (
+        )}
+        {!loading && !error && (
           <>
         <ThemeToggle />
 
