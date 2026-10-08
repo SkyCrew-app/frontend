@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog"
 import { useToast } from "@/components/hooks/use-toast"
 import { Download, Check, Printer, Share2, FileText, Copy } from "lucide-react"
+import { withBasePath } from "@/lib/runtime-config"
 
 interface FlightPlanActionsProps {
   flightPlanId: string | number
@@ -56,7 +57,7 @@ export function FlightPlanActions({ flightPlanId, flightDetails, onExport, onVal
       })
     }
     setIsValidateDialogOpen(false)
-    window.location.href = "/reservations/flight-plans"
+    window.location.href = withBasePath("/reservations/flight-plans")
   }
 
   const handlePrint = () => {

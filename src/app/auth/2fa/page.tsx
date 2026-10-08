@@ -74,7 +74,6 @@ export default function TwoFactorAuthPage() {
         },
       });
 
-      // Clean up after successful verification
       sessionStorage.removeItem('2fa_pending_email');
       router.push("/dashboard");
     } catch (error) {

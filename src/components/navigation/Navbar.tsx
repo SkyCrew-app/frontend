@@ -124,26 +124,6 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
 
   const unreadNotificationsCount = notifications.filter((n) => !n.is_read).length
 
-  if (loading)
-    return (
-      <div className="h-[86px] w-full flex items-center justify-center bg-card border-b border-border">
-        <div className="animate-pulse flex space-x-4">
-          <div className="rounded-full bg-muted h-8 w-8"></div>
-          <div className="flex-1 space-y-2 py-1 max-w-[200px]">
-            <div className="h-2 bg-muted rounded"></div>
-            <div className="h-2 bg-muted rounded w-3/4"></div>
-          </div>
-        </div>
-      </div>
-    )
-
-  if (error)
-    return (
-      <div className="h-[86px] w-full flex items-center justify-center bg-card border-b border-border">
-        <div className="text-destructive">Erreur lors du chargement des informations utilisateur.</div>
-      </div>
-    )
-
   return (
     <header className="sticky top-0 z-30 h-16 w-full flex items-center justify-between px-4 md:px-6 bg-card/80 backdrop-blur-md border-b border-border shadow-sm">
       {/* Left section */}
@@ -167,6 +147,22 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
 
       {/* Right section */}
       <div className="flex items-center space-x-4">
+        {loading && (
+          <div className="animate-pulse flex items-center space-x-4">
+            <div className="rounded-full bg-muted h-10 w-10"></div>
+            <div className="hidden md:block space-y-2">
+              <div className="h-2 w-24 bg-muted rounded"></div>
+              <div className="h-2 w-16 bg-muted rounded"></div>
+            </div>
+          </div>
+        )}
+        {!loading && error && (
+          <div className="text-sm text-destructive">
+            Erreur lors du chargement des informations utilisateur.
+          </div>
+        )}
+        {!loading && !error && (
+          <>
         <ThemeToggle />
 
         {/* Notifications - Custom Dropdown */}
@@ -325,6 +321,8 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
             <span>Déconnexion</span>
           </CustomDropdownItem>
         </CustomDropdown>
+          </>
+        )}
       </div>
     </header>
   )

@@ -216,7 +216,7 @@ export default function AdminHomePage() {
                 </CardContent>
                 <CardFooter className="pt-0">
                   <Button variant="ghost" size="sm" className="text-blue-500 hover:text-blue-700 p-0" asChild>
-                    <a href="/administration">Voir tous les utilisateurs →</a>
+                    <Link href="/administration">Voir tous les utilisateurs →</Link>
                   </Button>
                 </CardFooter>
               </Card>
@@ -240,7 +240,7 @@ export default function AdminHomePage() {
                 </CardContent>
                 <CardFooter className="pt-0">
                   <Button variant="ghost" size="sm" className="text-green-500 hover:text-green-700 p-0" asChild>
-                    <a href="/settings?tab=aircraft">Gérer la flotte →</a>
+                    <Link href="/settings?tab=aircraft">Gérer la flotte →</Link>
                   </Button>
                 </CardFooter>
               </Card>
@@ -266,7 +266,7 @@ export default function AdminHomePage() {
                 </CardContent>
                 <CardFooter className="pt-0">
                   <Button variant="ghost" size="sm" className="text-amber-500 hover:text-amber-700 p-0" asChild>
-                    <a href="/reservations">Voir les réservations →</a>
+                    <Link href="/reservations">Voir les réservations →</Link>
                   </Button>
                 </CardFooter>
               </Card>
@@ -288,7 +288,7 @@ export default function AdminHomePage() {
                 </CardContent>
                 <CardFooter className="pt-0">
                   <Button variant="ghost" size="sm" className="text-indigo-500 hover:text-indigo-700 p-0" asChild>
-                    <a href="/flights">Voir les vols →</a>
+                    <Link href="/flights">Voir les vols →</Link>
                   </Button>
                 </CardFooter>
               </Card>
@@ -309,10 +309,10 @@ export default function AdminHomePage() {
                     className="h-auto flex flex-col items-center justify-center p-4 gap-2 hover:bg-muted/50"
                     asChild
                   >
-                    <a href="/administration">
+                    <Link href="/administration">
                       <Users className="h-6 w-6 mb-1 text-blue-500" />
                       <span className="text-sm text-center">Utilisateurs</span>
-                    </a>
+                    </Link>
                   </Button>
 
                   <Button
@@ -320,10 +320,10 @@ export default function AdminHomePage() {
                     className="h-auto flex flex-col items-center justify-center p-4 gap-2 hover:bg-muted/50"
                     asChild
                   >
-                    <a href="/settings?tab=aircraft">
+                    <Link href="/settings?tab=aircraft">
                       <Plane className="h-6 w-6 mb-1 text-green-500" />
                       <span className="text-sm text-center">Avions</span>
-                    </a>
+                    </Link>
                   </Button>
 
                   <Button
@@ -331,10 +331,10 @@ export default function AdminHomePage() {
                     className="h-auto flex flex-col items-center justify-center p-4 gap-2 hover:bg-muted/50"
                     asChild
                   >
-                    <a href="/admin-e-learning">
+                    <Link href="/admin-e-learning">
                       <Award className="h-6 w-6 mb-1 text-amber-500" />
                       <span className="text-sm text-center">Formation</span>
-                    </a>
+                    </Link>
                   </Button>
 
                   <Button
@@ -342,10 +342,10 @@ export default function AdminHomePage() {
                     className="h-auto flex flex-col items-center justify-center p-4 gap-2 hover:bg-muted/50"
                     asChild
                   >
-                    <a href="/finance">
+                    <Link href="/finance">
                       <CreditCard className="h-6 w-6 mb-1 text-indigo-500" />
                       <span className="text-sm text-center">Finances</span>
-                    </a>
+                    </Link>
                   </Button>
 
                   <Button
@@ -353,10 +353,10 @@ export default function AdminHomePage() {
                     className="h-auto flex flex-col items-center justify-center p-4 gap-2 hover:bg-muted/50"
                     asChild
                   >
-                    <a href="/articles-admin">
+                    <Link href="/articles-admin">
                       <FileText className="h-6 w-6 mb-1 text-purple-500" />
                       <span className="text-sm text-center">Articles</span>
-                    </a>
+                    </Link>
                   </Button>
 
                   <Button
@@ -364,10 +364,10 @@ export default function AdminHomePage() {
                     className="h-auto flex flex-col items-center justify-center p-4 gap-2 hover:bg-muted/50"
                     asChild
                   >
-                    <a href="/settings">
+                    <Link href="/settings">
                       <Settings className="h-6 w-6 mb-1 text-gray-500" />
                       <span className="text-sm text-center">Paramètres</span>
-                    </a>
+                    </Link>
                   </Button>
                 </div>
               </CardContent>
@@ -514,7 +514,7 @@ export default function AdminHomePage() {
               </CardContent>
               <CardFooter>
                 <Button variant="outline" className="w-full" asChild>
-                  <a href="/reservations">Voir toutes les réservations</a>
+                  <Link href="/reservations">Voir toutes les réservations</Link>
                 </Button>
               </CardFooter>
             </Card>
@@ -571,7 +571,7 @@ export default function AdminHomePage() {
                 </CardContent>
                 <CardFooter>
                   <Button variant="outline" className="w-full" asChild>
-                    <a href="/flights">Voir tous les vols</a>
+                    <Link href="/flights">Voir tous les vols</Link>
                   </Button>
                 </CardFooter>
               </Card>
@@ -621,7 +621,7 @@ export default function AdminHomePage() {
                 </CardContent>
                 <CardFooter>
                   <Button variant="outline" className="w-full" asChild>
-                    <a href="/incidents">Voir tous les incidents</a>
+                    <Link href="/incidents">Voir tous les incidents</Link>
                   </Button>
                 </CardFooter>
               </Card>

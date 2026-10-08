@@ -1,6 +1,7 @@
 'use client';
 
 import { useMutation } from '@apollo/client';
+import { useQuery } from '@apollo/client';
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,8 +12,15 @@ import { AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { LOGIN_MUTATION } from '@/graphql/system';
+import { GET_ME } from '@/graphql/user';
 import { useToast } from "@/components/hooks/use-toast";
 import { loginSchema } from '@/lib/validations';
+
+const DEMO_ACCOUNTS = [
+  { label: 'Admin démo', email: 'demo@skycrew.fr', password: 'demo1234' },
+  { label: 'Pilote démo', email: 'jean.dupont@skycrew.fr', password: 'demo1234' },
+  { label: 'Instructeur démo', email: 'marie.laurent@skycrew.fr', password: 'demo1234' },
+];
 
 export default function LoginPage() {
   const router = useRouter();
@@ -22,13 +30,16 @@ export default function LoginPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [login, { loading }] = useMutation(LOGIN_MUTATION);
   const { toast } = useToast();
+  const { data: meData } = useQuery(GET_ME, {
+    fetchPolicy: 'network-only',
+  });
+  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 
   useEffect(() => {
-    const token = document.cookie.split('; ').find(row => row.startsWith('token='))?.split('=')[1];
-    if (token) {
+    if (meData?.me?.email) {
       router.push('/dashboard');
     }
-  }, [router]);
+  }, [meData, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,9 +58,7 @@ export default function LoginPage() {
 
     try {
       const response = await login({ variables: { email, password } });
-      const { access_token, is2FAEnabled } = response.data.login;
-
-      document.cookie = `token=${access_token}; path=/`;
+      const { is2FAEnabled } = response.data.login;
 
       toast({
         title: "Connexion réussie",
@@ -69,6 +78,13 @@ export default function LoginPage() {
         description: "Identifiants incorrects.",
       });
     }
+  };
+
+  const applyDemoCredentials = (demoEmail: string, demoPassword: string) => {
+    setEmail(demoEmail);
+    setPassword(demoPassword);
+    setFieldErrors({});
+    setError('');
   };
 
   return (
@@ -120,6 +136,30 @@ export default function LoginPage() {
               {loading ? 'Connexion...' : 'Se connecter'}
             </Button>
           </form>
+          {isDemoMode && (
+            <div className="mt-6 rounded-lg border border-border bg-muted/40 p-4 space-y-3">
+              <div>
+                <p className="text-sm font-medium">Accès démo</p>
+                <p className="text-xs text-muted-foreground">
+                  Utilise un de ces comptes pour explorer le site en lecture seule.
+                </p>
+              </div>
+              <div className="space-y-2">
+                {DEMO_ACCOUNTS.map((account) => (
+                  <button
+                    key={account.email}
+                    type="button"
+                    onClick={() => applyDemoCredentials(account.email, account.password)}
+                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-left hover:bg-accent transition-colors"
+                  >
+                    <p className="text-sm font-medium">{account.label}</p>
+                    <p className="text-xs text-muted-foreground">{account.email}</p>
+                    <p className="text-xs text-muted-foreground">Mot de passe: {account.password}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="text-center mt-4">
             <Link href="/auth/forgot-password" passHref>
               <Button variant="link">Mot de passe oublié ?</Button>

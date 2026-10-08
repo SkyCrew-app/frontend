@@ -25,6 +25,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Separator } from "@/components/ui/separator"
 import { useState, useEffect } from "react"
+import { getBackendBaseUrl } from "@/lib/runtime-config"
 
 export default function ArticlePage() {
   const { id } = useParams()
@@ -211,7 +212,7 @@ END:VCALENDAR`
               <img
                 src={
                   article.photo_url
-                    ? `${process.env.NEXT_PUBLIC_API_URL}${article.photo_url}`
+                    ? `${getBackendBaseUrl()}${article.photo_url}`
                     : "https://via.placeholder.com/1200x600?text=Article+Image"
                 }
                 alt={article.title}
@@ -345,7 +346,7 @@ END:VCALENDAR`
                     <img
                       src={
                         relatedArticle.photo_url
-                          ? `${process.env.NEXT_PUBLIC_API_URL}${relatedArticle.photo_url}`
+                          ? `${getBackendBaseUrl()}${relatedArticle.photo_url}`
                           : "https://via.placeholder.com/300x200?text=Article"
                       }
                       alt={relatedArticle.title}
