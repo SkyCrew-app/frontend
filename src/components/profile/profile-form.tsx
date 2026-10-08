@@ -13,6 +13,7 @@ import { useToast } from "@/components/hooks/use-toast"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
 import { motion } from "framer-motion"
+import { getBackendBaseUrl } from "@/lib/runtime-config"
 
 interface ProfileFormProps {
   userData: any
@@ -256,7 +257,7 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
                   <AvatarImage src={previewImage} alt="Aperçu de la photo de profil" />
                 ) : formData.profile_picture ? (
                   <AvatarImage
-                    src={`${process.env.NEXT_PUBLIC_API_URL}${formData.profile_picture}`}
+                    src={`${getBackendBaseUrl()}${formData.profile_picture}`}
                     alt="Photo de profil"
                   />
                 ) : (

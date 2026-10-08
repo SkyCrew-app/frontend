@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { ServerOff, AlertTriangle, RefreshCw, Home, Clock, Loader2, AlertCircle, CheckCircle2 } from "lucide-react"
 import Link from "next/link"
+import { getGraphqlUrl, withBasePath } from "@/lib/runtime-config"
 
 type PageState = "loading" | "error" | "unavailable" | "available"
 
@@ -21,7 +22,7 @@ export default function SiteDownPage() {
     const checkServiceStatus = async () => {
       try {
         // Vérification réelle du backend
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/graphql`, {
+        const response = await fetch(getGraphqlUrl(), {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -55,7 +56,7 @@ export default function SiteDownPage() {
 
           // Rediriger vers la page d'accueil après un court délai
           setTimeout(() => {
-            window.location.href = "/"
+            window.location.href = withBasePath("/")
           }, 2000)
         } else {
           setPageState("unavailable")
