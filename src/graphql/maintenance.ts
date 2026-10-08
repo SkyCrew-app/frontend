@@ -27,8 +27,8 @@ export const GET_ALL_MAINTENANCES = gql`
 `;
 
 export const CREATE_MAINTENANCE = gql`
-  mutation CreateMaintenance($maintenance: MaintenanceInput!) {
-    createMaintenance(maintenance: $maintenance) {
+  mutation CreateMaintenance($createMaintenanceInput: CreateMaintenanceInput!) {
+    createMaintenance(createMaintenanceInput: $createMaintenanceInput) {
       id
       start_date
       end_date
