@@ -12,6 +12,7 @@ export const GET_FILTERED_RESERVATIONS = gql`
       notes
       flight_category
       user {
+        id
         first_name
       }
       aircraft {

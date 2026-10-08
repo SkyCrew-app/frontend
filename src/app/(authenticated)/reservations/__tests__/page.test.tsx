@@ -16,6 +16,7 @@ const AFTER_TOMORROW_STR = '2024-10-25';
 
 const USER_EMAIL = 'pilote@example.com';
 const USER_ID = 42;
+const OTHER_USER_ID = 7;
 
 const buildAircraft = (id: number, registration_number: string) => ({
   id,
@@ -46,7 +47,7 @@ const existingReservation = {
   status: 'PENDING',
   notes: 'Prévoir le plein avant le départ',
   flight_category: 'TRAINING',
-  user: { first_name: 'Camille' },
+  user: { id: OTHER_USER_ID, first_name: 'Camille' },
   aircraft: { id: 1, registration_number: 'F-ABCD' },
 };
 
@@ -59,7 +60,7 @@ const createdReservation = {
   status: 'PENDING',
   notes: '',
   flight_category: '',
-  user: { first_name: 'Alex' },
+  user: { id: USER_ID, first_name: 'Alex' },
   aircraft: { id: 2, registration_number: 'F-EFGH' },
 };
 
@@ -263,6 +264,26 @@ describe('ReservationCalendar', () => {
     expect(details.getByText('2 heure(s)')).toBeInTheDocument();
     expect(details.getByText('Entraînement')).toBeInTheDocument();
     expect(details.getByText('Prévoir le plein avant le départ')).toBeInTheDocument();
+    expect(details.queryByRole('button', { name: 'Modifier' })).not.toBeInTheDocument();
+    expect(details.queryByRole('button', { name: 'Supprimer' })).not.toBeInTheDocument();
+  });
+
+  it("doit proposer de modifier et de supprimer une réservation à son propriétaire", async () => {
+    const user = userEvent.setup();
+    renderPage([
+      meMock,
+      userMock,
+      settingsMock,
+      aircraftsMock,
+      reservationsMock(TODAY_STR, TOMORROW_STR, [createdReservation]),
+    ]);
+    await screen.findByRole('table');
+
+    await user.click(screen.getByText('Vol local'));
+
+    const dialog = await screen.findByRole('dialog', { name: 'Détails de la réservation' });
+    expect(await within(dialog).findByRole('button', { name: 'Modifier' })).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: 'Supprimer' })).toBeInTheDocument();
   });
 
   it("doit masquer la grille et prévenir l'utilisateur quand le jour suivant est un jour de fermeture", async () => {
