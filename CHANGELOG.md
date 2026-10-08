@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.2.1](https://github.com/SkyCrew-app/frontend/compare/2.2.0...2.2.1) (2026-10-08)
+
+
+### Bug Fixes
+
+* **fleet:** :bug: repair the history pagination ([#68](https://github.com/SkyCrew-app/frontend/issues/68)) ([65a4d59](https://github.com/SkyCrew-app/frontend/commit/65a4d59dd9defa4ad0b98907e932cf7b64a58d34))
+* **maintenance:** :bug: repair the error state, creation and deletion ([#65](https://github.com/SkyCrew-app/frontend/issues/65)) ([dec4ae6](https://github.com/SkyCrew-app/frontend/commit/dec4ae6fd445a423cddcc56e154cbafa6f117d94))
+* **profile:** :bug: report a successful password change ([#67](https://github.com/SkyCrew-app/frontend/issues/67)) ([346c973](https://github.com/SkyCrew-app/frontend/commit/346c97397a0045a59c98e7a629d99e6b1fe1f15e))
+* **reservations:** :bug: let owners edit and delete their reservations ([#66](https://github.com/SkyCrew-app/frontend/issues/66)) ([2cc5bd5](https://github.com/SkyCrew-app/frontend/commit/2cc5bd56edd8ef65c690dc7db28c23b38630bde8))
+
 ## [2.2.0](https://github.com/SkyCrew-app/frontend/compare/2.1.0...2.2.0) (2026-10-08)
 
 
