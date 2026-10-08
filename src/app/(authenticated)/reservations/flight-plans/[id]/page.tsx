@@ -373,7 +373,7 @@ export default function FlightPlanDetails() {
         if (arrInfo) setMapFocus({ center: [arrInfo.lon, arrInfo.lat], zoom: 10 })
         break
       case "waypoints":
-        if (wps?.length > 0) {
+        if (Array.isArray(wps) && wps.length > 0) {
           const lats = wps.map((wp: any) => wp.lat)
           const lons = wps.map((wp: any) => wp.lon)
           setMapFocus({
