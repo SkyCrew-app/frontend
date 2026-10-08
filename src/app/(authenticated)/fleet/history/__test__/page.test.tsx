@@ -187,6 +187,34 @@ describe('AircraftHistory Component', () => {
     expect(
       card.queryByText(period(reservations[0].start_time, reservations[0].end_time)),
     ).not.toBeInTheDocument();
+    expect(card.getByText('Page 2 sur 2')).toBeInTheDocument();
+    expect(card.getByRole('button', { name: 'Suivant' })).toBeDisabled();
+    expect(card.getByRole('button', { name: 'Précédent' })).toBeEnabled();
+
+    await user.click(card.getByRole('button', { name: 'Précédent' }));
+
+    expect(card.getByText('Page 1 sur 2')).toBeInTheDocument();
+    expect(card.getAllByRole('listitem')).toHaveLength(5);
+    expect(
+      card.getByText(period(reservations[0].start_time, reservations[0].end_time)),
+    ).toBeInTheDocument();
+  });
+
+  it("doit revenir sur une page existante quand un filtre réduit la liste", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText('F-ABCD');
+
+    const card = getAircraftCard('F-ABCD');
+    await user.click(card.getByRole('button', { name: 'Suivant' }));
+    expect(card.getByText('Page 2 sur 2')).toBeInTheDocument();
+
+    await user.click(card.getByRole('button', { name: 'Filtres' }));
+    await user.type(await screen.findByPlaceholderText("Nom de l'utilisateur"), 'alice');
+
+    const items = card.getAllByRole('listitem');
+    expect(items).toHaveLength(2);
+    items.forEach((item) => expect(within(item).getByText('Alice Martin')).toBeInTheDocument());
   });
 
   it("doit filtrer les réservations par nom d'utilisateur", async () => {
