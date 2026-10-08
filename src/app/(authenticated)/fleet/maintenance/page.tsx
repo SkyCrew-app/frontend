@@ -15,6 +15,7 @@ import { MaintenanceTabs } from "@/components/maintenance/maintenance-tabs"
 import { MaintenanceTable } from "@/components/maintenance/maintenance-table"
 import { MaintenanceDetailDialog } from "@/components/maintenance/maintenance-detail-dialog"
 import { MaintenanceFormDialog } from "@/components/maintenance/maintenance-form-dialog"
+import { toMaintenanceInput } from "@/lib/maintenance"
 import type { DateRange } from "react-day-picker"
 
 enum MaintenanceType {
@@ -83,12 +84,18 @@ export default function MaintenanceTablePage() {
     )
 
   if (error) {
-    toast({
-      variant: "destructive",
-      title: "Erreur",
-      description: "Impossible de charger les maintenances. Veuillez réessayer plus tard.",
-    })
-    return null
+    return (
+      <div className="container mx-auto py-6 space-y-4" role="alert">
+        <h1 className="text-2xl font-bold">Erreur de chargement</h1>
+        <p className="text-muted-foreground">
+          Impossible de charger les maintenances. Veuillez réessayer plus tard.
+        </p>
+        <Button variant="outline" size="sm" onClick={() => refetch()}>
+          <RefreshCwIcon className="h-4 w-4 mr-2" aria-hidden="true" />
+          Réessayer
+        </Button>
+      </div>
+    )
   }
 
   const maintenances: Maintenance[] = data?.getAllMaintenances || []
@@ -153,7 +160,7 @@ export default function MaintenanceTablePage() {
   const handleDeleteMaintenance = async (maintenanceId: string) => {
     try {
       await deleteMaintenance({
-        variables: { id: maintenanceId },
+        variables: { id: Number.parseInt(maintenanceId, 10) },
         refetchQueries: [{ query: GET_ALL_MAINTENANCES }],
       })
       toast({
@@ -176,33 +183,15 @@ export default function MaintenanceTablePage() {
         await updateMaintenance({
           variables: {
             updateMaintenanceInput: {
-              id: parseInt(formData.id, 10),
-              aircraft_id: formData.aircraft_id,
-              maintenance_type: formData.maintenance_type,
-              status: formData.status,
-              start_date: formData.start_date,
-              end_date: formData.end_date,
-              description: formData.description,
-              maintenance_cost: Number.parseFloat(formData.maintenance_cost) || 0,
-              technician_id: formData.technician_id ? parseInt(formData.technician_id, 10) : null,
-            }
+              id: Number.parseInt(formData.id, 10),
+              ...toMaintenanceInput(formData),
+            },
           },
           refetchQueries: [{ query: GET_ALL_MAINTENANCES }],
         })
       } else {
         await createMaintenance({
-          variables: {
-            input: {
-              aircraft_id: formData.aircraft_id,
-              maintenance_type: formData.maintenance_type,
-              status: formData.status,
-              start_date: formData.start_date,
-              end_date: formData.end_date,
-              description: formData.description,
-              maintenance_cost: Number.parseFloat(formData.maintenance_cost) || 0,
-              technician_id: formData.technician_id || null,
-            },
-          },
+          variables: { createMaintenanceInput: toMaintenanceInput(formData) },
           refetchQueries: [{ query: GET_ALL_MAINTENANCES }],
         })
       }

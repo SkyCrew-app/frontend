@@ -3,7 +3,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MockedProvider, type MockedResponse } from '@apollo/client/testing';
 import MaintenanceTablePage from '../page';
-import { GET_ALL_MAINTENANCES } from '@/graphql/maintenance';
+import { DELETE_MAINTENANCE, GET_ALL_MAINTENANCES } from '@/graphql/maintenance';
 import { GET_USERS } from '@/graphql/user';
 import { GET_AIRCRAFTS } from '@/graphql/planes';
 
@@ -141,12 +141,6 @@ describe('MaintenanceTablePage', () => {
     expect(screen.getByText('Affichage de 1 à 3 sur 3 maintenances')).toBeInTheDocument();
   });
 
-  // NOTE : l'état d'erreur de GET_ALL_MAINTENANCES n'est volontairement pas testé ici.
-  // La page appelle `toast()` pendant le rendu (bloc `if (error)`), ce qui déclenche un
-  // setState sur elle-même via useToast et fait planter React ("Too many re-renders").
-  // Un test fidèle à l'intention (notification + page vide) échoue donc tant que le
-  // code source n'est pas corrigé ; il ne faut pas figer ce plantage dans un test.
-
   it('doit ouvrir le formulaire de création depuis le bouton "Nouvelle Maintenance"', async () => {
     const user = userEvent.setup();
     renderPage();
@@ -270,5 +264,55 @@ describe('MaintenanceTablePage', () => {
     expect(screen.getByText('Affichage de 11 à 12 sur 12 maintenances')).toBeInTheDocument();
     expect(screen.getByLabelText('Page 2')).toHaveAttribute('aria-current', 'page');
     expect(screen.queryByLabelText('Page suivante')).not.toBeInTheDocument();
+  });
+  it("doit afficher un message d'erreur et permettre de réessayer si le chargement échoue", async () => {
+    const user = userEvent.setup();
+    renderPage([
+      { request: { query: GET_ALL_MAINTENANCES }, error: new Error('Erreur réseau') },
+      usersMock,
+      aircraftsMock,
+      maintenancesMock(mockMaintenances),
+    ]);
+
+    const alert = await screen.findByRole('alert');
+    expect(within(alert).getByText('Erreur de chargement')).toBeInTheDocument();
+    expect(
+      within(alert).getByText('Impossible de charger les maintenances. Veuillez réessayer plus tard.'),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+
+    await user.click(within(alert).getByRole('button', { name: 'Réessayer' }));
+
+    expect(await screen.findByText('F-ABCD')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('doit supprimer la maintenance après confirmation et rafraîchir le tableau', async () => {
+    const user = userEvent.setup();
+    renderPage([
+      maintenancesMock(mockMaintenances),
+      usersMock,
+      aircraftsMock,
+      {
+        request: { query: DELETE_MAINTENANCE, variables: { id: 1 } },
+        result: { data: { deleteMaintenance: true } },
+      },
+      maintenancesMock(mockMaintenances.slice(1)),
+    ]);
+    await screen.findByText('F-ABCD');
+
+    await user.click(screen.getByRole('button', { name: 'Voir les détails de la maintenance pour F-ABCD' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Détails de la Maintenance' });
+    await user.click(within(dialog).getByRole('button', { name: /Supprimer/ }));
+
+    const confirmation = await screen.findByRole('alertdialog');
+    expect(
+      within(confirmation).getByText('Êtes-vous sûr de vouloir supprimer cette maintenance ?'),
+    ).toBeInTheDocument();
+    await user.click(within(confirmation).getByRole('button', { name: /Supprimer/ }));
+
+    await waitFor(() => expect(screen.queryByText('F-ABCD')).not.toBeInTheDocument());
+    expect(screen.getByText('F-WXYZ')).toBeInTheDocument();
+    expect(getDataRows()).toHaveLength(2);
   });
 });
