@@ -12,11 +12,7 @@ import { useToast } from "@/components/hooks/use-toast"
 import { cn } from "@/lib/utils"
 import { motion } from "framer-motion"
 
-interface PasswordFormProps {
-  userId: string | null
-}
-
-export function PasswordForm({ userId }: PasswordFormProps) {
+export function PasswordForm() {
   const [currentPassword, setCurrentPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -75,13 +71,12 @@ export function PasswordForm({ userId }: PasswordFormProps) {
     try {
       const { data } = await updatePassword({
         variables: {
-          userId: userId,
           currentPassword,
           newPassword,
         },
       })
 
-      if (data?.updatePassword?.success) {
+      if (data?.updatePassword?.id) {
         toast({
           title: "Succès",
           description: "Votre mot de passe a été modifié avec succès.",
@@ -95,7 +90,7 @@ export function PasswordForm({ userId }: PasswordFormProps) {
         toast({
           variant: "destructive",
           title: "Erreur",
-          description: data?.updatePassword?.message || "Erreur lors de la modification du mot de passe.",
+          description: "Erreur lors de la modification du mot de passe.",
         })
       }
     } catch (error) {

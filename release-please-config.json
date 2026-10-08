@@ -58,7 +58,5 @@
     ".": {
       "package-name": "skycrew-frontend"
     }
-  },
-  "separate-pull-requests": false,
-  "group-pull-request-title-pattern": "chore: :bookmark: release ${branch}"
+  }
 }

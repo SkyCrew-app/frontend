@@ -407,7 +407,8 @@ export default function ReservationCalendar() {
   }
 
   const canEditReservation = (reservation: Reservation) => {
-    return userId === reservation.user?.id
+    const ownerId = reservation.user?.id
+    return userId != null && ownerId != null && String(userId) === String(ownerId)
   }
 
   if (loadingReservations || loadingAircrafts || loadingSettings) {
