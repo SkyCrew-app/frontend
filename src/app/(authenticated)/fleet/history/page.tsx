@@ -43,12 +43,6 @@ export default function AircraftHistory() {
     );
   }
 
-  const paginate = (items: any[], aircraftId: string, type: 'reservations' | 'maintenances') => {
-    const page = currentPage[`${aircraftId}-${type}`] || 1;
-    const startIndex = (page - 1) * itemsPerPage;
-    return items.slice(startIndex, startIndex + itemsPerPage);
-  };
-
   const handlePageChange = (aircraftId: string, type: 'reservations' | 'maintenances', newPage: number) => {
     setCurrentPage(prev => ({
       ...prev,
@@ -101,7 +95,7 @@ export default function AircraftHistory() {
                     items={applyFilters(aircraft.reservations, 'reservations')}
                     aircraftId={aircraft.id}
                     type="reservations"
-                    paginate={paginate}
+                    page={currentPage[`${aircraft.id}-reservations`] || 1}
                     handlePageChange={handlePageChange}
                     itemsPerPage={itemsPerPage}
                     filters={filters}
@@ -122,7 +116,7 @@ export default function AircraftHistory() {
                     items={applyFilters(aircraft.maintenances, 'maintenances')}
                     aircraftId={aircraft.id}
                     type="maintenances"
-                    paginate={paginate}
+                    page={currentPage[`${aircraft.id}-maintenances`] || 1}
                     handlePageChange={handlePageChange}
                     itemsPerPage={itemsPerPage}
                     filters={filters}
@@ -148,20 +142,22 @@ export default function AircraftHistory() {
   );
 }
 
-function HistoryList({ items, aircraftId, type, paginate, handlePageChange, itemsPerPage, filters, setFilters, renderItem }: {
+function HistoryList({ items, aircraftId, type, page, handlePageChange, itemsPerPage, filters, setFilters, renderItem }: {
   items: any[];
   aircraftId: string;
   type: 'reservations' | 'maintenances';
-  paginate: (items: any[], aircraftId: string, type: 'reservations' | 'maintenances') => any[];
+  page: number;
   handlePageChange: (aircraftId: string, type: 'reservations' | 'maintenances', newPage: number) => void;
   itemsPerPage: number;
   filters: Record<string, any>;
   setFilters: React.Dispatch<React.SetStateAction<Record<string, any>>>;
   renderItem: (item: any) => React.ReactNode;
 }) {
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const paginatedItems = paginate(items, aircraftId, type);
-  const totalPages = Math.ceil(items.length / itemsPerPage);
+  const totalPages = Math.max(1, Math.ceil(items.length / itemsPerPage));
+  // A filter can shrink the list below the page the user was on.
+  const currentPage = Math.min(Math.max(page, 1), totalPages);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedItems = items.slice(startIndex, startIndex + itemsPerPage);
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters((prev: Record<string, any>) => ({ ...prev, [key]: value }));
