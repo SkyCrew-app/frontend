@@ -1,10 +1,11 @@
-import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client';
+import { ApolloClient, InMemoryCache } from '@apollo/client';
 import { onError } from "@apollo/client/link/error";
 import { createUploadLink } from 'apollo-upload-client';
 import { CachePersistor, LocalStorageWrapper } from 'apollo3-cache-persist';
+import { getGraphqlUrl } from './runtime-config';
 
 const uploadLink = createUploadLink({
-  uri: process.env.NEXT_PUBLIC_API_URL,
+  uri: getGraphqlUrl(),
   credentials: 'include',
   headers: {
     "Apollo-Require-Preflight": "true",

@@ -35,6 +35,7 @@ import Link from "next/link"
 import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useMediaQuery } from "@/hooks/use-media-query"
+import { withBasePath } from "@/lib/runtime-config"
 
 export default function CourseDetails() {
   const { id } = useParams()
@@ -251,7 +252,10 @@ export default function CourseDetails() {
           <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0 grid gap-4 sm:gap-6">
             <div className="flex flex-row items-center gap-3 sm:gap-4">
               <Avatar className="h-14 w-14 sm:h-20 sm:w-20 flex-shrink-0">
-                <AvatarImage src="/placeholder.svg?height=80&width=80" alt={course.instructor.first_name} />
+                <AvatarImage
+                  src={withBasePath("/placeholder.svg?height=80&width=80")}
+                  alt={course.instructor.first_name}
+                />
                 <AvatarFallback>
                   <User className="h-7 w-7 sm:h-10 sm:w-10" />
                 </AvatarFallback>
@@ -289,7 +293,10 @@ export default function CourseDetails() {
             <div className="flex flex-row items-center justify-between gap-2 sm:gap-4">
               <div className="flex items-center space-x-3 sm:space-x-4">
                 <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
-                  <AvatarImage src="/placeholder.svg?height=40&width=40" alt={course.student.first_name} />
+                  <AvatarImage
+                    src={withBasePath("/placeholder.svg?height=40&width=40")}
+                    alt={course.student.first_name}
+                  />
                   <AvatarFallback>
                     <User className="h-4 w-4 sm:h-5 sm:w-5" />
                   </AvatarFallback>
@@ -532,7 +539,10 @@ export default function CourseDetails() {
                         <li key={comment.id} className="bg-muted/40 p-4 rounded-lg">
                           <div className="flex items-start space-x-4">
                             <Avatar className="mt-1">
-                              <AvatarImage src="/placeholder.svg?height=40&width=40" alt={comment.author.first_name} />
+                              <AvatarImage
+                                src={withBasePath("/placeholder.svg?height=40&width=40")}
+                                alt={comment.author.first_name}
+                              />
                               <AvatarFallback>
                                 <User className="h-4 w-4" />
                               </AvatarFallback>
