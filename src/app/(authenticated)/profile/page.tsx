@@ -131,7 +131,7 @@ export default function ProfilePage() {
           </TabsContent>
 
           <TabsContent value="security" className="space-y-4">
-            <PasswordForm userId={userId} />
+            <PasswordForm />
 
             <div className="border rounded-lg p-4 shadow-sm">
               <h3 className="text-xl font-semibold mb-2">Authentification à deux facteurs (2FA)</h3>
@@ -318,7 +318,7 @@ export default function ProfilePage() {
                 Retour
               </Button>
             </div>
-            <PasswordForm userId={userId} />
+            <PasswordForm />
           </div>
         </motion.div>
       )}
