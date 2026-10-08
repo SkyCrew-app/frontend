@@ -181,7 +181,10 @@ export const GET_USER_DETAILS = gql`
 
 export const VERIFY_2FA_SECRET = gql`
   mutation Verify2FA($email: String!, $token: String!) {
-    verify2FA(email: $email, token: $token)
+    verify2FA(email: $email, token: $token) {
+      access_token
+      is2FAEnabled
+    }
   }
 `;
 
