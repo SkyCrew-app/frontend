@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.3.1](https://github.com/SkyCrew-app/frontend/compare/2.3.0...2.3.1) (2026-10-09)
+
+
+### Bug Fixes
+
+* :bug: load uploaded files from the configured backend ([#86](https://github.com/SkyCrew-app/frontend/issues/86)) ([4525d7c](https://github.com/SkyCrew-app/frontend/commit/4525d7c40f7ae4629f47a551a5f4c38088d27f3f))
+* **notifications:** :bug: connect the live notifications with the session ([#85](https://github.com/SkyCrew-app/frontend/issues/85)) ([a3e2031](https://github.com/SkyCrew-app/frontend/commit/a3e20312d017717623fce2d3b0e9d7971f24eebd))
+
 ## [2.3.0](https://github.com/SkyCrew-app/frontend/compare/2.2.2...2.3.0) (2026-10-09)
 
 
