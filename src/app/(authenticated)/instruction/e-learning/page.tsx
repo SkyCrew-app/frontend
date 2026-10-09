@@ -79,7 +79,7 @@ export default function ELearningPage() {
     error: lessonError,
   } = useQuery(GET_LESSON_CONTENT, {
     variables: { lessonId: selectedLesson?.id, userId },
-    skip: !selectedLesson,
+    skip: !selectedLesson || !userId,
   })
 
   const {
@@ -88,7 +88,7 @@ export default function ELearningPage() {
     error: progressError,
   } = useQuery(GET_COURSE_PROGRESS, {
     variables: { userId, courseId: selectedCourseId ? Number.parseFloat(selectedCourseId) : null },
-    skip: !selectedCourseId,
+    skip: !selectedCourseId || !userId,
   })
 
   useEffect(() => {

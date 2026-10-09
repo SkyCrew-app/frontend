@@ -21,6 +21,7 @@ import { toast } from "@/components/hooks/use-toast"
 import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
 import { aviationAPI, calculateDistance, calculateEstimatedTime } from "@/lib/aviation-api"
 import type { Airport, Waypoint } from "@/lib/aviation-api"
+import { buildCreateFlightInput } from "@/lib/graphql-inputs"
 
 enum FlightCategory {
   VFR = "VFR",
@@ -138,15 +139,19 @@ export default function CreateCustomFlightPlan() {
   }
 
   const handleSubmit = async () => {
+    const createFlightInput = buildCreateFlightInput(flightPlan, userId, reservationId)
+    if (!createFlightInput) {
+      toast({
+        variant: "destructive",
+        title: "Utilisateur non chargé",
+        description: "Vos informations utilisateur sont encore en cours de chargement. Veuillez réessayer.",
+      })
+      return
+    }
+
     try {
       const { data } = await createFlight({
-        variables: {
-          createFlightInput: {
-            ...flightPlan,
-            user_id: userId,
-            reservation_id: reservationId ? Number.parseInt(reservationId) : null,
-          },
-        },
+        variables: { createFlightInput },
       })
 
       if (data && data.createFlight) {
@@ -374,7 +379,10 @@ export default function CreateCustomFlightPlan() {
               {currentStep < steps.length - 1 ? (
                 <Button onClick={handleNext}>Suivant</Button>
               ) : (
-                <Button onClick={handleSubmit} disabled={createLoading} className="bg-green-500 hover:bg-green-600">
+                <Button
+                  onClick={handleSubmit}
+                  disabled={createLoading || userId === null}
+                  className="bg-green-500 hover:bg-green-600">
                   {createLoading ? (
                     <>
                       <Spinner className="mr-2" />

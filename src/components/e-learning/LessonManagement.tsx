@@ -52,6 +52,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "@/components/hooks/use-toast"
 import { WysiwygEditor } from "@/components/ui/wysiwyg-editor"
 import { AttachmentsInput } from "@/components/ui/attachments-input"
+import { optionalIdField } from "@/lib/graphql-inputs"
 
 export function LessonManagement() {
   const [title, setTitle] = useState("")
@@ -179,7 +180,7 @@ export function LessonManagement() {
             content: editingLesson.content,
             video_url: editingLesson.video_url,
             attachments: editingLesson.attachments,
-            moduleId: Number.parseInt(editingLesson.moduleId),
+            ...optionalIdField("moduleId", editingLesson.moduleId),
           },
         },
       })
