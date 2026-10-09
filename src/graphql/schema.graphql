@@ -1,0 +1,1705 @@
+input AddCommentInput {
+  author: Int!
+  content: String!
+  courseId: Int!
+}
+
+input AddCompetencyInput {
+  courseId: Int!
+  description: String
+  name: String!
+}
+
+type Administration {
+  address: String!
+  allowGuestPilots: Boolean!
+  closureDays: [String!]
+  clubName: String!
+  clubRules: String!
+  contactEmail: String!
+  contactPhone: String!
+  flightHourRate: Float
+  fuelManagement: String!
+  fuelPrice: Float
+  guestPilotFee: Float
+  id: Int!
+  isMaintenanceActive: Boolean!
+  maintenanceDay: String
+  maintenanceDuration: Int
+  maintenanceMessage: String
+  maintenanceTime: DateTime
+  membershipFee: Float
+  pilotLicenses: [String!]
+  reservationEndTime: String!
+  reservationStartTime: String!
+  taxonomies: Taxonomies!
+  timeSlotDuration: Int!
+}
+
+type Aircraft {
+  audits: [Audit!]!
+  availability_status: AvailabilityStatus!
+  consumption: Int!
+  cruiseSpeed: Int!
+  documents_url: [String!]
+  empty_weight: Float
+  fuel_capacity: Float
+  fuel_type: String
+  hourly_cost: Float!
+  id: Int!
+  image_url: String
+  maintenance_status: String!
+  maintenances: [Maintenance!]!
+  maxAltitude: Int!
+  max_takeoff_weight: Float
+  model: String!
+  registration_number: String!
+  reservations: [Reservation!]!
+  total_flight_hours: Float!
+  year_of_manufacture: Int!
+}
+
+type AircraftAuditStats {
+  aircraftId: Int!
+  auditCount: Int!
+  nonConformCount: Int!
+  registration: String!
+}
+
+type Answer {
+  """The user-provided answer text"""
+  answer_text: String
+  id: Int!
+
+  """Indicates if the answer is correct"""
+  is_correct: Boolean!
+
+  """The question being answered"""
+  question: Question!
+
+  """The date the answer was submitted"""
+  submitted_at: DateTime!
+
+  """The user who provided the answer"""
+  user: User!
+}
+
+type Article {
+  calendarLink: String
+  createdAt: DateTime!
+  description: String!
+  documents_url: [String!]
+  eventDate: DateTime
+  id: Int!
+  photo_url: String
+  tags: [String!]!
+  text: String!
+  title: String!
+  updatedAt: DateTime!
+}
+
+type Audit {
+  aircraft: Aircraft!
+  audit_date: DateTime!
+  audit_frequency: AuditFrequencyType!
+  audit_items: [AuditItem!]
+  audit_notes: String
+  audit_result: AuditResultType!
+  auditor: User!
+  closed_by: User
+  closed_date: DateTime
+  corrective_actions: String
+  created_at: DateTime!
+  id: Int!
+  is_closed: Boolean!
+  next_audit_date: DateTime
+  updated_at: DateTime!
+}
+
+"""Catégories possibles pour les items d'audit"""
+enum AuditCategoryType {
+  AUTRE
+  AVIONIQUE
+  CELLULE
+  DOCUMENTATION
+  EQUIPEMENT_SECURITE
+  MOTEUR
+  SYSTEME_CARBURANT
+  SYSTEME_ELECTRIQUE
+  TRAIN_ATTERRISSAGE
+}
+
+input AuditFilterInput {
+  aircraftId: Int
+  auditResult: AuditResultType
+  endDate: DateTime
+  isClosed: Boolean
+  startDate: DateTime
+}
+
+"""Fréquences possibles pour les audits de sécurité des aéronefs"""
+enum AuditFrequencyType {
+  ANNUEL
+  APRES_INCIDENT
+  AUTRE
+  BIANNUEL
+  HEBDOMADAIRE
+  HEURES_DE_VOL
+  MENSUEL
+  QUOTIDIEN
+  SEMESTRIEL
+  TRIMESTRIEL
+}
+
+type AuditItem {
+  category: AuditCategoryType!
+  description: String!
+  id: Int!
+  notes: String
+  requires_action: Boolean!
+  result: AuditResultType!
+}
+
+"""Résultats possibles pour un audit de sécurité"""
+enum AuditResultType {
+  CONFORME
+  CONFORME_AVEC_REMARQUES
+  NON_APPLICABLE
+  NON_CONFORME
+}
+
+type AuditStatistics {
+  auditsByAircraft: [AircraftAuditStats!]!
+  auditsByMonth: [MonthlyAuditStats!]!
+  closedAudits: Int!
+  conformCount: Int!
+  conformWithRemarksCount: Int!
+  nonConformCount: Int!
+  openAudits: Int!
+  totalAudits: Int!
+}
+
+type AuditTemplate {
+  applicable_aircraft_types: [String!]
+  created_at: DateTime!
+  created_by: User!
+  description: String!
+  id: Int!
+  is_active: Boolean!
+  items: [AuditTemplateItem!]!
+  name: String!
+  recommended_frequency: AuditFrequencyType!
+  updated_at: DateTime!
+  version: Int!
+}
+
+type AuditTemplateItem {
+  category: AuditCategoryType!
+  criticality: CriticalityLevel!
+  description: String!
+  expected_result: String
+  id: Int!
+  inspection_method: String
+  is_mandatory: Boolean!
+  order_index: Int!
+  reference_documentation: String
+  requires_photo_evidence: Boolean!
+  template: AuditTemplate!
+  title: String!
+}
+
+enum AvailabilityStatus {
+  AVAILABLE
+  RESERVATED
+  UNAVAILABLE
+}
+
+type BudgetForecast {
+  expenseForecast: Float!
+  netForecast: Float!
+  revenueForecast: Float!
+}
+
+type CertificationDto {
+  expiryDate: DateTime
+  id: Int!
+  name: String!
+  progress: Int!
+  status: String!
+}
+
+enum ChecklistCategory {
+  COCKPIT
+  DOCUMENTS
+  EMERGENCY
+  ENGINE
+  EXTERIOR
+}
+
+type ChecklistItem {
+  category: ChecklistCategory!
+  created_at: DateTime!
+  description: String
+  id: Int!
+  is_required: Boolean!
+  item_name: String!
+  sort_order: Int!
+  template: ChecklistTemplate!
+}
+
+type ChecklistResponse {
+  checked: Boolean!
+  itemId: Int!
+  note: String
+}
+
+input ChecklistResponseInput {
+  checked: Boolean!
+  itemId: Int!
+  note: String
+}
+
+type ChecklistSubmission {
+  completed_at: DateTime
+  created_at: DateTime!
+  id: Int!
+  pilot: User!
+  reservation: Reservation
+  responses: [ChecklistResponse!]
+  started_at: DateTime!
+  status: ChecklistSubmissionStatus!
+  template: ChecklistTemplate!
+  updated_at: DateTime!
+}
+
+enum ChecklistSubmissionStatus {
+  CANCELLED
+  COMPLETED
+  IN_PROGRESS
+}
+
+type ChecklistTemplate {
+  aircraft_model: String!
+  created_at: DateTime!
+  created_by: User!
+  description: String
+  id: Int!
+  is_active: Boolean!
+  items: [ChecklistItem!]
+  name: String!
+  updated_at: DateTime!
+}
+
+type Course {
+  category: String
+  description: String
+  id: Int!
+  modules: [Module!]!
+  progress: Float
+
+  """Required license for this course"""
+  required_license: LicenseType!
+  title: String!
+}
+
+type CourseComment {
+  author: User!
+  content: String!
+  course: InstructionCourse!
+  creationDate: DateTime!
+  id: Int!
+}
+
+type CourseCompetency {
+  course: InstructionCourse!
+  description: String
+  id: Int!
+  name: String!
+  validated: Boolean
+}
+
+type CourseDto {
+  date: DateTime!
+  id: Int!
+  instructor: InstructorDto!
+  status: String!
+  title: String!
+}
+
+enum CourseStatus {
+  CANCELED
+  COMPLETED
+  IN_PROGRESS
+  SCHEDULED
+}
+
+input CreateAdministrationInput {
+  address: String!
+  allowGuestPilots: Boolean!
+  closureDays: [String!]!
+  clubName: String!
+  clubRules: String!
+  contactEmail: String!
+  contactPhone: String!
+  flightHourRate: Float!
+  fuelManagement: String!
+  fuelPrice: Float!
+  guestPilotFee: Float
+  isMaintenanceActive: Boolean!
+  maintenanceDay: String!
+  maintenanceDuration: Int!
+  maintenanceMessage: String!
+  maintenanceTime: DateTime!
+  membershipFee: Float!
+  pilotLicenses: [String!]!
+  reservationEndTime: String!
+  reservationStartTime: String!
+  taxonomies: TaxonomiesInput!
+  timeSlotDuration: Int!
+}
+
+input CreateAircraftInput {
+  availability_status: AvailabilityStatus
+  consumption: Int
+  cruiseSpeed: Int
+  current_location: String
+  documents_url: [String!]
+  empty_weight: Float
+  fuel_capacity: Float
+  fuel_type: String
+  hourly_cost: Float
+  image_url: String
+  last_inspection_date: DateTime
+  maintenance_status: String
+  maxAltitude: Int
+  max_takeoff_weight: Float
+  model: String
+  registration_number: String
+  year_of_manufacture: Int
+}
+
+input CreateAnswerDTO {
+  """User-provided answer text"""
+  answer_text: String
+
+  """Indicates if the answer is correct"""
+  is_correct: Boolean!
+
+  """Question ID the answer is related to"""
+  questionId: Float!
+}
+
+input CreateArticleInput {
+  description: String!
+  documents: String
+  eventDate: DateTime
+  photo: String
+  tags: [String!]!
+  text: String!
+  title: String!
+}
+
+input CreateAuditInput {
+  aircraftId: Int!
+  audit_date: DateTime!
+  audit_frequency: AuditFrequencyType!
+  audit_notes: String
+  audit_result: AuditResultType!
+  auditorId: Int!
+  corrective_actions: String
+  next_audit_date: DateTime
+  templateId: Int
+}
+
+input CreateAuditItemInput {
+  category: AuditCategoryType!
+  description: String!
+  notes: String
+  requires_action: Boolean
+  result: AuditResultType!
+}
+
+input CreateAuditTemplateInput {
+  applicable_aircraft_types: [String!]
+  createdById: Int!
+  description: String!
+  items: [CreateAuditTemplateItemInput!]
+  name: String!
+  recommended_frequency: AuditFrequencyType!
+}
+
+input CreateAuditTemplateItemInput {
+  category: AuditCategoryType!
+  criticality: CriticalityLevel
+  description: String!
+  expected_result: String
+  inspection_method: String
+  is_mandatory: Boolean
+  order_index: Int
+  reference_documentation: String
+  requires_photo_evidence: Boolean
+  title: String!
+}
+
+input CreateChecklistItemInput {
+  category: ChecklistCategory!
+  description: String
+  is_required: Boolean
+  item_name: String!
+  sort_order: Int!
+  templateId: Int!
+}
+
+input CreateChecklistTemplateInput {
+  aircraft_model: String!
+  description: String
+  name: String!
+}
+
+input CreateCourseDTO {
+  category: String
+  description: String
+  required_license: LicenseType
+  title: String!
+}
+
+input CreateCourseInstructionInput {
+  endTime: DateTime
+  feedback: String
+  instructorId: Int!
+  rating: Float
+  startTime: DateTime!
+  studentId: Int!
+}
+
+input CreateEvaluationDTO {
+  """Module ID the evaluation belongs to"""
+  moduleId: Float!
+
+  """Minimum score required to pass the evaluation"""
+  pass_score: Float!
+}
+
+input CreateExpenseInput {
+  aircraft_id: Int
+  amount: Float!
+  category: String!
+  description: String
+  expense_date: DateTime!
+  sub_category: String
+}
+
+input CreateFinancialReportInput {
+  average_revenue_per_member: Float
+  net_profit: Float!
+  recommendations: String
+  report_date: DateTime!
+  total_expense: Float!
+  total_revenue: Float!
+}
+
+input CreateFlightInput {
+  arrival_time: DateTime
+  departure_time: DateTime
+  destination_icao: String!
+  distance_km: Float
+  encoded_polyline: String
+  estimated_flight_time: Float
+  flight_hours: Float!
+  flight_type: FlightCategory!
+  number_of_passengers: Int!
+  origin_icao: String!
+  reservation_id: Int
+  user_id: Int!
+  waypoints: [String!]
+  weather_conditions: String
+}
+
+input CreateIncidentInput {
+  aircraft_id: Int!
+  category: String!
+  corrective_actions: String
+  damage_report: String
+  description: String!
+  flight_id: Int!
+  incident_date: DateTime!
+  priority: String!
+  severity_level: String!
+  status: String!
+  user_id: Int!
+}
+
+input CreateInvoiceInput {
+  amount: Float!
+  balance_due: Float!
+  invoice_date: DateTime!
+  invoice_items: String
+  next_payment_due_date: DateTime
+  payment_method: String
+  user_id: Int!
+}
+
+input CreateLessonDTO {
+  attachments: [String!] = []
+
+  """Rich content in JSON format"""
+  content: String!
+  description: String
+
+  """Module ID the lesson belongs to"""
+  moduleId: Float!
+  title: String!
+  video_url: String
+}
+
+input CreateLicenseInput {
+  certification_authority: String
+  documents_url: [String!]
+  expiration_date: DateTime
+  issue_date: DateTime!
+  last_updated: DateTime
+  license_number: String!
+  license_type: String!
+  status: String! = "active"
+  user_id: Int!
+}
+
+input CreateMaintenanceInput {
+  aircraft_id: Int!
+  description: String
+  documents_url: [String!]
+  end_date: DateTime!
+  images_url: [String!]
+  maintenance_cost: Float
+  maintenance_type: MaintenanceType
+  parts_changed: String
+  start_date: DateTime!
+  status: String
+  technician_id: Int
+}
+
+input CreateModuleDTO {
+  """Course ID the module belongs to"""
+  courseId: Float!
+  description: String
+  title: String!
+}
+
+input CreateNotificationInput {
+  action_url: String
+  expiration_date: DateTime
+  is_read: Boolean
+  message: String!
+  notification_date: DateTime!
+  notification_type: String!
+  priority: String
+  user_id: Int!
+}
+
+input CreatePaymentInput {
+  amount: Float!
+  payment_method: String!
+  user_id: Int!
+}
+
+input CreateQuestionDTO {
+  content: JSONObject!
+
+  """Correct answer"""
+  correct_answer: String!
+
+  """List of possible answers"""
+  options: [String!]!
+}
+
+input CreateReservationInput {
+  aircraft_id: Int!
+  end_time: DateTime!
+  estimated_flight_hours: Float
+  flight_category: FlightCategory!
+  notes: String
+  purpose: String
+  reservation_date: DateTime
+  start_time: DateTime!
+  status: String
+  user_id: Int!
+}
+
+input CreateReservationTemplateInput {
+  aircraft_id: Int
+  day_of_week: Int
+  estimated_flight_hours: Float
+  flight_category: FlightCategory!
+  name: String!
+  notes: String
+  preferred_end_time: String
+  preferred_start_time: String
+  purpose: String
+}
+
+input CreateRoleInput {
+  role_name: String!
+}
+
+"""Niveaux de criticité pour les items d'audit"""
+enum CriticalityLevel {
+  CRITIQUE
+  INFO
+  MAJEUR
+  MINEUR
+}
+
+type DashboardWidgetConfig {
+  order: Int!
+  size: String!
+  visible: Boolean!
+  widgetId: String!
+}
+
+input DashboardWidgetConfigInput {
+  order: Int!
+  size: String!
+  visible: Boolean!
+  widgetId: String!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type ELearningCourseDto {
+  category: String!
+  completedLessons: Int!
+  id: Int!
+  lastAccessedDate: DateTime
+  progress: Float!
+  title: String!
+  totalLessons: Int!
+}
+
+type Evaluation {
+  id: Int!
+  module: Module!
+  pass_score: Float!
+  questions: [Question!]!
+  userProgress: UserProgress
+}
+
+type EvaluationSummaryDto {
+  averageScore: Float!
+  completed: Int!
+  upcoming: Int!
+}
+
+type Expense {
+  aircraft: Aircraft
+  amount: Float!
+  category: String!
+  description: String
+  expense_date: DateTime!
+  id: Int!
+  sub_category: String
+}
+
+type FinancialReport {
+  average_revenue_per_member: Float
+  id: Int!
+  net_profit: Float!
+  recommendations: String
+  report_date: DateTime!
+  total_expense: Float!
+  total_revenue: Float!
+}
+
+type Flight {
+  arrival_airport_info: String
+  arrival_time: DateTime
+  departure_airport_info: String
+  departure_time: DateTime
+  destination_icao: String!
+  detailed_waypoints: [String!]
+  distance_km: Float
+  encoded_polyline: String
+  estimated_flight_time: Float
+  estimated_fuel_liters: Float
+  flight_hours: Float!
+  flight_type: String!
+  fuel_policy: String
+  id: Int!
+  incident: Incident
+  number_of_passengers: Int
+  origin_icao: String!
+  performance_profile: String
+  remarks: String
+  reservation: Reservation
+  user: User!
+  waypoints: String
+  weather_conditions: String
+  wind_summary: String
+}
+
+enum FlightCategory {
+  CORPORATE
+  CROSS_COUNTRY
+  INSTRUCTION
+  LOCAL
+  MAINTENANCE
+  PRIVATE
+  TOURISM
+  TRAINING
+}
+
+input GenerateFlightPlanInput {
+  """Cruise altitude override in feet"""
+  cruise_altitude_ft: Int
+
+  """Specific departure time (defaults to reservation start_time)"""
+  departure_time: DateTime
+  destination_icao: String!
+
+  """Flight rules override: VFR or IFR"""
+  flight_rules: String
+  origin_icao: String!
+
+  """Preferred arrival runway (e.g. "27R")"""
+  preferred_runway_arr: String
+
+  """Preferred departure runway (e.g. "09L")"""
+  preferred_runway_dep: String
+  reservation_id: Int
+}
+
+type HoursEntry {
+  hours: Float!
+  label: String!
+}
+
+type Incident {
+  aircraft: Aircraft!
+  category: String!
+  corrective_actions: String
+  damage_report: String
+  description: String!
+  flight: Flight!
+  id: Int!
+  incident_date: DateTime!
+  priority: String!
+  severity_level: String!
+  status: String!
+  user: User!
+}
+
+type InstructionCourse {
+  comments: [CourseComment!]
+  competencies: [CourseCompetency!]
+  endTime: DateTime
+  feedback: String
+  id: Int!
+  instructor: User!
+  rating: Float
+  startTime: DateTime!
+  status: CourseStatus!
+  student: User!
+}
+
+type InstructorDto {
+  avatar: String
+  id: Int!
+  name: String!
+}
+
+type Invoice {
+  amount: Float!
+  amount_paid: Float!
+  balance_due: Float!
+  id: Int!
+  invoice_date: DateTime!
+  invoice_items: String
+  next_payment_due_date: DateTime
+  payment_method: String
+  payment_status: String!
+  payments: [Payment!]!
+  user: User!
+}
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON
+
+"""
+The `JSONObject` scalar type represents JSON objects as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSONObject
+
+type LearningProgressDto {
+  completedCourses: Int!
+  completedLessons: Int!
+  totalCourses: Int!
+  totalLessons: Int!
+}
+
+type Lesson {
+  attachments: [String!]
+
+  """Rich content in JSON format"""
+  content: JSON!
+  description: String
+  id: Int!
+  module: Module!
+  title: String!
+  video_url: String
+}
+
+type License {
+  certification_authority: String
+  documents_url: [String!]
+  expiration_date: DateTime
+  id: Int!
+  is_valid: Boolean!
+  issue_date: DateTime
+  license_number: String
+  license_type: String!
+  status: String!
+  user: User!
+}
+
+"""The type of pilot license required for a course"""
+enum LicenseType {
+  ATPL
+  CPL
+  PPL
+}
+
+input LogbookFilterInput {
+  aircraftId: Int
+  endDate: DateTime
+  flightType: String
+  startDate: DateTime
+}
+
+type LogbookStats {
+  averageFlightDuration: Float!
+  hoursByCategory: [HoursEntry!]!
+  hoursByModel: [HoursEntry!]!
+  last30DaysHours: Float!
+  last90DaysHours: Float!
+  longestFlight: Float!
+  monthlyHours: [MonthlyHoursEntry!]!
+  totalFlights: Int!
+  totalHours: Float!
+}
+
+input LoginInput {
+  email: String!
+  password: String!
+}
+
+type LoginResponse {
+  access_token: String!
+  is2FAEnabled: Boolean!
+}
+
+type Maintenance {
+  aircraft: Aircraft!
+  description: String
+  documents_url: [String!]
+  end_date: DateTime!
+  id: Int!
+  images_url: [String!]
+  maintenance_cost: Float
+  maintenance_type: MaintenanceType
+  parts_changed: String
+  start_date: DateTime!
+  status: String
+  technician: User
+}
+
+enum MaintenanceType {
+  CLEANING
+  INSPECTION
+  OTHER
+  OVERHAUL
+  REPAIR
+  SOFTWARE_UPDATE
+}
+
+type Module {
+  course: Course!
+  courseId: Int!
+  description: String
+
+  """Evaluations for the module"""
+  evaluations: [Evaluation!]!
+  id: Int!
+  lessons: [Lesson!]!
+  title: String!
+}
+
+type MonthlyAuditStats {
+  count: Int!
+  month: Int!
+  year: Int!
+}
+
+type MonthlyHoursEntry {
+  hours: Float!
+  month: String!
+}
+
+type Mutation {
+  addCommentToCourse(input: AddCommentInput!): CourseComment!
+  addCompetencyToCourse(input: AddCompetencyInput!): CourseCompetency!
+  completeChecklistSubmission(id: Int!): ChecklistSubmission!
+  completeLesson(lessonId: Float!, userId: Float!): Boolean!
+  confirm2FA(token: String!): Boolean!
+  confirmEmailAndSetPassword(password: String!, validation_token: String!): User!
+  createAdministration(createAdministrationInput: CreateAdministrationInput!): Administration!
+  createAircraft(createAircraftInput: CreateAircraftInput!, file: Upload, image: Upload): Aircraft!
+  createAnswer(createAnswerInput: CreateAnswerDTO!, questionId: Float!, userId: Float!): Answer!
+  createArticle(createArticleInput: CreateArticleInput!, documents: [Upload!], photo: Upload): Article!
+  createAudit(createAuditInput: CreateAuditInput!): Audit!
+  createAuditItem(auditId: Int!, createItemInput: CreateAuditItemInput!): AuditItem!
+  createAuditTemplate(createTemplateInput: CreateAuditTemplateInput!): AuditTemplate!
+  createChecklistItem(createChecklistItemInput: CreateChecklistItemInput!): ChecklistItem!
+  createChecklistTemplate(createChecklistTemplateInput: CreateChecklistTemplateInput!): ChecklistTemplate!
+  createCourse(createCourseInput: CreateCourseDTO!): Course!
+  createCourseInstruction(input: CreateCourseInstructionInput!): InstructionCourse!
+  createEvaluation(createEvaluationInput: CreateEvaluationDTO!): Evaluation!
+  createExpense(createExpenseInput: CreateExpenseInput!): Expense!
+  createFinancialReport(createFinancialReportInput: CreateFinancialReportInput!): FinancialReport!
+  createFlight(createFlightInput: CreateFlightInput!): Flight!
+  createIncident(incident: CreateIncidentInput!): Incident!
+  createInvoice(createInvoiceInput: CreateInvoiceInput!): Invoice!
+  createLesson(createLessonInput: CreateLessonDTO!): Lesson!
+  createLicense(createLicenseInput: CreateLicenseInput!, documents: [Upload!]): License!
+  createMaintenance(createMaintenanceInput: CreateMaintenanceInput!, files: [Upload!], images: [Upload!]): Maintenance!
+  createModule(createModuleInput: CreateModuleDTO!): Module!
+  createNotification(createNotificationInput: CreateNotificationInput!): Notification!
+  createPayment(createPaymentInput: CreatePaymentInput!): Payment!
+  createQuestion(createQuestionInput: CreateQuestionDTO!, evaluationId: Float!): Question!
+  createReservation(createReservationInput: CreateReservationInput!): Reservation!
+  createReservationTemplate(input: CreateReservationTemplateInput!): ReservationTemplate!
+  createRole(createRoleInput: CreateRoleInput!): Role!
+  createUser(date_of_birth: DateTime!, email: String!, first_name: String!, last_name: String!): User!
+  deleteAdministration(id: Int!): Boolean!
+  deleteAircraft(aircraftId: Int!): Boolean!
+  deleteAnswer(id: Float!): Boolean!
+  deleteAudit(id: Int!): Boolean!
+  deleteAuditItem(id: Int!): Boolean!
+  deleteAuditTemplate(id: Int!): Boolean!
+  deleteChecklistItem(id: Int!): Boolean!
+  deleteCourse(id: Float!): Boolean!
+  deleteCourseInstruction(id: Int!): Boolean!
+  deleteEvaluation(id: Float!): Boolean!
+  deleteIncident(id: String!): Boolean!
+  deleteLesson(id: Float!): Boolean!
+  deleteLicense(id: Int!): Boolean!
+  deleteMaintenance(id: Int!): Boolean!
+  deleteModule(id: Float!): Boolean!
+  deleteQuestion(id: Float!): Boolean!
+  deleteReservation(id: Int!): Boolean!
+  deleteReservationTemplate(id: Int!): Boolean!
+  deleteRole(id: Int!): Boolean!
+  exportLogbookPDF(filter: LogbookFilterInput): String!
+  generate2FASecret(email: String): String!
+  generateCsvFinancialReport(endDate: DateTime!, startDate: DateTime!): String!
+  generateFlightPlan(input: GenerateFlightPlanInput!): Flight!
+  generatePdfFinancialReport(endDate: DateTime!, startDate: DateTime!): String!
+  login(loginInput: LoginInput!): LoginResponse!
+  logout: Boolean!
+  markLessonCompleted(lessonId: Float!, userId: Float!): Boolean!
+  markLessonStarted(lessonId: Float!, userId: Float!): Boolean!
+  processPayment(createPaymentInput: CreatePaymentInput!): PaymentResult!
+  processRefund(amount: Float!, paymentIntentId: String!): Payment!
+  rateCourseInstruction(feedback: String!, id: Int!, rating: Int!): InstructionCourse!
+  removeArticle(id: Int!): Article!
+  removeExpense(id: Int!): Boolean!
+  removeFinancialReport(id: Int!): Boolean!
+  removeFlight(id: Float!): Boolean!
+  removeInvoice(id: Int!): Boolean!
+  removeNotification(id: Int!): Boolean!
+  reorderChecklistItems(itemIds: [Int!]!, templateId: Int!): [ChecklistItem!]!
+  seenNotification(id: Int!): Boolean!
+  setSiteStatus: Boolean!
+  startChecklistSubmission(submitChecklistInput: SubmitChecklistInput!): ChecklistSubmission!
+  toggle2FA(email: String, is2FAEnabled: Boolean!): User!
+  updateAdministration(updateAdministrationInput: UpdateAdministrationInput!): Administration!
+  updateAircraft(aircraftId: Int!, file: Upload, image: Upload, updateAircraftInput: UpdateAircraftInput!): Aircraft!
+  updateAnswer(id: Float!, updateAnswerInput: UpdateAnswerDTO!): Answer!
+  updateArticle(documents: [Upload!], photo: Upload, updateArticleInput: UpdateArticleInput!): Article!
+  updateAudit(id: Int!, updateAuditInput: UpdateAuditInput!): Audit!
+  updateAuditItem(id: Int!, updateItemInput: UpdateAuditItemInput!): AuditItem!
+  updateAuditTemplate(id: Int!, updateTemplateInput: UpdateAuditTemplateInput!): AuditTemplate!
+  updateChecklistItem(updateChecklistItemInput: UpdateChecklistItemInput!): ChecklistItem!
+  updateChecklistSubmission(updateChecklistSubmissionInput: UpdateChecklistSubmissionInput!): ChecklistSubmission!
+  updateChecklistTemplate(updateChecklistTemplateInput: UpdateChecklistTemplateInput!): ChecklistTemplate!
+  updateCourse(id: Float!, updateCourseInput: UpdateCourseDTO!): Course!
+  updateCourseInstruction(input: UpdateCourseInstructionInput!): InstructionCourse!
+  updateDashboardWidgets(userId: Int!, widgets: [DashboardWidgetConfigInput!]!): User!
+  updateEvaluation(id: Float!, updateEvaluationInput: UpdateEvaluationDTO!): Evaluation!
+  updateExpense(updateExpenseInput: UpdateExpenseInput!): Expense!
+  updateFinancialReport(updateFinancialReportInput: UpdateFinancialReportInput!): FinancialReport!
+  updateFlight(updateFlightInput: UpdateFlightInput!): Flight!
+  updateIncident(id: Float!, incident: UpdateIncidentInput!): Incident!
+  updateInvoice(updateInvoiceInput: UpdateInvoiceInput!): Invoice!
+  updateLesson(id: Float!, updateLessonInput: UpdateLessonDTO!): Lesson!
+  updateLicense(documents: [Upload!], updateLicenseInput: UpdateLicenseInput!): License!
+  updateMaintenance(files: [Upload!], images: [Upload!], updateMaintenanceInput: UpdateMaintenanceInput!): Maintenance!
+  updateModule(id: Float!, updateModuleInput: UpdateModuleDTO!): Module!
+  updateNotification(updateNotificationInput: UpdateNotificationInput!): Notification!
+  updateNotificationSettings(email_notifications_enabled: Boolean!, newsletter_subscribed: Boolean!, sms_notifications_enabled: Boolean!): User!
+  updatePassword(currentPassword: String!, newPassword: String!): User!
+  updatePaymentStatus(paymentId: String!, status: String!): Payment!
+  updateQuestion(id: Float!, updateQuestionInput: UpdateQuestionDTO!): Question!
+  updateReservation(updateReservationInput: UpdateReservationInput!): Reservation!
+  updateReservationTemplate(input: UpdateReservationTemplateInput!): ReservationTemplate!
+  updateRole(updateRoleInput: UpdateRoleInput!): Role!
+  updateUser(image: Upload, updateUserInput: UpdateUserInput!): User!
+  updateUserPreferences(preference: UpdateUserPreferencesInput!, userId: Float!): User!
+  validateAnswers(evaluationId: Float!, userAnswers: [UserAnswerInput!]!, userId: Float!): ValidationResult!
+  validateCompetency(competencyId: Int!): CourseCompetency!
+  verify2FA(email: String!, token: String!): LoginResponse!
+}
+
+type Notification {
+  action_url: String
+  expiration_date: DateTime
+  id: Int!
+  is_read: Boolean!
+  message: String!
+  notification_date: DateTime!
+  notification_type: String!
+  priority: String
+  user: User!
+}
+
+type Payment {
+  amount: Float!
+  error_message: String
+  external_payment_id: String
+  id: Int!
+  invoice: Invoice
+  payment_date: DateTime!
+  payment_details: String
+  payment_method: String!
+  payment_status: String!
+  user: User!
+}
+
+type PaymentResult {
+  amount: Float!
+  client_secret: String
+  external_payment_id: String!
+  id: Int!
+  payment_method: String!
+  payment_status: String!
+  user: User!
+}
+
+type Query {
+  adminDashboardStats: adminStatus!
+  article(id: Int!): Article!
+  articles: [Article!]!
+  audit(id: Int!): Audit!
+  auditCategoryTypes: [String!]!
+  auditFrequencyTypes: [String!]!
+  auditResultTypes: [String!]!
+  auditStatistics(endDate: DateTime, startDate: DateTime): AuditStatistics!
+  auditTemplate(id: Int!): AuditTemplate!
+  auditTemplates: [AuditTemplate!]!
+  auditTemplatesForAircraftType(aircraftType: String!): [AuditTemplate!]!
+  audits(filter: AuditFilterInput): [Audit!]!
+  checklistSubmission(id: Int!): ChecklistSubmission!
+  checklistSubmissions(status: ChecklistSubmissionStatus): [ChecklistSubmission!]!
+  checklistSubmissionsByReservation(reservationId: Int!): [ChecklistSubmission!]!
+  checklistTemplate(id: Int!): ChecklistTemplate!
+  checklistTemplates(aircraftModel: String): [ChecklistTemplate!]!
+  criticalityLevels: [String!]!
+  expense(id: Int!): Expense!
+  expenseByPeriod(endDate: DateTime!, startDate: DateTime!): [Expense!]!
+  expenses: [Expense!]!
+  filteredReservations(end_date: String, start_date: String): [Reservation!]!
+  financialReport(id: Int!): FinancialReport!
+  financialReports: [FinancialReport!]!
+  generateBudgetForecast(endDate: DateTime!, startDate: DateTime!): BudgetForecast!
+  getAircrafts: [Aircraft!]!
+  getAllAdministrations: [Administration!]!
+  getAllCoursesInstruction: [InstructionCourse!]!
+  getAllFlights: [Flight!]!
+  getAllIncidents: [Incident!]!
+  getAllLicenses: [License!]!
+  getAllMaintenances: [Maintenance!]!
+  getAllModules: [Module!]!
+  getCourseById(id: Float!, userId: Float): Course!
+  getCourseInstructionById(id: Int!): InstructionCourse!
+  getCourseProgress(courseId: Float!, userId: Float!): Float!
+  getCourses(category: String, search: String): [Course!]!
+  getCoursesByUserId(userId: Int!): [InstructionCourse!]!
+  getCoursesInstructionByInstructor(instructorId: Int!): [InstructionCourse!]!
+  getCoursesInstructionByStudent(studentId: Int!): [InstructionCourse!]!
+  getEmailFromCookie: String!
+  getEvaluationById(id: Float!): Evaluation!
+  getEvaluations: [Evaluation!]!
+  getEvaluationsByModule(moduleId: Float!): [Evaluation!]!
+  getFlightById(id: Int!): Flight!
+  getFlightsByUser(userId: Int): [Flight!]!
+  getHistoryAircraft: [Aircraft!]!
+  getIncident(id: Float!): Incident!
+  getIncidentsByCategory(category: String!): [Incident!]!
+  getIncidentsByFlight(flight: String!): [Incident!]!
+  getIncidentsByPriority(priority: String!): [Incident!]!
+  getIncidentsByStatus(status: String!): [Incident!]!
+  getLessonContent(lessonId: Float!, userId: Float!): Lesson!
+  getLessonsByModule(moduleId: Float!): [Lesson!]!
+  getLicenseById(id: Int!): License
+  getMaintenance(id: Int!): Maintenance!
+  getMaintenanceDetails: String!
+  getMaintenancesByAircraft(aircraftId: Int!): [Maintenance!]!
+  getModulesByCourse(courseId: Float!): [Module!]!
+  getQuestionsByEvaluation(evaluationId: Float!): [Question!]!
+  getSiteStatus: Boolean!
+  getUserDetails(id: Int!): User!
+  getUserEvaluationResults(userId: Float!): [UserProgress!]!
+  getUserInstructionSummary(userId: Int): UserInstructionSummary!
+  getUserPreferences(userId: Float!): User!
+  getUserProgress(lessonId: Float!, userId: Float!): Boolean!
+  getUserProgressByEvaluation(userId: Float!): [Evaluation!]!
+  getUsers: [User!]!
+  hello: String!
+  invoice(id: Int!): Invoice!
+  invoices: [Invoice!]!
+  invoicesByUser(userId: Int!): [Invoice!]!
+  logbookEntries(filter: LogbookFilterInput): [Flight!]!
+  logbookStats(filter: LogbookFilterInput): LogbookStats!
+  me: User!
+  myReservationTemplates: [ReservationTemplate!]!
+  notification(id: Int!): Notification!
+  notificationsByUser(userId: Int!): [Notification!]!
+  overdueAudits: [Audit!]!
+  payment(id: Int!): Payment!
+  payments: [Payment!]!
+  paymentsByInvoice(invoiceId: Int!): [Payment!]!
+  paymentsByUser(userId: Int!): [Payment!]!
+  recentFlights(limit: Int!): [Flight!]!
+  recentIncidents(limit: Int!): [Incident!]!
+  recentReservations(limit: Int!): [Reservation!]!
+  reservation(id: Int!): Reservation!
+  reservations: [Reservation!]!
+  role(id: Int!): Role!
+  roles: [Role!]!
+  upcomingAudits(daysAhead: Int! = 30): [Audit!]!
+  userByEmail(email: String!): User!
+  userReservations(userId: Int!): [Reservation!]!
+}
+
+type Question {
+  """The answers to the question"""
+  answers: [Answer!]!
+
+  """Rich content in JSON format"""
+  content: JSON!
+  correct_answer: String
+  id: Int!
+  options: [String!]!
+}
+
+type Reservation {
+  aircraft: Aircraft!
+  calendar_integration_url: String
+  end_time: DateTime!
+  estimated_flight_hours: Float
+  flight_category: FlightCategory!
+  flights: [Flight!]
+  id: Int!
+  notes: String
+  number_of_passengers: Float
+  purpose: String
+  reservation_date: DateTime
+  start_time: DateTime!
+  status: ReservationStatus!
+  user: User!
+}
+
+enum ReservationStatus {
+  CANCELLED
+  CONFIRMED
+  PENDING
+}
+
+type ReservationTemplate {
+  aircraft: Aircraft
+  created_at: DateTime!
+  day_of_week: Int
+  estimated_flight_hours: Float
+  flight_category: FlightCategory!
+  id: Int!
+  name: String!
+  notes: String
+  preferred_end_time: String
+  preferred_start_time: String
+  purpose: String
+  user: User!
+}
+
+type ReservationsByCategory {
+  count: Int!
+  flight_category: String!
+}
+
+type Role {
+  id: Int!
+  role_name: String!
+  users: [User!]
+}
+
+input SubmitChecklistInput {
+  reservationId: Int
+  responses: [ChecklistResponseInput!]!
+  templateId: Int!
+}
+
+type Taxonomies {
+  aircraftCategories: [String!]!
+  flightTypes: [String!]!
+  licenseTypes: [String!]!
+  maintenanceTypes: [String!]!
+}
+
+input TaxonomiesInput {
+  aircraftCategories: [String!]!
+  flightTypes: [String!]!
+  licenseTypes: [String!]!
+  maintenanceTypes: [String!]!
+}
+
+input UpdateAdministrationInput {
+  address: String
+  allowGuestPilots: Boolean
+  closureDays: [String!]
+  clubName: String
+  clubRules: String
+  contactEmail: String
+  contactPhone: String
+  flightHourRate: Float
+  fuelManagement: String
+  fuelPrice: Float
+  guestPilotFee: Float
+  id: Int!
+  isMaintenanceActive: Boolean
+  maintenanceDay: String
+  maintenanceDuration: Int
+  maintenanceMessage: String
+  maintenanceTime: DateTime
+  membershipFee: Float
+  pilotLicenses: [String!]
+  reservationEndTime: String
+  reservationStartTime: String
+  taxonomies: TaxonomiesInput
+  timeSlotDuration: Int
+}
+
+input UpdateAircraftInput {
+  availability_status: AvailabilityStatus
+  consumption: Int
+  cruiseSpeed: Int
+  current_location: String
+  documents_url: [String!]
+  empty_weight: Float
+  fuel_capacity: Float
+  fuel_type: String
+  hourly_cost: Float
+  image_url: String
+  last_inspection_date: DateTime
+  maintenance_status: String
+  maxAltitude: Int
+  max_takeoff_weight: Float
+  model: String
+  registration_number: String
+  year_of_manufacture: Int
+}
+
+input UpdateAnswerDTO {
+  """User-provided answer text"""
+  answer_text: String
+
+  """Indicates if the answer is correct"""
+  is_correct: Boolean
+
+  """Question ID the answer is related to"""
+  questionId: Float
+}
+
+input UpdateArticleInput {
+  description: String
+  documents: String
+  eventDate: DateTime
+  id: Float!
+  photo: String
+  tags: [String!]
+  text: String
+  title: String
+}
+
+input UpdateAuditInput {
+  aircraftId: Int
+  audit_date: DateTime
+  audit_frequency: AuditFrequencyType
+  audit_notes: String
+  audit_result: AuditResultType
+  closedById: Int
+  corrective_actions: String
+  is_closed: Boolean
+  next_audit_date: DateTime
+}
+
+input UpdateAuditItemInput {
+  category: AuditCategoryType
+  description: String
+  notes: String
+  requires_action: Boolean
+  result: AuditResultType
+}
+
+input UpdateAuditTemplateInput {
+  applicable_aircraft_types: [String!]
+  description: String
+  is_active: Boolean
+  items: [CreateAuditTemplateItemInput!]
+  name: String
+  recommended_frequency: AuditFrequencyType
+}
+
+input UpdateChecklistItemInput {
+  category: ChecklistCategory
+  description: String
+  id: Int!
+  is_required: Boolean
+  item_name: String
+  sort_order: Int
+}
+
+input UpdateChecklistSubmissionInput {
+  completed: Boolean
+  id: Int!
+  responses: [ChecklistResponseInput!]!
+}
+
+input UpdateChecklistTemplateInput {
+  aircraft_model: String
+  description: String
+  id: Int!
+  is_active: Boolean
+  name: String
+}
+
+input UpdateCourseDTO {
+  category: String
+  description: String
+  required_license: LicenseType
+  title: String
+}
+
+input UpdateCourseInstructionInput {
+  endTime: DateTime
+  feedback: String
+  id: Int!
+  instructorId: Int
+  rating: Float
+  startTime: DateTime
+  status: CourseStatus
+  studentId: Int
+}
+
+input UpdateEvaluationDTO {
+  """Module ID the evaluation belongs to"""
+  moduleId: Float
+
+  """Minimum score required to pass the evaluation"""
+  pass_score: Float
+}
+
+input UpdateExpenseInput {
+  aircraft_id: Int
+  amount: Float
+  category: String
+  description: String
+  expense_date: DateTime
+  id: Int!
+  sub_category: String
+}
+
+input UpdateFinancialReportInput {
+  average_revenue_per_member: Float
+  id: Int!
+  net_profit: Float
+  recommendations: String
+  report_date: DateTime
+  total_expense: Float
+  total_revenue: Float
+}
+
+input UpdateFlightInput {
+  arrival_time: DateTime
+  departure_time: DateTime
+  destination_icao: String
+  distance_km: Float
+  encoded_polyline: String
+  estimated_flight_time: Float
+  flight_hours: Float
+  flight_type: String
+  id: Int!
+  number_of_passengers: Int
+  origin_icao: String
+  reservation_id: Int
+  user_id: Int
+  waypoints: [String!]
+  weather_conditions: String
+}
+
+input UpdateIncidentInput {
+  aircraft_id: Int
+  category: String
+  corrective_actions: String
+  damage_report: String
+  description: String
+  flight_id: Int
+  id: Int!
+  incident_date: DateTime
+  priority: String
+  severity_level: String
+  status: String
+  user_id: Int
+}
+
+input UpdateInvoiceInput {
+  amount: Float
+  balance_due: Float
+  id: Int!
+  invoice_date: DateTime
+  invoice_items: String
+  next_payment_due_date: DateTime
+  payment_method: String
+  user_id: Int
+}
+
+input UpdateLessonDTO {
+  attachments: [String!] = []
+
+  """Rich content in JSON format"""
+  content: String
+  description: String
+
+  """Module ID the lesson belongs to"""
+  moduleId: Float
+  title: String
+  video_url: String
+}
+
+input UpdateLicenseInput {
+  certification_authority: String
+  documents_url: [String!]
+  expiration_date: DateTime
+  id: Int!
+  is_valid: Boolean
+  issue_date: DateTime
+  license_number: String
+  license_type: String
+  status: String
+}
+
+input UpdateMaintenanceInput {
+  aircraft_id: Int
+  description: String
+  documents_url: [String!]
+  end_date: DateTime
+  id: Int!
+  images_url: [String!]
+  maintenance_cost: Float
+  maintenance_type: MaintenanceType
+  parts_changed: String
+  start_date: DateTime
+  status: String
+  technician_id: Int
+}
+
+input UpdateModuleDTO {
+  """Course ID the module belongs to"""
+  courseId: Float
+  description: String
+  title: String
+}
+
+input UpdateNotificationInput {
+  action_url: String
+  expiration_date: DateTime
+  id: Int!
+  is_read: Boolean
+  message: String
+  notification_date: DateTime
+  notification_type: String
+  priority: String
+}
+
+input UpdateQuestionDTO {
+  content: JSONObject
+
+  """Correct answer"""
+  correct_answer: String
+
+  """List of possible answers"""
+  options: [String!]
+}
+
+input UpdateReservationInput {
+  aircraft_id: Int
+  end_time: DateTime
+  estimated_flight_hours: Float
+  flight_category: FlightCategory!
+  id: Int!
+  notes: String
+  purpose: String
+  reservation_date: DateTime
+  start_time: DateTime
+  user_id: Int
+}
+
+input UpdateReservationTemplateInput {
+  aircraft_id: Int
+  day_of_week: Int
+  estimated_flight_hours: Float
+  flight_category: FlightCategory
+  id: Int!
+  name: String
+  notes: String
+  preferred_end_time: String
+  preferred_start_time: String
+  purpose: String
+}
+
+input UpdateRoleInput {
+  id: Int!
+  role_name: String
+}
+
+input UpdateUserInput {
+  address: String
+  date_of_birth: DateTime
+  distance_unit: String
+  email: String
+  first_name: String
+  id: Float
+  is_instructor: Boolean
+  language: String
+  last_name: String
+  membership_end_date: DateTime
+  membership_start_date: DateTime
+  password: String
+  phone_number: String
+  profile_picture: String
+  roleId: Float
+  speed_unit: String
+  timezone: String
+}
+
+input UpdateUserPreferencesInput {
+  distance_unit: String
+  id: Float
+  language: String
+  preferred_aerodrome: String
+  speed_unit: String
+  timezone: String
+}
+
+"""The `Upload` scalar type represents a file upload."""
+scalar Upload
+
+type User {
+  address: String
+  answers: [Answer!]!
+  dashboard_widgets: [DashboardWidgetConfig!]
+  date_of_birth: DateTime!
+  distance_unit: String
+  email: String!
+  email_notifications_enabled: Boolean!
+  first_name: String!
+  flights: [Flight!]!
+  id: Int!
+  invoices: [Invoice!]!
+  is2FAEnabled: Boolean!
+  isEmailConfirmed: Boolean!
+  language: String
+  last_name: String!
+  licenses: [License!]
+  maintenances: [Maintenance!]
+  newsletter_subscribed: Boolean!
+  password: String @deprecated(reason: "Never returned.")
+  payments: [Payment!]!
+  phone_number: String
+  preferred_aerodrome: String
+  profile_picture: String
+  reservations: [Reservation!]!
+  role: Role
+  sms_notifications_enabled: Boolean!
+  speed_unit: String
+  timezone: String
+  total_flight_hours: Float
+  userProgresses: [UserProgress!]!
+  user_account_balance: Float!
+  validation_token: String @deprecated(reason: "Never returned.")
+}
+
+input UserAnswerInput {
+  """The user-provided answer"""
+  answer: String!
+
+  """The ID of the question"""
+  questionId: Int!
+}
+
+type UserInstructionSummary {
+  certifications: [CertificationDto!]!
+  eLearningCourses: [ELearningCourseDto!]!
+  evaluations: EvaluationSummaryDto!
+  learningProgress: LearningProgressDto!
+  recentCourses: [CourseDto!]!
+  upcomingCourses: [CourseDto!]!
+}
+
+type UserProgress {
+  completed: Boolean!
+  completed_at: DateTime
+
+  """The evaluations completed by the user"""
+  evaluation: Evaluation
+
+  """The unique ID of the user progress"""
+  id: Float!
+  passed: Boolean!
+  score: Float
+}
+
+type UsersByRole {
+  count: Int!
+  roleId: Int!
+  role_name: String!
+}
+
+type ValidationResult {
+  passed: Boolean!
+  score: Float!
+}
+
+type adminStatus {
+  availableAircrafts: Int!
+  flightHoursThisMonth: Float!
+  pendingReservations: Int!
+  reservationsByCategory: [ReservationsByCategory!]!
+  totalAircrafts: Int!
+  totalFlights: Int!
+  totalIncidents: Int!
+  totalReservations: Int!
+  totalUsers: Int!
+  usersByRole: [UsersByRole!]!
+}

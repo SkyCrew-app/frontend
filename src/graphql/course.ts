@@ -170,8 +170,8 @@ mutation RateCourse($id: Int!, $rating: Int!, $feedback: String!) {
 `
 
 export const UPDATE_COURSE = gql`
-  mutation UpdateCourse($id: Int!, $input: UpdateCourseInstructionInput!) {
-    updateCourse(id: $id, input: $input) {
+  mutation UpdateCourseInstruction($input: UpdateCourseInstructionInput!) {
+    updateCourseInstruction(input: $input) {
       id
       startTime
       endTime
@@ -184,18 +184,8 @@ export const UPDATE_COURSE = gql`
 `
 
 
-export const GET_COMPETENCIES = gql`
-  query GetAllCompetencies {
-    getAllCompetencies {
-      id
-      name
-      description
-    }
-  }
-`
-
 export const DELETE_COURSE = gql`
-  mutation DeleteCourse($id: Int!) {
-    deleteCourse(id: $id)
+  mutation DeleteCourseInstruction($id: Int!) {
+    deleteCourseInstruction(id: $id)
   }
 `

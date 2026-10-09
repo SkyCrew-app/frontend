@@ -48,22 +48,6 @@ export const CREATE_MODULE = gql`
   }
 `;
 
-export const GET_LESSONS = gql`
-  query GetLessons {
-    getLessons {
-      id
-      title
-      description
-      video_url
-      attachments
-      module {
-        id
-        title
-      }
-    }
-  }
-`;
-
 export const CREATE_LESSON = gql`
   mutation CreateLesson($createLessonInput: CreateLessonDTO!) {
     createLesson(createLessonInput: $createLessonInput) {
@@ -147,8 +131,8 @@ export const GET_EVALUATIONS = gql`
 `;
 
 export const UPDATE_EVALUATION = gql`
-  mutation UpdateEvaluation($updateEvaluationInput: UpdateEvaluationDTO!) {
-    updateEvaluation(updateEvaluationInput: $updateEvaluationInput) {
+  mutation UpdateEvaluation($id: Float!, $updateEvaluationInput: UpdateEvaluationDTO!) {
+    updateEvaluation(id: $id, updateEvaluationInput: $updateEvaluationInput) {
       id
       pass_score
       module {
@@ -166,8 +150,8 @@ export const DELETE_EVALUATION = gql`
 `;
 
 export const UPDATE_QUESTION = gql`
-  mutation UpdateQuestion($updateQuestionInput: UpdateQuestionDTO!) {
-    updateQuestion(updateQuestionInput: $updateQuestionInput) {
+  mutation UpdateQuestion($id: Float!, $updateQuestionInput: UpdateQuestionDTO!) {
+    updateQuestion(id: $id, updateQuestionInput: $updateQuestionInput) {
       id
       content
       options
@@ -217,8 +201,8 @@ export const DELETE_MODULE = gql`
 `;
 
 export const UPDATE_LESSON = gql`
-  mutation UpdateLesson($updateLessonInput: UpdateLessonDTO!) {
-    updateLesson(updateLessonInput: $updateLessonInput) {
+  mutation UpdateLesson($id: Float!, $updateLessonInput: UpdateLessonDTO!) {
+    updateLesson(id: $id, updateLessonInput: $updateLessonInput) {
       id
       title
       description

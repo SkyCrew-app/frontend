@@ -33,17 +33,6 @@ export const GET_EVALUATION_BY_ID = gql`
   }
 `;
 
-// Query to get questions for a specific evaluation
-export const GET_QUESTIONS_BY_EVALUATION = gql`
-  query GetQuestionsByEvaluation($evaluationId: Int!) {
-    getQuestionsByEvaluation(evaluationId: $evaluationId) {
-      id
-      content
-      options
-    }
-  }
-`;
-
 // Mutation to create an evaluation
 export const CREATE_EVALUATION = gql`
   mutation CreateEvaluation($createEvaluationInput: CreateEvaluationDTO!) {
@@ -54,70 +43,6 @@ export const CREATE_EVALUATION = gql`
         title
       }
       pass_score
-    }
-  }
-`;
-
-// Mutation to update an evaluation
-export const UPDATE_EVALUATION = gql`
-  mutation UpdateEvaluation($id: Int!, $updateEvaluationInput: UpdateEvaluationDTO!) {
-    updateEvaluation(id: $id, updateEvaluationInput: $updateEvaluationInput) {
-      id
-      module {
-        id
-        title
-      }
-      pass_score
-    }
-  }
-`;
-
-// Mutation to delete an evaluation
-export const DELETE_EVALUATION = gql`
-  mutation DeleteEvaluation($id: Int!) {
-    deleteEvaluation(id: $id)
-  }
-`;
-
-// Mutation to create a question
-export const CREATE_QUESTION = gql`
-  mutation CreateQuestion($evaluationId: Int!, $createQuestionInput: CreateQuestionDTO!) {
-    createQuestion(evaluationId: $evaluationId, createQuestionInput: $createQuestionInput) {
-      id
-      content
-      options
-      correct_answer
-    }
-  }
-`;
-
-// Mutation to update a question
-export const UPDATE_QUESTION = gql`
-  mutation UpdateQuestion($id: Int!, $updateQuestionInput: UpdateQuestionDTO!) {
-    updateQuestion(id: $id, updateQuestionInput: $updateQuestionInput) {
-      id
-      content
-      options
-      correct_answer
-    }
-  }
-`;
-
-// Mutation to delete a question
-export const DELETE_QUESTION = gql`
-  mutation DeleteQuestion($id: Int!) {
-    deleteQuestion(id: $id)
-  }
-`;
-
-// Mutation to submit an answer
-export const CREATE_ANSWER = gql`
-  mutation CreateAnswer($userId: Int!, $questionId: Int!, $createAnswerInput: CreateAnswerDTO!) {
-    createAnswer(userId: $userId, questionId: $questionId, createAnswerInput: $createAnswerInput) {
-      id
-      answer_text
-      is_correct
-      submitted_at
     }
   }
 `;

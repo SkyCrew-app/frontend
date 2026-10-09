@@ -54,9 +54,7 @@ export const UPDATE_RESERVATION = gql`
 
 export const DELETE_RESERVATION = gql`
   mutation DeleteReservation($id: Int!) {
-    deleteReservation(id: $id) {
-      id
-    }
+    deleteReservation(id: $id)
   }
 `;
 

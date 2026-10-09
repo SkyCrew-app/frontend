@@ -255,8 +255,8 @@ export function EvaluationManagement() {
     try {
       await updateEvaluation({
         variables: {
+          id: Number(editingEvaluation.id),
           updateEvaluationInput: {
-            id: editingEvaluation.id,
             pass_score: Number.parseInt(editingEvaluation.pass_score),
           },
         },
@@ -293,8 +293,8 @@ export function EvaluationManagement() {
     try {
       await updateQuestion({
         variables: {
+          id: Number(editingQuestion.id),
           updateQuestionInput: {
-            id: editingQuestion.id,
             content: { text: editingQuestion.content.text },
             options: validOptions,
             correct_answer: editingQuestion.correct_answer,
