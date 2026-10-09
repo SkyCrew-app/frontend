@@ -11,6 +11,7 @@ import { useQuery } from "@apollo/client"
 import { GET_USER_PROFILE } from "@/graphql/user"
 import { useCurrentUser } from "@/components/hooks/userHooks"
 import { getBackendBaseUrl } from "@/lib/runtime-config"
+import { useLogout } from "@/components/hooks/useLogout"
 
 const menuItems = [
   { name: "Tableau de bord", icon: LayoutDashboard, path: "/dashboard" },
@@ -75,6 +76,7 @@ interface SidebarProps {
 }
 
 export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarProps) {
+  const handleLogout = useLogout()
   const pathname = usePathname()
   const [openMenus, setOpenMenus] = React.useState<string[]>([])
   const userEmail = useCurrentUser()
@@ -414,13 +416,14 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
             <User className="h-4 w-4 mr-3" />
             <span>Mon profil</span>
           </Link>
-          <Link
-            href="/"
-            className="flex items-center px-4 py-2 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-lg transition-colors duration-150 mt-1"
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="flex w-full items-center px-4 py-2 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-lg transition-colors duration-150 mt-1"
           >
             <LogOut className="h-4 w-4 mr-3" />
             <span>Déconnexion</span>
-          </Link>
+          </button>
           <div className="mt-3 px-4 flex items-center justify-center">
             <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border border-sidebar-border bg-sidebar-accent px-1.5 font-mono text-[10px] font-medium text-sidebar-foreground/50">
               <span className="text-xs">&#8984;</span>K
