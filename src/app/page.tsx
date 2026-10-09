@@ -50,7 +50,8 @@ export default function LoginPage() {
       const errors: Record<string, string> = {};
       result.error.issues.forEach((issue) => {
         const field = issue.path[0] as string;
-        errors[field] = issue.message;
+        // Keep the first issue of a field: "required" comes before "invalid".
+        errors[field] ??= issue.message;
       });
       setFieldErrors(errors);
       return;
