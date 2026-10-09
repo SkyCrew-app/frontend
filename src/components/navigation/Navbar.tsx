@@ -7,7 +7,6 @@ import { Bell, ChevronRight, User, LogOut, CreditCard } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { GET_USER_PROFILE } from "@/graphql/user"
-import { LOGOUT_MUTATION } from "@/graphql/system"
 import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
 import { io, type Socket } from "socket.io-client"
 import { getBackendBaseUrl } from "@/lib/runtime-config"
@@ -15,7 +14,7 @@ import { GET_NOTIFICATIONS, SEEN_NOTIFICATION } from "@/graphql/notifications"
 import { getNotificationTypeInFrench } from "@/interfaces/notification"
 import { CustomDropdown, CustomDropdownItem, CustomDropdownSeparator } from "@/components/ui/custom-dropdown"
 import ThemeToggle from "@/components/theme/ThemeToggle"
-import { clearSessionCache } from "@/lib/apollo-client"
+import { useLogout } from "@/components/hooks/useLogout"
 
 interface NavbarProps {
   onToggleMobileMenu: () => void
@@ -23,7 +22,7 @@ interface NavbarProps {
 
 export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
   const router = useRouter()
-  const [logout] = useMutation(LOGOUT_MUTATION)
+  const handleLogout = useLogout()
   const [initials, setInitials] = useState<string | null>(null)
   const [profilePicture, setProfilePicture] = useState<string | null>(null)
   const [userAccountBalance, setUserAccountBalance] = useState<number | null>(null)
@@ -92,15 +91,6 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
     }
   }, [data])
 
-  const handleLogout = async () => {
-    try {
-      await logout()
-      await clearSessionCache()
-      router.push("/")
-    } catch (error) {
-      console.error("Erreur lors de la déconnexion:", error)
-    }
-  }
 
   const handleProfile = () => {
     router.push("/profile/")
