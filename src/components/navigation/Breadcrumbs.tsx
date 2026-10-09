@@ -65,7 +65,7 @@ export default function Breadcrumbs() {
       >
         <Home className="h-4 w-4" />
       </Link>
-      {breadcrumbs.map((crumb, index) => (
+      {breadcrumbs.map((crumb) => (
         <Fragment key={crumb.href}>
           <ChevronRight className="h-3.5 w-3.5 mx-1.5 text-muted-foreground/50 shrink-0" />
           {crumb.isLast ? (

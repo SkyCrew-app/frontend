@@ -570,7 +570,7 @@ function TemplateFormDialog({
     handleInputChange("items", newItems)
   }
 
-  const [isDragging, setIsDragging] = useState(false)
+  const [, setIsDragging] = useState(false)
 
   const handleDragEnd = (result: any) => {
     setIsDragging(false)

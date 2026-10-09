@@ -69,7 +69,6 @@ export function LessonManagement() {
   const {
     data: modulesData,
     loading: modulesLoading,
-    refetch: refetchModules,
   } = useQuery(GET_MODULES_BY_COURSE, {
     variables: { courseId: Number.parseInt(selectedCourseId) },
     skip: !selectedCourseId,

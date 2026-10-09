@@ -19,7 +19,7 @@ import {
   DELETE_CHECKLIST_ITEM,
   REORDER_CHECKLIST_ITEMS,
 } from "@/graphql/checklist"
-import type { ChecklistTemplate, ChecklistItem } from "@/interfaces/checklist"
+import type { ChecklistTemplate } from "@/interfaces/checklist"
 import { ChecklistTemplateEditor } from "@/components/checklists/ChecklistTemplateEditor"
 
 export default function AdminChecklistDetailPage() {
@@ -152,7 +152,7 @@ export default function AdminChecklistDetailPage() {
         },
         refetchQueries: [{ query: GET_CHECKLIST_TEMPLATE, variables: { id } }],
       })
-    } catch (error) {
+    } catch {
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -161,7 +161,7 @@ export default function AdminChecklistDetailPage() {
     }
   }
 
-  const handleUpdateItem = async (item: ChecklistItem) => {
+  const handleUpdateItem = async () => {
     // Not used directly in the editor but kept for interface compatibility
   }
 

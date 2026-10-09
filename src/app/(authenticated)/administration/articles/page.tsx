@@ -39,7 +39,7 @@ import {
   PlusCircle,
   Edit,
   Trash2,
-  Image,
+  Image as ImageIcon,
   FileText,
   Tag,
   AlignLeft,
@@ -270,7 +270,6 @@ export default function ArticlesAdminPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [selectedDocument, setSelectedDocument] = useState<File | null>(null)
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState({
     title: "",
@@ -545,7 +544,7 @@ export default function ArticlesAdminPage() {
                   <span>Contenu</span>
                 </TabsTrigger>
                 <TabsTrigger value="media" className="flex items-center gap-2">
-                  <Image className="h-4 w-4" />
+                  <ImageIcon className="h-4 w-4" />
                   <span>Médias</span>
                 </TabsTrigger>
               </TabsList>
@@ -696,7 +695,7 @@ export default function ArticlesAdminPage() {
                 <TabsContent value="media" className="h-full overflow-y-auto p-6 space-y-6">
                   <div className="space-y-2">
                     <Label htmlFor="photo" className="text-sm font-medium flex items-center">
-                      <Image className="h-4 w-4 mr-1" />
+                      <ImageIcon className="h-4 w-4 mr-1" />
                       Image principale
                     </Label>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -727,7 +726,7 @@ export default function ArticlesAdminPage() {
                           </div>
                         ) : (
                           <div className="text-sm text-center text-muted-foreground">
-                            <Image className="h-8 w-8 mx-auto mb-1 opacity-50" />
+                            <ImageIcon className="h-8 w-8 mx-auto mb-1 opacity-50" />
                             <p>Aucune image sélectionnée</p>
                           </div>
                         )}

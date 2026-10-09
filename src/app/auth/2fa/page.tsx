@@ -76,7 +76,7 @@ export default function TwoFactorAuthPage() {
 
       sessionStorage.removeItem('2fa_pending_email');
       router.push("/dashboard");
-    } catch (error) {
+    } catch {
       toast({
         variant: "destructive",
         title: "Erreur",

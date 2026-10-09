@@ -65,13 +65,6 @@ const PHASE_COLORS: Record<Phase, string> = {
   ground: "#64748B",
 }
 
-const PHASE_FILLS: Record<Phase, string> = {
-  climb: "rgba(34,197,94,0.15)",
-  cruise: "rgba(224,64,251,0.08)",
-  descent: "rgba(245,158,11,0.15)",
-  ground: "rgba(100,116,139,0.1)",
-}
-
 /* ------------------------------------------------------------------ */
 /*  Theme-adaptive palette                                             */
 /* ------------------------------------------------------------------ */

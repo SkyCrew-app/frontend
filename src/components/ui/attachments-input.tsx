@@ -42,7 +42,7 @@ export function AttachmentsInput({ value, onChange, className }: AttachmentsInpu
       const fileName = url.split("/").pop() || "fichier"
       // Tronquer le nom s'il est trop long
       return fileName.length > 25 ? fileName.substring(0, 22) + "..." : fileName
-    } catch (error) {
+    } catch {
       return "fichier"
     }
   }

@@ -17,7 +17,6 @@ import {
   Moon,
   Monitor,
   Plus,
-  Download,
 } from "lucide-react"
 import {
   CommandDialog,

@@ -23,7 +23,7 @@ export function AirportInfo({ airportInfo, type, weather }: AirportInfoProps) {
     if (!timeString) return "N/A"
     try {
       return new Date(timeString).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-    } catch (e) {
+    } catch {
       return "N/A"
     }
   }

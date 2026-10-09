@@ -70,7 +70,6 @@ export function QuestionStepper({
 function MobileQuestionStepper({
   totalQuestions,
   currentQuestion,
-  answeredQuestions,
   onNavigate,
 }: QuestionStepperProps) {
   return (

@@ -47,7 +47,7 @@ export function CourseCard({ course, onClick }: CourseCardProps) {
   const formatDate = (dateString: string) => {
     try {
       return format(parseISO(dateString), "d MMMM yyyy", { locale: fr })
-    } catch (e) {
+    } catch {
       return "Date invalide"
     }
   }

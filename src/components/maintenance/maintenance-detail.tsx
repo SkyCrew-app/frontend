@@ -19,7 +19,7 @@ interface MaintenanceDetailProps {
   maintenanceStatuses: Record<string, string>
 }
 
-export function MaintenanceDetail({ maintenance, maintenanceTypes, maintenanceStatuses }: MaintenanceDetailProps) {
+export function MaintenanceDetail({ maintenance, maintenanceTypes }: MaintenanceDetailProps) {
   const [api, setApi] = useState<CarouselApi | undefined>(undefined)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [imageCount, setImageCount] = useState(0)

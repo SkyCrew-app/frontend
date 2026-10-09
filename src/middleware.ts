@@ -94,7 +94,7 @@ export async function middleware(req: NextRequest) {
       maxAge: 3600
     });
 
-  } catch (error) {
+  } catch {
     response.cookies.delete('token');
     return NextResponse.redirect(new URL(withBasePath('/system/notconnected'), req.url));
   }

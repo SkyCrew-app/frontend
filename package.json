@@ -6,7 +6,7 @@
     "dev": "next dev -p 5173",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint src --ext .ts,.tsx",
     "test": "jest --passWithNoTests",
     "test:cov": "jest --coverage",
     "prepare": "husky || true"

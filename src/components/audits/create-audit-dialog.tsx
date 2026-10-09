@@ -54,7 +54,7 @@ export function CreateAuditDialog({ isOpen, onClose, onSuccess }: CreateAuditDia
   const { data: userData } = useQuery(GET_USERS_FOR_AUDIT)
   const { data: enumsData } = useQuery(GET_AUDIT_ENUMS)
 
-  const { data: templateData, loading: templateLoading } = useQuery(GET_AUDIT_TEMPLATE_BY_ID, {
+  const { data: templateData } = useQuery(GET_AUDIT_TEMPLATE_BY_ID, {
     variables: {
       id: Number.parseInt(formData.templateId),
     },

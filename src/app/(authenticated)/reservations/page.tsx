@@ -43,7 +43,7 @@ export default function ReservationCalendar() {
   const [selectedAircraft, setSelectedAircraft] = useState<number | null>(null)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
-  const [hoveredTime, setHoveredTime] = useState<string | null>(null)
+  const [, setHoveredTime] = useState<string | null>(null)
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null)
   const [isReservationDialogOpen, setIsReservationDialogOpen] = useState(false)
   const [purpose, setPurpose] = useState("")
@@ -86,7 +86,6 @@ export default function ReservationCalendar() {
     data: reservationData,
     loading: loadingReservations,
     error: errorReservations,
-    refetch: refetchReservations,
   } = useQuery(GET_FILTERED_RESERVATIONS, {
     variables: { startDate: formattedDate, endDate: nextDate },
   })
@@ -291,7 +290,7 @@ export default function ReservationCalendar() {
           title: "Réservation mise à jour",
           description: `La réservation pour l'avion ${selectedReservation.aircraft.registration_number} a été mise à jour.`,
         })
-      } catch (error) {
+      } catch {
         toast({
           variant: "destructive",
           title: "Erreur lors de la mise à jour",
@@ -318,7 +317,7 @@ export default function ReservationCalendar() {
           title: "Réservation supprimée",
           description: `La réservation pour l'avion ${selectedReservation.aircraft.registration_number} a été supprimée.`,
         })
-      } catch (error) {
+      } catch {
         toast({
           variant: "destructive",
           title: "Erreur lors de la suppression",

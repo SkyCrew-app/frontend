@@ -45,7 +45,7 @@ const cardVariant = {
   },
 }
 
-export function OverviewTab({ data, setActiveTab }: OverviewTabProps) {
+export function OverviewTab({ data }: OverviewTabProps) {
   const router = useRouter()
 
   return (

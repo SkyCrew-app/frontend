@@ -72,7 +72,7 @@ export default function LoginPage() {
       } else {
         router.push('/dashboard');
       }
-    } catch (err) {
+    } catch {
       toast({
         variant: "destructive",
         title: "Erreur de connexion",

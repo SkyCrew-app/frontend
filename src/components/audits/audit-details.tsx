@@ -19,7 +19,6 @@ import {
   Loader2,
   Camera,
   FileWarning,
-  X,
 } from "lucide-react"
 import { CLOSE_AUDIT } from "@/graphql/audit"
 import { AuditResultType, type AuditCategoryType, AuditFrequencyType, CriticalityLevel } from "@/interfaces/audit"
@@ -385,7 +384,7 @@ export function AuditDetails({ isOpen, onClose, audit, onEdit }: AuditDetailsPro
                 <div className="px-3 sm:px-5 md:px-6 py-3 sm:py-4 space-y-3 sm:space-y-4">
                   {isMobile ? (
                     <Accordion type="single" collapsible className="w-full">
-                      {Object.entries(groupedItems).map(([category, items]: [string, any], index) => (
+                      {Object.entries(groupedItems).map(([category, items]: [string, any]) => (
                         <AccordionItem key={category} value={category} className="border-b border-border/70 mb-0">
                           <AccordionTrigger className="text-xs font-medium py-2 hover:no-underline">
                             <div className="flex items-center gap-1.5">
