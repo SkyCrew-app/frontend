@@ -6,6 +6,7 @@ import { useQuery } from "@apollo/client"
 import { Shield, Plus, AlertTriangle, CheckCircle, Clock, FileText } from "lucide-react"
 import { GET_ALL_AUDITS, GET_AUDIT_ENUMS } from "@/graphql/audit"
 import { AuditResultType, type AuditFrequencyType } from "@/interfaces/audit"
+import { filterAudits } from "@/lib/audit"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -37,17 +38,21 @@ export default function SecurityAuditsPage() {
       filter: {
         ...(filters.aircraftId && { aircraftId: filters.aircraftId }),
         ...(filters.auditResult && { auditResult: filters.auditResult }),
-        ...(filters.auditFrequency && { auditFrequency: filters.auditFrequency }),
         ...(filters.startDate && { startDate: filters.startDate }),
         ...(filters.endDate && { endDate: filters.endDate }),
         ...(activeTab === "open" && { isClosed: false }),
         ...(activeTab === "closed" && { isClosed: true }),
         ...(activeTab === "nonconform" && { auditResult: AuditResultType.NON_CONFORME }),
-        ...(activeTab === "overdue" && { isOverdue: true }),
       },
     },
     fetchPolicy: "network-only",
     skip: activeMainTab !== "audits",
+  })
+
+  // AuditFilterInput has no frequency nor overdue criteria: applied on the returned list.
+  const visibleAudits = filterAudits(data?.audits || [], {
+    auditFrequency: filters.auditFrequency,
+    overdueOnly: activeTab === "overdue",
   })
 
   const handleFilterChange = (newFilters: any) => {
@@ -234,7 +239,7 @@ export default function SecurityAuditsPage() {
                       <AuditList
                         loading={loading}
                         error={error}
-                        audits={data?.audits || []}
+                        audits={visibleAudits}
                         searchTerm={filters.searchTerm}
                         onRefetch={refetch}
                       />
