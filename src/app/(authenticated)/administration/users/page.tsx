@@ -111,7 +111,7 @@ export default function AdministrationPage() {
         variables: {
           updateUserInput: {
             ...userData,
-            roleId: selectedRole,
+            roleId: selectedRole ? Number(selectedRole) : null,
           },
         },
       })

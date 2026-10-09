@@ -69,6 +69,8 @@ export function MobileReservationForm({
     flightCategory ? flightCategoryMapping[flightCategory as keyof typeof flightCategoryMapping] : undefined,
   )
 
+  const [categoryError, setCategoryError] = useState(false)
+
   // Modifier la fonction handleSubmit pour éviter les mises à jour d'état inutiles
   const handleSubmit = async () => {
     if (!selectedAircraftId) {
@@ -86,6 +88,12 @@ export function MobileReservationForm({
     // Vérifier que l'heure de fin est après l'heure de début
     if (endDateTime <= startDateTime) {
       alert("L'heure de fin doit être après l'heure de début")
+      return
+    }
+
+    // La catégorie est obligatoire (enum requis par l'API).
+    if (!flightCategory) {
+      setCategoryError(true)
       return
     }
 
@@ -175,9 +183,10 @@ export function MobileReservationForm({
           onValueChange={(value) => {
             setSelectedCategoryFr(value)
             setFlightCategory(flightCategoryReverseMapping[value])
+            setCategoryError(false)
           }}
         >
-          <SelectTrigger id="category">
+          <SelectTrigger id="category" aria-invalid={categoryError} className={categoryError ? "border-red-500" : ""}>
             <SelectValue placeholder="Sélectionner une catégorie" />
           </SelectTrigger>
           <SelectContent>
@@ -188,6 +197,11 @@ export function MobileReservationForm({
             ))}
           </SelectContent>
         </Select>
+        {categoryError && (
+          <p className="mt-1 text-sm text-red-500" role="alert">
+            Veuillez sélectionner une catégorie de vol.
+          </p>
+        )}
       </div>
 
       <div>

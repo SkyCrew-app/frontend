@@ -168,6 +168,15 @@ export default function ReservationCalendar() {
       return
     }
 
+    if (!flightCategory) {
+      toast({
+        variant: "destructive",
+        title: "Catégorie de vol manquante",
+        description: "Veuillez sélectionner une catégorie de vol.",
+      })
+      return
+    }
+
     setIsCreating(true)
     try {
       const startTime = new Date(`${formattedDate}T${selectedTimeRange.start}`)
@@ -220,6 +229,15 @@ export default function ReservationCalendar() {
         variant: "destructive",
         title: "Erreur",
         description: "Impossible de trouver l'utilisateur actuel.",
+      })
+      return
+    }
+
+    if (!flightCategory) {
+      toast({
+        variant: "destructive",
+        title: "Catégorie de vol manquante",
+        description: "Veuillez sélectionner une catégorie de vol.",
       })
       return
     }

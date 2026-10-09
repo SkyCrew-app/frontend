@@ -39,6 +39,15 @@ function ConfirmEmailComponent() {
       return;
     }
 
+    if (!validation_token) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Le lien est invalide ou a expiré.",
+      });
+      return;
+    }
+
     try {
       await confirmEmailAndSetPassword({
         variables: {

@@ -75,6 +75,17 @@ export function ReservationForm({
     }
   }, [flightCategory])
 
+  const [categoryError, setCategoryError] = useState(false)
+
+  // La catégorie est obligatoire à la création (enum requis par l'API).
+  const handleSubmit = () => {
+    if (!isEdit && !flightCategory) {
+      setCategoryError(true)
+      return
+    }
+    onSubmit()
+  }
+
   const getAircraftName = () => {
     if (!selectedAircraft || !aircraftData) return ""
     const aircraft = aircraftData.getAircrafts.find((a: Aircraft) => a.id === selectedAircraft)
@@ -131,9 +142,10 @@ export function ReservationForm({
             onValueChange={(value) => {
               setSelectedCategoryFr(value)
               setFlightCategory(flightCategoryReverseMapping[value])
+              setCategoryError(false)
             }}
           >
-            <SelectTrigger id="category">
+            <SelectTrigger id="category" aria-invalid={categoryError} className={categoryError ? "border-red-500" : ""}>
               <SelectValue placeholder="Sélectionner une catégorie" />
             </SelectTrigger>
             <SelectContent>
@@ -144,6 +156,11 @@ export function ReservationForm({
               ))}
             </SelectContent>
           </Select>
+          {categoryError && (
+            <p className="mt-1 text-sm text-red-500" role="alert">
+              Veuillez sélectionner une catégorie de vol.
+            </p>
+          )}
         </div>
 
         <div>
@@ -159,7 +176,7 @@ export function ReservationForm({
       </div>
 
       <div className="flex justify-end pt-4">
-        <Button onClick={onSubmit} disabled={isSubmitting}>
+        <Button onClick={handleSubmit} disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {isEdit ? "Mettre à jour" : "Créer la réservation"}
         </Button>

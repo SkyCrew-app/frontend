@@ -5,9 +5,10 @@ import { useMutation } from "@apollo/client"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
-import { UPDATE_USER } from "@/graphql/user"
+import { UPDATE_NOTIFICATION_SETTINGS } from "@/graphql/user"
 import { useToast } from "@/components/hooks/use-toast"
 import { motion } from "framer-motion"
+import { buildNotificationSettings } from "@/lib/notification-settings"
 
 interface NotificationFormProps {
   userData: any
@@ -15,7 +16,7 @@ interface NotificationFormProps {
   refetch: () => Promise<any>
 }
 
-export function NotificationForm({ userData, userId, refetch }: NotificationFormProps) {
+export function NotificationForm({ userData, refetch }: NotificationFormProps) {
   const [notifications, setNotifications] = useState({
     email_notifications_enabled: false,
     sms_notifications_enabled: false,
@@ -25,7 +26,7 @@ export function NotificationForm({ userData, userId, refetch }: NotificationForm
   const [saveSuccess, setSaveSuccess] = useState(false)
 
   const { toast } = useToast()
-  const [updateNotifications] = useMutation(UPDATE_USER)
+  const [updateNotifications] = useMutation(UPDATE_NOTIFICATION_SETTINGS)
 
   useEffect(() => {
     if (userData) {
@@ -36,7 +37,14 @@ export function NotificationForm({ userData, userId, refetch }: NotificationForm
     }
   }, [userData])
 
-  const handleSwitchChange = async (name: string, checked: boolean) => {
+  const handleSwitchChange = async (
+    name: "email_notifications_enabled" | "sms_notifications_enabled",
+    checked: boolean,
+  ) => {
+    // Sans les données du serveur, on ne connaît pas l'abonnement à la newsletter :
+    // l'envoyer à l'aveugle écraserait la valeur enregistrée.
+    if (!userData) return
+
     setNotifications(prev => ({ ...prev, [name]: checked }))
     setSaveSuccess(false)
 
@@ -44,15 +52,10 @@ export function NotificationForm({ userData, userId, refetch }: NotificationForm
 
     try {
       const { data } = await updateNotifications({
-        variables: {
-          updateUserInput: {
-            id: userId,
-            [name]: checked,
-          },
-        },
+        variables: buildNotificationSettings(userData, { [name]: checked }),
       })
 
-      if (data?.updateUser) {
+      if (data?.updateNotificationSettings) {
         toast({
           title: "Succès",
           description: "Paramètres de notification mis à jour avec succès",
@@ -101,7 +104,7 @@ export function NotificationForm({ userData, userId, refetch }: NotificationForm
               id="email_notifications_enabled"
               checked={notifications.email_notifications_enabled}
               onCheckedChange={(checked) => handleSwitchChange("email_notifications_enabled", checked)}
-              disabled={isUpdating}
+              disabled={isUpdating || !userData}
               className="data-[state=checked]:bg-primary"
             />
           </div>
@@ -117,7 +120,7 @@ export function NotificationForm({ userData, userId, refetch }: NotificationForm
               id="sms_notifications_enabled"
               checked={notifications.sms_notifications_enabled}
               onCheckedChange={(checked) => handleSwitchChange("sms_notifications_enabled", checked)}
-              disabled={isUpdating}
+              disabled={isUpdating || !userData}
               className="data-[state=checked]:bg-primary"
             />
           </div>

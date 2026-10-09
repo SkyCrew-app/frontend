@@ -34,6 +34,12 @@ export const GET_ADMINISTRATION = gql`
       maintenanceMessage
       maintenanceTime
       fuelPrice
+      taxonomies {
+        aircraftCategories
+        flightTypes
+        licenseTypes
+        maintenanceTypes
+      }
     }
   }
 `;
