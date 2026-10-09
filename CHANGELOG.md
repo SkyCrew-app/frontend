@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.3.3](https://github.com/SkyCrew-app/frontend/compare/2.3.2...2.3.3) (2026-10-09)
+
+
+### Bug Fixes
+
+* **audits:** :bug: send valid variables from the audit, article and course screens ([#95](https://github.com/SkyCrew-app/frontend/issues/95)) ([515e9cb](https://github.com/SkyCrew-app/frontend/commit/515e9cb9c16312bb6f3d8f1d1619d37d1d3252c5))
+* **checklists:** :bug: save the last answers before completing a checklist ([#99](https://github.com/SkyCrew-app/frontend/issues/99)) ([8a5da46](https://github.com/SkyCrew-app/frontend/commit/8a5da4697e09745a078dc364d52a83845a98983f))
+* **flights:** :bug: send the variables the API expects when closing a flight ([#94](https://github.com/SkyCrew-app/frontend/issues/94)) ([480bd22](https://github.com/SkyCrew-app/frontend/commit/480bd2217ba130028488e55207cfb533c7e6801b))
+* **graphql:** :bug: report a refused mutation instead of announcing a success ([#98](https://github.com/SkyCrew-app/frontend/issues/98)) ([98ef0bc](https://github.com/SkyCrew-app/frontend/commit/98ef0bc91d2988142a716fa5a8780446a111fa06))
+* **users:** :bug: send valid variables from the profile, reservation and settings screens ([#96](https://github.com/SkyCrew-app/frontend/issues/96)) ([4092913](https://github.com/SkyCrew-app/frontend/commit/409291325e28bc340f5fc4544c99d0150ab03ae4))
+
 ## [2.3.2](https://github.com/SkyCrew-app/frontend/compare/2.3.1...2.3.2) (2026-10-09)
 
 
