@@ -217,6 +217,37 @@ describe('AircraftHistory Component', () => {
     items.forEach((item) => expect(within(item).getByText('Alice Martin')).toBeInTheDocument());
   });
 
+  it("ne doit pas appliquer le filtre d'un avion aux autres avions", async () => {
+    const user = userEvent.setup();
+    const otherReservations = [
+      { id: 'o1', start_time: '2024-08-01T12:00:00.000Z', end_time: '2024-08-02T12:00:00.000Z', user: users[0] },
+      { id: 'o2', start_time: '2024-09-01T12:00:00.000Z', end_time: '2024-09-02T12:00:00.000Z', user: users[0] },
+    ];
+    renderPage([
+      successMock({
+        getHistoryAircraft: [
+          mockData.getHistoryAircraft[0],
+          { ...mockData.getHistoryAircraft[1], reservations: otherReservations },
+        ],
+      }),
+    ]);
+    await screen.findByText('F-ABCD');
+
+    const firstCard = getAircraftCard('F-ABCD');
+    const secondCard = getAircraftCard('F-WXYZ');
+    expect(secondCard.getAllByRole('listitem')).toHaveLength(2);
+
+    await user.click(firstCard.getByRole('button', { name: 'Filtres' }));
+    await user.type(await screen.findByPlaceholderText("Nom de l'utilisateur"), 'alice');
+
+    // Le filtre réduit la première carte à Alice Martin…
+    expect(firstCard.getAllByRole('listitem')).toHaveLength(2);
+    // …et laisse intactes les réservations de John Doe sur la seconde.
+    const untouched = secondCard.getAllByRole('listitem');
+    expect(untouched).toHaveLength(2);
+    untouched.forEach((item) => expect(within(item).getByText('John Doe')).toBeInTheDocument());
+  });
+
   it("doit filtrer les réservations par nom d'utilisateur", async () => {
     const user = userEvent.setup();
     renderPage();
@@ -292,6 +323,7 @@ describe('AircraftHistory Component', () => {
         description: "Impossible de charger l'historique des avions. Veuillez réessayer plus tard.",
       }),
     );
+    expect(mockToast).toHaveBeenCalledTimes(1);
 
     expect(container).toBeEmptyDOMElement();
     expect(screen.queryByText('Historique des Vols et Maintenances')).not.toBeInTheDocument();
