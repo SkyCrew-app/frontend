@@ -15,7 +15,7 @@ type Administration {
   allowGuestPilots: Boolean!
   closureDays: [String!]
   clubName: String!
-  clubRules: String!
+  clubRules: String
   contactEmail: String!
   contactPhone: String!
   flightHourRate: Float
@@ -32,15 +32,15 @@ type Administration {
   pilotLicenses: [String!]
   reservationEndTime: String!
   reservationStartTime: String!
-  taxonomies: Taxonomies!
+  taxonomies: Taxonomies
   timeSlotDuration: Int!
 }
 
 type Aircraft {
   audits: [Audit!]!
   availability_status: AvailabilityStatus!
-  consumption: Int!
-  cruiseSpeed: Int!
+  consumption: Int
+  cruiseSpeed: Int
   documents_url: [String!]
   empty_weight: Float
   fuel_capacity: Float
@@ -50,7 +50,7 @@ type Aircraft {
   image_url: String
   maintenance_status: String!
   maintenances: [Maintenance!]!
-  maxAltitude: Int!
+  maxAltitude: Int
   max_takeoff_weight: Float
   model: String!
   registration_number: String!
@@ -298,7 +298,7 @@ type Course {
   progress: Float
 
   """Required license for this course"""
-  required_license: LicenseType!
+  required_license: LicenseType
   title: String!
 }
 
@@ -781,7 +781,7 @@ type Incident {
   corrective_actions: String
   damage_report: String
   description: String!
-  flight: Flight!
+  flight: Flight
   id: Int!
   incident_date: DateTime!
   priority: String!
