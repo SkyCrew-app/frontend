@@ -66,7 +66,9 @@ export const UPDATE_ARTICLE = gql`
     $description: String!
     $text: String!
     $tags: [String!]!
-    $eventDate: DateTime!
+    $eventDate: DateTime
+    $photo: Upload
+    $documents: [Upload!]
   ) {
     updateArticle(
       updateArticleInput: {
@@ -77,6 +79,8 @@ export const UPDATE_ARTICLE = gql`
         tags: $tags
         eventDate: $eventDate
       }
+      photo: $photo
+      documents: $documents
     ) {
       id
       title

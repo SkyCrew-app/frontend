@@ -121,7 +121,7 @@ export default function CourseDetails() {
           input: {
             courseId: Number(id),
             content: newComment,
-            authorId: Number(userData.id),
+            author: Number(userData.id),
           },
         },
       })

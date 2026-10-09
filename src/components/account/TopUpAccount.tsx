@@ -231,6 +231,7 @@ export default function TopUpAccount() {
   }, [userData])
 
   const handleInitStripeIntent = async () => {
+    if (!userId) return
     try {
       if (!amount || Number.parseFloat(amount) <= 0) {
         throw new Error("Veuillez saisir un montant supérieur à 0")
@@ -375,7 +376,7 @@ export default function TopUpAccount() {
                       <Button
                         className="w-full"
                         onClick={handleInitStripeIntent}
-                        disabled={loadingStripeIntent || !amount || Number.parseFloat(amount) <= 0}
+                        disabled={loadingStripeIntent || !userId || !amount || Number.parseFloat(amount) <= 0}
                       >
                         {loadingStripeIntent ? "Initialisation..." : "Initialiser le paiement par carte"}
                       </Button>
@@ -399,12 +400,12 @@ export default function TopUpAccount() {
                 </TabsContent>
 
                 <TabsContent value="paypal" className="mt-4">
-                  {Number.parseFloat(amount) > 0 ? (
-                    <PayPalButtonsWrapper
-                      amount={amount}
-                      userId={userId ? Number.parseInt(userId) : 0}
-                      setAmount={setAmount}
-                    />
+                  {!userId ? (
+                    <div className="p-4 border rounded-lg bg-muted/30 text-center">
+                      <p className="text-sm text-muted-foreground">Chargement de votre compte...</p>
+                    </div>
+                  ) : Number.parseFloat(amount) > 0 ? (
+                    <PayPalButtonsWrapper amount={amount} userId={Number(userId)} setAmount={setAmount} />
                   ) : (
                     <div className="p-4 border rounded-lg bg-muted/30 text-center">
                       <p className="text-sm text-muted-foreground">

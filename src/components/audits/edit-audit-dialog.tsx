@@ -4,9 +4,10 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { useQuery, useMutation } from "@apollo/client"
 import { Loader2, Save } from "lucide-react"
-import { UPDATE_AUDIT, GET_AUDIT_ENUMS } from "@/graphql/audit"
+import { UPDATE_AUDIT, UPDATE_AUDIT_ITEM, GET_AUDIT_ENUMS } from "@/graphql/audit"
 import { AuditResultType, AuditFrequencyType, AuditCategoryType } from "@/interfaces/audit"
 import { calculateNextAuditDate } from "@/lib/utils"
+import { getChangedAuditItems } from "@/lib/audit"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -41,15 +42,9 @@ export function EditAuditDialog({ isOpen, onClose, audit, onSuccess }: EditAudit
 
   const { data: enumsData } = useQuery(GET_AUDIT_ENUMS)
 
-  const [updateAudit, { loading: updateLoading }] = useMutation(UPDATE_AUDIT, {
-    onCompleted: () => {
-      toast({ variant: "default", description: "Audit mis à jour avec succès" })
-      onSuccess()
-    },
-    onError: (error) => {
-      toast({ variant: "destructive", description: `Erreur lors de la mise à jour: ${error.message}` })
-    },
-  })
+  const [updateLoading, setUpdateLoading] = useState(false)
+  const [updateAudit] = useMutation(UPDATE_AUDIT)
+  const [updateAuditItem] = useMutation(UPDATE_AUDIT_ITEM)
 
   useEffect(() => {
     if (audit && isOpen) {
@@ -124,34 +119,57 @@ export function EditAuditDialog({ isOpen, onClose, audit, onSuccess }: EditAudit
     return Object.keys(errors).length === 0
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!validateForm()) {
+    if (!validateForm() || updateLoading) {
       return
     }
 
-    updateAudit({
-      variables: {
-        id: audit.id,
-        input: {
-          audit_date: formData.auditDate.toISOString(),
-          audit_result: formData.auditResult,
-          audit_notes: formData.auditNotes,
-          audit_frequency: formData.auditFrequency,
-          next_audit_date: formData.nextAuditDate?.toISOString(),
-          corrective_actions: formData.correctiveActions,
-          audit_items: formData.auditItems.map((item) => ({
-            id: item.id,
-            category: item.category,
-            description: item.description,
-            notes: item.notes,
-            result: item.result,
-            requires_action: item.requires_action,
-          })),
-        },
-      },
-    })
+    setUpdateLoading(true)
+    try {
+      try {
+        await updateAudit({
+          variables: {
+            id: audit.id,
+            input: {
+              audit_date: formData.auditDate.toISOString(),
+              audit_result: formData.auditResult,
+              audit_notes: formData.auditNotes,
+              audit_frequency: formData.auditFrequency,
+              next_audit_date: formData.nextAuditDate?.toISOString(),
+              corrective_actions: formData.correctiveActions,
+            },
+          },
+        })
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Erreur inconnue"
+        toast({ variant: "destructive", description: `Erreur lors de la mise à jour: ${message}` })
+        return
+      }
+
+      // UpdateAuditInput carries no items: each modified item has its own mutation.
+      const itemUpdates = getChangedAuditItems(audit.audit_items, formData.auditItems)
+      const results = await Promise.allSettled(
+        itemUpdates.map(({ id, input }) => updateAuditItem({ variables: { id, input } })),
+      )
+      const failures = results.filter((result): result is PromiseRejectedResult => result.status === "rejected")
+
+      if (failures.length > 0) {
+        const reason = failures[0].reason
+        const message = reason instanceof Error ? reason.message : "Erreur inconnue"
+        toast({
+          variant: "destructive",
+          description: `Audit mis à jour, mais ${failures.length} élément(s) sur ${itemUpdates.length} n'ont pas pu être enregistrés: ${message}`,
+        })
+        return
+      }
+
+      toast({ variant: "default", description: "Audit mis à jour avec succès" })
+      onSuccess()
+    } finally {
+      setUpdateLoading(false)
+    }
   }
 
   return (

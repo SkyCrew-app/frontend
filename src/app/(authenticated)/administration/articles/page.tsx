@@ -310,7 +310,19 @@ export default function ArticlesAdminPage() {
 
     try {
       if (isEditing && selectedArticle) {
-        await updateArticle({ variables: { id: selectedArticle.id, ...variables } })
+        // Files are only sent when a new one was picked, so the existing ones are kept otherwise.
+        await updateArticle({
+          variables: {
+            id: selectedArticle.id,
+            title: variables.title,
+            description: variables.description,
+            text: variables.text,
+            tags: variables.tags,
+            eventDate: variables.eventDate,
+            ...(selectedImage && { photo: selectedImage }),
+            ...(selectedDocument && { documents: [selectedDocument] }),
+          },
+        })
         toast({
           title: "Article mis à jour avec succès.",
           description: `L'article "${formData.title}" a été mis à jour.`,

@@ -71,6 +71,7 @@ export function AuditDetails({ isOpen, onClose, audit, onEdit }: AuditDetailsPro
   })
 
   const handleCloseAudit = () => {
+    if (!userId) return
     setIsClosing(true)
     closeAudit({
       variables: {
@@ -366,7 +367,7 @@ export function AuditDetails({ isOpen, onClose, audit, onEdit }: AuditDetailsPro
               {!audit?.is_closed && (
                 <Button
                   onClick={handleCloseAudit}
-                  disabled={closeLoading || isClosing}
+                  disabled={closeLoading || isClosing || !userId}
                   className="h-8 sm:h-9 px-2.5 sm:px-3 text-2xs sm:text-xs flex items-center gap-1"
                   aria-label="Clôturer l'audit"
                 >
