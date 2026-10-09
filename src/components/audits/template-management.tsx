@@ -26,6 +26,7 @@ import {
 } from "@/graphql/audit"
 import { AuditCategoryType, AuditFrequencyType, CriticalityLevel } from "@/interfaces/audit"
 import { getAuditCategoryLabel, getAuditFrequencyLabel, getCriticalityLabel } from "@/lib/utils"
+import { toAuditTemplateItemInput } from "@/lib/audit"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -325,6 +326,13 @@ export function TemplateManagement() {
         template={selectedTemplate}
         enumsData={enumsData}
         onSubmit={(templateData) => {
+          if (!userId) {
+            toast({
+              variant: "destructive",
+              description: "Utilisateur non identifié, veuillez réessayer dans un instant.",
+            })
+            return
+          }
           createTemplate({
             variables: {
               input: {
@@ -338,7 +346,7 @@ export function TemplateManagement() {
             },
           })
         }}
-        isLoading={createLoading}
+        isLoading={createLoading || !userId}
         mode="create"
       />
 
@@ -619,10 +627,7 @@ function TemplateFormDialog({
 
     const submissionData = {
       ...formData,
-      items: formData.items.map((item, index) => ({
-        ...item,
-        order_index: index,
-      })),
+      items: formData.items.map(toAuditTemplateItemInput),
     }
 
     onSubmit(submissionData)

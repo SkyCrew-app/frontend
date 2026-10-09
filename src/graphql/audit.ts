@@ -27,6 +27,7 @@ export const GET_ALL_AUDITS = gql`
         description
         result
         notes
+        requires_action
       }
     }
   }
@@ -133,6 +134,12 @@ export const GET_AUDIT_TEMPLATE = gql`
         title
         description
         criticality
+        order_index
+        inspection_method
+        expected_result
+        reference_documentation
+        requires_photo_evidence
+        is_mandatory
       }
     }
   }

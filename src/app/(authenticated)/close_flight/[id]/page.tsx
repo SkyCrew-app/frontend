@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import { useForm, FormProvider } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import * as z from "zod"
 import { format, parseISO } from "date-fns"
 import { fr } from "date-fns/locale"
 import { AlertTriangle, CheckCircle, RotateCw, FileIcon as FilePdf, Plane, User, Calendar, MapPin } from "lucide-react"
@@ -20,32 +19,9 @@ import { useParams, useRouter } from "next/navigation"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { GET_FLIGHT, UPDATE_FLIGHT } from "@/graphql/flights"
 import { CREATE_INCIDENT } from "@/graphql/incident"
-
-const flightRecapSchema = z.object({
-  flight_hours: z.number().min(0, "Les heures de vol ne peuvent pas être négatives"),
-  flight_type: z.string().min(1, "Le type de vol est requis"),
-  origin_icao: z.string().length(4, "Le code ICAO doit avoir 4 caractères"),
-  destination_icao: z.string().length(4, "Le code ICAO doit avoir 4 caractères"),
-  weather_conditions: z.string().optional(),
-  number_of_passengers: z.number().int().min(0).optional(),
-  encoded_polyline: z.string().optional(),
-  distance_km: z.number().min(0, "La distance ne peut pas être négative"),
-  estimated_flight_time: z.number().nullable(),
-  waypoints: z.string().optional(),
-  detailed_waypoints: z.array(z.string()).optional(),
-  incidentOccurred: z.boolean().default(false),
-  incident_date: z.date().optional(),
-  severity_level: z.enum(["low", "medium", "high"]).optional(),
-  incident_description: z.string().optional(),
-  damage_report: z.string().optional(),
-  corrective_actions: z.string().optional(),
-  incident_status: z.string().optional(),
-  incident_priority: z.enum(["low", "medium", "high"]).optional(),
-  incident_category: z.enum(["mechanical", "electrical", "weather", "human_error", "other"]).optional(),
-  flightNotes: z.string().optional(),
-})
-
-type FlightRecapFormValues = z.infer<typeof flightRecapSchema>
+import { useToast } from "@/components/hooks/use-toast"
+import { flightRecapSchema, type FlightRecapFormValues } from "@/lib/flight-recap-schema"
+import { toIntId } from "@/lib/graphql-inputs"
 
 export default function FlightRecap() {
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -53,6 +29,7 @@ export default function FlightRecap() {
   const router = useRouter()
   const params = useParams()
   const id = params.id as string
+  const { toast } = useToast()
 
   const { loading, error, data } = useQuery(GET_FLIGHT, {
     variables: { id: Number.parseInt(id) },
@@ -75,7 +52,6 @@ export default function FlightRecap() {
       distance_km: 0,
       estimated_flight_time: null,
       waypoints: "",
-      detailed_waypoints: [],
       incidentOccurred: false,
     },
   })
@@ -94,12 +70,24 @@ export default function FlightRecap() {
         distance_km: flight.distance_km || 0,
         estimated_flight_time: flight.estimated_flight_time,
         waypoints: flight.waypoints || "",
-        detailed_waypoints: flight.detailed_waypoints || [],
       })
     }
   }, [data, methods])
 
   const onSubmit = async (formData: FlightRecapFormValues) => {
+    // `aircraft_id` est obligatoire (Int!) : sans aéronef connu (vol sans réservation),
+    // l'incident ne peut pas être créé, on n'envoie donc rien.
+    const aircraftId = toIntId(data?.getFlightById?.reservation?.aircraft?.id)
+    if (formData.incidentOccurred && aircraftId === null) {
+      toast({
+        variant: "destructive",
+        title: "Incident impossible à enregistrer",
+        description:
+          "Ce vol n'est rattaché à aucun aéronef : l'incident ne peut pas être associé à un aéronef. Le vol n'a pas été clôturé.",
+      })
+      return
+    }
+
     setIsSubmitting(true)
     try {
       await updateFlight({
@@ -115,8 +103,7 @@ export default function FlightRecap() {
             encoded_polyline: formData.encoded_polyline,
             distance_km: formData.distance_km,
             estimated_flight_time: formData.estimated_flight_time,
-            waypoints: formData.waypoints,
-            detailed_waypoints: formData.detailed_waypoints,
+            // `waypoints` n'est qu'affiché sur cette page : il n'est pas renvoyé à l'API.
           },
         },
       })
@@ -126,7 +113,7 @@ export default function FlightRecap() {
           variables: {
             incident: {
               incident_date: formData.incident_date,
-              aircraft_id: Number(data?.getFlightById?.reservation?.aircraft?.id),
+              aircraft_id: aircraftId,
               user_id: Number(data?.getFlightById?.user?.id),
               severity_level: formData.severity_level,
               description: formData.incident_description,
@@ -144,7 +131,14 @@ export default function FlightRecap() {
       setIsSubmitted(true)
     } catch (error) {
       console.error("Error submitting flight recap:", error)
-      //TODO: Handle error (e.g., show error message to user)
+      toast({
+        variant: "destructive",
+        title: "Erreur lors de la clôture du vol",
+        description:
+          error instanceof Error && error.message
+            ? error.message
+            : "Une erreur est survenue lors de la clôture du vol.",
+      })
     } finally {
       setIsSubmitting(false)
     }
