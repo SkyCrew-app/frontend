@@ -30,10 +30,8 @@ interface ChecklistTemplateEditorProps {
 }
 
 export function ChecklistTemplateEditor({
-  template,
   items,
   onAddItem,
-  onUpdateItem,
   onDeleteItem,
   onReorder,
 }: ChecklistTemplateEditorProps) {

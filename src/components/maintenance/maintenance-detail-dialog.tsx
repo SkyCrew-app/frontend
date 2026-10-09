@@ -44,7 +44,6 @@ interface MaintenanceDetailDialogProps {
 export function MaintenanceDetailDialog({
   maintenance,
   maintenanceTypes,
-  maintenanceStatuses,
   isOpen,
   onOpenChange,
   onEdit,

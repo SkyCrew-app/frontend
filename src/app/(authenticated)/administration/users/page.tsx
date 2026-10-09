@@ -58,7 +58,7 @@ export default function AdministrationPage() {
     fetchPolicy: "cache-and-network",
   })
 
-  const { data: rolesData } = useQuery(GET_ROLES, {
+  useQuery(GET_ROLES, {
     onCompleted: (data) => setRoles(data.roles),
   })
 

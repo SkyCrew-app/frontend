@@ -33,8 +33,8 @@ import { AircraftDetailDialog } from "@/components/fleet/aircraft-detail-dialog"
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title)
 
 export default function FleetDashboard() {
-  const { data, loading, error, refetch } = useQuery<AircraftData>(GET_AIRCRAFTS, {
-    onError: (error) => {
+  const { data, loading, refetch } = useQuery<AircraftData>(GET_AIRCRAFTS, {
+    onError: () => {
       toast({
         variant: "destructive",
         title: "Erreur",

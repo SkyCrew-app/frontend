@@ -13,7 +13,7 @@ interface WidgetContainerProps {
   children: React.ReactNode
 }
 
-export default function WidgetContainer({ id, title, isDragging, dragHandleProps, children }: WidgetContainerProps) {
+export default function WidgetContainer({ title, isDragging, dragHandleProps, children }: WidgetContainerProps) {
   return (
     <motion.div
       initial={{ y: 20, opacity: 0 }}

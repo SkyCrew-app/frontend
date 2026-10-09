@@ -6,17 +6,14 @@ import { CourseManagement } from "@/components/e-learning/CourseManagement"
 import { ModuleManagement } from "@/components/e-learning/ModuleManagement"
 import { LessonManagement } from "@/components/e-learning/LessonManagement"
 import { EvaluationManagement } from "@/components/evaluation/EvaluationManagement"
-import { BookOpen, Layers, FileText, ClipboardList, Sparkles, BarChart3 } from "lucide-react"
+import { BookOpen, Layers, FileText, ClipboardList } from "lucide-react"
 import { motion } from "framer-motion"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { useMediaQuery } from "@/hooks/use-media-query"
 import { Separator } from "@/components/ui/separator"
-import { Badge } from "@/components/ui/badge"
 
 export default function AdminELearningPage() {
   const [activeTab, setActiveTab] = useState("courses")
   const [mounted, setMounted] = useState(false)
-  const isMobile = useMediaQuery("(max-width: 768px)")
 
   // Éviter les erreurs d'hydratation
   useEffect(() => {

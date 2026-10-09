@@ -53,7 +53,7 @@ function ConfirmEmailComponent() {
       setTimeout(() => {
         router.push('/');
       }, 3000);
-    } catch (error) {
+    } catch {
       toast({
         variant: "destructive",
         title: "Erreur",

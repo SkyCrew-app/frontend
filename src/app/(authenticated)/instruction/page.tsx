@@ -13,7 +13,6 @@ import {
   AlertCircle,
 } from "lucide-react"
 import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
-import gql from "graphql-tag"
 import { motion } from "framer-motion"
 import type { InstructionSummary } from "@/interfaces/instruction"
 import { OverviewTab } from "@/components/learning-home/overview-tab"

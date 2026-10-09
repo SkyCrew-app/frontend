@@ -20,7 +20,7 @@ export function ELearningCard({ course, onClick, compact = false }: ELearningCar
     if (!dateString) return ""
     try {
       return format(parseISO(dateString), "d MMMM yyyy", { locale: fr })
-    } catch (e) {
+    } catch {
       return "Date invalide"
     }
   }

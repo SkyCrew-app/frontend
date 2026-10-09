@@ -93,7 +93,7 @@ export function PasswordForm() {
           description: "Erreur lors de la modification du mot de passe.",
         })
       }
-    } catch (error) {
+    } catch {
       toast({
         variant: "destructive",
         title: "Erreur",

@@ -58,7 +58,7 @@ export default function MyFlightPlans() {
     }
   }, [userData])
 
-  const { data, loading, error, refetch } = useQuery(GET_USER_FLIGHT_PLANS, {
+  const { data, loading, error } = useQuery(GET_USER_FLIGHT_PLANS, {
     variables: { userId },
     skip: !userId,
   })
@@ -126,7 +126,7 @@ export default function MyFlightPlans() {
         title: "Plan de vol mis à jour",
         description: `Le plan de vol ${selectedFlight.origin_icao} - ${selectedFlight.destination_icao} a été mis à jour.`,
       })
-    } catch (error) {
+    } catch {
       toast({
         variant: "destructive",
         title: "Erreur lors de la mise à jour",

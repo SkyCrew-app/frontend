@@ -34,7 +34,6 @@ import {
 import Link from "next/link"
 import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { useMediaQuery } from "@/hooks/use-media-query"
 import { withBasePath } from "@/lib/runtime-config"
 
 export default function CourseDetails() {
@@ -47,8 +46,7 @@ export default function CourseDetails() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const userEmail = useCurrentUser()
   const userData = useUserData(userEmail)
-  const [userId, setUserId] = useState<number | null>(null)
-  const isMobile = useMediaQuery("(max-width: 640px)")
+  const [, setUserId] = useState<number | null>(null)
 
   const [activeTab, setActiveTab] = useState("competencies")
 

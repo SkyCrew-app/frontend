@@ -42,7 +42,6 @@ export function AddLicenseForm({
   issueDate,
   setIssueDate,
   expirationDate,
-  setExpirationDate,
   onSubmit,
   onExpirationDateChange,
 }: AddLicenseFormProps) {

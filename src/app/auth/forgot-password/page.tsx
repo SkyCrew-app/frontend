@@ -35,7 +35,7 @@ export default function ForgotPasswordPage() {
         description: `Un e-mail de réinitialisation a été envoyé à ${email}.`,
       });
       setSuccess(true);
-    } catch (error) {
+    } catch {
       toast({
         variant: "destructive",
         title: "Erreur",

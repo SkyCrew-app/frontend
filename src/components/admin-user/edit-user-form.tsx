@@ -29,7 +29,6 @@ export function EditUserForm({
   onOpenChange,
   user,
   roles,
-  selectedRole,
   onRoleChange,
   onSubmit,
 }: EditUserFormProps) {

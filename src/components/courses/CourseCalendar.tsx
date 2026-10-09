@@ -30,7 +30,7 @@ type CourseCalendarProps = {
   userRole: "instructor" | "student"
 }
 
-export default function CourseCalendar({ courses, userId, userRole }: CourseCalendarProps) {
+export default function CourseCalendar({ courses, userRole }: CourseCalendarProps) {
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: new Date(),
     to: undefined,
