@@ -91,7 +91,7 @@ describe('LoginPage', () => {
     ).toBeInTheDocument();
     const emailField = screen.getByLabelText(/Adresse e-mail/i);
     expect(emailField).toHaveAttribute('aria-invalid', 'true');
-    expect(emailField).toHaveAccessibleDescription(/e-mail/i);
+    expect(emailField).toHaveAccessibleDescription("L'adresse e-mail est requise");
     expect(toast).not.toHaveBeenCalled();
     expect(push).not.toHaveBeenCalled();
   });
