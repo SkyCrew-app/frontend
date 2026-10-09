@@ -506,7 +506,7 @@ input CreateFlightInput {
   encoded_polyline: String
   estimated_flight_time: Float
   flight_hours: Float!
-  flight_type: FlightCategory!
+  flight_type: String!
   number_of_passengers: Int!
   origin_icao: String!
   reservation_id: Int
