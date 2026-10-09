@@ -2,20 +2,23 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useMutation, useQuery } from "@apollo/client"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { CREATE_COURSE, GET_USERS } from "@/graphql/course"
+import { CREATE_COURSE, GET_MEMBERS_DIRECTORY } from "@/graphql/course"
+import { courseParticipants } from "@/lib/roles"
 import { Spinner } from "@/components/ui/spinner"
 
 type NewCourseModalProps = {
   isOpen: boolean
   onClose: () => void
   onSuccess?: () => void
+  // Set when an instructor plans their own course: the instructor is not asked.
+  instructorId?: number | null
 }
 
 type UserType = {
@@ -23,11 +26,13 @@ type UserType = {
   first_name: string
   last_name: string
   email?: string
+  role?: { role_name?: string | null } | null
 }
 
-export default function NewCourseModal({ isOpen, onClose, onSuccess }: NewCourseModalProps) {
+export default function NewCourseModal({ isOpen, onClose, onSuccess, instructorId = null }: NewCourseModalProps) {
+  const ownInstructorId = instructorId === null ? "" : String(instructorId)
   const [formData, setFormData] = useState({
-    instructorId: "",
+    instructorId: ownInstructorId,
     studentId: "",
     startTime: "",
     endTime: "",
@@ -35,7 +40,14 @@ export default function NewCourseModal({ isOpen, onClose, onSuccess }: NewCourse
   const [searchInstructor, setSearchInstructor] = useState("")
   const [searchStudent, setSearchStudent] = useState("")
 
-  const { data: userData, loading: userLoading } = useQuery(GET_USERS)
+  const { data: userData, loading: userLoading } = useQuery(GET_MEMBERS_DIRECTORY)
+
+  // The course page learns who the user is after its first render.
+  useEffect(() => {
+    if (ownInstructorId) {
+      setFormData((prev) => ({ ...prev, instructorId: ownInstructorId }))
+    }
+  }, [ownInstructorId])
   const [createCourse, { loading: createLoading }] = useMutation(CREATE_COURSE, {
     onCompleted: () => {
       if (onSuccess) {
@@ -48,7 +60,7 @@ export default function NewCourseModal({ isOpen, onClose, onSuccess }: NewCourse
 
   const resetForm = () => {
     setFormData({
-      instructorId: "",
+      instructorId: ownInstructorId,
       studentId: "",
       startTime: "",
       endTime: "",
@@ -79,19 +91,13 @@ export default function NewCourseModal({ isOpen, onClose, onSuccess }: NewCourse
     }
   }
 
-  const filteredInstructors =
-    userData?.getUsers.filter(
-      (user: UserType) =>
-        user.first_name.toLowerCase().includes(searchInstructor.toLowerCase()) ||
-        user.last_name.toLowerCase().includes(searchInstructor.toLowerCase()),
-    ) || []
+  const matches = (user: UserType, search: string) =>
+    user.first_name.toLowerCase().includes(search.toLowerCase()) ||
+    user.last_name.toLowerCase().includes(search.toLowerCase())
 
-  const filteredStudents =
-    userData?.getUsers.filter(
-      (user: UserType) =>
-        user.first_name.toLowerCase().includes(searchStudent.toLowerCase()) ||
-        user.last_name.toLowerCase().includes(searchStudent.toLowerCase()),
-    ) || []
+  const { instructors, students } = courseParticipants<UserType>(userData?.membersDirectory, formData.instructorId)
+  const filteredInstructors = instructors.filter((user) => matches(user, searchInstructor))
+  const filteredStudents = students.filter((user) => matches(user, searchStudent))
 
   const isFormValid = formData.instructorId && formData.studentId && formData.startTime
 
@@ -111,36 +117,38 @@ export default function NewCourseModal({ isOpen, onClose, onSuccess }: NewCourse
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 gap-4">
-            <div>
-              <Label htmlFor="instructorId">Instructeur</Label>
-              <Select onValueChange={(value) => handleInputChange("instructorId", value)} value={formData.instructorId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner un instructeur" />
-                </SelectTrigger>
-                <SelectContent>
-                  <Input
-                    placeholder="Rechercher un instructeur"
-                    value={searchInstructor}
-                    onChange={(e) => setSearchInstructor(e.target.value)}
-                    className="mb-2"
-                  />
-                  {userLoading ? (
-                    <div className="flex items-center justify-center p-2">
-                      <Spinner className="mr-2" />
-                      Chargement...
-                    </div>
-                  ) : filteredInstructors.length === 0 ? (
-                    <div className="p-2 text-center text-muted-foreground">Aucun instructeur trouvé</div>
-                  ) : (
-                    filteredInstructors.map((instructor: UserType) => (
-                      <SelectItem key={instructor.id} value={instructor.id.toString()}>
-                        {instructor.first_name} {instructor.last_name}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
+            {!ownInstructorId && (
+              <div>
+                <Label htmlFor="instructorId">Instructeur</Label>
+                <Select onValueChange={(value) => handleInputChange("instructorId", value)} value={formData.instructorId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner un instructeur" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <Input
+                      placeholder="Rechercher un instructeur"
+                      value={searchInstructor}
+                      onChange={(e) => setSearchInstructor(e.target.value)}
+                      className="mb-2"
+                    />
+                    {userLoading ? (
+                      <div className="flex items-center justify-center p-2">
+                        <Spinner className="mr-2" />
+                        Chargement...
+                      </div>
+                    ) : filteredInstructors.length === 0 ? (
+                      <div className="p-2 text-center text-muted-foreground">Aucun instructeur trouvé</div>
+                    ) : (
+                      filteredInstructors.map((instructor: UserType) => (
+                        <SelectItem key={instructor.id} value={instructor.id.toString()}>
+                          {instructor.first_name} {instructor.last_name}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             <div>
               <Label htmlFor="studentId">Élève</Label>
