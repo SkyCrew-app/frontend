@@ -22,6 +22,7 @@ import { CREATE_INCIDENT } from "@/graphql/incident"
 import { useToast } from "@/components/hooks/use-toast"
 import { flightRecapSchema, type FlightRecapFormValues } from "@/lib/flight-recap-schema"
 import { toIntId } from "@/lib/graphql-inputs"
+import { formatDecimal, formatFlightDuration } from "@/lib/format"
 
 export default function FlightRecap() {
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -168,11 +169,11 @@ export default function FlightRecap() {
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <span className="font-medium">Durée du vol:</span>
-              <span>{methods.getValues("flight_hours")} heures</span>
+              <span>{formatFlightDuration(methods.getValues("flight_hours"))}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="font-medium">Distance parcourue:</span>
-              <span>{methods.getValues("distance_km")} km</span>
+              <span>{formatDecimal(methods.getValues("distance_km"))} km</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="font-medium">Statut:</span>
@@ -269,7 +270,7 @@ export default function FlightRecap() {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Durée estimée</p>
                 <p className="font-semibold">
-                  {flight?.estimated_flight_time ? `${flight.estimated_flight_time} h` : "N/A"}
+                  {formatFlightDuration(flight?.estimated_flight_time)}
                 </p>
               </div>
               <div>

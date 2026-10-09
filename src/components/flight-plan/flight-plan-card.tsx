@@ -121,10 +121,15 @@ export function FlightPlanCard({
           </div>
         </div>
       </CardContent>
-      <CardFooter className="flex justify-end gap-2 pt-2 border-t bg-muted/50">
+      <CardFooter className="flex flex-wrap justify-end gap-2 pt-2 border-t bg-muted/50">
         <Button size="sm" variant="outline" onClick={() => onEdit(flight)}>
           Modifier
         </Button>
+        <Link href={`/close_flight/${flight.id}`}>
+          <Button size="sm" variant="outline">
+            Clôturer
+          </Button>
+        </Link>
         <Link href={`flight-plans/${flight.id}`}>
           <Button size="sm" variant="default">
             Détails

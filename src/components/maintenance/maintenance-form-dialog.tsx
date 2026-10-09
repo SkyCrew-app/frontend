@@ -245,7 +245,7 @@ export function MaintenanceFormDialog({
                     </SelectTrigger>
                     <SelectContent>
                       {aircrafts.map((aircraft) => (
-                        <SelectItem key={aircraft.id} value={aircraft.id}>
+                        <SelectItem key={aircraft.id} value={String(aircraft.id)}>
                           {aircraft.registration_number} ({aircraft.model})
                         </SelectItem>
                       ))}

@@ -12,7 +12,7 @@ import { useMutation } from "@apollo/client"
 import { CREATE_AIRCRAFT } from "@/graphql/planes"
 import { AvailabilityStatus, type CreateAircraftInput, type CreateAircraftResponse } from "@/interfaces/aircraft"
 import { toast } from "@/components/hooks/use-toast"
-import { buildAircraftInput } from "@/lib/aircraft"
+import { buildAircraftInput, FIRST_MANUFACTURE_YEAR } from "@/lib/aircraft"
 import { Loader2, Upload, X } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import Image from "next/image"
@@ -180,6 +180,8 @@ export function CreateAircraftForm({ isOpen, onClose, onSuccess }: CreateAircraf
                     name="year_of_manufacture"
                     type="number"
                     step="1"
+                    min={FIRST_MANUFACTURE_YEAR}
+                    max={new Date().getFullYear()}
                     value={formData.year_of_manufacture}
                     onChange={handleInputChange}
                     required
