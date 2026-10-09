@@ -1,7 +1,7 @@
 "use client"
 
+import { getBackendBaseUrl } from "@/lib/runtime-config"
 import {
-import { getBackendBaseUrl } from '@/lib/runtime-config'
   Dialog,
   DialogContent,
   DialogTitle,
