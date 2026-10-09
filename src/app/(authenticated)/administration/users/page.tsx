@@ -111,7 +111,7 @@ export default function AdministrationPage() {
         variables: {
           updateUserInput: {
             ...userData,
-            roleId: selectedRole,
+            roleId: selectedRole ? Number(selectedRole) : null,
           },
         },
       })
@@ -162,6 +162,14 @@ export default function AdministrationPage() {
       return
     }
 
+    if (!issueDate) {
+      toast({
+        title: "Veuillez sélectionner une date de délivrance",
+        variant: "destructive",
+      })
+      return
+    }
+
     const files = formData.getAll("documents") as File[]
     const validFiles = files.filter((file) => file.size > 0)
 
@@ -172,7 +180,7 @@ export default function AdministrationPage() {
           license_type: formData.get("license_type") as string,
           license_number: formData.get("license_number") as string,
           expiration_date: expirationDate?.toISOString(),
-          issue_date: issueDate?.toISOString(),
+          issue_date: issueDate.toISOString(),
           certification_authority: (formData.get("certification_authority") as string) || null,
           status: (formData.get("status") as string) || "active",
         },

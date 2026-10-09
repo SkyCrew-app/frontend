@@ -21,6 +21,7 @@ import { UPDATE_COURSE, DELETE_COURSE, GET_USERS } from "@/graphql/course"
 import { format, parseISO } from "date-fns"
 import { fr } from "date-fns/locale"
 import { useToast } from "@/components/hooks/use-toast"
+import { datetimeLocalToISOString } from "@/lib/datetime"
 import { Spinner } from "@/components/ui/spinner"
 
 type Instructor = {
@@ -114,8 +115,8 @@ export default function CourseList({ courses = [], userRole, userId, onRefresh }
         variables: {
           input: {
             id: courseId,
-            startTime: editStartTime,
-            endTime: editEndTime || null,
+            startTime: datetimeLocalToISOString(editStartTime),
+            endTime: datetimeLocalToISOString(editEndTime),
             instructorId: Number.parseInt(editInstructor, 10),
             studentId: Number.parseInt(editStudent, 10),
             status: editStatus,

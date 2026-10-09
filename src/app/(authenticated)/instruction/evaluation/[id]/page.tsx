@@ -59,6 +59,11 @@ export default function EvaluationPage({ params }: { params: Promise<{ id: strin
       return
     }
 
+    // `userId` est obligatoire (Float!) : on attend que l'utilisateur soit chargé.
+    if (userId === null) {
+      return
+    }
+
     setIsSubmitting(true)
 
     try {
@@ -277,7 +282,7 @@ export default function EvaluationPage({ params }: { params: Promise<{ id: strin
                     {currentQuestion === evaluation.questions.length - 1 ? (
                       <Button
                         onClick={handleSubmit}
-                        disabled={validating || isSubmitting}
+                        disabled={validating || isSubmitting || userId === null}
                         size={isMobile ? "sm" : "default"}
                         className="gap-1"
                       >
@@ -325,7 +330,7 @@ export default function EvaluationPage({ params }: { params: Promise<{ id: strin
             {currentQuestion === evaluation.questions.length - 1 && (
               <Button
                 onClick={handleSubmit}
-                disabled={validating || isSubmitting || Object.keys(userAnswers).length !== evaluation.questions.length}
+                disabled={validating || isSubmitting || userId === null || Object.keys(userAnswers).length !== evaluation.questions.length}
                 className="w-full"
                 size="lg"
               >

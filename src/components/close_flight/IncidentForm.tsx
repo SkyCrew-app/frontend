@@ -56,7 +56,7 @@ export default function IncidentForm() {
                       setValue("incident_description", "")
                       setValue("damage_report", "")
                       setValue("corrective_actions", "")
-                      setValue("incident_date", null)
+                      setValue("incident_date", undefined)
                       setValue("severity_level", undefined)
                       setValue("incident_priority", undefined)
                       setValue("incident_category", undefined)

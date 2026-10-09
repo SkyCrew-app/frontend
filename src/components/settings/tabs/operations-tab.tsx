@@ -10,7 +10,7 @@ import { motion } from "framer-motion"
 import { Calendar, Clock, PenToolIcon as Tool } from "lucide-react"
 
 export function OperationsTab() {
-  const { register, setValue, getValues } = useFormContext()
+  const { register, setValue, getValues, formState } = useFormContext()
 
   const weekdays = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]
 
@@ -112,7 +112,11 @@ export function OperationsTab() {
                 {...register("maintenanceDuration", { valueAsNumber: true })}
                 min="1"
                 max="24"
+                step="1"
               />
+              {formState.errors.maintenanceDuration && (
+                <p className="text-sm text-red-500">{formState.errors.maintenanceDuration.message as string}</p>
+              )}
             </div>
           </div>
         </CardContent>

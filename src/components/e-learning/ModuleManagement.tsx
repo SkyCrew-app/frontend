@@ -36,6 +36,7 @@ import { PlusCircle, Layers, BookOpen, Edit, Trash2, Search, CheckCircle2, Info,
 import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "@/components/hooks/use-toast"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { optionalIdField } from "@/lib/graphql-inputs"
 
 export function ModuleManagement() {
   const [title, setTitle] = useState("")
@@ -146,7 +147,7 @@ export function ModuleManagement() {
           updateModuleInput: {
             title: editingModule.title,
             description: editingModule.description,
-            courseId: Number.parseInt(editingModule.courseId),
+            ...optionalIdField("courseId", editingModule.courseId),
           },
         },
       })

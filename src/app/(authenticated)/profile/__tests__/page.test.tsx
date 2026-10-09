@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, waitFor, fireEvent, within } from '@testing-library/react';
 import ProfilePage from '../page';
 import { MockedProvider, MockedResponse } from '@apollo/client/testing';
-import { GET_ME, GET_USER_BY_EMAIL, UPDATE_USER } from '@/graphql/user';
+import { GET_ME, GET_USER_BY_EMAIL, UPDATE_NOTIFICATION_SETTINGS, UPDATE_USER } from '@/graphql/user';
 import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
 
@@ -37,6 +37,7 @@ const baseUser = {
   total_flight_hours: 1000,
   email_notifications_enabled: true,
   sms_notifications_enabled: false,
+  newsletter_subscribed: false,
   role: { id: '1', role_name: 'USER' },
   licenses: [] as Array<Record<string, unknown>>,
   language: 'fr',
@@ -324,6 +325,61 @@ describe('ProfilePage Component', () => {
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Enregistrer les modifications' })).toBeEnabled();
     });
+  });
+
+  test('active les notifications SMS en conservant les autres réglages puis reflète la réponse du serveur', async () => {
+    let currentUser = { ...baseUser, newsletter_subscribed: true };
+    const variableMatcher = jest.fn(() => true);
+
+    renderPage([
+      meMock,
+      userMock(() => currentUser),
+      {
+        request: { query: UPDATE_NOTIFICATION_SETTINGS },
+        variableMatcher,
+        result: () => {
+          currentUser = { ...currentUser, sms_notifications_enabled: true };
+          return {
+            data: {
+              updateNotificationSettings: {
+                id: '42',
+                email_notifications_enabled: true,
+                sms_notifications_enabled: true,
+                newsletter_subscribed: true,
+              },
+            },
+          };
+        },
+      },
+    ]);
+
+    await screen.findByText('Email: Activé - SMS: Désactivé');
+    fireEvent.click(screen.getByRole('heading', { name: 'Notifications' }));
+
+    const smsSwitch = screen.getByRole('switch', { name: 'Notifications par SMS' });
+    expect(screen.getByRole('switch', { name: 'Notifications par email' })).toBeChecked();
+    expect(smsSwitch).not.toBeChecked();
+
+    fireEvent.click(smsSwitch);
+
+    expect(
+      await screen.findByText('Vos préférences de notification ont été enregistrées avec succès.'),
+    ).toBeInTheDocument();
+    expect(variableMatcher).toHaveBeenCalledTimes(1);
+    expect(variableMatcher).toHaveBeenCalledWith({
+      email_notifications_enabled: true,
+      sms_notifications_enabled: true,
+      newsletter_subscribed: true,
+    });
+    expect(mockToast).toHaveBeenCalledWith({
+      title: 'Succès',
+      description: 'Paramètres de notification mis à jour avec succès',
+    });
+    expect(smsSwitch).toBeChecked();
+
+    // Après le refetch, la carte récapitulative reflète le nouvel état.
+    fireEvent.click(screen.getByRole('button', { name: 'Retour' }));
+    expect(await screen.findByText('Email: Activé - SMS: Activé')).toBeInTheDocument();
   });
 
   test('affiche les suggestions d\'adresses lors de la saisie et permet d\'en choisir une', async () => {

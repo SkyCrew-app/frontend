@@ -18,7 +18,7 @@ import { ChecklistProgress } from "./ChecklistProgress"
 interface ChecklistFormProps {
   submission: ChecklistSubmission
   items: ChecklistItem[]
-  onUpdate: (responses: ChecklistResponse[]) => void
+  onUpdate: (responses: ChecklistResponse[]) => void | Promise<void>
   onComplete: () => void
 }
 
@@ -102,13 +102,14 @@ export function ChecklistForm({ submission, items, onUpdate, onComplete }: Check
   ).length
   const allRequiredChecked = checkedRequired === requiredItems.length
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     // Flush pending auto-save
     if (debounceRef.current) {
       clearTimeout(debounceRef.current)
       debounceRef.current = null
     }
-    onUpdate(buildResponseArray(responses))
+    // The last answers are saved before the checklist is completed.
+    await onUpdate(buildResponseArray(responses))
     onComplete()
   }
 

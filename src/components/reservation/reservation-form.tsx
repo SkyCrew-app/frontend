@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
 import { Loader2 } from "lucide-react"
+import { FlightCategoryError } from "@/components/reservation/flight-category-error"
 
 interface Aircraft {
   id: number
@@ -75,6 +76,17 @@ export function ReservationForm({
     }
   }, [flightCategory])
 
+  const [categoryError, setCategoryError] = useState(false)
+
+  // La catégorie est obligatoire à la création (enum requis par l'API).
+  const handleSubmit = () => {
+    if (!isEdit && !flightCategory) {
+      setCategoryError(true)
+      return
+    }
+    onSubmit()
+  }
+
   const getAircraftName = () => {
     if (!selectedAircraft || !aircraftData) return ""
     const aircraft = aircraftData.getAircrafts.find((a: Aircraft) => a.id === selectedAircraft)
@@ -131,9 +143,10 @@ export function ReservationForm({
             onValueChange={(value) => {
               setSelectedCategoryFr(value)
               setFlightCategory(flightCategoryReverseMapping[value])
+              setCategoryError(false)
             }}
           >
-            <SelectTrigger id="category">
+            <SelectTrigger id="category" aria-invalid={categoryError} className={categoryError ? "border-red-500" : ""}>
               <SelectValue placeholder="Sélectionner une catégorie" />
             </SelectTrigger>
             <SelectContent>
@@ -144,6 +157,7 @@ export function ReservationForm({
               ))}
             </SelectContent>
           </Select>
+          <FlightCategoryError visible={categoryError} />
         </div>
 
         <div>
@@ -159,7 +173,7 @@ export function ReservationForm({
       </div>
 
       <div className="flex justify-end pt-4">
-        <Button onClick={onSubmit} disabled={isSubmitting}>
+        <Button onClick={handleSubmit} disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {isEdit ? "Mettre à jour" : "Créer la réservation"}
         </Button>
