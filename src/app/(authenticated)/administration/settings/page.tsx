@@ -31,6 +31,7 @@ import { AircraftTab } from "@/components/settings/tabs/aircraft-tab"
 import { MembersTab } from "@/components/settings/tabs/members-tab"
 import { TaxonomyManager } from "@/components/settings/taxonomy/taxonomy-manager"
 import { RoleManager } from "@/components/settings/roles/roles-manager"
+import { taxonomiesFromRecord } from "@/lib/settings"
 
 const formSchema = z.object({
   clubName: z.string().min(2, { message: "Le nom de l'aéroclub doit contenir au moins 2 caractères" }),
@@ -42,7 +43,11 @@ const formSchema = z.object({
   reservationStartTime: z.string(),
   reservationEndTime: z.string(),
   maintenanceDay: z.string(),
-  maintenanceDuration: z.number().min(1).max(24),
+  maintenanceDuration: z
+    .number()
+    .int({ message: "La durée de la maintenance doit être un nombre entier d'heures" })
+    .min(1)
+    .max(24),
   aircraftTypes: z.array(
     z.object({
       type: z.string(),
@@ -123,12 +128,7 @@ export default function SettingsPage() {
         guestPilotFee: adminData.guestPilotFee || 0,
         fuelManagement: adminData.fuelManagement || "self-service",
         fuelPrice: adminData.fuelPrice || 0,
-        taxonomies: {
-          maintenanceTypes: adminData.taxonomies?.maintenanceTypes || [],
-          licenseTypes: adminData.taxonomies?.licenseTypes || [],
-          aircraftCategories: adminData.taxonomies?.aircraftCategories || [],
-          flightTypes: adminData.taxonomies?.flightTypes || [],
-        },
+        taxonomies: taxonomiesFromRecord(adminData),
         pilotLicenses: adminData.pilotLicenses || [],
         isMaintenanceActive: adminData.isMaintenanceActive || false,
         maintenanceMessage: adminData.maintenanceMessage || "",
@@ -141,13 +141,23 @@ export default function SettingsPage() {
   }, [administrationData, aircraftData, form])
 
   const onSubmit = async (data: FormValues) => {
+    const administrationId = administrationData?.getAllAdministrations?.[0]?.id
+    if (administrationId === undefined || administrationId === null) {
+      toast({
+        title: "Erreur",
+        description: "Les paramètres n'ont pas pu être chargés, l'enregistrement est impossible.",
+        variant: "destructive",
+      })
+      return
+    }
+
     setIsSubmitting(true)
 
     try {
       await updateAdministration({
         variables: {
           input: {
-            id: 1,
+            id: administrationId,
             clubName: data.clubName,
             contactEmail: data.contactEmail,
             contactPhone: data.contactPhone,

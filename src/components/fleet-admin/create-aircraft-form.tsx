@@ -12,6 +12,7 @@ import { useMutation } from "@apollo/client"
 import { CREATE_AIRCRAFT } from "@/graphql/planes"
 import { AvailabilityStatus, type CreateAircraftInput, type CreateAircraftResponse } from "@/interfaces/aircraft"
 import { toast } from "@/components/hooks/use-toast"
+import { buildAircraftInput } from "@/lib/aircraft"
 import { Loader2, Upload, X } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import Image from "next/image"
@@ -133,7 +134,7 @@ export function CreateAircraftForm({ isOpen, onClose, onSuccess }: CreateAircraf
     e.preventDefault()
     createAircraft({
       variables: {
-        createAircraftInput: formData,
+        createAircraftInput: buildAircraftInput(formData),
         file: documentFile,
         image: imageFile,
       },
@@ -178,6 +179,7 @@ export function CreateAircraftForm({ isOpen, onClose, onSuccess }: CreateAircraf
                     id="year_of_manufacture"
                     name="year_of_manufacture"
                     type="number"
+                    step="1"
                     value={formData.year_of_manufacture}
                     onChange={handleInputChange}
                     required
@@ -262,6 +264,7 @@ export function CreateAircraftForm({ isOpen, onClose, onSuccess }: CreateAircraf
                     id="maxAltitude"
                     name="maxAltitude"
                     type="number"
+                    step="1"
                     value={formData.maxAltitude || ""}
                     onChange={handleInputChange}
                   />
@@ -273,6 +276,7 @@ export function CreateAircraftForm({ isOpen, onClose, onSuccess }: CreateAircraf
                     id="cruiseSpeed"
                     name="cruiseSpeed"
                     type="number"
+                    step="1"
                     value={formData.cruiseSpeed || ""}
                     onChange={handleInputChange}
                   />
@@ -284,7 +288,7 @@ export function CreateAircraftForm({ isOpen, onClose, onSuccess }: CreateAircraf
                     id="consumption"
                     name="consumption"
                     type="number"
-                    step="0.1"
+                    step="1"
                     value={formData.consumption || ""}
                     onChange={handleInputChange}
                   />

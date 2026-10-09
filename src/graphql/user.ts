@@ -76,6 +76,7 @@ export const GET_USER_BY_EMAIL = gql`
       total_flight_hours
       email_notifications_enabled
       sms_notifications_enabled
+      newsletter_subscribed
       role {
         id
         role_name
@@ -115,6 +116,25 @@ export const UPDATE_USER = gql`
       address
       date_of_birth
       profile_picture
+    }
+  }
+`;
+
+export const UPDATE_NOTIFICATION_SETTINGS = gql`
+  mutation UpdateNotificationSettings(
+    $email_notifications_enabled: Boolean!
+    $sms_notifications_enabled: Boolean!
+    $newsletter_subscribed: Boolean!
+  ) {
+    updateNotificationSettings(
+      email_notifications_enabled: $email_notifications_enabled
+      sms_notifications_enabled: $sms_notifications_enabled
+      newsletter_subscribed: $newsletter_subscribed
+    ) {
+      id
+      email_notifications_enabled
+      sms_notifications_enabled
+      newsletter_subscribed
     }
   }
 `;

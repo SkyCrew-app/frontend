@@ -17,6 +17,7 @@ import {
   type UpdateAircraftResponse,
 } from "@/interfaces/aircraft"
 import { toast } from "@/components/hooks/use-toast"
+import { buildAircraftInput } from "@/lib/aircraft"
 import { Loader2, Upload, X } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import Image from "next/image"
@@ -174,7 +175,7 @@ export function EditAircraftForm({ aircraft, isOpen, onClose, onSuccess }: EditA
     updateAircraft({
       variables: {
         aircraftId: aircraft.id,
-        updateAircraftInput: filteredFormData,
+        updateAircraftInput: buildAircraftInput(filteredFormData),
         file: documentFile,
         image: imageFile,
       },
@@ -219,6 +220,7 @@ export function EditAircraftForm({ aircraft, isOpen, onClose, onSuccess }: EditA
                     id="year_of_manufacture"
                     name="year_of_manufacture"
                     type="number"
+                    step="1"
                     value={formData.year_of_manufacture}
                     onChange={handleInputChange}
                     required
@@ -303,6 +305,7 @@ export function EditAircraftForm({ aircraft, isOpen, onClose, onSuccess }: EditA
                     id="maxAltitude"
                     name="maxAltitude"
                     type="number"
+                    step="1"
                     value={formData.maxAltitude || ""}
                     onChange={handleInputChange}
                   />
@@ -314,6 +317,7 @@ export function EditAircraftForm({ aircraft, isOpen, onClose, onSuccess }: EditA
                     id="cruiseSpeed"
                     name="cruiseSpeed"
                     type="number"
+                    step="1"
                     value={formData.cruiseSpeed || ""}
                     onChange={handleInputChange}
                   />
@@ -325,7 +329,7 @@ export function EditAircraftForm({ aircraft, isOpen, onClose, onSuccess }: EditA
                     id="consumption"
                     name="consumption"
                     type="number"
-                    step="0.1"
+                    step="1"
                     value={formData.consumption || ""}
                     onChange={handleInputChange}
                   />

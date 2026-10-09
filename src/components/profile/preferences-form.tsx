@@ -51,6 +51,9 @@ export function PreferencesForm({ userData, userId, refetch }: PreferencesFormPr
   }
 
   const savePreferencesChanges = async () => {
+    // L'identifiant n'est connu qu'une fois l'utilisateur chargé.
+    if (!userId) return
+
     setIsUpdating(true)
     try {
       const { data } = await updatePreferences({
@@ -226,7 +229,7 @@ export function PreferencesForm({ userData, userId, refetch }: PreferencesFormPr
           <Button
             className="ml-auto hover:shadow-md transition-shadow"
             onClick={savePreferencesChanges}
-            disabled={isUpdating}
+            disabled={isUpdating || !userId}
           >
             {isUpdating ? "Enregistrement..." : "Enregistrer les modifications"}
           </Button>

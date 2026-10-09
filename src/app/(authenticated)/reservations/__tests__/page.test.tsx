@@ -85,6 +85,7 @@ const userMock: MockedResponse = {
         total_flight_hours: 120,
         email_notifications_enabled: true,
         sms_notifications_enabled: false,
+        newsletter_subscribed: false,
         role: { id: 1, role_name: 'PILOT' },
         licenses: [],
         language: 'fr',
@@ -156,6 +157,11 @@ const dragOverFreeCells = (registration: string, fromIndex: number, toIndex: num
 };
 
 const originalMatchMedia = window.matchMedia;
+
+// jsdom n'implémente pas ces API, utilisées par la liste déroulante (Radix) des catégories de vol.
+window.HTMLElement.prototype.hasPointerCapture = jest.fn(() => false);
+window.HTMLElement.prototype.releasePointerCapture = jest.fn();
+window.HTMLElement.prototype.scrollIntoView = jest.fn();
 
 describe('ReservationCalendar', () => {
   beforeEach(() => {
@@ -347,6 +353,17 @@ describe('ReservationCalendar', () => {
     expect(form.getByText('11:00')).toBeInTheDocument();
 
     await user.type(form.getByLabelText('But de la réservation'), 'Vol local');
+
+    // Sans catégorie de vol (enum obligatoire côté API), rien n'est envoyé et l'oubli est signalé.
+    await user.click(form.getByRole('button', { name: 'Créer la réservation' }));
+    expect(await form.findByRole('alert')).toHaveTextContent('Veuillez sélectionner une catégorie de vol.');
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(createVariables).not.toHaveBeenCalled();
+    expect(screen.getByRole('dialog', { name: 'Créer une réservation' })).toBeInTheDocument();
+
+    await user.click(form.getByRole('combobox'));
+    await user.click(await screen.findByRole('option', { name: 'Local' }));
+    expect(form.queryByRole('alert')).not.toBeInTheDocument();
     await user.click(form.getByRole('button', { name: 'Créer la réservation' }));
 
     await waitFor(() => expect(createVariables).toHaveBeenCalledTimes(1));
@@ -358,7 +375,7 @@ describe('ReservationCalendar', () => {
       estimated_flight_hours: 2,
       status: 'PENDING',
       notes: '',
-      flight_category: '',
+      flight_category: 'LOCAL',
     });
     expect(new Date(input.start_time).getTime()).toBe(new Date(2024, 9, 23, 9, 0).getTime());
     expect(new Date(input.end_time).getTime()).toBe(new Date(2024, 9, 23, 11, 0).getTime());
