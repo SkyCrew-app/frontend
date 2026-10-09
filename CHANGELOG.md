@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.2](https://github.com/SkyCrew-app/frontend/compare/2.3.1...2.3.2) (2026-10-09)
+
+
+### Bug Fixes
+
+* :bug: make every query and mutation match the API schema ([#90](https://github.com/SkyCrew-app/frontend/issues/90)) ([1244a62](https://github.com/SkyCrew-app/frontend/commit/1244a624615f6dd4c78a928a0e6d8b8a5c366db6))
+
 ## [2.3.1](https://github.com/SkyCrew-app/frontend/compare/2.3.0...2.3.1) (2026-10-09)
 
 
