@@ -38,8 +38,8 @@ export const GET_USER_PROFILE = gql`
 export const CONFIRM_EMAIL_AND_SET_PASSWORD = gql`
   mutation ConfirmEmailAndSetPassword($validation_token: String!, $password: String!) {
     confirmEmailAndSetPassword(validation_token: $validation_token, password: $password){
-      validation_token,
-      password
+      id
+      email
     }
   }
 `;
@@ -53,6 +53,12 @@ export const GET_EMAIL_QUERY = gql`
 export const GENERATE_2FA_SECRET_MUTATION = gql`
   mutation Generate2FASecret {
     generate2FASecret
+  }
+`;
+
+export const CONFIRM_2FA_MUTATION = gql`
+  mutation Confirm2FA($token: String!) {
+    confirm2FA(token: $token)
   }
 `;
 
