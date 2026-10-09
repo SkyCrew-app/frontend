@@ -65,9 +65,8 @@ const client = new ApolloClient({
       fetchPolicy: 'network-only',
       errorPolicy: 'all',
     },
-    mutate: {
-      errorPolicy: 'all',
-    },
+    // Mutations keep the default error policy: a refused mutation rejects, so
+    // the calling screen reports the failure instead of announcing a success.
   },
 });
 
