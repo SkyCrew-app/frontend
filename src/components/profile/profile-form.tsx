@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
 import { motion } from "framer-motion"
 import { getBackendBaseUrl } from "@/lib/runtime-config"
+import { getAge } from "@/lib/age"
 
 interface ProfileFormProps {
   userData: any
@@ -161,9 +162,7 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
       valid = false
       newErrors.date_of_birth = "La date de naissance est requise."
     } else {
-      const birthDate = new Date(formData.date_of_birth)
-      const today = new Date()
-      const age = today.getFullYear() - birthDate.getFullYear()
+      const age = getAge(new Date(formData.date_of_birth))
 
       if (age < 16) {
         valid = false
