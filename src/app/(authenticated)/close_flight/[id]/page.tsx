@@ -125,7 +125,9 @@ export default function FlightRecap() {
         await createIncident({
           variables: {
             incident: {
-              date: formData.incident_date,
+              incident_date: formData.incident_date,
+              aircraft_id: Number(data?.getFlightById?.reservation?.aircraft?.id),
+              user_id: Number(data?.getFlightById?.user?.id),
               severity_level: formData.severity_level,
               description: formData.incident_description,
               damage_report: formData.damage_report,
