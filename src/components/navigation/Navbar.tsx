@@ -10,6 +10,7 @@ import { GET_USER_PROFILE } from "@/graphql/user"
 import { LOGOUT_MUTATION } from "@/graphql/system"
 import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
 import { io, type Socket } from "socket.io-client"
+import { getBackendBaseUrl } from "@/lib/runtime-config"
 import { GET_NOTIFICATIONS, SEEN_NOTIFICATION } from "@/graphql/notifications"
 import { getNotificationTypeInFrench } from "@/interfaces/notification"
 import { CustomDropdown, CustomDropdownItem, CustomDropdownSeparator } from "@/components/ui/custom-dropdown"
@@ -54,12 +55,9 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
 
   useEffect(() => {
     if (userId) {
-      const newSocket = io("http://localhost:3000", {
-        query: { userId },
-      })
-
-      newSocket.on("connect", () => {
-        console.log("Connected to WebSocket")
+      // The server identifies the user from the session cookie.
+      const newSocket = io(getBackendBaseUrl(), {
+        withCredentials: true,
       })
 
       newSocket.on("notification", (payload) => {
