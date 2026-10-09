@@ -1,10 +1,10 @@
 import { gql } from '@apollo/client'
 
 export const CREATE_INCIDENT = gql`
-  mutation CreateIncident($incident: IncidentInput!) {
+  mutation CreateIncident($incident: CreateIncidentInput!) {
     createIncident(incident: $incident) {
       id
-      date
+      incident_date
       severity_level
       description
       damage_report

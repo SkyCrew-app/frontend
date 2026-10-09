@@ -172,8 +172,8 @@ export function LessonManagement() {
     try {
       await updateLesson({
         variables: {
+          id: Number(editingLesson.id),
           updateLessonInput: {
-            id: editingLesson.id,
             title: editingLesson.title,
             description: editingLesson.description,
             content: editingLesson.content,
