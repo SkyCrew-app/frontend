@@ -14,6 +14,7 @@ import { Separator } from "@/components/ui/separator"
 import { ExternalLink, FileText, PlaneTakeoff } from "lucide-react"
 import type { Aircraft } from "@/interfaces/aircraft"
 import { StatusBadge } from "./status-badge"
+import { getBackendBaseUrl } from "@/lib/runtime-config"
 
 interface AircraftDetailDialogProps {
   aircraft: Aircraft | null
@@ -107,7 +108,7 @@ export function AircraftDetailDialog({ aircraft, isOpen, onOpenChange }: Aircraf
                           </span>
                         </div>
                         <a
-                          href={`http://localhost:3000${url}`}
+                          href={`${getBackendBaseUrl()}${url}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-blue-500 hover:text-blue-700 flex items-center ml-2 flex-shrink-0"
@@ -136,7 +137,7 @@ export function AircraftDetailDialog({ aircraft, isOpen, onOpenChange }: Aircraf
               <CardContent className="flex items-center justify-center p-4">
                 {aircraft.image_url ? (
                   <img
-                    src={`http://localhost:3000${aircraft.image_url}`}
+                    src={`${getBackendBaseUrl()}${aircraft.image_url}`}
                     alt={`${aircraft.model} - ${aircraft.registration_number}`}
                     className="max-w-full h-auto object-cover rounded-md shadow"
                   />

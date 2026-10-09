@@ -10,6 +10,7 @@ import { GET_USER_PROFILE } from "@/graphql/user"
 import { LOGOUT_MUTATION } from "@/graphql/system"
 import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
 import { io, type Socket } from "socket.io-client"
+import { getBackendBaseUrl } from "@/lib/runtime-config"
 import { GET_NOTIFICATIONS, SEEN_NOTIFICATION } from "@/graphql/notifications"
 import { getNotificationTypeInFrench } from "@/interfaces/notification"
 import { CustomDropdown, CustomDropdownItem, CustomDropdownSeparator } from "@/components/ui/custom-dropdown"
@@ -54,12 +55,9 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
 
   useEffect(() => {
     if (userId) {
-      const newSocket = io("http://localhost:3000", {
-        query: { userId },
-      })
-
-      newSocket.on("connect", () => {
-        console.log("Connected to WebSocket")
+      // The server identifies the user from the session cookie.
+      const newSocket = io(getBackendBaseUrl(), {
+        withCredentials: true,
       })
 
       newSocket.on("notification", (payload) => {
@@ -262,7 +260,7 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
             >
               <Avatar className="h-8 w-8 mr-2 border-2 border-card">
                 {profilePicture ? (
-                  <AvatarImage src={`http://localhost:3000${profilePicture}`} alt="User Avatar" />
+                  <AvatarImage src={`${getBackendBaseUrl()}${profilePicture}`} alt="User Avatar" />
                 ) : (
                   <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
                     {initials}
@@ -282,7 +280,7 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
             <div className="flex items-center">
               <Avatar className="h-10 w-10 mr-3 border-2 border-card">
                 {profilePicture ? (
-                  <AvatarImage src={`http://localhost:3000${profilePicture}`} alt="User Avatar" />
+                  <AvatarImage src={`${getBackendBaseUrl()}${profilePicture}`} alt="User Avatar" />
                 ) : (
                   <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
                     {initials}
