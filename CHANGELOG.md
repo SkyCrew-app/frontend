@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.0](https://github.com/SkyCrew-app/frontend/compare/2.2.2...2.3.0) (2026-10-09)
+
+
+### Features
+
+* **auth:** :sparkles: confirm two-factor setup with a first code ([#81](https://github.com/SkyCrew-app/frontend/issues/81)) ([3543831](https://github.com/SkyCrew-app/frontend/commit/35438317a7befe16000745c83da6e9dfcb0a25a7))
+
 ## [2.2.2](https://github.com/SkyCrew-app/frontend/compare/2.2.1...2.2.2) (2026-10-09)
 
 
