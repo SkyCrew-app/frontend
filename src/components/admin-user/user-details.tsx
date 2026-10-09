@@ -26,6 +26,7 @@ import {
   User,
 } from "lucide-react"
 import type { UserDetails } from "@/interfaces/user"
+import { getBackendBaseUrl } from "@/lib/runtime-config"
 
 interface UserDetailsProps {
   isOpen: boolean
@@ -321,7 +322,7 @@ export function UserDetailsDialog({
                                   {license.documents_url.map((doc, index) => (
                                     <a
                                       key={index}
-                                      href={doc.startsWith("http") ? doc : `http://localhost:3000${doc}`}
+                                      href={doc.startsWith("http") ? doc : `${getBackendBaseUrl()}${doc}`}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       className="text-primary hover:underline flex items-center"

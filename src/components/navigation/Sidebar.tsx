@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useQuery } from "@apollo/client"
 import { GET_USER_PROFILE } from "@/graphql/user"
 import { useCurrentUser } from "@/components/hooks/userHooks"
+import { getBackendBaseUrl } from "@/lib/runtime-config"
 
 const menuItems = [
   { name: "Tableau de bord", icon: LayoutDashboard, path: "/dashboard" },
@@ -286,7 +287,7 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
           <div className="flex items-center space-x-3">
             <Avatar className="h-10 w-10 border-2 border-white/20">
               {profilePicture ? (
-                <AvatarImage src={`http://localhost:3000${profilePicture}`} alt={userName || "User Avatar"} />
+                <AvatarImage src={`${getBackendBaseUrl()}${profilePicture}`} alt={userName || "User Avatar"} />
               ) : (
                 <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground">
                   {initials}

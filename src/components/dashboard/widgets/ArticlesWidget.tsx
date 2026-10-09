@@ -10,6 +10,7 @@ import { useQuery } from "@apollo/client"
 import { GET_ARTICLES } from "@/graphql/articles"
 import { useToast } from "@/components/hooks/use-toast"
 import Link from "next/link"
+import { getBackendBaseUrl } from "@/lib/runtime-config"
 
 export default function ArticlesWidget() {
   const { data: articlesData, loading: articlesLoading, error: articlesError } = useQuery(GET_ARTICLES)
@@ -87,7 +88,7 @@ export default function ArticlesWidget() {
                     <img
                       src={
                         article.photo_url
-                          ? `http://localhost:3000${article.photo_url}`
+                          ? `${getBackendBaseUrl()}${article.photo_url}`
                           : "https://placehold.co/600x400"
                       }
                       alt={article.title}

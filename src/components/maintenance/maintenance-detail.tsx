@@ -12,6 +12,7 @@ import type { CarouselApi } from "@/components/ui/carousel"
 import { StatusBadge } from "./status-badge"
 import { MaintenanceTypeIcon } from "./maintenance-type-icon"
 import type { Maintenance } from "@/interfaces/maintenance"
+import { getBackendBaseUrl } from "@/lib/runtime-config"
 
 interface MaintenanceDetailProps {
   maintenance: Maintenance | null
@@ -129,7 +130,7 @@ export function MaintenanceDetail({ maintenance, maintenanceTypes }: Maintenance
                             <div className="p-1">
                               <div className="overflow-hidden rounded-lg">
                                 <img
-                                  src={`http://localhost:3000${url}`}
+                                  src={`${getBackendBaseUrl()}${url}`}
                                   alt={`Image de maintenance ${index + 1} pour ${maintenance.aircraft.registration_number}`}
                                   className="w-full h-auto object-cover aspect-video"
                                 />
@@ -163,7 +164,7 @@ export function MaintenanceDetail({ maintenance, maintenanceTypes }: Maintenance
                       <Card key={index} className="overflow-hidden">
                         <CardContent className="p-0">
                           <a
-                            href={`http://localhost:3000${url}`}
+                            href={`${getBackendBaseUrl()}${url}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center p-4 hover:bg-muted transition-colors"

@@ -108,7 +108,7 @@ export function AircraftDetailDialog({ aircraft, isOpen, onOpenChange }: Aircraf
                           </span>
                         </div>
                         <a
-                          href={`http://localhost:3000${url}`}
+                          href={`${getBackendBaseUrl()}${url}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-blue-500 hover:text-blue-700 flex items-center ml-2 flex-shrink-0"
