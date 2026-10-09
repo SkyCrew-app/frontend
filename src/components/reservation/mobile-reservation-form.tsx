@@ -13,6 +13,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { TimePickerDemo } from "@/components/ui/time-picker"
 import { Loader2, CalendarIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { FlightCategoryError } from "@/components/reservation/flight-category-error"
 
 interface Aircraft {
   id: number
@@ -197,11 +198,7 @@ export function MobileReservationForm({
             ))}
           </SelectContent>
         </Select>
-        {categoryError && (
-          <p className="mt-1 text-sm text-red-500" role="alert">
-            Veuillez sélectionner une catégorie de vol.
-          </p>
-        )}
+        <FlightCategoryError visible={categoryError} />
       </div>
 
       <div>

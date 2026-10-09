@@ -5,7 +5,7 @@ export type Taxonomies = {
   maintenanceTypes: string[]
 }
 
-type LoadedTaxonomies = Partial<Record<keyof Taxonomies, string[] | null>> | null | undefined
+type LoadedTaxonomies = Partial<Record<keyof Taxonomies, string[] | null>> | null
 
 /**
  * Listes de taxonomie du formulaire des paramètres, à partir de

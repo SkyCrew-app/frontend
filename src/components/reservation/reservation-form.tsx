@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
 import { Loader2 } from "lucide-react"
+import { FlightCategoryError } from "@/components/reservation/flight-category-error"
 
 interface Aircraft {
   id: number
@@ -156,11 +157,7 @@ export function ReservationForm({
               ))}
             </SelectContent>
           </Select>
-          {categoryError && (
-            <p className="mt-1 text-sm text-red-500" role="alert">
-              Veuillez sélectionner une catégorie de vol.
-            </p>
-          )}
+          <FlightCategoryError visible={categoryError} />
         </div>
 
         <div>
