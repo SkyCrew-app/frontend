@@ -16,6 +16,7 @@ import CourseCalendar from "@/components/courses/CourseCalendar"
 import NewCourseModal from "@/components/courses/NewCourseModal"
 import { GET_COURSE_BY_USER_ID } from "@/graphql/course"
 import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
+import { isAdministrator, isInstructor as hasInstructorRole } from "@/lib/roles"
 
 export default function InstructionDashboard() {
   const [viewMode, setViewMode] = useState<"list" | "calendar">("list")
@@ -34,8 +35,9 @@ export default function InstructionDashboard() {
     }
   }, [userData])
 
-  const userRole = userData?.role?.role_name || "student"
-  const isInstructor = userRole === "INSTRUCTOR"
+  const isInstructor = hasInstructorRole(userData)
+  // Only an instructor or an administrator can plan a course.
+  const canCreateCourse = isInstructor || isAdministrator(userData)
 
   const { loading, error, data, refetch } = useQuery(GET_COURSE_BY_USER_ID, {
     variables: { userId },
@@ -105,9 +107,11 @@ export default function InstructionDashboard() {
     <div className="space-y-6 p-6 bg-background text-foreground">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Mes Cours</h1>
-        <Button onClick={() => setIsNewCourseModalOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" /> Nouveau Cours
-        </Button>
+        {canCreateCourse && (
+          <Button onClick={() => setIsNewCourseModalOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" /> Nouveau Cours
+          </Button>
+        )}
       </div>
 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
@@ -170,6 +174,7 @@ export default function InstructionDashboard() {
       <NewCourseModal
         isOpen={isNewCourseModalOpen}
         onClose={() => setIsNewCourseModalOpen(false)}
+        instructorId={isInstructor ? userId : null}
         onSuccess={() => {
           refetch()
           toast({

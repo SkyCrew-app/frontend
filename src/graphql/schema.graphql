@@ -1174,6 +1174,7 @@ type Query {
   logbookEntries(filter: LogbookFilterInput): [Flight!]!
   logbookStats(filter: LogbookFilterInput): LogbookStats!
   me: User!
+  membersDirectory: [User!]!
   myReservationTemplates: [ReservationTemplate!]!
   notification(id: Int!): Notification!
   notificationsByUser(userId: Int!): [Notification!]!

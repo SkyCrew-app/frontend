@@ -17,7 +17,8 @@ import {
 import Link from "next/link"
 import { Star, Clock, Edit2, Check, X, FileText, AlertTriangle, Trash2 } from "lucide-react"
 import { useMutation, useQuery } from "@apollo/client"
-import { UPDATE_COURSE, DELETE_COURSE, GET_USERS } from "@/graphql/course"
+import { UPDATE_COURSE, DELETE_COURSE, GET_MEMBERS_DIRECTORY } from "@/graphql/course"
+import { courseParticipants } from "@/lib/roles"
 import { format, parseISO } from "date-fns"
 import { fr } from "date-fns/locale"
 import { useToast } from "@/components/hooks/use-toast"
@@ -68,7 +69,7 @@ export default function CourseList({ courses = [], userRole, userId, onRefresh }
   const { toast } = useToast()
   const [updateCourse, { loading: updateLoading }] = useMutation(UPDATE_COURSE)
   const [deleteCourse, { loading: deleteLoading }] = useMutation(DELETE_COURSE)
-  const { data: usersData } = useQuery(GET_USERS)
+  const { data: usersData } = useQuery(GET_MEMBERS_DIRECTORY)
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -174,8 +175,7 @@ export default function CourseList({ courses = [], userRole, userId, onRefresh }
     }
   }
 
-  const instructors = usersData?.getUsers.filter((user: any) => user.role?.role_name === "INSTRUCTOR") || []
-  const students = usersData?.getUsers.filter((user: any) => user.role?.role_name === "STUDENT") || []
+  const { instructors, students } = courseParticipants(usersData?.membersDirectory, userId)
 
   const canEditCourse = (course: Course) => {
     return userRole === "instructor" && course.instructor.id === userId
