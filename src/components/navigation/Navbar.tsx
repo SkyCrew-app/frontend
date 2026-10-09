@@ -15,6 +15,7 @@ import { GET_NOTIFICATIONS, SEEN_NOTIFICATION } from "@/graphql/notifications"
 import { getNotificationTypeInFrench } from "@/interfaces/notification"
 import { CustomDropdown, CustomDropdownItem, CustomDropdownSeparator } from "@/components/ui/custom-dropdown"
 import ThemeToggle from "@/components/theme/ThemeToggle"
+import { clearSessionCache } from "@/lib/apollo-client"
 
 interface NavbarProps {
   onToggleMobileMenu: () => void
@@ -94,6 +95,7 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
   const handleLogout = async () => {
     try {
       await logout()
+      await clearSessionCache()
       router.push("/")
     } catch (error) {
       console.error("Erreur lors de la déconnexion:", error)
