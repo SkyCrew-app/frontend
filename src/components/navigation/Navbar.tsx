@@ -260,7 +260,7 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
             >
               <Avatar className="h-8 w-8 mr-2 border-2 border-card">
                 {profilePicture ? (
-                  <AvatarImage src={`http://localhost:3000${profilePicture}`} alt="User Avatar" />
+                  <AvatarImage src={`${getBackendBaseUrl()}${profilePicture}`} alt="User Avatar" />
                 ) : (
                   <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
                     {initials}
@@ -280,7 +280,7 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
             <div className="flex items-center">
               <Avatar className="h-10 w-10 mr-3 border-2 border-card">
                 {profilePicture ? (
-                  <AvatarImage src={`http://localhost:3000${profilePicture}`} alt="User Avatar" />
+                  <AvatarImage src={`${getBackendBaseUrl()}${profilePicture}`} alt="User Avatar" />
                 ) : (
                   <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground">
                     {initials}
