@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.2.2](https://github.com/SkyCrew-app/frontend/compare/2.2.1...2.2.2) (2026-10-09)
+
+
+### Bug Fixes
+
+* **auth:** :bug: ask for the email when the login form is submitted empty ([#73](https://github.com/SkyCrew-app/frontend/issues/73)) ([337350e](https://github.com/SkyCrew-app/frontend/commit/337350e25fe1ba02bb8c7985b681272ad141a0ee))
+* **auth:** :bug: generate the two-factor secret only on request ([#72](https://github.com/SkyCrew-app/frontend/issues/72)) ([d6b63c1](https://github.com/SkyCrew-app/frontend/commit/d6b63c108ff5fc6e84a1668d9abd035bfb54809b))
+* **deps:** :lock: update Next.js to a patched release ([#76](https://github.com/SkyCrew-app/frontend/issues/76)) ([a7b3e55](https://github.com/SkyCrew-app/frontend/commit/a7b3e55321aa43f2cbf501a8dbf2f324b5ec9091))
+* **fleet:** :bug: keep history filters separate for each aircraft ([#74](https://github.com/SkyCrew-app/frontend/issues/74)) ([57fa19d](https://github.com/SkyCrew-app/frontend/commit/57fa19d6c5a8b02a0d4eed0d82c3199d0ca00058))
+* **profile:** :bug: check the minimum age on the full birth date ([#75](https://github.com/SkyCrew-app/frontend/issues/75)) ([30003bd](https://github.com/SkyCrew-app/frontend/commit/30003bd94f016afb06cfb803d4ee125879a76d97))
+
 ## [2.2.1](https://github.com/SkyCrew-app/frontend/compare/2.2.0...2.2.1) (2026-10-08)
 
 
