@@ -30,11 +30,9 @@ import {
   Fuel,
   Gauge,
   Navigation,
-  TrendingUp,
   FileText,
   Radio,
   Compass,
-  ArrowRight,
 } from "lucide-react"
 import type { Weather } from "@/interfaces/weather"
 

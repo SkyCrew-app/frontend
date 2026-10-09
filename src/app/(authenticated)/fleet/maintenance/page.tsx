@@ -36,7 +36,7 @@ enum MaintenanceStatus {
 
 export default function MaintenanceTablePage() {
   const { data, loading, error, refetch } = useQuery(GET_ALL_MAINTENANCES, {
-    onError: (error) => {
+    onError: () => {
       toast({
         variant: "destructive",
         title: "Erreur",

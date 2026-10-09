@@ -123,7 +123,7 @@ export default function CourseList({ courses = [], userRole, userId, onRefresh }
         },
       })
       setEditingCourse(null)
-      onRefresh && onRefresh()
+      if (onRefresh) onRefresh()
       toast({
         title: "Cours mis à jour",
         description: "Les informations du cours ont été mises à jour avec succès.",
@@ -158,7 +158,7 @@ export default function CourseList({ courses = [], userRole, userId, onRefresh }
       })
       setIsDeleteDialogOpen(false)
       setCourseToDelete(null)
-      onRefresh && onRefresh()
+      if (onRefresh) onRefresh()
       toast({
         title: "Cours supprimé",
         description: "Le cours a été supprimé avec succès.",

@@ -12,8 +12,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Skeleton } from "@/components/ui/skeleton";
 
 function ResetPasswordComponent() {
-  const searchParams = useSearchParams();
-  const token = searchParams.get('token');
+  useSearchParams();
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -52,7 +51,7 @@ function ResetPasswordComponent() {
         title: "Succès",
         description: "Votre mot de passe a été réinitialisé avec succès.",
       });
-    } catch (error) {
+    } catch {
       toast({
         variant: "destructive",
         title: "Erreur",

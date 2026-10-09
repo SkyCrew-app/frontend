@@ -75,14 +75,14 @@ export default function MyReservations() {
     }
   }, [userData])
 
-  const { data, loading, error, refetch } = useQuery(GET_USER_RESERVATIONS, {
+  const { data, loading, error } = useQuery(GET_USER_RESERVATIONS, {
     variables: { userId },
     skip: !userId,
   })
 
   const [updateReservation] = useMutation(UPDATE_RESERVATION)
 
-  const { data: templatesData, refetch: refetchTemplates } = useQuery(GET_MY_TEMPLATES)
+  const { data: templatesData } = useQuery(GET_MY_TEMPLATES)
   const { data: aircraftData } = useQuery(GET_AIRCRAFTS)
   const [createTemplate, { loading: creatingTemplate }] = useMutation(CREATE_RESERVATION_TEMPLATE)
   const [updateTemplate, { loading: updatingTemplate }] = useMutation(UPDATE_RESERVATION_TEMPLATE)
@@ -147,7 +147,7 @@ export default function MyReservations() {
         title: "Réservation mise à jour",
         description: `La réservation pour l'avion ${selectedReservation.aircraft.registration_number} a été mise à jour.`,
       })
-    } catch (error) {
+    } catch {
       toast({
         variant: "destructive",
         title: "Erreur lors de la mise à jour",
@@ -185,7 +185,7 @@ export default function MyReservations() {
         toast({ title: "Mod\u00e8le cr\u00e9\u00e9" })
       }
       setIsTemplateDialogOpen(false)
-    } catch (err) {
+    } catch {
       toast({ variant: "destructive", title: "Erreur", description: "Impossible de sauvegarder le mod\u00e8le." })
     }
   }
@@ -197,7 +197,7 @@ export default function MyReservations() {
         refetchQueries: [{ query: GET_MY_TEMPLATES }],
       })
       toast({ title: "Mod\u00e8le supprim\u00e9" })
-    } catch (err) {
+    } catch {
       toast({ variant: "destructive", title: "Erreur", description: "Impossible de supprimer le mod\u00e8le." })
     }
   }

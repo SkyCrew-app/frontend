@@ -39,7 +39,7 @@ export function FlightSummary({
   const formatDate = (dateString: string) => {
     try {
       return format(new Date(dateString), "EEEE d MMMM yyyy", { locale: fr })
-    } catch (e) {
+    } catch {
       return dateString
     }
   }
@@ -47,7 +47,7 @@ export function FlightSummary({
   const formatTime = (timeString: string) => {
     try {
       return format(new Date(timeString), "HH:mm", { locale: fr })
-    } catch (e) {
+    } catch {
       return timeString
     }
   }

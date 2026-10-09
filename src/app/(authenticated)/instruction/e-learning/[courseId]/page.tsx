@@ -135,7 +135,7 @@ export default function CourseDetailPage() {
         }))
 
         const evaluations = module.evaluations
-          ? module.evaluations.map((evaluation, i) => ({
+          ? module.evaluations.map((evaluation) => ({
               ...evaluation,
               completed: index > 1,
               score: index > 1 ? Math.floor(70 + Math.random() * 30) : undefined,

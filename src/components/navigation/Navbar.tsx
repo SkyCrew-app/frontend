@@ -31,7 +31,7 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
   const userData = useUserData(userEmail)
   const [userId, setUserId] = useState<number | null>(null)
   const [notifications, setNotifications] = useState<any[]>([])
-  const [socket, setSocket] = useState<Socket | null>(null)
+  const [, setSocket] = useState<Socket | null>(null)
 
   const { data: notificationsData, refetch: refetchNotifications } = useQuery(GET_NOTIFICATIONS, {
     variables: { userId: userId || 0 },

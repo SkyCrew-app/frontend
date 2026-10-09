@@ -23,9 +23,6 @@ const withSerwist = withSerwistInit({
 const nextConfig = {
   reactStrictMode: true,
   basePath,
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   images: {
     domains: ["images.unsplash.com"],
   },

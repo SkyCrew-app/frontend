@@ -16,22 +16,22 @@ import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 export default function AircraftHistory() {
-  const { data, loading, error } = useQuery(GET_FLIGHT_HISTORY);
+  const { toast } = useToast();
+  const { data, loading, error } = useQuery(GET_FLIGHT_HISTORY, {
+    onError: () => {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de charger l'historique des avions. Veuillez réessayer plus tard.",
+      });
+    },
+  });
   const [currentPage, setCurrentPage] = useState<Record<string, number>>({});
   const [filters, setFilters] = useState<Record<string, any>>({});
   const itemsPerPage = 5;
 
-  const { toast } = useToast();
-
   if (loading) return <Skeleton className="w-full h-[600px]" />;
-  if (error) {
-    toast({
-      variant: "destructive",
-      title: "Erreur",
-      description: "Impossible de charger l'historique des avions. Veuillez réessayer plus tard.",
-    });
-    return null;
-  }
+  if (error) return null;
 
   if (!data || !data.getHistoryAircraft || data.getHistoryAircraft.length === 0) {
     return (
@@ -50,12 +50,14 @@ export default function AircraftHistory() {
     }));
   };
 
-  const applyFilters = (items: any[], type: 'reservations' | 'maintenances') => {
+  // Filters are kept per aircraft and per tab, so one card does not filter the others.
+  const applyFilters = (items: any[], type: 'reservations' | 'maintenances', aircraftId: string) => {
+    const prefix = `${aircraftId}-${type}`;
     return items.filter(item => {
       if (type === 'reservations') {
-        const startDate = filters[`${type}StartDate`] ? new Date(filters[`${type}StartDate`]) : null;
-        const endDate = filters[`${type}EndDate`] ? new Date(filters[`${type}EndDate`]) : null;
-        const userName = filters[`${type}UserName`]?.toLowerCase();
+        const startDate = filters[`${prefix}StartDate`] ? new Date(filters[`${prefix}StartDate`]) : null;
+        const endDate = filters[`${prefix}EndDate`] ? new Date(filters[`${prefix}EndDate`]) : null;
+        const userName = filters[`${prefix}UserName`]?.toLowerCase();
 
         return (!startDate || new Date(item.start_time) >= startDate) &&
                (!endDate || new Date(item.end_time) <= endDate) &&
@@ -92,7 +94,7 @@ export default function AircraftHistory() {
                 </TabsList>
                 <TabsContent value="reservations">
                   <HistoryList
-                    items={applyFilters(aircraft.reservations, 'reservations')}
+                    items={applyFilters(aircraft.reservations, 'reservations', aircraft.id)}
                     aircraftId={aircraft.id}
                     type="reservations"
                     page={currentPage[`${aircraft.id}-reservations`] || 1}
@@ -113,7 +115,7 @@ export default function AircraftHistory() {
                 </TabsContent>
                 <TabsContent value="maintenances">
                   <HistoryList
-                    items={applyFilters(aircraft.maintenances, 'maintenances')}
+                    items={applyFilters(aircraft.maintenances, 'maintenances', aircraft.id)}
                     aircraftId={aircraft.id}
                     type="maintenances"
                     page={currentPage[`${aircraft.id}-maintenances`] || 1}
@@ -183,46 +185,46 @@ function HistoryList({ items, aircraftId, type, page, handlePageChange, itemsPer
               </div>
               <div className="grid gap-2">
                 <div className="grid grid-cols-3 items-center gap-4">
-                  <Label htmlFor={`${type}StartDate`}>Début</Label>
+                  <Label htmlFor={`${aircraftId}-${type}StartDate`}>Début</Label>
                   <Input
-                    id={`${type}StartDate`}
+                    id={`${aircraftId}-${type}StartDate`}
                     type="date"
                     className="col-span-2 h-8"
-                    value={filters[`${type}StartDate`] || ''}
-                    onChange={(e) => handleFilterChange(`${type}StartDate`, e.target.value)}
+                    value={filters[`${aircraftId}-${type}StartDate`] || ''}
+                    onChange={(e) => handleFilterChange(`${aircraftId}-${type}StartDate`, e.target.value)}
                   />
                 </div>
                 <div className="grid grid-cols-3 items-center gap-4">
-                  <Label htmlFor={`${type}EndDate`}>Fin</Label>
+                  <Label htmlFor={`${aircraftId}-${type}EndDate`}>Fin</Label>
                   <Input
-                    id={`${type}EndDate`}
+                    id={`${aircraftId}-${type}EndDate`}
                     type="date"
                     className="col-span-2 h-8"
-                    value={filters[`${type}EndDate`] || ''}
-                    onChange={(e) => handleFilterChange(`${type}EndDate`, e.target.value)}
+                    value={filters[`${aircraftId}-${type}EndDate`] || ''}
+                    onChange={(e) => handleFilterChange(`${aircraftId}-${type}EndDate`, e.target.value)}
                   />
                 </div>
                 {type === 'reservations' ? (
                   <div className="grid grid-cols-3 items-center gap-4">
-                    <Label htmlFor={`${type}UserName`}>Utilisateur</Label>
+                    <Label htmlFor={`${aircraftId}-${type}UserName`}>Utilisateur</Label>
                     <Input
-                      id={`${type}UserName`}
+                      id={`${aircraftId}-${type}UserName`}
                       type="text"
                       className="col-span-2 h-8"
-                      value={filters[`${type}UserName`] || ''}
-                      onChange={(e) => handleFilterChange(`${type}UserName`, e.target.value)}
+                      value={filters[`${aircraftId}-${type}UserName`] || ''}
+                      onChange={(e) => handleFilterChange(`${aircraftId}-${type}UserName`, e.target.value)}
                       placeholder="Nom de l'utilisateur"
                     />
                   </div>
                 ) : (
                   <div className="grid grid-cols-3 items-center gap-4">
-                    <Label htmlFor={`${type}Type`}>Type</Label>
+                    <Label htmlFor={`${aircraftId}-${type}Type`}>Type</Label>
                     <Input
-                      id={`${type}Type`}
+                      id={`${aircraftId}-${type}Type`}
                       type="text"
                       className="col-span-2 h-8"
-                      value={filters[`${type}Type`] || ''}
-                      onChange={(e) => handleFilterChange(`${type}Type`, e.target.value)}
+                      value={filters[`${aircraftId}-${type}Type`] || ''}
+                      onChange={(e) => handleFilterChange(`${aircraftId}-${type}Type`, e.target.value)}
                       placeholder="Type de maintenance"
                     />
                   </div>

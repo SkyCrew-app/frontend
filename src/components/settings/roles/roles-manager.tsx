@@ -49,7 +49,7 @@ export function RoleManager() {
       toast({ title: "Rôle créé", description: "Le nouveau rôle a été créé avec succès." })
       setIsCreateDialogOpen(false)
       await refetch()
-    } catch (error) {
+    } catch {
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de la création du rôle.",
@@ -71,7 +71,7 @@ export function RoleManager() {
       setIsEditDialogOpen(false)
       setRoleToEdit(null)
       await refetch()
-    } catch (error) {
+    } catch {
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de la mise à jour du rôle.",
@@ -87,7 +87,7 @@ export function RoleManager() {
       await deleteRole({ variables: { id: role.id } })
       toast({ title: "Rôle supprimé", description: "Le rôle a été supprimé avec succès." })
       await refetch()
-    } catch (error) {
+    } catch {
       toast({
         title: "Erreur",
         description: "Une erreur est survenue lors de la suppression du rôle.",

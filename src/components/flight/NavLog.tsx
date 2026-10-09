@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Table, Navigation } from "lucide-react"
+import { Navigation } from "lucide-react"
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */

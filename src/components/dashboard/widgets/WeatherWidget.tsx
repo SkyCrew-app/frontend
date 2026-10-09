@@ -12,7 +12,7 @@ interface WeatherWidgetProps {
   preferredAerodrome: string | null
 }
 
-export default function WeatherWidget({ userEmail, preferredAerodrome }: WeatherWidgetProps) {
+export default function WeatherWidget({ preferredAerodrome }: WeatherWidgetProps) {
   const [weatherData, setWeatherData] = useState<any | null>(null)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const { toast } = useToast()

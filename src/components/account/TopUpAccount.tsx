@@ -95,7 +95,7 @@ function PayPalButtonsWrapper({ amount, userId, setAmount }: PayPalButtonsWrappe
         description: "Paiement PayPal confirmé et solde mis à jour !",
       })
       setAmount("")
-    } catch (error) {
+    } catch {
       toast({
         variant: "destructive",
         title: "Erreur PayPal",
@@ -128,10 +128,8 @@ function PayPalButtonsWrapper({ amount, userId, setAmount }: PayPalButtonsWrappe
 }
 
 function CheckoutForm({
-  clientSecret,
   amount,
   setAmount,
-  userId,
 }: {
   clientSecret: string
   amount: string

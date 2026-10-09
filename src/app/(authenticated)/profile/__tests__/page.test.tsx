@@ -165,6 +165,12 @@ describe('ProfilePage Component', () => {
     expect(screen.getByText('Paramètres de notifications')).toBeInTheDocument();
     expect(screen.getByText('Aucune licence')).toBeInTheDocument();
     expect(screen.queryByText(/John Doe/)).not.toBeInTheDocument();
+
+    // Le toast de la page ne doit pas se répéter à chaque nouveau rendu.
+    const pageToasts = mockToast.mock.calls.filter(
+      ([toast]) => toast.description === 'Erreur lors de la récupération des données utilisateur',
+    );
+    expect(pageToasts).toHaveLength(1);
   });
 
   test('permet d\'ouvrir la carte profil avec le formulaire pré-rempli puis de revenir', async () => {

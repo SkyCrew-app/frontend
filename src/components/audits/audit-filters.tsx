@@ -38,7 +38,7 @@ interface AuditFiltersProps {
   loading: boolean
 }
 
-export function AuditFilters({ filters, onFilterChange, onClearFilters, enumsData, loading }: AuditFiltersProps) {
+export function AuditFilters({ filters, onFilterChange, onClearFilters, enumsData }: AuditFiltersProps) {
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const isMobile = useMediaQuery("(max-width: 768px)")
 

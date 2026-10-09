@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useQuery } from '@apollo/client';
 import { toast } from '@/components/hooks/use-toast';
 import { GET_USER_BY_EMAIL } from '@/graphql/user';
 import { GET_ME } from '@/graphql/user';
 
 export function useCurrentUser() {
-  const { data, error, loading } = useQuery(GET_ME);
+  const { data, error } = useQuery(GET_ME);
 
   useEffect(() => {
     if (error) {

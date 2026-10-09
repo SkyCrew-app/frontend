@@ -51,8 +51,8 @@ export const GET_EMAIL_QUERY = gql`
 `;
 
 export const GENERATE_2FA_SECRET_MUTATION = gql`
-  mutation Generate2FASecret($email: String!) {
-    generate2FASecret(email: $email)
+  mutation Generate2FASecret {
+    generate2FASecret
   }
 `;
 

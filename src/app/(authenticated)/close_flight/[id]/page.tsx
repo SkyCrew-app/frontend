@@ -102,7 +102,7 @@ export default function FlightRecap() {
   const onSubmit = async (formData: FlightRecapFormValues) => {
     setIsSubmitting(true)
     try {
-      const { data: flightData } = await updateFlight({
+      await updateFlight({
         variables: {
           updateFlightInput: {
             id: Number.parseInt(id),
@@ -122,7 +122,7 @@ export default function FlightRecap() {
       })
 
       if (formData.incidentOccurred) {
-        const { data: incidentData } = await createIncident({
+        await createIncident({
           variables: {
             incident: {
               date: formData.incident_date,

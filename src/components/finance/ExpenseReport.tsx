@@ -169,11 +169,6 @@ export default function ExpensesReport({ period, date }: { period: string; date:
   // Trier les données par valeur décroissante
   chartData.sort((a, b) => b.value - a.value)
 
-  // Fonction pour obtenir une icône par catégorie
-  const getCategoryIcon = (category: string) => {
-    return <Receipt className="h-4 w-4" />
-  }
-
   return (
     <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="space-y-8 max-w-7xl mx-auto">
       {isOverBudget && (

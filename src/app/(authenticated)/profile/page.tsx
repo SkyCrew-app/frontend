@@ -73,6 +73,16 @@ export default function ProfilePage() {
     fetchPolicy: "cache-first",
   })
 
+  useEffect(() => {
+    if (errorUser) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Erreur lors de la récupération des données utilisateur",
+      })
+    }
+  }, [errorUser, toast])
+
   const handleCardClick = (sectionName: string) => {
     setActiveSection(activeSection === sectionName ? null : sectionName)
   }
@@ -98,13 +108,6 @@ export default function ProfilePage() {
     )
   }
 
-  if (errorUser) {
-    toast({
-      variant: "destructive",
-      title: "Erreur",
-      description: "Erreur lors de la récupération des données utilisateur",
-    })
-  }
 
   if (isMobile) {
     return (
