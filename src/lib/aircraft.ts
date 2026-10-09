@@ -30,3 +30,6 @@ export function buildAircraftInput<T extends object>(formData: T): T {
 
   return input as T
 }
+
+// Powered flight starts in 1903: no aircraft was built before.
+export const FIRST_MANUFACTURE_YEAR = 1903
