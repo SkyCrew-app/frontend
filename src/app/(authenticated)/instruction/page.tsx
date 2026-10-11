@@ -20,6 +20,7 @@ import { CoursesTab } from "@/components/learning-home/courses-tab"
 import { ELearningTab } from "@/components/learning-home/e-learning-tab"
 import { Button } from "@/components/ui/button"
 import { GET_USER_INSTRUCTION_SUMMARY } from "@/graphql/evaluation"
+import { learningRoutes } from "@/lib/learning-navigation"
 
 const fadeIn = {
   hidden: { opacity: 0 },
@@ -109,7 +110,7 @@ export default function InstructionHome() {
               <Calendar className="mr-2 h-4 w-4" />
               <span className="hidden sm:inline">Mes</span> Cours
             </Button>
-            <Button variant="outline" onClick={() => router.push("instruction/e-learning")} className="shadow-sm">
+            <Button variant="outline" onClick={() => router.push(learningRoutes.eLearning)} className="shadow-sm">
               <BookOpen className="mr-2 h-4 w-4" />
               E-Learning
             </Button>

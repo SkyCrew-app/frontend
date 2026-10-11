@@ -17,7 +17,8 @@ import FlightNotesForm from "@/components/close_flight/FlightNotesForm"
 import { useMutation, useQuery } from "@apollo/client"
 import { useParams, useRouter } from "next/navigation"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { GET_FLIGHT, UPDATE_FLIGHT } from "@/graphql/flights"
+import { EXPORT_FLIGHT_RECAP_PDF, GET_FLIGHT, UPDATE_FLIGHT } from "@/graphql/flights"
+import { downloadBase64Pdf } from "@/lib/download"
 import { CREATE_INCIDENT } from "@/graphql/incident"
 import { useToast } from "@/components/hooks/use-toast"
 import { flightRecapSchema, type FlightRecapFormValues } from "@/lib/flight-recap-schema"
@@ -39,6 +40,7 @@ export default function FlightRecap() {
 
   const [updateFlight] = useMutation(UPDATE_FLIGHT)
   const [createIncident] = useMutation(CREATE_INCIDENT)
+  const [exportRecap, { loading: isExporting }] = useMutation(EXPORT_FLIGHT_RECAP_PDF)
 
   const methods = useForm<FlightRecapFormValues>({
     resolver: zodResolver(flightRecapSchema),
@@ -148,9 +150,20 @@ export default function FlightRecap() {
     }
   }
 
-  const handleExportPDF = () => {
-    //TODO: Export flight recap to PDF
-    console.log("Exporting to PDF...")
+  // The PDF shows the flight as it is recorded, not what is being typed.
+  const handleExportPDF = async () => {
+    try {
+      const { data: exported } = await exportRecap({ variables: { flightId: Number.parseInt(id) } })
+      if (exported?.exportFlightRecapPDF) {
+        downloadBase64Pdf(exported.exportFlightRecapPDF, `vol-${id}.pdf`)
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Export impossible",
+        description: error instanceof Error && error.message ? error.message : "Le PDF n'a pas pu être généré.",
+      })
+    }
   }
 
   if (loading) return <p>Chargement...</p>
@@ -172,8 +185,12 @@ export default function FlightRecap() {
             figure dans votre carnet de vol.
           </CardDescription>
         </CardHeader>
-        <CardFooter>
+        <CardFooter className="gap-2">
           <Button onClick={() => router.push("/logbook")}>Voir le carnet de vol</Button>
+          <Button variant="outline" onClick={handleExportPDF} disabled={isExporting}>
+            <FilePdf className="mr-2 h-4 w-4" />
+            Exporter en PDF
+          </Button>
         </CardFooter>
       </Card>
     )
@@ -312,7 +329,7 @@ export default function FlightRecap() {
             <FlightNotesForm />
 
             <div className="flex justify-between items-center">
-              <Button type="button" variant="outline" onClick={handleExportPDF}>
+              <Button type="button" variant="outline" onClick={handleExportPDF} disabled={isExporting}>
                 <FilePdf className="mr-2 h-4 w-4" />
                 Exporter en PDF
               </Button>

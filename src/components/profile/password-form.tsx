@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Eye, EyeOff } from 'lucide-react'
 import { UPDATE_PASSWORD } from "@/graphql/user"
 import { useToast } from "@/components/hooks/use-toast"
+import { useLogout } from "@/components/hooks/useLogout"
 import { cn } from "@/lib/utils"
 import { motion } from "framer-motion"
 
@@ -30,6 +31,7 @@ export function PasswordForm() {
 
   const { toast } = useToast()
   const [updatePassword] = useMutation(UPDATE_PASSWORD)
+  const logout = useLogout()
 
   const validateForm = () => {
     let valid = true
@@ -78,14 +80,16 @@ export function PasswordForm() {
 
       if (data?.updatePassword?.id) {
         toast({
-          title: "Succès",
-          description: "Votre mot de passe a été modifié avec succès.",
+          title: "Mot de passe modifié",
+          description: "Toutes vos sessions ont été fermées. Reconnectez-vous avec le nouveau mot de passe.",
         })
 
         setCurrentPassword("")
         setNewPassword("")
         setConfirmPassword("")
         setSaveSuccess(true)
+        // The API no longer accepts this session either.
+        await logout()
       } else {
         toast({
           variant: "destructive",

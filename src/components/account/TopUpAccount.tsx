@@ -8,7 +8,7 @@ import { loadStripe } from "@stripe/stripe-js"
 import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js"
 import { PayPalScriptProvider } from "@paypal/react-paypal-js"
 import type { PayPalButtonsComponentProps } from "@paypal/react-paypal-js"
-import { PROCESS_PAYMENT, UPDATE_PAYMENT_STATUS } from "@/graphql/account"
+import { PROCESS_PAYMENT, CONFIRM_PAYMENT } from "@/graphql/account"
 import { useToast } from "@/components/hooks/use-toast"
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
@@ -48,7 +48,8 @@ function PayPalButtonsWrapper({ amount, userId, setAmount }: PayPalButtonsWrappe
   const [isProcessing, setIsProcessing] = useState(false)
 
   const [processPayment] = useMutation(PROCESS_PAYMENT)
-  const [updatePaymentStatus] = useMutation(UPDATE_PAYMENT_STATUS)
+  // The balance shown elsewhere is read again once the account is credited.
+  const [confirmPayment] = useMutation(CONFIRM_PAYMENT, { refetchQueries: "active" })
 
   const createOrder: PayPalButtonsComponentProps["createOrder"] = async () => {
     try {
@@ -83,12 +84,7 @@ function PayPalButtonsWrapper({ amount, userId, setAmount }: PayPalButtonsWrappe
   const onApprove: PayPalButtonsComponentProps["onApprove"] = async (data: { orderID: any }) => {
     try {
       setIsProcessing(true)
-      await updatePaymentStatus({
-        variables: {
-          paymentId: data.orderID,
-          status: "completed",
-        },
-      })
+      await confirmPayment({ variables: { paymentId: data.orderID } })
 
       toast({
         title: "Succès",
@@ -143,7 +139,8 @@ function CheckoutForm({
   const elements = useElements()
   const { toast } = useToast()
 
-  const [updatePaymentStatus] = useMutation(UPDATE_PAYMENT_STATUS)
+  // The balance shown elsewhere is read again once the account is credited.
+  const [confirmPayment] = useMutation(CONFIRM_PAYMENT, { refetchQueries: "active" })
 
   const handleConfirmStripePayment = async () => {
     if (!stripe || !elements) return
@@ -161,12 +158,7 @@ function CheckoutForm({
       }
 
       if (paymentIntent?.status === "succeeded") {
-        await updatePaymentStatus({
-          variables: {
-            paymentId: paymentIntent.id,
-            status: "completed",
-          },
-        })
+        await confirmPayment({ variables: { paymentId: paymentIntent.id } })
 
         toast({
           title: "Succès",

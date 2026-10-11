@@ -91,3 +91,14 @@ export const DELETE_MAINTENANCE = gql`
     deleteMaintenance(id: $id)
   }
 `;
+
+// Removes one image or document of a maintenance; the others are kept.
+export const REMOVE_MAINTENANCE_ATTACHMENT = gql`
+  mutation RemoveMaintenanceAttachment($maintenanceId: Int!, $url: String!) {
+    removeMaintenanceAttachment(maintenanceId: $maintenanceId, url: $url) {
+      id
+      images_url
+      documents_url
+    }
+  }
+`;

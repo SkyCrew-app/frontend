@@ -11,6 +11,12 @@ jest.mock('@/components/hooks/use-toast', () => ({
   useToast: () => ({ toast }),
 }));
 
+const logout = jest.fn().mockResolvedValue(undefined);
+
+jest.mock('@/components/hooks/useLogout', () => ({
+  useLogout: () => logout,
+}));
+
 const renderForm = (mocks: MockedResponse[] = []) =>
   render(
     <MockedProvider mocks={mocks} addTypename={false}>
@@ -58,11 +64,13 @@ describe('PasswordForm', () => {
 
     await waitFor(() =>
       expect(toast).toHaveBeenCalledWith({
-        title: 'Succès',
-        description: 'Votre mot de passe a été modifié avec succès.',
+        title: 'Mot de passe modifié',
+        description: 'Toutes vos sessions ont été fermées. Reconnectez-vous avec le nouveau mot de passe.',
       }),
     );
     expect(toast).toHaveBeenCalledTimes(1);
+    // The session ended with the old password: the member signs in again.
+    expect(logout).toHaveBeenCalledTimes(1);
     expect(currentField()).toHaveValue('');
     expect(newField()).toHaveValue('');
     expect(confirmField()).toHaveValue('');
