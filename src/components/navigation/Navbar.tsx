@@ -15,6 +15,7 @@ import { getNotificationTypeInFrench } from "@/interfaces/notification"
 import { CustomDropdown, CustomDropdownItem, CustomDropdownSeparator } from "@/components/ui/custom-dropdown"
 import ThemeToggle from "@/components/theme/ThemeToggle"
 import { useLogout } from "@/components/hooks/useLogout"
+import { useMounted } from "@/components/hooks/useMounted"
 
 interface NavbarProps {
   onToggleMobileMenu: () => void
@@ -77,6 +78,10 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
     variables: { email: userEmail || "" },
     skip: !userEmail,
   })
+  // The server always renders the loading state: the browser does the same on
+  // its first render, even when the profile is already in its cache.
+  const mounted = useMounted()
+  const showLoading = !mounted || loading
 
   useEffect(() => {
     if (data && data.userByEmail) {
@@ -137,7 +142,7 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
 
       {/* Right section */}
       <div className="flex items-center space-x-4">
-        {loading && (
+        {showLoading && (
           <div className="animate-pulse flex items-center space-x-4">
             <div className="rounded-full bg-muted h-10 w-10"></div>
             <div className="hidden md:block space-y-2">
@@ -146,12 +151,12 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
             </div>
           </div>
         )}
-        {!loading && error && (
+        {!showLoading && error && (
           <div className="text-sm text-destructive">
             Erreur lors du chargement des informations utilisateur.
           </div>
         )}
-        {!loading && !error && (
+        {!showLoading && !error && (
           <>
         <ThemeToggle />
 
