@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.4.0](https://github.com/SkyCrew-app/frontend/compare/2.3.4...2.4.0) (2026-10-11)
+
+
+### Features
+
+* **auth:** :sparkles: reset a forgotten password ([#115](https://github.com/SkyCrew-app/frontend/issues/115)) ([f2e87ad](https://github.com/SkyCrew-app/frontend/commit/f2e87adba32c089f27c5108a8f42ae3c501945ac))
+* **checklists:** :sparkles: edit and reorder the items of a checklist template ([#113](https://github.com/SkyCrew-app/frontend/issues/113)) ([cc3a855](https://github.com/SkyCrew-app/frontend/commit/cc3a8555cdd4888c56b8823b28d25d26b2369b1a))
+* **flights:** :sparkles: show closed flights as closed ([#111](https://github.com/SkyCrew-app/frontend/issues/111)) ([3ef76d8](https://github.com/SkyCrew-app/frontend/commit/3ef76d894c9ec782211928344175e1d33c2d7880))
+* **maintenance:** :sparkles: attach images and documents to a maintenance ([#114](https://github.com/SkyCrew-app/frontend/issues/114)) ([531169f](https://github.com/SkyCrew-app/frontend/commit/531169fcb3ecbcc2d7869d72cc9d15b5031c83a9))
+
+
+### Bug Fixes
+
+* **e-learning:** :bug: show the real progress of a member ([#112](https://github.com/SkyCrew-app/frontend/issues/112)) ([9ef9ea8](https://github.com/SkyCrew-app/frontend/commit/9ef9ea881e2e113a15b72cddc988b3e355468099))
+* **maintenance:** :lock: list picked images by name instead of previewing them ([#117](https://github.com/SkyCrew-app/frontend/issues/117)) ([0eef660](https://github.com/SkyCrew-app/frontend/commit/0eef6605b7ea4c893be5a0f0c1a23487b86fa801))
+
 ## [2.3.4](https://github.com/SkyCrew-app/frontend/compare/2.3.3...2.3.4) (2026-10-11)
 
 
