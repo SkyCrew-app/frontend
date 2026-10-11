@@ -20,6 +20,7 @@ import type { CarouselApi } from "@/components/ui/carousel"
 import { StatusBadge } from "./status-badge"
 import { MaintenanceTypeIcon } from "./maintenance-type-icon"
 import type { Maintenance } from "@/interfaces/maintenance"
+import { maintenanceFileName, maintenanceFileUrl } from "@/lib/maintenance"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -171,8 +172,10 @@ export function MaintenanceDetailDialog({
                             <CarouselItem key={index}>
                               <div className="p-1">
                                 <div className="overflow-hidden rounded-lg">
+                                  {/* Maintenance files need the session: the image is requested with credentials. */}
                                   <img
-                                    src={`${getBackendBaseUrl()}${url}`}
+                                    src={maintenanceFileUrl(getBackendBaseUrl(), url)}
+                                    crossOrigin="use-credentials"
                                     alt={`Image de maintenance ${index + 1} pour ${maintenance.aircraft.registration_number}`}
                                     className="w-full h-auto object-cover aspect-video"
                                   />
@@ -206,16 +209,16 @@ export function MaintenanceDetailDialog({
                         <Card key={index} className="overflow-hidden">
                           <CardContent className="p-0">
                             <a
-                              href={`${getBackendBaseUrl()}${url}`}
+                              href={maintenanceFileUrl(getBackendBaseUrl(), url)}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="flex items-center p-4 hover:bg-muted transition-colors"
-                              aria-label={`Document ${index + 1} - ${url.split("/").pop()}`}
+                              aria-label={`Document ${index + 1} - ${maintenanceFileName(url)}`}
                             >
                               <FileTextIcon className="h-8 w-8 mr-4 text-blue-500" aria-hidden="true" />
                               <div>
                                 <div className="font-medium">Document {index + 1}</div>
-                                <div className="text-sm text-muted-foreground">{url.split("/").pop()}</div>
+                                <div className="text-sm text-muted-foreground break-all">{maintenanceFileName(url)}</div>
                               </div>
                             </a>
                           </CardContent>
