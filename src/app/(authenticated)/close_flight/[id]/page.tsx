@@ -71,6 +71,7 @@ export default function FlightRecap() {
         distance_km: flight.distance_km || 0,
         estimated_flight_time: flight.estimated_flight_time,
         waypoints: flight.waypoints || "",
+        flightNotes: flight.remarks || "",
       })
     }
   }, [data, methods])
@@ -104,6 +105,7 @@ export default function FlightRecap() {
             encoded_polyline: formData.encoded_polyline,
             distance_km: formData.distance_km,
             estimated_flight_time: formData.estimated_flight_time,
+            remarks: formData.flightNotes?.trim() || undefined,
             // `waypoints` n'est qu'affiché sur cette page : il n'est pas renvoyé à l'API.
           },
         },

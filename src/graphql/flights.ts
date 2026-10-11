@@ -57,6 +57,7 @@ export const GET_FLIGHT_PLAN_BY_ID = gql`
   query GetFlightById($id: Int!) {
     getFlightById(id: $id) {
       id
+      remarks
       flight_hours
       flight_type
       origin_icao
