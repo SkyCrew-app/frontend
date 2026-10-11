@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.3.4](https://github.com/SkyCrew-app/frontend/compare/2.3.3...2.3.4) (2026-10-11)
+
+
+### Bug Fixes
+
+* **auth:** :bug: sign out from the sidebar ([#106](https://github.com/SkyCrew-app/frontend/issues/106)) ([39b468c](https://github.com/SkyCrew-app/frontend/commit/39b468c0e3761af2dc27172cddddffde437e0dfa))
+* **auth:** :lock: empty the cached data when the account changes ([#104](https://github.com/SkyCrew-app/frontend/issues/104)) ([0ba8b06](https://github.com/SkyCrew-app/frontend/commit/0ba8b06941081798003e1f562b23a676c977664f))
+* **courses:** :bug: recognise instructors and list members from the directory ([#105](https://github.com/SkyCrew-app/frontend/issues/105)) ([ce74ef4](https://github.com/SkyCrew-app/frontend/commit/ce74ef4c8c931d312059128c636c6e1cb1bed169))
+* **ui:** :bug: keep flight notes and correct dates, years, rounding and clipped buttons ([#107](https://github.com/SkyCrew-app/frontend/issues/107)) ([c9ecd3f](https://github.com/SkyCrew-app/frontend/commit/c9ecd3f291d1394f5b92cc16e7709c6c152e2269))
+
 ## [2.3.3](https://github.com/SkyCrew-app/frontend/compare/2.3.2...2.3.3) (2026-10-09)
 
 
