@@ -8,6 +8,7 @@ import { format, parseISO } from "date-fns"
 import { fr } from "date-fns/locale"
 import type { ELearningCourse } from "@/interfaces/instruction"
 import { motion } from "framer-motion"
+import { percentage } from "@/lib/learning-progress"
 
 interface ELearningCardProps {
   course: ELearningCourse
@@ -25,7 +26,7 @@ export function ELearningCard({ course, onClick, compact = false }: ELearningCar
     }
   }
 
-  const progressPercentage = Math.round((course.completedLessons / course.totalLessons) * 100)
+  const progressPercentage = percentage(course.completedLessons, course.totalLessons)
 
   return (
     <motion.div
