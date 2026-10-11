@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtDecode } from "jwt-decode";
-import { getGraphqlUrl, stripBasePath, withBasePath } from '@/lib/runtime-config';
+import { getServerGraphqlUrl, stripBasePath, withBasePath } from '@/lib/runtime-config';
 
 interface CustomJwtPayload {
   exp: number;
@@ -18,7 +18,7 @@ const roleBasedRoutes = {
 
 async function isInMaintenanceMode(req: NextRequest) {
   try {
-    const response = await fetch(getGraphqlUrl(), {
+    const response = await fetch(getServerGraphqlUrl(), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

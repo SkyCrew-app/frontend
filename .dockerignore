@@ -1,0 +1,13 @@
+node_modules
+.next
+.git
+.github
+coverage
+screen
+*.md
+.env
+.env.*
+!.env.production.example
+src/**/__tests__
+jest.config.js
+jest.setup.js
