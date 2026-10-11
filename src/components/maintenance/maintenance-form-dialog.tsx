@@ -13,7 +13,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
-import { CalendarIcon, Loader2, Upload, FileTextIcon } from "lucide-react"
+import { CalendarIcon, ImageIcon, Loader2, Upload, FileTextIcon } from "lucide-react"
 import type { Maintenance } from "@/interfaces/maintenance"
 import { useToast } from "@/components/hooks/use-toast"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -443,11 +443,8 @@ export function MaintenanceFormDialog({
                   {imageFiles.map((file, index) => (
                     <div key={index} className="flex items-center justify-between p-2 border rounded-md">
                       <div className="flex items-center">
-                        <img
-                          src={URL.createObjectURL(file) || "/placeholder.svg"}
-                          alt={`Aperçu ${index}`}
-                          className="w-12 h-12 object-cover rounded mr-2"
-                        />
+                        {/* No preview: a picked file is only named until it is uploaded. */}
+                        <ImageIcon className="w-5 h-5 mr-2 text-muted-foreground" aria-hidden="true" />
                         <span className="text-sm truncate max-w-[150px]">{file.name}</span>
                       </div>
                       <Button
