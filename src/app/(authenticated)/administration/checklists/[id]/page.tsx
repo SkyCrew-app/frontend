@@ -16,10 +16,16 @@ import {
   GET_CHECKLIST_TEMPLATE,
   UPDATE_CHECKLIST_TEMPLATE,
   CREATE_CHECKLIST_ITEM,
+  UPDATE_CHECKLIST_ITEM,
   DELETE_CHECKLIST_ITEM,
   REORDER_CHECKLIST_ITEMS,
 } from "@/graphql/checklist"
-import type { ChecklistTemplate } from "@/interfaces/checklist"
+import type { ChecklistItem, ChecklistTemplate } from "@/interfaces/checklist"
+import {
+  buildCreateChecklistItemInput,
+  buildUpdateChecklistItemInput,
+  type ChecklistItemDraft,
+} from "@/lib/checklist-items"
 import { ChecklistTemplateEditor } from "@/components/checklists/ChecklistTemplateEditor"
 
 export default function AdminChecklistDetailPage() {
@@ -43,6 +49,7 @@ export default function AdminChecklistDetailPage() {
 
   const [updateTemplate, { loading: saving }] = useMutation(UPDATE_CHECKLIST_TEMPLATE)
   const [createItem] = useMutation(CREATE_CHECKLIST_ITEM)
+  const [updateItem] = useMutation(UPDATE_CHECKLIST_ITEM)
   const [deleteItem] = useMutation(DELETE_CHECKLIST_ITEM)
   const [reorderItems] = useMutation(REORDER_CHECKLIST_ITEMS)
 
@@ -90,36 +97,51 @@ export default function AdminChecklistDetailPage() {
     }
   }
 
-  const handleAddItem = async (item: {
-    item_name: string
-    description: string
-    category: string
-    is_required: boolean
-  }) => {
+  const handleAddItem = async (draft: ChecklistItemDraft): Promise<boolean> => {
+    const input = buildCreateChecklistItemInput(id, draft, template?.items || [])
+    if (!input) return false
+
     try {
       await createItem({
-        variables: {
-          input: {
-            templateId: id,
-            item_name: item.item_name,
-            description: item.description,
-            category: item.category.toUpperCase(),
-            is_required: item.is_required,
-            sort_order: (template?.items?.length || 0),
-          },
-        },
+        variables: { input },
         refetchQueries: [{ query: GET_CHECKLIST_TEMPLATE, variables: { id } }],
       })
       toast({
         title: "Item ajouté",
-        description: `L'item "${item.item_name}" a été ajouté.`,
+        description: `L'item "${input.item_name}" a été ajouté.`,
       })
+      return true
     } catch (error) {
       toast({
         variant: "destructive",
         title: "Erreur",
         description: (error as Error).message || "Impossible d'ajouter l'item.",
       })
+      return false
+    }
+  }
+
+  const handleUpdateItem = async (item: ChecklistItem, draft: ChecklistItemDraft): Promise<boolean> => {
+    const input = buildUpdateChecklistItemInput(item, draft, template?.items || [])
+    if (!input) return false
+
+    try {
+      await updateItem({
+        variables: { input },
+        refetchQueries: [{ query: GET_CHECKLIST_TEMPLATE, variables: { id } }],
+      })
+      toast({
+        title: "Item modifié",
+        description: `L'item "${input.item_name}" a été enregistré.`,
+      })
+      return true
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: (error as Error).message || "Impossible de modifier l'item.",
+      })
+      return false
     }
   }
 
@@ -142,27 +164,26 @@ export default function AdminChecklistDetailPage() {
     }
   }
 
-  const handleReorder = async (reorderedItems: { id: number | string; sort_order: number }[]) => {
+  const handleReorder = async (itemIds: number[]) => {
     try {
-      const sortedItems = [...reorderedItems].sort((a, b) => a.sort_order - b.sort_order)
       await reorderItems({
-        variables: {
-          templateId: id,
-          itemIds: sortedItems.map((item) => Number(item.id)),
+        variables: { templateId: id, itemIds },
+        // Shows the new order at once; it is rolled back if the API refuses it.
+        optimisticResponse: {
+          reorderChecklistItems: itemIds.map((itemId, index) => ({
+            __typename: "ChecklistItem",
+            id: itemId,
+            sort_order: index,
+          })),
         },
-        refetchQueries: [{ query: GET_CHECKLIST_TEMPLATE, variables: { id } }],
       })
-    } catch {
+    } catch (error) {
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Impossible de réordonner les items.",
+        description: (error as Error).message || "Impossible de réordonner les items.",
       })
     }
-  }
-
-  const handleUpdateItem = async () => {
-    // Not used directly in the editor but kept for interface compatibility
   }
 
   if (loading) {
