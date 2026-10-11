@@ -715,6 +715,7 @@ type FinancialReport {
 type Flight {
   arrival_airport_info: String
   arrival_time: DateTime
+  closed_at: DateTime
   departure_airport_info: String
   departure_time: DateTime
   destination_icao: String!
@@ -1443,6 +1444,7 @@ input UpdateFinancialReportInput {
 
 input UpdateFlightInput {
   arrival_time: DateTime
+  closed: Boolean
   departure_time: DateTime
   destination_icao: String
   distance_km: Float

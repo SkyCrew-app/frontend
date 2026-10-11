@@ -125,11 +125,17 @@ export function FlightPlanCard({
         <Button size="sm" variant="outline" onClick={() => onEdit(flight)}>
           Modifier
         </Button>
-        <Link href={`/close_flight/${flight.id}`}>
-          <Button size="sm" variant="outline">
-            Clôturer
-          </Button>
-        </Link>
+        {flight.closed_at ? (
+          <Badge variant="outline" className="mr-auto">
+            Clôturé
+          </Badge>
+        ) : (
+          <Link href={`/close_flight/${flight.id}`}>
+            <Button size="sm" variant="outline">
+              Clôturer
+            </Button>
+          </Link>
+        )}
         <Link href={`flight-plans/${flight.id}`}>
           <Button size="sm" variant="default">
             Détails

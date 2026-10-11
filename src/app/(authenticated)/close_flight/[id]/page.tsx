@@ -106,6 +106,7 @@ export default function FlightRecap() {
             distance_km: formData.distance_km,
             estimated_flight_time: formData.estimated_flight_time,
             remarks: formData.flightNotes?.trim() || undefined,
+            closed: true,
             // `waypoints` n'est qu'affiché sur cette page : il n'est pas renvoyé à l'API.
           },
         },
@@ -156,6 +157,27 @@ export default function FlightRecap() {
   if (error) return <p>Erreur : {error.message}</p>
 
   const flight = data?.getFlightById
+
+  // A flight is closed once: afterwards only an administrator can amend it.
+  if (flight?.closed_at && !isSubmitted) {
+    return (
+      <Card>
+        <CardHeader>
+          <div className="flex items-center space-x-2">
+            <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+            <CardTitle>Vol déjà clôturé</CardTitle>
+          </div>
+          <CardDescription>
+            Ce vol a été clôturé le {format(new Date(flight.closed_at), "d MMMM yyyy 'à' HH:mm", { locale: fr })}. Il
+            figure dans votre carnet de vol.
+          </CardDescription>
+        </CardHeader>
+        <CardFooter>
+          <Button onClick={() => router.push("/logbook")}>Voir le carnet de vol</Button>
+        </CardFooter>
+      </Card>
+    )
+  }
 
   if (isSubmitted) {
     return (
