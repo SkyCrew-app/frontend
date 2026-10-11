@@ -22,6 +22,8 @@ const withSerwist = withSerwistInit({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Self-contained server for the container image.
+  output: "standalone",
   basePath,
   images: {
     domains: ["images.unsplash.com"],

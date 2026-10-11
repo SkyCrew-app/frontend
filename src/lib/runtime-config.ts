@@ -44,6 +44,12 @@ export const getGraphqlUrl = () => {
   return apiUrl.endsWith("/graphql") ? apiUrl : `${trimTrailingSlash(apiUrl)}/graphql`;
 };
 
+// Address of the API for code running on the server (the middleware). The
+// browser address can be relative, such as "/graphql" behind a reverse proxy,
+// which a server cannot fetch: INTERNAL_GRAPHQL_URL then gives the address of
+// the API inside the private network.
+export const getServerGraphqlUrl = () => process.env.INTERNAL_GRAPHQL_URL?.trim() || getGraphqlUrl();
+
 export const getBackendBaseUrl = () => {
   const explicitBackendUrl = process.env.NEXT_PUBLIC_BACKEND_URL?.trim();
 
