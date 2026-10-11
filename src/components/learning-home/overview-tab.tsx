@@ -20,6 +20,7 @@ import type { InstructionSummary } from "@/interfaces/instruction"
 import { motion } from "framer-motion"
 import { CourseCard } from "./course-card"
 import { ELearningCard } from "./e-learning-card"
+import { lessonTotals, percentage } from "@/lib/learning-progress"
 
 interface OverviewTabProps {
   data: InstructionSummary
@@ -47,6 +48,8 @@ const cardVariant = {
 
 export function OverviewTab({ data }: OverviewTabProps) {
   const router = useRouter()
+  // Counted from the e-learning courses: the summary's own lesson counter stays at zero.
+  const lessons = lessonTotals(data.eLearningCourses)
 
   return (
     <div className="space-y-6 overflow-hidden">
@@ -83,11 +86,11 @@ export function OverviewTab({ data }: OverviewTabProps) {
                   <div className="flex justify-between mb-1 text-sm">
                     <span>Leçons complétées</span>
                     <span className="font-medium">
-                      {data.learningProgress.completedLessons}/{data.learningProgress.totalLessons}
+                      {lessons.completed}/{lessons.total}
                     </span>
                   </div>
                   <Progress
-                    value={(data.learningProgress.completedLessons / data.learningProgress.totalLessons) * 100 || 0}
+                    value={percentage(lessons.completed, lessons.total)}
                     className="h-2"
                   />
                 </div>
