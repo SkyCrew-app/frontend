@@ -214,3 +214,9 @@ export const UPDATE_FLIGHT = gql`
     }
   }
 `;
+
+export const EXPORT_FLIGHT_RECAP_PDF = gql`
+  mutation ExportFlightRecapPDF($flightId: Int!) {
+    exportFlightRecapPDF(flightId: $flightId)
+  }
+`;

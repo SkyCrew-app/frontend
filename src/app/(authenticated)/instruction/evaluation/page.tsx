@@ -19,7 +19,7 @@ import { useMediaQuery } from "@/hooks/use-media-query"
 interface Module {
   id: number
   title: string
-  description: string
+  description: string | null
 }
 
 interface Evaluation {
@@ -61,9 +61,10 @@ export default function EvaluationsPage() {
   const userProgressResults: UserProgress[] = data?.getUserEvaluationResults || []
 
   const filteredResults = userProgressResults.filter((progress) => {
+    const search = searchTerm.trim().toLowerCase()
+    const { title, description } = progress.evaluation.module
     const matchesSearch =
-      progress.evaluation.module.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      progress.evaluation.module.description.toLowerCase().includes(searchTerm.toLowerCase())
+      title.toLowerCase().includes(search) || (description ?? "").toLowerCase().includes(search)
 
     const matchesStatus =
       filterStatus === "all" ||
@@ -175,7 +176,7 @@ export default function EvaluationsPage() {
                       </div>
                       <div className="flex items-center space-x-2">
                         <Book className="h-3 w-3 sm:h-4 sm:w-4 text-primary flex-shrink-0" />
-                        <span>Module ID: {progress.evaluation.module.id}</span>
+                        <span className="truncate">Module : {progress.evaluation.module.title}</span>
                       </div>
                     </div>
                     <div>

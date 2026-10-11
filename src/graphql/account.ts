@@ -61,9 +61,11 @@ export const PROCESS_PAYMENT = gql`
   }
 `;
 
-export const UPDATE_PAYMENT_STATUS = gql`
-  mutation UpdatePaymentStatus($paymentId: String!, $status: String!) {
-    updatePaymentStatus(paymentId: $paymentId, status: $status) {
+// Confirms a payment of the signed-in member. The API checks with the payment
+// provider that the money was received before crediting the account.
+export const CONFIRM_PAYMENT = gql`
+  mutation ConfirmPayment($paymentId: String!) {
+    confirmPayment(paymentId: $paymentId) {
       id
       payment_status
       external_payment_id

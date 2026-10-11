@@ -18,6 +18,8 @@ import type { Maintenance } from "@/interfaces/maintenance"
 import { useToast } from "@/components/hooks/use-toast"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { maintenanceFileName, validateMaintenanceAttachments } from "@/lib/maintenance"
+import { useMutation } from "@apollo/client"
+import { REMOVE_MAINTENANCE_ATTACHMENT } from "@/graphql/maintenance"
 
 interface Aircraft {
   id: string
@@ -73,6 +75,9 @@ export function MaintenanceFormDialog({
 }: MaintenanceFormDialogProps) {
   const isEditing = !!maintenance
   const { toast } = useToast()
+  const [removeAttachment] = useMutation(REMOVE_MAINTENANCE_ATTACHMENT, { refetchQueries: "active" })
+  const [removedUrls, setRemovedUrls] = useState<string[]>([])
+  const [removingUrl, setRemovingUrl] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState<MaintenanceFormData>({
     aircraft_id: "",
@@ -91,6 +96,7 @@ export function MaintenanceFormDialog({
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   useEffect(() => {
+    setRemovedUrls([])
     if (maintenance) {
       setFormData({
         id: maintenance.id.toString(),
@@ -124,8 +130,26 @@ export function MaintenanceFormDialog({
     setErrors({})
   }, [maintenance, isOpen])
 
-  const existingImages = maintenance?.images_url || []
-  const existingDocuments = maintenance?.documents_url || []
+  // Files already stored, minus the ones removed since the dialog opened.
+  const existingImages = (maintenance?.images_url || []).filter((url) => !removedUrls.includes(url))
+  const existingDocuments = (maintenance?.documents_url || []).filter((url) => !removedUrls.includes(url))
+
+  const handleRemoveExisting = async (url: string) => {
+    if (!maintenance) return
+    setRemovingUrl(url)
+    try {
+      await removeAttachment({ variables: { maintenanceId: Number(maintenance.id), url } })
+      setRemovedUrls((previous) => [...previous, url])
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Retrait impossible",
+        description: error instanceof Error && error.message ? error.message : "Le fichier n'a pas pu être retiré.",
+      })
+    } finally {
+      setRemovingUrl(null)
+    }
+  }
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {}
@@ -434,10 +458,29 @@ export function MaintenanceFormDialog({
               <div className="space-y-4">
                 <Label>Images</Label>
                 {existingImages.length > 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    {existingImages.length} image(s) déjà enregistrée(s) : {existingImages.map(maintenanceFileName).join(", ")}.
-                    {" "}Si vous en ajoutez de nouvelles, elles remplaceront les images existantes.
-                  </p>
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">
+                      Déjà enregistré{existingImages.length > 1 ? "s" : ""} ({existingImages.length}). Les fichiers ajoutés
+                      ci-dessous s&apos;y ajouteront.
+                    </p>
+                    <ul className="space-y-1">
+                      {existingImages.map((url) => (
+                        <li key={url} className="flex items-center justify-between p-2 border rounded-md">
+                          <span className="text-sm break-all">{maintenanceFileName(url)}</span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            disabled={removingUrl === url}
+                            onClick={() => handleRemoveExisting(url)}
+                            aria-label={`Retirer l'image ${maintenanceFileName(url)}`}
+                          >
+                            &times;
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {imageFiles.map((file, index) => (
@@ -485,11 +528,29 @@ export function MaintenanceFormDialog({
               <div className="space-y-4">
                 <Label>Documents</Label>
                 {existingDocuments.length > 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    {existingDocuments.length} document(s) déjà enregistré(s) :{" "}
-                    {existingDocuments.map(maintenanceFileName).join(", ")}. Si vous en ajoutez de nouveaux, ils
-                    remplaceront les documents existants.
-                  </p>
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">
+                      Déjà enregistré{existingDocuments.length > 1 ? "s" : ""} ({existingDocuments.length}). Les fichiers ajoutés
+                      ci-dessous s&apos;y ajouteront.
+                    </p>
+                    <ul className="space-y-1">
+                      {existingDocuments.map((url) => (
+                        <li key={url} className="flex items-center justify-between p-2 border rounded-md">
+                          <span className="text-sm break-all">{maintenanceFileName(url)}</span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            disabled={removingUrl === url}
+                            onClick={() => handleRemoveExisting(url)}
+                            aria-label={`Retirer le document ${maintenanceFileName(url)}`}
+                          >
+                            &times;
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {documentFiles.map((file, index) => (
