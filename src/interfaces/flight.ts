@@ -19,6 +19,7 @@ export interface Flight {
   wind_summary?: string
   performance_profile?: string
   remarks?: string | null
+  closed_at?: string | null
   created_at?: string
   estimated_fuel_liters?: number
   user?: {

@@ -12,6 +12,7 @@ export const GET_USER_BY_EMAIL = gql`
 export const GET_USER_FLIGHT_PLANS = gql`
   query GetFlightsByUser($userId: Int!) {
     getFlightsByUser(userId: $userId) {
+      closed_at
       id
       flight_hours
       flight_type
@@ -58,6 +59,7 @@ export const GET_FLIGHT_PLAN_BY_ID = gql`
     getFlightById(id: $id) {
       id
       remarks
+      closed_at
       flight_hours
       flight_type
       origin_icao
