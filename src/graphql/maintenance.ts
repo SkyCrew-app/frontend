@@ -27,8 +27,12 @@ export const GET_ALL_MAINTENANCES = gql`
 `;
 
 export const CREATE_MAINTENANCE = gql`
-  mutation CreateMaintenance($createMaintenanceInput: CreateMaintenanceInput!) {
-    createMaintenance(createMaintenanceInput: $createMaintenanceInput) {
+  mutation CreateMaintenance(
+    $createMaintenanceInput: CreateMaintenanceInput!
+    $files: [Upload!]
+    $images: [Upload!]
+  ) {
+    createMaintenance(createMaintenanceInput: $createMaintenanceInput, files: $files, images: $images) {
       id
       start_date
       end_date
@@ -53,8 +57,12 @@ export const CREATE_MAINTENANCE = gql`
 `;
 
 export const UPDATE_MAINTENANCE = gql`
-  mutation UpdateMaintenance($updateMaintenanceInput: UpdateMaintenanceInput!) {
-    updateMaintenance(updateMaintenanceInput: $updateMaintenanceInput) {
+  mutation UpdateMaintenance(
+    $updateMaintenanceInput: UpdateMaintenanceInput!
+    $files: [Upload!]
+    $images: [Upload!]
+  ) {
+    updateMaintenance(updateMaintenanceInput: $updateMaintenanceInput, files: $files, images: $images) {
       id
       start_date
       end_date

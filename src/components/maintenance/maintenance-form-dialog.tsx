@@ -17,6 +17,7 @@ import { CalendarIcon, Loader2, Upload, FileTextIcon } from "lucide-react"
 import type { Maintenance } from "@/interfaces/maintenance"
 import { useToast } from "@/components/hooks/use-toast"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { maintenanceFileName, validateMaintenanceAttachments } from "@/lib/maintenance"
 
 interface Aircraft {
   id: string
@@ -117,11 +118,14 @@ export function MaintenanceFormDialog({
         images: [],
         documents: [],
       })
-      setImageFiles([])
-      setDocumentFiles([])
     }
+    setImageFiles([])
+    setDocumentFiles([])
     setErrors({})
   }, [maintenance, isOpen])
+
+  const existingImages = maintenance?.images_url || []
+  const existingDocuments = maintenance?.documents_url || []
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {}
@@ -163,19 +167,29 @@ export function MaintenanceFormDialog({
     }
   }
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const files = Array.from(e.target.files)
-      setImageFiles((prev) => [...prev, ...files])
+  // Adds the picked files unless the API would refuse the resulting selection.
+  const addFiles = (e: React.ChangeEvent<HTMLInputElement>, kind: "images" | "documents") => {
+    const picked = Array.from(e.target.files || [])
+    // Lets the same file be picked again after it was removed.
+    e.target.value = ""
+    if (picked.length === 0) return
+
+    const images = kind === "images" ? [...imageFiles, ...picked] : imageFiles
+    const documents = kind === "documents" ? [...documentFiles, ...picked] : documentFiles
+    const problem = validateMaintenanceAttachments({ images, documents })
+
+    if (problem) {
+      toast({ variant: "destructive", title: "Fichier refusé", description: problem })
+      return
     }
+
+    setImageFiles(images)
+    setDocumentFiles(documents)
   }
 
-  const handleDocumentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const files = Array.from(e.target.files)
-      setDocumentFiles((prev) => [...prev, ...files])
-    }
-  }
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => addFiles(e, "images")
+
+  const handleDocumentChange = (e: React.ChangeEvent<HTMLInputElement>) => addFiles(e, "documents")
 
   const removeImage = (index: number) => {
     setImageFiles((prev) => prev.filter((_, i) => i !== index))
@@ -208,7 +222,8 @@ export function MaintenanceFormDialog({
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Une erreur est survenue lors de l'enregistrement de la maintenance.",
+        description:
+          (error as Error)?.message || "Une erreur est survenue lors de l'enregistrement de la maintenance.",
       })
     } finally {
       setIsSubmitting(false)
@@ -418,6 +433,12 @@ export function MaintenanceFormDialog({
             <TabsContent value="attachments" className="space-y-6 mt-4">
               <div className="space-y-4">
                 <Label>Images</Label>
+                {existingImages.length > 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    {existingImages.length} image(s) déjà enregistrée(s) : {existingImages.map(maintenanceFileName).join(", ")}.
+                    {" "}Si vous en ajoutez de nouvelles, elles remplaceront les images existantes.
+                  </p>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {imageFiles.map((file, index) => (
                     <div key={index} className="flex items-center justify-between p-2 border rounded-md">
@@ -450,7 +471,7 @@ export function MaintenanceFormDialog({
                       <p className="mb-2 text-sm text-muted-foreground">
                         <span className="font-semibold">Cliquez pour ajouter</span> ou glissez-déposez
                       </p>
-                      <p className="text-xs text-muted-foreground">PNG, JPG ou JPEG (max. 10 Mo)</p>
+                      <p className="text-xs text-muted-foreground">PNG, JPG ou JPEG (max. 1 Mo par fichier)</p>
                     </div>
                     <input
                       id="image-upload"
@@ -466,6 +487,13 @@ export function MaintenanceFormDialog({
 
               <div className="space-y-4">
                 <Label>Documents</Label>
+                {existingDocuments.length > 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    {existingDocuments.length} document(s) déjà enregistré(s) :{" "}
+                    {existingDocuments.map(maintenanceFileName).join(", ")}. Si vous en ajoutez de nouveaux, ils
+                    remplaceront les documents existants.
+                  </p>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {documentFiles.map((file, index) => (
                     <div key={index} className="flex items-center justify-between p-2 border rounded-md">
@@ -494,7 +522,7 @@ export function MaintenanceFormDialog({
                       <p className="mb-2 text-sm text-muted-foreground">
                         <span className="font-semibold">Cliquez pour ajouter</span> ou glissez-déposez
                       </p>
-                      <p className="text-xs text-muted-foreground">PDF, DOC, DOCX, XLS, XLSX (max. 10 Mo)</p>
+                      <p className="text-xs text-muted-foreground">PDF, DOC, DOCX, XLS, XLSX (max. 1 Mo par fichier)</p>
                     </div>
                     <input
                       id="document-upload"
