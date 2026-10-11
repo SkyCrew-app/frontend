@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.5.0](https://github.com/SkyCrew-app/frontend/compare/2.4.0...2.5.0) (2026-10-11)
+
+
+### Features
+
+* **deploy:** :rocket: build and publish a container image ([#121](https://github.com/SkyCrew-app/frontend/issues/121)) ([716c2fc](https://github.com/SkyCrew-app/frontend/commit/716c2fc8c57ab4b7fb58f46576e2930e878b84b3))
+
 ## [2.4.0](https://github.com/SkyCrew-app/frontend/compare/2.3.4...2.4.0) (2026-10-11)
 
 
