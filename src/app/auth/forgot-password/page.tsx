@@ -9,12 +9,15 @@ import Link from 'next/link';
 import { useToast } from "@/components/hooks/use-toast";
 import { Toaster } from "@/components/ui/toaster";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useMutation } from '@apollo/client';
+import { REQUEST_PASSWORD_RESET } from '@/graphql/user';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const [requestPasswordReset] = useMutation(REQUEST_PASSWORD_RESET);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,10 +32,11 @@ export default function ForgotPasswordPage() {
 
     setIsLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await requestPasswordReset({ variables: { email: email.trim() } });
+      // The API answers the same whether or not the address has an account.
       toast({
-        title: "E-mail envoyé",
-        description: `Un e-mail de réinitialisation a été envoyé à ${email}.`,
+        title: "Demande enregistrée",
+        description: "Si un compte existe pour cette adresse, un e-mail de réinitialisation vient d'être envoyé.",
       });
       setSuccess(true);
     } catch {
@@ -56,7 +60,8 @@ export default function ForgotPasswordPage() {
           {success ? (
             <div className="space-y-4">
               <p className="text-center">
-                Un e-mail de réinitialisation a été envoyé à {email}. Veuillez vérifier votre boîte de réception.
+                Si un compte existe pour {email}, un e-mail de réinitialisation vient d&apos;être envoyé. Le lien
+                qu&apos;il contient est valable une heure.
               </p>
               <Link href="/" passHref>
                 <Button className="w-full">Retour à la page de connexion</Button>

@@ -15,7 +15,12 @@ import { MaintenanceTabs } from "@/components/maintenance/maintenance-tabs"
 import { MaintenanceTable } from "@/components/maintenance/maintenance-table"
 import { MaintenanceDetailDialog } from "@/components/maintenance/maintenance-detail-dialog"
 import { MaintenanceFormDialog } from "@/components/maintenance/maintenance-form-dialog"
-import { toMaintenanceInput } from "@/lib/maintenance"
+import {
+  buildCreateMaintenanceVariables,
+  buildUpdateMaintenanceVariables,
+  type MaintenanceAttachments,
+  type MaintenanceFormValues,
+} from "@/lib/maintenance"
 import type { DateRange } from "react-day-picker"
 
 enum MaintenanceType {
@@ -177,29 +182,21 @@ export default function MaintenanceTablePage() {
     }
   }
 
-  const handleSubmitMaintenanceForm = async (formData: any) => {
-    try {
-      if (formData.id) {
-        await updateMaintenance({
-          variables: {
-            updateMaintenanceInput: {
-              id: Number.parseInt(formData.id, 10),
-              ...toMaintenanceInput(formData),
-            },
-          },
-          refetchQueries: [{ query: GET_ALL_MAINTENANCES }],
-        })
-      } else {
-        await createMaintenance({
-          variables: { createMaintenanceInput: toMaintenanceInput(formData) },
-          refetchQueries: [{ query: GET_ALL_MAINTENANCES }],
-        })
-      }
+  // Rejects on failure: the form reports it and stays open.
+  const handleSubmitMaintenanceForm = async (formData: MaintenanceFormValues & MaintenanceAttachments) => {
+    if (formData.id) {
+      const variables = buildUpdateMaintenanceVariables(formData)
+      if (!variables) throw new Error("Identifiant de maintenance invalide.")
 
-      return Promise.resolve()
-    } catch (error) {
-      console.error("Erreur lors de la soumission:", error)
-      return Promise.reject(error)
+      await updateMaintenance({
+        variables,
+        refetchQueries: [{ query: GET_ALL_MAINTENANCES }],
+      })
+    } else {
+      await createMaintenance({
+        variables: buildCreateMaintenanceVariables(formData),
+        refetchQueries: [{ query: GET_ALL_MAINTENANCES }],
+      })
     }
   }
 

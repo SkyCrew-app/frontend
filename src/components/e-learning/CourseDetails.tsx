@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
-import { CheckCircle, BookOpen, FileText, AlertCircle } from "lucide-react"
+import { CheckCircle, Circle, BookOpen, FileText, AlertCircle } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import type { ApolloError } from "@apollo/client"
 import Link from "next/link"
@@ -44,6 +44,7 @@ interface CourseDetailsProps {
   courseProgress: number
   progressLoading: boolean
   progressError: ApolloError | undefined
+  completedLessonIds: ReadonlySet<number>
   setSelectedLesson: (lesson: Lesson) => void
 }
 
@@ -52,6 +53,7 @@ export function CourseDetails({
   courseProgress,
   progressLoading,
   progressError,
+  completedLessonIds,
   setSelectedLesson,
 }: CourseDetailsProps) {
   const [expandedModule, setExpandedModule] = useState<string>("")
@@ -75,7 +77,9 @@ export function CourseDetails({
         <div className="mb-8">
           <div className="flex justify-between items-center mb-2">
             <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Progression du cours</h3>
-            <span className="text-sm font-medium">{Math.round(courseProgress)}%</span>
+            {!progressLoading && !progressError && (
+              <span className="text-sm font-medium">{Math.round(courseProgress)}%</span>
+            )}
           </div>
 
           {progressLoading ? (
@@ -129,6 +133,7 @@ export function CourseDetails({
               <AccordionContent className="px-3 sm:px-4 pt-2 pb-4">
                 <ModuleContent
                   module={module}
+                  completedLessonIds={completedLessonIds}
                   setSelectedLesson={setSelectedLesson}
                   isExpanded={expandedModule === module.id}
                 />
@@ -143,11 +148,12 @@ export function CourseDetails({
 
 interface ModuleContentProps {
   module: Module
+  completedLessonIds: ReadonlySet<number>
   setSelectedLesson: (lesson: Lesson) => void
   isExpanded: boolean
 }
 
-function ModuleContent({ module, setSelectedLesson, isExpanded }: ModuleContentProps) {
+function ModuleContent({ module, completedLessonIds, setSelectedLesson, isExpanded }: ModuleContentProps) {
   const { data, loading, error } = useQuery(GET_EVALUATIONS_BY_MODULE, {
     variables: { moduleId: Number.parseInt(module.id) },
     skip: !isExpanded,
@@ -187,7 +193,11 @@ function ModuleContent({ module, setSelectedLesson, isExpanded }: ModuleContentP
           className="w-full justify-start text-xs sm:text-sm h-auto py-1.5 sm:py-2 px-2 sm:px-3 rounded-md"
           onClick={() => setSelectedLesson(lesson)}
         >
-          <CheckCircle className="mr-1.5 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-green-500 flex-shrink-0" />
+          {completedLessonIds.has(Number(lesson.id)) ? (
+            <CheckCircle className="mr-1.5 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-green-500 flex-shrink-0" />
+          ) : (
+            <Circle className="mr-1.5 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
+          )}
           <span className="text-left truncate">{lesson.title}</span>
         </Button>
       ))}

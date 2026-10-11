@@ -1,8 +1,9 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useQuery } from "@apollo/client"
-import { GET_COURSE_DETAILS } from "@/graphql/instruction"
+import { GET_COURSE_DETAILS, GET_COURSE_PROGRESS } from "@/graphql/instruction"
+import { GET_USER_EVALUATION_RESULTS } from "@/graphql/evaluation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardFooter } from "@/components/ui/card"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
@@ -13,12 +14,12 @@ import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useParams, useRouter } from "next/navigation"
 import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
+import { useLessonCompletion } from "@/components/hooks/useLessonCompletion"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   BookOpen,
   CheckCircle,
   ChevronLeft,
-  Clock,
   FileText,
   GraduationCap,
   Info,
@@ -29,6 +30,14 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import type { Course } from "@/interfaces/learning"
+import {
+  courseLessonIds,
+  latestEvaluationAttempts,
+  moduleProgress,
+  nextLessonId,
+  stableIndex,
+  type EvaluationAttempt,
+} from "@/lib/learning-progress"
 
 const fadeIn = {
   hidden: { opacity: 0 },
@@ -92,85 +101,57 @@ const aviationImages = [
   "https://images.unsplash.com/photo-1562368370-cff10978a647?q=80&w=2670&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
 ]
 
-const getRandomAviationImage = () => {
-  const randomIndex = Math.floor(Math.random() * aviationImages.length)
-  return aviationImages[randomIndex]
-}
-
 export default function CourseDetailPage() {
   const params = useParams()
   const router = useRouter()
   const courseId = params.courseId as string
+  const numericCourseId = Number.parseFloat(courseId)
   const [selectedModule, setSelectedModule] = useState<number | null>(null)
   const [selectedTab, setSelectedTab] = useState<string>("modules")
   const userEmail = useCurrentUser()
   const userData = useUserData(userEmail)
-  const [userId, setUserId] = useState<string | null>(null)
-  const [processedCourse, setProcessedCourse] = useState<Course | null>(null)
-
-  useEffect(() => {
-    if (userData) {
-      setUserId(userData.id)
-    }
-  }, [userData])
+  const userId: number | null = userData ? Number(userData.id) : null
 
   const { data, loading, error } = useQuery<{ getCourseById: Course }>(GET_COURSE_DETAILS, {
-    variables: { id: Number.parseFloat(courseId), userId: userId ? Number.parseFloat(userId) : null },
+    variables: { id: numericCourseId, userId },
     skip: !courseId,
   })
 
-  useEffect(() => {
-    if (data?.getCourseById) {
-      const course = data.getCourseById
+  const { data: progressData, error: progressError } = useQuery<{ getCourseProgress: number }>(
+    GET_COURSE_PROGRESS,
+    {
+      variables: { userId, courseId: numericCourseId },
+      skip: !courseId || userId === null,
+    },
+  )
 
-      const totalLessons = course.modules.reduce((total, module) => total + module.lessons.length, 0)
+  const { data: attemptsData } = useQuery<{ getUserEvaluationResults: EvaluationAttempt[] }>(
+    GET_USER_EVALUATION_RESULTS,
+    {
+      variables: { userId },
+      skip: userId === null,
+    },
+  )
 
-      const completedLessons = Math.floor(totalLessons * 0.3)
-
-      const modulesWithProgress = course.modules.map((module, index) => {
-        const lessons = module.lessons.map((lesson, i) => ({
-          ...lesson,
-          completed: i < index + 1,
-          duration: 15 + i * 5,
-        }))
-
-        const evaluations = module.evaluations
-          ? module.evaluations.map((evaluation) => ({
-              ...evaluation,
-              completed: index > 1,
-              score: index > 1 ? Math.floor(70 + Math.random() * 30) : undefined,
-            }))
-          : []
-
-        const moduleProgress =
-          lessons.length > 0 ? (lessons.filter((l) => l.completed).length / lessons.length) * 100 : 0
-
-        return {
-          ...module,
-          lessons,
-          evaluations,
-          progress: moduleProgress,
-        }
-      })
-
-      setProcessedCourse({
-        ...course,
-        modules: modulesWithProgress,
-        totalLessons,
-        totalDuration: totalLessons * 20,
-        progress: totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0,
-        coverImage: getRandomAviationImage(),
-      })
-    }
-  }, [data])
+  const course = data?.getCourseById ?? null
+  const lessonIds = useMemo(() => courseLessonIds(course), [course])
+  const {
+    completedLessonIds,
+    loading: completionLoading,
+    unavailable: completionUnavailable,
+  } = useLessonCompletion(userId, lessonIds)
+  const attempts = useMemo(
+    () => latestEvaluationAttempts(attemptsData?.getUserEvaluationResults),
+    [attemptsData],
+  )
 
   useEffect(() => {
-    if (((processedCourse?.modules) ?? []).length > 0 && !selectedModule) {
-      setSelectedModule(processedCourse!.modules[0].id)
+    if (course && course.modules.length > 0 && !selectedModule) {
+      setSelectedModule(course.modules[0].id)
     }
-  }, [processedCourse, selectedModule])
+  }, [course, selectedModule])
 
-  if (loading) return <CourseDetailSkeleton />
+  if (loading && !course) return <CourseDetailSkeleton />
   if (error)
     return (
       <div className="container mx-auto p-4">
@@ -190,19 +171,16 @@ export default function CourseDetailPage() {
       </div>
     )
 
-  if (!processedCourse) return <CourseDetailSkeleton />
+  if (!course) return <CourseDetailSkeleton />
 
-  const currentModule = processedCourse.modules.find((m) => m.id === selectedModule) || processedCourse.modules[0]
-
-  const formatDuration = (minutes: number) => {
-    const hours = Math.floor(minutes / 60)
-    const mins = minutes % 60
-
-    if (hours > 0) {
-      return `${hours}h ${mins > 0 ? `${mins}min` : ""}`
-    }
-    return `${mins} min`
-  }
+  const currentModule = course.modules.find((m) => m.id === selectedModule) || course.modules[0]
+  const totalLessons = lessonIds.length
+  const courseProgress = progressData ? Math.round(progressData.getCourseProgress) : null
+  const progressLabel = courseProgress !== null ? `${courseProgress}%` : progressError ? "Indisponible" : "…"
+  const coverImage = aviationImages[stableIndex(course.id, aviationImages.length)]
+  const isLessonCompleted = (lesson: { id: number }) => completedLessonIds.has(lesson.id)
+  const resumeLessonId = nextLessonId(course, completedLessonIds)
+  const currentModuleProgress = currentModule ? moduleProgress(currentModule.lessons, completedLessonIds) : 0
 
   return (
     <motion.div initial="hidden" animate="visible" variants={fadeIn} className="container mx-auto p-4 space-y-6">
@@ -218,9 +196,9 @@ export default function CourseDetailPage() {
         <div className="flex flex-col items-end gap-1 w-full md:w-1/3">
           <div className="flex justify-between w-full text-sm">
             <span>Progression du cours</span>
-            <span className="font-medium">{Math.round(processedCourse.progress || 0)}%</span>
+            <span className="font-medium">{progressLabel}</span>
           </div>
-          <Progress value={processedCourse.progress} className="w-full h-2" />
+          <Progress value={courseProgress ?? 0} className="w-full h-2" />
         </div>
       </div>
 
@@ -229,38 +207,38 @@ export default function CourseDetailPage() {
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{
-            backgroundImage: processedCourse.coverImage
-              ? `url(${processedCourse.coverImage})`
+            backgroundImage: coverImage
+              ? `url(${coverImage})`
               : "linear-gradient(to right, rgb(59, 130, 246), rgb(37, 99, 235))",
             opacity: 0.2,
           }}
         />
         <div className="relative bg-black/30 p-6 md:p-8 text-white">
           <div className="max-w-3xl">
-            <h1 className="text-2xl md:text-4xl font-bold mb-2">{processedCourse.title}</h1>
-            <p className="mb-4 text-white/80">{processedCourse.description}</p>
+            <h1 className="text-2xl md:text-4xl font-bold mb-2">{course.title}</h1>
+            <p className="mb-4 text-white/80">{course.description}</p>
 
             <div className="flex flex-wrap gap-3 mb-4">
-              <Badge className="bg-blue-600 hover:bg-blue-700 text-white">{processedCourse.category}</Badge>
-              {processedCourse.required_license && (
+              <Badge className="bg-blue-600 hover:bg-blue-700 text-white">{course.category}</Badge>
+              {course.required_license && (
                 <Badge className="bg-purple-600 hover:bg-purple-700 text-white">
-                  Licence requise: {processedCourse.required_license}
+                  Licence requise: {course.required_license}
                 </Badge>
               )}
               <Badge variant="outline" className="border-white/30 text-white">
-                <Clock className="mr-1 h-3 w-3" />
-                {formatDuration(processedCourse.totalDuration || 0)}
-              </Badge>
-              <Badge variant="outline" className="border-white/30 text-white">
                 <FileText className="mr-1 h-3 w-3" />
-                {processedCourse.totalLessons} leçons
+                {totalLessons} leçons
               </Badge>
             </div>
 
             <div className="flex items-center gap-2">
-              <Button className="bg-blue-600 hover:bg-blue-700">
+              <Button
+                className="bg-blue-600 hover:bg-blue-700"
+                disabled={resumeLessonId === null}
+                onClick={() => router.push(`/instruction/e-learning/${course.id}/${resumeLessonId}`)}
+              >
                 <Play className="mr-2 h-4 w-4" />
-                Continuer le cours
+                {completedLessonIds.size > 0 ? "Continuer le cours" : "Commencer le cours"}
               </Button>
             </div>
           </div>
@@ -298,7 +276,7 @@ export default function CourseDetailPage() {
                     className="w-full"
                     value={selectedModule?.toString() || undefined}
                   >
-                    {processedCourse.modules.map((module, index) => (
+                    {course.modules.map((module, index) => (
                       <AccordionItem key={module.id} value={module.id.toString()}>
                         <AccordionTrigger
                           className="hover:bg-muted/50 px-3 rounded-lg"
@@ -311,7 +289,7 @@ export default function CourseDetailPage() {
                               </div>
                               <span className="text-left">{module.title}</span>
                             </div>
-                            {module.progress === 100 && (
+                            {moduleProgress(module.lessons, completedLessonIds) === 100 && (
                               <CheckCircle className="h-4 w-4 text-green-500 ml-2 shrink-0" />
                             )}
                           </div>
@@ -323,15 +301,15 @@ export default function CourseDetailPage() {
                                 key={lesson.id}
                                 variant="ghost"
                                 className={`w-full justify-start text-sm h-auto py-2 ${
-                                  lesson.completed
+                                  isLessonCompleted(lesson)
                                     ? "text-green-600 dark:text-green-400 font-medium"
                                     : "text-muted-foreground"
                                 }`}
                                 onClick={() =>
-                                  router.push(`/instruction/e-learning/${processedCourse.id}/${lesson.id}`)
+                                  router.push(`/instruction/e-learning/${course.id}/${lesson.id}`)
                                 }
                               >
-                                {lesson.completed ? (
+                                {isLessonCompleted(lesson) ? (
                                   <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
                                 ) : (
                                   <PlayCircle className="mr-2 h-4 w-4 text-blue-500" />
@@ -350,11 +328,11 @@ export default function CourseDetailPage() {
                                     key={evaluation.id}
                                     variant="ghost"
                                     className={`w-full justify-start text-sm h-auto py-2 ${
-                                      evaluation.completed
+                                      attempts.has(evaluation.id)
                                         ? "text-amber-600 dark:text-amber-400 font-medium"
                                         : "text-muted-foreground"
                                     }`}
-                                    onClick={() => router.push(`/instruction/evaluations/${evaluation.id}`)}
+                                    onClick={() => router.push(`/instruction/evaluation/${evaluation.id}`)}
                                   >
                                     <ClipboardCheck className="mr-2 h-4 w-4 text-amber-500" />
                                     <span className="truncate">Évaluation de module {evalIndex + 1}</span>
@@ -375,25 +353,21 @@ export default function CourseDetailPage() {
                     <ul className="space-y-2 text-sm">
                       <li className="flex justify-between">
                         <span className="text-muted-foreground">Catégorie</span>
-                        <span>{processedCourse.category}</span>
+                        <span>{course.category}</span>
                       </li>
-                      {processedCourse.required_license && (
+                      {course.required_license && (
                         <li className="flex justify-between">
                           <span className="text-muted-foreground">Licence requise</span>
-                          <span>{processedCourse.required_license}</span>
+                          <span>{course.required_license}</span>
                         </li>
                       )}
                       <li className="flex justify-between">
-                        <span className="text-muted-foreground">Durée totale</span>
-                        <span>{formatDuration(processedCourse.totalDuration || 0)}</span>
-                      </li>
-                      <li className="flex justify-between">
                         <span className="text-muted-foreground">Nombre de leçons</span>
-                        <span>{processedCourse.totalLessons}</span>
+                        <span>{totalLessons}</span>
                       </li>
                       <li className="flex justify-between">
                         <span className="text-muted-foreground">Progression</span>
-                        <span>{Math.round(processedCourse.progress || 0)}%</span>
+                        <span>{progressLabel}</span>
                       </li>
                     </ul>
                   </div>
@@ -405,12 +379,12 @@ export default function CourseDetailPage() {
                     <ul className="space-y-2 text-sm">
                       <li className="flex justify-between">
                         <span className="text-muted-foreground">Modules</span>
-                        <span>{processedCourse.modules.length}</span>
+                        <span>{course.modules.length}</span>
                       </li>
                       <li className="flex justify-between">
                         <span className="text-muted-foreground">Évaluations</span>
                         <span>
-                          {processedCourse.modules.reduce(
+                          {course.modules.reduce(
                             (total, module) => total + (module.evaluations?.length || 0),
                             0,
                           )}
@@ -452,7 +426,7 @@ export default function CourseDetailPage() {
                       <div
                         key={lesson.id}
                         className={`p-4 rounded-lg border ${
-                          lesson.completed
+                          isLessonCompleted(lesson)
                             ? "bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800/30"
                             : "bg-white dark:bg-card hover:bg-muted/50 dark:hover:bg-muted/10"
                         } transition-colors`}
@@ -461,36 +435,30 @@ export default function CourseDetailPage() {
                           <div className="flex-shrink-0">
                             <div
                               className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                                lesson.completed
+                                isLessonCompleted(lesson)
                                   ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
                                   : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
                               }`}
                             >
-                              {lesson.completed ? <CheckCircle className="h-5 w-5" /> : <span>{index + 1}</span>}
+                              {isLessonCompleted(lesson) ? <CheckCircle className="h-5 w-5" /> : <span>{index + 1}</span>}
                             </div>
                           </div>
                           <div className="flex-grow">
                             <h3 className="font-medium">{lesson.title}</h3>
                             <p className="text-sm text-muted-foreground line-clamp-2">{lesson.description}</p>
-                            {lesson.duration && (
-                              <div className="flex items-center mt-2 text-xs text-muted-foreground">
-                                <Clock className="h-3 w-3 mr-1"/>
-                                <span>{formatDuration(lesson.duration)}</span>
-                              </div>
-                            )}
                           </div>
                           <div className="flex-shrink-0">
                             <Button
                               size="sm"
-                              variant={lesson.completed ? "outline" : "default"}
+                              variant={isLessonCompleted(lesson) ? "outline" : "default"}
                               className={
-                                lesson.completed
+                                isLessonCompleted(lesson)
                                   ? "border-green-200 text-green-700 hover:bg-green-50 dark:border-green-800 dark:text-green-400 dark:hover:bg-green-950/30"
                                   : ""
                               }
-                              onClick={() => router.push(`/instruction/e-learning/${processedCourse.id}/${lesson.id}`)}
+                              onClick={() => router.push(`/instruction/e-learning/${course.id}/${lesson.id}`)}
                             >
-                              {lesson.completed ? (
+                              {isLessonCompleted(lesson) ? (
                                 <>
                                   <CheckCircle className="mr-1 h-4 w-4" />
                                   Revoir
@@ -516,11 +484,15 @@ export default function CourseDetailPage() {
                           Évaluations du module
                         </h3>
 
-                        {currentModule.evaluations.map((evaluation, evalIndex) => (
+                        {currentModule.evaluations.map((evaluation, evalIndex) => {
+                          const attempt = attempts.get(evaluation.id)
+                          const passed = attempt?.passed === true
+
+                          return (
                           <div
                             key={evaluation.id}
                             className={`p-4 rounded-lg border ${
-                              evaluation.completed
+                              attempt
                                 ? "bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-800/30"
                                 : "bg-white dark:bg-card hover:bg-muted/50 dark:hover:bg-muted/10 border-amber-100"
                             } transition-colors`}
@@ -529,7 +501,7 @@ export default function CourseDetailPage() {
                               <div className="flex-shrink-0">
                                 <div
                                   className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                                    evaluation.completed
+                                    attempt
                                       ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
                                       : "bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300"
                                   }`}
@@ -542,16 +514,18 @@ export default function CourseDetailPage() {
                                 <p className="text-sm text-muted-foreground">
                                   Score minimum requis: {evaluation.pass_score}%
                                 </p>
-                                {evaluation.completed && evaluation.score && (
+                                {attempt && (
                                   <div className="flex items-center mt-2 text-xs font-medium">
                                     <span
                                       className={
-                                        evaluation.score >= evaluation.pass_score
-                                          ? "text-green-600 dark:text-green-400"
-                                          : "text-red-600 dark:text-red-400"
+                                        passed ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
                                       }
                                     >
-                                      Votre score: {evaluation.score}%
+                                      {attempt.score !== null
+                                        ? `Votre score: ${Math.round(attempt.score)}%`
+                                        : passed
+                                          ? "Évaluation réussie"
+                                          : "Évaluation non réussie"}
                                     </span>
                                   </div>
                                 )}
@@ -559,15 +533,19 @@ export default function CourseDetailPage() {
                               <div className="flex-shrink-0">
                                 <Button
                                   size="sm"
-                                  variant={evaluation.completed ? "outline" : "default"}
+                                  variant={passed ? "outline" : "default"}
                                   className={
-                                    evaluation.completed
+                                    passed
                                       ? "border-amber-200 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-400 dark:hover:bg-amber-950/30"
                                       : "bg-amber-600 hover:bg-amber-700 text-white"
                                   }
-                                  onClick={() => router.push(`/instruction/evaluations/${evaluation.id}`)}
+                                  onClick={() =>
+                                    router.push(
+                                      passed ? "/instruction/evaluation" : `/instruction/evaluation/${evaluation.id}`,
+                                    )
+                                  }
                                 >
-                                  {evaluation.completed ? (
+                                  {passed ? (
                                     <>
                                       <CheckCircle className="mr-1 h-4 w-4" />
                                       Voir résultats
@@ -575,14 +553,15 @@ export default function CourseDetailPage() {
                                   ) : (
                                     <>
                                       <ClipboardCheck className="mr-1 h-4 w-4" />
-                                      Passer l'évaluation
+                                      {attempt ? "Repasser l'évaluation" : "Passer l'évaluation"}
                                     </>
                                   )}
                                 </Button>
                               </div>
                             </div>
                           </div>
-                        ))}
+                          )
+                        })}
                       </>
                     )}
                   </div>
@@ -592,9 +571,13 @@ export default function CourseDetailPage() {
             <CardFooter className="border-t pt-4 flex justify-between">
               <div className="text-sm text-muted-foreground">
                 <GraduationCap className="inline-block mr-1 h-4 w-4" />
-                Progression du module: {Math.round(currentModule.progress || 0)}%
+                {completionUnavailable
+                  ? "Progression du module indisponible"
+                  : completionLoading
+                    ? "Progression du module: …"
+                    : `Progression du module: ${currentModuleProgress}%`}
               </div>
-              <Progress value={currentModule.progress} className="w-1/2 h-2" />
+              <Progress value={currentModuleProgress} className="w-1/2 h-2" />
             </CardFooter>
           </Card>
         </motion.div>

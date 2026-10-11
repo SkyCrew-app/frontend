@@ -1,9 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useTheme } from "next-themes"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
+import { useLessonCompletion } from "@/components/hooks/useLessonCompletion"
+import { courseLessonIds } from "@/lib/learning-progress"
 import { useQuery } from "@apollo/client"
 import { GET_COURSES, GET_COURSE_DETAILS, GET_LESSON_CONTENT, GET_COURSE_PROGRESS } from "@/graphql/instruction"
 import { CourseSearch } from "@/components/e-learning/CourseSearch"
@@ -21,7 +23,6 @@ export default function ELearningPage() {
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [category, setCategory] = useState("all")
-  const [courseProgress, setCourseProgress] = useState<number>(0)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const userEmail = useCurrentUser()
   const userData = useUserData(userEmail)
@@ -91,12 +92,6 @@ export default function ELearningPage() {
     skip: !selectedCourseId || !userId,
   })
 
-  useEffect(() => {
-    if (progressData && progressData.getCourseProgress) {
-      setCourseProgress(progressData.getCourseProgress)
-    }
-  }, [progressData])
-
   const handleSetCategory = (newCategory: string) => {
     setCategory(newCategory)
     setTimeout(() => {
@@ -120,6 +115,9 @@ export default function ELearningPage() {
   const courses = coursesData?.getCourses || []
   const course = courseData?.getCourseById as Course | undefined
   const lessonContent = lessonData?.getLessonContent as Lesson | undefined
+  const courseProgress: number = progressData?.getCourseProgress ?? 0
+  const lessonIds = useMemo(() => courseLessonIds(course), [course])
+  const { completedLessonIds } = useLessonCompletion(userId !== null ? Number(userId) : null, lessonIds)
 
   useEffect(() => {
     if (selectedCourseId && window.innerWidth < 1024) {
@@ -211,6 +209,7 @@ export default function ELearningPage() {
                   courseProgress={courseProgress}
                   progressLoading={progressLoading}
                   progressError={progressError}
+                  completedLessonIds={completedLessonIds}
                   setSelectedLesson={(lesson: CourseDetailsLesson) => setSelectedLesson(lesson as Lesson)}
                 />
                 {selectedLesson && (
