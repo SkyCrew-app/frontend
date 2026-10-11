@@ -30,3 +30,9 @@ export function buildAircraftInput<T extends object>(formData: T): T {
 
   return input as T
 }
+
+// Powered flight starts in 1903: no aircraft was built before.
+export const FIRST_MANUFACTURE_YEAR = 1903
+
+// Bounds of the year of manufacture field, shared by the aircraft forms.
+export const manufactureYearBounds = () => ({ min: FIRST_MANUFACTURE_YEAR, max: new Date().getFullYear() })

@@ -126,9 +126,10 @@ export const CREATE_COURSE = gql`
 `;
 
 
-export const GET_USERS = gql`
-  query GetUsers {
-    getUsers {
+// The club directory: every member can read it, unlike the full list of users.
+export const GET_MEMBERS_DIRECTORY = gql`
+  query GetMembersDirectory {
+    membersDirectory {
       id
       first_name
       last_name

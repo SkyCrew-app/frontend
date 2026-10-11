@@ -19,6 +19,7 @@ import { AddLicenseForm } from "@/components/admin-user/add-license-form"
 import { UserDetailsDialog } from "@/components/admin-user/user-details"
 import { UserFilters } from "@/components/admin-user/user-filters"
 import { PaginationControls } from "@/components/admin-user/pagination-controls"
+import { calendarDayToISOString } from "@/lib/datetime"
 
 const fadeIn = {
   hidden: { opacity: 0 },
@@ -179,8 +180,8 @@ export default function AdministrationPage() {
           user_id: Number.parseInt(selectedUserId),
           license_type: formData.get("license_type") as string,
           license_number: formData.get("license_number") as string,
-          expiration_date: expirationDate?.toISOString(),
-          issue_date: issueDate.toISOString(),
+          expiration_date: calendarDayToISOString(expirationDate),
+          issue_date: calendarDayToISOString(issueDate),
           certification_authority: (formData.get("certification_authority") as string) || null,
           status: (formData.get("status") as string) || "active",
         },

@@ -1,4 +1,4 @@
-import { ApolloClient, InMemoryCache } from '@apollo/client';
+import { ApolloClient, InMemoryCache, NormalizedCacheObject } from '@apollo/client';
 import { onError } from "@apollo/client/link/error";
 import { createUploadLink } from 'apollo-upload-client';
 import { CachePersistor, LocalStorageWrapper } from 'apollo3-cache-persist';
@@ -44,8 +44,9 @@ const cache = new InMemoryCache({
 });
 
 // Persist cache to localStorage for offline support
+let persistor: CachePersistor<NormalizedCacheObject> | null = null;
 if (typeof window !== 'undefined') {
-  const persistor = new CachePersistor({
+  persistor = new CachePersistor({
     cache,
     storage: new LocalStorageWrapper(window.localStorage),
     maxSize: 1048576 * 5, // 5MB
@@ -69,5 +70,17 @@ const client = new ApolloClient({
     // the calling screen reports the failure instead of announcing a success.
   },
 });
+
+// Empties what was cached for the session, in memory and in the browser
+// storage, so that an account never sees the data of the previous one.
+export async function clearSessionCache() {
+  persistor?.pause();
+  try {
+    await client.clearStore();
+    await persistor?.purge();
+  } finally {
+    persistor?.resume();
+  }
+}
 
 export default client;

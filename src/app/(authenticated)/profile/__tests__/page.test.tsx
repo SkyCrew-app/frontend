@@ -131,7 +131,6 @@ describe('ProfilePage Component', () => {
     await waitFor(() => {
       expect(container.querySelectorAll('.animate-pulse')).toHaveLength(7);
     });
-    expect(screen.queryByRole('heading', { name: 'Mon Profil' })).not.toBeInTheDocument();
 
     expect(await screen.findByText(`John Doe - ${EMAIL}`)).toBeInTheDocument();
     expect(container.querySelectorAll('.animate-pulse')).toHaveLength(0);

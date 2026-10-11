@@ -29,12 +29,13 @@ export const flightRecapSchema = z
     incident_date: z.date().nullable().optional(),
     severity_level: z.enum(["low", "medium", "high"]).optional(),
     incident_description: z.string().optional(),
+    // Written by the pilot when closing the flight; kept as the logbook remarks.
+    flightNotes: z.string().max(2000, "Les notes ne peuvent pas dépasser 2000 caractères").optional(),
     damage_report: z.string().optional(),
     corrective_actions: z.string().optional(),
     incident_status: z.string().optional(),
     incident_priority: z.enum(["low", "medium", "high"]).optional(),
     incident_category: z.enum(["mechanical", "electrical", "weather", "human_error", "other"]).optional(),
-    flightNotes: z.string().optional(),
   })
   .superRefine((values, ctx) => {
     if (!values.incidentOccurred) return

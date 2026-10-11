@@ -15,6 +15,7 @@ import { LOGIN_MUTATION } from '@/graphql/system';
 import { GET_ME } from '@/graphql/user';
 import { useToast } from "@/components/hooks/use-toast";
 import { loginSchema } from '@/lib/validations';
+import { clearSessionCache } from '@/lib/apollo-client';
 
 const DEMO_ACCOUNTS = [
   { label: 'Admin démo', email: 'demo@skycrew.fr', password: 'demo1234' },
@@ -60,6 +61,8 @@ export default function LoginPage() {
     try {
       const response = await login({ variables: { email, password } });
       const { is2FAEnabled } = response.data.login;
+      // Nothing cached by a previous account on this browser is kept.
+      await clearSessionCache();
 
       toast({
         title: "Connexion réussie",

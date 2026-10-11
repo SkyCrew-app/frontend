@@ -30,7 +30,7 @@ export default function FlightNotesForm() {
                   {...field}
                 />
               </FormControl>
-              <FormDescription>Ces notes seront visibles par les autres membres et instructeurs</FormDescription>
+              <FormDescription>Ces notes sont reprises dans la colonne Remarques de votre carnet de vol</FormDescription>
               <FormMessage />
             </FormItem>
           )}
