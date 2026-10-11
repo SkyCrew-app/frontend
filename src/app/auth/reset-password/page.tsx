@@ -1,7 +1,10 @@
 'use client';
 
-import React, { Suspense, useState, useEffect } from 'react';
+import React, { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { useMutation } from '@apollo/client';
+import { RESET_PASSWORD } from '@/graphql/user';
+import { newPasswordError } from '@/lib/password';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,50 +15,43 @@ import { Toaster } from "@/components/ui/toaster";
 import { Skeleton } from "@/components/ui/skeleton";
 
 function ResetPasswordComponent() {
-  useSearchParams();
+  const token = useSearchParams().get('token');
+  const [resetPassword] = useMutation(RESET_PASSWORD);
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [success, setSuccess] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-
-  useEffect(() => {
-    setTimeout(() => setIsLoading(false), 1000);
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!password || !confirmPassword) {
+    const problem = newPasswordError(password, confirmPassword);
+    if (problem || !token) {
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Veuillez remplir tous les champs.",
-      });
-      return;
-    }
-    if (password !== confirmPassword) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Les mots de passe ne correspondent pas.",
+        description: problem ?? "Ce lien de réinitialisation est incomplet.",
       });
       return;
     }
 
     setIsLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await resetPassword({ variables: { token, newPassword: password } });
       setSuccess(true);
       toast({
         title: "Succès",
         description: "Votre mot de passe a été réinitialisé avec succès.",
       });
-    } catch {
+    } catch (error) {
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Une erreur est survenue lors de la réinitialisation du mot de passe.",
+        description:
+          error instanceof Error && error.message
+            ? error.message
+            : "Une erreur est survenue lors de la réinitialisation du mot de passe.",
       });
     } finally {
       setIsLoading(false);
@@ -90,6 +86,15 @@ function ResetPasswordComponent() {
               </p>
               <Link href="/" passHref>
                 <Button className="w-full">Retour à la page de connexion</Button>
+              </Link>
+            </div>
+          ) : !token ? (
+            <div className="space-y-4">
+              <p className="text-center">
+                Ce lien de réinitialisation est incomplet. Demandez-en un nouveau.
+              </p>
+              <Link href="/auth/forgot-password" passHref>
+                <Button className="w-full">Demander un nouveau lien</Button>
               </Link>
             </div>
           ) : (
