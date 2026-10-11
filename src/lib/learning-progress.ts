@@ -12,7 +12,8 @@ export interface EvaluationAttempt {
 
 // Share of `done` in `total` as a whole percentage, 0 when there is nothing to do.
 export function percentage(done: number, total: number): number {
-  if (!(total > 0) || !(done > 0)) return 0
+  // NaN fails both comparisons and counts as nothing done.
+  if (Number.isNaN(total) || Number.isNaN(done) || total <= 0 || done <= 0) return 0
   return Math.min(100, Math.round((done / total) * 100))
 }
 
@@ -76,7 +77,7 @@ export function stableIndex(seed: number | string, length: number): number {
   if (length <= 0) return 0
   let hash = 0
   for (const char of String(seed)) {
-    hash = (hash * 31 + char.charCodeAt(0)) >>> 0
+    hash = (hash * 31 + (char.codePointAt(0) ?? 0)) >>> 0
   }
   return hash % length
 }

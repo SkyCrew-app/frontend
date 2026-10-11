@@ -29,7 +29,8 @@ export function useLessonCompletion(userId: number | null, lessonIds: number[]):
     let cancelled = false
     setState((previous) => ({ ...previous, loading: true }))
 
-    Promise.allSettled(
+    // allSettled never rejects: each lesson is judged on its own result.
+    void Promise.allSettled(
       ids.map((lessonId) =>
         client.query<{ getUserProgress: boolean | null }>({
           query: GET_LESSON_PROGRESS,
