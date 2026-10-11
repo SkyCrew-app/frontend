@@ -9,80 +9,73 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { GripVertical, Plus, Trash2 } from "lucide-react"
+import { GripVertical, Loader2, Pencil, Plus, Trash2 } from "lucide-react"
+import { ChecklistItem, ChecklistTemplate, CATEGORY_LABELS, CATEGORY_ORDER } from "@/interfaces/checklist"
 import {
-  ChecklistItem,
-  ChecklistTemplate,
-  ChecklistCategory,
-  CATEGORY_LABELS,
-  CATEGORY_ORDER,
-} from "@/interfaces/checklist"
+  emptyChecklistItemDraft,
+  groupItemsByCategory,
+  reorderItemIds,
+  toChecklistItemDraft,
+  type ChecklistItemDraft,
+} from "@/lib/checklist-items"
 
 interface ChecklistTemplateEditorProps {
   template: ChecklistTemplate
   items: ChecklistItem[]
-  onAddItem: (item: { item_name: string; description: string; category: string; is_required: boolean }) => void
-  onUpdateItem: (item: ChecklistItem) => void
+  // Both resolve to true once the item is saved; the form stays open otherwise.
+  onAddItem: (draft: ChecklistItemDraft) => Promise<boolean>
+  onUpdateItem: (item: ChecklistItem, draft: ChecklistItemDraft) => Promise<boolean>
   onDeleteItem: (id: number | string) => void
-  onReorder: (items: { id: number | string; sort_order: number }[]) => void
+  // Ids of every item of the template, in their new order.
+  onReorder: (itemIds: number[]) => void
 }
 
 export function ChecklistTemplateEditor({
   items,
   onAddItem,
+  onUpdateItem,
   onDeleteItem,
   onReorder,
 }: ChecklistTemplateEditorProps) {
-  const [showAddForm, setShowAddForm] = useState(false)
+  const [showItemForm, setShowItemForm] = useState(false)
+  const [editingItem, setEditingItem] = useState<ChecklistItem | null>(null)
+  const [draft, setDraft] = useState<ChecklistItemDraft>(emptyChecklistItemDraft)
+  const [saving, setSaving] = useState(false)
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | string | null>(null)
-  const [newItem, setNewItem] = useState({
-    item_name: "",
-    description: "",
-    category: ChecklistCategory.EXTERIOR as string,
-    is_required: true,
-  })
 
-  // Group items by category
-  const groupedItems = CATEGORY_ORDER.reduce(
-    (acc, cat) => {
-      const catItems = items
-        .filter((item) => item.category === cat)
-        .sort((a, b) => a.sort_order - b.sort_order)
-      if (catItems.length > 0) acc[cat] = catItems
-      return acc
-    },
-    {} as Record<string, ChecklistItem[]>,
-  )
+  const groupedItems = groupItemsByCategory(items)
 
-  const handleAddItem = () => {
-    if (!newItem.item_name.trim()) return
-    onAddItem(newItem)
-    setNewItem({
-      item_name: "",
-      description: "",
-      category: ChecklistCategory.EXTERIOR,
-      is_required: true,
-    })
-    setShowAddForm(false)
+  const openAddForm = () => {
+    setEditingItem(null)
+    setDraft(emptyChecklistItemDraft())
+    setShowItemForm(true)
+  }
+
+  const openEditForm = (item: ChecklistItem) => {
+    setEditingItem(item)
+    setDraft(toChecklistItemDraft(item))
+    setShowItemForm(true)
+  }
+
+  const handleSubmitItem = async () => {
+    if (!draft.item_name.trim() || saving) return
+
+    setSaving(true)
+    try {
+      const saved = editingItem ? await onUpdateItem(editingItem, draft) : await onAddItem(draft)
+      if (saved) setShowItemForm(false)
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleDragEnd = (result: DropResult) => {
-    if (!result.destination) return
+    if (!result.destination || result.destination.droppableId !== result.source.droppableId) return
 
-    const category = result.source.droppableId
-    const catItems = [...(groupedItems[category] || [])]
-
-    const [moved] = catItems.splice(result.source.index, 1)
-    catItems.splice(result.destination.index, 0, moved)
-
-    const reordered = catItems.map((item, index) => ({
-      id: item.id,
-      sort_order: index,
-    }))
-
-    onReorder(reordered)
+    const itemIds = reorderItemIds(items, result.source.droppableId, result.source.index, result.destination.index)
+    if (itemIds) onReorder(itemIds)
   }
 
   const handleConfirmDelete = () => {
@@ -96,14 +89,14 @@ export function ChecklistTemplateEditor({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">Items de la checklist ({items.length})</h3>
-        <Button onClick={() => setShowAddForm(true)} size="sm" className="gap-1">
+        <Button onClick={openAddForm} size="sm" className="gap-1">
           <Plus className="h-4 w-4" />
           Ajouter un item
         </Button>
       </div>
 
       <DragDropContext onDragEnd={handleDragEnd}>
-        {Object.entries(groupedItems).map(([category, catItems]) => (
+        {groupedItems.map(({ category, items: catItems }) => (
           <Card key={category}>
             <CardHeader className="pb-2">
               <CardTitle className="text-base flex items-center gap-2">
@@ -112,7 +105,7 @@ export function ChecklistTemplateEditor({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <Droppable droppableId={category}>
+              <Droppable droppableId={category} type={category}>
                 {(provided) => (
                   <div ref={provided.innerRef} {...provided.droppableProps} className="space-y-2">
                     {catItems.map((item, index) => (
@@ -125,7 +118,11 @@ export function ChecklistTemplateEditor({
                               snapshot.isDragging ? "shadow-lg" : ""
                             }`}
                           >
-                            <div {...provided.dragHandleProps} className="cursor-grab text-muted-foreground">
+                            <div
+                              {...provided.dragHandleProps}
+                              className="cursor-grab text-muted-foreground"
+                              aria-label={`Déplacer l'item ${item.item_name}`}
+                            >
                               <GripVertical className="h-4 w-4" />
                             </div>
                             <div className="flex-1 min-w-0">
@@ -140,8 +137,18 @@ export function ChecklistTemplateEditor({
                             <Button
                               variant="ghost"
                               size="icon"
+                              className="h-8 w-8"
+                              onClick={() => openEditForm(item)}
+                              aria-label={`Modifier l'item ${item.item_name}`}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
                               className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
                               onClick={() => setDeleteConfirmId(item.id)}
+                              aria-label={`Supprimer l'item ${item.item_name}`}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -165,17 +172,22 @@ export function ChecklistTemplateEditor({
         </div>
       )}
 
-      {/* Add item dialog */}
-      <Dialog open={showAddForm} onOpenChange={setShowAddForm}>
+      {/* Add / edit item dialog */}
+      <Dialog open={showItemForm} onOpenChange={(open) => !saving && setShowItemForm(open)}>
         <DialogContent className="sm:max-w-md">
-          <DialogTitle>Ajouter un item</DialogTitle>
+          <DialogTitle>{editingItem ? "Modifier l'item" : "Ajouter un item"}</DialogTitle>
+          <DialogDescription>
+            {editingItem
+              ? "Modifiez le nom, la description, la catégorie ou le caractère obligatoire de l'item."
+              : "Renseignez le nouvel item à ajouter à la checklist."}
+          </DialogDescription>
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="item-name">Nom de l&apos;item</Label>
               <Input
                 id="item-name"
-                value={newItem.item_name}
-                onChange={(e) => setNewItem({ ...newItem, item_name: e.target.value })}
+                value={draft.item_name}
+                onChange={(e) => setDraft({ ...draft, item_name: e.target.value })}
                 placeholder="Ex: Vérifier le niveau d'huile"
               />
             </div>
@@ -183,18 +195,15 @@ export function ChecklistTemplateEditor({
               <Label htmlFor="item-desc">Description (optionnel)</Label>
               <Textarea
                 id="item-desc"
-                value={newItem.description}
-                onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
+                value={draft.description}
+                onChange={(e) => setDraft({ ...draft, description: e.target.value })}
                 placeholder="Instructions supplémentaires..."
               />
             </div>
             <div className="space-y-2">
-              <Label>Catégorie</Label>
-              <Select
-                value={newItem.category}
-                onValueChange={(val) => setNewItem({ ...newItem, category: val })}
-              >
-                <SelectTrigger>
+              <Label htmlFor="item-category">Catégorie</Label>
+              <Select value={draft.category} onValueChange={(val) => setDraft({ ...draft, category: val })}>
+                <SelectTrigger id="item-category">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -209,8 +218,8 @@ export function ChecklistTemplateEditor({
             <div className="flex items-center gap-2">
               <Checkbox
                 id="item-required"
-                checked={newItem.is_required}
-                onCheckedChange={(val) => setNewItem({ ...newItem, is_required: val === true })}
+                checked={draft.is_required}
+                onCheckedChange={(val) => setDraft({ ...draft, is_required: val === true })}
               />
               <Label htmlFor="item-required" className="cursor-pointer">
                 Obligatoire
@@ -218,11 +227,12 @@ export function ChecklistTemplateEditor({
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddForm(false)}>
+            <Button variant="outline" onClick={() => setShowItemForm(false)} disabled={saving}>
               Annuler
             </Button>
-            <Button onClick={handleAddItem} disabled={!newItem.item_name.trim()}>
-              Ajouter
+            <Button onClick={handleSubmitItem} disabled={saving || !draft.item_name.trim()}>
+              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {editingItem ? "Enregistrer" : "Ajouter"}
             </Button>
           </DialogFooter>
         </DialogContent>
