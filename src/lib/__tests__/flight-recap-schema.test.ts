@@ -71,3 +71,14 @@ describe('flightRecapSchema', () => {
     }
   });
 });
+
+describe('notes de vol', () => {
+  it('conserve les notes saisies à la clôture', () => {
+    const result = flightRecapSchema.safeParse({ ...baseValues, flightNotes: 'Vent de travers' });
+    expect(result.success && result.data.flightNotes).toBe('Vent de travers');
+  });
+
+  it('refuse des notes de plus de 2000 caractères', () => {
+    expect(flightRecapSchema.safeParse({ ...baseValues, flightNotes: 'a'.repeat(2001) }).success).toBe(false);
+  });
+});

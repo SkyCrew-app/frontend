@@ -1453,6 +1453,7 @@ input UpdateFlightInput {
   id: Int!
   number_of_passengers: Int
   origin_icao: String
+  remarks: String
   reservation_id: Int
   user_id: Int
   waypoints: [String!]

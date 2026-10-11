@@ -503,7 +503,7 @@ export default function ArticlesAdminPage() {
                   <CardContent className="pb-2 flex-grow">
                     <p className="text-sm text-muted-foreground line-clamp-3">{article.description}</p>
                   </CardContent>
-                  <CardContent className="pt-0 pb-4 flex justify-end gap-2">
+                  <CardContent className="pt-0 pb-4 flex flex-wrap justify-end gap-2">
                     <Button
                       variant="outline"
                       size="sm"
