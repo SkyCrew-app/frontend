@@ -33,7 +33,7 @@ function ChartTooltip({ active, payload, label }: any) {
     <div className="rounded-md border bg-card p-2 text-xs shadow-sm">
       {label && <p className="font-medium">{label}</p>}
       {payload.map((entry: any, index: number) => (
-        <div key={index} className="mt-1 flex items-center gap-1.5">
+        <div key={index} className="mt-1 flex items-center gap-2">
           <span
             className="h-2 w-2 rounded-full"
             style={{ backgroundColor: entry.payload?.color || entry.fill || entry.color }}
@@ -51,7 +51,7 @@ function ChartLegend({ payload }: any) {
   return (
     <ul className="mt-2 flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
       {(payload ?? []).map((entry: any, index: number) => (
-        <li key={index} className="flex items-center gap-1.5">
+        <li key={index} className="flex items-center gap-2">
           <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: entry.color }} />
           {entry.value}
           {entry.payload?.value !== undefined && (

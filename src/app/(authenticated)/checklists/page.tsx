@@ -7,21 +7,14 @@ import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ArrowRight, ClipboardCheck, Loader2, Plus } from "lucide-react"
+import { ArrowRight, ClipboardCheck, Plus } from "lucide-react"
 import { useToast } from "@/components/hooks/use-toast"
 import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
 import { PageHeader } from "@/components/layout/PageHeader"
+import { SidePanel } from "@/components/layout/SidePanel"
 import { EmptyState } from "@/components/layout/EmptyState"
 import { ErrorState } from "@/components/layout/ErrorState"
 import { GET_CHECKLIST_SUBMISSIONS, GET_CHECKLIST_TEMPLATES, START_CHECKLIST_SUBMISSION } from "@/graphql/checklist"
@@ -72,7 +65,7 @@ function SubmissionCard({ submission }: { submission: ChecklistSubmission }) {
           </p>
         </CardContent>
         <CardFooter className="justify-end pt-0">
-          <span className="flex items-center gap-1 text-sm font-medium text-primary">
+          <span className="flex items-center gap-2 text-sm font-medium text-primary">
             {inProgress ? "Reprendre" : "Consulter"}
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
           </span>
@@ -208,46 +201,41 @@ export default function ChecklistsPage() {
         </>
       )}
 
-      <Dialog open={isNewDialogOpen} onOpenChange={setIsNewDialogOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Démarrer une checklist</DialogTitle>
-            <DialogDescription>Choisissez le modèle correspondant à l&apos;avion que vous préparez.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2">
-            <Label htmlFor="checklist-template">Modèle de checklist</Label>
-            {loadingTemplates && templates.length === 0 ? (
-              <Skeleton className="h-10 w-full" />
-            ) : templates.length === 0 ? (
-              <p className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
-                Aucun modèle de checklist n&apos;est disponible. Demandez à un administrateur du club d&apos;en activer un.
-              </p>
-            ) : (
-              <Select value={templateId} onValueChange={setSelectedTemplateId}>
-                <SelectTrigger id="checklist-template">
-                  <SelectValue placeholder="Choisir un modèle" />
-                </SelectTrigger>
-                <SelectContent>
-                  {templates.map((t) => (
-                    <SelectItem key={String(t.id)} value={String(t.id)}>
-                      {t.name} — {t.aircraft_model}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          </div>
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => setIsNewDialogOpen(false)} disabled={starting}>
-              Annuler
-            </Button>
-            <Button onClick={handleStartChecklist} disabled={!templateId || !userData?.id || starting}>
-              {starting && <Loader2 className="h-4 w-4 animate-spin" />}
-              Démarrer la checklist
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <SidePanel
+        open={isNewDialogOpen}
+        onOpenChange={(open) => !starting && setIsNewDialogOpen(open)}
+        title="Démarrer une checklist"
+        description="Choisissez le modèle correspondant à l'avion que vous préparez."
+        onSubmit={handleStartChecklist}
+        submitLabel="Démarrer la checklist"
+        submitting={starting}
+        submitDisabled={!templateId || !userData?.id}
+        size="md"
+      >
+        <div className="space-y-2">
+          <Label htmlFor="checklist-template">Modèle de checklist</Label>
+          {loadingTemplates && templates.length === 0 ? (
+            <Skeleton className="h-10 w-full" />
+          ) : templates.length === 0 ? (
+            <p className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
+              Aucun modèle de checklist n&apos;est disponible. Demandez à un administrateur du club d&apos;en activer un.
+            </p>
+          ) : (
+            <Select value={templateId} onValueChange={setSelectedTemplateId}>
+              <SelectTrigger id="checklist-template">
+                <SelectValue placeholder="Choisir un modèle" />
+              </SelectTrigger>
+              <SelectContent>
+                {templates.map((t) => (
+                  <SelectItem key={String(t.id)} value={String(t.id)}>
+                    {t.name} — {t.aircraft_model}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
+      </SidePanel>
     </div>
   )
 }

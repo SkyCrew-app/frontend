@@ -373,13 +373,13 @@ export function VerticalProfile({ waypoints, maxAltitude, className = "" }: Vert
 
         {/* Phase legend */}
         <div className="mt-3 flex flex-wrap items-center justify-center gap-x-6 gap-y-1 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1.5">
+          <span className="flex items-center gap-2">
             <span className="w-4 h-1 rounded bg-success inline-block"></span> Montée
           </span>
-          <span className="flex items-center gap-1.5">
+          <span className="flex items-center gap-2">
             <span className="w-4 h-1 rounded bg-primary inline-block"></span> Croisière
           </span>
-          <span className="flex items-center gap-1.5">
+          <span className="flex items-center gap-2">
             <span className="w-4 h-1 rounded bg-warning inline-block"></span> Descente
           </span>
         </div>

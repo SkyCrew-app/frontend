@@ -1,19 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Loader2 } from "lucide-react"
+import { SidePanel } from "@/components/layout/SidePanel"
 import type { Flight } from "@/interfaces/flight"
 import { FLIGHT_RULE_OPTIONS, flightTypeLabel } from "@/components/flight/flight-type"
 
@@ -52,8 +43,7 @@ export function FlightPlanEditDialog({ isOpen, onOpenChange, flight, onSave }: F
     ? FLIGHT_RULE_OPTIONS
     : [...FLIGHT_RULE_OPTIONS, { value: flight.flight_type, label: flightTypeLabel(flight.flight_type) }]
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault()
+  const handleSubmit = async () => {
     setIsSubmitting(true)
     try {
       await onSave(flightType, weatherKnown ? weatherConditions : undefined, numberOfPassengers)
@@ -63,74 +53,67 @@ export function FlightPlanEditDialog({ isOpen, onOpenChange, flight, onSave }: F
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Modifier le plan de vol</DialogTitle>
-          <DialogDescription>
-            {flight.origin_icao} → {flight.destination_icao}. La route se modifie en créant un nouveau plan.
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="flight-type">Type de vol</Label>
-              <Select value={flightType} onValueChange={setFlightType}>
-                <SelectTrigger id="flight-type">
-                  <SelectValue placeholder="Sélectionner" />
-                </SelectTrigger>
-                <SelectContent>
-                  {typeOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="number-of-passengers">Passagers</Label>
-              <Input
-                id="number-of-passengers"
-                type="number"
-                inputMode="numeric"
-                min={0}
-                max={20}
-                step={1}
-                value={numberOfPassengers === undefined ? "" : numberOfPassengers}
-                onChange={(e) => {
-                  const value = e.target.value === "" ? undefined : Number.parseInt(e.target.value, 10)
-                  setNumberOfPassengers(Number.isNaN(value) ? undefined : value)
-                }}
-                placeholder="0"
-              />
-            </div>
+    <SidePanel
+      open={isOpen}
+      onOpenChange={(next) => {
+        if (!next && isSubmitting) return
+        onOpenChange(next)
+      }}
+      title="Modifier le plan de vol"
+      description={`${flight.origin_icao} → ${flight.destination_icao}. La route se modifie en créant un nouveau plan.`}
+      size="md"
+      onSubmit={handleSubmit}
+      submitting={isSubmitting}
+    >
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="flight-type">Type de vol</Label>
+            <Select value={flightType} onValueChange={setFlightType}>
+              <SelectTrigger id="flight-type">
+                <SelectValue placeholder="Sélectionner" />
+              </SelectTrigger>
+              <SelectContent>
+                {typeOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          {weatherKnown && (
-            <div className="space-y-2">
-              <Label htmlFor="weather-conditions">Conditions météo</Label>
-              <Input
-                id="weather-conditions"
-                value={weatherConditions}
-                onChange={(e) => setWeatherConditions(e.target.value)}
-                placeholder="Ex. : CAVOK, vent 240/08"
-              />
-            </div>
-          )}
+          <div className="space-y-2">
+            <Label htmlFor="number-of-passengers">Passagers</Label>
+            <Input
+              id="number-of-passengers"
+              type="number"
+              inputMode="numeric"
+              min={0}
+              max={20}
+              step={1}
+              value={numberOfPassengers === undefined ? "" : numberOfPassengers}
+              onChange={(e) => {
+                const value = e.target.value === "" ? undefined : Number.parseInt(e.target.value, 10)
+                setNumberOfPassengers(Number.isNaN(value) ? undefined : value)
+              }}
+              placeholder="0"
+            />
+          </div>
+        </div>
 
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
-              Annuler
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-              Enregistrer
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+        {weatherKnown && (
+          <div className="space-y-2">
+            <Label htmlFor="weather-conditions">Conditions météo</Label>
+            <Input
+              id="weather-conditions"
+              value={weatherConditions}
+              onChange={(e) => setWeatherConditions(e.target.value)}
+              placeholder="Ex. : CAVOK, vent 240/08"
+            />
+          </div>
+        )}
+      </div>
+    </SidePanel>
   )
 }

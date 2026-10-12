@@ -102,7 +102,7 @@ export function RatingCard({ rating, feedback, canRate, isOwnRating, onRate }: R
               <Label id="rating-label">
                 Note <span className="text-destructive">*</span>
               </Label>
-              <div className="flex items-center gap-1" role="radiogroup" aria-labelledby="rating-label">
+              <div className="flex items-center gap-2" role="radiogroup" aria-labelledby="rating-label">
                 {STARS.map((star) => (
                   <button
                     key={star}

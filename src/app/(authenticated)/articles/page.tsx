@@ -142,7 +142,7 @@ export default function ArticlesPage() {
           </Select>
 
           {/* On a phone both views are a single column: the switch would change nothing. */}
-          <div className="hidden items-center gap-1 sm:flex" role="group" aria-label="Affichage">
+          <div className="hidden items-center gap-2 sm:flex" role="group" aria-label="Affichage">
             <Button
               variant={viewMode === "grid" ? "secondary" : "ghost"}
               size="icon"

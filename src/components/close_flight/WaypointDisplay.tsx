@@ -11,6 +11,8 @@ type Waypoint = {
 
 type WaypointsDisplayProps = {
   waypoints: string
+  /** Only the chain of identifiers, for a narrow column. */
+  compact?: boolean
 }
 
 const isDetailed = (waypoint: unknown): waypoint is Waypoint =>
@@ -20,7 +22,7 @@ const isDetailed = (waypoint: unknown): waypoint is Waypoint =>
   typeof (waypoint as Waypoint).lon === "number"
 
 /** Read-only route of the flight plan, shown on the closing page. */
-export default function WaypointsDisplay({ waypoints }: WaypointsDisplayProps) {
+export default function WaypointsDisplay({ waypoints, compact = false }: WaypointsDisplayProps) {
   if (!waypoints) return null
 
   let parsedWaypoints: unknown[] = []
@@ -36,8 +38,12 @@ export default function WaypointsDisplay({ waypoints }: WaypointsDisplayProps) {
   }
 
   // Plans prepared by hand only keep the identifiers of their points.
-  if (!parsedWaypoints.every(isDetailed)) {
-    return <p className="text-sm">{parsedWaypoints.map((waypoint) => String((waypoint as Waypoint)?.ident ?? waypoint)).join(" → ")}</p>
+  if (compact || !parsedWaypoints.every(isDetailed)) {
+    return (
+      <p className="text-sm">
+        {parsedWaypoints.map((waypoint) => String((waypoint as Waypoint)?.ident ?? waypoint)).join(" → ")}
+      </p>
+    )
   }
 
   return (

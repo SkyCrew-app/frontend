@@ -1,19 +1,10 @@
 "use client"
 
-import type React from "react"
 import { useState } from "react"
 import { useMutation, useQuery } from "@apollo/client"
-import { BookOpen, Loader2, Plus, Search } from "lucide-react"
+import { BookOpen, Plus, Search } from "lucide-react"
 import { CREATE_COURSE, DELETE_COURSE, GET_COURSES, UPDATE_COURSE } from "@/graphql/learningAdmin"
 import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -21,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { EmptyState } from "@/components/layout/EmptyState"
 import { ErrorState } from "@/components/layout/ErrorState"
+import { SidePanel } from "@/components/layout/SidePanel"
 import { toast } from "@/components/hooks/use-toast"
 import { ConfirmDeleteDialog } from "./ConfirmDeleteDialog"
 import { FormField } from "./FormField"
@@ -86,8 +78,7 @@ export function CourseManagement() {
 
   const titleError = form.title.trim() ? null : "Donnez un titre au cours."
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault()
+  const handleSubmit = async () => {
     setSubmitted(true)
     if (titleError) return
 
@@ -257,77 +248,68 @@ export function CourseManagement() {
         </div>
       )}
 
-      <Dialog open={isFormOpen} onOpenChange={(open) => !saving && setIsFormOpen(open)}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{isEdit ? "Modifier le cours" : "Créer un cours"}</DialogTitle>
-            <DialogDescription>
-              {isEdit
-                ? "Ces informations sont visibles dans le catalogue des membres."
-                : "Le cours apparaît dans le catalogue ; ses modules et ses leçons s'ajoutent ensuite."}
-            </DialogDescription>
-          </DialogHeader>
+      <SidePanel
+        open={isFormOpen}
+        onOpenChange={(open) => !saving && setIsFormOpen(open)}
+        title={isEdit ? "Modifier le cours" : "Créer un cours"}
+        description={
+          isEdit
+            ? "Ces informations sont visibles dans le catalogue des membres."
+            : "Le cours apparaît dans le catalogue ; ses modules et ses leçons s'ajoutent ensuite."
+        }
+        onSubmit={handleSubmit}
+        submitLabel={isEdit ? "Enregistrer" : "Créer le cours"}
+        submitting={saving}
+      >
+        <div className="space-y-4">
+          <FormField label="Titre" htmlFor="course-title" required error={submitted ? titleError : null}>
+            <Input
+              id="course-title"
+              placeholder="Ex. Météorologie pour le PPL"
+              value={form.title}
+              onChange={(event) => setForm({ ...form, title: event.target.value })}
+              aria-invalid={submitted && !!titleError}
+            />
+          </FormField>
 
-          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-            <FormField label="Titre" htmlFor="course-title" required error={submitted ? titleError : null}>
+          <FormField label="Description" htmlFor="course-description" hint="Deux ou trois phrases sur ce que le cours apprend.">
+            <Textarea
+              id="course-description"
+              placeholder="Ex. Lire une carte TEMSI, comprendre les fronts et préparer un vol en sécurité."
+              value={form.description}
+              onChange={(event) => setForm({ ...form, description: event.target.value })}
+              rows={4}
+            />
+          </FormField>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <FormField label="Catégorie" htmlFor="course-category">
               <Input
-                id="course-title"
-                placeholder="Ex. Météorologie pour le PPL"
-                value={form.title}
-                onChange={(event) => setForm({ ...form, title: event.target.value })}
-                aria-invalid={submitted && !!titleError}
+                id="course-category"
+                placeholder="Ex. Navigation"
+                value={form.category}
+                onChange={(event) => setForm({ ...form, category: event.target.value })}
               />
             </FormField>
 
-            <FormField label="Description" htmlFor="course-description" hint="Deux ou trois phrases sur ce que le cours apprend.">
-              <Textarea
-                id="course-description"
-                placeholder="Ex. Lire une carte TEMSI, comprendre les fronts et préparer un vol en sécurité."
-                value={form.description}
-                onChange={(event) => setForm({ ...form, description: event.target.value })}
-                rows={4}
-              />
+            <FormField label="Licence requise" htmlFor="course-license">
+              <Select value={form.license} onValueChange={(value) => setForm({ ...form, license: value })}>
+                <SelectTrigger id="course-license">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NO_LICENSE}>Aucune</SelectItem>
+                  {LICENSES.map((license) => (
+                    <SelectItem key={license} value={license}>
+                      {license}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </FormField>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <FormField label="Catégorie" htmlFor="course-category">
-                <Input
-                  id="course-category"
-                  placeholder="Ex. Navigation"
-                  value={form.category}
-                  onChange={(event) => setForm({ ...form, category: event.target.value })}
-                />
-              </FormField>
-
-              <FormField label="Licence requise" htmlFor="course-license">
-                <Select value={form.license} onValueChange={(value) => setForm({ ...form, license: value })}>
-                  <SelectTrigger id="course-license">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={NO_LICENSE}>Aucune</SelectItem>
-                    {LICENSES.map((license) => (
-                      <SelectItem key={license} value={license}>
-                        {license}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormField>
-            </div>
-
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsFormOpen(false)} disabled={saving}>
-                Annuler
-              </Button>
-              <Button type="submit" disabled={saving}>
-                {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                {isEdit ? "Enregistrer" : "Créer le cours"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+          </div>
+        </div>
+      </SidePanel>
 
       <ConfirmDeleteDialog
         open={courseToDelete !== null}

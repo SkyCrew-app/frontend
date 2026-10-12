@@ -1,14 +1,7 @@
 "use client"
 
 import type { ReactNode } from "react"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog"
+import { SidePanel } from "@/components/layout/SidePanel"
 import { Button } from "@/components/ui/button"
 import { ExternalLink, FileText, Pencil } from "lucide-react"
 import type { Aircraft } from "@/interfaces/aircraft"
@@ -53,92 +46,91 @@ export function AircraftDetailDialog({ aircraft, isOpen, onOpenChange, onEdit }:
   const documents = aircraft.documents_url ?? []
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{aircraft.registration_number}</DialogTitle>
-          <DialogDescription>{aircraft.model}</DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-6">
-          <div className="flex flex-wrap gap-2">
-            <StatusBadge status={aircraft.availability_status} type="availability" />
-            <StatusBadge status={aircraft.maintenance_status} type="maintenance" />
-          </div>
-
-          {aircraft.image_url && (
-            // Aircraft files need the session: a plain image request carries it.
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={aircraftFileUrl(getBackendBaseUrl(), aircraft.image_url)}
-              alt={`${aircraft.model} ${aircraft.registration_number}`}
-              className="max-h-64 w-full rounded-lg border object-cover"
-            />
-          )}
-
-          <section className="space-y-3">
-            <h3 className="text-sm font-semibold">Informations générales</h3>
-            <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-              <Fact label="Année">{aircraft.year_of_manufacture ?? "—"}</Fact>
-              <Fact label="Heures de vol">
-                {hasValue(aircraft.total_flight_hours) ? formatFlightDuration(aircraft.total_flight_hours) : "—"}
-              </Fact>
-              <Fact label="Coût horaire">{formatMoney(aircraft.hourly_cost)}</Fact>
-            </dl>
-          </section>
-
-          {characteristics.length > 0 && (
-            <section className="space-y-3">
-              <h3 className="text-sm font-semibold">Caractéristiques</h3>
-              <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                {characteristics.map((item) => (
-                  <Fact key={item.label} label={item.label}>
-                    {typeof item.value === "number" ? formatDecimal(item.value) : item.value}
-                    {item.unit ? ` ${item.unit}` : ""}
-                  </Fact>
-                ))}
-              </dl>
-            </section>
-          )}
-
-          <section className="space-y-3">
-            <h3 className="text-sm font-semibold">Documents</h3>
-            {documents.length > 0 ? (
-              <ul className="space-y-2">
-                {documents.map((url) => (
-                  <li key={url}>
-                    <a
-                      href={aircraftFileUrl(getBackendBaseUrl(), url)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-3 rounded-md border p-3 text-sm transition-colors hover:bg-muted"
-                    >
-                      <FileText className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-                      <span className="min-w-0 flex-1 truncate">{aircraftFileName(url)}</span>
-                      <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-                      <span className="sr-only">(nouvel onglet)</span>
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm text-muted-foreground">Aucun document pour cet aéronef.</p>
-            )}
-          </section>
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Fermer
-          </Button>
-          {onEdit && (
+    <SidePanel
+      open={isOpen}
+      onOpenChange={onOpenChange}
+      title={aircraft.registration_number}
+      description={aircraft.model}
+      footer={
+        onEdit ? (
+          <>
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Fermer
+            </Button>
             <Button onClick={() => onEdit(aircraft)}>
               <Pencil className="h-4 w-4" aria-hidden="true" />
               Modifier
             </Button>
+          </>
+        ) : undefined
+      }
+    >
+      <div className="space-y-6">
+        <div className="flex flex-wrap gap-2">
+          <StatusBadge status={aircraft.availability_status} type="availability" />
+          <StatusBadge status={aircraft.maintenance_status} type="maintenance" />
+        </div>
+
+        {aircraft.image_url && (
+          // Aircraft files need the session: a plain image request carries it.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={aircraftFileUrl(getBackendBaseUrl(), aircraft.image_url)}
+            alt={`${aircraft.model} ${aircraft.registration_number}`}
+            className="max-h-48 w-full rounded-lg border object-cover"
+          />
+        )}
+
+        <section className="space-y-3">
+          <h3 className="text-sm font-semibold">Informations générales</h3>
+          <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+            <Fact label="Année">{aircraft.year_of_manufacture ?? "—"}</Fact>
+            <Fact label="Heures de vol">
+              {hasValue(aircraft.total_flight_hours) ? formatFlightDuration(aircraft.total_flight_hours) : "—"}
+            </Fact>
+            <Fact label="Coût horaire">{formatMoney(aircraft.hourly_cost)}</Fact>
+          </dl>
+        </section>
+
+        {characteristics.length > 0 && (
+          <section className="space-y-3">
+            <h3 className="text-sm font-semibold">Caractéristiques</h3>
+            <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+              {characteristics.map((item) => (
+                <Fact key={item.label} label={item.label}>
+                  {typeof item.value === "number" ? formatDecimal(item.value) : item.value}
+                  {item.unit ? ` ${item.unit}` : ""}
+                </Fact>
+              ))}
+            </dl>
+          </section>
+        )}
+
+        <section className="space-y-3">
+          <h3 className="text-sm font-semibold">Documents</h3>
+          {documents.length > 0 ? (
+            <ul className="space-y-2">
+              {documents.map((url) => (
+                <li key={url}>
+                  <a
+                    href={aircraftFileUrl(getBackendBaseUrl(), url)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 rounded-md border p-3 text-sm transition-colors hover:bg-muted"
+                  >
+                    <FileText className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                    <span className="min-w-0 flex-1 truncate">{aircraftFileName(url)}</span>
+                    <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                    <span className="sr-only">(nouvel onglet)</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground">Aucun document pour cet aéronef.</p>
           )}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </section>
+      </div>
+    </SidePanel>
   )
 }

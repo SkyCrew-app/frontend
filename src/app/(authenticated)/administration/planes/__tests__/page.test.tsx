@@ -173,14 +173,17 @@ describe('FleetManagementPage', () => {
     await user.click(screen.getByRole('button', { name: 'Ajouter un aéronef' }));
     const dialog = within(await screen.findByRole('dialog', { name: 'Ajouter un aéronef' }));
 
-    // Le formulaire est découpé en sections, toutes visibles sans onglet.
+    // Le formulaire est découpé en étapes, sans onglet ; on commence par la première.
     expect(dialog.queryByRole('tab')).not.toBeInTheDocument();
-    ['Identification', 'État', 'Performances', 'Carburant et masses', 'Photo et document'].forEach((section) =>
-      expect(dialog.getByRole('heading', { name: section })).toBeInTheDocument(),
-    );
+    const steps = within(dialog.getByRole('list', { name: 'Étapes' }));
+    expect(steps.getAllByRole('listitem')).toHaveLength(3);
+    expect(steps.getByRole('button', { name: /Identification/ })).toHaveAttribute('aria-current', 'step');
+    expect(dialog.getByRole('heading', { name: 'État' })).toBeInTheDocument();
+    expect(dialog.queryByRole('button', { name: "Ajouter l'aéronef" })).not.toBeInTheDocument();
 
-    // Envoi à vide : chaque champ obligatoire dit ce qui manque, rien n'est envoyé.
-    await user.click(dialog.getByRole('button', { name: "Ajouter l'aéronef" }));
+    // Étape incomplète : chaque champ obligatoire dit ce qui manque, on ne passe pas à la suite.
+    await user.click(dialog.getByRole('button', { name: 'Suivant' }));
+    expect(steps.getByRole('button', { name: /Identification/ })).toHaveAttribute('aria-current', 'step');
     expect(dialog.getByText("Indiquez l'immatriculation.")).toBeInTheDocument();
     expect(dialog.getByText('Indiquez le modèle.')).toBeInTheDocument();
     expect(dialog.getByText(/Indiquez une année entre 1903 et/)).toBeInTheDocument();
@@ -192,6 +195,13 @@ describe('FleetManagementPage', () => {
     await user.type(dialog.getByLabelText(/Coût horaire/), '132.5');
     expect(dialog.queryByText("Indiquez l'immatriculation.")).not.toBeInTheDocument();
 
+    await user.click(dialog.getByRole('button', { name: 'Suivant' }));
+    ['Performances', 'Carburant et masses'].forEach((section) =>
+      expect(dialog.getByRole('heading', { name: section })).toBeInTheDocument(),
+    );
+    await user.click(dialog.getByRole('button', { name: 'Suivant' }));
+    expect(steps.getByRole('button', { name: /Photo et document/ })).toHaveAttribute('aria-current', 'step');
+    expect(dialog.getByRole('button', { name: 'Choisir une photo' })).toBeInTheDocument();
     await user.click(dialog.getByRole('button', { name: "Ajouter l'aéronef" }));
 
     expect(await screen.findByRole('heading', { level: 3, name: 'F-NEUF' })).toBeInTheDocument();
@@ -235,13 +245,17 @@ describe('FleetManagementPage', () => {
 
     expect(dialog.getByLabelText(/Immatriculation/)).toHaveValue('F-GABC');
     expect(dialog.getByLabelText(/Coût horaire/)).toHaveValue(150);
-    expect(dialog.getByLabelText('Consommation')).toHaveValue(35);
     expect(dialog.getByRole('combobox', { name: /État de maintenance/ })).toHaveTextContent('Opérationnel');
-    expect(dialog.getByText('manuel.pdf')).toBeInTheDocument();
 
     await user.clear(dialog.getByLabelText(/Modèle/));
     await user.type(dialog.getByLabelText(/Modèle/), 'Robin DR400-120');
+    await user.click(dialog.getByRole('button', { name: 'Suivant' }));
+
+    expect(dialog.getByRole('spinbutton', { name: 'Consommation' })).toHaveValue(35);
     await user.clear(dialog.getByLabelText('Consommation'));
+    await user.click(dialog.getByRole('button', { name: 'Suivant' }));
+
+    expect(dialog.getByText('manuel.pdf')).toBeVisible();
     await user.click(dialog.getByRole('button', { name: 'Enregistrer' }));
 
     expect(await screen.findByText('Robin DR400-120')).toBeInTheDocument();

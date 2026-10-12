@@ -197,12 +197,12 @@ END:VCALENDAR`
       <div className="space-y-3">
         <PageHeader title={article.title} className="mb-0" />
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-          <span className="inline-flex items-center gap-1.5">
+          <span className="inline-flex items-center gap-2">
             <Calendar className="h-4 w-4" aria-hidden="true" />
             Publié le {formatDate(article.createdAt)}
           </span>
           {readingTime > 0 && (
-            <span className="inline-flex items-center gap-1.5">
+            <span className="inline-flex items-center gap-2">
               <Clock className="h-4 w-4" aria-hidden="true" />
               {readingTime} min de lecture
             </span>

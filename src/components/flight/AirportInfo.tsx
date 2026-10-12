@@ -64,7 +64,7 @@ export function AirportInfo({ airportInfo, type, weather }: AirportInfoProps) {
             <CardTitle className="mt-1 truncate text-base">{airportInfo.name || airportInfo.ICAO}</CardTitle>
             {location && <p className="mt-0.5 text-sm text-muted-foreground">{location}</p>}
           </div>
-          <div className="flex shrink-0 items-center gap-1.5">
+          <div className="flex shrink-0 items-center gap-2">
             <Badge variant="outline">{airportInfo.ICAO}</Badge>
             {airportInfo.iata && <Badge variant="neutral">{airportInfo.iata}</Badge>}
           </div>

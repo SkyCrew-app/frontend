@@ -131,7 +131,7 @@ export default function LogbookTable({ flights, loading, filtered = false, onRes
         <button
           type="button"
           onClick={() => handleSort(column)}
-          className="inline-flex items-center gap-1 rounded-sm hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="inline-flex items-center gap-2 rounded-sm hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           {label}
           <Icon className={active ? "h-3.5 w-3.5 text-foreground" : "h-3.5 w-3.5 opacity-50"} aria-hidden="true" />

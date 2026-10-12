@@ -1,15 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { ArrowDown, ArrowUp, Loader2 } from "lucide-react"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog"
+import { ArrowDown, ArrowUp } from "lucide-react"
+import { SidePanel } from "@/components/layout/SidePanel"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { useMutation } from "@apollo/client"
@@ -85,76 +78,68 @@ export default function WidgetSettingsDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Personnaliser le tableau de bord</DialogTitle>
-          <DialogDescription>Choisissez les widgets affichés et leur ordre.</DialogDescription>
-        </DialogHeader>
+    <SidePanel
+      open={open}
+      onOpenChange={(next) => (next || !saving) && onOpenChange(next)}
+      title="Personnaliser le tableau de bord"
+      description="Choisissez les widgets affichés et leur ordre."
+      onSubmit={handleSave}
+      submitLabel="Enregistrer"
+      submitting={saving}
+      submitDisabled={!userId}
+      footerStart={
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => setLocalWidgets(normalizeWidgets(DEFAULT_WIDGETS))}
+          disabled={saving}
+        >
+          Rétablir la disposition par défaut
+        </Button>
+      }
+    >
+      <ul className="divide-y divide-border rounded-lg border">
+        {localWidgets.map((widget, index) => {
+          const meta = WIDGET_REGISTRY[widget.widgetId]
+          const switchId = `widget-visible-${widget.widgetId}`
 
-        <ul className="divide-y divide-border rounded-lg border">
-          {localWidgets.map((widget, index) => {
-            const meta = WIDGET_REGISTRY[widget.widgetId]
-            const switchId = `widget-visible-${widget.widgetId}`
-
-            return (
-              <li key={widget.widgetId} className="flex items-center gap-2 p-3">
-                <div className="flex shrink-0 flex-col">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-9"
-                    onClick={() => handleMove(index, -1)}
-                    disabled={index === 0}
-                    aria-label={`Monter « ${meta.label} »`}
-                    title="Monter"
-                  >
-                    <ArrowUp className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-9"
-                    onClick={() => handleMove(index, 1)}
-                    disabled={index === localWidgets.length - 1}
-                    aria-label={`Descendre « ${meta.label} »`}
-                    title="Descendre"
-                  >
-                    <ArrowDown className="h-4 w-4" />
-                  </Button>
-                </div>
-                <label htmlFor={switchId} className="min-w-0 flex-1 cursor-pointer">
-                  <span className="block text-sm font-medium">{meta.label}</span>
-                  <span className="block text-xs text-muted-foreground">{meta.description}</span>
-                </label>
-                <Switch id={switchId} checked={widget.visible} onCheckedChange={() => handleToggle(widget.widgetId)} />
-              </li>
-            )
-          })}
-        </ul>
-
-        <DialogFooter className="gap-2 sm:justify-between sm:space-x-0">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => setLocalWidgets(normalizeWidgets(DEFAULT_WIDGETS))}
-            disabled={saving}
-          >
-            Rétablir la disposition par défaut
-          </Button>
-          <div className="flex flex-col-reverse gap-2 sm:flex-row">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
-              Annuler
-            </Button>
-            <Button type="button" onClick={handleSave} disabled={saving || !userId}>
-              {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              Enregistrer
-            </Button>
-          </div>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          return (
+            <li key={widget.widgetId} className="flex items-center gap-2 p-3">
+              <div className="flex shrink-0 flex-col">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-9"
+                  onClick={() => handleMove(index, -1)}
+                  disabled={index === 0}
+                  aria-label={`Monter « ${meta.label} »`}
+                  title="Monter"
+                >
+                  <ArrowUp className="h-4 w-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-9"
+                  onClick={() => handleMove(index, 1)}
+                  disabled={index === localWidgets.length - 1}
+                  aria-label={`Descendre « ${meta.label} »`}
+                  title="Descendre"
+                >
+                  <ArrowDown className="h-4 w-4" />
+                </Button>
+              </div>
+              <label htmlFor={switchId} className="min-w-0 flex-1 cursor-pointer">
+                <span className="block text-sm font-medium">{meta.label}</span>
+                <span className="block text-xs text-muted-foreground">{meta.description}</span>
+              </label>
+              <Switch id={switchId} checked={widget.visible} onCheckedChange={() => handleToggle(widget.widgetId)} />
+            </li>
+          )
+        })}
+      </ul>
+    </SidePanel>
   )
 }

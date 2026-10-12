@@ -26,7 +26,7 @@ export default function WidgetContainer({ title, description, action, children }
           <CardTitle className="text-base">{title}</CardTitle>
           {description && <CardDescription className="mt-0.5 truncate text-xs">{description}</CardDescription>}
         </div>
-        {action && <div className="flex shrink-0 items-center gap-1">{action}</div>}
+        {action && <div className="flex shrink-0 items-center gap-2">{action}</div>}
       </CardHeader>
       <CardContent className="flex-1 p-5 pt-0">{children}</CardContent>
     </Card>
@@ -38,7 +38,7 @@ export function WidgetLink({ href, children }: { href: string; children: ReactNo
   return (
     <Link
       href={href}
-      className="inline-flex items-center gap-1 rounded-sm text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="inline-flex items-center gap-2 rounded-sm text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       {children}
       <ArrowRight className="h-4 w-4" aria-hidden="true" />

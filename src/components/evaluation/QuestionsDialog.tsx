@@ -1,22 +1,14 @@
 "use client"
 
-import type React from "react"
 import { useEffect, useState } from "react"
 import { useMutation } from "@apollo/client"
 import { Check, HelpCircle, Loader2, Plus, Trash2 } from "lucide-react"
 import { CREATE_QUESTION, DELETE_QUESTION, UPDATE_QUESTION } from "@/graphql/learningAdmin"
 import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { EmptyState } from "@/components/layout/EmptyState"
+import { SidePanel } from "@/components/layout/SidePanel"
 import { toast } from "@/components/hooks/use-toast"
 import { ConfirmDeleteDialog } from "@/components/e-learning/ConfirmDeleteDialog"
 import { FormField } from "@/components/e-learning/FormField"
@@ -58,7 +50,7 @@ interface QuestionsDialogProps {
   onChanged: () => void
 }
 
-// The questions of an evaluation: the list, and the form of one question in the same dialog.
+// The questions of an evaluation: the list, and the form of one question in the same panel.
 export function QuestionsDialog({ evaluation, onClose, onChanged }: QuestionsDialogProps) {
   // null shows the list; a form shows the question being written.
   const [form, setForm] = useState<QuestionForm | null>(null)
@@ -122,8 +114,7 @@ export function QuestionsDialog({ evaluation, onClose, onChanged }: QuestionsDia
       }
     : { text: null, options: null }
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault()
+  const handleSubmit = async () => {
     if (!form || evaluationId === null) return
     setSubmitted(true)
     if (errors.text || errors.options) return
@@ -173,157 +164,152 @@ export function QuestionsDialog({ evaluation, onClose, onChanged }: QuestionsDia
 
   return (
     <>
-      <Dialog open={evaluation !== null} onOpenChange={(open) => !open && !saving && onClose()}>
-        <DialogContent className="max-w-2xl">
-          {form === null ? (
+      <SidePanel
+        open={evaluation !== null}
+        onOpenChange={(open) => !open && !saving && onClose()}
+        title={form === null ? "Questions de l'évaluation" : form.id !== null ? "Modifier la question" : "Ajouter une question"}
+        description={
+          form === null
+            ? `${moduleTitle} · score de réussite : ${Math.round(evaluation?.pass_score ?? 0)} % · ${questions.length} question${questions.length > 1 ? "s" : ""}`
+            : `${moduleTitle} · une seule bonne réponse par question.`
+        }
+        // The question form is a view of the same panel: its cancel button goes back to the list.
+        onSubmit={form === null ? undefined : handleSubmit}
+        footer={
+          form === null ? (
             <>
-              <DialogHeader>
-                <DialogTitle>Questions de l'évaluation</DialogTitle>
-                <DialogDescription>
-                  {moduleTitle} · score de réussite : {Math.round(evaluation?.pass_score ?? 0)} % · {questions.length}{" "}
-                  question{questions.length > 1 ? "s" : ""}
-                </DialogDescription>
-              </DialogHeader>
-
-              {questions.length === 0 ? (
-                <EmptyState
-                  icon={HelpCircle}
-                  title="Aucune question"
-                  description="Tant qu'elle n'a pas de question, l'évaluation ne peut pas être passée."
-                />
-              ) : (
-                <ol className="space-y-3">
-                  {questions.map((question, index) => (
-                    <li key={question.id} className="rounded-lg border p-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <p className="text-sm font-medium">
-                          <span className="tabular-nums text-muted-foreground">{index + 1}. </span>
-                          {question.content?.text}
-                        </p>
-                        <RowActions
-                          name={`la question ${index + 1}`}
-                          onEdit={() => openEdit(question)}
-                          onDelete={() => setQuestionToDelete(question)}
-                        />
-                      </div>
-                      <ul className="mt-2 space-y-1">
-                        {question.options.map((option, optionIndex) => {
-                          const isCorrect = option === question.correct_answer
-                          return (
-                            <li
-                              key={optionIndex}
-                              className={cn(
-                                "flex items-center gap-2 rounded-md px-2 py-1 text-sm",
-                                isCorrect ? "bg-success/15 font-medium text-success" : "text-muted-foreground",
-                              )}
-                            >
-                              {isCorrect ? (
-                                <Check className="h-4 w-4 shrink-0" aria-label="Bonne réponse" />
-                              ) : (
-                                <span className="w-4 shrink-0" aria-hidden="true" />
-                              )}
-                              {option}
-                            </li>
-                          )
-                        })}
-                      </ul>
-                    </li>
-                  ))}
-                </ol>
-              )}
-
-              <DialogFooter>
-                <Button variant="outline" onClick={onClose}>
-                  Fermer
-                </Button>
-                <Button onClick={openCreate}>
-                  <Plus className="h-4 w-4" />
-                  Ajouter une question
-                </Button>
-              </DialogFooter>
+              <Button type="button" variant="outline" onClick={onClose}>
+                Fermer
+              </Button>
+              <Button type="button" onClick={openCreate}>
+                <Plus className="h-4 w-4" />
+                Ajouter une question
+              </Button>
             </>
           ) : (
             <>
-              <DialogHeader>
-                <DialogTitle>{form.id !== null ? "Modifier la question" : "Ajouter une question"}</DialogTitle>
-                <DialogDescription>{moduleTitle} · une seule bonne réponse par question.</DialogDescription>
-              </DialogHeader>
-
-              <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-                <FormField label="Question" htmlFor="question-text" required error={submitted ? errors.text : null}>
-                  <Textarea
-                    id="question-text"
-                    value={form.text}
-                    onChange={(event) => setForm({ ...form, text: event.target.value })}
-                    placeholder="Ex. Que signifie le groupe « CAVOK » dans un METAR ?"
-                    rows={3}
-                    aria-invalid={submitted && !!errors.text}
-                  />
-                </FormField>
-
-                <FormField
-                  label="Réponses proposées"
-                  required
-                  error={submitted ? errors.options : null}
-                  hint="Cochez le rond de la bonne réponse. Deux réponses au minimum."
-                >
-                  <div className="space-y-2" role="radiogroup" aria-label="Bonne réponse">
-                    {form.options.map((option, index) => (
-                      <div key={index} className="flex items-center gap-2">
-                        <input
-                          type="radio"
-                          name="correct-answer"
-                          className="h-4 w-4 shrink-0 accent-primary"
-                          checked={form.correctIndex === index}
-                          onChange={() => setForm({ ...form, correctIndex: index })}
-                          aria-label={`La réponse ${index + 1} est la bonne`}
-                        />
-                        <Input
-                          value={option}
-                          onChange={(event) => setOption(index, event.target.value)}
-                          placeholder={`Réponse ${index + 1}`}
-                          aria-label={`Réponse ${index + 1}`}
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-9 w-9 shrink-0 text-destructive hover:text-destructive"
-                          onClick={() => removeOption(index)}
-                          disabled={form.options.length <= 2}
-                          aria-label={`Supprimer la réponse ${index + 1}`}
-                          title={form.options.length <= 2 ? "Deux réponses au minimum" : "Supprimer la réponse"}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setForm({ ...form, options: [...form.options, ""] })}
-                  >
-                    <Plus className="h-4 w-4" />
-                    Ajouter une réponse
-                  </Button>
-                </FormField>
-
-                <DialogFooter>
-                  <Button type="button" variant="outline" onClick={() => setForm(null)} disabled={saving}>
-                    Annuler
-                  </Button>
-                  <Button type="submit" disabled={saving}>
-                    {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                    {form.id !== null ? "Enregistrer" : "Ajouter la question"}
-                  </Button>
-                </DialogFooter>
-              </form>
+              <Button type="button" variant="outline" onClick={() => setForm(null)} disabled={saving}>
+                Annuler
+              </Button>
+              <Button type="submit" disabled={saving}>
+                {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+                {form.id !== null ? "Enregistrer" : "Ajouter la question"}
+              </Button>
             </>
-          )}
-        </DialogContent>
-      </Dialog>
+          )
+        }
+      >
+        {form === null ? (
+          questions.length === 0 ? (
+            <EmptyState
+              icon={HelpCircle}
+              title="Aucune question"
+              description="Tant qu'elle n'a pas de question, l'évaluation ne peut pas être passée."
+            />
+          ) : (
+            <ol className="space-y-3">
+              {questions.map((question, index) => (
+                <li key={question.id} className="rounded-lg border p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-sm font-medium">
+                      <span className="tabular-nums text-muted-foreground">{index + 1}. </span>
+                      {question.content?.text}
+                    </p>
+                    <RowActions
+                      name={`la question ${index + 1}`}
+                      onEdit={() => openEdit(question)}
+                      onDelete={() => setQuestionToDelete(question)}
+                    />
+                  </div>
+                  <ul className="mt-2 space-y-1">
+                    {question.options.map((option, optionIndex) => {
+                      const isCorrect = option === question.correct_answer
+                      return (
+                        <li
+                          key={optionIndex}
+                          className={cn(
+                            "flex items-center gap-2 rounded-md px-2 py-1 text-sm",
+                            isCorrect ? "bg-success/15 font-medium text-success" : "text-muted-foreground",
+                          )}
+                        >
+                          {isCorrect ? (
+                            <Check className="h-4 w-4 shrink-0" aria-label="Bonne réponse" />
+                          ) : (
+                            <span className="w-4 shrink-0" aria-hidden="true" />
+                          )}
+                          {option}
+                        </li>
+                      )
+                    })}
+                  </ul>
+                </li>
+              ))}
+            </ol>
+          )
+        ) : (
+          <div className="space-y-4">
+            <FormField label="Question" htmlFor="question-text" required error={submitted ? errors.text : null}>
+              <Textarea
+                id="question-text"
+                value={form.text}
+                onChange={(event) => setForm({ ...form, text: event.target.value })}
+                placeholder="Ex. Que signifie le groupe « CAVOK » dans un METAR ?"
+                rows={3}
+                aria-invalid={submitted && !!errors.text}
+              />
+            </FormField>
+
+            <FormField
+              label="Réponses proposées"
+              required
+              error={submitted ? errors.options : null}
+              hint="Cochez le rond de la bonne réponse. Deux réponses au minimum."
+            >
+              <div className="space-y-2" role="radiogroup" aria-label="Bonne réponse">
+                {form.options.map((option, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="correct-answer"
+                      className="h-4 w-4 shrink-0 accent-primary"
+                      checked={form.correctIndex === index}
+                      onChange={() => setForm({ ...form, correctIndex: index })}
+                      aria-label={`La réponse ${index + 1} est la bonne`}
+                    />
+                    <Input
+                      value={option}
+                      onChange={(event) => setOption(index, event.target.value)}
+                      placeholder={`Réponse ${index + 1}`}
+                      aria-label={`Réponse ${index + 1}`}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9 shrink-0 text-destructive hover:text-destructive"
+                      onClick={() => removeOption(index)}
+                      disabled={form.options.length <= 2}
+                      aria-label={`Supprimer la réponse ${index + 1}`}
+                      title={form.options.length <= 2 ? "Deux réponses au minimum" : "Supprimer la réponse"}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setForm({ ...form, options: [...form.options, ""] })}
+              >
+                <Plus className="h-4 w-4" />
+                Ajouter une réponse
+              </Button>
+            </FormField>
+          </div>
+        )}
+      </SidePanel>
 
       <ConfirmDeleteDialog
         open={questionToDelete !== null}
