@@ -1,4 +1,15 @@
-import { filterAudits, getChangedAuditItems, isAuditOverdue, toAuditTemplateItemInput } from '../audit';
+import {
+  auditCategoryLabel,
+  auditCriticality,
+  auditFrequencyLabel,
+  auditResult,
+  auditStatus,
+  countAuditsByStatus,
+  filterAudits,
+  getChangedAuditItems,
+  isAuditOverdue,
+  toAuditTemplateItemInput,
+} from '../audit';
 
 describe('toAuditTemplateItemInput', () => {
   it("retire l'id et le __typename d'un élément issu d'une requête", () => {
@@ -173,5 +184,67 @@ describe('isAuditOverdue', () => {
 
   it('est en retard quand la prochaine date est passée', () => {
     expect(isAuditOverdue({ is_closed: false, next_audit_date: '2026-06-15T11:59:59Z' }, now)).toBe(true);
+  });
+});
+
+describe('onglets de statut', () => {
+  const now = new Date('2026-06-15T12:00:00Z');
+  const audits = [
+    { id: 1, audit_result: 'CONFORME', is_closed: false, next_audit_date: '2026-06-01T00:00:00Z' },
+    { id: 2, audit_result: 'NON_CONFORME', is_closed: false, next_audit_date: '2026-07-01T00:00:00Z' },
+    { id: 3, audit_result: 'NON_CONFORME', is_closed: true, next_audit_date: '2026-01-01T00:00:00Z' },
+  ];
+  const ids = (list: { id: number }[]) => list.map((audit) => audit.id);
+
+  it("filtre sur l'onglet sélectionné", () => {
+    expect(ids(filterAudits(audits, { tab: 'all' }, now))).toEqual([1, 2, 3]);
+    expect(ids(filterAudits(audits, { tab: 'open' }, now))).toEqual([1, 2]);
+    expect(ids(filterAudits(audits, { tab: 'closed' }, now))).toEqual([3]);
+    expect(ids(filterAudits(audits, { tab: 'nonconform' }, now))).toEqual([2, 3]);
+    expect(ids(filterAudits(audits, { tab: 'overdue' }, now))).toEqual([1]);
+  });
+
+  it('compte les audits de chaque onglet sur la liste complète', () => {
+    expect(countAuditsByStatus(audits, now)).toEqual({ total: 3, open: 2, closed: 1, nonconform: 2, overdue: 1 });
+    expect(countAuditsByStatus([], now)).toEqual({ total: 0, open: 0, closed: 0, nonconform: 0, overdue: 0 });
+  });
+});
+
+describe('libellés et couleurs', () => {
+  const now = new Date('2026-06-15T12:00:00Z');
+
+  it('donne un libellé français et une couleur à chaque résultat', () => {
+    expect(auditResult('CONFORME')).toEqual({ label: 'Conforme', variant: 'success' });
+    expect(auditResult('NON_CONFORME')).toEqual({ label: 'Non conforme', variant: 'danger' });
+    expect(auditResult('CONFORME_AVEC_REMARQUES')).toEqual({ label: 'Conforme avec remarques', variant: 'warning' });
+    expect(auditResult('NON_APPLICABLE')).toEqual({ label: 'Non applicable', variant: 'neutral' });
+  });
+
+  it("n'affiche jamais un code brut", () => {
+    expect(auditResult('NEW_CODE').label).toBe('Non renseigné');
+    expect(auditResult(null).label).toBe('Non renseigné');
+    expect(auditCriticality('NEW_CODE').label).toBe('Non renseigné');
+    expect(auditFrequencyLabel('NEW_CODE')).toBe('Non renseigné');
+    expect(auditCategoryLabel(undefined)).toBe('Non renseigné');
+  });
+
+  it("déduit le statut d'un audit", () => {
+    expect(auditStatus({ is_closed: true, next_audit_date: '2026-01-01T00:00:00Z' }, now)).toEqual({
+      label: 'Clôturé',
+      variant: 'success',
+    });
+    expect(auditStatus({ is_closed: false, next_audit_date: '2026-01-01T00:00:00Z' }, now)).toEqual({
+      label: 'En retard',
+      variant: 'danger',
+    });
+    expect(auditStatus({ is_closed: false, next_audit_date: null }, now)).toEqual({ label: 'En cours', variant: 'info' });
+  });
+
+  it('traduit criticités, fréquences et catégories', () => {
+    expect(auditCriticality('CRITIQUE')).toEqual({ label: 'Critique', variant: 'danger' });
+    expect(auditCriticality('MAJEUR').variant).toBe('warning');
+    expect(auditFrequencyLabel('HEURES_DE_VOL')).toBe('Selon les heures de vol');
+    expect(auditFrequencyLabel('BIANNUEL')).toBe('Tous les 2 ans');
+    expect(auditCategoryLabel('TRAIN_ATTERRISSAGE')).toBe("Train d'atterrissage");
   });
 });

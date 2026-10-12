@@ -1,248 +1,190 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
-import { useTheme } from "next-themes"
-import { Skeleton } from "@/components/ui/skeleton"
-import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
-import { useLessonCompletion } from "@/components/hooks/useLessonCompletion"
-import { courseLessonIds } from "@/lib/learning-progress"
+import { useMemo, useState } from "react"
+import Link from "next/link"
 import { useQuery } from "@apollo/client"
-import { GET_COURSES, GET_COURSE_DETAILS, GET_LESSON_CONTENT, GET_COURSE_PROGRESS } from "@/graphql/instruction"
-import { CourseSearch } from "@/components/e-learning/CourseSearch"
-import { CourseList } from "@/components/e-learning/CourseList"
-import { CourseDetails, type Lesson as CourseDetailsLesson } from "@/components/e-learning/CourseDetails"
-import { LessonContent } from "@/components/e-learning/LessonContent"
+import { BookOpen, Search, Settings } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Menu, X } from "lucide-react"
-import { Course, Lesson } from "@/interfaces/courses"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Skeleton } from "@/components/ui/skeleton"
+import { PageHeader } from "@/components/layout/PageHeader"
+import { EmptyState } from "@/components/layout/EmptyState"
+import { ErrorState } from "@/components/layout/ErrorState"
+import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
+import {
+  CourseCatalogCard,
+  type CatalogCourse,
+  type CourseProgress,
+} from "@/components/e-learning/CourseCatalogCard"
+import { GET_USER_INSTRUCTION_SUMMARY } from "@/graphql/evaluation"
+import { GET_COURSES } from "@/graphql/learningAdmin"
+import type { InstructionSummary } from "@/interfaces/instruction"
+import { percentage } from "@/lib/learning-progress"
+import { isAdministrator } from "@/lib/roles"
+
+// Courses to resume first, then the ones to start, then the finished ones.
+const progressRank = (progress: CourseProgress | undefined) => {
+  if (!progress) return 1
+  const done = percentage(progress.completedLessons, progress.totalLessons)
+  if (done > 0 && done < 100) return 0
+  return done >= 100 ? 2 : 1
+}
 
 export default function ELearningPage() {
-  const [mounted, setMounted] = useState(false)
-  const { theme, resolvedTheme } = useTheme()
-  const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null)
-  const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [category, setCategory] = useState("all")
-  const [sidebarOpen, setSidebarOpen] = useState(false)
   const userEmail = useCurrentUser()
   const userData = useUserData(userEmail)
-  const [userId, setUserId] = useState<string | null>(null)
+  const userId: number | null = userData ? Number(userData.id) : null
 
-  useEffect(() => {
-    setMounted(true)
-
-    const isDark = theme === "dark" || resolvedTheme === "dark"
-    if (isDark) {
-      document.documentElement.classList.add("dark")
-    } else {
-      document.documentElement.classList.remove("dark")
-    }
-  }, [])
-
-  useEffect(() => {
-    if (mounted) {
-      const isDark = theme === "dark" || resolvedTheme === "dark"
-      document.documentElement.classList.toggle("dark", isDark)
-    }
-  }, [mounted, theme, resolvedTheme])
-
-  useEffect(() => {
-    if (userData) {
-      setUserId(userData.id)
-    }
-  }, [userData])
-
-  const {
-    data: coursesData,
-    loading: coursesLoading,
-    error: coursesError,
-    refetch: refetchCourses,
-  } = useQuery(GET_COURSES, {
-    variables: {
-      category: category === "all" ? null : category,
-      search: searchTerm,
+  const { data, loading, error, refetch } = useQuery<{ getCourses: CatalogCourse[] }>(GET_COURSES, {
+    fetchPolicy: "cache-and-network",
+  })
+  // The summary carries the lessons completed in each course.
+  const { data: summaryData } = useQuery<{ getUserInstructionSummary: InstructionSummary }>(
+    GET_USER_INSTRUCTION_SUMMARY,
+    {
+      variables: { userId },
+      skip: userId === null,
+      fetchPolicy: "cache-and-network",
     },
-    fetchPolicy: "network-only",
-  })
+  )
 
-  const {
-    data: courseData,
-    loading: courseLoading,
-    error: courseError,
-  } = useQuery(GET_COURSE_DETAILS, {
-    variables: { id: selectedCourseId ? Number.parseFloat(selectedCourseId) : null, userId },
-    skip: !selectedCourseId,
-  })
-
-  const {
-    data: lessonData,
-    loading: lessonLoading,
-    error: lessonError,
-  } = useQuery(GET_LESSON_CONTENT, {
-    variables: { lessonId: selectedLesson?.id, userId },
-    skip: !selectedLesson || !userId,
-  })
-
-  const {
-    data: progressData,
-    loading: progressLoading,
-    error: progressError,
-  } = useQuery(GET_COURSE_PROGRESS, {
-    variables: { userId, courseId: selectedCourseId ? Number.parseFloat(selectedCourseId) : null },
-    skip: !selectedCourseId || !userId,
-  })
-
-  const handleSetCategory = (newCategory: string) => {
-    setCategory(newCategory)
-    setTimeout(() => {
-      refetchCourses({
-        category: newCategory === "all" ? null : newCategory,
-        search: searchTerm,
-      })
-    }, 0)
-  }
-
-  const handleSetSearchTerm = (term: string) => {
-    setSearchTerm(term)
-    setTimeout(() => {
-      refetchCourses({
-        category: category === "all" ? null : category,
-        search: term,
-      })
-    }, 0)
-  }
-
-  const courses = coursesData?.getCourses || []
-  const course = courseData?.getCourseById as Course | undefined
-  const lessonContent = lessonData?.getLessonContent as Lesson | undefined
-  const courseProgress: number = progressData?.getCourseProgress ?? 0
-  const lessonIds = useMemo(() => courseLessonIds(course), [course])
-  const { completedLessonIds } = useLessonCompletion(userId !== null ? Number(userId) : null, lessonIds)
-
-  useEffect(() => {
-    if (selectedCourseId && window.innerWidth < 1024) {
-      setSidebarOpen(false)
+  const courses = data?.getCourses
+  const progressByCourse = useMemo(() => {
+    const map = new Map<number, CourseProgress>()
+    for (const course of summaryData?.getUserInstructionSummary.eLearningCourses ?? []) {
+      map.set(Number(course.id), { completedLessons: course.completedLessons, totalLessons: course.totalLessons })
     }
-  }, [selectedCourseId])
+    return map
+  }, [summaryData])
 
-  if (!mounted) {
-    return (
-      <div className="flex flex-col lg:flex-row min-h-screen bg-background" suppressHydrationWarning>
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <header className="bg-card shadow-sm border-b border-border p-4 flex items-center">
-            <h1 className="text-2xl font-semibold tracking-tight truncate">Chargement...</h1>
-          </header>
-          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-background">
-            <div className="mx-auto max-w-6xl">
-              <Skeleton className="h-12 w-3/4" />
-              <Skeleton className="h-[200px] w-full mt-4" />
-            </div>
-          </main>
-        </div>
-      </div>
-    )
-  }
+  const categories = useMemo(
+    () =>
+      [...new Set((courses ?? []).map((course) => course.category?.trim()).filter((name): name is string => !!name))].sort(
+        (a, b) => a.localeCompare(b, "fr"),
+      ),
+    [courses],
+  )
+
+  const visibleCourses = useMemo(() => {
+    const search = searchTerm.trim().toLowerCase()
+    return (courses ?? [])
+      .filter((course) => {
+        const matchesSearch =
+          !search ||
+          course.title.toLowerCase().includes(search) ||
+          (course.description ?? "").toLowerCase().includes(search)
+        const matchesCategory = category === "all" || course.category?.trim() === category
+        return matchesSearch && matchesCategory
+      })
+      .sort(
+        (a, b) =>
+          progressRank(progressByCourse.get(Number(a.id))) - progressRank(progressByCourse.get(Number(b.id))) ||
+          a.title.localeCompare(b.title, "fr"),
+      )
+  }, [courses, searchTerm, category, progressByCourse])
+
+  const isFiltered = searchTerm.trim() !== "" || category !== "all"
+  const manageButton = isAdministrator(userData) ? (
+    <Button variant="outline" asChild>
+      <Link href="/administration/e-learning">
+        <Settings className="h-4 w-4" />
+        Gérer les cours
+      </Link>
+    </Button>
+  ) : null
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen bg-background">
-      {/* Overlay pour mobile quand la sidebar est ouverte */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 bg-black/50 z-20 lg:hidden" onClick={() => setSidebarOpen(false)} />
-      )}
+    <div className="space-y-6">
+      <PageHeader
+        className="mb-0"
+        title="E-learning"
+        description="Les cours en ligne du club, à suivre à votre rythme."
+        actions={manageButton}
+      />
 
-      {/* Sidebar */}
-      <aside
-        className={`bg-card w-full lg:w-80 lg:min-h-screen flex flex-col transition-all duration-300 ease-in-out ${sidebarOpen ? "fixed inset-0 z-30" : "hidden lg:flex"}`}
-      >
-        <div className="p-4 border-b border-border flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Cours disponibles</h2>
-          <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setSidebarOpen(false)}>
-            <X className="h-5 w-5" />
-          </Button>
-        </div>
-        <div className="p-4 border-b border-border">
-          <CourseSearch
-            searchTerm={searchTerm}
-            setSearchTerm={handleSetSearchTerm}
-            category={category}
-            setCategory={handleSetCategory}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative w-full sm:max-w-xs">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="search"
+            aria-label="Rechercher un cours en ligne"
+            placeholder="Rechercher un cours, ex. météorologie"
+            className="pl-9"
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
           />
         </div>
-        <div className="flex-grow overflow-y-auto">
-          <CourseList
-            courses={courses}
-            selectedCourseId={selectedCourseId}
-            setSelectedCourseId={setSelectedCourseId}
-            coursesLoading={coursesLoading}
-            coursesError={coursesError}
-          />
-        </div>
-      </aside>
-
-      {/* Contenu principal */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-card shadow-sm border-b border-border p-4 flex items-center">
-          <Button variant="outline" size="icon" className="lg:hidden mr-4" onClick={() => setSidebarOpen(!sidebarOpen)}>
-            <Menu className="h-5 w-5" />
-          </Button>
-          <h1 className="text-2xl font-semibold tracking-tight truncate">
-            {course ? course.title : "Plateforme d'apprentissage en ligne"}
-          </h1>
-        </header>
-
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-background">
-          <div className="mx-auto max-w-6xl">
-            {courseLoading ? (
-              <div className="space-y-4">
-                <Skeleton className="h-12 w-3/4" />
-                <Skeleton className="h-[200px] w-full" />
-              </div>
-            ) : courseError ? (
-              <div className="bg-destructive/15 text-destructive p-6 rounded-lg shadow-sm">
-                <h3 className="text-lg font-medium mb-2">Erreur de chargement</h3>
-                <p>{courseError.message}</p>
-              </div>
-            ) : course ? (
-              <div className="space-y-8">
-                <CourseDetails
-                  course={course}
-                  courseProgress={courseProgress}
-                  progressLoading={progressLoading}
-                  progressError={progressError}
-                  completedLessonIds={completedLessonIds}
-                  setSelectedLesson={(lesson: CourseDetailsLesson) => setSelectedLesson(lesson as Lesson)}
-                />
-                {selectedLesson && (
-                  <LessonContent
-                    lesson={lessonContent}
-                    courseId={selectedCourseId || ""}
-                    lessonLoading={lessonLoading}
-                    lessonError={lessonError ? { message: lessonError.message } : null}
-                  />
-                )}
-              </div>
-            ) : (
-              <div className="text-center py-16 px-4">
-                <div className="max-w-md mx-auto bg-card rounded-lg shadow-sm p-8 border border-border">
-                  <h2 className="text-2xl font-bold mb-4">Bienvenue sur la plateforme d'apprentissage</h2>
-                  <p className="text-muted-foreground mb-6">
-                    Sélectionnez un cours dans la liste pour commencer votre apprentissage.
-                  </p>
-                  <Button
-                    variant="outline"
-                    className="lg:hidden w-full sm:w-auto text-sm"
-                    onClick={() => setSidebarOpen(true)}
-                  >
-                    <Menu className="h-4 w-4 mr-2" />
-                    <span className="truncate">Voir les cours disponibles</span>
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
-        </main>
+        {categories.length > 1 && (
+          <Select value={category} onValueChange={setCategory}>
+            <SelectTrigger className="w-full sm:w-56" aria-label="Filtrer par catégorie">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toutes les catégories</SelectItem>
+              {categories.map((name) => (
+                <SelectItem key={name} value={name}>
+                  {name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </div>
+
+      {loading && !courses ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <Card key={index}>
+              <CardHeader className="pb-3">
+                <Skeleton className="h-5 w-3/4" />
+                <Skeleton className="h-3 w-1/3" />
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-2/3" />
+                <Skeleton className="h-2 w-full" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : error && !courses ? (
+        <ErrorState onRetry={() => refetch()} />
+      ) : visibleCourses.length === 0 ? (
+        <EmptyState
+          icon={BookOpen}
+          title={isFiltered ? "Aucun cours ne correspond" : "Aucun cours en ligne pour le moment"}
+          description={
+            isFiltered
+              ? "Modifiez la recherche ou la catégorie."
+              : "Les cours apparaîtront ici dès que le club en aura publié."
+          }
+          action={
+            isFiltered ? (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSearchTerm("")
+                  setCategory("all")
+                }}
+              >
+                Effacer les filtres
+              </Button>
+            ) : (
+              manageButton
+            )
+          }
+        />
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {visibleCourses.map((course) => (
+            <CourseCatalogCard key={course.id} course={course} progress={progressByCourse.get(Number(course.id))} />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
-

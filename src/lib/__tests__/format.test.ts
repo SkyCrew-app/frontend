@@ -9,9 +9,9 @@ describe("formatDecimal", () => {
   })
 
   it("says when there is no figure", () => {
-    expect(formatDecimal(null)).toBe("N/A")
-    expect(formatDecimal(undefined)).toBe("N/A")
-    expect(formatDecimal("abc")).toBe("N/A")
+    expect(formatDecimal(null)).toBe("—")
+    expect(formatDecimal(undefined)).toBe("—")
+    expect(formatDecimal("abc")).toBe("—")
   })
 })
 
@@ -25,7 +25,7 @@ describe("formatFlightDuration", () => {
   })
 
   it("says when there is no duration", () => {
-    expect(formatFlightDuration(null)).toBe("N/A")
-    expect(formatFlightDuration(undefined)).toBe("N/A")
+    expect(formatFlightDuration(null)).toBe("—")
+    expect(formatFlightDuration(undefined)).toBe("—")
   })
 })

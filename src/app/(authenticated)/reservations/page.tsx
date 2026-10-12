@@ -1,11 +1,15 @@
 "use client"
 
-import { useMutation, useQuery } from "@apollo/client"
-import { useState, useEffect } from "react"
-import { format, eachHourOfInterval, isBefore, isAfter } from "date-fns"
+import { ApolloError, useMutation, useQuery } from "@apollo/client"
+import { useState, useEffect, useMemo, useRef } from "react"
+import { format, addHours, eachHourOfInterval, isSameDay } from "date-fns"
 import { fr } from "date-fns/locale"
+import { CalendarOff, Clock, Plane, Plus } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/components/hooks/use-toast"
 import {
@@ -18,32 +22,82 @@ import { GET_AIRCRAFTS } from "@/graphql/planes"
 import { type Reservation, ReservationStatus } from "@/interfaces/reservation"
 import { GET_SETTINGS } from "@/graphql/settings"
 import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
-import { ReservationHeader } from "@/components/reservation/reservation-header"
+import { PageHeader } from "@/components/layout/PageHeader"
+import { EmptyState } from "@/components/layout/EmptyState"
+import { ErrorState } from "@/components/layout/ErrorState"
+import { DateNavigator } from "@/components/reservation/reservation-header"
 import { ReservationCell } from "@/components/reservation/reservation-cell"
 import { FreeCell } from "@/components/reservation/free-cell"
 import { ReservationForm } from "@/components/reservation/reservation-form"
 import { ReservationDetail } from "@/components/reservation/reservation-detail"
 import { MobileReservationView } from "@/components/reservation/mobile-reservation-view"
-import { MobileReservationForm } from "@/components/reservation/mobile-reservation-form"
-import { Card, CardContent } from "@/components/ui/card"
-import { AlertTriangle } from "lucide-react"
+import {
+  NewReservationForm,
+  type NewReservationPrefill,
+  type NewReservationValues,
+} from "@/components/reservation/new-reservation-form"
+import { LEGEND_STATUSES, reservationDotClass } from "@/components/reservation/status-style"
+import { reservationStatus } from "@/lib/reservation-status"
+import { formatDate, formatTime } from "@/lib/format"
+import { cn } from "@/lib/utils"
 import { useMediaQuery } from "@/hooks/use-media-query"
 
 interface Aircraft {
   id: number
   registration_number: string
+  model?: string
+  availability_status?: string
+}
+
+interface DragSelection {
+  aircraftId: number
+  anchor: number
+  current: number
+}
+
+interface SlotSelection {
+  aircraftId: number
+  start: Date
+  end: Date
+}
+
+const normalizeDayName = (day: string) =>
+  day
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+
+const longDate = (date: Date) => format(date, "EEEE d MMMM yyyy", { locale: fr })
+
+// Business refusals of the API (aircraft already booked, licence, balance) are written for the pilot.
+const creationErrorMessage = (error: unknown) => {
+  const apiMessage = error instanceof ApolloError ? error.graphQLErrors[0]?.message : undefined
+  return apiMessage || "La réservation n'a pas pu être créée. Vérifiez votre connexion puis réessayez."
+}
+
+// A reservation template sends its values in the query string ("Utiliser" in "Mes réservations").
+const readPrefillFromUrl = (): NewReservationPrefill | null => {
+  if (typeof window === "undefined") return null
+  const params = new URLSearchParams(window.location.search)
+  const prefill: NewReservationPrefill = {
+    aircraftId: params.get("aircraft_id") ?? undefined,
+    startTime: params.get("start_time") ?? undefined,
+    endTime: params.get("end_time") ?? undefined,
+    flightCategory: params.get("flight_category") ?? undefined,
+    purpose: params.get("purpose") ?? undefined,
+    notes: params.get("notes") ?? undefined,
+  }
+  return Object.values(prefill).some(Boolean) ? prefill : null
 }
 
 export default function ReservationCalendar() {
   const [currentDate, setCurrentDate] = useState<Date>(new Date())
-  const [selectedTimeRange, setSelectedTimeRange] = useState<{ start: string | null; end: string | null }>({
-    start: null,
-    end: null,
-  })
-  const [selectedAircraft, setSelectedAircraft] = useState<number | null>(null)
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [drag, setDrag] = useState<DragSelection | null>(null)
   const [isDragging, setIsDragging] = useState(false)
-  const [, setHoveredTime] = useState<string | null>(null)
+  const [slotSelection, setSlotSelection] = useState<SlotSelection | null>(null)
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [isNewDialogOpen, setIsNewDialogOpen] = useState(false)
+  const [prefill, setPrefill] = useState<NewReservationPrefill | undefined>(undefined)
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null)
   const [isReservationDialogOpen, setIsReservationDialogOpen] = useState(false)
   const [purpose, setPurpose] = useState("")
@@ -54,11 +108,12 @@ export default function ReservationCalendar() {
   const [editNotes, setEditNotes] = useState("")
   const [editFlightCategory, setEditFlightCategory] = useState("")
   const [isCreating, setIsCreating] = useState(false)
-  const [disabledDays, setDisabledDays] = useState<string[]>([])
-  const [hours, setHours] = useState<Date[]>([])
+  const [isUpdating, setIsUpdating] = useState(false)
+  const [mobileAircraftFilter, setMobileAircraftFilter] = useState<number | null>(null)
+  const currentHourRef = useRef<HTMLTableCellElement>(null)
   const userEmail = useCurrentUser()
   const userData = useUserData(userEmail)
-  const [userId, setUserId] = useState<string | null>(null)
+  const userId: string | number | null = userData?.id ?? null
   const { toast } = useToast()
 
   const formattedDate = format(currentDate, "yyyy-MM-dd")
@@ -74,74 +129,135 @@ export default function ReservationCalendar() {
     fetchPolicy: "network-only",
   })
 
-  useEffect(() => {
-    if (userData) {
-      setUserId(userData.id)
-    }
-  }, [userData])
-
   const { data: aircraftData, loading: loadingAircrafts } = useQuery(GET_AIRCRAFTS)
 
   const {
     data: reservationData,
     loading: loadingReservations,
     error: errorReservations,
+    refetch: refetchReservations,
   } = useQuery(GET_FILTERED_RESERVATIONS, {
     variables: { startDate: formattedDate, endDate: nextDate },
+    // Other pilots book too: a day already visited is shown at once, then refreshed.
+    fetchPolicy: "cache-and-network",
   })
 
-  useEffect(() => {
-    if (settingsData?.getAllAdministrations?.length > 0) {
-      const { closureDays, reservationStartTime, reservationEndTime } = settingsData.getAllAdministrations[0]
+  const refetchDay = [{ query: GET_FILTERED_RESERVATIONS, variables: { startDate: formattedDate, endDate: nextDate } }]
 
-      const newHours = eachHourOfInterval({
-        start: new Date(`${formattedDate}T${reservationStartTime}`),
-        end: new Date(`${formattedDate}T${reservationEndTime}`),
-      })
+  const administration = settingsData?.getAllAdministrations?.[0]
+  const disabledDays: string[] = useMemo(() => administration?.closureDays ?? [], [administration])
 
-      setHours(newHours)
-      setDisabledDays(closureDays)
+  // One column per bookable hour: the closing time ends the last slot, it does not start one.
+  const { slots, closingTime } = useMemo(() => {
+    if (!administration) return { slots: [] as Date[], closingTime: null as Date | null }
+    const opening = new Date(`${formattedDate}T${administration.reservationStartTime}`)
+    const closing = new Date(`${formattedDate}T${administration.reservationEndTime}`)
+    if (Number.isNaN(opening.getTime()) || Number.isNaN(closing.getTime()) || closing <= opening) {
+      return { slots: [] as Date[], closingTime: null as Date | null }
     }
-  }, [settingsData, formattedDate])
+    return {
+      slots: eachHourOfInterval({ start: opening, end: closing }).filter((hour) => hour < closing),
+      closingTime: closing,
+    }
+  }, [administration, formattedDate])
 
-  const normalizeDayName = (day: string) =>
-    day
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase()
-
-  const isDayClosed = () => {
-    const dayName = normalizeDayName(format(currentDate, "EEEE", { locale: fr }))
-    const normalizedDisabledDays = disabledDays.map(normalizeDayName)
-    return normalizedDisabledDays.includes(dayName)
+  const slotEnd = (index: number) => {
+    const end = addHours(slots[index], 1)
+    return closingTime && end > closingTime ? closingTime : end
   }
 
-  const handleMouseDown = (aircraftId: number, time: string) => {
-    setSelectedTimeRange({ start: time, end: null })
-    setSelectedAircraft(aircraftId)
+  const aircrafts: Aircraft[] = aircraftData?.getAircrafts ?? []
+  const dayReservations: Reservation[] = reservationData?.filteredReservations ?? []
+
+  const isClosedDay = (date: Date) =>
+    disabledDays.map(normalizeDayName).includes(normalizeDayName(format(date, "EEEE", { locale: fr })))
+  const dayClosed = isClosedDay(currentDate)
+
+  const now = new Date()
+  const currentSlotIndex = isSameDay(currentDate, now)
+    ? slots.findIndex((slot, index) => slot <= now && now < slotEnd(index))
+    : -1
+
+  const loading = (loadingReservations && !reservationData) || loadingAircrafts || loadingSettings
+
+  // Open the form pre-filled when the page is reached from a reservation template.
+  useEffect(() => {
+    const fromUrl = readPrefillFromUrl()
+    if (!fromUrl) return
+    setPrefill(fromUrl)
+    setIsNewDialogOpen(true)
+    window.history.replaceState(null, "", window.location.pathname)
+  }, [])
+
+  // Bring the current hour into view when the grid is wider than the screen.
+  useEffect(() => {
+    const cell = currentHourRef.current
+    const scroller = cell?.closest("div")
+    if (!cell || !scroller) return
+    scroller.scrollLeft = Math.max(0, cell.offsetLeft - scroller.clientWidth / 2)
+  }, [formattedDate, loading, currentSlotIndex])
+
+  const isOwnReservation = (reservation: Reservation) => {
+    const ownerId = reservation.user?.id
+    return userId != null && ownerId != null && String(userId) === String(ownerId)
+  }
+
+  const reservationsOverlapping = (aircraftId: number, start: Date, end: Date) =>
+    dayReservations.filter(
+      (reservation) =>
+        String(reservation.aircraft.id) === String(aircraftId) &&
+        new Date(reservation.start_time) < end &&
+        new Date(reservation.end_time) > start,
+    )
+
+  const resetSlotForm = () => {
+    setPurpose("")
+    setNotes("")
+    setFlightCategory("")
+    setDrag(null)
+    setSlotSelection(null)
+  }
+
+  const finishSelection = (aircraftId: number, from: number, to: number) => {
+    const first = Math.min(from, to)
+    const last = Math.max(from, to)
+    const start = slots[first]
+    const end = slotEnd(last)
+
+    if (reservationsOverlapping(aircraftId, start, end).length > 0) {
+      setDrag(null)
+      toast({
+        variant: "destructive",
+        title: "Créneau indisponible",
+        description: "La sélection chevauche une réservation existante. Choisissez uniquement des créneaux libres.",
+      })
+      return
+    }
+
+    setSlotSelection({ aircraftId, start, end })
+    setIsCreateDialogOpen(true)
+  }
+
+  const handleMouseDown = (aircraftId: number, index: number) => {
+    setDrag({ aircraftId, anchor: index, current: index })
     setIsDragging(true)
   }
 
-  const handleMouseEnter = (hour: Date) => {
-    if (isDragging) {
-      const timeString = format(hour, "HH:mm")
-      setHoveredTime(timeString)
-      setSelectedTimeRange((prev) => ({ ...prev, end: timeString }))
+  const handleMouseEnter = (aircraftId: number, index: number) => {
+    if (isDragging && drag?.aircraftId === aircraftId) {
+      setDrag({ ...drag, current: index })
     }
   }
 
   const handleMouseUp = () => {
-    if (selectedTimeRange.start && selectedTimeRange.end && selectedAircraft) {
-      const start = selectedTimeRange.start
-      const end = selectedTimeRange.end
-
-      if (start > end) {
-        setSelectedTimeRange({ start: end, end: start })
-      }
-
-      setIsCreateDialogOpen(true)
-    }
+    if (!isDragging) return
     setIsDragging(false)
+    if (drag) finishSelection(drag.aircraftId, drag.anchor, drag.current)
+  }
+
+  const handleKeyboardSelect = (aircraftId: number, index: number) => {
+    setDrag({ aircraftId, anchor: index, current: index })
+    finishSelection(aircraftId, index, index)
   }
 
   const handleReservationClick = (reservation: Reservation) => {
@@ -158,402 +274,460 @@ export default function ReservationCalendar() {
     setIsEditDialogOpen(true)
   }
 
-  const handleCreateReservation = async () => {
+  // Returns true when the reservation was created.
+  const createFrom = async (values: NewReservationValues): Promise<boolean> => {
     if (!userId) {
       toast({
         variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de trouver l'utilisateur actuel.",
+        title: "Réservation impossible",
+        description: "Votre compte n'est pas encore chargé. Réessayez dans un instant.",
       })
-      return
+      return false
     }
 
-    if (!flightCategory) {
+    if (!values.flightCategory) {
       toast({
         variant: "destructive",
         title: "Catégorie de vol manquante",
         description: "Veuillez sélectionner une catégorie de vol.",
       })
-      return
+      return false
     }
 
     setIsCreating(true)
     try {
-      const startTime = new Date(`${formattedDate}T${selectedTimeRange.start}`)
-      const endTime = new Date(`${formattedDate}T${selectedTimeRange.end}`)
-      const estimatedFlightHours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60)
+      const estimatedFlightHours = (values.endTime.getTime() - values.startTime.getTime()) / (1000 * 60 * 60)
 
       await createReservation({
         variables: {
           input: {
-            aircraft_id: selectedAircraft,
-            start_time: startTime,
-            end_time: endTime,
-            purpose,
+            aircraft_id: values.aircraftId,
+            start_time: values.startTime,
+            end_time: values.endTime,
+            purpose: values.purpose,
             user_id: userId,
             estimated_flight_hours: estimatedFlightHours,
             status: ReservationStatus.PENDING,
-            notes,
-            flight_category: flightCategory,
+            notes: values.notes,
+            flight_category: values.flightCategory,
           },
         },
-        refetchQueries: [
-          { query: GET_FILTERED_RESERVATIONS, variables: { startDate: formattedDate, endDate: nextDate } },
-        ],
+        refetchQueries: refetchDay,
       })
 
+      const registration = aircrafts.find((a) => String(a.id) === String(values.aircraftId))?.registration_number
       toast({
-        title: "Réservation créée avec succès",
-        description: "Votre réservation a été ajoutée.",
+        title: "Réservation créée",
+        description: `${registration ?? "Avion"} · ${formatDate(values.startTime)} de ${formatTime(values.startTime)} à ${formatTime(values.endTime)}`,
       })
-
-      setPurpose("")
-      setNotes("")
-      setFlightCategory("")
-      setIsCreateDialogOpen(false)
+      return true
     } catch (error) {
-      console.error("Erreur Apollo Client:", error)
       toast({
         variant: "destructive",
-        title: "Erreur lors de la création",
-        description: (error as any).message || "Une erreur inconnue est survenue.",
+        title: "Réservation refusée",
+        description: creationErrorMessage(error),
       })
+      return false
     } finally {
       setIsCreating(false)
     }
   }
 
-  const handleCreateMobileReservation = async (aircraftId: number, startTime: Date, endTime: Date) => {
-    if (!userId) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de trouver l'utilisateur actuel.",
-      })
-      return
-    }
-
-    if (!flightCategory) {
-      toast({
-        variant: "destructive",
-        title: "Catégorie de vol manquante",
-        description: "Veuillez sélectionner une catégorie de vol.",
-      })
-      return
-    }
-
-    setIsCreating(true)
-    try {
-      const estimatedFlightHours = (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60)
-
-      await createReservation({
-        variables: {
-          input: {
-            aircraft_id: aircraftId,
-            start_time: startTime,
-            end_time: endTime,
-            purpose,
-            user_id: userId,
-            estimated_flight_hours: estimatedFlightHours,
-            status: ReservationStatus.PENDING,
-            notes,
-            flight_category: flightCategory,
-          },
-        },
-        refetchQueries: [
-          { query: GET_FILTERED_RESERVATIONS, variables: { startDate: formattedDate, endDate: nextDate } },
-        ],
-      })
-
-      toast({
-        title: "Réservation créée avec succès",
-        description: "Votre réservation a été ajoutée.",
-      })
-
-      setPurpose("")
-      setNotes("")
-      setFlightCategory("")
+  const handleCreateFromSlot = async () => {
+    if (!slotSelection) return
+    const created = await createFrom({
+      aircraftId: slotSelection.aircraftId,
+      startTime: slotSelection.start,
+      endTime: slotSelection.end,
+      purpose,
+      notes,
+      flightCategory,
+    })
+    if (created) {
       setIsCreateDialogOpen(false)
-    } catch (error) {
-      console.error("Erreur Apollo Client:", error)
-      toast({
-        variant: "destructive",
-        title: "Erreur lors de la création",
-        description: (error as any).message || "Une erreur inconnue est survenue.",
-      })
-    } finally {
-      setIsCreating(false)
+      resetSlotForm()
+    }
+  }
+
+  const handleCreateFromForm = async (values: NewReservationValues) => {
+    const created = await createFrom(values)
+    if (created) {
+      setIsNewDialogOpen(false)
+      setPrefill(undefined)
+      // Show the day that was just booked.
+      if (!isSameDay(values.startTime, currentDate)) setCurrentDate(values.startTime)
     }
   }
 
   const handleUpdateReservation = async () => {
-    if (selectedReservation) {
-      try {
-        await updateReservation({
-          variables: {
-            input: {
-              id: selectedReservation.id,
-              purpose: editPurpose || selectedReservation.purpose,
-              notes: editNotes || selectedReservation.notes,
-              flight_category: editFlightCategory || selectedReservation.flight_category,
-            },
-          },
-          refetchQueries: [
-            { query: GET_FILTERED_RESERVATIONS, variables: { startDate: formattedDate, endDate: nextDate } },
-          ],
-        })
+    if (!selectedReservation) return
 
-        setIsEditDialogOpen(false)
-        toast({
-          title: "Réservation mise à jour",
-          description: `La réservation pour l'avion ${selectedReservation.aircraft.registration_number} a été mise à jour.`,
-        })
-      } catch {
-        toast({
-          variant: "destructive",
-          title: "Erreur lors de la mise à jour",
-          description: "Une erreur est survenue lors de la mise à jour de la réservation.",
-        })
-      }
+    setIsUpdating(true)
+    try {
+      await updateReservation({
+        variables: {
+          input: {
+            id: selectedReservation.id,
+            purpose: editPurpose,
+            notes: editNotes,
+            flight_category: editFlightCategory || selectedReservation.flight_category,
+          },
+        },
+        refetchQueries: refetchDay,
+      })
+
+      setIsEditDialogOpen(false)
+      toast({
+        title: "Réservation mise à jour",
+        description: `La réservation de ${selectedReservation.aircraft.registration_number} a été modifiée.`,
+      })
+    } catch {
+      toast({
+        variant: "destructive",
+        title: "Modification impossible",
+        description: "La réservation n'a pas pu être modifiée. Réessayez dans un instant.",
+      })
+    } finally {
+      setIsUpdating(false)
     }
   }
 
   const handleDeleteReservation = async () => {
-    if (selectedReservation) {
-      try {
-        await deleteReservation({
-          variables: {
-            id: selectedReservation.id,
-          },
-          refetchQueries: [
-            { query: GET_FILTERED_RESERVATIONS, variables: { startDate: formattedDate, endDate: nextDate } },
-          ],
-        })
+    if (!selectedReservation) return
 
-        setIsReservationDialogOpen(false)
-        toast({
-          title: "Réservation supprimée",
-          description: `La réservation pour l'avion ${selectedReservation.aircraft.registration_number} a été supprimée.`,
-        })
-      } catch {
-        toast({
-          variant: "destructive",
-          title: "Erreur lors de la suppression",
-          description: "Une erreur est survenue lors de la suppression de la réservation.",
-        })
-      }
+    try {
+      await deleteReservation({
+        variables: {
+          id: selectedReservation.id,
+        },
+        refetchQueries: refetchDay,
+      })
+
+      setIsReservationDialogOpen(false)
+      toast({
+        title: "Réservation supprimée",
+        description: `La réservation de ${selectedReservation.aircraft.registration_number} a été supprimée.`,
+      })
+    } catch {
+      toast({
+        variant: "destructive",
+        title: "Suppression impossible",
+        description: "La réservation n'a pas pu être supprimée. Réessayez dans un instant.",
+      })
     }
   }
 
-  const renderCalendarGrid = () => {
-    if (!aircraftData || !reservationData || !hours.length) return null
+  const renderRow = (aircraft: Aircraft) => {
+    const cells: React.ReactNode[] = []
+    let index = 0
 
-    return aircraftData.getAircrafts.map((aircraft: Aircraft) => {
-      let skipHours = 0
+    while (index < slots.length) {
+      const slotIndex = index
+      const slot = slots[slotIndex]
+      const reservation = reservationsOverlapping(aircraft.id, slot, slotEnd(slotIndex))[0]
 
-      return (
-        <TableRow key={aircraft.id}>
-          <TableCell className="font-medium whitespace-nowrap sticky left-0 bg-background z-10 border-r">
-            {aircraft.registration_number}
-          </TableCell>
+      if (reservation) {
+        // The block covers every following slot the reservation still runs into.
+        let span = 1
+        while (slotIndex + span < slots.length && new Date(reservation.end_time) > slots[slotIndex + span]) {
+          span++
+        }
+        cells.push(
+          <ReservationCell
+            key={slotIndex}
+            reservation={reservation}
+            colSpan={span}
+            isMine={isOwnReservation(reservation)}
+            onClick={() => handleReservationClick(reservation)}
+          />,
+        )
+        index += span
+        continue
+      }
 
-          {hours.map((hour, index) => {
-            if (skipHours > 0) {
-              skipHours--
-              return null
-            }
+      const isSelected =
+        drag !== null &&
+        drag.aircraftId === aircraft.id &&
+        slotIndex >= Math.min(drag.anchor, drag.current) &&
+        slotIndex <= Math.max(drag.anchor, drag.current)
 
-            const timeString = format(hour, "HH:mm")
-
-            if (
-              settingsData?.getAllAdministrations?.length > 0 &&
-              (isBefore(
-                hour,
-                new Date(`${formattedDate}T${settingsData.getAllAdministrations[0].reservationStartTime}`),
-              ) ||
-                isAfter(hour, new Date(`${formattedDate}T${settingsData.getAllAdministrations[0].reservationEndTime}`)))
-            ) {
-              return <TableCell key={index} className="bg-muted cursor-not-allowed p-0 h-12" />
-            }
-
-            const reservationForAircraft = reservationData.filteredReservations.find(
-              (reservation: Reservation) =>
-                reservation.aircraft.id === aircraft.id &&
-                new Date(reservation.start_time) <= hour &&
-                new Date(reservation.end_time) > hour,
-            )
-
-            if (reservationForAircraft) {
-              const durationHours =
-                (new Date(reservationForAircraft.end_time).getTime() -
-                  new Date(reservationForAircraft.start_time).getTime()) /
-                3600000
-              const colSpan = Math.floor(durationHours)
-              skipHours = colSpan - 1
-
-              return (
-                <ReservationCell
-                  key={index}
-                  reservation={reservationForAircraft}
-                  colSpan={colSpan}
-                  onClick={() => handleReservationClick(reservationForAircraft)}
-                />
-              )
-            } else {
-              const isSelectedRange =
-                selectedTimeRange.start &&
-                selectedTimeRange.end &&
-                selectedAircraft === aircraft.id &&
-                timeString >= selectedTimeRange.start &&
-                timeString <= selectedTimeRange.end
-
-              return (
-                <FreeCell
-                  key={index}
-                  isSelected={!!isSelectedRange}
-                  onMouseDown={() => handleMouseDown(aircraft.id, timeString)}
-                  onMouseEnter={() => handleMouseEnter(hour)}
-                  onMouseUp={handleMouseUp}
-                />
-              )
-            }
-          })}
-        </TableRow>
+      cells.push(
+        <FreeCell
+          key={slotIndex}
+          label={`Réserver ${aircraft.registration_number} à ${format(slot, "HH:mm")}`}
+          isSelected={isSelected}
+          isCurrentHour={slotIndex === currentSlotIndex}
+          onMouseDown={() => handleMouseDown(aircraft.id, slotIndex)}
+          onMouseEnter={() => handleMouseEnter(aircraft.id, slotIndex)}
+          onActivate={() => handleKeyboardSelect(aircraft.id, slotIndex)}
+        />,
       )
-    })
-  }
+      index++
+    }
 
-  const canEditReservation = (reservation: Reservation) => {
-    const ownerId = reservation.user?.id
-    return userId != null && ownerId != null && String(userId) === String(ownerId)
-  }
-
-  if (loadingReservations || loadingAircrafts || loadingSettings) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-12 w-64" />
-        <Skeleton className="h-8 w-full" />
-        <Skeleton className="h-[500px] w-full" />
+      <TableRow key={aircraft.id} className="hover:bg-transparent">
+        <TableCell className="sticky left-0 z-10 whitespace-nowrap border-r bg-background py-2">
+          <span className="font-medium">{aircraft.registration_number}</span>
+          {aircraft.model && <span className="block text-xs text-muted-foreground">{aircraft.model}</span>}
+          {aircraft.availability_status === "UNAVAILABLE" && (
+            <Badge variant="neutral" className="mt-1">
+              Indisponible
+            </Badge>
+          )}
+        </TableCell>
+        {cells}
+      </TableRow>
+    )
+  }
+
+  const renderDay = () => {
+    if (loading) {
+      return (
+        <div className="space-y-2">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+        </div>
+      )
+    }
+
+    if (errorReservations) {
+      return (
+        <ErrorState
+          description="Les réservations de cette journée n'ont pas pu être chargées. Vérifiez votre connexion puis réessayez."
+          onRetry={() => refetchReservations()}
+        />
+      )
+    }
+
+    if (dayClosed) {
+      return (
+        <Alert className="border-warning/30 bg-warning/10 text-warning [&>svg]:text-warning">
+          <CalendarOff className="h-4 w-4" />
+          <AlertTitle>Aéroclub fermé</AlertTitle>
+          <AlertDescription>
+            Votre aéroclub est fermé ce jour ({format(currentDate, "EEEE", { locale: fr })})
+          </AlertDescription>
+        </Alert>
+      )
+    }
+
+    if (aircrafts.length === 0) {
+      return (
+        <EmptyState
+          icon={Plane}
+          title="Aucun avion à réserver"
+          description="Les avions du club apparaîtront ici dès qu'ils seront ajoutés à la flotte."
+        />
+      )
+    }
+
+    if (isMobile) {
+      return (
+        <MobileReservationView
+          currentDate={currentDate}
+          aircrafts={aircrafts}
+          reservations={dayReservations}
+          selectedAircraft={mobileAircraftFilter}
+          setSelectedAircraft={setMobileAircraftFilter}
+          currentUserId={userId}
+          onViewReservation={handleReservationClick}
+        />
+      )
+    }
+
+    if (slots.length === 0) {
+      return (
+        <EmptyState
+          icon={Clock}
+          title="Horaires de réservation non définis"
+          description="Un administrateur doit renseigner les heures d'ouverture du club dans les paramètres."
+        />
+      )
+    }
+
+    return (
+      <div className="space-y-3">
+        <div
+          className="overflow-hidden rounded-lg border"
+          onMouseUp={handleMouseUp}
+          onMouseLeave={() => {
+            if (isDragging) {
+              setIsDragging(false)
+              setDrag(null)
+            }
+          }}
+        >
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="sticky left-0 z-20 min-w-[120px] border-r bg-muted">Avion</TableHead>
+                {slots.map((slot, index) => (
+                  <TableHead
+                    key={index}
+                    ref={index === currentSlotIndex ? currentHourRef : undefined}
+                    aria-current={index === currentSlotIndex ? "time" : undefined}
+                    className={cn(
+                      "min-w-[76px] px-2 text-center tabular-nums",
+                      index === currentSlotIndex && "bg-primary/10 font-semibold text-primary",
+                    )}
+                  >
+                    {format(slot, "HH:mm")}
+                  </TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>{aircrafts.map(renderRow)}</TableBody>
+          </Table>
+        </div>
+
+        <div className="flex flex-col gap-2 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+          <ul className="flex flex-wrap items-center gap-x-4 gap-y-1" aria-label="Légende">
+            {LEGEND_STATUSES.map((status) => (
+              <li key={status} className="flex items-center gap-1.5">
+                <span className={cn("h-2.5 w-2.5 rounded-sm", reservationDotClass(status))} aria-hidden="true" />
+                {reservationStatus(status).label}
+              </li>
+            ))}
+            {currentSlotIndex >= 0 && (
+              <li className="flex items-center gap-1.5">
+                <span className="h-2.5 w-2.5 rounded-sm bg-primary/30" aria-hidden="true" />
+                Heure en cours
+              </li>
+            )}
+          </ul>
+          <p>Cliquez sur un créneau libre, ou glissez sur plusieurs, pour réserver.</p>
+        </div>
       </div>
     )
   }
 
-  if (errorReservations) {
-    return (
-      <Card className="border-destructive/30 bg-destructive/10">
-        <CardContent className="p-6 text-destructive flex items-center">
-          <AlertTriangle className="h-6 w-6 mr-3" />
-          <div>
-            <h3 className="font-semibold">Erreur de chargement</h3>
-            <p>Impossible de charger les réservations. Veuillez réessayer plus tard.</p>
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
+  const selectedAircraftRegistration = slotSelection
+    ? (aircrafts.find((a) => a.id === slotSelection.aircraftId)?.registration_number ?? "")
+    : ""
 
   return (
     <div className="space-y-6">
-      <ReservationHeader
-        currentDate={currentDate}
-        setCurrentDate={setCurrentDate}
-        disabledDays={disabledDays}
-        isDayClosed={isDayClosed()}
+      <PageHeader
+        className="mb-0"
+        title="Calendrier des réservations"
+        description="Disponibilité des avions du club, jour par jour."
+        actions={
+          <Button onClick={() => setIsNewDialogOpen(true)} disabled={aircrafts.length === 0}>
+            <Plus className="h-4 w-4" />
+            Nouvelle réservation
+          </Button>
+        }
       />
 
-      {!isDayClosed() && (
-        <>
-          {/* Vue mobile */}
-          {isMobile ? (
-            <MobileReservationView
-              currentDate={currentDate}
-              aircrafts={aircraftData.getAircrafts}
-              reservations={reservationData.filteredReservations}
-              selectedAircraft={selectedAircraft}
-              setSelectedAircraft={setSelectedAircraft}
-              onCreateReservation={() => setIsCreateDialogOpen(true)}
-              onViewReservation={handleReservationClick}
-            />
-          ) : (
-            /* Vue desktop */
-            <div className="overflow-x-auto rounded-lg border shadow-sm">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="sticky left-0 z-20 bg-muted">Avion</TableHead>
-                    {hours.map((hour, index) => (
-                      <TableHead key={index} className="text-center min-w-[80px] p-2">
-                        {format(hour, "HH:mm")}
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>{renderCalendarGrid()}</TableBody>
-              </Table>
-            </div>
-          )}
-        </>
-      )}
+      <DateNavigator currentDate={currentDate} setCurrentDate={setCurrentDate} isClosedDay={isClosedDay} />
 
-      {/* Dialogue de création de réservation */}
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogTitle>Créer une réservation</DialogTitle>
-          {isMobile ? (
-            <MobileReservationForm
-              aircrafts={aircraftData.getAircrafts}
-              currentDate={currentDate}
-              purpose={purpose}
-              setPurpose={setPurpose}
-              notes={notes}
-              setNotes={setNotes}
-              flightCategory={flightCategory}
-              setFlightCategory={setFlightCategory}
-              onSubmit={handleCreateMobileReservation}
-              isSubmitting={isCreating}
-              disabledDays={disabledDays}
-            />
-          ) : (
+      {renderDay()}
+
+      {/* Creation from the slots selected in the grid */}
+      <Dialog
+        open={isCreateDialogOpen}
+        onOpenChange={(open) => {
+          setIsCreateDialogOpen(open)
+          if (!open) resetSlotForm()
+        }}
+      >
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Créer une réservation</DialogTitle>
+            <DialogDescription>Vérifiez le créneau choisi, puis précisez votre vol.</DialogDescription>
+          </DialogHeader>
+          {slotSelection && (
             <ReservationForm
-              selectedAircraft={selectedAircraft}
-              aircraftData={aircraftData}
-              selectedTimeRange={selectedTimeRange}
-              currentDate={currentDate}
+              summary={{
+                aircraft: selectedAircraftRegistration,
+                date: longDate(slotSelection.start),
+                start: format(slotSelection.start, "HH:mm"),
+                end: format(slotSelection.end, "HH:mm"),
+              }}
               purpose={purpose}
               setPurpose={setPurpose}
               notes={notes}
               setNotes={setNotes}
               flightCategory={flightCategory}
               setFlightCategory={setFlightCategory}
-              onSubmit={handleCreateReservation}
+              onSubmit={handleCreateFromSlot}
+              onCancel={() => {
+                setIsCreateDialogOpen(false)
+                resetSlotForm()
+              }}
               isSubmitting={isCreating}
             />
           )}
         </DialogContent>
       </Dialog>
 
-      {/* Dialogue de détails de réservation */}
-      {selectedReservation && (
-        <Dialog open={isReservationDialogOpen} onOpenChange={setIsReservationDialogOpen}>
-          <DialogContent className="sm:max-w-md">
-            <DialogTitle>Détails de la réservation</DialogTitle>
-            <ReservationDetail
-              reservation={selectedReservation}
-              onEdit={() => handleUpdate(selectedReservation)}
-              onDelete={handleDeleteReservation}
-              canEdit={canEditReservation(selectedReservation)}
+      {/* Creation from the "Nouvelle réservation" button or a template */}
+      {aircrafts.length > 0 && (
+        <Dialog
+          open={isNewDialogOpen}
+          onOpenChange={(open) => {
+            setIsNewDialogOpen(open)
+            if (!open) setPrefill(undefined)
+          }}
+        >
+          <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Nouvelle réservation</DialogTitle>
+              <DialogDescription>Choisissez l&apos;avion, le jour et l&apos;horaire de votre vol.</DialogDescription>
+            </DialogHeader>
+            <NewReservationForm
+              aircrafts={aircrafts}
+              currentDate={currentDate}
+              prefill={prefill}
+              isClosedDay={isClosedDay}
+              onSubmit={handleCreateFromForm}
+              onCancel={() => {
+                setIsNewDialogOpen(false)
+                setPrefill(undefined)
+              }}
+              isSubmitting={isCreating}
             />
           </DialogContent>
         </Dialog>
       )}
 
-      {/* Dialogue de modification de réservation */}
+      {selectedReservation && (
+        <Dialog open={isReservationDialogOpen} onOpenChange={setIsReservationDialogOpen}>
+          <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Détails de la réservation</DialogTitle>
+              <DialogDescription className="sr-only">
+                Informations de la réservation sélectionnée dans le calendrier.
+              </DialogDescription>
+            </DialogHeader>
+            <ReservationDetail
+              reservation={selectedReservation}
+              onEdit={() => handleUpdate(selectedReservation)}
+              onDelete={handleDeleteReservation}
+              canEdit={isOwnReservation(selectedReservation)}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
+
       {selectedReservation && (
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="sm:max-w-md">
-            <DialogTitle>Modifier la réservation</DialogTitle>
+          <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Modifier la réservation</DialogTitle>
+              <DialogDescription>L&apos;avion et l&apos;horaire ne sont pas modifiables.</DialogDescription>
+            </DialogHeader>
             <ReservationForm
-              isEdit={true}
+              isEdit
+              summary={{
+                aircraft: selectedReservation.aircraft.registration_number,
+                date: longDate(new Date(selectedReservation.start_time)),
+                start: format(new Date(selectedReservation.start_time), "HH:mm"),
+                end: format(new Date(selectedReservation.end_time), "HH:mm"),
+              }}
               purpose={editPurpose}
               setPurpose={setEditPurpose}
               notes={editNotes}
@@ -561,9 +735,8 @@ export default function ReservationCalendar() {
               flightCategory={editFlightCategory}
               setFlightCategory={setEditFlightCategory}
               onSubmit={handleUpdateReservation}
-              isSubmitting={false}
-              startTime={format(new Date(selectedReservation.start_time), "HH:mm")}
-              endTime={format(new Date(selectedReservation.end_time), "HH:mm")}
+              onCancel={() => setIsEditDialogOpen(false)}
+              isSubmitting={isUpdating}
             />
           </DialogContent>
         </Dialog>

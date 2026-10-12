@@ -1,11 +1,13 @@
 "use client"
 
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Search, Filter, SortAsc, SortDesc, X } from "lucide-react"
+import { Search, X } from "lucide-react"
+import { reservationStatus } from "@/lib/reservation-status"
+import { FLIGHT_CATEGORY_OPTIONS } from "@/components/reservation/flight-category"
+
+export type ReservationSortOrder = "newest" | "oldest"
 
 interface ReservationFiltersProps {
   searchTerm: string
@@ -14,13 +16,15 @@ interface ReservationFiltersProps {
   setStatusFilter: (value: string) => void
   categoryFilter: string
   setCategoryFilter: (value: string) => void
-  sortOrder: "newest" | "oldest"
-  setSortOrder: (value: "newest" | "oldest") => void
-  flightCategoryMapping: Record<string, string>
+  sortOrder: ReservationSortOrder
+  setSortOrder: (value: ReservationSortOrder) => void
   resetFilters: () => void
   hasActiveFilters: boolean
 }
 
+const STATUSES = ["PENDING", "CONFIRMED", "CANCELLED"]
+
+/** One-row toolbar of "Mes réservations": search, status, category, sort. */
 export function ReservationFilters({
   searchTerm,
   setSearchTerm,
@@ -30,112 +34,67 @@ export function ReservationFilters({
   setCategoryFilter,
   sortOrder,
   setSortOrder,
-  flightCategoryMapping,
   resetFilters,
   hasActiveFilters,
 }: ReservationFiltersProps) {
   return (
-    <Card className="mb-6">
-      <CardContent className="pt-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="search" className="flex items-center gap-2">
-              <Search className="h-4 w-4" />
-              Recherche
-            </Label>
-            <div className="relative">
-              <Input
-                id="search"
-                placeholder="But ou immatriculation"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pr-8"
-              />
-              {searchTerm && (
-                <button
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  onClick={() => setSearchTerm("")}
-                  aria-label="Effacer la recherche"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-          </div>
+    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+      <div className="relative sm:w-full sm:max-w-xs">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          type="search"
+          aria-label="Rechercher une réservation"
+          placeholder="But ou immatriculation"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-9"
+        />
+      </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="status" className="flex items-center gap-2">
-              <Filter className="h-4 w-4" />
-              Statut
-            </Label>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger id="status">
-                <SelectValue placeholder="Tous les statuts" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">Tous les statuts</SelectItem>
-                <SelectItem value="PENDING">En attente</SelectItem>
-                <SelectItem value="CONFIRMED">Confirmé</SelectItem>
-                <SelectItem value="CANCELLED">Annulé</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+      <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <SelectTrigger aria-label="Filtrer par statut" className="sm:w-[170px]">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="ALL">Tous les statuts</SelectItem>
+          {STATUSES.map((status) => (
+            <SelectItem key={status} value={status}>
+              {reservationStatus(status).label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
-          <div className="space-y-2">
-            <Label htmlFor="category" className="flex items-center gap-2">
-              <Filter className="h-4 w-4" />
-              Catégorie
-            </Label>
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger id="category">
-                <SelectValue placeholder="Toutes les catégories" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">Toutes les catégories</SelectItem>
-                {Object.entries(flightCategoryMapping).map(([key, value]) => (
-                  <SelectItem key={key} value={key}>
-                    {value}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+      <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+        <SelectTrigger aria-label="Filtrer par catégorie de vol" className="sm:w-[190px]">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="ALL">Toutes les catégories</SelectItem>
+          {FLIGHT_CATEGORY_OPTIONS.map((category) => (
+            <SelectItem key={category.value} value={category.value}>
+              {category.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              {sortOrder === "newest" ? <SortDesc className="h-4 w-4" /> : <SortAsc className="h-4 w-4" />}
-              Tri
-            </Label>
-            <div className="flex gap-2">
-              <Button
-                variant={sortOrder === "newest" ? "default" : "outline"}
-                size="sm"
-                className="flex-1"
-                onClick={() => setSortOrder("newest")}
-              >
-                Plus récent
-              </Button>
-              <Button
-                variant={sortOrder === "oldest" ? "default" : "outline"}
-                size="sm"
-                className="flex-1"
-                onClick={() => setSortOrder("oldest")}
-              >
-                Plus ancien
-              </Button>
-            </div>
-          </div>
-        </div>
+      <Select value={sortOrder} onValueChange={(value) => setSortOrder(value as ReservationSortOrder)}>
+        <SelectTrigger aria-label="Trier les réservations" className="sm:w-[200px]">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="newest">Plus récentes d&apos;abord</SelectItem>
+          <SelectItem value="oldest">Plus anciennes d&apos;abord</SelectItem>
+        </SelectContent>
+      </Select>
 
-        {hasActiveFilters && (
-          <div className="mt-4 flex justify-end">
-            <Button variant="ghost" size="sm" onClick={resetFilters} className="text-muted-foreground">
-              <X className="h-4 w-4 mr-1" />
-              Réinitialiser les filtres
-            </Button>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+      {hasActiveFilters && (
+        <Button variant="ghost" size="sm" onClick={resetFilters} className="self-start text-muted-foreground sm:self-auto">
+          <X className="h-4 w-4" />
+          Réinitialiser
+        </Button>
+      )}
+    </div>
   )
 }

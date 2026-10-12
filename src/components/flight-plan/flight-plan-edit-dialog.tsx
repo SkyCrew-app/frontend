@@ -1,85 +1,88 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Dialog, DialogContent, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Loader2, Plane, Cloud, Users } from "lucide-react"
+import { Loader2 } from "lucide-react"
 import type { Flight } from "@/interfaces/flight"
+import { FLIGHT_RULE_OPTIONS, flightTypeLabel } from "@/components/flight/flight-type"
 
 interface FlightPlanEditDialogProps {
   isOpen: boolean
   onOpenChange: (open: boolean) => void
   flight: Flight | null
-  onSave: (flightType: string, weatherConditions: string, numberOfPassengers: number | undefined) => Promise<void>
-  flightTypeTranslations: Record<string, string>
+  /** `weatherConditions` is undefined when the list did not load it: it must then be left untouched. */
+  onSave: (
+    flightType: string,
+    weatherConditions: string | undefined,
+    numberOfPassengers: number | undefined,
+  ) => Promise<void>
 }
 
-export function FlightPlanEditDialog({
-  isOpen,
-  onOpenChange,
-  flight,
-  onSave,
-  flightTypeTranslations,
-}: FlightPlanEditDialogProps) {
+export function FlightPlanEditDialog({ isOpen, onOpenChange, flight, onSave }: FlightPlanEditDialogProps) {
   const [flightType, setFlightType] = useState("")
   const [weatherConditions, setWeatherConditions] = useState("")
   const [numberOfPassengers, setNumberOfPassengers] = useState<number | undefined>(undefined)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  // Only offer the weather field when the current value is known, so it is never wiped by mistake.
+  const weatherKnown = flight?.weather_conditions !== undefined
+
   useEffect(() => {
-    if (flight) {
+    if (flight && isOpen) {
       setFlightType(flight.flight_type || "")
       setWeatherConditions(flight.weather_conditions || "")
       setNumberOfPassengers(flight.number_of_passengers)
     }
-  }, [flight])
+  }, [flight, isOpen])
 
-  const handleSave = async () => {
-    if (!flight) return
+  if (!flight) return null
 
+  const typeOptions = FLIGHT_RULE_OPTIONS.some((option) => option.value === flight.flight_type)
+    ? FLIGHT_RULE_OPTIONS
+    : [...FLIGHT_RULE_OPTIONS, { value: flight.flight_type, label: flightTypeLabel(flight.flight_type) }]
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault()
     setIsSubmitting(true)
     try {
-      await onSave(flightType, weatherConditions, numberOfPassengers)
+      await onSave(flightType, weatherKnown ? weatherConditions : undefined, numberOfPassengers)
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  if (!flight) return null
-
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogTitle>Modifier le plan de vol</DialogTitle>
-        <div className="grid gap-4 py-4">
-          <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
-            <Plane className="h-5 w-5 text-primary" />
-            <div>
-              <span className="font-medium">{flight.origin_icao}</span> →{" "}
-              <span className="font-medium">{flight.destination_icao}</span>
-              {flight.distance_km && (
-                <span className="text-sm text-muted-foreground ml-2">({flight.distance_km.toFixed(0)} km)</span>
-              )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Modifier le plan de vol</DialogTitle>
+          <DialogDescription>
+            {flight.origin_icao} → {flight.destination_icao}. La route se modifie en créant un nouveau plan.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="flight-type" className="flex items-center gap-2">
-                <Cloud className="h-4 w-4" />
-                Type de vol
-              </Label>
+              <Label htmlFor="flight-type">Type de vol</Label>
               <Select value={flightType} onValueChange={setFlightType}>
                 <SelectTrigger id="flight-type">
-                  <SelectValue placeholder="Type de vol" />
+                  <SelectValue placeholder="Sélectionner" />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.entries(flightTypeTranslations).map(([key, value]) => (
-                    <SelectItem key={key} value={key}>
-                      {value}
+                  {typeOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -87,47 +90,46 @@ export function FlightPlanEditDialog({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="weather-conditions" className="flex items-center gap-2">
-                <Cloud className="h-4 w-4" />
-                Conditions météo
-              </Label>
-              <Input
-                id="weather-conditions"
-                value={weatherConditions}
-                onChange={(e) => setWeatherConditions(e.target.value)}
-                placeholder="Ex: CAVOK, Nuageux, Pluie légère..."
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="number-of-passengers" className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                Nombre de passagers
-              </Label>
+              <Label htmlFor="number-of-passengers">Passagers</Label>
               <Input
                 id="number-of-passengers"
                 type="number"
-                min="0"
-                max="20"
+                inputMode="numeric"
+                min={0}
+                max={20}
+                step={1}
                 value={numberOfPassengers === undefined ? "" : numberOfPassengers}
                 onChange={(e) => {
-                  const value = e.target.value === "" ? undefined : Number.parseInt(e.target.value)
-                  setNumberOfPassengers(value)
+                  const value = e.target.value === "" ? undefined : Number.parseInt(e.target.value, 10)
+                  setNumberOfPassengers(Number.isNaN(value) ? undefined : value)
                 }}
                 placeholder="0"
               />
             </div>
           </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
-            Annuler
-          </Button>
-          <Button onClick={handleSave} disabled={isSubmitting}>
-            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Sauvegarder
-          </Button>
-        </DialogFooter>
+
+          {weatherKnown && (
+            <div className="space-y-2">
+              <Label htmlFor="weather-conditions">Conditions météo</Label>
+              <Input
+                id="weather-conditions"
+                value={weatherConditions}
+                onChange={(e) => setWeatherConditions(e.target.value)}
+                placeholder="Ex. : CAVOK, vent 240/08"
+              />
+            </div>
+          )}
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+              Annuler
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+              Enregistrer
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   )

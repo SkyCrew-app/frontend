@@ -14,6 +14,7 @@ export const GET_FILTERED_RESERVATIONS = gql`
       user {
         id
         first_name
+        last_name
       }
       aircraft {
         id

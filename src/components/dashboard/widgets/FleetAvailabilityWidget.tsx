@@ -1,84 +1,69 @@
 "use client"
 
 import { useQuery } from "@apollo/client"
-import { GET_AIRCRAFTS } from "@/graphql/planes"
-import { Badge } from "@/components/ui/badge"
-import { Skeleton } from "@/components/ui/skeleton"
 import { Plane } from "lucide-react"
-import Link from "next/link"
+import { GET_AIRCRAFTS } from "@/graphql/planes"
+import { AvailabilityStatus } from "@/interfaces/aircraft"
+import { WIDGET_REGISTRY } from "@/interfaces/dashboard"
+import { Badge } from "@/components/ui/badge"
+import WidgetContainer, { WidgetEmpty, WidgetError, WidgetLink, WidgetListSkeleton, WidgetRow } from "../WidgetContainer"
+import { aircraftAvailability } from "../widget-config"
+
+const MAX_ROWS = 4
 
 export default function FleetAvailabilityWidget() {
-  const { data, loading } = useQuery(GET_AIRCRAFTS)
+  const { data, loading, error, refetch } = useQuery(GET_AIRCRAFTS)
 
-  if (loading) {
+  const aircrafts: any[] = data?.getAircrafts || []
+  const availableCount = aircrafts.filter((a) => a.availability_status === AvailabilityStatus.AVAILABLE).length
+  // Available aircraft first: that is what the member is looking for.
+  const sorted = [...aircrafts].sort(
+    (a, b) =>
+      Number(b.availability_status === AvailabilityStatus.AVAILABLE) -
+      Number(a.availability_status === AvailabilityStatus.AVAILABLE),
+  )
+  const hiddenCount = Math.max(sorted.length - MAX_ROWS, 0)
+
+  const renderContent = () => {
+    if (loading) return <WidgetListSkeleton rows={MAX_ROWS} />
+    if (error && aircrafts.length === 0) return <WidgetError onRetry={() => refetch()} />
+    if (aircrafts.length === 0) return <WidgetEmpty icon={Plane} title="Aucun avion dans la flotte" />
+
     return (
-      <div className="space-y-3">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="flex items-center gap-3">
-            <Skeleton className="h-10 w-10 rounded" />
-            <div className="flex-1">
-              <Skeleton className="h-4 w-3/4 mb-1" />
-              <Skeleton className="h-3 w-1/2" />
-            </div>
-          </div>
-        ))}
+      <div className="space-y-1">
+        {sorted.slice(0, MAX_ROWS).map((aircraft) => {
+          const status = aircraftAvailability(aircraft.availability_status)
+          return (
+            <WidgetRow
+              key={aircraft.id}
+              href="/fleet"
+              icon={Plane}
+              title={aircraft.registration_number}
+              meta={aircraft.model}
+              trailing={<Badge variant={status.variant}>{status.label}</Badge>}
+            />
+          )
+        })}
+        {hiddenCount > 0 && (
+          <p className="pt-1 text-xs text-muted-foreground">
+            et {hiddenCount} autre{hiddenCount > 1 ? "s" : ""} avion{hiddenCount > 1 ? "s" : ""}
+          </p>
+        )}
       </div>
     )
-  }
-
-  const aircrafts = data?.getAircrafts || []
-
-  if (aircrafts.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-6 text-center">
-        <Plane className="h-8 w-8 text-muted-foreground mb-2" />
-        <p className="text-sm text-muted-foreground">Aucun avion dans la flotte</p>
-      </div>
-    )
-  }
-
-  const statusConfig: Record<string, { label: string; className: string }> = {
-    available: {
-      label: "Disponible",
-      className: "bg-success/15 text-success",
-    },
-    reserved: {
-      label: "Réservé",
-      className: "bg-info/15 text-info",
-    },
-    maintenance: {
-      label: "Maintenance",
-      className: "bg-brand/15 text-brand",
-    },
-    unavailable: {
-      label: "Indisponible",
-      className: "bg-destructive/15 text-destructive",
-    },
   }
 
   return (
-    <div className="space-y-3">
-      {aircrafts.map((aircraft: any) => {
-        const status = statusConfig[aircraft.availability_status] || statusConfig["unavailable"]
-        return (
-          <Link
-            key={aircraft.id}
-            href="/fleet"
-            className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
-          >
-            <div className="flex items-center justify-center h-10 w-10 rounded bg-info/10">
-              <Plane className="h-5 w-5 text-info rotate-45" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium">{aircraft.registration_number}</p>
-              <p className="text-xs text-muted-foreground">{aircraft.model}</p>
-            </div>
-            <Badge variant="secondary" className={`text-xs ${status.className}`}>
-              {status.label}
-            </Badge>
-          </Link>
-        )
-      })}
-    </div>
+    <WidgetContainer
+      title={WIDGET_REGISTRY["fleet-availability"].label}
+      description={
+        aircrafts.length > 0
+          ? `${availableCount} disponible${availableCount > 1 ? "s" : ""} sur ${aircrafts.length}`
+          : undefined
+      }
+      action={<WidgetLink href="/fleet">Voir la flotte</WidgetLink>}
+    >
+      {renderContent()}
+    </WidgetContainer>
   )
 }

@@ -5,17 +5,18 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Check, ChevronsUpDown, Navigation2, X, Loader2, AlertTriangle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { aviationAPI, formatWaypoint, type Waypoint } from "@/lib/aviation-api"
 
 interface WaypointSearchProps {
+  /** Id of the trigger button, so a <Label htmlFor> can point at it. */
+  id?: string
   waypoints: string[]
   onChange: (waypoints: string[]) => void
 }
 
-export function WaypointSearch({ waypoints, onChange }: WaypointSearchProps) {
+export function WaypointSearch({ id, waypoints, onChange }: WaypointSearchProps) {
   const [open, setOpen] = useState(false)
   const [searchResults, setSearchResults] = useState<Waypoint[]>([])
   const [searchQuery, setSearchQuery] = useState("")
@@ -32,10 +33,10 @@ export function WaypointSearch({ waypoints, onChange }: WaypointSearchProps) {
           const results = await aviationAPI.searchWaypoints(searchQuery)
           setSearchResults(results)
           if (results.length === 0) {
-            setError("Aucun waypoint trouvé pour cette recherche")
+            setError("Aucun point trouvé pour cette recherche.")
           }
         } catch (err) {
-          setError("Erreur lors de la recherche des waypoints. Vérifiez votre connexion API.")
+          setError("La recherche de points est indisponible pour le moment.")
           console.error(err)
         } finally {
           setLoading(false)
@@ -74,7 +75,7 @@ export function WaypointSearch({ waypoints, onChange }: WaypointSearchProps) {
         setError(null)
       } catch (err) {
         console.error("Erreur lors du chargement des waypoints:", err)
-        setError("Impossible de charger certains waypoints. Vérifiez votre connexion API.")
+        setError("Certains points de route n'ont pas pu être chargés.")
       } finally {
         setLoading(false)
       }
@@ -90,40 +91,47 @@ export function WaypointSearch({ waypoints, onChange }: WaypointSearchProps) {
     setOpen(false)
   }
 
-  const removeWaypoint = (waypointId: string) => {
-    onChange(waypoints.filter((w) => w !== waypointId))
+  // The route stores either the id or the identifier of a point: remove whichever is there.
+  const removeWaypoint = (waypoint: Waypoint) => {
+    onChange(waypoints.filter((w) => w !== waypoint.id && w !== waypoint.ident))
   }
 
   const getWaypointTypeColor = (type: string) => {
-    if (type.includes("VOR")) return "bg-info/15 text-info"
-    if (type.includes("NDB")) return "bg-primary/15 text-primary"
-    if (type.includes("DME")) return "bg-warning/15 text-warning"
-    if (type.includes("ILS")) return "bg-success/15 text-success"
-    if (type.includes("TACAN")) return "bg-destructive/15 text-destructive"
-    return "bg-muted text-foreground"
+    if (type.includes("VOR")) return "success" as const
+    if (type.includes("NDB")) return "warning" as const
+    if (type.includes("DME") || type.includes("ILS") || type.includes("TACAN")) return "info" as const
+    return "neutral" as const
   }
 
   return (
     <div className="space-y-4">
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button variant="outline" role="combobox" aria-expanded={open} className="w-full justify-between">
-            <div className="flex items-center">
-              <Navigation2 className="mr-2 h-4 w-4" />
-              Ajouter un waypoint
-            </div>
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <Button
+            id={id}
+            type="button"
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className="w-full justify-between font-normal"
+          >
+            <span className="flex items-center gap-2">
+              <Navigation2 className="h-4 w-4 text-muted-foreground" />
+              Ajouter un point de route
+            </span>
+            <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[400px] p-0">
-          <Command>
-            <CommandInput placeholder="Rechercher un waypoint..." onValueChange={setSearchQuery} />
+        <PopoverContent className="w-[min(400px,calc(100vw-2rem))] p-0" align="start">
+          {/* Results are already filtered by the search API. */}
+          <Command shouldFilter={false}>
+            <CommandInput placeholder="Identifiant ou nom (VOR, NDB, point…)" onValueChange={setSearchQuery} />
             <CommandList>
               <CommandEmpty>
                 {loading ? (
                   <div className="flex items-center justify-center p-4">
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Recherche en cours...
+                    Recherche en cours…
                   </div>
                 ) : error ? (
                   <div className="flex items-center justify-center p-4 text-warning">
@@ -131,7 +139,7 @@ export function WaypointSearch({ waypoints, onChange }: WaypointSearchProps) {
                     {error}
                   </div>
                 ) : (
-                  "Aucun waypoint trouvé."
+                  "Saisissez au moins deux caractères."
                 )}
               </CommandEmpty>
               <CommandGroup className="max-h-[300px] overflow-y-auto">
@@ -151,7 +159,7 @@ export function WaypointSearch({ waypoints, onChange }: WaypointSearchProps) {
                         {waypoint.name && waypoint.name !== waypoint.ident && (
                           <span className="text-sm text-muted-foreground">- {waypoint.name}</span>
                         )}
-                        <Badge variant="secondary" className={getWaypointTypeColor(waypoint.type)}>
+                        <Badge variant={getWaypointTypeColor(waypoint.type)}>
                           {waypoint.type}
                         </Badge>
                       </div>
@@ -169,29 +177,30 @@ export function WaypointSearch({ waypoints, onChange }: WaypointSearchProps) {
       </Popover>
 
       {selectedWaypoints.length > 0 && (
-        <ScrollArea className="h-[200px] rounded-md border p-4">
-          <div className="space-y-2">
-            {selectedWaypoints.map((waypoint, index) => (
-              <div key={index} className="flex items-center justify-between bg-muted/50 p-2 rounded-md">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium w-6 text-center">{index + 1}</span>
-                  <div className="flex flex-col">
-                    <span>{waypoint.name || waypoint.ident}</span>
-                    <span className="text-sm text-muted-foreground">{formatWaypoint(waypoint)}</span>
-                  </div>
+        <ol className="max-h-56 space-y-2 overflow-y-auto">
+          {selectedWaypoints.map((waypoint, index) => (
+            <li key={index} className="flex items-center justify-between gap-2 rounded-md bg-muted/50 p-2">
+              <div className="flex min-w-0 items-center gap-3">
+                <span className="w-6 shrink-0 text-center text-sm font-medium tabular-nums">{index + 1}</span>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">{waypoint.name || waypoint.ident}</p>
+                  <p className="truncate text-xs text-muted-foreground">{formatWaypoint(waypoint)}</p>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => removeWaypoint(waypoint.id || waypoint.ident)}
-                  className="h-8 w-8 p-0"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
               </div>
-            ))}
-          </div>
-        </ScrollArea>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => removeWaypoint(waypoint)}
+                className="h-9 w-9 shrink-0"
+                aria-label={`Retirer ${waypoint.ident} de la route`}
+                title="Retirer"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </li>
+          ))}
+        </ol>
       )}
     </div>
   )

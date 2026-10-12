@@ -1,10 +1,9 @@
 "use client"
 
 import { ReactNode, useState } from "react"
-import { ChevronDown } from "lucide-react"
+import { CheckCircle2, ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { Badge } from "@/components/ui/badge"
 
 interface ChecklistCategorySectionProps {
   category: string
@@ -29,27 +28,27 @@ export function ChecklistCategorySection({
       <CollapsibleTrigger asChild>
         <button
           type="button"
-          className={cn(
-            "flex w-full items-center justify-between rounded-lg px-4 py-3 text-left font-semibold transition-colors",
-            isComplete
-              ? "bg-success/15 text-success"
-              : "bg-muted hover:bg-muted/80",
-          )}
+          className="flex min-h-12 w-full items-center justify-between gap-3 rounded-lg bg-muted px-4 py-3 text-left transition-colors hover:bg-muted/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <div className="flex items-center gap-2">
+          <span className="flex min-w-0 items-center gap-2">
             <ChevronDown
-              className={cn("h-4 w-4 transition-transform duration-200", isOpen && "rotate-180")}
+              className={cn("h-4 w-4 shrink-0 transition-transform duration-200", isOpen && "rotate-180")}
+              aria-hidden="true"
             />
-            <span>{category}</span>
-          </div>
-          <Badge variant={isComplete ? "default" : "secondary"} className="text-xs">
-            {checkedCount}/{totalCount}
-          </Badge>
+            <span className="truncate font-semibold">{category}</span>
+          </span>
+          <span
+            className={cn(
+              "flex shrink-0 items-center gap-1.5 text-sm tabular-nums",
+              isComplete ? "font-medium text-success" : "text-muted-foreground",
+            )}
+          >
+            {isComplete && <CheckCircle2 className="h-4 w-4" aria-hidden="true" />}
+            {checkedCount} / {totalCount}
+          </span>
         </button>
       </CollapsibleTrigger>
-      <CollapsibleContent className="pt-2 space-y-2">
-        {children}
-      </CollapsibleContent>
+      <CollapsibleContent className="space-y-2 pt-2">{children}</CollapsibleContent>
     </Collapsible>
   )
 }

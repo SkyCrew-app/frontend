@@ -11,8 +11,15 @@ jest.mock('@/components/hooks/use-toast', () => ({
   useToast: () => ({ toast: (...args: unknown[]) => mockToast(...args) }),
 }));
 
+// A plain anchor: the real link schedules prefetch work the tests do not wait for.
+jest.mock('next/link', () => ({
+  __esModule: true,
+  default: ({ href, children }: { href: string; children: React.ReactNode }) => <a href={href}>{children}</a>,
+}));
+
 describe('Setup2FA Component', () => {
   const qrCodeUrl = 'data:image/png;base64,PREMIER_QR_CODE';
+  const QR_ALT = "QR code à scanner avec votre application d'authentification";
   const secondQrCodeUrl = 'data:image/png;base64,SECOND_QR_CODE';
 
   const generateMock = (url: string): MockedResponse => ({
@@ -27,7 +34,7 @@ describe('Setup2FA Component', () => {
       </MockedProvider>
     );
 
-  const generateButton = () => screen.getByRole('button', { name: 'Générer le QR Code' });
+  const generateButton = () => screen.getByRole('button', { name: /^Générer (le|un nouveau) QR code$/ });
 
   beforeEach(() => {
     mockToast.mockClear();
@@ -37,13 +44,15 @@ describe('Setup2FA Component', () => {
     const generated = jest.fn(() => ({ data: { generate2FASecret: qrCodeUrl } }));
     renderPage([{ request: { query: GENERATE_2FA_SECRET_MUTATION }, result: generated }]);
 
-    expect(screen.getByText('Configurer la vérification 2FA')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Authentification à deux facteurs' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Retour au profil' })).toHaveAttribute('href', '/profile');
+    expect(screen.getByText('QR code à générer')).toBeInTheDocument();
     expect(generateButton()).toBeEnabled();
 
     // Laisse aux effets le temps de se déclencher : aucune mutation ne doit partir.
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(generated).not.toHaveBeenCalled();
-    expect(screen.queryByAltText('QR Code pour 2FA')).not.toBeInTheDocument();
+    expect(screen.queryByAltText(QR_ALT)).not.toBeInTheDocument();
     expect(mockToast).not.toHaveBeenCalled();
   });
 
@@ -53,14 +62,15 @@ describe('Setup2FA Component', () => {
 
     await user.click(generateButton());
 
-    const qrCodeImage = await screen.findByAltText('QR Code pour 2FA');
+    const qrCodeImage = await screen.findByAltText(QR_ALT);
     expect(qrCodeImage).toHaveAttribute('src', qrCodeUrl);
-    expect(screen.getByText(/Scannez ce QR code avec votre authentificateur/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Activer la 2FA' })).toBeDisabled();
+    expect(screen.getByText('En attente du code')).toBeInTheDocument();
+    expect(screen.getByText(/Saisissez le code à 6 chiffres/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Activer la double authentification' })).toBeDisabled();
     await waitFor(() =>
       expect(mockToast).toHaveBeenCalledWith({
-        title: 'QR Code généré',
-        description: "Veuillez scanner le QR code avec votre application d'authentification.",
+        title: 'QR code généré',
+        description: "Scannez-le avec votre application d'authentification.",
       }),
     );
     expect(mockToast).toHaveBeenCalledTimes(1);
@@ -71,11 +81,11 @@ describe('Setup2FA Component', () => {
     renderPage([generateMock(qrCodeUrl), generateMock(secondQrCodeUrl)]);
 
     await user.click(generateButton());
-    expect(await screen.findByAltText('QR Code pour 2FA')).toHaveAttribute('src', qrCodeUrl);
+    expect(await screen.findByAltText(QR_ALT)).toHaveAttribute('src', qrCodeUrl);
 
     await user.click(generateButton());
     await waitFor(() =>
-      expect(screen.getByAltText('QR Code pour 2FA')).toHaveAttribute('src', secondQrCodeUrl),
+      expect(screen.getByAltText(QR_ALT)).toHaveAttribute('src', secondQrCodeUrl),
     );
     expect(mockToast).toHaveBeenCalledTimes(2);
   });
@@ -91,11 +101,11 @@ describe('Setup2FA Component', () => {
     await waitFor(() =>
       expect(mockToast).toHaveBeenCalledWith({
         variant: 'destructive',
-        title: 'Erreur',
-        description: 'Erreur lors de la génération du 2FA.',
+        title: 'Génération impossible',
+        description: "Le QR code n'a pas pu être généré. Réessayez dans un instant.",
       }),
     );
-    expect(screen.queryByAltText('QR Code pour 2FA')).not.toBeInTheDocument();
+    expect(screen.queryByAltText(QR_ALT)).not.toBeInTheDocument();
     expect(generateButton()).toBeEnabled();
   });
   describe('confirmation par un premier code', () => {
@@ -106,7 +116,7 @@ describe('Setup2FA Component', () => {
 
     const generateThenType = async (user: ReturnType<typeof userEvent.setup>, typed: string) => {
       await user.click(generateButton());
-      await screen.findByAltText('QR Code pour 2FA');
+      await screen.findByAltText(QR_ALT);
       await user.type(screen.getByLabelText('Code de vérification'), typed);
     };
 
@@ -117,12 +127,12 @@ describe('Setup2FA Component', () => {
       await generateThenType(user, '12a3');
 
       expect(screen.getByLabelText('Code de vérification')).toHaveValue('123');
-      expect(screen.getByRole('button', { name: 'Activer la 2FA' })).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Activer la double authentification' })).toBeDisabled();
 
       await user.type(screen.getByLabelText('Code de vérification'), '456789');
 
       expect(screen.getByLabelText('Code de vérification')).toHaveValue('123456');
-      expect(screen.getByRole('button', { name: 'Activer la 2FA' })).toBeEnabled();
+      expect(screen.getByRole('button', { name: 'Activer la double authentification' })).toBeEnabled();
     });
 
     it('active la 2FA quand le code est valide', async () => {
@@ -133,15 +143,16 @@ describe('Setup2FA Component', () => {
       ]);
 
       await generateThenType(user, '123456');
-      await user.click(screen.getByRole('button', { name: 'Activer la 2FA' }));
+      await user.click(screen.getByRole('button', { name: 'Activer la double authentification' }));
 
       expect(await screen.findByRole('status')).toHaveTextContent(
         "L'authentification à deux facteurs est active.",
       );
-      expect(screen.queryByAltText('QR Code pour 2FA')).not.toBeInTheDocument();
+      expect(screen.queryByAltText(QR_ALT)).not.toBeInTheDocument();
+      expect(screen.getByText('Activée')).toBeInTheDocument();
       expect(mockToast).toHaveBeenLastCalledWith({
-        title: '2FA activée',
-        description: "L'authentification à deux facteurs est maintenant active sur votre compte.",
+        title: 'Double authentification activée',
+        description: 'Un code vous sera demandé à chaque connexion.',
       });
     });
 
@@ -153,7 +164,7 @@ describe('Setup2FA Component', () => {
       ]);
 
       await generateThenType(user, '000000');
-      await user.click(screen.getByRole('button', { name: 'Activer la 2FA' }));
+      await user.click(screen.getByRole('button', { name: 'Activer la double authentification' }));
 
       await waitFor(() =>
         expect(mockToast).toHaveBeenLastCalledWith({
@@ -163,8 +174,8 @@ describe('Setup2FA Component', () => {
         }),
       );
       expect(screen.queryByRole('status')).not.toBeInTheDocument();
-      expect(screen.getByAltText('QR Code pour 2FA')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Activer la 2FA' })).toBeEnabled();
+      expect(screen.getByAltText(QR_ALT)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Activer la double authentification' })).toBeEnabled();
     });
   });
 });

@@ -5,6 +5,9 @@ import {
   buildUpdateMaintenanceVariables,
   maintenanceFileName,
   maintenanceFileUrl,
+  maintenanceStatus,
+  maintenanceTechnicianLabel,
+  maintenanceTypeLabel,
   toMaintenanceInput,
   validateMaintenanceAttachments,
 } from '../maintenance';
@@ -163,5 +166,29 @@ describe('pièces jointes de maintenance', () => {
       expect(maintenanceFileName('/uploads/maintenance/4/rapport.pdf')).toBe('rapport.pdf');
       expect(maintenanceFileName('100%.pdf')).toBe('100%.pdf');
     });
+  });
+});
+
+describe('libellés des maintenances', () => {
+  it('traduit chaque type et ne montre jamais un code brut', () => {
+    expect(maintenanceTypeLabel('INSPECTION')).toBe('Inspection');
+    expect(maintenanceTypeLabel('SOFTWARE_UPDATE')).toBe('Mise à jour logicielle');
+    expect(maintenanceTypeLabel('UNKNOWN_CODE')).toBe('Autre');
+    expect(maintenanceTypeLabel(null)).toBe('—');
+  });
+
+  it('donne un libellé et une couleur à chaque statut', () => {
+    expect(maintenanceStatus('PLANNED')).toEqual({ label: 'Planifiée', variant: 'info' });
+    expect(maintenanceStatus('IN_PROGRESS')).toEqual({ label: 'En cours', variant: 'warning' });
+    expect(maintenanceStatus('COMPLETED')).toEqual({ label: 'Terminée', variant: 'success' });
+    expect(maintenanceStatus('CANCELLED')).toEqual({ label: 'Annulée', variant: 'danger' });
+    expect(maintenanceStatus(undefined)).toEqual({ label: '—', variant: 'neutral' });
+  });
+
+  it('nomme un technicien par son prénom et son e-mail', () => {
+    expect(maintenanceTechnicianLabel({ first_name: 'Marie', email: 'marie@example.com' })).toBe(
+      'Marie · marie@example.com',
+    );
+    expect(maintenanceTechnicianLabel({ email: 'marie@example.com' })).toBe('marie@example.com');
   });
 });

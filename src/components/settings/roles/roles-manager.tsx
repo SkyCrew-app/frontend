@@ -2,41 +2,40 @@
 
 import { useState } from "react"
 import { useQuery, useMutation } from "@apollo/client"
+import { Plus, UserCog } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { PlusCircle, UserCog } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Progress } from "@/components/ui/progress"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { EmptyState } from "@/components/layout/EmptyState"
+import { ErrorState } from "@/components/layout/ErrorState"
 import { toast } from "@/components/hooks/use-toast"
 import { CREATE_ROLE, UPDATE_ROLE, DELETE_ROLE, GET_ROLES } from "@/graphql/roles"
-import { RoleForm } from "./role-form"
-import { RoleActions } from "./role-actions"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { motion } from "framer-motion"
+import { ROLE_ADMIN, ROLE_INSTRUCTOR } from "@/lib/roles"
+import { SettingsSection } from "../settings-field"
+import { DeleteItemDialog, ItemList, NameDialog } from "../item-list"
 
 interface Role {
   id: string
   role_name: string
 }
 
+// The application recognises these two roles by their name.
+const isBuiltInRole = (role: Role) => role.role_name === ROLE_ADMIN || role.role_name === ROLE_INSTRUCTOR
+
+const BUILT_IN_NOTICE =
+  "L'application reconnaît ce rôle à son nom : le renommer ou le supprimer peut retirer leurs accès aux membres concernés."
+
 export function RoleManager() {
-  const [roles, setRoles] = useState<Role[]>([])
-  const [roleToEdit, setRoleToEdit] = useState<Role | null>(null)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [roleToEdit, setRoleToEdit] = useState<Role | null>(null)
+  const [roleToDelete, setRoleToDelete] = useState<Role | null>(null)
+  // Kept after closing so the dialog text does not change while it fades out.
+  const [lastRoleToDelete, setLastRoleToDelete] = useState<Role | null>(null)
   const [mutationInProgress, setMutationInProgress] = useState(false)
 
-  const { loading, error, refetch } = useQuery(GET_ROLES, {
-    onCompleted: (data) => setRoles(data.roles),
-    onError: () => {
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger les rôles.",
-        variant: "destructive",
-      })
-    },
-  })
+  const { data, loading, error, refetch } = useQuery<{ roles: Role[] }>(GET_ROLES)
+  const roles = data?.roles ?? []
+  const roleNames = roles.map((role) => role.role_name)
 
   const [createRole] = useMutation(CREATE_ROLE)
   const [updateRole] = useMutation(UPDATE_ROLE)
@@ -46,13 +45,13 @@ export function RoleManager() {
     setMutationInProgress(true)
     try {
       await createRole({ variables: { createRoleInput: { role_name } } })
-      toast({ title: "Rôle créé", description: "Le nouveau rôle a été créé avec succès." })
+      toast({ title: "Rôle créé", description: `Le rôle « ${role_name} » a été ajouté.` })
       setIsCreateDialogOpen(false)
       await refetch()
     } catch {
       toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la création du rôle.",
+        title: "Création impossible",
+        description: "Le rôle n'a pas pu être créé. Réessayez.",
         variant: "destructive",
       })
     }
@@ -67,146 +66,129 @@ export function RoleManager() {
       await updateRole({
         variables: { updateRoleInput: { id: roleToEdit.id, role_name } },
       })
-      toast({ title: "Rôle mis à jour", description: "Le rôle a été modifié avec succès." })
-      setIsEditDialogOpen(false)
+      toast({ title: "Rôle modifié", description: `Le rôle s'appelle maintenant « ${role_name} ».` })
       setRoleToEdit(null)
       await refetch()
     } catch {
       toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la mise à jour du rôle.",
+        title: "Modification impossible",
+        description: "Le rôle n'a pas pu être renommé. Réessayez.",
         variant: "destructive",
       })
     }
     setMutationInProgress(false)
   }
 
-  const handleDeleteRole = async (role: Role) => {
+  const handleDeleteRole = async () => {
+    if (!roleToDelete) return
+
     setMutationInProgress(true)
     try {
-      await deleteRole({ variables: { id: role.id } })
-      toast({ title: "Rôle supprimé", description: "Le rôle a été supprimé avec succès." })
+      await deleteRole({ variables: { id: roleToDelete.id } })
+      toast({ title: "Rôle supprimé", description: `Le rôle « ${roleToDelete.role_name} » a été supprimé.` })
+      setRoleToDelete(null)
       await refetch()
     } catch {
       toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la suppression du rôle.",
+        title: "Suppression impossible",
+        description: "Le rôle n'a pas pu être supprimé. Vérifiez qu'aucun membre ne l'utilise encore.",
         variant: "destructive",
       })
     }
     setMutationInProgress(false)
   }
 
-  if (error) {
-    return (
-      <div className="p-4 border border-destructive/30 bg-destructive/10 text-destructive rounded-md">
-        Une erreur est survenue lors du chargement des rôles.
-      </div>
-    )
-  }
+  const addButton = (
+    <Button type="button" variant="outline" size="sm" onClick={() => setIsCreateDialogOpen(true)}>
+      <Plus className="h-4 w-4" />
+      Ajouter un rôle
+    </Button>
+  )
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-      <Card className="border-t-4 border-t-primary">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-xl flex items-center gap-2">
-            <UserCog className="h-5 w-5 text-info" />
-            Gestion des rôles
-          </CardTitle>
-          <CardDescription>Configurez les rôles des utilisateurs de l'aéroclub.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {mutationInProgress && <Progress value={50} className="animate-pulse" />}
+    <SettingsSection
+      title="Rôles"
+      description="Les rôles que l'on peut attribuer aux membres. Chaque ajout, modification ou suppression est enregistré immédiatement."
+      action={!error && !loading && roles.length > 0 ? addButton : undefined}
+    >
+      {error ? (
+        <ErrorState onRetry={() => refetch()} />
+      ) : loading ? (
+        <div className="space-y-2" aria-busy="true">
+          {[0, 1, 2].map((row) => (
+            <Skeleton key={row} className="h-12 w-full" />
+          ))}
+        </div>
+      ) : roles.length === 0 ? (
+        <EmptyState
+          icon={UserCog}
+          title="Aucun rôle"
+          description="Créez un premier rôle pour pouvoir l'attribuer aux membres."
+          action={addButton}
+        />
+      ) : (
+        <ItemList
+          items={roles.map((role) => ({
+            key: String(role.id),
+            name: role.role_name,
+            meta: isBuiltInRole(role) ? <Badge variant="neutral">Rôle de l'application</Badge> : undefined,
+          }))}
+          onEdit={(item) => setRoleToEdit(roles.find((role) => String(role.id) === item.key) ?? null)}
+          onDelete={(item) => {
+            const role = roles.find((candidate) => String(candidate.id) === item.key) ?? null
+            setRoleToDelete(role)
+            setLastRoleToDelete(role)
+          }}
+        />
+      )}
 
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-medium">Liste des rôles</h3>
-            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-              <DialogTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="bg-info/10 border-info/30 text-info hover:bg-info/15 hover:text-info"
-                >
-                  <PlusCircle className="mr-2 h-4 w-4" /> Ajouter un rôle
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Ajouter un rôle</DialogTitle>
-                </DialogHeader>
-                <RoleForm onSubmit={handleCreateRole} isSubmitting={mutationInProgress} />
-              </DialogContent>
-            </Dialog>
-          </div>
+      <NameDialog
+        open={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
+        title="Ajouter un rôle"
+        description="Le rôle pourra ensuite être attribué aux membres."
+        label="Nom du rôle"
+        placeholder="Ex. Mécanicien"
+        submitLabel="Créer le rôle"
+        existingNames={roleNames}
+        duplicateMessage="Un rôle porte déjà ce nom."
+        isSubmitting={mutationInProgress}
+        onSubmit={handleCreateRole}
+      />
 
-          <div className="border rounded-md overflow-hidden">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/30">
-                    <TableHead>Nom du rôle</TableHead>
-                    <TableHead className="w-24 text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {loading ? (
-                    Array(3)
-                      .fill(0)
-                      .map((_, index) => (
-                        <TableRow key={index}>
-                          <TableCell>
-                            <Skeleton className="h-6 w-3/4" />
-                          </TableCell>
-                          <TableCell className="flex justify-end space-x-2">
-                            <Skeleton className="h-8 w-8" />
-                            <Skeleton className="h-8 w-8" />
-                          </TableCell>
-                        </TableRow>
-                      ))
-                  ) : roles.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={2} className="text-center py-6 text-muted-foreground">
-                        Aucun rôle trouvé. Créez votre premier rôle en cliquant sur "Ajouter un rôle".
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    roles.map((role) => (
-                      <TableRow key={role.id} className="hover:bg-info/5">
-                        <TableCell className="font-medium">{role.role_name}</TableCell>
-                        <TableCell>
-                          <RoleActions
-                            role={role}
-                            onEdit={(role) => {
-                              setRoleToEdit(role)
-                              setIsEditDialogOpen(true)
-                            }}
-                            onDelete={handleDeleteRole}
-                          />
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </div>
+      <NameDialog
+        open={roleToEdit !== null}
+        onOpenChange={(open) => !open && setRoleToEdit(null)}
+        title="Modifier le rôle"
+        description="Le nouveau nom s'applique à tous les membres qui ont ce rôle."
+        label="Nom du rôle"
+        placeholder="Ex. Mécanicien"
+        initialValue={roleToEdit?.role_name ?? ""}
+        submitLabel="Enregistrer"
+        existingNames={roleNames}
+        duplicateMessage="Un rôle porte déjà ce nom."
+        isSubmitting={mutationInProgress}
+        notice={
+          roleToEdit && isBuiltInRole(roleToEdit) ? (
+            <p className="rounded-md bg-warning/15 p-3 text-sm text-warning">{BUILT_IN_NOTICE}</p>
+          ) : undefined
+        }
+        onSubmit={handleUpdateRole}
+      />
 
-          {/* Dialog pour éditer un rôle */}
-          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Modifier le rôle</DialogTitle>
-              </DialogHeader>
-              {roleToEdit && (
-                <RoleForm
-                  defaultValue={roleToEdit.role_name}
-                  onSubmit={handleUpdateRole}
-                  isSubmitting={mutationInProgress}
-                />
-              )}
-            </DialogContent>
-          </Dialog>
-        </CardContent>
-      </Card>
-    </motion.div>
+      <DeleteItemDialog
+        open={roleToDelete !== null}
+        onOpenChange={(open) => !open && setRoleToDelete(null)}
+        title="Supprimer ce rôle ?"
+        description={
+          <>
+            Le rôle « {(roleToDelete ?? lastRoleToDelete)?.role_name} » sera supprimé définitivement.
+            {roleToDelete && isBuiltInRole(roleToDelete) && <> {BUILT_IN_NOTICE}</>}
+          </>
+        }
+        isDeleting={mutationInProgress}
+        onConfirm={handleDeleteRole}
+      />
+    </SettingsSection>
   )
 }

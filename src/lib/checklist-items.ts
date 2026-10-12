@@ -1,4 +1,10 @@
-import { CATEGORY_ORDER, ChecklistCategory, type ChecklistItem } from "@/interfaces/checklist"
+import {
+  CATEGORY_ORDER,
+  ChecklistCategory,
+  ChecklistSubmissionStatus,
+  type ChecklistItem,
+  type ChecklistSubmission,
+} from "@/interfaces/checklist"
 import { toIntId } from "@/lib/graphql-inputs"
 
 export interface ChecklistItemDraft {
@@ -143,4 +149,26 @@ export function buildUpdateChecklistItemInput(
     is_required: draft.is_required,
     ...(category !== String(item.category).toUpperCase() && { sort_order: nextSortOrder(items) }),
   }
+}
+
+type StatusVariant = "success" | "info" | "danger" | "neutral"
+
+const SUBMISSION_STATUSES: Record<string, { label: string; variant: StatusVariant }> = {
+  [ChecklistSubmissionStatus.IN_PROGRESS]: { label: "En cours", variant: "info" },
+  [ChecklistSubmissionStatus.COMPLETED]: { label: "Terminée", variant: "success" },
+  [ChecklistSubmissionStatus.CANCELLED]: { label: "Annulée", variant: "danger" },
+}
+
+// One wording and one colour per checklist status, wherever it is shown.
+export const checklistStatus = (status: string | null | undefined) =>
+  SUBMISSION_STATUSES[(status ?? "").toUpperCase()] ?? { label: "Statut inconnu", variant: "neutral" as StatusVariant }
+
+// How far a checklist is: only answers to items still in the template count.
+export function submissionProgress(submission: Pick<ChecklistSubmission, "responses" | "template">) {
+  const itemIds = new Set((submission.template?.items ?? []).map((item) => String(item.id)))
+  const checked = (submission.responses ?? []).filter(
+    (response) => response.checked && itemIds.has(String(response.itemId)),
+  ).length
+  const total = itemIds.size
+  return { checked, total, percentage: total > 0 ? Math.round((checked / total) * 100) : 0 }
 }

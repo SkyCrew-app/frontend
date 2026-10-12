@@ -1,1262 +1,380 @@
 "use client"
 
 import type React from "react"
-
-import { useState, useEffect } from "react"
-import { useQuery, useMutation } from "@apollo/client"
+import { useState } from "react"
+import { useMutation, useQuery } from "@apollo/client"
+import { ClipboardList, HelpCircle, Loader2, MoreHorizontal, Pencil, Plus, Search, Trash2 } from "lucide-react"
 import {
-  GET_MODULES,
-  GET_EVALUATIONS,
   CREATE_EVALUATION,
-  CREATE_QUESTION,
-  UPDATE_EVALUATION,
-  UPDATE_QUESTION,
   DELETE_EVALUATION,
-  DELETE_QUESTION,
+  GET_EVALUATIONS,
+  GET_MODULES,
+  UPDATE_EVALUATION,
 } from "@/graphql/learningAdmin"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import {
-  Trash2,
-  Check,
-  Book,
-  HelpCircle,
-  Edit,
-  PlusCircle,
-  ClipboardList,
-  Search,
-  CheckCircle2,
-  Layers,
-  Loader2,
-  ArrowLeft,
-  Info,
-} from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { EmptyState } from "@/components/layout/EmptyState"
+import { ErrorState } from "@/components/layout/ErrorState"
 import { toast } from "@/components/hooks/use-toast"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { Separator } from "@/components/ui/separator"
+import { ConfirmDeleteDialog } from "@/components/e-learning/ConfirmDeleteDialog"
+import { FormField } from "@/components/e-learning/FormField"
+import { QuestionsDialog, type AdminEvaluation } from "./QuestionsDialog"
+
+interface ModuleOption {
+  id: number | string
+  title: string
+}
+
+interface EvaluationForm {
+  // Absent while creating an evaluation.
+  id: number | string | null
+  moduleId: string
+  moduleTitle: string
+  passScore: string
+}
+
+const emptyForm: EvaluationForm = { id: null, moduleId: "", moduleTitle: "", passScore: "70" }
 
 export function EvaluationManagement() {
-  const [activeTab, setActiveTab] = useState("view")
-  const [step, setStep] = useState(1)
-  const [selectedModuleId, setSelectedModuleId] = useState("")
-  const [passScore, setPassScore] = useState("70")
-  const [questionContent, setQuestionContent] = useState("")
-  const [options, setOptions] = useState(["", ""])
-  const [correctAnswer, setCorrectAnswer] = useState("")
-  const [selectedEvaluationId, setSelectedEvaluationId] = useState("")
-  const [editingEvaluation, setEditingEvaluation] = useState<any>(null)
-  const [editingQuestion, setEditingQuestion] = useState<any>(null)
-  const [isEditEvaluationOpen, setIsEditEvaluationOpen] = useState(false)
-  const [isEditQuestionOpen, setIsEditQuestionOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
-  const [currentEvaluation, setCurrentEvaluation] = useState<any>(null)
+  const [form, setForm] = useState<EvaluationForm>(emptyForm)
+  const [isFormOpen, setIsFormOpen] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+  const [questionsOf, setQuestionsOf] = useState<string | null>(null)
+  const [evaluationToDelete, setEvaluationToDelete] = useState<AdminEvaluation | null>(null)
 
-  const { data: modulesData, loading: modulesLoading } = useQuery(GET_MODULES)
-  const { data: evaluationsData, loading, error: queryError, refetch: refetchEvaluations } = useQuery(GET_EVALUATIONS)
+  const modulesQuery = useQuery<{ getAllModules: ModuleOption[] }>(GET_MODULES, { fetchPolicy: "cache-and-network" })
+  const { data, loading, error, refetch } = useQuery<{ getEvaluations: AdminEvaluation[] }>(GET_EVALUATIONS, {
+    fetchPolicy: "cache-and-network",
+  })
 
-  const [createEvaluation, { loading: createEvalLoading }] = useMutation(CREATE_EVALUATION, {
-    onCompleted: (data) => {
-      if (data && data.createEvaluation && data.createEvaluation.id) {
-        setSelectedEvaluationId(data.createEvaluation.id)
-        setStep(2)
-        toast({
-          title: "Évaluation créée",
-          description: "Vous pouvez maintenant ajouter des questions.",
-          variant: "default",
+  const [createEvaluation, { loading: creating }] = useMutation(CREATE_EVALUATION)
+  const [updateEvaluation, { loading: updating }] = useMutation(UPDATE_EVALUATION)
+  const [deleteEvaluation, { loading: deleting }] = useMutation(DELETE_EVALUATION)
+  const saving = creating || updating
+  const isEdit = form.id !== null
+
+  const evaluations = data?.getEvaluations
+  const modules = modulesQuery.data?.getAllModules ?? []
+  // Read from the list, so the dialog follows each change of its questions.
+  const openedEvaluation = (evaluations ?? []).find((evaluation) => String(evaluation.id) === questionsOf) ?? null
+
+  const openCreate = () => {
+    setForm(emptyForm)
+    setSubmitted(false)
+    setIsFormOpen(true)
+  }
+
+  const openEdit = (evaluation: AdminEvaluation) => {
+    setForm({
+      id: evaluation.id,
+      moduleId: evaluation.module ? String(evaluation.module.id) : "",
+      moduleTitle: evaluation.module?.title ?? "—",
+      passScore: String(Math.round(evaluation.pass_score)),
+    })
+    setSubmitted(false)
+    setIsFormOpen(true)
+  }
+
+  const passScore = Number.parseInt(form.passScore, 10)
+  const errors = {
+    moduleId: isEdit || form.moduleId ? null : "Choisissez le module évalué.",
+    passScore:
+      Number.isInteger(passScore) && passScore >= 1 && passScore <= 100
+        ? null
+        : "Indiquez un score entre 1 et 100.",
+  }
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault()
+    setSubmitted(true)
+    if (errors.moduleId || errors.passScore) return
+
+    try {
+      if (form.id !== null) {
+        await updateEvaluation({
+          variables: { id: Number(form.id), updateEvaluationInput: { pass_score: passScore } },
         })
+        await refetch()
+        toast({ title: "Évaluation modifiée", description: "Le score de réussite a été enregistré." })
+        setIsFormOpen(false)
+      } else {
+        const { data: created } = await createEvaluation({
+          variables: {
+            createEvaluationInput: { moduleId: Number.parseInt(form.moduleId, 10), pass_score: passScore },
+          },
+        })
+        await refetch()
+        toast({ title: "Évaluation créée", description: "Ajoutez maintenant ses questions." })
+        setIsFormOpen(false)
+        // A new evaluation is empty: go straight to its questions.
+        if (created?.createEvaluation?.id != null) setQuestionsOf(String(created.createEvaluation.id))
       }
-    },
-    onError: (error) => {
+    } catch {
       toast({
-        title: "Erreur lors de la création",
-        description: error.message,
+        title: isEdit ? "Évaluation non modifiée" : "Évaluation non créée",
+        description: "L'enregistrement a échoué. Vérifiez les informations puis réessayez.",
         variant: "destructive",
       })
-    },
-  })
+    }
+  }
 
-  const [createQuestion, { loading: createQuestionLoading }] = useMutation(CREATE_QUESTION, {
-    onCompleted: () => {
-      setQuestionContent("")
-      setOptions(["", ""])
-      setCorrectAnswer("")
-      refetchEvaluations()
-      toast({
-        title: "Question ajoutée",
-        description: "La question a été ajoutée à l'évaluation.",
-        variant: "default",
-      })
-    },
-    onError: (error) => {
-      toast({
-        title: "Erreur lors de l'ajout",
-        description: error.message,
-        variant: "destructive",
-      })
-    },
-  })
-
-  const [updateEvaluation, { loading: updateEvalLoading }] = useMutation(UPDATE_EVALUATION, {
-    onCompleted: () => {
-      refetchEvaluations()
-      setIsEditEvaluationOpen(false)
-      toast({
-        title: "Évaluation mise à jour",
-        description: "Les modifications ont été enregistrées.",
-        variant: "default",
-      })
-    },
-    onError: (error) => {
-      toast({
-        title: "Erreur lors de la mise à jour",
-        description: error.message,
-        variant: "destructive",
-      })
-    },
-  })
-
-  const [updateQuestion, { loading: updateQuestionLoading }] = useMutation(UPDATE_QUESTION, {
-    onCompleted: () => {
-      refetchEvaluations()
-      setIsEditQuestionOpen(false)
-      toast({
-        title: "Question mise à jour",
-        description: "Les modifications ont été enregistrées.",
-        variant: "default",
-      })
-    },
-    onError: (error) => {
-      toast({
-        title: "Erreur lors de la mise à jour",
-        description: error.message,
-        variant: "destructive",
-      })
-    },
-  })
-
-  const [deleteEvaluation, { loading: deleteEvalLoading }] = useMutation(DELETE_EVALUATION, {
-    onCompleted: () => {
-      refetchEvaluations()
-      toast({
-        title: "Évaluation supprimée",
-        description: "L'évaluation a été supprimée avec succès.",
-        variant: "default",
-      })
-    },
-    onError: (error) => {
-      toast({
-        title: "Erreur lors de la suppression",
-        description: error.message,
-        variant: "destructive",
-      })
-    },
-  })
-
-  const [deleteQuestion, { loading: deleteQuestionLoading }] = useMutation(DELETE_QUESTION, {
-    onCompleted: () => {
-      refetchEvaluations()
-      toast({
-        title: "Question supprimée",
-        description: "La question a été supprimée avec succès.",
-        variant: "default",
-      })
-    },
-    onError: (error) => {
-      toast({
-        title: "Erreur lors de la suppression",
-        description: error.message,
-        variant: "destructive",
-      })
-    },
-  })
-
-  const handleCreateEvaluation = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleDelete = async () => {
+    if (!evaluationToDelete) return
     try {
-      await createEvaluation({
-        variables: {
-          createEvaluationInput: {
-            moduleId: Number.parseInt(selectedModuleId),
-            pass_score: Number.parseInt(passScore),
-          },
-        },
-      })
-    } catch (err) {
-      console.error("Error creating evaluation:", err)
-    }
-  }
-
-  const handleCreateQuestion = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    // Vérifier que toutes les options sont remplies
-    const validOptions = options.filter((option) => option.trim() !== "")
-    if (validOptions.length < 2) {
+      await deleteEvaluation({ variables: { id: Number(evaluationToDelete.id) } })
+      setEvaluationToDelete(null)
+      refetch()
+      toast({ title: "Évaluation supprimée", description: "Elle n'est plus proposée aux membres." })
+    } catch {
       toast({
-        title: "Erreur de validation",
-        description: "Vous devez fournir au moins deux options de réponse.",
+        title: "Évaluation non supprimée",
+        description: "La suppression a échoué. Réessayez dans un instant.",
         variant: "destructive",
       })
-      return
-    }
-
-    // Vérifier qu'une réponse correcte est sélectionnée
-    if (!correctAnswer) {
-      toast({
-        title: "Erreur de validation",
-        description: "Vous devez sélectionner une réponse correcte.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    try {
-      await createQuestion({
-        variables: {
-          evaluationId: parseFloat(selectedEvaluationId),
-          createQuestionInput: {
-            content: { text: questionContent },
-            options: validOptions,
-            correct_answer: correctAnswer,
-          },
-        },
-      })
-    } catch (err) {
-      console.error("Error creating question:", err)
     }
   }
 
-  const handleUpdateEvaluation = async (e: React.FormEvent) => {
-    e.preventDefault()
-    try {
-      await updateEvaluation({
-        variables: {
-          id: Number(editingEvaluation.id),
-          updateEvaluationInput: {
-            pass_score: Number.parseInt(editingEvaluation.pass_score),
-          },
-        },
-      })
-    } catch (err) {
-      console.error("Error updating evaluation:", err)
-    }
-  }
+  const search = searchTerm.trim().toLowerCase()
+  const filteredEvaluations = (evaluations ?? []).filter(
+    (evaluation) => !search || (evaluation.module?.title ?? "").toLowerCase().includes(search),
+  )
 
-  const handleUpdateQuestion = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    // Vérifier que toutes les options sont remplies
-    const validOptions = editingQuestion.options.filter((option: string) => option.trim() !== "")
-    if (validOptions.length < 2) {
-      toast({
-        title: "Erreur de validation",
-        description: "Vous devez fournir au moins deux options de réponse.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    // Vérifier qu'une réponse correcte est sélectionnée
-    if (!editingQuestion.correct_answer) {
-      toast({
-        title: "Erreur de validation",
-        description: "Vous devez sélectionner une réponse correcte.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    try {
-      await updateQuestion({
-        variables: {
-          id: Number(editingQuestion.id),
-          updateQuestionInput: {
-            content: { text: editingQuestion.content.text },
-            options: validOptions,
-            correct_answer: editingQuestion.correct_answer,
-          },
-        },
-      })
-    } catch (err) {
-      console.error("Error updating question:", err)
-    }
-  }
-
-  const handleDeleteEvaluation = async (id: string) => {
-    try {
-      await deleteEvaluation({
-        variables: { id: Number.parseInt(id) },
-      })
-    } catch (err) {
-      console.error("Error deleting evaluation:", err)
-    }
-  }
-
-  const handleDeleteQuestion = async (id: string) => {
-    try {
-      await deleteQuestion({
-        variables: { id: Number.parseInt(id) },
-      })
-    } catch (err) {
-      console.error("Error deleting question:", err)
-    }
-  }
-
-  const addOption = () => setOptions([...options, ""])
-
-  const removeOption = (index: number) => {
-    if (options.length <= 2) {
-      toast({
-        title: "Action impossible",
-        description: "Une question doit avoir au moins deux options.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    const newOptions = [...options]
-    newOptions.splice(index, 1)
-    setOptions(newOptions)
-
-    // Si l'option supprimée était la réponse correcte, réinitialiser la réponse correcte
-    if (options[index] === correctAnswer) {
-      setCorrectAnswer("")
-    }
-  }
-
-  const updateOption = (index: number, value: string) => {
-    const newOptions = [...options]
-    newOptions[index] = value
-    setOptions(newOptions)
-
-    // Mettre à jour la réponse correcte si elle correspond à l'option modifiée
-    if (correctAnswer === options[index]) {
-      setCorrectAnswer(value)
-    }
-  }
-
-  // Filtrer les évaluations
-  const filteredEvaluations = evaluationsData?.getEvaluations
-    ? evaluationsData.getEvaluations.filter((evaluation: any) => {
-        const moduleTitle = evaluation.module?.title?.toLowerCase() || ""
-        return moduleTitle.includes(searchTerm.toLowerCase())
-      })
-    : []
-
-  // Animation variants
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
-  }
-
-  const item = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0 },
-  }
-
-  // Trouver l'évaluation actuelle pour l'affichage des questions
-  useEffect(() => {
-    if (selectedEvaluationId && evaluationsData?.getEvaluations) {
-      const evaluation = evaluationsData.getEvaluations.find((e: any) => e.id.toString() === selectedEvaluationId)
-      setCurrentEvaluation(evaluation)
-    }
-  }, [selectedEvaluationId, evaluationsData])
+  const createButton = (
+    <Button onClick={openCreate}>
+      <Plus className="h-4 w-4" />
+      Créer une évaluation
+    </Button>
+  )
 
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-      <TabsList className="grid w-full grid-cols-2">
-        <TabsTrigger value="view" className="flex items-center gap-2">
-          <ClipboardList className="h-4 w-4" />
-          Liste des évaluations
-        </TabsTrigger>
-        <TabsTrigger value="create" className="flex items-center gap-2">
-          <PlusCircle className="h-4 w-4" />
-          Créer une évaluation
-        </TabsTrigger>
-      </TabsList>
-
-      <TabsContent value="view" className="space-y-6">
-        <div className="flex flex-col sm:flex-row justify-between gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Rechercher par module..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-full"
-            />
-          </div>
+    <div className="space-y-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative w-full sm:max-w-xs">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="search"
+            aria-label="Rechercher une évaluation par module"
+            placeholder="Rechercher un module, ex. réglementation"
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            className="pl-9"
+          />
         </div>
+        <div className="sm:ml-auto">{createButton}</div>
+      </div>
 
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <Card key={i} className="overflow-hidden">
-                <CardHeader className="pb-2">
-                  <Skeleton className="h-6 w-3/4" />
-                  <Skeleton className="h-4 w-1/2 mt-2" />
-                </CardHeader>
-                <CardContent>
-                  <Skeleton className="h-4 w-full mb-2" />
-                  <Skeleton className="h-2 w-full" />
-                </CardContent>
-                <CardFooter className="flex justify-between">
-                  <Skeleton className="h-9 w-24" />
-                  <Skeleton className="h-9 w-24" />
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-        ) : queryError ? (
-          <Card className="bg-destructive/10 border-destructive/30 text-destructive">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Info className="h-5 w-5 mr-2" />
-                Erreur de chargement
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>{queryError.message}</p>
-            </CardContent>
-            <CardFooter>
-              <Button variant="outline" onClick={() => refetchEvaluations()}>
-                Réessayer
+      {loading && !evaluations ? (
+        <div className="space-y-2 rounded-xl border bg-card p-4">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <Skeleton key={index} className="h-12 w-full" />
+          ))}
+        </div>
+      ) : error && !evaluations ? (
+        <ErrorState onRetry={() => refetch()} />
+      ) : filteredEvaluations.length === 0 ? (
+        <EmptyState
+          icon={ClipboardList}
+          title={search ? "Aucune évaluation ne correspond" : "Aucune évaluation pour le moment"}
+          description={
+            search ? "Modifiez la recherche." : "Une évaluation vérifie les acquis d'un module par un questionnaire."
+          }
+          action={
+            search ? (
+              <Button variant="outline" onClick={() => setSearchTerm("")}>
+                Effacer la recherche
               </Button>
-            </CardFooter>
-          </Card>
-        ) : (
-          <>
-            {filteredEvaluations.length === 0 ? (
-              <div className="text-center py-12">
-                <ClipboardList className="mx-auto h-12 w-12 text-muted-foreground opacity-20" />
-                <h3 className="mt-4 text-lg font-medium">Aucune évaluation trouvée</h3>
-                <p className="text-muted-foreground mt-2">
-                  {searchTerm
-                    ? "Aucune évaluation ne correspond à votre recherche."
-                    : "Commencez par créer une nouvelle évaluation."}
-                </p>
-                {searchTerm && (
-                  <Button variant="outline" className="mt-4" onClick={() => setSearchTerm("")}>
-                    Réinitialiser la recherche
-                  </Button>
-                )}
-                <Button className="mt-4 ml-2" onClick={() => setActiveTab("create")}>
-                  <PlusCircle className="h-4 w-4 mr-2" />
-                  Créer une évaluation
-                </Button>
-              </div>
             ) : (
-              <ScrollArea className="h-[calc(100vh-15rem)]">
-                <motion.div
-                  variants={container}
-                  initial="hidden"
-                  animate="show"
-                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pr-4"
-                >
-                  <AnimatePresence>
-                    {filteredEvaluations.map((evaluation: any) => (
-                      <motion.div key={evaluation.id} variants={item} layout>
-                        <Card className="h-full flex flex-col hover:shadow-md transition-shadow">
-                          <CardHeader className="pb-2">
-                            <div className="flex justify-between items-start">
-                              <CardTitle className="text-lg flex items-center">
-                                <Book className="w-5 h-5 mr-2 text-info" />
-                                <span className="line-clamp-1">{evaluation.module?.title || "Module inconnu"}</span>
-                              </CardTitle>
-                              <Badge variant="outline">
-                                {evaluation.questions.length} question{evaluation.questions.length !== 1 ? "s" : ""}
-                              </Badge>
-                            </div>
-                            <CardDescription className="flex items-center mt-1">
-                              <Layers className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
-                              Module {evaluation.module?.id || "?"}
-                            </CardDescription>
-                          </CardHeader>
-                          <CardContent className="pb-2 flex-grow">
-                            <div className="space-y-2">
-                              <div className="flex justify-between items-center text-sm">
-                                <span>Score de réussite</span>
-                                <span className="font-medium">{evaluation.pass_score}%</span>
-                              </div>
-                              <Progress value={evaluation.pass_score} className="h-2" />
-                            </div>
-                          </CardContent>
-                          <CardFooter className="flex flex-wrap justify-between pt-2 border-t mt-auto gap-2">
-                            <Dialog>
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <DialogTrigger asChild>
-                                      <Button variant="outline" size="sm">
-                                        <HelpCircle className="w-4 h-4 mr-2" />
-                                        Questions
-                                      </Button>
-                                    </DialogTrigger>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Voir et gérer les questions</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-                              <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden flex flex-col">
-                                <DialogHeader>
-                                  <DialogTitle className="flex items-center">
-                                    <ClipboardList className="w-5 h-5 mr-2 text-info" />
-                                    Questions de l'évaluation
-                                  </DialogTitle>
-                                </DialogHeader>
-
-                                <div className="flex-grow overflow-hidden flex flex-col">
-                                  <div className="flex justify-between items-center mb-4">
-                                    <div>
-                                      <h3 className="font-medium">{evaluation.module?.title || "Module inconnu"}</h3>
-                                      <p className="text-sm text-muted-foreground">
-                                        Score de réussite : {evaluation.pass_score}% | {evaluation.questions.length}{" "}
-                                        questions
-                                      </p>
-                                    </div>
-                                    <TooltipProvider>
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => {
-                                              setEditingEvaluation(evaluation)
-                                              setIsEditEvaluationOpen(true)
-                                            }}
-                                          >
-                                            <Edit className="w-4 h-4 mr-2" />
-                                            Modifier l'évaluation
-                                          </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                          <p>Modifier les paramètres de l'évaluation</p>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TooltipProvider>
-                                  </div>
-
-                                  <Separator className="my-2" />
-
-                                  <ScrollArea className="flex-grow pr-4">
-                                    <div className="space-y-4">
-                                      {evaluation.questions.length === 0 ? (
-                                        <div className="text-center py-8">
-                                          <HelpCircle className="mx-auto h-12 w-12 text-muted-foreground opacity-20" />
-                                          <p className="mt-2 text-muted-foreground">
-                                            Aucune question dans cette évaluation
-                                          </p>
-                                          <Button
-                                            variant="outline"
-                                            className="mt-4"
-                                            onClick={() => {
-                                              setSelectedEvaluationId(evaluation.id)
-                                              setStep(2)
-                                              setActiveTab("create")
-                                            }}
-                                          >
-                                            <PlusCircle className="w-4 h-4 mr-2" />
-                                            Ajouter des questions
-                                          </Button>
-                                        </div>
-                                      ) : (
-                                        <Accordion type="multiple" className="w-full">
-                                          {evaluation.questions.map((question: any, index: number) => (
-                                            <AccordionItem
-                                              key={question.id}
-                                              value={question.id}
-                                              className="border rounded-lg mb-3"
-                                            >
-                                              <AccordionTrigger className="px-4 py-2 hover:bg-muted/50">
-                                                <div className="flex items-center text-left">
-                                                  <Badge className="mr-3 bg-info/15 text-info">
-                                                    {index + 1}
-                                                  </Badge>
-                                                  <span className="font-medium line-clamp-1">
-                                                    {question.content.text}
-                                                  </span>
-                                                </div>
-                                              </AccordionTrigger>
-                                              <AccordionContent className="px-4 pb-4">
-                                                <div className="space-y-4">
-                                                  <div>
-                                                    <h4 className="text-sm font-medium mb-2">Options de réponse</h4>
-                                                    <ul className="space-y-2">
-                                                      {question.options.map((option: string, optionIndex: number) => (
-                                                        <li key={optionIndex} className="flex items-center">
-                                                          <div
-                                                            className={`flex items-center p-2 rounded-md ${
-                                                              option === question.correct_answer
-                                                                ? "bg-success/10 text-success"
-                                                                : "bg-muted/50"
-                                                            } w-full`}
-                                                          >
-                                                            {option === question.correct_answer && (
-                                                              <Check className="w-4 h-4 mr-2 text-success shrink-0" />
-                                                            )}
-                                                            <span>{option}</span>
-                                                          </div>
-                                                        </li>
-                                                      ))}
-                                                    </ul>
-                                                  </div>
-
-                                                  <div className="flex justify-end space-x-2 pt-2">
-                                                    <TooltipProvider>
-                                                      <Tooltip>
-                                                        <TooltipTrigger asChild>
-                                                          <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            onClick={() => {
-                                                              setEditingQuestion(question)
-                                                              setIsEditQuestionOpen(true)
-                                                            }}
-                                                            disabled={updateQuestionLoading}
-                                                          >
-                                                            <Edit className="w-4 h-4 mr-2" />
-                                                            Modifier
-                                                          </Button>
-                                                        </TooltipTrigger>
-                                                        <TooltipContent>
-                                                          <p>Modifier cette question</p>
-                                                        </TooltipContent>
-                                                      </Tooltip>
-                                                    </TooltipProvider>
-
-                                                    <AlertDialog>
-                                                      <TooltipProvider>
-                                                        <Tooltip>
-                                                          <TooltipTrigger asChild>
-                                                            <AlertDialogTrigger asChild>
-                                                              <Button
-                                                                variant="outline"
-                                                                size="sm"
-                                                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                                                disabled={deleteQuestionLoading}
-                                                              >
-                                                                <Trash2 className="w-4 h-4 mr-2" />
-                                                                Supprimer
-                                                              </Button>
-                                                            </AlertDialogTrigger>
-                                                          </TooltipTrigger>
-                                                          <TooltipContent>
-                                                            <p>Supprimer définitivement cette question</p>
-                                                          </TooltipContent>
-                                                        </Tooltip>
-                                                      </TooltipProvider>
-                                                      <AlertDialogContent>
-                                                        <AlertDialogHeader>
-                                                          <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
-                                                          <AlertDialogDescription>
-                                                            Êtes-vous sûr de vouloir supprimer cette question ? Cette
-                                                            action est irréversible.
-                                                          </AlertDialogDescription>
-                                                        </AlertDialogHeader>
-                                                        <AlertDialogFooter>
-                                                          <AlertDialogCancel>Annuler</AlertDialogCancel>
-                                                          <AlertDialogAction
-                                                            onClick={() => handleDeleteQuestion(question.id)}
-                                                            className="bg-destructive hover:bg-destructive/90"
-                                                          >
-                                                            {deleteQuestionLoading ? (
-                                                              <>
-                                                                <Loader2 className="animate-spin h-4 w-4 mr-2" />
-                                                                Suppression...
-                                                              </>
-                                                            ) : (
-                                                              <>Supprimer</>
-                                                            )}
-                                                          </AlertDialogAction>
-                                                        </AlertDialogFooter>
-                                                      </AlertDialogContent>
-                                                    </AlertDialog>
-                                                  </div>
-                                                </div>
-                                              </AccordionContent>
-                                            </AccordionItem>
-                                          ))}
-                                        </Accordion>
-                                      )}
-                                    </div>
-                                  </ScrollArea>
-                                </div>
-                              </DialogContent>
-                            </Dialog>
-
-                            <div className="flex gap-2">
-                              <TooltipProvider>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => {
-                                        setEditingEvaluation(evaluation)
-                                        setIsEditEvaluationOpen(true)
-                                      }}
-                                      disabled={updateEvalLoading}
-                                    >
-                                      <Edit className="w-4 h-4 mr-2" />
-                                      Modifier
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    <p>Modifier les paramètres de l'évaluation</p>
-                                  </TooltipContent>
-                                </Tooltip>
-                              </TooltipProvider>
-
-                              <AlertDialog>
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <AlertDialogTrigger asChild>
-                                        <Button
-                                          variant="outline"
-                                          size="sm"
-                                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                          disabled={deleteEvalLoading}
-                                        >
-                                          <Trash2 className="w-4 h-4 mr-2" />
-                                          Supprimer
-                                        </Button>
-                                      </AlertDialogTrigger>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p>Supprimer définitivement cette évaluation</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      Êtes-vous sûr de vouloir supprimer cette évaluation ? Cette action est
-                                      irréversible et supprimera également toutes les questions associées.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>Annuler</AlertDialogCancel>
-                                    <AlertDialogAction
-                                      onClick={() => handleDeleteEvaluation(evaluation.id)}
-                                      className="bg-destructive hover:bg-destructive/90"
-                                    >
-                                      {deleteEvalLoading ? (
-                                        <>
-                                          <Loader2 className="animate-spin h-4 w-4 mr-2" />
-                                          Suppression...
-                                        </>
-                                      ) : (
-                                        <>Supprimer</>
-                                      )}
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            </div>
-                          </CardFooter>
-                        </Card>
-                      </motion.div>
-                    ))}
-                  </AnimatePresence>
-                </motion.div>
-              </ScrollArea>
-            )}
-          </>
-        )}
-      </TabsContent>
-
-      <TabsContent value="create">
-        <Card className="border-t-4 border-t-primary">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              {step === 1 ? (
-                <>
-                  <PlusCircle className="w-5 h-5 mr-2 text-info" />
-                  Créer une nouvelle évaluation
-                </>
-              ) : (
-                <>
-                  <HelpCircle className="w-5 h-5 mr-2 text-info" />
-                  Ajouter des questions à l'évaluation
-                </>
-              )}
-            </CardTitle>
-            <CardDescription>
-              {step === 1
-                ? "Étape 1: Définir les paramètres de l'évaluation"
-                : "Étape 2: Ajouter des questions à l'évaluation"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {step === 1 ? (
-              <form onSubmit={handleCreateEvaluation} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="module-select">
-                    Module associé <span className="text-destructive">*</span>
-                  </Label>
-                  <Select value={selectedModuleId} onValueChange={setSelectedModuleId} required>
-                    <SelectTrigger id="module-select">
-                      <SelectValue placeholder="Sélectionner un module" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {modulesLoading ? (
-                        <div className="flex items-center justify-center p-4">
-                          <Loader2 className="animate-spin h-5 w-5 text-primary" />
-                        </div>
-                      ) : !modulesData?.getAllModules || modulesData.getAllModules.length === 0 ? (
-                        <div className="p-2 text-center text-sm text-muted-foreground">Aucun module disponible</div>
-                      ) : (
-                        modulesData.getAllModules.map((module: any) => (
-                          <SelectItem key={module.id} value={module.id.toString()}>
-                            {module.title}
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="pass-score">
-                    Score de réussite (%) <span className="text-destructive">*</span>
-                  </Label>
-                  <Input
-                    id="pass-score"
-                    type="number"
-                    min="1"
-                    max="100"
-                    value={passScore}
-                    onChange={(e) => setPassScore(e.target.value)}
-                    required
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Pourcentage minimum de bonnes réponses pour réussir l'évaluation.
-                  </p>
-                </div>
-
-                <div className="pt-4 flex justify-between">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setActiveTab("view")
-                    }}
-                  >
-                    Annuler
-                  </Button>
-                  <Button type="submit" className="w-full md:w-auto" disabled={createEvalLoading || !selectedModuleId}>
-                    {createEvalLoading ? (
-                      <>
-                        <Loader2 className="animate-spin h-4 w-4 mr-2" />
-                        Création en cours...
-                      </>
-                    ) : (
-                      <>Créer l'évaluation et passer aux questions</>
-                    )}
-                  </Button>
-                </div>
-              </form>
-            ) : (
-              <form onSubmit={handleCreateQuestion} className="space-y-4">
-                {currentEvaluation && (
-                  <div className="bg-info/10 p-3 rounded-md mb-4">
-                    <h3 className="font-medium flex items-center">
-                      <Book className="w-4 h-4 mr-2 text-info" />
-                      {currentEvaluation.module?.title || "Module inconnu"}
-                    </h3>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Score de réussite : {currentEvaluation.pass_score}% |{currentEvaluation.questions.length} question
-                      {currentEvaluation.questions.length !== 1 ? "s" : ""} déjà ajoutée
-                      {currentEvaluation.questions.length !== 1 ? "s" : ""}
-                    </p>
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  <Label htmlFor="question-content">
-                    Question <span className="text-destructive">*</span>
-                  </Label>
-                  <Textarea
-                    id="question-content"
-                    value={questionContent}
-                    onChange={(e) => setQuestionContent(e.target.value)}
-                    placeholder="Saisissez le texte de la question"
-                    rows={3}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label>
-                      Options de réponse <span className="text-destructive">*</span>
-                    </Label>
-                    <Button type="button" onClick={addOption} variant="outline" size="sm" className="h-7 text-xs">
-                      <PlusCircle className="h-3 w-3 mr-1" />
-                      Ajouter une option
-                    </Button>
-                  </div>
-
-                  <div className="space-y-2 mt-2">
-                    {options.map((option, index) => (
-                      <div key={index} className="flex items-center space-x-2">
-                        <Input
-                          value={option}
-                          onChange={(e) => updateOption(index, e.target.value)}
-                          placeholder={`Option ${index + 1}`}
-                          required
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          className="h-9 w-9 shrink-0"
-                          onClick={() => removeOption(index)}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>
-                    Réponse correcte <span className="text-destructive">*</span>
-                  </Label>
-                  <RadioGroup value={correctAnswer} onValueChange={setCorrectAnswer} className="space-y-2">
-                    {options.map(
-                      (option, index) =>
-                        option.trim() && (
-                          <div
-                            key={index}
-                            className="flex items-center space-x-2 rounded-md border p-3 hover:bg-muted/50"
-                          >
-                            <RadioGroupItem value={option} id={`option-${index}`} />
-                            <Label htmlFor={`option-${index}`} className="flex-grow cursor-pointer">
-                              {option}
-                            </Label>
-                          </div>
-                        ),
-                    )}
-                  </RadioGroup>
-                  {options.filter((o) => o.trim()).length === 0 && (
-                    <p className="text-sm text-muted-foreground">
-                      Ajoutez des options de réponse pour pouvoir sélectionner la réponse correcte.
-                    </p>
-                  )}
-                </div>
-
-                <div className="pt-4 flex justify-between">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setActiveTab("view")
-                      setStep(1)
-                    }}
-                    className="flex items-center"
-                  >
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Retour à la liste
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={
-                      createQuestionLoading ||
-                      !questionContent ||
-                      options.filter((o) => o.trim()).length < 2 ||
-                      !correctAnswer
-                    }
-                  >
-                    {createQuestionLoading ? (
-                      <>
-                        <Loader2 className="animate-spin h-4 w-4 mr-2" />
-                        Ajout en cours...
-                      </>
-                    ) : (
-                      <>
-                        <PlusCircle className="w-4 h-4 mr-2" />
-                        Ajouter la question
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </form>
-            )}
-          </CardContent>
-        </Card>
-      </TabsContent>
-
-      {/* Dialog de modification d'évaluation */}
-      <Dialog open={isEditEvaluationOpen} onOpenChange={setIsEditEvaluationOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Modifier l'évaluation</DialogTitle>
-          </DialogHeader>
-
-          {editingEvaluation && (
-            <form onSubmit={handleUpdateEvaluation} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-module">Module associé</Label>
-                <Input
-                  id="edit-module"
-                  value={editingEvaluation.module?.title || "Module inconnu"}
-                  disabled
-                  className="bg-muted/50"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="edit-pass-score">
-                  Score de réussite (%) <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="edit-pass-score"
-                  type="number"
-                  min="1"
-                  max="100"
-                  value={editingEvaluation.pass_score}
-                  onChange={(e) => setEditingEvaluation({ ...editingEvaluation, pass_score: e.target.value })}
-                  required
-                />
-              </div>
-
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsEditEvaluationOpen(false)}
-                  disabled={updateEvalLoading}
-                >
-                  Annuler
-                </Button>
-                <Button type="submit" disabled={updateEvalLoading}>
-                  {updateEvalLoading ? (
-                    <>
-                      <Loader2 className="animate-spin h-4 w-4 mr-2" />
-                      Enregistrement...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="w-4 h-4 mr-2" />
-                      Enregistrer les modifications
-                    </>
-                  )}
-                </Button>
-              </DialogFooter>
-            </form>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Dialog de modification de question */}
-      <Dialog open={isEditQuestionOpen} onOpenChange={setIsEditQuestionOpen}>
-        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Modifier la question</DialogTitle>
-          </DialogHeader>
-
-          {editingQuestion && (
-            <form onSubmit={handleUpdateQuestion} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-question-content">
-                  Question <span className="text-destructive">*</span>
-                </Label>
-                <Textarea
-                  id="edit-question-content"
-                  value={editingQuestion.content.text}
-                  onChange={(e) =>
-                    setEditingQuestion({
-                      ...editingQuestion,
-                      content: {
-                        ...editingQuestion.content,
-                        text: e.target.value,
-                      },
-                    })
-                  }
-                  rows={3}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label>
-                    Options de réponse <span className="text-destructive">*</span>
-                  </Label>
-                  <Button
-                    type="button"
-                    onClick={() => {
-                      setEditingQuestion({
-                        ...editingQuestion,
-                        options: [...editingQuestion.options, ""],
-                      })
-                    }}
-                    variant="outline"
-                    size="sm"
-                    className="h-7 text-xs"
-                  >
-                    <PlusCircle className="h-3 w-3 mr-1" />
-                    Ajouter une option
-                  </Button>
-                </div>
-
-                <div className="space-y-2 mt-2">
-                  {editingQuestion.options.map((option: string, index: number) => (
-                    <div key={index} className="flex items-center space-x-2">
-                      <Input
-                        value={option}
-                        onChange={(e) => {
-                          const newOptions = [...editingQuestion.options]
-                          newOptions[index] = e.target.value
-
-                          // Mettre à jour la réponse correcte si elle correspond à l'option modifiée
-                          let newCorrectAnswer = editingQuestion.correct_answer
-                          if (editingQuestion.correct_answer === editingQuestion.options[index]) {
-                            newCorrectAnswer = e.target.value
-                          }
-
-                          setEditingQuestion({
-                            ...editingQuestion,
-                            options: newOptions,
-                            correct_answer: newCorrectAnswer,
-                          })
-                        }}
-                        placeholder={`Option ${index + 1}`}
-                        required
-                      />
-                      <Button
+              createButton
+            )
+          }
+        />
+      ) : (
+        <div className="overflow-x-auto rounded-xl border bg-card">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Module évalué</TableHead>
+                <TableHead className="text-right">Score de réussite</TableHead>
+                <TableHead className="text-right">Questions</TableHead>
+                <TableHead className="w-12">
+                  <span className="sr-only">Actions</span>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredEvaluations.map((evaluation) => {
+                const openQuestions = () => setQuestionsOf(String(evaluation.id))
+                return (
+                  <TableRow key={evaluation.id} className="cursor-pointer" onClick={openQuestions}>
+                    <TableCell className="min-w-[12rem] font-medium">
+                      {/* The button keeps the row reachable from the keyboard. */}
+                      <button
                         type="button"
-                        variant="outline"
-                        size="icon"
-                        className="h-9 w-9 shrink-0"
-                        onClick={() => {
-                          if (editingQuestion.options.length <= 2) {
-                            toast({
-                              title: "Action impossible",
-                              description: "Une question doit avoir au moins deux options.",
-                              variant: "destructive",
-                            })
-                            return
-                          }
-
-                          const newOptions = [...editingQuestion.options]
-                          newOptions.splice(index, 1)
-
-                          // Si l'option supprimée était la réponse correcte, réinitialiser la réponse correcte
-                          let newCorrectAnswer = editingQuestion.correct_answer
-                          if (editingQuestion.correct_answer === editingQuestion.options[index]) {
-                            newCorrectAnswer = ""
-                          }
-
-                          setEditingQuestion({
-                            ...editingQuestion,
-                            options: newOptions,
-                            correct_answer: newCorrectAnswer,
-                          })
+                        className="text-left hover:underline focus-visible:underline focus-visible:outline-none"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          openQuestions()
                         }}
                       >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </div>
+                        {evaluation.module?.title ?? "—"}
+                      </button>
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">{Math.round(evaluation.pass_score)} %</TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {evaluation.questions.length === 0 ? (
+                        <Badge variant="warning">Aucune question</Badge>
+                      ) : (
+                        evaluation.questions.length
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right" onClick={(event) => event.stopPropagation()}>
+                      <DropdownMenu modal={false}>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-9 w-9"
+                            aria-label={`Actions de l'évaluation ${evaluation.module?.title ?? ""}`}
+                            title="Actions"
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onSelect={openQuestions}>
+                            <HelpCircle className="h-4 w-4" />
+                            Gérer les questions
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => openEdit(evaluation)}>
+                            <Pencil className="h-4 w-4" />
+                            Modifier le score de réussite
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onSelect={() => setEvaluationToDelete(evaluation)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Supprimer
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
-              <div className="space-y-2">
-                <Label>
-                  Réponse correcte <span className="text-destructive">*</span>
-                </Label>
-                <RadioGroup
-                  value={editingQuestion.correct_answer}
-                  onValueChange={(value) => setEditingQuestion({ ...editingQuestion, correct_answer: value })}
-                  className="space-y-2"
-                >
-                  {editingQuestion.options.map(
-                    (option: string, index: number) =>
-                      option.trim() && (
-                        <div
-                          key={index}
-                          className="flex items-center space-x-2 rounded-md border p-3 hover:bg-muted/50"
-                        >
-                          <RadioGroupItem value={option} id={`edit-option-${index}`} />
-                          <Label htmlFor={`edit-option-${index}`} className="flex-grow cursor-pointer">
-                            {option}
-                          </Label>
-                        </div>
-                      ),
-                  )}
-                </RadioGroup>
-              </div>
+      <Dialog open={isFormOpen} onOpenChange={(open) => !saving && setIsFormOpen(open)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{isEdit ? "Modifier l'évaluation" : "Créer une évaluation"}</DialogTitle>
+            <DialogDescription>
+              {isEdit
+                ? `Évaluation du module « ${form.moduleTitle} ».`
+                : "Choisissez le module évalué ; les questions s'ajoutent juste après."}
+            </DialogDescription>
+          </DialogHeader>
 
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsEditQuestionOpen(false)}
-                  disabled={updateQuestionLoading}
-                >
-                  Annuler
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={
-                    updateQuestionLoading ||
-                    !editingQuestion.content.text ||
-                    editingQuestion.options.filter((o: string) => o.trim()).length < 2 ||
-                    !editingQuestion.correct_answer
-                  }
-                >
-                  {updateQuestionLoading ? (
-                    <>
-                      <Loader2 className="animate-spin h-4 w-4 mr-2" />
-                      Enregistrement...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="w-4 h-4 mr-2" />
-                      Enregistrer les modifications
-                    </>
-                  )}
-                </Button>
-              </DialogFooter>
-            </form>
-          )}
+          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+            {!isEdit && (
+              <FormField label="Module" htmlFor="evaluation-module" required error={submitted ? errors.moduleId : null}>
+                <Select value={form.moduleId} onValueChange={(value) => setForm({ ...form, moduleId: value })}>
+                  <SelectTrigger id="evaluation-module">
+                    <SelectValue placeholder="Choisir un module" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {modulesQuery.loading && modules.length === 0 ? (
+                      <div className="flex items-center justify-center gap-2 p-3 text-sm text-muted-foreground">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Chargement des modules
+                      </div>
+                    ) : modules.length === 0 ? (
+                      <div className="p-3 text-center text-sm text-muted-foreground">
+                        Aucun module : créez-en un dans l'onglet Modules.
+                      </div>
+                    ) : (
+                      modules.map((module) => (
+                        <SelectItem key={module.id} value={String(module.id)}>
+                          {module.title}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </FormField>
+            )}
+
+            <FormField
+              label="Score de réussite"
+              htmlFor="evaluation-pass-score"
+              required
+              error={submitted ? errors.passScore : null}
+              hint="Part de bonnes réponses à atteindre pour réussir."
+            >
+              <div className="flex items-center gap-2">
+                <Input
+                  id="evaluation-pass-score"
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={100}
+                  step={1}
+                  className="w-28 text-right tabular-nums"
+                  value={form.passScore}
+                  onChange={(event) => setForm({ ...form, passScore: event.target.value })}
+                  aria-invalid={submitted && !!errors.passScore}
+                />
+                <span className="text-sm text-muted-foreground">%</span>
+              </div>
+            </FormField>
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setIsFormOpen(false)} disabled={saving}>
+                Annuler
+              </Button>
+              <Button type="submit" disabled={saving}>
+                {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+                {isEdit ? "Enregistrer" : "Créer l'évaluation"}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
-    </Tabs>
+
+      <QuestionsDialog evaluation={openedEvaluation} onClose={() => setQuestionsOf(null)} onChanged={() => refetch()} />
+
+      <ConfirmDeleteDialog
+        open={evaluationToDelete !== null}
+        onOpenChange={(open) => !open && setEvaluationToDelete(null)}
+        title="Supprimer cette évaluation ?"
+        description={`L'évaluation du module « ${evaluationToDelete?.module?.title ?? ""} » sera définitivement supprimée, avec toutes ses questions.`}
+        onConfirm={handleDelete}
+        loading={deleting}
+      />
+    </div>
   )
 }

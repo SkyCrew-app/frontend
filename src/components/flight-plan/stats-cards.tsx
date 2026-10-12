@@ -1,7 +1,8 @@
 "use client"
 
-import { StatCard, type StatTone } from "@/components/layout/StatCard"
+import { StatCard } from "@/components/layout/StatCard"
 import { Plane, MapPin, Route, Clock } from "lucide-react"
+import { formatDecimal, formatFlightDuration } from "@/lib/format"
 import type { Flight } from "@/interfaces/flight"
 
 interface StatsCardsProps {
@@ -9,58 +10,21 @@ interface StatsCardsProps {
 }
 
 export function StatsCards({ flights }: StatsCardsProps) {
-  const totalFlights = flights.length
+  const totalDistance = flights.reduce((sum, flight) => sum + (flight.distance_km || 0), 0)
+  const totalHours = flights.reduce((sum, flight) => sum + (flight.flight_hours || 0), 0)
 
-  const totalDistance = flights.reduce((sum, flight) => {
-    return sum + (flight.distance_km || 0)
-  }, 0)
-
-  const totalHours = flights.reduce((sum, flight) => {
-    return sum + (flight.flight_hours || 0)
-  }, 0)
-
-  const uniqueAirports = new Set()
+  const aerodromes = new Set<string>()
   flights.forEach((flight) => {
-    if (flight.origin_icao) uniqueAirports.add(flight.origin_icao)
-    if (flight.destination_icao) uniqueAirports.add(flight.destination_icao)
+    if (flight.origin_icao) aerodromes.add(flight.origin_icao)
+    if (flight.destination_icao) aerodromes.add(flight.destination_icao)
   })
 
-  const stats = [
-    {
-      title: "Plans de vol",
-      value: totalFlights,
-      unit: "",
-      icon: Plane,
-      tone: "info" as StatTone,
-    },
-    {
-      title: "Heures de vol",
-      value: totalHours.toFixed(1),
-      unit: "h",
-      icon: Clock,
-      tone: "success" as StatTone,
-    },
-    {
-      title: "Distance totale",
-      value: Math.round(totalDistance),
-      unit: "km",
-      icon: Route,
-      tone: "warning" as StatTone,
-    },
-    {
-      title: "Aéroports visités",
-      value: uniqueAirports.size,
-      unit: "",
-      icon: MapPin,
-      tone: "primary" as StatTone,
-    },
-  ]
-
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-      {stats.map((stat) => (
-        <StatCard key={stat.title} label={stat.title} value={`${stat.value}${stat.unit}`} icon={stat.icon} tone={stat.tone} />
-      ))}
+    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <StatCard label="Plans de vol" value={flights.length} icon={Plane} tone="info" />
+      <StatCard label="Temps de vol prévu" value={formatFlightDuration(totalHours)} icon={Clock} tone="success" />
+      <StatCard label="Distance totale" value={`${formatDecimal(totalDistance, 0)} km`} icon={Route} tone="warning" />
+      <StatCard label="Aérodromes" value={aerodromes.size} icon={MapPin} tone="primary" />
     </div>
   )
 }

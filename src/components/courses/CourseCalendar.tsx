@@ -1,239 +1,115 @@
 "use client"
 
-import { useState } from "react"
-import { Calendar } from "@/components/ui/calendar"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { format, isSameDay, isWithinInterval, parseISO } from "date-fns"
-import { fr } from "date-fns/locale"
-import { Star, Clock, BookOpen, ChevronLeft, ChevronRight } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { useMemo, useState } from "react"
 import Link from "next/link"
-import type { DateRange } from "react-day-picker"
-
-type Course = {
-  id: number
-  instructor: { id: number; first_name: string; last_name: string }
-  student: { id: number; first_name: string; last_name: string }
-  startTime: string
-  endTime: string | null
-  status: string
-  rating: number | null
-  description?: string
-  competencies: { id: number; name: string; description: string; validated: boolean }[]
-}
+import { format, isSameDay, parseISO } from "date-fns"
+import { fr } from "date-fns/locale"
+import { CalendarX, ChevronRight } from "lucide-react"
+import { Calendar } from "@/components/ui/calendar"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { EmptyState } from "@/components/layout/EmptyState"
+import { learningRoutes } from "@/lib/learning-navigation"
+import {
+  courseCounterpart,
+  courseHours,
+  courseStatus,
+  personName,
+  type InstructionCourse,
+} from "./course-helpers"
 
 type CourseCalendarProps = {
-  courses: Course[]
-  userId: number
-  userRole: "instructor" | "student"
+  courses: InstructionCourse[]
+  userId: number | null
 }
 
-export default function CourseCalendar({ courses, userRole }: CourseCalendarProps) {
-  const [dateRange, setDateRange] = useState<DateRange | undefined>({
-    from: new Date(),
-    to: undefined,
-  })
+export default function CourseCalendar({ courses, userId }: CourseCalendarProps) {
+  const [selectedDay, setSelectedDay] = useState<Date>(new Date())
+  const [month, setMonth] = useState<Date>(new Date())
 
-  const coursesByDate = courses.reduce(
-    (acc, course) => {
-      const date = format(parseISO(course.startTime), "yyyy-MM-dd")
-      if (!acc[date]) {
-        acc[date] = []
-      }
-      acc[date].push(course)
-      return acc
-    },
-    {} as Record<string, Course[]>,
+  const courseDays = useMemo(() => courses.map((course) => parseISO(course.startTime)), [courses])
+  const coursesOfDay = useMemo(
+    () =>
+      courses
+        .filter((course) => isSameDay(parseISO(course.startTime), selectedDay))
+        .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()),
+    [courses, selectedDay],
   )
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "SCHEDULED":
-        return "bg-info/15 text-info"
-      case "IN_PROGRESS":
-        return "bg-warning/15 text-warning"
-      case "COMPLETED":
-        return "bg-success/15 text-success"
-      case "CANCELED":
-        return "bg-destructive/15 text-destructive"
-      default:
-        return "bg-muted text-foreground"
-    }
-  }
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case "SCHEDULED":
-        return "Planifié"
-      case "IN_PROGRESS":
-        return "En cours"
-      case "COMPLETED":
-        return "Terminé"
-      case "CANCELED":
-        return "Annulé"
-      default:
-        return status
-    }
-  }
-
-  const filteredCourses = courses.filter((course) =>
-    dateRange?.to && dateRange.from
-      ? isWithinInterval(parseISO(course.startTime), { start: dateRange.from, end: dateRange.to })
-      : dateRange?.from
-        ? isSameDay(parseISO(course.startTime), dateRange.from)
-        : false,
-  )
-
-  const getDayHasEvents = (date: Date) => {
-    const dateStr = format(date, "yyyy-MM-dd")
-    return !!coursesByDate[dateStr] && coursesByDate[dateStr].length > 0
+  const goToToday = () => {
+    const today = new Date()
+    setSelectedDay(today)
+    setMonth(today)
   }
 
   return (
-    <div className="flex flex-col lg:flex-row space-y-6 lg:space-y-0 lg:space-x-6">
-      <div className="lg:w-1/3">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex justify-between items-center mb-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  const newDate = new Date()
-                  setDateRange({ from: newDate, to: undefined })
-                }}
-              >
-                Aujourd'hui
-              </Button>
-              <div className="flex space-x-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => {
-                    const prevMonth = new Date(dateRange?.from || new Date())
-                    prevMonth.setMonth(prevMonth.getMonth() - 1)
-                    setDateRange({ from: prevMonth, to: undefined })
-                  }}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => {
-                    const nextMonth = new Date(dateRange?.from || new Date())
-                    nextMonth.setMonth(nextMonth.getMonth() + 1)
-                    setDateRange({ from: nextMonth, to: undefined })
-                  }}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
+    <div className="grid gap-4 lg:grid-cols-[auto_1fr]">
+      <Card className="mx-auto w-full max-w-sm lg:mx-0">
+        <CardContent className="p-3">
+          <Calendar
+            mode="single"
+            selected={selectedDay}
+            onSelect={(day) => day && setSelectedDay(day)}
+            month={month}
+            onMonthChange={setMonth}
+            locale={fr}
+            modifiers={{ hasCourse: courseDays }}
+            modifiersClassNames={{ hasCourse: "font-semibold underline decoration-2 underline-offset-4" }}
+          />
+          <div className="flex items-center justify-between gap-3 border-t px-3 pt-3">
+            <p className="text-xs text-muted-foreground">Les jours soulignés ont un cours.</p>
+            <Button variant="outline" size="sm" onClick={goToToday}>
+              Aujourd'hui
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
-            <Calendar
-              mode="single"
-              selected={dateRange?.from}
-              onSelect={(date) => setDateRange({ from: date || new Date(), to: undefined })}
-              locale={fr}
-              className="rounded-md"
-              modifiers={{
-                hasEvents: (date) => getDayHasEvents(date),
-              }}
-              modifiersStyles={{
-                hasEvents: {
-                  fontWeight: "bold",
-                  color: "var(--primary)",
-                  textDecoration: "underline",
-                },
-              }}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg first-letter:uppercase">
+            {format(selectedDay, "EEEE d MMMM yyyy", { locale: fr })}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {coursesOfDay.length === 0 ? (
+            <EmptyState
+              icon={CalendarX}
+              title="Aucun cours ce jour-là"
+              description="Choisissez un jour souligné dans le calendrier."
             />
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="flex-grow">
-        <Card className="h-full">
-          <CardContent className="p-4">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-semibold text-foreground">
-                {dateRange?.from && format(dateRange.from, "dd MMMM yyyy", { locale: fr })}
-              </h3>
-            </div>
-
-            <ScrollArea className="h-[calc(100vh-400px)] max-h-[500px]">
-              {filteredCourses.length > 0 ? (
-                <div className="space-y-4">
-                  {filteredCourses.map((course) => (
-                    <Card key={course.id} className="p-4 hover:shadow-md transition-shadow">
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="flex flex-col">
-                          <h4 className="text-base font-medium text-foreground">
-                            {userRole === "instructor" ? course.student.first_name : course.instructor.first_name}{" "}
-                            {userRole === "instructor" ? course.student.last_name : course.instructor.last_name}
-                          </h4>
-                          {course.description && <p className="text-sm text-muted-foreground">{course.description}</p>}
-                        </div>
-                        <Badge className={getStatusColor(course.status)}>{getStatusLabel(course.status)}</Badge>
+          ) : (
+            <ul className="divide-y">
+              {coursesOfDay.map((course) => {
+                const { person, role } = courseCounterpart(course, userId)
+                const status = courseStatus(course.status)
+                const validated = course.competencies.filter((competency) => competency.validated).length
+                return (
+                  <li key={course.id}>
+                    <Link
+                      href={learningRoutes.course(course.id)}
+                      className="flex flex-wrap items-center gap-3 rounded-md px-2 py-3 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <p className="w-28 shrink-0 text-sm font-medium tabular-nums">{courseHours(course)}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">{personName(person)}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {role}
+                          {course.competencies.length > 0 &&
+                            ` · ${validated} / ${course.competencies.length} compétences validées`}
+                        </p>
                       </div>
-
-                      <div className="grid grid-cols-2 gap-2 mb-3">
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <Clock className="w-4 h-4 mr-1" />
-                          <span>Début: {format(parseISO(course.startTime), "HH:mm", { locale: fr })}</span>
-                        </div>
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <Clock className="w-4 h-4 mr-1" />
-                          <span>
-                            Fin:{" "}
-                            {course.endTime ? format(parseISO(course.endTime), "HH:mm", { locale: fr }) : "Non défini"}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center text-sm text-muted-foreground mb-3">
-                        <BookOpen className="w-4 h-4 mr-1" />
-                        <span>
-                          {course.competencies.length} compétence{course.competencies.length > 1 ? "s" : ""}
-                        </span>
-                        {course.competencies.length > 0 && (
-                          <Badge variant="outline" className="ml-2">
-                            {course.competencies.filter((c) => c.validated).length} validée
-                            {course.competencies.filter((c) => c.validated).length > 1 ? "s" : ""}
-                          </Badge>
-                        )}
-                      </div>
-
-                      <div className="flex justify-between items-center mt-2">
-                        {course.rating ? (
-                          <div className="flex items-center">
-                            <Star className="w-4 h-4 fill-warning text-warning mr-1" />
-                            <span className="text-sm font-medium">{course.rating}/5</span>
-                          </div>
-                        ) : (
-                          <div></div>
-                        )}
-                        <Link href={`/instruction/courses/${course.id}`}>
-                          <Button variant="outline" size="sm">
-                            Détails
-                          </Button>
-                        </Link>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                  <p className="text-lg">Aucun cours prévu pour cette date</p>
-                  <p className="text-sm">Sélectionnez une autre date ou créez un nouveau cours</p>
-                </div>
-              )}
-            </ScrollArea>
-          </CardContent>
-        </Card>
-      </div>
+                      <Badge variant={status.variant}>{status.label}</Badge>
+                      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                    </Link>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }

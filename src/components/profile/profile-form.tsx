@@ -1,20 +1,45 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { useMutation } from "@apollo/client"
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card"
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { User, Mail, Phone, MapPin, Calendar, Camera } from 'lucide-react'
+import { Camera, Loader2 } from "lucide-react"
 import axios from "axios"
 import { UPDATE_USER } from "@/graphql/user"
 import { useToast } from "@/components/hooks/use-toast"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
-import { motion } from "framer-motion"
 import { getBackendBaseUrl } from "@/lib/runtime-config"
 import { getAge } from "@/lib/age"
+import { FormField } from "./form-field"
+
+const toFormData = (userData: any) => ({
+  first_name: userData?.first_name || "",
+  last_name: userData?.last_name || "",
+  email: userData?.email || "",
+  phone_number: userData?.phone_number || "",
+  address: userData?.address || "",
+  date_of_birth: userData?.date_of_birth || "",
+  profile_picture: userData?.profile_picture || "",
+})
+
+const NO_ERRORS = {
+  first_name: "",
+  last_name: "",
+  email: "",
+  phone_number: "",
+  address: "",
+  date_of_birth: "",
+}
+
+// Value of the date input: the API sends a full timestamp.
+const toDateInputValue = (value: string) => {
+  if (!value) return ""
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? "" : date.toISOString().split("T")[0]
+}
 
 interface ProfileFormProps {
   userData: any
@@ -46,22 +71,17 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [previewImage, setPreviewImage] = useState<string | null>(null)
   const [isUpdating, setIsUpdating] = useState(false)
-  const [saveSuccess, setSaveSuccess] = useState(false)
+  const formRef = useRef<HTMLFormElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  // Only the answer to the latest address search is shown.
+  const addressRequest = useRef(0)
 
   const { toast } = useToast()
   const [updateProfile] = useMutation(UPDATE_USER)
 
   useEffect(() => {
     if (userData) {
-      setFormData({
-        first_name: userData.first_name || "",
-        last_name: userData.last_name || "",
-        email: userData.email || "",
-        phone_number: userData.phone_number || "",
-        address: userData.address || "",
-        date_of_birth: userData.date_of_birth || "",
-        profile_picture: userData.profile_picture || "",
-      })
+      setFormData(toFormData(userData))
     }
   }, [userData])
 
@@ -74,10 +94,10 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
     if (name === "address" && value.length > 2) {
       fetchAddressSuggestions(value)
     } else if (name === "address") {
+      addressRequest.current += 1
       setAddressSuggestions([])
     }
 
-    setSaveSuccess(false)
   }
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -85,25 +105,30 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
     if (file) {
       setSelectedImage(file)
       setPreviewImage(URL.createObjectURL(file))
-      setSaveSuccess(false)
     }
   }
 
   const fetchAddressSuggestions = async (query: string) => {
+    const request = ++addressRequest.current
     try {
-      const response = await axios.get(`https://api-adresse.data.gouv.fr/search/?q=${query}&limit=5`)
+      const response = await axios.get(
+        `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(query)}&limit=5`,
+      )
+      if (request !== addressRequest.current) return
       const suggestions = response.data.features.map((feature: any) => feature.properties.label)
       setAddressSuggestions(suggestions)
     } catch (error) {
+      if (request !== addressRequest.current) return
       console.error("Erreur lors de la récupération des suggestions d'adresse:", error)
       setAddressSuggestions([])
     }
   }
 
   const selectAddress = (address: string) => {
+    addressRequest.current += 1
     setFormData((prev) => ({ ...prev, address }))
+    setErrors((prev) => ({ ...prev, address: "" }))
     setAddressSuggestions([])
-    setSaveSuccess(false)
   }
 
   const validateForm = () => {
@@ -178,11 +203,14 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
   }
 
   const saveProfileChanges = async () => {
+    // The identifier is only known once the member is loaded.
+    if (!userId) return
+
     if (!validateForm()) {
-      const firstErrorElement = document.querySelector(".border-destructive")
-      if (firstErrorElement) {
-        firstErrorElement.scrollIntoView({ behavior: "smooth", block: "center" })
-      }
+      // Once the messages are rendered, bring the first field to fix into view.
+      setTimeout(() => {
+        formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus()
+      }, 0)
       return
     }
 
@@ -209,20 +237,11 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
           description: "Profil mis à jour avec succès",
         })
 
-        setSaveSuccess(true)
-
         if (selectedImage) {
           setSelectedImage(null)
         }
 
         await refetch()
-
-        setTimeout(() => {
-          const successMessage = document.querySelector("[data-save-success]")
-          if (successMessage) {
-            successMessage.scrollIntoView({ behavior: "smooth", block: "center" })
-          }
-        }, 100)
       } else {
         throw new Error("La mise à jour a échoué")
       }
@@ -238,181 +257,151 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
     }
   }
 
+  const saved = toFormData(userData)
+  const isDirty =
+    Boolean(selectedImage) ||
+    (Object.keys(saved) as Array<keyof typeof saved>).some((key) => formData[key] !== saved[key])
+
+  const resetForm = () => {
+    addressRequest.current += 1
+    setFormData(saved)
+    setErrors(NO_ERRORS)
+    setAddressSuggestions([])
+    setSelectedImage(null)
+    setPreviewImage(null)
+    if (fileInputRef.current) fileInputRef.current.value = ""
+  }
+
+  const fieldProps = (name: keyof typeof NO_ERRORS) => ({
+    id: name,
+    name,
+    value: formData[name],
+    onChange: handleChange,
+    "aria-required": true,
+    "aria-invalid": Boolean(errors[name]),
+    "aria-describedby": errors[name] ? `${name}-error` : undefined,
+    className: cn(errors[name] && "border-destructive"),
+  })
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-    >
-      <Card className="w-full">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-xl font-semibold">Informations personnelles</CardTitle>
+    <Card>
+      <form
+        ref={formRef}
+        noValidate
+        onSubmit={(e) => {
+          e.preventDefault()
+          void saveProfileChanges()
+        }}
+      >
+        <CardHeader>
+          <CardTitle>Informations personnelles</CardTitle>
+          <CardDescription>Ces coordonnées servent au club pour vous identifier et vous contacter.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="flex flex-col items-center mb-6">
-            <div className="relative mb-4">
-              <Avatar className="h-32 w-32 border-4 border-primary/10">
-                {previewImage ? (
-                  <AvatarImage src={previewImage} alt="Aperçu de la photo de profil" />
-                ) : formData.profile_picture ? (
-                  <AvatarImage
-                    src={`${getBackendBaseUrl()}${formData.profile_picture}`}
-                    alt="Photo de profil"
-                  />
-                ) : (
-                  <AvatarFallback className="text-3xl bg-primary/10 text-primary">
-                    {formData.first_name?.[0]}
-                    {formData.last_name?.[0]}
-                  </AvatarFallback>
-                )}
-              </Avatar>
-              <Label
-                htmlFor="picture"
-                className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-2 cursor-pointer shadow-md hover:bg-primary/90 transition-colors"
-              >
-                <Camera size={18} />
-                <span className="sr-only">Changer la photo</span>
-              </Label>
-              <Input
+          <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+            <Avatar className="h-20 w-20 shrink-0">
+              {previewImage ? (
+                <AvatarImage src={previewImage} alt="Aperçu de la photo de profil" />
+              ) : formData.profile_picture ? (
+                <AvatarImage src={`${getBackendBaseUrl()}${formData.profile_picture}`} alt="Photo de profil" />
+              ) : (
+                <AvatarFallback className="bg-primary/10 text-xl text-primary">
+                  {formData.first_name?.[0]}
+                  {formData.last_name?.[0]}
+                </AvatarFallback>
+              )}
+            </Avatar>
+            <div className="space-y-1.5">
+              <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                <Camera className="h-4 w-4" aria-hidden="true" />
+                Changer la photo
+              </Button>
+              <input
+                ref={fileInputRef}
                 id="picture"
                 type="file"
                 accept="image/*"
                 onChange={handleImageChange}
                 className="hidden"
+                aria-label="Photo de profil"
+                tabIndex={-1}
               />
+              <p className="text-xs text-muted-foreground">
+                {selectedImage
+                  ? "La nouvelle photo sera enregistrée avec le formulaire."
+                  : "Une image carrée au format JPG ou PNG."}
+              </p>
             </div>
-            <p className="text-sm text-muted-foreground">
-              Cliquez sur l'icône pour changer votre photo de profil
-            </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <Label htmlFor="first_name" className="flex items-center gap-2 text-sm font-medium">
-                <User size={16} className="text-primary/70" />
-                Prénom
-              </Label>
-              <Input
-                id="first_name"
-                name="first_name"
-                value={formData.first_name}
-                onChange={handleChange}
-                className={cn(errors.first_name ? "border-destructive" : "", "mt-1")}
-              />
-              {errors.first_name && <p className="text-destructive text-sm mt-1">{errors.first_name}</p>}
-            </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <FormField id="first_name" label="Prénom" required error={errors.first_name}>
+              <Input {...fieldProps("first_name")} placeholder="Camille" autoComplete="given-name" />
+            </FormField>
 
-            <div>
-              <Label htmlFor="last_name" className="flex items-center gap-2 text-sm font-medium">
-                <User size={16} className="text-primary/70" />
-                Nom
-              </Label>
-              <Input
-                id="last_name"
-                name="last_name"
-                value={formData.last_name}
-                onChange={handleChange}
-                className={cn(errors.last_name ? "border-destructive" : "", "mt-1")}
-              />
-              {errors.last_name && <p className="text-destructive text-sm mt-1">{errors.last_name}</p>}
-            </div>
+            <FormField id="last_name" label="Nom" required error={errors.last_name}>
+              <Input {...fieldProps("last_name")} placeholder="Martin" autoComplete="family-name" />
+            </FormField>
 
-            <div>
-              <Label htmlFor="email" className="flex items-center gap-2 text-sm font-medium">
-                <Mail size={16} className="text-primary/70" />
-                Email
-              </Label>
+            <FormField id="email" label="Email" required error={errors.email}>
               <Input
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className={cn(errors.email ? "border-destructive" : "", "mt-1")}
+                {...fieldProps("email")}
+                type="email"
+                placeholder="camille.martin@exemple.fr"
+                autoComplete="email"
               />
-              {errors.email && <p className="text-destructive text-sm mt-1">{errors.email}</p>}
-            </div>
+            </FormField>
 
-            <div>
-              <Label htmlFor="phone_number" className="flex items-center gap-2 text-sm font-medium">
-                <Phone size={16} className="text-primary/70" />
-                Numéro de téléphone
-              </Label>
-              <Input
-                id="phone_number"
-                name="phone_number"
-                value={formData.phone_number}
-                onChange={handleChange}
-                className={cn(errors.phone_number ? "border-destructive" : "", "mt-1")}
-              />
-              {errors.phone_number && <p className="text-destructive text-sm mt-1">{errors.phone_number}</p>}
-            </div>
+            <FormField id="phone_number" label="Numéro de téléphone" required error={errors.phone_number}>
+              <Input {...fieldProps("phone_number")} type="tel" placeholder="06 12 34 56 78" autoComplete="tel" />
+            </FormField>
 
-            <div>
-              <Label htmlFor="address" className="flex items-center gap-2 text-sm font-medium">
-                <MapPin size={16} className="text-primary/70" />
-                Adresse
-              </Label>
-              <Input
-                id="address"
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
-                className={cn(errors.address ? "border-destructive" : "", "mt-1")}
-              />
-              {errors.address && <p className="text-destructive text-sm mt-1">{errors.address}</p>}
-              {addressSuggestions.length > 0 && (
-                <ul className="border border-border mt-2 rounded-lg max-h-40 overflow-auto shadow-md z-10 relative bg-background">
-                  {addressSuggestions.map((suggestion, index) => (
-                    <li
-                      key={index}
-                      className="p-2 cursor-pointer hover:bg-muted transition-colors"
-                      onClick={() => selectAddress(suggestion)}
-                    >
-                      {suggestion}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+            <FormField id="address" label="Adresse" required error={errors.address} className="sm:col-span-2">
+              <div className="relative">
+                <Input
+                  {...fieldProps("address")}
+                  placeholder="12 rue de l'Aérodrome, 31000 Toulouse"
+                  autoComplete="off"
+                />
+                {addressSuggestions.length > 0 && (
+                  <ul className="absolute left-0 right-0 top-full z-10 mt-1 max-h-48 overflow-auto rounded-md border bg-popover p-1 text-sm text-popover-foreground shadow-md">
+                    {addressSuggestions.map((suggestion, index) => (
+                      <li key={index}>
+                        <button
+                          type="button"
+                          className="w-full rounded-sm px-2 py-2 text-left hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
+                          onClick={() => selectAddress(suggestion)}
+                        >
+                          {suggestion}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </FormField>
 
-            <div>
-              <Label htmlFor="date_of_birth" className="flex items-center gap-2 text-sm font-medium">
-                <Calendar size={16} className="text-primary/70" />
-                Date de naissance
-              </Label>
+            <FormField id="date_of_birth" label="Date de naissance" required error={errors.date_of_birth}>
               <Input
-                id="date_of_birth"
-                name="date_of_birth"
+                {...fieldProps("date_of_birth")}
                 type="date"
-                value={formData.date_of_birth ? new Date(formData.date_of_birth).toISOString().split("T")[0] : ""}
-                onChange={handleChange}
-                className={cn(errors.date_of_birth ? "border-destructive" : "", "mt-1")}
+                value={toDateInputValue(formData.date_of_birth)}
+                max={new Date().toISOString().split("T")[0]}
+                autoComplete="bday"
               />
-              {errors.date_of_birth && <p className="text-destructive text-sm mt-1">{errors.date_of_birth}</p>}
-            </div>
+            </FormField>
           </div>
-
-          {saveSuccess && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              data-save-success
-              className="bg-success/10 text-success p-3 rounded-md text-sm border border-success/30"
-            >
-              Vos informations ont été enregistrées avec succès.
-            </motion.div>
-          )}
         </CardContent>
-        <CardFooter className="border-t bg-muted/50 pt-4">
-          <Button
-            className="ml-auto hover:shadow-md transition-shadow"
-            onClick={saveProfileChanges}
-            disabled={isUpdating}
-          >
+        <CardFooter className="flex-wrap justify-end gap-2">
+          <Button type="button" variant="outline" onClick={resetForm} disabled={isUpdating || !isDirty}>
+            Annuler
+          </Button>
+          <Button type="submit" disabled={isUpdating || !userId}>
+            {isUpdating && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
             {isUpdating ? "Enregistrement..." : "Enregistrer les modifications"}
           </Button>
         </CardFooter>
-      </Card>
-    </motion.div>
+      </form>
+    </Card>
   )
 }

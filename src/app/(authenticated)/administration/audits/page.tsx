@@ -1,26 +1,34 @@
 "use client"
 
 import { useState } from "react"
-import { motion } from "framer-motion"
 import { useQuery } from "@apollo/client"
-import { Shield, Plus, AlertTriangle, CheckCircle, Clock, FileText } from "lucide-react"
+import { AlertTriangle, CheckCircle, ClipboardCheck, Clock, Plus, Search } from "lucide-react"
 import { GET_ALL_AUDITS, GET_AUDIT_ENUMS } from "@/graphql/audit"
-import { AuditResultType, type AuditFrequencyType } from "@/interfaces/audit"
-import { filterAudits } from "@/lib/audit"
+import type { AuditFrequencyType, AuditResultType } from "@/interfaces/audit"
+import { countAuditsByStatus, filterAudits, type AuditStatusTab } from "@/lib/audit"
+import { PageHeader } from "@/components/layout/PageHeader"
+import { StatCard } from "@/components/layout/StatCard"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { AuditList } from "@/components/audits/audit-list"
 import { AuditFilters } from "@/components/audits/audit-filters"
 import { CreateAuditDialog } from "@/components/audits/create-audit-dialog"
 import { AuditStatistics } from "@/components/audits/audit-statistics"
 import { TemplateManagement } from "@/components/audits/template-management"
-import { Skeleton } from "@/components/ui/skeleton"
+
+const STATUS_TABS: { value: AuditStatusTab; label: string; count: "total" | "open" | "closed" | "nonconform" | "overdue" }[] = [
+  { value: "all", label: "Tous", count: "total" },
+  { value: "open", label: "En cours", count: "open" },
+  { value: "closed", label: "Clôturés", count: "closed" },
+  { value: "nonconform", label: "Non conformes", count: "nonconform" },
+  { value: "overdue", label: "En retard", count: "overdue" },
+]
 
 export default function SecurityAuditsPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState<string>("all")
+  const [activeTab, setActiveTab] = useState<AuditStatusTab>("all")
   const [activeMainTab, setActiveMainTab] = useState<string>("audits")
   const [filters, setFilters] = useState({
     aircraftId: null as number | null,
@@ -33,6 +41,7 @@ export default function SecurityAuditsPage() {
 
   const { loading: enumsLoading, data: enumsData } = useQuery(GET_AUDIT_ENUMS)
 
+  // The status tab is applied on the returned list, so the counters of every tab stay right.
   const { loading, error, data, refetch } = useQuery(GET_ALL_AUDITS, {
     variables: {
       filter: {
@@ -40,9 +49,6 @@ export default function SecurityAuditsPage() {
         ...(filters.auditResult && { auditResult: filters.auditResult }),
         ...(filters.startDate && { startDate: filters.startDate }),
         ...(filters.endDate && { endDate: filters.endDate }),
-        ...(activeTab === "open" && { isClosed: false }),
-        ...(activeTab === "closed" && { isClosed: true }),
-        ...(activeTab === "nonconform" && { auditResult: AuditResultType.NON_CONFORME }),
       },
     },
     fetchPolicy: "network-only",
@@ -50,13 +56,12 @@ export default function SecurityAuditsPage() {
   })
 
   // AuditFilterInput has no frequency nor overdue criteria: applied on the returned list.
-  const visibleAudits = filterAudits(data?.audits || [], {
-    auditFrequency: filters.auditFrequency,
-    overdueOnly: activeTab === "overdue",
-  })
+  const filteredAudits = filterAudits<any>(data?.audits || [], { auditFrequency: filters.auditFrequency })
+  const visibleAudits = filterAudits<any>(filteredAudits, { tab: activeTab })
+  const statusCounts = countAuditsByStatus(filteredAudits)
 
   const handleFilterChange = (newFilters: any) => {
-    setFilters({ ...filters, ...newFilters })
+    setFilters((current) => ({ ...current, ...newFilters }))
   }
 
   const clearFilters = () => {
@@ -70,212 +75,101 @@ export default function SecurityAuditsPage() {
     })
   }
 
-  const getAuditStatusCounts = () => {
-    if (!data?.audits) return { total: 0, open: 0, closed: 0, nonconform: 0, overdue: 0 }
+  const hasActiveFilters = Boolean(
+    filters.aircraftId ||
+      filters.auditResult ||
+      filters.auditFrequency ||
+      filters.startDate ||
+      filters.endDate ||
+      filters.searchTerm ||
+      activeTab !== "all",
+  )
 
-    const now = new Date()
-    return data.audits.reduce(
-      (acc: any, audit: any) => {
-        acc.total++
-        if (!audit.is_closed) acc.open++
-        if (audit.is_closed) acc.closed++
-        if (audit.audit_result === AuditResultType.NON_CONFORME) acc.nonconform++
-        if (audit.next_audit_date && new Date(audit.next_audit_date) < now && !audit.is_closed) acc.overdue++
-        return acc
-      },
-      { total: 0, open: 0, closed: 0, nonconform: 0, overdue: 0 },
-    )
-  }
-
-  const statusCounts = getAuditStatusCounts()
+  // First load only: a refetch keeps the figures on screen.
+  const countsLoading = loading && !data
+  const count = (value: number) => (countsLoading ? <Skeleton className="h-8 w-10" /> : value)
 
   return (
-    <div className="w-full">
-      <div className="w-full">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mb-4 sm:mb-8"
-        >
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 mb-4 sm:mb-6">
-            <div>
-              <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
-                <Shield className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
-                Audits de sécurité
-              </h1>
-              <p className="text-sm sm:text-base text-muted-foreground mt-1">
-                Gérez les audits de sécurité de votre flotte d'aéronefs
-              </p>
-            </div>
+    <div className="space-y-6">
+      <PageHeader
+        className="mb-0"
+        title="Audits de sécurité"
+        description="Suivez les audits de sécurité des aéronefs et les modèles qui servent à les réaliser."
+        actions={
+          <Button onClick={() => setIsCreateModalOpen(true)}>
+            <Plus className="h-4 w-4" />
+            Nouvel audit
+          </Button>
+        }
+      />
 
-            <div className="flex items-center gap-3 self-start mt-3 md:mt-0">
-              <Button
-                onClick={() => setIsCreateModalOpen(true)}
-                className="flex items-center gap-1.5 text-sm sm:text-base"
-              >
-                <Plus className="h-4 w-4" />
-                <span className="hidden xs:inline">Nouvel audit</span>
-                <span className="xs:hidden">Ajouter</span>
-              </Button>
-            </div>
+      <Tabs value={activeMainTab} onValueChange={setActiveMainTab} className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="audits">Audits</TabsTrigger>
+          <TabsTrigger value="templates">Modèles d'audit</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="audits" className="mt-0 space-y-6">
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <StatCard label="Audits" value={count(statusCounts.total)} icon={ClipboardCheck} tone="info" />
+            <StatCard label="En cours" value={count(statusCounts.open)} icon={Clock} tone="warning" />
+            <StatCard label="Clôturés" value={count(statusCounts.closed)} icon={CheckCircle} tone="success" />
+            <StatCard label="En retard" value={count(statusCounts.overdue)} icon={AlertTriangle} tone="danger" />
           </div>
 
-          <Tabs defaultValue="audits" value={activeMainTab} onValueChange={setActiveMainTab} className="w-full">
-            <TabsList className="mb-6 w-full grid grid-cols-2 -p-1">
-              <TabsTrigger value="audits" className="text-sm sm:text-base">
-                Audits
-              </TabsTrigger>
-              <TabsTrigger value="templates" className="text-sm sm:text-base">
-                Modèles d'audit
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="audits" className="space-y-6">
-              <div className="grid gap-4 md:grid-cols-4 mb-6">
-                <Card className="bg-info/10 border-info/30">
-                  <CardContent className="p-4 flex justify-between items-center">
-                    <div>
-                      <p className="text-sm font-medium text-info">Total des audits</p>
-                      <div className="text-2xl font-bold">
-                        {loading ? <Skeleton className="h-8 w-16" /> : statusCounts.total}
-                      </div>
-                    </div>
-                    <Shield className="h-8 w-8 text-info" />
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-warning/10 border-warning/30">
-                  <CardContent className="p-4 flex justify-between items-center">
-                    <div>
-                      <p className="text-sm font-medium text-warning">Audits en cours</p>
-                      <div className="text-2xl font-bold">
-                        {loading ? <Skeleton className="h-8 w-16" /> : statusCounts.open}
-                      </div>
-                    </div>
-                    <Clock className="h-8 w-8 text-warning" />
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-success/10 border-success/30">
-                  <CardContent className="p-4 flex justify-between items-center">
-                    <div>
-                      <p className="text-sm font-medium text-success">Audits clôturés</p>
-                      <div className="text-2xl font-bold">
-                        {loading ? <Skeleton className="h-8 w-16" /> : statusCounts.closed}
-                      </div>
-                    </div>
-                    <CheckCircle className="h-8 w-8 text-success" />
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-destructive/10 border-destructive/30">
-                  <CardContent className="p-4 flex justify-between items-center">
-                    <div>
-                      <p className="text-sm font-medium text-destructive">Audits en retard</p>
-                      <div className="text-2xl font-bold">
-                        {loading ? <Skeleton className="h-8 w-16" /> : statusCounts.overdue}
-                      </div>
-                    </div>
-                    <AlertTriangle className="h-8 w-8 text-destructive" />
-                  </CardContent>
-                </Card>
+          <div className="space-y-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="relative w-full sm:max-w-xs">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder="Immatriculation, auditeur, note…"
+                  className="pl-9"
+                  value={filters.searchTerm}
+                  onChange={(e) => handleFilterChange({ searchTerm: e.target.value })}
+                  aria-label="Rechercher un audit"
+                />
               </div>
+              <AuditFilters
+                filters={filters}
+                onFilterChange={handleFilterChange}
+                onClearFilters={clearFilters}
+                enumsData={enumsData}
+                loading={enumsLoading}
+              />
+            </div>
 
-              <Card className="border-t-4 border-t-primary">
-                <CardHeader className="pb-2 px-3 sm:px-6">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
-                    <div>
-                      <CardTitle className="text-lg sm:text-xl">Liste des audits</CardTitle>
-                      <CardDescription className="text-sm">
-                        Consultez et gérez tous les audits de sécurité
-                      </CardDescription>
-                    </div>
-                    <AuditFilters
-                      filters={filters}
-                      onFilterChange={handleFilterChange}
-                      onClearFilters={clearFilters}
-                      enumsData={enumsData}
-                      loading={enumsLoading}
-                    />
-                  </div>
-                </CardHeader>
-                <CardContent className="px-3 sm:px-6">
-                  <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="grid grid-cols-5 mb-4">
-                      <TabsTrigger value="all" className="text-xs sm:text-sm">
-                        Tous
-                        <Badge variant="secondary" className="ml-1.5 text-xs">
-                          {loading ? "..." : statusCounts.total}
-                        </Badge>
-                      </TabsTrigger>
-                      <TabsTrigger value="open" className="text-xs sm:text-sm">
-                        En cours
-                        <Badge variant="secondary" className="ml-1.5 text-xs">
-                          {loading ? "..." : statusCounts.open}
-                        </Badge>
-                      </TabsTrigger>
-                      <TabsTrigger value="closed" className="text-xs sm:text-sm">
-                        Clôturés
-                        <Badge variant="secondary" className="ml-1.5 text-xs">
-                          {loading ? "..." : statusCounts.closed}
-                        </Badge>
-                      </TabsTrigger>
-                      <TabsTrigger value="nonconform" className="text-xs sm:text-sm">
-                        Non conformes
-                        <Badge variant="secondary" className="ml-1.5 text-xs">
-                          {loading ? "..." : statusCounts.nonconform}
-                        </Badge>
-                      </TabsTrigger>
-                      <TabsTrigger value="overdue" className="text-xs sm:text-sm">
-                        En retard
-                        <Badge variant="secondary" className="ml-1.5 text-xs">
-                          {loading ? "..." : statusCounts.overdue}
-                        </Badge>
-                      </TabsTrigger>
-                    </TabsList>
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as AuditStatusTab)}>
+              <TabsList>
+                {STATUS_TABS.map((tab) => (
+                  <TabsTrigger key={tab.value} value={tab.value} className="gap-1.5">
+                    {tab.label}
+                    {!countsLoading && (
+                      <span className="text-xs tabular-nums text-muted-foreground">{statusCounts[tab.count]}</span>
+                    )}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
 
-                    <TabsContent value={activeTab}>
-                      <AuditList
-                        loading={loading}
-                        error={error}
-                        audits={visibleAudits}
-                        searchTerm={filters.searchTerm}
-                        onRefetch={refetch}
-                      />
-                    </TabsContent>
-                  </Tabs>
-                </CardContent>
-              </Card>
+            <AuditList
+              loading={loading}
+              error={error}
+              audits={visibleAudits}
+              searchTerm={filters.searchTerm}
+              hasActiveFilters={hasActiveFilters}
+              onCreate={() => setIsCreateModalOpen(true)}
+              onRefetch={refetch}
+            />
+          </div>
 
-              <div className="mt-6">
-                <AuditStatistics />
-              </div>
-            </TabsContent>
+          <AuditStatistics />
+        </TabsContent>
 
-            <TabsContent value="templates">
-              <Card className="border-t-4 border-t-primary">
-                <CardHeader className="pb-2 px-3 sm:px-6">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
-                    <div>
-                      <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
-                        <FileText className="h-5 w-5 text-primary" />
-                        Gestion des modèles d'audit
-                      </CardTitle>
-                      <CardDescription className="text-sm">
-                        Créez et gérez des modèles d'audit pour standardiser vos inspections
-                      </CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="px-3 sm:px-6">
-                  <TemplateManagement />
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </motion.div>
-      </div>
+        <TabsContent value="templates" className="mt-0">
+          <TemplateManagement />
+        </TabsContent>
+      </Tabs>
 
       <CreateAuditDialog
         isOpen={isCreateModalOpen}

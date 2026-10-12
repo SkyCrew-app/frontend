@@ -1,9 +1,10 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { useForm, FormProvider } from "react-hook-form"
+import { useForm, FormProvider, type FieldErrors } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import * as z from "zod"
+import { useMutation, useQuery } from "@apollo/client"
+import { Loader2, Settings } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import {
@@ -15,184 +16,96 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { toast } from "@/components/hooks/use-toast"
-import { useMutation, useQuery } from "@apollo/client"
 import { Skeleton } from "@/components/ui/skeleton"
+import { PageHeader } from "@/components/layout/PageHeader"
+import { EmptyState } from "@/components/layout/EmptyState"
+import { ErrorState } from "@/components/layout/ErrorState"
+import { toast } from "@/components/hooks/use-toast"
 import { GET_ADMINISTRATION, UPDATE_ADMINISTRATION } from "@/graphql/settings"
-import { GET_AIRCRAFTS } from "@/graphql/planes"
-import { format, parseISO } from "date-fns"
-import { motion } from "framer-motion"
-import { Settings, Save, RotateCcw } from "lucide-react"
 import { GeneralTab } from "@/components/settings/tabs/general-tab"
 import { OperationsTab } from "@/components/settings/tabs/operations-tab"
 import { AircraftTab } from "@/components/settings/tabs/aircraft-tab"
 import { MembersTab } from "@/components/settings/tabs/members-tab"
 import { TaxonomyManager } from "@/components/settings/taxonomy/taxonomy-manager"
 import { RoleManager } from "@/components/settings/roles/roles-manager"
-import { taxonomiesFromRecord } from "@/lib/settings"
+import {
+  administrationInputFromValues,
+  settingsFormSchema,
+  settingsFormValuesFromRecord,
+  tabsWithErrors,
+  type AdministrationRecord,
+  type SettingsFormTab,
+  type SettingsFormValues,
+} from "@/lib/settings"
 
-const formSchema = z.object({
-  clubName: z.string().min(2, { message: "Le nom de l'aéroclub doit contenir au moins 2 caractères" }),
-  contactEmail: z.string().email({ message: "Veuillez entrer une adresse email valide" }),
-  contactPhone: z.string().regex(/^\+?[0-9]{10,14}$/, { message: "Veuillez entrer un numéro de téléphone valide" }),
-  address: z.string().min(5, { message: "L'adresse doit contenir au moins 5 caractères" }),
-  closureDays: z.array(z.string()),
-  timeSlotDuration: z.number().min(30).max(120),
-  reservationStartTime: z.string(),
-  reservationEndTime: z.string(),
-  maintenanceDay: z.string(),
-  maintenanceDuration: z
-    .number()
-    .int({ message: "La durée de la maintenance doit être un nombre entier d'heures" })
-    .min(1)
-    .max(24),
-  aircraftTypes: z.array(
-    z.object({
-      type: z.string(),
-      hourlyRate: z.number().min(0),
-      isAvailable: z.boolean(),
-    }),
-  ),
-  pilotLicenses: z.array(z.string()),
-  membershipFee: z.number().min(0),
-  flightHourRate: z.number().min(0),
-  clubRules: z.string(),
-  allowGuestPilots: z.boolean(),
-  guestPilotFee: z.number().min(0),
-  fuelManagement: z.enum(["self-service", "staff-only", "external"]),
-  fuelPrice: z.number().min(0, { message: "Le prix du carburant doit être positif" }),
-  taxonomies: z.record(z.array(z.string())).optional(),
-  isMaintenanceActive: z.boolean(),
-  maintenanceMessage: z.string().optional(),
-  maintenanceTime: z
-    .string()
-    .nullable()
-    .transform((val) => (val ? new Date(val).toISOString() : null)),
-})
+const FORM_ID = "settings-form"
 
-type FormValues = z.infer<typeof formSchema>
-
-const fadeIn = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
-}
+// The tabs saved by the "Enregistrer" button; roles are saved on their own.
+const FORM_TABS: { value: SettingsFormTab; label: string }[] = [
+  { value: "general", label: "Général" },
+  { value: "reservations", label: "Réservations" },
+  { value: "aircraft", label: "Avions et carburant" },
+  { value: "members", label: "Membres" },
+  { value: "lists", label: "Listes de choix" },
+]
 
 export default function SettingsPage() {
+  const [activeTab, setActiveTab] = useState<string>("general")
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [activeTab, setActiveTab] = useState("general")
+  const [isFormReady, setIsFormReady] = useState(false)
+  // Values waiting for the confirmation asked before switching maintenance mode on.
+  const [pendingValues, setPendingValues] = useState<SettingsFormValues | null>(null)
   const [updateAdministration] = useMutation(UPDATE_ADMINISTRATION)
-  const { data: aircraftData, loading: aircraftLoading, error: aircraftError } = useQuery(GET_AIRCRAFTS)
-  const {
-    data: administrationData,
-    loading: administrationLoading,
-    error: administrationError,
-  } = useQuery(GET_ADMINISTRATION)
+  const { data, loading, error, refetch } = useQuery<{ getAllAdministrations: AdministrationRecord[] }>(
+    GET_ADMINISTRATION,
+  )
+  const record = data?.getAllAdministrations?.[0]
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {},
-  })
+  const form = useForm<SettingsFormValues>({ resolver: zodResolver(settingsFormSchema) })
+  const { isDirty, dirtyFields, errors } = form.formState
 
-  const isResetRef = useRef(false)
-
+  // Fill the form once: later cache updates must not overwrite what the user is typing.
+  const isLoadedRef = useRef(false)
   useEffect(() => {
-    if (
-      !isResetRef.current &&
-      administrationData?.getAllAdministrations?.length &&
-      aircraftData?.getAircrafts?.length
-    ) {
-      const adminData = administrationData.getAllAdministrations[0]
-
-      form.reset({
-        clubName: adminData.clubName,
-        contactEmail: adminData.contactEmail,
-        contactPhone: adminData.contactPhone,
-        address: adminData.address,
-        closureDays: adminData.closureDays || [],
-        timeSlotDuration: adminData.timeSlotDuration,
-        reservationStartTime: adminData.reservationStartTime,
-        reservationEndTime: adminData.reservationEndTime,
-        maintenanceDay: adminData.maintenanceDay,
-        maintenanceDuration: adminData.maintenanceDuration,
-        aircraftTypes: aircraftData.getAircrafts.map((aircraft: { registration_number: any; hourly_cost: any }) => ({
-          type: aircraft.registration_number,
-          hourlyRate: aircraft.hourly_cost,
-          isAvailable: true,
-        })),
-        membershipFee: adminData.membershipFee,
-        flightHourRate: adminData.flightHourRate,
-        clubRules: adminData.clubRules || "",
-        allowGuestPilots: adminData.allowGuestPilots || false,
-        guestPilotFee: adminData.guestPilotFee || 0,
-        fuelManagement: adminData.fuelManagement || "self-service",
-        fuelPrice: adminData.fuelPrice || 0,
-        taxonomies: taxonomiesFromRecord(adminData),
-        pilotLicenses: adminData.pilotLicenses || [],
-        isMaintenanceActive: adminData.isMaintenanceActive || false,
-        maintenanceMessage: adminData.maintenanceMessage || "",
-        maintenanceTime: adminData.maintenanceTime
-          ? format(parseISO(adminData.maintenanceTime), "yyyy-MM-dd'T'HH:mm")
-          : null,
-      })
-      isResetRef.current = true
+    if (!isLoadedRef.current && record) {
+      form.reset(settingsFormValuesFromRecord(record))
+      isLoadedRef.current = true
+      setIsFormReady(true)
     }
-  }, [administrationData, aircraftData, form])
+  }, [record, form])
 
-  const onSubmit = async (data: FormValues) => {
-    const administrationId = administrationData?.getAllAdministrations?.[0]?.id
+  // Warn before the browser leaves the page with unsaved changes.
+  useEffect(() => {
+    if (!isDirty) return
+    const warn = (event: BeforeUnloadEvent) => event.preventDefault()
+    window.addEventListener("beforeunload", warn)
+    return () => window.removeEventListener("beforeunload", warn)
+  }, [isDirty])
+
+  const save = async (values: SettingsFormValues) => {
+    const administrationId = record?.id
     if (administrationId === undefined || administrationId === null) {
       toast({
-        title: "Erreur",
-        description: "Les paramètres n'ont pas pu être chargés, l'enregistrement est impossible.",
+        title: "Enregistrement impossible",
+        description: "Les paramètres n'ont pas pu être chargés. Rechargez la page puis réessayez.",
         variant: "destructive",
       })
       return
     }
 
     setIsSubmitting(true)
-
     try {
       await updateAdministration({
-        variables: {
-          input: {
-            id: administrationId,
-            clubName: data.clubName,
-            contactEmail: data.contactEmail,
-            contactPhone: data.contactPhone,
-            address: data.address,
-            closureDays: data.closureDays,
-            timeSlotDuration: data.timeSlotDuration,
-            reservationStartTime: data.reservationStartTime,
-            reservationEndTime: data.reservationEndTime,
-            maintenanceDay: data.maintenanceDay,
-            maintenanceDuration: data.maintenanceDuration,
-            pilotLicenses: data.pilotLicenses,
-            membershipFee: data.membershipFee,
-            flightHourRate: data.flightHourRate,
-            clubRules: data.clubRules,
-            allowGuestPilots: data.allowGuestPilots,
-            guestPilotFee: data.guestPilotFee,
-            fuelManagement: data.fuelManagement,
-            fuelPrice: data.fuelPrice,
-            taxonomies: data.taxonomies,
-            isMaintenanceActive: data.isMaintenanceActive,
-            maintenanceMessage: data.maintenanceMessage,
-            maintenanceTime: data.maintenanceTime,
-          },
-        },
+        variables: { input: administrationInputFromValues(administrationId, values) },
       })
+      // The saved values become the reference for "unsaved changes".
+      form.reset(form.getValues())
+      toast({ title: "Paramètres enregistrés", description: "Vos modifications ont été enregistrées." })
+    } catch {
       toast({
-        title: "Paramètres enregistrés",
-        description: "Les modifications ont été sauvegardées avec succès.",
-      })
-    } catch (error) {
-      console.error("Error updating administration:", error)
-
-      toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors de l'enregistrement des paramètres.",
+        title: "Enregistrement impossible",
+        description: "Les paramètres n'ont pas pu être enregistrés. Réessayez dans un instant.",
         variant: "destructive",
       })
     } finally {
@@ -200,181 +113,143 @@ export default function SettingsPage() {
     }
   }
 
-  if (aircraftError || administrationError) {
-    return (
-      <div className="text-center text-destructive p-6 border border-destructive/30 rounded-md">
-        <p className="font-semibold mb-2">Erreur lors du chargement des données :</p>
-        {aircraftError && <p>Impossible de charger les avions.</p>}
-        {administrationError && <p>Impossible de charger les paramètres.</p>}
-        <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>
-          Réessayer
-        </Button>
-      </div>
-    )
+  const onValid = (values: SettingsFormValues) => {
+    if (values.isMaintenanceActive && dirtyFields.isMaintenanceActive) {
+      setPendingValues(values)
+      return
+    }
+    return save(values)
   }
 
-  if (aircraftLoading || administrationLoading) {
-    return (
-      <div className="space-y-6 p-6">
-        <Skeleton className="h-10 w-1/3" />
-        <div className="space-y-4">
-          <Skeleton className="h-8 w-full" />
-          <div className="space-y-2">
-            <Skeleton className="h-6 w-1/3" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-6 w-1/4" />
-            <Skeleton className="h-10 w-full" />
-          </div>
-        </div>
-      </div>
-    )
+  const onInvalid = (invalid: FieldErrors<SettingsFormValues>) => {
+    const tabs = tabsWithErrors(Object.keys(invalid))
+    if (tabs.length > 0 && !tabs.includes(activeTab as SettingsFormTab)) setActiveTab(tabs[0])
+    toast({
+      title: "Enregistrement impossible",
+      description: "Certains champs sont à corriger : ils sont signalés en rouge.",
+      variant: "destructive",
+    })
   }
+
+  const invalidTabs = tabsWithErrors(Object.keys(errors))
 
   return (
-    <div className="min-h-screen">
-      <div className="w-full">
-        <motion.div initial="hidden" animate="visible" variants={fadeIn} className="mb-8">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
-            <div>
-              <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
-                <Settings className="h-8 w-8 text-info" />
-                Paramètres de l'aéroclub
-              </h1>
-              <p className="text-muted-foreground mt-1">
-                Configurez les paramètres généraux, les opérations, les avions et les membres de l'aéroclub
-              </p>
-            </div>
-          </div>
+    <div className="space-y-6">
+      <PageHeader
+        title="Paramètres de l'aéroclub"
+        description="Coordonnées, réservations, tarifs, rôles et listes de choix du club."
+        className="mb-0"
+      />
 
-          <FormProvider {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)}>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-              >
-                <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                  <div className="overflow-x-auto pb-2">
-                    <TabsList className="w-full md:w-auto flex md:inline-flex space-x-1">
-                      <TabsTrigger
-                        value="general"
-                        className="flex items-center whitespace-nowrap"
-                        data-active={activeTab === "general"}
-                      >
-                        Général
-                      </TabsTrigger>
-                      <TabsTrigger
-                        value="operations"
-                        className="flex items-center whitespace-nowrap"
-                        data-active={activeTab === "operations"}
-                      >
-                        Opérations
-                      </TabsTrigger>
-                      <TabsTrigger
-                        value="aircraft"
-                        className="flex items-center whitespace-nowrap"
-                        data-active={activeTab === "aircraft"}
-                      >
-                        Avions
-                      </TabsTrigger>
-                      <TabsTrigger
-                        value="members"
-                        className="flex items-center whitespace-nowrap"
-                        data-active={activeTab === "members"}
-                      >
-                        Membres
-                      </TabsTrigger>
-                      <TabsTrigger
-                        value="roles"
-                        className="flex items-center whitespace-nowrap"
-                        data-active={activeTab === "roles"}
-                      >
-                        Rôles
-                      </TabsTrigger>
-                      <TabsTrigger
-                        value="taxonomy"
-                        className="flex items-center whitespace-nowrap"
-                        data-active={activeTab === "taxonomy"}
-                      >
-                        Taxonomie
-                      </TabsTrigger>
-                    </TabsList>
-                  </div>
+      {error ? (
+        <ErrorState onRetry={() => refetch()} />
+      ) : loading || (record && !isFormReady) ? (
+        <div className="space-y-6" aria-busy="true">
+          <Skeleton className="h-10 w-full max-w-xl" />
+          <Skeleton className="h-72 w-full" />
+          <Skeleton className="h-48 w-full" />
+        </div>
+      ) : !record ? (
+        <EmptyState
+          icon={Settings}
+          title="Paramètres introuvables"
+          description="Aucun paramètre n'est encore défini pour cet aéroclub."
+        />
+      ) : (
+        <FormProvider {...form}>
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="w-full sm:w-auto">
+              {FORM_TABS.map((tab) => (
+                <TabsTrigger key={tab.value} value={tab.value} className="gap-1.5">
+                  {tab.label}
+                  {invalidTabs.includes(tab.value) && (
+                    <>
+                      <span className="h-2 w-2 rounded-full bg-destructive" aria-hidden="true" />
+                      <span className="sr-only">(champs à corriger)</span>
+                    </>
+                  )}
+                </TabsTrigger>
+              ))}
+              <TabsTrigger value="roles">Rôles</TabsTrigger>
+            </TabsList>
 
-                  <TabsContent value="general" className="focus-visible:outline-none focus-visible:ring-0">
-                    <GeneralTab />
-                  </TabsContent>
-
-                  <TabsContent value="operations" className="focus-visible:outline-none focus-visible:ring-0">
-                    <OperationsTab />
-                  </TabsContent>
-
-                  <TabsContent value="aircraft" className="focus-visible:outline-none focus-visible:ring-0">
-                    <AircraftTab />
-                  </TabsContent>
-
-                  <TabsContent value="members" className="focus-visible:outline-none focus-visible:ring-0">
-                    <MembersTab />
-                  </TabsContent>
-
-                  <TabsContent value="roles" className="focus-visible:outline-none focus-visible:ring-0">
-                    <RoleManager />
-                  </TabsContent>
-
-                  <TabsContent value="taxonomy" className="focus-visible:outline-none focus-visible:ring-0">
-                    <TaxonomyManager />
-                  </TabsContent>
-                </Tabs>
-
-                <div className="mt-6 flex flex-col sm:flex-row justify-end gap-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      isResetRef.current = false
-                      form.reset()
-                    }}
-                    className="order-2 sm:order-1"
-                  >
-                    <RotateCcw className="mr-2 h-4 w-4" />
-                    Réinitialiser
-                  </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        type="button"
-                        disabled={isSubmitting}
-                        className="order-1 sm:order-2 bg-info hover:bg-info/90"
-                      >
-                        <Save className="mr-2 h-4 w-4" />
-                        {isSubmitting ? "Enregistrement..." : "Enregistrer les modifications"}
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Êtes-vous sûr de vouloir enregistrer ces modifications ?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Cette action mettra à jour les paramètres de l'aéroclub. Assurez-vous que toutes les
-                          informations sont correctes.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Annuler</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => form.handleSubmit(onSubmit)()}
-                          className="bg-info hover:bg-info/90"
-                        >
-                          Confirmer
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              </motion.div>
+            {/* Values live in the form state, so they survive a change of tab. */}
+            <form id={FORM_ID} onSubmit={form.handleSubmit(onValid, onInvalid)} noValidate>
+              <TabsContent value="general">
+                <GeneralTab />
+              </TabsContent>
+              <TabsContent value="reservations">
+                <OperationsTab />
+              </TabsContent>
+              <TabsContent value="aircraft">
+                <AircraftTab />
+              </TabsContent>
+              <TabsContent value="members">
+                <MembersTab />
+              </TabsContent>
+              <TabsContent value="lists">
+                <TaxonomyManager />
+              </TabsContent>
             </form>
-          </FormProvider>
-        </motion.div>
-      </div>
+
+            {/* Outside the form: creating a role must not submit the settings. */}
+            <TabsContent value="roles">
+              <RoleManager />
+            </TabsContent>
+          </Tabs>
+
+          {(activeTab !== "roles" || isDirty) && (
+            <div className="sticky bottom-4 z-10 flex flex-col gap-3 rounded-lg border bg-card p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+              <p className="flex items-center gap-2 text-sm text-muted-foreground" role="status">
+                {isDirty ? (
+                  <>
+                    <span className="h-2 w-2 shrink-0 rounded-full bg-warning" aria-hidden="true" />
+                    <span className="text-foreground">Modifications non enregistrées</span>
+                  </>
+                ) : (
+                  "Aucune modification à enregistrer"
+                )}
+              </p>
+              <div className="flex flex-col-reverse gap-2 sm:flex-row">
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={!isDirty || isSubmitting}
+                  onClick={() => form.reset()}
+                >
+                  Annuler les modifications
+                </Button>
+                <Button type="submit" form={FORM_ID} disabled={!isDirty || isSubmitting}>
+                  {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+                  Enregistrer
+                </Button>
+              </div>
+            </div>
+          )}
+
+          <AlertDialog open={pendingValues !== null} onOpenChange={(open) => !open && setPendingValues(null)}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Activer le mode maintenance ?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Dès l'enregistrement, les visiteurs seront redirigés vers la page de maintenance, jusqu'à ce que
+                  vous désactiviez ce mode.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Annuler</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => {
+                    if (pendingValues) void save(pendingValues)
+                  }}
+                >
+                  Activer et enregistrer
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </FormProvider>
+      )}
     </div>
   )
 }

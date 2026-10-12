@@ -1,380 +1,195 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useMutation } from "@apollo/client"
+import { ChevronRight, MoreHorizontal, Pencil, Star, Trash2 } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from "@/components/ui/dialog"
-import Link from "next/link"
-import { Star, Clock, Edit2, Check, X, FileText, AlertTriangle, Trash2 } from "lucide-react"
-import { useMutation, useQuery } from "@apollo/client"
-import { UPDATE_COURSE, DELETE_COURSE, GET_MEMBERS_DIRECTORY } from "@/graphql/course"
-import { courseParticipants } from "@/lib/roles"
-import { format, parseISO } from "date-fns"
-import { fr } from "date-fns/locale"
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { useToast } from "@/components/hooks/use-toast"
-import { datetimeLocalToISOString } from "@/lib/datetime"
-import { Spinner } from "@/components/ui/spinner"
-
-type Instructor = {
-  id: number
-  first_name: string
-  last_name: string
-}
-
-type Student = {
-  id: number
-  first_name: string
-  last_name: string
-}
-
-type Course = {
-  id: number
-  instructor: Instructor
-  student: Student
-  startTime: string
-  endTime: string | null
-  status: string
-  rating: number | null
-  description?: string
-  competencies: { id: number; name: string; description: string; validated: boolean }[]
-}
+import { ConfirmDeleteDialog } from "@/components/e-learning/ConfirmDeleteDialog"
+import { DELETE_COURSE } from "@/graphql/course"
+import { formatDate } from "@/lib/format"
+import { learningRoutes } from "@/lib/learning-navigation"
+import CourseFormDialog from "./CourseFormDialog"
+import {
+  courseCounterpart,
+  courseHours,
+  courseStatus,
+  personName,
+  type InstructionCourse,
+} from "./course-helpers"
 
 type CourseListProps = {
-  courses: Course[]
-  userRole: "instructor" | "student"
-  userId?: number
-  onRefresh?: () => void
+  courses: InstructionCourse[]
+  userId: number | null
+  // An administrator may modify any course, an instructor only the ones they give.
+  isAdministrator?: boolean
+  onChanged: () => void
 }
 
-export default function CourseList({ courses = [], userRole, userId, onRefresh }: CourseListProps) {
-  const [editingCourse, setEditingCourse] = useState<number | null>(null)
-  const [editStartTime, setEditStartTime] = useState("")
-  const [editEndTime, setEditEndTime] = useState("")
-  const [editInstructor, setEditInstructor] = useState("")
-  const [editStudent, setEditStudent] = useState("")
-  const [editStatus, setEditStatus] = useState("")
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [courseToDelete, setCourseToDelete] = useState<number | null>(null)
-
+export default function CourseList({ courses, userId, isAdministrator = false, onChanged }: CourseListProps) {
+  const router = useRouter()
   const { toast } = useToast()
-  const [updateCourse, { loading: updateLoading }] = useMutation(UPDATE_COURSE)
-  const [deleteCourse, { loading: deleteLoading }] = useMutation(DELETE_COURSE)
-  const { data: usersData } = useQuery(GET_MEMBERS_DIRECTORY)
+  // The edited course is kept while its dialog closes, so the dialog does not change under the eyes.
+  const [courseToEdit, setCourseToEdit] = useState<InstructionCourse | null>(null)
+  const [isEditOpen, setIsEditOpen] = useState(false)
+  const [courseToDelete, setCourseToDelete] = useState<InstructionCourse | null>(null)
+  const [deleteCourse, { loading: deleting }] = useMutation(DELETE_COURSE)
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "SCHEDULED":
-        return "bg-info/15 text-info"
-      case "IN_PROGRESS":
-        return "bg-warning/15 text-warning"
-      case "COMPLETED":
-        return "bg-success/15 text-success"
-      case "CANCELED":
-        return "bg-destructive/15 text-destructive"
-      default:
-        return "bg-muted text-foreground"
-    }
-  }
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case "SCHEDULED":
-        return "Planifié"
-      case "IN_PROGRESS":
-        return "En cours"
-      case "COMPLETED":
-        return "Terminé"
-      case "CANCELED":
-        return "Annulé"
-      default:
-        return status
-    }
-  }
-
-  const handleEdit = (course: Course) => {
-    setEditingCourse(course.id)
-    setEditStartTime(format(parseISO(course.startTime), "yyyy-MM-dd'T'HH:mm"))
-    setEditEndTime(course.endTime ? format(parseISO(course.endTime), "yyyy-MM-dd'T'HH:mm") : "")
-    setEditInstructor(course.instructor.id.toString())
-    setEditStudent(course.student.id.toString())
-    setEditStatus(course.status)
-  }
-
-  const handleSave = async (courseId: number) => {
-    try {
-      await updateCourse({
-        variables: {
-          input: {
-            id: courseId,
-            startTime: datetimeLocalToISOString(editStartTime),
-            endTime: datetimeLocalToISOString(editEndTime),
-            instructorId: Number.parseInt(editInstructor, 10),
-            studentId: Number.parseInt(editStudent, 10),
-            status: editStatus,
-          },
-        },
-      })
-      setEditingCourse(null)
-      if (onRefresh) onRefresh()
-      toast({
-        title: "Cours mis à jour",
-        description: "Les informations du cours ont été mises à jour avec succès.",
-      })
-    } catch (error) {
-      console.error("Error updating course:", error)
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la mise à jour du cours.",
-      })
-    }
-  }
-
-  const handleCancel = () => {
-    setEditingCourse(null)
-  }
-
-  const confirmDelete = (courseId: number) => {
-    setCourseToDelete(courseId)
-    setIsDeleteDialogOpen(true)
-  }
+  const givesCourse = (course: InstructionCourse) => userId !== null && Number(course.instructor.id) === userId
+  const canEdit = (course: InstructionCourse) => isAdministrator || givesCourse(course)
 
   const handleDelete = async () => {
     if (!courseToDelete) return
-
     try {
-      await deleteCourse({
-        variables: {
-          id: courseToDelete,
-        },
-      })
-      setIsDeleteDialogOpen(false)
+      await deleteCourse({ variables: { id: courseToDelete.id } })
       setCourseToDelete(null)
-      if (onRefresh) onRefresh()
-      toast({
-        title: "Cours supprimé",
-        description: "Le cours a été supprimé avec succès.",
-      })
-    } catch (error) {
-      console.error("Error deleting course:", error)
+      onChanged()
+      toast({ title: "Cours supprimé", description: "Le cours a été retiré de la liste." })
+    } catch {
       toast({
         variant: "destructive",
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la suppression du cours.",
+        title: "Cours non supprimé",
+        description: "La suppression a échoué. Réessayez dans un instant.",
       })
     }
-  }
-
-  const { instructors, students } = courseParticipants(usersData?.membersDirectory, userId)
-
-  const canEditCourse = (course: Course) => {
-    return userRole === "instructor" && course.instructor.id === userId
   }
 
   return (
     <>
-      <div className="rounded-md border overflow-x-auto">
+      <div className="overflow-x-auto rounded-xl border bg-card">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{userRole === "instructor" ? "Élève" : "Instructeur"}</TableHead>
-              <TableHead>Date et heure de début</TableHead>
-              <TableHead>Date et heure de fin</TableHead>
+              <TableHead>Date</TableHead>
+              <TableHead>Horaire</TableHead>
+              <TableHead>Avec</TableHead>
               <TableHead>Statut</TableHead>
-              <TableHead>Compétences</TableHead>
-              <TableHead>Note</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="text-right">Compétences validées</TableHead>
+              <TableHead className="text-right">Note</TableHead>
+              <TableHead className="w-12">
+                <span className="sr-only">Actions</span>
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {courses.length > 0 ? (
-              courses.map((course) => (
-                <TableRow key={course.id}>
-                  <TableCell className="font-medium">
-                    {editingCourse === course.id ? (
-                      <Select
-                        value={userRole === "instructor" ? editStudent : editInstructor}
-                        onValueChange={userRole === "instructor" ? setEditStudent : setEditInstructor}
-                      >
-                        <SelectTrigger className="w-[180px]">
-                          <SelectValue
-                            placeholder={
-                              userRole === "instructor" ? "Sélectionner un élève" : "Sélectionner un instructeur"
-                            }
-                          />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {(userRole === "instructor" ? students : instructors).map((user: any) => (
-                            <SelectItem key={user.id} value={user.id.toString()}>
-                              {user.first_name} {user.last_name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <div className="flex flex-col">
-                        <span>
-                          {userRole === "instructor" ? course.student.first_name : course.instructor.first_name}{" "}
-                          {userRole === "instructor" ? course.student.last_name : course.instructor.last_name}
-                        </span>
-                        {course.description && (
-                          <span className="text-xs text-muted-foreground truncate max-w-[200px]">
-                            {course.description}
-                          </span>
-                        )}
-                      </div>
-                    )}
+            {courses.map((course) => {
+              const { person, role } = courseCounterpart(course, userId)
+              const status = courseStatus(course.status)
+              const validated = course.competencies.filter((competency) => competency.validated).length
+              const href = learningRoutes.course(course.id)
+
+              return (
+                <TableRow key={course.id} className="cursor-pointer" onClick={() => router.push(href)}>
+                  <TableCell className="whitespace-nowrap font-medium">
+                    {/* The link keeps the row reachable from the keyboard. */}
+                    <Link href={href} onClick={(event) => event.stopPropagation()} className="hover:underline">
+                      {formatDate(course.startTime)}
+                    </Link>
                   </TableCell>
+                  <TableCell className="whitespace-nowrap tabular-nums">{courseHours(course)}</TableCell>
                   <TableCell>
-                    {editingCourse === course.id ? (
-                      <Input
-                        type="datetime-local"
-                        value={editStartTime}
-                        onChange={(e) => setEditStartTime(e.target.value)}
-                        className="w-full"
-                      />
-                    ) : (
-                      <div className="flex items-center">
-                        <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
-                        {format(parseISO(course.startTime), "d MMM yyyy HH:mm", { locale: fr })}
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {editingCourse === course.id ? (
-                      <Input
-                        type="datetime-local"
-                        value={editEndTime}
-                        onChange={(e) => setEditEndTime(e.target.value)}
-                        className="w-full"
-                      />
-                    ) : course.endTime ? (
-                      <div className="flex items-center">
-                        <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
-                        {format(parseISO(course.endTime), "d MMM yyyy HH:mm", { locale: fr })}
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground">Non défini</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {editingCourse === course.id ? (
-                      <Select value={editStatus} onValueChange={setEditStatus}>
-                        <SelectTrigger className="w-[140px]">
-                          <SelectValue placeholder="Statut" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="SCHEDULED">Planifié</SelectItem>
-                          <SelectItem value="IN_PROGRESS">En cours</SelectItem>
-                          <SelectItem value="COMPLETED">Terminé</SelectItem>
-                          <SelectItem value="CANCELED">Annulé</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <Badge className={getStatusColor(course.status)}>{getStatusLabel(course.status)}</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center">
-                      <FileText className="h-4 w-4 mr-1 text-muted-foreground" />
-                      <span>{course.competencies.length}</span>
+                    <div className="min-w-[8rem]">
+                      <p className="font-medium">{personName(person)}</p>
+                      <p className="text-xs text-muted-foreground">{role}</p>
                     </div>
                   </TableCell>
                   <TableCell>
+                    <Badge variant={status.variant}>{status.label}</Badge>
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {course.competencies.length > 0 ? `${validated} / ${course.competencies.length}` : "—"}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
                     {course.rating ? (
-                      <div className="flex items-center">
-                        <Star className="w-4 h-4 fill-warning text-warning mr-1" />
-                        <span>{course.rating}</span>
-                      </div>
+                      <span className="inline-flex items-center justify-end gap-1">
+                        <Star className="h-4 w-4 fill-warning text-warning" aria-hidden="true" />
+                        {course.rating} / 5
+                      </span>
                     ) : (
-                      <span className="text-muted-foreground">-</span>
+                      "—"
                     )}
                   </TableCell>
-                  <TableCell className="text-right">
-                    {editingCourse === course.id ? (
-                      <div className="flex space-x-2 justify-end">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleSave(course.id)}
-                          disabled={updateLoading}
-                        >
-                          {updateLoading ? <Spinner className="h-4 w-4" /> : <Check className="h-4 w-4" />}
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={handleCancel}>
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="flex space-x-2 justify-end">
-                        {canEditCourse(course) && (
-                          <>
-                            <Button variant="outline" size="sm" onClick={() => handleEdit(course)}>
-                              <Edit2 className="h-4 w-4" />
-                            </Button>
-                            <Button variant="outline" size="sm" onClick={() => confirmDelete(course.id)}>
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </>
-                        )}
-                        <Link href={`/instruction/courses/${course.id}`}>
-                          <Button variant="outline" size="sm">
-                            Détails
+                  <TableCell className="text-right" onClick={(event) => event.stopPropagation()}>
+                    {canEdit(course) ? (
+                      <DropdownMenu modal={false}>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="Actions du cours" title="Actions">
+                            <MoreHorizontal className="h-4 w-4" />
                           </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem asChild>
+                            <Link href={href}>
+                              <ChevronRight className="h-4 w-4" />
+                              Ouvrir le cours
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() => {
+                              setCourseToEdit(course)
+                              setIsEditOpen(true)
+                            }}
+                          >
+                            <Pencil className="h-4 w-4" />
+                            Modifier
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onSelect={() => setCourseToDelete(course)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Supprimer
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    ) : (
+                      <Button variant="ghost" size="icon" className="h-9 w-9" asChild>
+                        <Link href={href} aria-label="Ouvrir le cours" title="Ouvrir le cours">
+                          <ChevronRight className="h-4 w-4" />
                         </Link>
-                      </div>
+                      </Button>
                     )}
                   </TableCell>
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center">
-                  <div className="flex flex-col items-center justify-center text-muted-foreground">
-                    <FileText className="h-12 w-12 mb-2 opacity-20" />
-                    <p>Aucun cours trouvé</p>
-                    <p className="text-sm">Ajustez vos filtres ou créez un nouveau cours</p>
-                  </div>
-                </TableCell>
-              </TableRow>
-            )}
+              )
+            })}
           </TableBody>
         </Table>
       </div>
 
-      {/* Dialog de confirmation de suppression */}
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirmer la suppression</DialogTitle>
-            <DialogDescription>
-              Êtes-vous sûr de vouloir supprimer ce cours ? Cette action est irréversible.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex items-center justify-center py-4">
-            <AlertTriangle className="h-16 w-16 text-destructive" />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
-              Annuler
-            </Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={deleteLoading}>
-              {deleteLoading ? <Spinner className="mr-2 h-4 w-4" /> : null}
-              Supprimer
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <CourseFormDialog
+        open={isEditOpen}
+        course={courseToEdit}
+        // Only an administrator chooses the instructor of someone else's course.
+        instructorId={courseToEdit && !isAdministrator ? Number(courseToEdit.instructor.id) : null}
+        onClose={() => setIsEditOpen(false)}
+        onSaved={onChanged}
+      />
+
+      <ConfirmDeleteDialog
+        open={courseToDelete !== null}
+        onOpenChange={(open) => !open && setCourseToDelete(null)}
+        title="Supprimer ce cours ?"
+        description={
+          courseToDelete
+            ? `Le cours du ${formatDate(courseToDelete.startTime)} avec ${personName(courseCounterpart(courseToDelete, userId).person)} sera définitivement supprimé.`
+            : ""
+        }
+        onConfirm={handleDelete}
+        loading={deleting}
+      />
     </>
   )
 }

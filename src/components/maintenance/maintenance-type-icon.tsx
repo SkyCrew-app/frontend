@@ -1,35 +1,28 @@
-import { AlertTriangleIcon, XCircleIcon, RefreshCwIcon, FileTextIcon, CheckCircleIcon, InfoIcon } from "lucide-react"
+import { ClipboardCheck, Cpu, Hammer, type LucideIcon, RefreshCw, Sparkles, Wrench } from "lucide-react"
+import { maintenanceTypeLabel } from "@/lib/maintenance"
+import { cn } from "@/lib/utils"
 
-type MaintenanceType = "INSPECTION" | "REPAIR" | "OVERHAUL" | "SOFTWARE_UPDATE" | "CLEANING" | "OTHER"
+const ICONS: Record<string, LucideIcon> = {
+  INSPECTION: ClipboardCheck,
+  REPAIR: Hammer,
+  OVERHAUL: RefreshCw,
+  SOFTWARE_UPDATE: Cpu,
+  CLEANING: Sparkles,
+}
 
 interface MaintenanceTypeIconProps {
-  type: MaintenanceType
-  label: string
+  type: string | null | undefined
   className?: string
 }
 
-export function MaintenanceTypeIcon({ type, label, className = "" }: MaintenanceTypeIconProps) {
-  const getIcon = (type: MaintenanceType) => {
-    switch (type) {
-      case "INSPECTION":
-        return <AlertTriangleIcon className={`h-4 w-4 mr-1 ${className}`} aria-hidden="true" />
-      case "REPAIR":
-        return <XCircleIcon className={`h-4 w-4 mr-1 ${className}`} aria-hidden="true" />
-      case "OVERHAUL":
-        return <RefreshCwIcon className={`h-4 w-4 mr-1 ${className}`} aria-hidden="true" />
-      case "SOFTWARE_UPDATE":
-        return <FileTextIcon className={`h-4 w-4 mr-1 ${className}`} aria-hidden="true" />
-      case "CLEANING":
-        return <CheckCircleIcon className={`h-4 w-4 mr-1 ${className}`} aria-hidden="true" />
-      default:
-        return <InfoIcon className={`h-4 w-4 mr-1 ${className}`} aria-hidden="true" />
-    }
-  }
+/** Type of a maintenance: its icon and its French label. */
+export function MaintenanceTypeIcon({ type, className }: MaintenanceTypeIconProps) {
+  const Icon = ICONS[(type ?? "").toUpperCase()] ?? Wrench
 
   return (
-    <div className="flex items-center">
-      {getIcon(type)}
-      <span>{label}</span>
-    </div>
+    <span className={cn("inline-flex items-center gap-2", className)}>
+      <Icon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+      {maintenanceTypeLabel(type)}
+    </span>
   )
 }

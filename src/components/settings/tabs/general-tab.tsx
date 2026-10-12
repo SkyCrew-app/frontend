@@ -1,98 +1,134 @@
 "use client"
 
 import { useFormContext } from "react-hook-form"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Separator } from "@/components/ui/separator"
-import { motion } from "framer-motion"
-import { Building, Mail, Phone, MapPin, AlertTriangle } from "lucide-react"
+import type { SettingsFormValues } from "@/lib/settings"
+import { SettingsField, SettingsSection, errorMessage } from "../settings-field"
 
 export function GeneralTab() {
-  const { register, formState, setValue, watch } = useFormContext()
+  const {
+    register,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useFormContext<SettingsFormValues>()
+  const isMaintenanceActive = watch("isMaintenanceActive")
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-      <Card className="border-t-4 border-t-primary">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-xl">Paramètres généraux</CardTitle>
-          <CardDescription>Configurez les informations générales de l'aéroclub.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="club-name" className="flex items-center gap-2">
-                <Building className="h-4 w-4 text-info" />
-                Nom de l'aéroclub
-              </Label>
-              <Input id="club-name" {...register("clubName")} />
-              {formState.errors.clubName && (
-                <p className="text-sm text-destructive">{formState.errors.clubName.message as string}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="contact-email" className="flex items-center gap-2">
-                <Mail className="h-4 w-4 text-info" />
-                Email de contact
-              </Label>
-              <Input id="contact-email" type="email" {...register("contactEmail")} />
-              {formState.errors.contactEmail && (
-                <p className="text-sm text-destructive">{formState.errors.contactEmail.message as string}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="contact-phone" className="flex items-center gap-2">
-                <Phone className="h-4 w-4 text-info" />
-                Numéro de contact
-              </Label>
-              <Input id="contact-phone" type="tel" {...register("contactPhone")} />
-              {formState.errors.contactPhone && (
-                <p className="text-sm text-destructive">{formState.errors.contactPhone.message as string}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="address" className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-info" />
-                Adresse
-              </Label>
-              <Textarea id="address" {...register("address")} />
-              {formState.errors.address && (
-                <p className="text-sm text-destructive">{formState.errors.address.message as string}</p>
-              )}
-            </div>
-          </div>
-          <Separator className="my-4" />
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-warning" />
-              Maintenance du site
-            </h3>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="is-maintenance-active"
-                checked={watch("isMaintenanceActive")}
-                onCheckedChange={(checked) => setValue("isMaintenanceActive", !!checked)}
-              />
+    <div className="space-y-6">
+      <SettingsSection title="Coordonnées du club" description="Le nom et les moyens de contact de l'aéroclub.">
+        <div className="grid gap-4 md:grid-cols-2">
+          <SettingsField
+            id="club-name"
+            label="Nom de l'aéroclub"
+            required
+            error={errorMessage(errors.clubName)}
+            className="md:col-span-2"
+          >
+            <Input
+              id="club-name"
+              placeholder="Ex. Aéroclub du Val de Loire"
+              aria-invalid={errors.clubName ? true : undefined}
+              {...register("clubName")}
+            />
+          </SettingsField>
+          <SettingsField id="contact-email" label="E-mail de contact" required error={errorMessage(errors.contactEmail)}>
+            <Input
+              id="contact-email"
+              type="email"
+              autoComplete="email"
+              placeholder="contact@aeroclub.fr"
+              aria-invalid={errors.contactEmail ? true : undefined}
+              {...register("contactEmail")}
+            />
+          </SettingsField>
+          <SettingsField
+            id="contact-phone"
+            label="Téléphone de contact"
+            required
+            hint="10 à 14 chiffres, sans espaces. L'indicatif international (+33…) est accepté."
+            error={errorMessage(errors.contactPhone)}
+          >
+            <Input
+              id="contact-phone"
+              type="tel"
+              autoComplete="tel"
+              placeholder="0478123456"
+              aria-invalid={errors.contactPhone ? true : undefined}
+              aria-describedby="contact-phone-hint"
+              {...register("contactPhone")}
+            />
+          </SettingsField>
+          <SettingsField
+            id="address"
+            label="Adresse"
+            required
+            error={errorMessage(errors.address)}
+            className="md:col-span-2"
+          >
+            <Textarea
+              id="address"
+              rows={3}
+              placeholder={"Aérodrome de Tours-Sorigny\n37250 Sorigny"}
+              aria-invalid={errors.address ? true : undefined}
+              {...register("address")}
+            />
+          </SettingsField>
+        </div>
+      </SettingsSection>
+
+      <SettingsSection
+        title="Mode maintenance du site"
+        description="Tant qu'il est actif, les visiteurs sont redirigés vers une page de maintenance."
+      >
+        <div className="space-y-4">
+          <div className="flex items-start justify-between gap-4 rounded-md border p-3">
+            <div className="space-y-1">
               <Label htmlFor="is-maintenance-active">Activer le mode maintenance</Label>
+              <p id="is-maintenance-active-hint" className="text-xs text-muted-foreground">
+                Prend effet à l'enregistrement des paramètres.
+              </p>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="maintenance-message">Message de maintenance</Label>
+            <Switch
+              id="is-maintenance-active"
+              aria-describedby="is-maintenance-active-hint"
+              checked={!!isMaintenanceActive}
+              onCheckedChange={(checked) => setValue("isMaintenanceActive", checked, { shouldDirty: true })}
+            />
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <SettingsField
+              id="maintenance-message"
+              label="Message affiché"
+              hint="Laissez vide pour afficher le message par défaut."
+              className="md:col-span-2"
+            >
               <Textarea
                 id="maintenance-message"
+                rows={3}
+                placeholder="Ex. Le site est en cours de mise à jour, il sera de nouveau disponible dans la soirée."
+                aria-describedby="maintenance-message-hint"
                 {...register("maintenanceMessage")}
-                placeholder="Message à afficher pendant la maintenance..."
-                className="h-24"
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="maintenance-time">Date et heure de fin de maintenance</Label>
-              <Input id="maintenance-time" type="datetime-local" {...register("maintenanceTime")} />
-            </div>
+            </SettingsField>
+            <SettingsField
+              id="maintenance-time"
+              label="Fin prévue de la maintenance"
+              hint="Sert au compte à rebours de la page de maintenance."
+            >
+              <Input
+                id="maintenance-time"
+                type="datetime-local"
+                aria-describedby="maintenance-time-hint"
+                {...register("maintenanceTime")}
+              />
+            </SettingsField>
           </div>
-        </CardContent>
-      </Card>
-    </motion.div>
+        </div>
+      </SettingsSection>
+    </div>
   )
 }

@@ -1,4 +1,9 @@
-import { buildAircraftInput } from '../aircraft';
+import {
+  aircraftAvailability,
+  aircraftFileUrl,
+  aircraftMaintenanceState,
+  buildAircraftInput,
+} from '../aircraft';
 
 describe('buildAircraftInput', () => {
   const base = {
@@ -65,5 +70,37 @@ describe('buildAircraftInput', () => {
     buildAircraftInput(formData);
 
     expect(formData).toEqual({ ...base, consumption: 25.5, last_inspection_date: '' });
+  });
+});
+
+describe('libellés de statut des aéronefs', () => {
+  it('donne un libellé et une couleur à chaque disponibilité', () => {
+    expect(aircraftAvailability('AVAILABLE')).toEqual({ label: 'Disponible', variant: 'success' });
+    expect(aircraftAvailability('RESERVATED')).toEqual({ label: 'Réservé', variant: 'info' });
+    expect(aircraftAvailability('UNAVAILABLE')).toEqual({ label: 'Indisponible', variant: 'danger' });
+    expect(aircraftAvailability(null)).toEqual({ label: '—', variant: 'neutral' });
+  });
+
+  it("reconnaît les différentes écritures d'un même état de maintenance", () => {
+    expect(aircraftMaintenanceState('OK')).toEqual({ label: 'Opérationnel', variant: 'success' });
+    expect(aircraftMaintenanceState('OPERATIONAL')).toEqual({ label: 'Opérationnel', variant: 'success' });
+    expect(aircraftMaintenanceState('Maintenance requise').variant).toBe('warning');
+    expect(aircraftMaintenanceState('NEEDS_MAINTENANCE').label).toBe('Maintenance requise');
+    expect(aircraftMaintenanceState('IN_MAINTENANCE')).toEqual({ label: 'En maintenance', variant: 'danger' });
+  });
+
+  it('affiche tel quel un état saisi à la main', () => {
+    expect(aircraftMaintenanceState('Visite 100h en cours')).toEqual({
+      label: 'Visite 100h en cours',
+      variant: 'neutral',
+    });
+    expect(aircraftMaintenanceState('')).toEqual({ label: '—', variant: 'neutral' });
+  });
+});
+
+describe('aircraftFileUrl', () => {
+  it("préfixe un chemin stocké par l'adresse de l'API et laisse une adresse complète intacte", () => {
+    expect(aircraftFileUrl('http://api.test', '/uploads/3/photo.jpg')).toBe('http://api.test/uploads/3/photo.jpg');
+    expect(aircraftFileUrl('http://api.test', 'https://cdn.test/photo.jpg')).toBe('https://cdn.test/photo.jpg');
   });
 });

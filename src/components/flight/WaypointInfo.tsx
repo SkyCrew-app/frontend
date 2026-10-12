@@ -1,9 +1,8 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { MapPin } from "lucide-react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Plane, MapPin, ArrowUp, Navigation, Compass } from "lucide-react"
 
 interface Waypoint {
   ident: string
@@ -19,98 +18,63 @@ interface WaypointInfoProps {
   onFocusWaypoint?: (index: number) => void
 }
 
+type BadgeVariant = "success" | "info" | "warning" | "neutral"
+
+const TYPE_VARIANTS: Record<string, BadgeVariant> = {
+  APT: "info",
+  VOR: "success",
+  NDB: "warning",
+}
+
+// Standard abbreviations stay as they are; the airport one gets a readable label.
+const typeLabel = (type: string) => (type?.toUpperCase() === "APT" ? "Aérodrome" : type || "Point")
+
 export function WaypointInfo({ waypoints: rawWaypoints, onFocusWaypoint }: WaypointInfoProps) {
   const waypoints = rawWaypoints || []
-  const getWaypointTypeColor = (type: string) => {
-    switch (type) {
-      case "APT":
-        return "bg-info/15 text-info"
-      case "VOR":
-        return "bg-primary/15 text-primary"
-      case "NDB":
-        return "bg-warning/15 text-warning"
-      case "FIX":
-        return "bg-success/15 text-success"
-      default:
-        return "bg-muted text-foreground"
-    }
-  }
-
-  const getWaypointIcon = (type: string) => {
-    switch (type) {
-      case "APT":
-        return <Plane className="h-5 w-5" />
-      case "VOR":
-        return <Navigation className="h-5 w-5" />
-      case "NDB":
-        return <Compass className="h-5 w-5" />
-      default:
-        return <MapPin className="h-5 w-5" />
-    }
-  }
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
-          <Navigation className="h-6 w-6 text-primary" />
-          <span>Waypoints</span>
-          <Badge variant="outline" className="ml-auto">
-            {waypoints.length} points
-          </Badge>
-        </CardTitle>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base">Points de route</CardTitle>
+        <CardDescription>
+          {waypoints.length > 0
+            ? `${waypoints.length} point${waypoints.length > 1 ? "s" : ""}. Sélectionnez un point pour le situer sur la carte.`
+            : "Ce plan de vol ne contient pas de point de route détaillé."}
+        </CardDescription>
       </CardHeader>
-      <CardContent>
-        <ScrollArea className="h-[400px] w-full rounded-md border p-4">
-          {waypoints.length > 0 ? (
-            <div className="space-y-4">
-              {waypoints.map((waypoint, index) => (
-                <div
-                  key={index}
-                  className="relative bg-card dark:bg-card-dark p-4 rounded-md shadow hover:shadow-md transition-shadow duration-200 border"
-                  onClick={() => onFocusWaypoint && onFocusWaypoint(index)}
+      {waypoints.length > 0 && (
+        <CardContent>
+          <ol className="max-h-[420px] space-y-1 overflow-y-auto">
+            {waypoints.map((waypoint, index) => (
+              <li key={index}>
+                <button
+                  type="button"
+                  onClick={() => onFocusWaypoint?.(index)}
+                  className="flex w-full items-center gap-3 rounded-lg p-2 text-left transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  <div className="absolute top-0 left-0 w-8 h-8 bg-primary/10 flex items-center justify-center rounded-tl-md rounded-br-md">
-                    <span className="text-xs font-bold text-primary">{index + 1}</span>
-                  </div>
-
-                  <div className="flex justify-between items-center mb-3 pl-6">
-                    <h3 className="text-lg font-semibold flex items-center">{waypoint.ident}</h3>
-                    <Badge className={getWaypointTypeColor(waypoint.type)}>
-                      <span className="flex items-center">
-                        {getWaypointIcon(waypoint.type)}
-                        <span className="ml-1">{waypoint.type}</span>
-                      </span>
-                    </Badge>
-                  </div>
-
-                  {waypoint.name && <p className="text-sm text-muted-foreground mb-3 pl-6">{waypoint.name}</p>}
-
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div className="flex items-center space-x-1">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <span>Lat: {waypoint.lat.toFixed(4)}°</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <span>Lon: {waypoint.lon.toFixed(4)}°</span>
-                    </div>
-                    <div className="flex items-center space-x-1 col-span-2">
-                      <ArrowUp className="h-4 w-4 text-muted-foreground" />
-                      <span>Altitude: {waypoint.alt} ft</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-              <MapPin className="h-12 w-12 mb-2 opacity-20" />
-              <p>Aucun waypoint disponible</p>
-            </div>
-          )}
-        </ScrollArea>
-      </CardContent>
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold tabular-nums">
+                    {index + 1}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-2">
+                      <span className="text-sm font-semibold">{waypoint.ident}</span>
+                      <Badge variant={TYPE_VARIANTS[waypoint.type?.toUpperCase()] ?? "neutral"}>
+                        {typeLabel(waypoint.type)}
+                      </Badge>
+                    </span>
+                    <span className="block truncate text-xs text-muted-foreground tabular-nums">
+                      {waypoint.name && waypoint.name !== waypoint.ident ? `${waypoint.name} · ` : ""}
+                      {waypoint.lat.toFixed(4)}°, {waypoint.lon.toFixed(4)}°
+                      {waypoint.alt > 0 ? ` · ${waypoint.alt} ft` : ""}
+                    </span>
+                  </span>
+                  <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                </button>
+              </li>
+            ))}
+          </ol>
+        </CardContent>
+      )}
     </Card>
   )
 }

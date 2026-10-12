@@ -1,78 +1,102 @@
 "use client"
 
-import React, { useState } from "react"
+import { useState } from "react"
 import { useFormContext } from "react-hook-form"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
-import { TaxonomyCategory as TaxonomyCategoryComponent } from "./taxonomy-category"
-import { motion } from "framer-motion"
-import { Tags } from "lucide-react"
+import { TAXONOMY_LISTS, type SettingsFormValues, type Taxonomies } from "@/lib/settings"
+import { DeleteItemDialog, NameDialog } from "../item-list"
+import { TaxonomyCategory } from "./taxonomy-category"
 
-type TaxonomyCategory = "maintenanceTypes" | "licenseTypes" | "aircraftCategories" | "flightTypes"
+type ListKey = keyof Taxonomies
 
-const taxonomyLabels: Record<TaxonomyCategory, string> = {
-  maintenanceTypes: "Types de maintenance",
-  licenseTypes: "Types de licences",
-  aircraftCategories: "Catégories d'aéronefs",
-  flightTypes: "Types de vols",
-}
+type PendingAction =
+  | { type: "add"; list: ListKey }
+  | { type: "edit"; list: ListKey; item: string }
+  | { type: "delete"; list: ListKey; item: string }
 
 export function TaxonomyManager() {
-  const { watch, setValue } = useFormContext()
-  const taxonomies = watch("taxonomies") || {}
-  const [newItem, setNewItem] = useState<Record<TaxonomyCategory, string>>({
-    maintenanceTypes: "",
-    licenseTypes: "",
-    aircraftCategories: "",
-    flightTypes: "",
-  })
+  const { watch, setValue } = useFormContext<SettingsFormValues>()
+  const taxonomies = watch("taxonomies")
+  const [action, setAction] = useState<PendingAction | null>(null)
+  // Kept after closing so the dialog text does not change while it fades out.
+  const [lastAction, setLastAction] = useState<PendingAction | null>(null)
 
-  const handleAddItem = (category: TaxonomyCategory) => {
-    if (newItem[category].trim() !== "") {
-      const currentItems = taxonomies[category] || []
-      // Vérifier si l'élément existe déjà
-      if (!currentItems.includes(newItem[category].trim())) {
-        setValue(`taxonomies.${category}`, [...currentItems, newItem[category].trim()])
-      }
-      setNewItem({ ...newItem, [category]: "" })
+  const open = (next: PendingAction) => {
+    setAction(next)
+    setLastAction(next)
+  }
+  const close = () => setAction(null)
+
+  const itemsOf = (list: ListKey): string[] => taxonomies?.[list] ?? []
+  const save = (list: ListKey, items: string[]) =>
+    setValue(`taxonomies.${list}`, items, { shouldDirty: true, shouldValidate: true })
+
+  const shown = action ?? lastAction
+  const list = TAXONOMY_LISTS.find((entry) => entry.key === shown?.list) ?? TAXONOMY_LISTS[0]
+  const shownItem = shown && shown.type !== "add" ? shown.item : ""
+
+  const handleName = (name: string) => {
+    if (!action) return
+    if (action.type === "add") save(action.list, [...itemsOf(action.list), name])
+    if (action.type === "edit") {
+      save(
+        action.list,
+        itemsOf(action.list).map((item) => (item === action.item ? name : item)),
+      )
     }
+    close()
   }
 
-  const handleRemoveItem = (category: TaxonomyCategory, item: string) => {
-    const currentItems = taxonomies[category] || []
-    setValue(
-      `taxonomies.${category}`,
-      currentItems.filter((i: string) => i !== item),
+  const handleDelete = () => {
+    if (action?.type !== "delete") return
+    save(
+      action.list,
+      itemsOf(action.list).filter((item) => item !== action.item),
     )
+    close()
   }
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-      <Card className="border-t-4 border-t-primary">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-xl flex items-center gap-2">
-            <Tags className="h-5 w-5 text-info" />
-            Gestion des taxonomies
-          </CardTitle>
-          <CardDescription>Configurez les différentes catégories et types utilisés dans l'aéroclub.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {(Object.keys(taxonomyLabels) as TaxonomyCategory[]).map((category, index) => (
-            <React.Fragment key={category}>
-              <TaxonomyCategoryComponent
-                categoryKey={category}
-                categoryLabel={taxonomyLabels[category]}
-                items={taxonomies[category] || []}
-                newItemValue={newItem[category]}
-                onNewItemChange={(value) => setNewItem({ ...newItem, [category]: value })}
-                onAddItem={() => handleAddItem(category)}
-                onRemoveItem={(item) => handleRemoveItem(category, item)}
-              />
-              {index < Object.keys(taxonomyLabels).length - 1 && <Separator className="my-4" />}
-            </React.Fragment>
-          ))}
-        </CardContent>
-      </Card>
-    </motion.div>
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">
+        Les valeurs proposées dans les listes de choix du club. Vos changements sont pris en compte quand vous
+        enregistrez les paramètres.
+      </p>
+      <div className="grid gap-4 lg:grid-cols-2">
+        {TAXONOMY_LISTS.map((entry) => (
+          <TaxonomyCategory
+            key={entry.key}
+            title={entry.title}
+            addLabel={entry.addTitle}
+            emptyText={entry.emptyText}
+            items={itemsOf(entry.key)}
+            onAdd={() => open({ type: "add", list: entry.key })}
+            onEdit={(item) => open({ type: "edit", list: entry.key, item })}
+            onDelete={(item) => open({ type: "delete", list: entry.key, item })}
+          />
+        ))}
+      </div>
+
+      <NameDialog
+        open={action?.type === "add" || action?.type === "edit"}
+        onOpenChange={(next) => !next && close()}
+        title={shown?.type === "edit" ? `Modifier « ${shownItem} »` : list.addTitle}
+        description={`Liste « ${list.title} ».`}
+        label="Nom"
+        placeholder={`Ex. ${list.example}`}
+        initialValue={shown?.type === "edit" ? shownItem : ""}
+        submitLabel={shown?.type === "edit" ? "Modifier" : "Ajouter"}
+        existingNames={itemsOf(list.key)}
+        duplicateMessage="Cette valeur est déjà dans la liste."
+        onSubmit={handleName}
+      />
+
+      <DeleteItemDialog
+        open={action?.type === "delete"}
+        onOpenChange={(next) => !next && close()}
+        title={list.deleteTitle}
+        description={`« ${shownItem} » sera retiré de la liste « ${list.title} » au prochain enregistrement des paramètres.`}
+        onConfirm={handleDelete}
+      />
+    </div>
   )
 }

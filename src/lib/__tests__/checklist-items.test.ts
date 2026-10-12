@@ -1,6 +1,8 @@
 import {
   buildCreateChecklistItemInput,
   buildUpdateChecklistItemInput,
+  checklistStatus,
+  submissionProgress,
   groupItemsByCategory,
   nextSortOrder,
   reorderItemIds,
@@ -161,6 +163,39 @@ describe('toChecklistItemDraft', () => {
       description: '',
       category: 'EXTERIOR',
       is_required: false,
+    });
+  });
+});
+
+describe('checklistStatus', () => {
+  it('donne un libellé français et une couleur par statut', () => {
+    expect(checklistStatus('IN_PROGRESS')).toEqual({ label: 'En cours', variant: 'info' });
+    expect(checklistStatus('COMPLETED')).toEqual({ label: 'Terminée', variant: 'success' });
+    expect(checklistStatus('CANCELLED')).toEqual({ label: 'Annulée', variant: 'danger' });
+  });
+
+  it("n'affiche jamais un code inconnu tel quel", () => {
+    expect(checklistStatus('ARCHIVED').label).toBe('Statut inconnu');
+    expect(checklistStatus(null).variant).toBe('neutral');
+  });
+});
+
+describe('submissionProgress', () => {
+  it('ne compte que les réponses cochées des items encore présents dans le modèle', () => {
+    const template = { items: [item(1, 'EXTERIOR', 0), item(2, 'COCKPIT', 1), item(3, 'ENGINE', 2)] } as never;
+    const responses = [
+      { itemId: 1, checked: true },
+      { itemId: '2', checked: false },
+      { itemId: 99, checked: true },
+    ];
+    expect(submissionProgress({ template, responses })).toEqual({ checked: 1, total: 3, percentage: 33 });
+  });
+
+  it('vaut 0 % pour un modèle vide', () => {
+    expect(submissionProgress({ template: { items: [] } as never, responses: [] })).toEqual({
+      checked: 0,
+      total: 0,
+      percentage: 0,
     });
   });
 });

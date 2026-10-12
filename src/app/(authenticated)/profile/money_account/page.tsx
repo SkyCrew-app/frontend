@@ -1,92 +1,26 @@
 "use client"
 
-import { useState } from "react"
 import AccountOverview from "@/components/account/AccountOverview"
 import TransactionHistory from "@/components/account/TransactionHistory"
 import TopUpAccount from "@/components/account/TopUpAccount"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useMediaQuery } from "@/hooks/use-media-query"
-import { Wallet, CreditCard, History } from "lucide-react"
-import { motion } from "framer-motion"
+import { PageHeader } from "@/components/layout/PageHeader"
 
 export default function MoneyAccountPage() {
-  const [activeTab, setActiveTab] = useState("overview")
-  const isMobile = useMediaQuery("(max-width: 768px)")
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
-  }
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 },
-  }
-
-  if (!isMobile) {
-    return (
-      <motion.div
-        className="min-h-screen py-12"
-        initial="hidden"
-        animate="visible"
-        variants={containerVariants}
-      >
-        <div className="w-full">
-          <motion.h1 className="mb-6 text-2xl font-semibold tracking-tight" variants={itemVariants}>
-            Gestion financière
-          </motion.h1>
-
-          <motion.div className="grid gap-8 md:grid-cols-2" variants={itemVariants}>
-            <AccountOverview />
-            <TopUpAccount />
-          </motion.div>
-
-          <motion.div className="mt-12" variants={itemVariants}>
-            <TransactionHistory />
-          </motion.div>
-        </div>
-      </motion.div>
-    )
-  }
-
   return (
-    <div className="min-h-screen py-6">
-      <div className="w-full">
-        <h1 className="mb-6 text-2xl font-semibold tracking-tight">Gestion financière</h1>
+    <div className="space-y-6">
+      <PageHeader
+        title="Mon compte"
+        description="Votre solde, le rechargement de votre compte et l'historique de vos transactions."
+        className="mb-0"
+      />
 
-        <Tabs defaultValue="overview" className="w-full" onValueChange={setActiveTab} value={activeTab}>
-          <TabsList className="grid grid-cols-3 mb-6">
-            <TabsTrigger value="overview" className="flex items-center justify-center">
-              <Wallet className="mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">Solde</span>
-            </TabsTrigger>
-            <TabsTrigger value="topup" className="flex items-center justify-center">
-              <CreditCard className="mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">Recharger</span>
-            </TabsTrigger>
-            <TabsTrigger value="history" className="flex items-center justify-center">
-              <History className="mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">Historique</span>
-            </TabsTrigger>
-          </TabsList>
+      <AccountOverview />
 
-          <TabsContent value="overview" className="space-y-4">
-            <AccountOverview />
-          </TabsContent>
-
-          <TabsContent value="topup" className="space-y-4">
-            <TopUpAccount />
-          </TabsContent>
-
-          <TabsContent value="history" className="space-y-4">
-            <TransactionHistory />
-          </TabsContent>
-        </Tabs>
+      <div className="grid items-start gap-6 xl:grid-cols-3">
+        <TopUpAccount />
+        <div className="min-w-0 xl:col-span-2">
+          <TransactionHistory />
+        </div>
       </div>
     </div>
   )

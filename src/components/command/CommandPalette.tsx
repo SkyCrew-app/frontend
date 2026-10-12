@@ -17,6 +17,9 @@ import {
   Moon,
   Monitor,
   Plus,
+  Map,
+  Newspaper,
+  CreditCard,
 } from "lucide-react"
 import {
   CommandDialog,
@@ -50,9 +53,9 @@ export default function CommandPalette({ open, onOpenChange }: CommandPalettePro
 
   return (
     <CommandDialog open={open} onOpenChange={onOpenChange}>
-      <CommandInput placeholder="Rechercher une page ou une action..." />
+      <CommandInput placeholder="Rechercher une page ou une action…" />
       <CommandList>
-        <CommandEmpty>Aucun r&eacute;sultat trouv&eacute;.</CommandEmpty>
+        <CommandEmpty>Aucun résultat.</CommandEmpty>
 
         <CommandGroup heading="Navigation">
           <CommandItem onSelect={() => navigate("/dashboard")}>
@@ -61,16 +64,20 @@ export default function CommandPalette({ open, onOpenChange }: CommandPalettePro
           </CommandItem>
           <CommandItem onSelect={() => navigate("/reservations")}>
             <Calendar className="mr-2 h-4 w-4" />
-            R&eacute;servations
+            Réservations
           </CommandItem>
           <CommandItem onSelect={() => navigate("/reservations/my")}>
             <CalendarCheck className="mr-2 h-4 w-4" />
-            Mes r&eacute;servations
+            Mes réservations
+          </CommandItem>
+          <CommandItem onSelect={() => navigate("/reservations/flight-plans")}>
+            <Map className="mr-2 h-4 w-4" />
+            Mes plans de vol
           </CommandItem>
           <CommandItem onSelect={() => navigate("/logbook")}>
             <BookOpen className="mr-2 h-4 w-4" />
             Carnet de vol
-            <CommandShortcut>&#8679;&#8984;L</CommandShortcut>
+            <CommandShortcut>⇧⌘L</CommandShortcut>
           </CommandItem>
           <CommandItem onSelect={() => navigate("/checklists")}>
             <ClipboardCheck className="mr-2 h-4 w-4" />
@@ -84,9 +91,17 @@ export default function CommandPalette({ open, onOpenChange }: CommandPalettePro
             <GraduationCap className="mr-2 h-4 w-4" />
             Instruction
           </CommandItem>
+          <CommandItem onSelect={() => navigate("/articles")}>
+            <Newspaper className="mr-2 h-4 w-4" />
+            Articles
+          </CommandItem>
           <CommandItem onSelect={() => navigate("/profile")}>
             <User className="mr-2 h-4 w-4" />
             Mon profil
+          </CommandItem>
+          <CommandItem onSelect={() => navigate("/profile/money_account")}>
+            <CreditCard className="mr-2 h-4 w-4" />
+            Mon solde
           </CommandItem>
           <CommandItem onSelect={() => navigate("/notifications")}>
             <Bell className="mr-2 h-4 w-4" />
@@ -103,25 +118,25 @@ export default function CommandPalette({ open, onOpenChange }: CommandPalettePro
         <CommandGroup heading="Actions rapides">
           <CommandItem onSelect={() => navigate("/reservations")}>
             <Plus className="mr-2 h-4 w-4" />
-            Nouvelle r&eacute;servation
-            <CommandShortcut>&#8679;&#8984;N</CommandShortcut>
+            Nouvelle réservation
+            <CommandShortcut>⇧⌘N</CommandShortcut>
           </CommandItem>
         </CommandGroup>
 
         <CommandSeparator />
 
-        <CommandGroup heading="Th&egrave;me">
+        <CommandGroup heading="Thème">
           <CommandItem onSelect={() => changeTheme("light")}>
             <Sun className="mr-2 h-4 w-4" />
-            Mode clair
+            Thème clair
           </CommandItem>
           <CommandItem onSelect={() => changeTheme("dark")}>
             <Moon className="mr-2 h-4 w-4" />
-            Mode sombre
+            Thème sombre
           </CommandItem>
           <CommandItem onSelect={() => changeTheme("system")}>
             <Monitor className="mr-2 h-4 w-4" />
-            Mode syst&egrave;me
+            Thème du système
           </CommandItem>
         </CommandGroup>
       </CommandList>

@@ -1,55 +1,85 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { useQuery, useMutation } from "@apollo/client"
 import { useRouter } from "next/navigation"
-import { format } from "date-fns"
-import { fr } from "date-fns/locale"
-import { motion } from "framer-motion"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ClipboardCheck, Plus, AlertTriangle, Clock, CheckCircle2, ArrowRight } from "lucide-react"
+import { ArrowRight, ClipboardCheck, Loader2, Plus } from "lucide-react"
 import { useToast } from "@/components/hooks/use-toast"
 import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
-import { GET_CHECKLIST_SUBMISSIONS, GET_CHECKLIST_TEMPLATES } from "@/graphql/checklist"
-import { START_CHECKLIST_SUBMISSION } from "@/graphql/checklist"
-import {
-  ChecklistSubmission,
-  ChecklistSubmissionStatus,
-  ChecklistTemplate,
-} from "@/interfaces/checklist"
+import { PageHeader } from "@/components/layout/PageHeader"
+import { EmptyState } from "@/components/layout/EmptyState"
+import { ErrorState } from "@/components/layout/ErrorState"
+import { GET_CHECKLIST_SUBMISSIONS, GET_CHECKLIST_TEMPLATES, START_CHECKLIST_SUBMISSION } from "@/graphql/checklist"
+import { ChecklistSubmission, ChecklistSubmissionStatus, ChecklistTemplate } from "@/interfaces/checklist"
 import { ChecklistProgress } from "@/components/checklists/ChecklistProgress"
+import { checklistStatus, submissionProgress } from "@/lib/checklist-items"
+import { formatDateTime } from "@/lib/format"
 
-function getStatusBadge(status: string) {
-  switch (status) {
-    case ChecklistSubmissionStatus.COMPLETED:
-      return (
-        <Badge className="bg-success/15 text-success gap-1">
-          <CheckCircle2 className="h-3 w-3" />
-          Terminée
-        </Badge>
-      )
-    case ChecklistSubmissionStatus.IN_PROGRESS:
-      return (
-        <Badge className="bg-info/15 text-info gap-1">
-          <Clock className="h-3 w-3" />
-          En cours
-        </Badge>
-      )
-    case ChecklistSubmissionStatus.CANCELLED:
-      return (
-        <Badge className="bg-destructive/15 text-destructive">
-          Annulée
-        </Badge>
-      )
-    default:
-      return <Badge variant="secondary">{status}</Badge>
-  }
+const HISTORY_PREVIEW = 6
+
+const byMostRecent = (a: ChecklistSubmission, b: ChecklistSubmission) =>
+  new Date(b.completed_at ?? b.started_at).getTime() - new Date(a.completed_at ?? a.started_at).getTime()
+
+// One card anatomy for every checklist: title, status, facts, action bottom right.
+function SubmissionCard({ submission }: { submission: ChecklistSubmission }) {
+  const status = checklistStatus(submission.status)
+  const { checked, total } = submissionProgress(submission)
+  const inProgress = submission.status === ChecklistSubmissionStatus.IN_PROGRESS
+  const isCompleted = submission.status === ChecklistSubmissionStatus.COMPLETED
+
+  return (
+    <Link
+      href={`/checklists/${submission.id}`}
+      className="group rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      <Card className="flex h-full flex-col transition-shadow hover:shadow-md">
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between gap-3">
+            <CardTitle className="text-base">{submission.template.name}</CardTitle>
+            <Badge variant={status.variant} className="shrink-0">
+              {status.label}
+            </Badge>
+          </div>
+          <CardDescription>{submission.template.aircraft_model}</CardDescription>
+        </CardHeader>
+        <CardContent className="flex-1 space-y-3 pb-3">
+          {inProgress ? (
+            <ChecklistProgress checked={checked} total={total} />
+          ) : (
+            <p className="text-sm tabular-nums text-muted-foreground">
+              {checked} / {total} {total > 1 ? "points vérifiés" : "point vérifié"}
+            </p>
+          )}
+          <p className="text-xs text-muted-foreground">
+            {isCompleted && submission.completed_at
+              ? `Terminée le ${formatDateTime(submission.completed_at)}`
+              : `Commencée le ${formatDateTime(submission.started_at)}`}
+          </p>
+        </CardContent>
+        <CardFooter className="justify-end pt-0">
+          <span className="flex items-center gap-1 text-sm font-medium text-primary">
+            {inProgress ? "Reprendre" : "Consulter"}
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+          </span>
+        </CardFooter>
+      </Card>
+    </Link>
+  )
 }
 
 export default function ChecklistsPage() {
@@ -59,46 +89,44 @@ export default function ChecklistsPage() {
   const userData = useUserData(userEmail)
   const [isNewDialogOpen, setIsNewDialogOpen] = useState(false)
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("")
+  const [showAllHistory, setShowAllHistory] = useState(false)
 
-  const { data: submissionsData, loading: loadingSubmissions, error: errorSubmissions } = useQuery(
-    GET_CHECKLIST_SUBMISSIONS,
-    {
-      fetchPolicy: "network-only",
-    },
-  )
+  const {
+    data: submissionsData,
+    loading: loadingSubmissions,
+    error: errorSubmissions,
+    refetch,
+  } = useQuery(GET_CHECKLIST_SUBMISSIONS, {
+    fetchPolicy: "network-only",
+  })
 
   const { data: templatesData, loading: loadingTemplates } = useQuery(GET_CHECKLIST_TEMPLATES)
 
   const [startSubmission, { loading: starting }] = useMutation(START_CHECKLIST_SUBMISSION)
 
   const submissions: ChecklistSubmission[] = submissionsData?.checklistSubmissions || []
-  const templates: ChecklistTemplate[] = templatesData?.checklistTemplates?.filter(
-    (t: ChecklistTemplate) => t.is_active,
-  ) || []
+  const templates: ChecklistTemplate[] =
+    templatesData?.checklistTemplates?.filter((t: ChecklistTemplate) => t.is_active) || []
 
-  // Group submissions: in_progress first, then completed
-  const inProgress = submissions.filter((s) => s.status === ChecklistSubmissionStatus.IN_PROGRESS)
-  const completed = submissions.filter((s) => s.status === ChecklistSubmissionStatus.COMPLETED)
+  const inProgress = submissions.filter((s) => s.status === ChecklistSubmissionStatus.IN_PROGRESS).sort(byMostRecent)
+  // Everything that is no longer being filled in, cancelled ones included.
+  const history = submissions.filter((s) => s.status !== ChecklistSubmissionStatus.IN_PROGRESS).sort(byMostRecent)
+  const visibleHistory = showAllHistory ? history : history.slice(0, HISTORY_PREVIEW)
 
-  const getProgress = (sub: ChecklistSubmission) => {
-    const totalItems = sub.template.items?.length || 0
-    const checkedItems = sub.responses?.filter((r) => r.checked).length || 0
-    return { checked: checkedItems, total: totalItems }
-  }
+  // With a single template there is nothing to choose.
+  const templateId = selectedTemplateId || (templates.length === 1 ? String(templates[0].id) : "")
 
   const handleStartChecklist = async () => {
-    if (!selectedTemplateId || !userData?.id) return
+    if (!templateId || !userData?.id) return
     try {
       const { data } = await startSubmission({
         variables: {
           input: {
-            templateId: Number(selectedTemplateId),
+            templateId: Number(templateId),
             responses: [],
           },
         },
-        refetchQueries: [
-          { query: GET_CHECKLIST_SUBMISSIONS },
-        ],
+        refetchQueries: [{ query: GET_CHECKLIST_SUBMISSIONS }],
       })
 
       setIsNewDialogOpen(false)
@@ -107,172 +135,97 @@ export default function ChecklistsPage() {
       if (data?.startChecklistSubmission?.id) {
         router.push(`/checklists/${data.startChecklistSubmission.id}`)
       }
-
-      toast({
-        title: "Checklist démarrée",
-        description: "Vous pouvez maintenant remplir votre checklist.",
-      })
-    } catch (error) {
+    } catch {
       toast({
         variant: "destructive",
-        title: "Erreur",
-        description: (error as Error).message || "Impossible de démarrer la checklist.",
+        title: "La checklist n'a pas pu être démarrée",
+        description: "Réessayez dans un instant.",
       })
     }
   }
 
-  if (loadingSubmissions) {
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-12 w-64" />
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {[...Array(3)].map((_, i) => (
-            <Skeleton key={i} className="h-48" />
-          ))}
-        </div>
-      </div>
-    )
-  }
-
-  if (errorSubmissions) {
-    return (
-      <Card className="border-destructive/30 bg-destructive/10">
-        <CardContent className="p-6 text-destructive flex items-center">
-          <AlertTriangle className="h-6 w-6 mr-3" />
-          <div>
-            <h3 className="font-semibold">Erreur de chargement</h3>
-            <p>Impossible de charger vos checklists. Veuillez réessayer plus tard.</p>
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
+  const newButton = (
+    <Button onClick={() => setIsNewDialogOpen(true)}>
+      <Plus className="h-4 w-4" />
+      Nouvelle checklist
+    </Button>
+  )
 
   return (
     <div className="space-y-6">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
-              <ClipboardCheck className="h-6 w-6 text-primary sm:h-7 sm:w-7 md:h-8 md:w-8" />
-              Checklists pré-vol
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground sm:text-base">
-              Gérez et remplissez vos checklists de vérification avant le vol
-            </p>
-          </div>
+      <PageHeader
+        title="Checklists"
+        description="Vos vérifications avant le vol, point par point."
+        actions={newButton}
+        className="mb-0"
+      />
 
-          <Button onClick={() => setIsNewDialogOpen(true)} size="sm" className="w-full sm:w-auto gap-1">
-            <Plus className="h-4 w-4" />
-            Nouvelle checklist
-          </Button>
+      {loadingSubmissions && submissions.length === 0 ? (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 3 }, (_, i) => (
+            <Skeleton key={i} className="h-44 rounded-xl" />
+          ))}
         </div>
-      </motion.div>
+      ) : errorSubmissions ? (
+        <ErrorState onRetry={() => refetch()} />
+      ) : submissions.length === 0 ? (
+        <EmptyState
+          icon={ClipboardCheck}
+          title="Aucune checklist pour le moment"
+          description="Démarrez une checklist avant votre prochain vol : vos réponses s'enregistrent au fur et à mesure."
+          action={newButton}
+        />
+      ) : (
+        <>
+          {inProgress.length > 0 && (
+            <section className="space-y-3">
+              <h2 className="text-lg font-semibold">En cours</h2>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {inProgress.map((sub) => (
+                  <SubmissionCard key={sub.id} submission={sub} />
+                ))}
+              </div>
+            </section>
+          )}
 
-      {/* In progress */}
-      {inProgress.length > 0 && (
-        <div className="space-y-3">
-          <h2 className="text-lg font-semibold flex items-center gap-2">
-            <Clock className="h-5 w-5 text-info" />
-            En cours
-          </h2>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {inProgress.map((sub) => {
-              const { checked, total } = getProgress(sub)
-              return (
-                <Card key={sub.id} className="cursor-pointer hover:shadow-md transition-shadow border-l-4 border-l-info"
-                  onClick={() => router.push(`/checklists/${sub.id}`)}
-                >
-                  <CardHeader className="pb-2">
-                    <div className="flex items-start justify-between">
-                      <CardTitle className="text-base">{sub.template.name}</CardTitle>
-                      {getStatusBadge(sub.status)}
-                    </div>
-                    <CardDescription>{sub.template.aircraft_model}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <ChecklistProgress checked={checked} total={total} required={0} />
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>
-                        Démarrée le {format(new Date(sub.started_at), "dd MMM yyyy HH:mm", { locale: fr })}
-                      </span>
-                      <ArrowRight className="h-4 w-4" />
-                    </div>
-                  </CardContent>
-                </Card>
-              )
-            })}
-          </div>
-        </div>
+          {history.length > 0 && (
+            <section className="space-y-3">
+              <h2 className="text-lg font-semibold">Historique</h2>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {visibleHistory.map((sub) => (
+                  <SubmissionCard key={sub.id} submission={sub} />
+                ))}
+              </div>
+              {history.length > HISTORY_PREVIEW && (
+                <div className="flex justify-center">
+                  <Button variant="outline" onClick={() => setShowAllHistory(!showAllHistory)}>
+                    {showAllHistory ? "Afficher moins" : `Afficher les ${history.length} checklists`}
+                  </Button>
+                </div>
+              )}
+            </section>
+          )}
+        </>
       )}
 
-      {/* Completed */}
-      {completed.length > 0 && (
-        <div className="space-y-3">
-          <h2 className="text-lg font-semibold flex items-center gap-2">
-            <CheckCircle2 className="h-5 w-5 text-success" />
-            Terminées
-          </h2>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {completed.map((sub) => {
-              const { checked, total } = getProgress(sub)
-              return (
-                <Card key={sub.id} className="cursor-pointer hover:shadow-md transition-shadow"
-                  onClick={() => router.push(`/checklists/${sub.id}`)}
-                >
-                  <CardHeader className="pb-2">
-                    <div className="flex items-start justify-between">
-                      <CardTitle className="text-base">{sub.template.name}</CardTitle>
-                      {getStatusBadge(sub.status)}
-                    </div>
-                    <CardDescription>{sub.template.aircraft_model}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>{checked}/{total} items</span>
-                      <span>
-                        {sub.completed_at &&
-                          format(new Date(sub.completed_at), "dd MMM yyyy HH:mm", { locale: fr })}
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      {submissions.length === 0 && (
-        <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <ClipboardCheck className="h-12 w-12 text-muted-foreground/50 mb-4" />
-            <h3 className="text-lg font-semibold">Aucune checklist</h3>
-            <p className="text-sm text-muted-foreground mt-1 mb-4">
-              Démarrez une nouvelle checklist pré-vol pour commencer.
-            </p>
-            <Button onClick={() => setIsNewDialogOpen(true)} className="gap-1">
-              <Plus className="h-4 w-4" />
-              Nouvelle checklist
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* New checklist dialog */}
       <Dialog open={isNewDialogOpen} onOpenChange={setIsNewDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogTitle>Nouvelle checklist pré-vol</DialogTitle>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Modèle de checklist</Label>
-              <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionnez un modèle..." />
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Démarrer une checklist</DialogTitle>
+            <DialogDescription>Choisissez le modèle correspondant à l&apos;avion que vous préparez.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="checklist-template">Modèle de checklist</Label>
+            {loadingTemplates && templates.length === 0 ? (
+              <Skeleton className="h-10 w-full" />
+            ) : templates.length === 0 ? (
+              <p className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
+                Aucun modèle de checklist n&apos;est disponible. Demandez à un administrateur du club d&apos;en activer un.
+              </p>
+            ) : (
+              <Select value={templateId} onValueChange={setSelectedTemplateId}>
+                <SelectTrigger id="checklist-template">
+                  <SelectValue placeholder="Choisir un modèle" />
                 </SelectTrigger>
                 <SelectContent>
                   {templates.map((t) => (
@@ -282,18 +235,15 @@ export default function ChecklistsPage() {
                   ))}
                 </SelectContent>
               </Select>
-              {loadingTemplates && <p className="text-xs text-muted-foreground">Chargement des modèles...</p>}
-              {templates.length === 0 && !loadingTemplates && (
-                <p className="text-xs text-destructive">Aucun modèle de checklist actif disponible.</p>
-              )}
-            </div>
+            )}
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsNewDialogOpen(false)}>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setIsNewDialogOpen(false)} disabled={starting}>
               Annuler
             </Button>
-            <Button onClick={handleStartChecklist} disabled={!selectedTemplateId || starting}>
-              {starting ? "Démarrage..." : "Démarrer"}
+            <Button onClick={handleStartChecklist} disabled={!templateId || !userData?.id || starting}>
+              {starting && <Loader2 className="h-4 w-4 animate-spin" />}
+              Démarrer la checklist
             </Button>
           </DialogFooter>
         </DialogContent>

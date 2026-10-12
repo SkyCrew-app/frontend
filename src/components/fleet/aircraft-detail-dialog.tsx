@@ -1,5 +1,6 @@
 "use client"
 
+import type { ReactNode } from "react"
 import {
   Dialog,
   DialogContent,
@@ -9,153 +10,133 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
-import { ExternalLink, FileText, PlaneTakeoff } from "lucide-react"
+import { ExternalLink, FileText, Pencil } from "lucide-react"
 import type { Aircraft } from "@/interfaces/aircraft"
 import { StatusBadge } from "./status-badge"
 import { getBackendBaseUrl } from "@/lib/runtime-config"
+import { aircraftFileName, aircraftFileUrl } from "@/lib/aircraft"
+import { formatDecimal, formatFlightDuration, formatMoney } from "@/lib/format"
 
 interface AircraftDetailDialogProps {
   aircraft: Aircraft | null
   isOpen: boolean
   onOpenChange: (open: boolean) => void
+  /** Shown as the main action when the viewer may edit the aircraft. */
+  onEdit?: (aircraft: Aircraft) => void
 }
 
-export function AircraftDetailDialog({ aircraft, isOpen, onOpenChange }: AircraftDetailDialogProps) {
+const hasValue = (value: number | string | null | undefined) => value !== null && value !== undefined && value !== ""
+
+function Fact({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div>
+      <dt className="text-sm text-muted-foreground">{label}</dt>
+      <dd className="mt-0.5 text-sm font-medium tabular-nums">{children}</dd>
+    </div>
+  )
+}
+
+export function AircraftDetailDialog({ aircraft, isOpen, onOpenChange, onEdit }: AircraftDetailDialogProps) {
   if (!aircraft) return null
+
+  // Optional characteristics: only the ones filled in are listed.
+  const characteristics = [
+    { label: "Altitude maximale", value: aircraft.maxAltitude, unit: "ft" },
+    { label: "Vitesse de croisière", value: aircraft.cruiseSpeed, unit: "kt" },
+    { label: "Consommation", value: aircraft.consumption, unit: "L/h" },
+    { label: "Capacité du réservoir", value: aircraft.fuel_capacity, unit: "L" },
+    { label: "Carburant", value: aircraft.fuel_type, unit: "" },
+    { label: "Masse à vide", value: aircraft.empty_weight, unit: "kg" },
+    { label: "Masse maximale au décollage", value: aircraft.max_takeoff_weight, unit: "kg" },
+  ].filter((item) => hasValue(item.value))
+
+  const documents = aircraft.documents_url ?? []
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl flex items-center">
-            <PlaneTakeoff className="h-6 w-6 mr-2" />
-            {aircraft.registration_number} - {aircraft.model}
-          </DialogTitle>
-          <DialogDescription>Détails complets de l'aéronef et historique de maintenance</DialogDescription>
+          <DialogTitle>{aircraft.registration_number}</DialogTitle>
+          <DialogDescription>{aircraft.model}</DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
-          <div className="md:col-span-2 space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Informations générales</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Immatriculation</p>
-                    <p className="font-medium">{aircraft.registration_number}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Modèle</p>
-                    <p className="font-medium">{aircraft.model}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Année de fabrication</p>
-                    <p className="font-medium">{aircraft.year_of_manufacture}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Heures de vol totales</p>
-                    <p className="font-medium">{aircraft.total_flight_hours} heures</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Coût horaire</p>
-                    <p className="font-medium">{aircraft.hourly_cost.toFixed(2)} €</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Consommation</p>
-                    <p className="font-medium">{aircraft.consumption} L/h</p>
-                  </div>
-                </div>
-
-                <Separator />
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Disponibilité</p>
-                    <div className="mt-1">
-                      <StatusBadge status={aircraft.availability_status} type="availability" />
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">État de maintenance</p>
-                    <div className="mt-1">
-                      <StatusBadge status={aircraft.maintenance_status} type="maintenance" />
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center">
-                  <FileText className="h-5 w-5 mr-2" />
-                  Documents
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {aircraft.documents_url?.length ? (
-                  <div className="grid grid-cols-1 gap-2">
-                    {aircraft.documents_url.map((url, index) => (
-                      <div key={index} className="flex items-center justify-between p-2 border rounded-md">
-                        <div className="flex items-center">
-                          <FileText className="h-5 w-5 mr-2 text-info" />
-                          <span className="truncate max-w-[200px] sm:max-w-[300px]">
-                            Document {index + 1} - {url.split("/").pop()}
-                          </span>
-                        </div>
-                        <a
-                          href={`${getBackendBaseUrl()}${url}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-info hover:text-info flex items-center ml-2 flex-shrink-0"
-                          aria-label={`Ouvrir le document ${index + 1}`}
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                        </a>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-6 text-muted-foreground">
-                    <FileText className="h-12 w-12 mx-auto mb-2 opacity-20" />
-                    <p>Aucun document disponible pour cet aéronef</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+        <div className="space-y-6">
+          <div className="flex flex-wrap gap-2">
+            <StatusBadge status={aircraft.availability_status} type="availability" />
+            <StatusBadge status={aircraft.maintenance_status} type="maintenance" />
           </div>
 
-          <div className="md:col-span-1">
-            <Card className="h-full">
-              <CardHeader>
-                <CardTitle className="text-lg">Image de l'aéronef</CardTitle>
-              </CardHeader>
-              <CardContent className="flex items-center justify-center p-4">
-                {aircraft.image_url ? (
-                  <img
-                    src={`${getBackendBaseUrl()}${aircraft.image_url}`}
-                    alt={`${aircraft.model} - ${aircraft.registration_number}`}
-                    className="max-w-full h-auto object-cover rounded-md shadow"
-                  />
-                ) : (
-                  <div className="w-full aspect-video bg-muted flex items-center justify-center rounded-md">
-                    <PlaneTakeoff className="h-12 w-12 text-muted-foreground opacity-20" />
-                    <span className="text-muted-foreground ml-2">Aucune image disponible</span>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+          {aircraft.image_url && (
+            // Aircraft files need the session: a plain image request carries it.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={aircraftFileUrl(getBackendBaseUrl(), aircraft.image_url)}
+              alt={`${aircraft.model} ${aircraft.registration_number}`}
+              className="max-h-64 w-full rounded-lg border object-cover"
+            />
+          )}
+
+          <section className="space-y-3">
+            <h3 className="text-sm font-semibold">Informations générales</h3>
+            <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              <Fact label="Année">{aircraft.year_of_manufacture ?? "—"}</Fact>
+              <Fact label="Heures de vol">
+                {hasValue(aircraft.total_flight_hours) ? formatFlightDuration(aircraft.total_flight_hours) : "—"}
+              </Fact>
+              <Fact label="Coût horaire">{formatMoney(aircraft.hourly_cost)}</Fact>
+            </dl>
+          </section>
+
+          {characteristics.length > 0 && (
+            <section className="space-y-3">
+              <h3 className="text-sm font-semibold">Caractéristiques</h3>
+              <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                {characteristics.map((item) => (
+                  <Fact key={item.label} label={item.label}>
+                    {typeof item.value === "number" ? formatDecimal(item.value) : item.value}
+                    {item.unit ? ` ${item.unit}` : ""}
+                  </Fact>
+                ))}
+              </dl>
+            </section>
+          )}
+
+          <section className="space-y-3">
+            <h3 className="text-sm font-semibold">Documents</h3>
+            {documents.length > 0 ? (
+              <ul className="space-y-2">
+                {documents.map((url) => (
+                  <li key={url}>
+                    <a
+                      href={aircraftFileUrl(getBackendBaseUrl(), url)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 rounded-md border p-3 text-sm transition-colors hover:bg-muted"
+                    >
+                      <FileText className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                      <span className="min-w-0 flex-1 truncate">{aircraftFileName(url)}</span>
+                      <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                      <span className="sr-only">(nouvel onglet)</span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-muted-foreground">Aucun document pour cet aéronef.</p>
+            )}
+          </section>
         </div>
 
-        <DialogFooter className="mt-6">
+        <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Fermer
           </Button>
+          {onEdit && (
+            <Button onClick={() => onEdit(aircraft)}>
+              <Pencil className="h-4 w-4" aria-hidden="true" />
+              Modifier
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

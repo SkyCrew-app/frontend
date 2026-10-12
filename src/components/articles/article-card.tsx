@@ -1,15 +1,12 @@
 "use client"
 
-import { useState } from "react"
-import Image from "next/image"
 import Link from "next/link"
-import { format } from "date-fns"
-import { fr } from "date-fns/locale"
-import { motion } from "framer-motion"
-import { Calendar, Clock, ArrowRight } from "lucide-react"
+import { ArrowRight, Calendar, Clock } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card } from "@/components/ui/card"
+import { formatDate } from "@/lib/format"
+import { cn } from "@/lib/utils"
+import { ArticleImage } from "./article-image"
 
 interface Article {
   id: string
@@ -17,7 +14,7 @@ interface Article {
   description: string
   text: string
   tags: string[]
-  photo_url: string
+  photo_url: string | null
   createdAt: string
   eventDate: string | null
 }
@@ -27,158 +24,66 @@ interface ArticleCardProps {
   viewMode: "grid" | "list"
 }
 
+const MAX_TAGS = 3
+
+/** One article in the news list. Same anatomy in both views: picture, date, title, summary, tags. */
 export function ArticleCard({ article, viewMode }: ArticleCardProps) {
-  const [isHovered, setIsHovered] = useState(false)
-
-  const item = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0 },
-  }
-
-  const formatDate = (dateString: string) => {
-    return format(new Date(dateString), "d MMMM yyyy", { locale: fr })
-  }
-
-  const truncateDescription = (text: string, length: number) => {
-    if (text.length <= length) return text
-    return text.substring(0, length) + "..."
-  }
-
-  const descriptionLength = viewMode === "grid" ? 120 : 200
-
-  if (viewMode === "list") {
-    return (
-      <motion.div variants={item}>
-        <Card className="overflow-hidden transition-all hover:shadow-md"
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-        >
-          <div className="flex flex-col sm:flex-row">
-            <div className="relative h-48 w-full sm:h-auto sm:w-1/3 md:w-1/4">
-              <Image
-                src={article.photo_url || "/placeholder.svg?height=400&width=600"}
-                alt={article.title}
-                fill
-                className="object-cover transition-transform duration-500 ease-in-out"
-                style={{
-                  transform: isHovered ? "scale(1.05)" : "scale(1)",
-                }}
-                sizes="(max-width: 640px) 100vw, (max-width: 768px) 33vw, 25vw"
-              />
-            </div>
-            <div className="flex flex-1 flex-col justify-between">
-              <CardHeader>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  {article.eventDate ? (
-                    <span className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      Événement: {formatDate(article.eventDate)}
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      Publié: {formatDate(article.createdAt)}
-                    </span>
-                  )}
-                </div>
-                <CardTitle className="line-clamp-1 text-xl">{article.title}</CardTitle>
-                <CardDescription className="line-clamp-3 mt-1">
-                  {truncateDescription(article.description, descriptionLength)}
-                </CardDescription>
-              </CardHeader>
-              <CardFooter className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex flex-wrap gap-1">
-                  {article.tags?.slice(0, 3).map((tag) => (
-                    <Badge key={tag} variant="secondary" className="text-xs">
-                      {tag}
-                    </Badge>
-                  ))}
-                  {article.tags?.length > 3 && (
-                    <Badge variant="outline" className="text-xs">
-                      +{article.tags.length - 3}
-                    </Badge>
-                  )}
-                </div>
-                <Button asChild size="sm" className="group gap-1">
-                  <Link href={`/articles/${article.id}`}>
-                    Lire l'article
-                    <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-                  </Link>
-                </Button>
-              </CardFooter>
-            </div>
-          </div>
-        </Card>
-      </motion.div>
-    )
-  }
+  const isList = viewMode === "list"
+  const tags = article.tags ?? []
 
   return (
-    <motion.div variants={item}>
-      <Card className="h-full overflow-hidden transition-all hover:shadow-md"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+    <Link
+      href={`/articles/${article.id}`}
+      className="group block h-full rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+    >
+      <Card
+        className={cn(
+          "flex h-full overflow-hidden transition-shadow hover:shadow-md",
+          isList ? "flex-col sm:flex-row" : "flex-col",
+        )}
       >
-        <div className="relative h-48 overflow-hidden">
-          <Image
-            src={article.photo_url || "/placeholder.svg?height=400&width=600"}
-            alt={article.title}
-            fill
-            className="object-cover transition-transform duration-500 ease-in-out"
-            style={{
-              transform: isHovered ? "scale(1.05)" : "scale(1)",
-            }}
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-          <div className="absolute bottom-3 left-3 flex flex-wrap gap-1">
-            {article.tags?.slice(0, 2).map((tag) => (
-              <Badge key={tag} className="bg-primary/90 text-xs hover:bg-primary">
-                {tag}
-              </Badge>
-            ))}
-            {article.tags?.length > 2 && (
-              <Badge variant="outline" className="bg-black/50 text-xs text-white hover:bg-black/70">
-                +{article.tags.length - 2}
-              </Badge>
+        <ArticleImage
+          src={article.photo_url}
+          alt=""
+          className={cn("aspect-video w-full shrink-0", isList && "sm:aspect-[4/3] sm:w-56")}
+        />
+
+        <div className="flex min-w-0 flex-1 flex-col gap-2 p-5">
+          <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            {article.eventDate ? (
+              <>
+                <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
+                Événement du {formatDate(article.eventDate)}
+              </>
+            ) : (
+              <>
+                <Clock className="h-3.5 w-3.5" aria-hidden="true" />
+                Publié le {formatDate(article.createdAt)}
+              </>
             )}
+          </p>
+
+          <h2 className="line-clamp-2 text-lg font-semibold leading-tight tracking-tight">{article.title}</h2>
+          <p className={cn("text-sm text-muted-foreground", isList ? "line-clamp-2" : "line-clamp-3")}>
+            {article.description}
+          </p>
+
+          <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-2">
+            <div className="flex flex-wrap gap-1">
+              {tags.slice(0, MAX_TAGS).map((tag) => (
+                <Badge key={tag} variant="secondary">
+                  {tag}
+                </Badge>
+              ))}
+              {tags.length > MAX_TAGS && <Badge variant="outline">+{tags.length - MAX_TAGS}</Badge>}
+            </div>
+            <span className="ml-auto inline-flex items-center gap-1 text-sm font-medium text-primary group-hover:underline">
+              Lire l'article
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </span>
           </div>
         </div>
-        <CardHeader className="pb-2">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            {article.eventDate ? (
-              <span className="flex items-center gap-1">
-                <Calendar className="h-3 w-3" />
-                Événement: {formatDate(article.eventDate)}
-              </span>
-            ) : (
-              <span className="flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                Publié: {formatDate(article.createdAt)}
-              </span>
-            )}
-          </div>
-          <CardTitle className="line-clamp-2 mt-1.5 text-lg">{article.title}</CardTitle>
-        </CardHeader>
-        <CardContent className="pb-2">
-          <p className="line-clamp-3 text-sm text-muted-foreground">
-            {truncateDescription(article.description, descriptionLength)}
-          </p>
-        </CardContent>
-        <CardFooter>
-          <Button
-            asChild
-            variant="ghost"
-            size="sm"
-            className="group -ml-2 gap-1 px-2 text-primary hover:bg-primary/10 hover:text-primary"
-          >
-            <Link href={`/articles/${article.id}`}>
-              Lire l'article
-              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-            </Link>
-          </Button>
-        </CardFooter>
       </Card>
-    </motion.div>
+    </Link>
   )
 }

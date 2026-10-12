@@ -94,7 +94,7 @@ export function WysiwygEditor({
   }
 
   return (
-    <div className={`border rounded-md ${className}`}>
+    <div className={`border rounded-md ${className ?? ""}`}>
       <div className="flex flex-wrap gap-1 p-2 border-b bg-muted/20">
         <Toggle
           size="sm"

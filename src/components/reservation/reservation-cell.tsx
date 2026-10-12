@@ -1,86 +1,82 @@
 "use client"
 
-import { format } from "date-fns"
 import { TableCell } from "@/components/ui/table"
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card"
+import { Badge } from "@/components/ui/badge"
 import type { Reservation } from "@/interfaces/reservation"
 import { Clock, User, FileText, Tag } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { formatFlightDuration, formatTime } from "@/lib/format"
+import { reservationStatus } from "@/lib/reservation-status"
+import { reservationBlockClass } from "@/components/reservation/status-style"
+import { flightCategoryLabel } from "@/components/reservation/flight-category"
 
 interface ReservationCellProps {
   reservation: Reservation
   colSpan: number
+  /** True when the reservation belongs to the signed-in user. */
+  isMine?: boolean
   onClick: () => void
 }
 
-export function ReservationCell({ reservation, colSpan, onClick }: ReservationCellProps) {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "CONFIRMED":
-        return "bg-success/15 text-success border-l-2 border-l-success hover:bg-success/25"
-      case "PENDING":
-        return "bg-warning/15 text-warning border-l-2 border-l-warning hover:bg-warning/25"
-      case "CANCELLED":
-        return "bg-destructive/10 text-destructive border-l-2 border-l-destructive line-through hover:bg-destructive/20"
-      default:
-        return "bg-info/15 text-info border-l-2 border-l-info hover:bg-info/25"
-    }
-  }
+export const reservationPilotName = (reservation: Reservation) =>
+  [reservation.user?.first_name, reservation.user?.last_name].filter(Boolean).join(" ")
 
-  const statusColor = getStatusColor(reservation.status)
+export const reservationDurationHours = (reservation: Reservation) =>
+  (new Date(reservation.end_time).getTime() - new Date(reservation.start_time).getTime()) / 3600000
+
+export function ReservationCell({ reservation, colSpan, isMine = false, onClick }: ReservationCellProps) {
+  const status = reservationStatus(reservation.status)
+  const pilot = isMine ? "Vous" : reservationPilotName(reservation)
+  const timeRange = `${formatTime(reservation.start_time)} – ${formatTime(reservation.end_time)}`
 
   return (
     <TableCell
       colSpan={colSpan}
-      className={`text-center p-0 font-medium cursor-pointer transition-colors ${statusColor}`}
-      onClick={onClick}
+      className={cn("h-12 p-0 font-medium transition-colors", reservationBlockClass(reservation.status))}
     >
-      <HoverCard>
+      <HoverCard openDelay={300}>
         <HoverCardTrigger asChild>
-          <div className="p-2 h-full flex items-center justify-center text-sm">
-            <span className="truncate max-w-[150px]">{reservation.purpose || "Réservation"}</span>
-          </div>
+          <button
+            type="button"
+            onClick={onClick}
+            className="flex h-12 w-full flex-col items-start justify-center px-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+          >
+            <span className="w-full truncate text-sm leading-tight">{reservation.purpose || "Réservation"}</span>
+            {pilot && <span className="w-full truncate text-xs font-normal leading-tight opacity-80">{pilot}</span>}
+          </button>
         </HoverCardTrigger>
-        <HoverCardContent className="w-80">
-          <div className="space-y-2">
-            <h4 className="font-medium">{reservation.purpose || "Réservation"}</h4>
-
-            <div className="flex items-start gap-2">
-              <User className="h-4 w-4 mt-0.5 text-muted-foreground" />
-              <div>
-                <p className="text-sm">
-                  {reservation.user?.first_name} {reservation.user?.last_name}
-                </p>
-                <p className="text-xs text-muted-foreground">{reservation.user?.email}</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <div className="text-sm">
-                <p>
-                  {format(new Date(reservation.start_time), "HH:mm")} -{" "}
-                  {format(new Date(reservation.end_time), "HH:mm")}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {reservation.estimated_flight_hours} heure(s) estimée(s)
-                </p>
-              </div>
-            </div>
-
-            {reservation.flight_category && (
-              <div className="flex items-center gap-2">
-                <Tag className="h-4 w-4 text-muted-foreground" />
-                <p className="text-sm">{reservation.flight_category}</p>
-              </div>
-            )}
-
-            {reservation.notes && (
-              <div className="flex items-start gap-2">
-                <FileText className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                <p className="text-sm">{reservation.notes}</p>
-              </div>
-            )}
+        <HoverCardContent className="w-72 space-y-3">
+          <div className="flex items-start justify-between gap-2">
+            <p className="text-sm font-semibold text-foreground">{reservation.purpose || "Réservation"}</p>
+            <Badge variant={status.variant}>{status.label}</Badge>
           </div>
+          <ul className="space-y-1.5 text-sm text-foreground">
+            <li className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-muted-foreground" />
+              <span className="tabular-nums">
+                {timeRange} · {formatFlightDuration(reservationDurationHours(reservation))}
+              </span>
+            </li>
+            {pilot && (
+              <li className="flex items-center gap-2">
+                <User className="h-4 w-4 text-muted-foreground" />
+                {pilot}
+              </li>
+            )}
+            {reservation.flight_category && (
+              <li className="flex items-center gap-2">
+                <Tag className="h-4 w-4 text-muted-foreground" />
+                {flightCategoryLabel(reservation.flight_category)}
+              </li>
+            )}
+            {reservation.notes && (
+              <li className="flex items-start gap-2">
+                <FileText className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                <span className="line-clamp-3">{reservation.notes}</span>
+              </li>
+            )}
+          </ul>
         </HoverCardContent>
       </HoverCard>
     </TableCell>
