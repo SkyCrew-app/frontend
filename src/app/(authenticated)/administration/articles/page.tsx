@@ -6,12 +6,8 @@ import { format } from "date-fns"
 import { fr } from "date-fns/locale"
 import { useEditor, EditorContent } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
-import Underline from "@tiptap/extension-underline"
-import TextStyle from "@tiptap/extension-text-style"
+import { TextStyle } from "@tiptap/extension-text-style"
 import { Color } from "@tiptap/extension-color"
-import BulletList from "@tiptap/extension-bullet-list"
-import OrderedList from "@tiptap/extension-ordered-list"
-import ListItem from "@tiptap/extension-list-item"
 import { motion, AnimatePresence } from "framer-motion"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
@@ -103,7 +99,12 @@ const MenuButton = ({
 
 const RichTextEditor = ({ content, onChange }: { content: string; onChange: (content: string) => void }) => {
   const editor = useEditor({
-    extensions: [StarterKit, Underline, TextStyle, Color, BulletList, OrderedList, ListItem, FontSize],
+    // Rendered in the browser only: the page is also rendered on the server.
+    immediatelyRender: false,
+    // The toolbar shows what is active at the cursor.
+    shouldRerenderOnTransaction: true,
+    // The starter kit includes lists, underline and links.
+    extensions: [StarterKit, TextStyle, Color, FontSize],
     content,
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML())

@@ -21,6 +21,7 @@ import { motion } from "framer-motion"
 import { CourseCard } from "./course-card"
 import { ELearningCard } from "./e-learning-card"
 import { lessonTotals, percentage } from "@/lib/learning-progress"
+import { learningRoutes } from "@/lib/learning-navigation"
 
 interface OverviewTabProps {
   data: InstructionSummary
@@ -97,7 +98,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
               </div>
             </CardContent>
             <CardFooter className="pt-3">
-              <Button variant="ghost" size="sm" className="w-full group" onClick={() => router.push("instruction/e-learning")}>
+              <Button variant="ghost" size="sm" className="w-full group" onClick={() => router.push(learningRoutes.eLearning)}>
                 <span>Voir tous les cours</span>
                 <ChevronRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" />
               </Button>
@@ -144,7 +145,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
               </div>
             </CardContent>
             <CardFooter className="pt-3">
-              <Button variant="ghost" size="sm" className="w-full group" onClick={() => router.push("instruction/evaluation")}>
+              <Button variant="ghost" size="sm" className="w-full group" onClick={() => router.push(learningRoutes.evaluations)}>
                 <span>Voir les évaluations</span>
                 <ChevronRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" />
               </Button>
@@ -235,7 +236,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
               <Button
                 variant="outline"
                 className="w-full justify-start hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-950/30 dark:hover:text-blue-300 transition-colors"
-                onClick={() => router.push("instruction/e-learning")}
+                onClick={() => router.push(learningRoutes.eLearning)}
                 disabled
               >
                 <Play className="mr-2 h-4 w-4 text-blue-500" />
@@ -244,7 +245,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
               <Button
                 variant="outline"
                 className="w-full justify-start hover:bg-amber-50 hover:text-amber-700 dark:hover:bg-amber-950/30 dark:hover:text-amber-300 transition-colors"
-                onClick={() => router.push("instruction/evaluation")}
+                onClick={() => router.push(learningRoutes.evaluations)}
               >
                 <ListChecks className="mr-2 h-4 w-4 text-amber-500" />
                 Passer une évaluation
@@ -279,7 +280,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
                       <ELearningCard
                         key={course.id}
                         course={course}
-                        onClick={() => router.push(`instruction/e-learning/course/${course.id}`)}
+                        onClick={() => router.push(learningRoutes.eLearningCourse(course.id))}
                         compact
                       />
                     ))
@@ -292,7 +293,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
               </div>
             </CardContent>
             <CardFooter className="bg-muted/30 pt-2">
-              <Button variant="ghost" size="sm" className="w-full group" onClick={() => router.push("instruction/e-learning")}>
+              <Button variant="ghost" size="sm" className="w-full group" onClick={() => router.push(learningRoutes.eLearning)}>
                 <span>Voir tous les cours e-learning</span>
                 <ChevronRight className="ml-1 h-4 w-4 group-hover:translate-x-1 transition-transform" />
               </Button>

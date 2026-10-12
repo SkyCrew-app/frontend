@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -23,12 +23,15 @@ export const metadata: Metadata = {
   title: 'SkyCrew',
   description: 'SkyCrew is a comprehensive web-based application designed to streamline the management of an aeroclub. It offers real-time tracking of aircraft, reservation management, pilot certifications, maintenance tracking, and much more.',
   manifest: `${basePath || ''}/manifest.json`,
-  themeColor: '#1e3a5f',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
     title: 'SkyCrew',
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: '#1e3a5f',
 };
 
 export default function RootLayout({

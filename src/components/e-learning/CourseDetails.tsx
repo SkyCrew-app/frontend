@@ -14,6 +14,7 @@ import { CheckCircle, Circle, BookOpen, FileText, AlertCircle } from "lucide-rea
 import { Skeleton } from "@/components/ui/skeleton"
 import type { ApolloError } from "@apollo/client"
 import Link from "next/link"
+import { learningRoutes } from "@/lib/learning-navigation"
 
 export interface Lesson {
   id: string
@@ -207,7 +208,7 @@ function ModuleContent({ module, completedLessonIds, setSelectedLesson, isExpand
           <h4 className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mt-4 mb-2">Évaluations</h4>
 
           {evaluations.map((evaluation: Evaluation) => (
-            <Link key={evaluation.id} href={`evaluation/${evaluation.id}`} passHref className="block w-full">
+            <Link key={evaluation.id} href={learningRoutes.evaluation(evaluation.id)} passHref className="block w-full">
               <Button
                 variant="outline"
                 className="w-full justify-start text-xs sm:text-sm h-auto py-1.5 sm:py-2 px-2 sm:px-3 rounded-md border-primary/20 bg-primary/5 hover:bg-primary/10"

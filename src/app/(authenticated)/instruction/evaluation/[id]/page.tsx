@@ -20,6 +20,8 @@ import { useRouter } from "next/navigation"
 import { useMediaQuery } from "@/hooks/use-media-query"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Evaluation } from "@/interfaces/evaluation"
+import { useToast } from "@/components/hooks/use-toast"
+import { learningRoutes } from "@/lib/learning-navigation"
 
 export default function EvaluationPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params)
@@ -30,6 +32,7 @@ export default function EvaluationPage({ params }: { params: Promise<{ id: strin
   const [showWarning, setShowWarning] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
+  const { toast } = useToast()
   const isMobile = useMediaQuery("(max-width: 640px)")
 
   const userEmail = useCurrentUser()
@@ -86,7 +89,15 @@ export default function EvaluationPage({ params }: { params: Promise<{ id: strin
         })
       }
     } catch (error) {
-      console.error("Error validating answers:", error)
+      // The answers stay in place so the member can submit again.
+      toast({
+        title: "Évaluation non enregistrée",
+        description:
+          error instanceof Error && error.message
+            ? `${error.message} Vos réponses sont conservées, vous pouvez réessayer.`
+            : "Une erreur est survenue. Vos réponses sont conservées, vous pouvez réessayer.",
+        variant: "destructive",
+      })
     } finally {
       setIsSubmitting(false)
     }
@@ -124,7 +135,7 @@ export default function EvaluationPage({ params }: { params: Promise<{ id: strin
   }
 
   const handleContinue = () => {
-    router.push("/instruction/evaluation")
+    router.push(learningRoutes.evaluations)
   }
 
   if (loading)
@@ -151,7 +162,7 @@ export default function EvaluationPage({ params }: { params: Promise<{ id: strin
           <AlertTitle>Erreur</AlertTitle>
           <AlertDescription>
             Impossible de charger l'évaluation: {error.message}
-            <Button variant="outline" className="mt-4 w-full" onClick={() => router.push("/evaluations")}>
+            <Button variant="outline" className="mt-4 w-full" onClick={() => router.push(learningRoutes.evaluations)}>
               Retour aux évaluations
             </Button>
           </AlertDescription>

@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation"
 import { useQuery, useMutation } from "@apollo/client"
-import { GET_LESSON_CONTENT, COMPLETE_LESSON, GET_LESSON_PROGRESS } from "@/graphql/instruction"
+import { GET_COURSE_DETAILS, GET_LESSON_CONTENT, COMPLETE_LESSON, GET_LESSON_PROGRESS } from "@/graphql/instruction"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -27,6 +27,7 @@ import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { toast } from "@/components/hooks/use-toast"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { adjacentLessons, learningRoutes } from "@/lib/learning-navigation"
 
 interface Lesson {
   id: number
@@ -140,6 +141,14 @@ export default function LessonPage() {
 
   const isCompleted = progressData?.getUserProgress === true
 
+  // Same variables as the course page, so its outline is read from the cache.
+  const { data: courseData } = useQuery(GET_COURSE_DETAILS, {
+    variables: { id: Number.parseFloat(courseId), userId: userId ? Number(userId) : null },
+    skip: !courseId || !userId,
+  })
+  const { previous: previousLessonId, next: nextLessonId } = adjacentLessons(courseData?.getCourseById, lessonId)
+  const isLastLesson = !!courseData?.getCourseById && nextLessonId === null
+
   const [completeLesson] = useMutation(COMPLETE_LESSON, {
     onCompleted: () => {
       refetchProgress()
@@ -198,9 +207,8 @@ export default function LessonPage() {
     }
   }
 
-  const handleNavigation = (direction: "prev" | "next") => {
-    const newLessonId = direction === "prev" ? Number.parseInt(lessonId, 10) - 1 : Number.parseInt(lessonId, 10) + 1
-    router.push(`/instruction/e-learning/${courseId}/${newLessonId}`)
+  const goToLesson = (targetLessonId: number | null) => {
+    if (targetLessonId !== null) router.push(learningRoutes.lesson(courseId, targetLessonId))
   }
 
   const attachments = lesson.attachments || []
@@ -348,18 +356,31 @@ export default function LessonPage() {
             <CardFooter className="flex flex-col sm:flex-row justify-between gap-2 p-4 bg-muted/30">
               <Button
                 variant="outline"
-                onClick={() => handleNavigation("prev")}
-                disabled={Number.parseInt(lessonId, 10) === 1}
+                onClick={() => goToLesson(previousLessonId)}
+                disabled={previousLessonId === null}
                 className="w-full sm:w-auto"
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Leçon précédente
               </Button>
 
-              <Button onClick={() => handleNavigation("next")} className="w-full sm:w-auto">
-                Leçon suivante
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+              {isLastLesson ? (
+                <Button asChild className="w-full sm:w-auto">
+                  <Link href={learningRoutes.eLearningCourse(courseId)}>
+                    Retour au cours
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => goToLesson(nextLessonId)}
+                  disabled={nextLessonId === null}
+                  className="w-full sm:w-auto"
+                >
+                  Leçon suivante
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              )}
             </CardFooter>
           </Card>
         </motion.div>

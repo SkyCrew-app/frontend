@@ -6,6 +6,7 @@ import { BookOpen } from "lucide-react"
 import { useRouter } from "next/navigation"
 import type { InstructionSummary } from "@/interfaces/instruction"
 import { ELearningCard } from "./e-learning-card"
+import { learningRoutes } from "@/lib/learning-navigation"
 
 interface ELearningTabProps {
   data: InstructionSummary
@@ -27,7 +28,7 @@ export function ELearningTab({ data }: ELearningTabProps) {
               <ELearningCard
                 key={course.id}
                 course={course}
-                onClick={() => router.push(`instruction/e-learning/course/${course.id}`)}
+                onClick={() => router.push(learningRoutes.eLearningCourse(course.id))}
               />
             ))
           ) : (
@@ -39,7 +40,7 @@ export function ELearningTab({ data }: ELearningTabProps) {
         </div>
       </CardContent>
       <CardFooter className="bg-muted/30 pt-3">
-        <Button className="w-full" onClick={() => router.push("instruction/e-learning")}>
+        <Button className="w-full" onClick={() => router.push(learningRoutes.eLearning)}>
           <BookOpen className="mr-2 h-4 w-4" />
           Explorer tous les cours
         </Button>
