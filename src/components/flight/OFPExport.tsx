@@ -279,9 +279,9 @@ export function OFPExport(props: OFPExportProps) {
 
   return (
     <>
-      <Button onClick={handlePrint} variant="outline" className="gap-2">
+      <Button onClick={handlePrint} variant="outline" title="Ouvre le plan de vol opérationnel (OFP) prêt à imprimer">
         <Printer className="h-4 w-4" />
-        Imprimer OFP
+        Imprimer l&apos;OFP
       </Button>
 
       {/* Hidden printable content */}

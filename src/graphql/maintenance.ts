@@ -20,6 +20,7 @@ export const GET_ALL_MAINTENANCES = gql`
       technician {
         id
         first_name
+        last_name
         email
       }
     }
@@ -50,6 +51,7 @@ export const CREATE_MAINTENANCE = gql`
       technician {
         id
         first_name
+        last_name
         email
       }
     }
@@ -80,6 +82,7 @@ export const UPDATE_MAINTENANCE = gql`
       technician {
         id
         first_name
+        last_name
         email
       }
     }

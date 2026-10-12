@@ -1,103 +1,67 @@
 "use client"
 
-import { motion } from "framer-motion"
-import { Sparkles, Trophy, XCircle, ArrowRight } from "lucide-react"
+import { CheckCircle2, RotateCcw, XCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
+import { Progress } from "@/components/ui/progress"
+import { cn } from "@/lib/utils"
 
 interface EvaluationResultProps {
   score: number
   passed: boolean
   passScore: number
   onRetry: () => void
-  onContinue?: () => void
+  onContinue: () => void
 }
 
+// What the member sees once the answers are sent: passed or not, the score, what to do next.
 export function EvaluationResult({ score, passed, passScore, onRetry, onContinue }: EvaluationResultProps) {
+  const rounded = Math.round(score)
+  const Icon = passed ? CheckCircle2 : XCircle
+
   return (
-    <Card className="overflow-hidden">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-        transition={{ duration: 0.5 }}
-        className={`p-4 sm:p-8 rounded-lg ${
-          passed
-            ? "bg-gradient-to-br from-success/20 to-success/5"
-            : "bg-gradient-to-br from-destructive/20 to-destructive/5"
-        }`}
-      >
-        <div className="flex flex-col items-center text-center">
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 260, damping: 20 }}
-            className="relative"
-          >
-            <div
-              className={`absolute inset-0 rounded-full ${passed ? "bg-success/10" : "bg-destructive/10"} blur-xl`}
-            ></div>
-            {passed ? (
-              <Trophy className="w-16 h-16 sm:w-24 sm:h-24 text-success relative z-10" />
-            ) : (
-              <XCircle className="w-16 h-16 sm:w-24 sm:h-24 text-destructive relative z-10" />
-            )}
-          </motion.div>
-
-          <h3 className="text-xl sm:text-2xl font-bold mt-4 mb-2">
-            {passed ? "Félicitations !" : "Pas tout à fait..."}
-          </h3>
-
-          <p className="text-sm sm:text-lg mb-4 max-w-md">
-            {passed
-              ? "Vous avez réussi cette évaluation avec succès."
-              : `Vous n'avez pas atteint le score minimum requis pour cette évaluation.`}
-          </p>
-
-          <div className="w-full max-w-xs mb-4">
-            <div className="flex justify-between text-sm mb-1">
-              <span>Votre score</span>
-              <span>Minimum requis: {passScore}%</span>
-            </div>
-            <div className="h-8 w-full bg-muted rounded-full overflow-hidden flex items-center">
-              <div
-                className={`h-full ${passed ? "bg-success" : "bg-destructive"} rounded-full flex items-center justify-center`}
-                style={{ width: `${score}%` }}
-              >
-                <span className="px-2 text-sm font-bold text-white">{score}%</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-3 mt-4 w-full max-w-xs">
-            {passed ? (
-              <>
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.5 }}
-                  className="absolute -z-10 opacity-20"
-                >
-                  <Sparkles className="w-8 h-8 text-warning" />
-                </motion.div>
-                <Button onClick={onContinue} className="w-full" size="lg">
-                  Continuer
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button onClick={onRetry} variant="outline" className="w-full">
-                  Réessayer
-                </Button>
-                <Button onClick={onContinue} variant="secondary" className="w-full">
-                  Revenir aux cours
-                </Button>
-              </>
-            )}
-          </div>
+    <Card>
+      <CardContent className="flex flex-col items-center gap-4 p-6 text-center sm:p-10" role="status">
+        <div
+          className={cn(
+            "flex h-12 w-12 items-center justify-center rounded-full",
+            passed ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive",
+          )}
+        >
+          <Icon className="h-6 w-6" aria-hidden="true" />
         </div>
-      </motion.div>
+
+        <div className="space-y-1">
+          <h2 className="text-lg font-semibold">{passed ? "Évaluation réussie" : "Évaluation non réussie"}</h2>
+          <p className="max-w-md text-sm text-muted-foreground">
+            {passed
+              ? "Bravo, vous avez atteint le score demandé. Le résultat est enregistré dans vos évaluations."
+              : "Vous n'avez pas atteint le score demandé. Revoyez les leçons du module, puis réessayez quand vous voulez."}
+          </p>
+        </div>
+
+        <div className="w-full max-w-xs space-y-2">
+          <p className="text-3xl font-semibold tabular-nums">{rounded} %</p>
+          <Progress value={Math.min(100, Math.max(0, rounded))} className="h-2" aria-label={`Votre score : ${rounded} %`} />
+          <p className="text-xs tabular-nums text-muted-foreground">Score requis : {Math.round(passScore)} %</p>
+        </div>
+
+        <div className="flex w-full flex-col-reverse justify-center gap-2 sm:w-auto sm:flex-row">
+          {passed ? (
+            <Button onClick={onContinue}>Voir mes évaluations</Button>
+          ) : (
+            <>
+              <Button variant="outline" onClick={onContinue}>
+                Voir mes évaluations
+              </Button>
+              <Button onClick={onRetry}>
+                <RotateCcw className="h-4 w-4" />
+                Réessayer
+              </Button>
+            </>
+          )}
+        </div>
+      </CardContent>
     </Card>
   )
 }

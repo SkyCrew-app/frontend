@@ -2,26 +2,63 @@
 
 import React, { useState } from "react"
 import { useMutation } from "@apollo/client"
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card"
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, Loader2 } from "lucide-react"
 import { UPDATE_PASSWORD } from "@/graphql/user"
 import { useToast } from "@/components/hooks/use-toast"
 import { useLogout } from "@/components/hooks/useLogout"
 import { cn } from "@/lib/utils"
-import { motion } from "framer-motion"
+import { FormField } from "./form-field"
+
+interface PasswordFieldProps {
+  id: string
+  label: string
+  value: string
+  onChange: (value: string) => void
+  autoComplete: string
+  error?: string
+  hint?: string
+  className?: string
+}
+
+function PasswordField({ id, label, value, onChange, autoComplete, error, hint, className }: PasswordFieldProps) {
+  const [visible, setVisible] = useState(false)
+
+  return (
+    <FormField id={id} label={label} required error={error} hint={hint} className={className}>
+      <div className="relative">
+        <Input
+          id={id}
+          type={visible ? "text" : "password"}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          autoComplete={autoComplete}
+          aria-required="true"
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? `${id}-error` : undefined}
+          className={cn("pr-11", error && "border-destructive")}
+        />
+        <button
+          type="button"
+          onClick={() => setVisible(!visible)}
+          className="absolute right-0 top-0 flex h-full w-10 items-center justify-center rounded-r-md text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          aria-label={visible ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+          title={visible ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+        >
+          {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+        </button>
+      </div>
+    </FormField>
+  )
+}
 
 export function PasswordForm() {
   const [currentPassword, setCurrentPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
-  const [showNewPassword, setShowNewPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
-  const [saveSuccess, setSaveSuccess] = useState(false)
 
   const [errors, setErrors] = useState({
     currentPassword: "",
@@ -87,7 +124,6 @@ export function PasswordForm() {
         setCurrentPassword("")
         setNewPassword("")
         setConfirmPassword("")
-        setSaveSuccess(true)
         // The API no longer accepts this session either.
         await logout()
       } else {
@@ -108,103 +144,69 @@ export function PasswordForm() {
     }
   }
 
+  const clearError = (field: keyof typeof errors) => {
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: "" }))
+  }
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-    >
-      <Card className="w-full">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-xl font-semibold">Changer le mot de passe</CardTitle>
+    <Card>
+      <form
+        noValidate
+        onSubmit={(e) => {
+          e.preventDefault()
+          handleSubmit()
+        }}
+      >
+        <CardHeader>
+          <CardTitle>Mot de passe</CardTitle>
+          <CardDescription>
+            Après le changement, toutes vos sessions sont fermées et vous devez vous reconnecter.
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="currentPassword" className="text-sm font-medium">Mot de passe actuel</Label>
-            <div className="relative">
-              <Input
-                id="currentPassword"
-                type={showCurrentPassword ? "text" : "password"}
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                className={cn(errors.currentPassword ? "border-destructive" : "", "mt-1 pr-10")}
-              />
-              <button
-                type="button"
-                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none"
-                aria-label={showCurrentPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
-              >
-                {showCurrentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-            {errors.currentPassword && <p className="text-destructive text-sm mt-1">{errors.currentPassword}</p>}
-          </div>
-
-          <div>
-            <Label htmlFor="newPassword" className="text-sm font-medium">Nouveau mot de passe</Label>
-            <div className="relative">
-              <Input
-                id="newPassword"
-                type={showNewPassword ? "text" : "password"}
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className={cn(errors.newPassword ? "border-destructive" : "", "mt-1 pr-10")}
-              />
-              <button
-                type="button"
-                onClick={() => setShowNewPassword(!showNewPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none"
-                aria-label={showNewPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
-              >
-                {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-            {errors.newPassword && <p className="text-destructive text-sm mt-1">{errors.newPassword}</p>}
-          </div>
-
-          <div>
-            <Label htmlFor="confirmPassword" className="text-sm font-medium">Confirmer le nouveau mot de passe</Label>
-            <div className="relative">
-              <Input
-                id="confirmPassword"
-                type={showConfirmPassword ? "text" : "password"}
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className={cn(errors.confirmPassword ? "border-destructive" : "", "mt-1 pr-10")}
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none"
-                aria-label={showConfirmPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
-              >
-                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-            {errors.confirmPassword && <p className="text-destructive text-sm mt-1">{errors.confirmPassword}</p>}
-          </div>
-
-          {saveSuccess && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-success/10 text-success p-3 rounded-md text-sm border border-success/30"
-            >
-              Votre mot de passe a été modifié avec succès.
-            </motion.div>
-          )}
+        <CardContent className="grid gap-4 sm:grid-cols-2">
+          <PasswordField
+            id="currentPassword"
+            label="Mot de passe actuel"
+            value={currentPassword}
+            onChange={(value) => {
+              setCurrentPassword(value)
+              clearError("currentPassword")
+            }}
+            autoComplete="current-password"
+            error={errors.currentPassword}
+            className="sm:col-span-2 sm:max-w-sm"
+          />
+          <PasswordField
+            id="newPassword"
+            label="Nouveau mot de passe"
+            value={newPassword}
+            onChange={(value) => {
+              setNewPassword(value)
+              clearError("newPassword")
+            }}
+            autoComplete="new-password"
+            error={errors.newPassword}
+            hint="8 caractères au minimum."
+          />
+          <PasswordField
+            id="confirmPassword"
+            label="Confirmer le nouveau mot de passe"
+            value={confirmPassword}
+            onChange={(value) => {
+              setConfirmPassword(value)
+              clearError("confirmPassword")
+            }}
+            autoComplete="new-password"
+            error={errors.confirmPassword}
+          />
         </CardContent>
-        <CardFooter className="border-t bg-muted/50 pt-4">
-          <Button
-            className="ml-auto hover:shadow-md transition-shadow"
-            onClick={handleSubmit}
-            disabled={isUpdating}
-          >
+        <CardFooter className="justify-end">
+          <Button type="submit" disabled={isUpdating}>
+            {isUpdating && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
             {isUpdating ? "Modification en cours..." : "Changer le mot de passe"}
           </Button>
         </CardFooter>
-      </Card>
-    </motion.div>
+      </form>
+    </Card>
   )
 }

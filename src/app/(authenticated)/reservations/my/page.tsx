@@ -1,8 +1,23 @@
 "use client"
 
 import { useMutation, useQuery } from "@apollo/client"
-import { useState, useEffect } from "react"
+import { useState } from "react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { BookmarkPlus, Loader2, Plus } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Button } from "@/components/ui/button"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { useToast } from "@/components/hooks/use-toast"
 import {
   GET_USER_RESERVATIONS,
@@ -13,69 +28,42 @@ import {
   DELETE_RESERVATION_TEMPLATE,
 } from "@/graphql/reservation"
 import { GET_AIRCRAFTS } from "@/graphql/planes"
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination"
 import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
+import { PageHeader } from "@/components/layout/PageHeader"
+import { ErrorState } from "@/components/layout/ErrorState"
+import { EmptyState as SharedEmptyState } from "@/components/layout/EmptyState"
 import { ReservationCard } from "@/components/my-reservation/reservation-card"
-import { ReservationFilters } from "@/components/my-reservation/reservation-filters"
+import { ReservationFilters, type ReservationSortOrder } from "@/components/my-reservation/reservation-filters"
 import { ReservationEditDialog } from "@/components/my-reservation/reservation-edit-dialog"
 import { EmptyState } from "@/components/my-reservation/empty-state"
 import { StatsCards } from "@/components/my-reservation/stats-cards"
 import { TemplateCard } from "@/components/my-reservation/template-card"
 import { TemplateDialog } from "@/components/my-reservation/template-dialog"
-import { AlertCircle, Plus, BookTemplate } from "lucide-react"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Button } from "@/components/ui/button"
-import { useRouter } from "next/navigation"
+import { ListPager } from "@/components/reservation/list-pager"
+import type { Reservation } from "@/interfaces/reservation"
 import type { ReservationTemplate } from "@/interfaces/reservation-template"
 
-const flightCategoryMapping = {
-  LOCAL: "Local",
-  CROSS_COUNTRY: "Vol longue distance",
-  INSTRUCTION: "Instruction",
-  TOURISM: "Tourisme",
-  TRAINING: "Entraînement",
-  MAINTENANCE: "Maintenance",
-  PRIVATE: "Privé",
-  CORPORATE: "Affaires",
-}
-
-const flightCategoryReverseMapping = Object.fromEntries(
-  Object.entries(flightCategoryMapping).map(([key, value]) => [value, key]),
-)
+const ITEMS_PER_PAGE = 6
 
 export default function MyReservations() {
   const userEmail = useCurrentUser()
   const userData = useUserData(userEmail)
   const router = useRouter()
-  const [userId, setUserId] = useState<string | null>(null)
-  const [selectedReservation, setSelectedReservation] = useState<any | null>(null)
+  const userId: string | number | null = userData?.id ?? null
+  const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false)
   const [editingTemplate, setEditingTemplate] = useState<ReservationTemplate | null>(null)
+  const [templateToDelete, setTemplateToDelete] = useState<ReservationTemplate | null>(null)
   const { toast } = useToast()
 
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("ALL")
   const [categoryFilter, setCategoryFilter] = useState("ALL")
-  const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest")
-
+  const [sortOrder, setSortOrder] = useState<ReservationSortOrder>("newest")
   const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 6
 
-  useEffect(() => {
-    if (userData) {
-      setUserId(userData.id)
-    }
-  }, [userData])
-
-  const { data, loading, error } = useQuery(GET_USER_RESERVATIONS, {
+  const { data, loading, error, refetch } = useQuery(GET_USER_RESERVATIONS, {
     variables: { userId },
     skip: !userId,
   })
@@ -86,7 +74,15 @@ export default function MyReservations() {
   const { data: aircraftData } = useQuery(GET_AIRCRAFTS)
   const [createTemplate, { loading: creatingTemplate }] = useMutation(CREATE_RESERVATION_TEMPLATE)
   const [updateTemplate, { loading: updatingTemplate }] = useMutation(UPDATE_RESERVATION_TEMPLATE)
-  const [deleteTemplate] = useMutation(DELETE_RESERVATION_TEMPLATE)
+  const [deleteTemplate, { loading: deletingTemplate }] = useMutation(DELETE_RESERVATION_TEMPLATE)
+
+  // Any change of filter or sort goes back to the first page.
+  const onFilterChange =
+    <T,>(setter: (value: T) => void) =>
+    (value: T) => {
+      setter(value)
+      setCurrentPage(1)
+    }
 
   const resetFilters = () => {
     setSearchTerm("")
@@ -97,31 +93,30 @@ export default function MyReservations() {
 
   const hasActiveFilters = searchTerm !== "" || statusFilter !== "ALL" || categoryFilter !== "ALL"
 
-  const filteredReservations =
-    data?.userReservations
-      ?.filter((reservation: any) => {
-        const searchTermLower = searchTerm.toLowerCase()
-        const purposeLower = (reservation.purpose || "").toLowerCase()
-        const registrationLower = reservation.aircraft.registration_number.toLowerCase()
+  const allReservations: Reservation[] = data?.userReservations ?? []
 
-        return (
-          (purposeLower.includes(searchTermLower) || registrationLower.includes(searchTermLower)) &&
-          (statusFilter === "ALL" || reservation.status === statusFilter) &&
-          (categoryFilter === "ALL" || reservation.flight_category === categoryFilter)
-        )
-      })
-      .sort((a: any, b: any) => {
-        if (sortOrder === "newest") {
-          return new Date(b.start_time).getTime() - new Date(a.start_time).getTime()
-        } else {
-          return new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
-        }
-      }) || []
+  const filteredReservations = allReservations
+    .filter((reservation) => {
+      const searchTermLower = searchTerm.trim().toLowerCase()
+      const purposeLower = (reservation.purpose || "").toLowerCase()
+      const registrationLower = reservation.aircraft.registration_number.toLowerCase()
 
-  const totalPages = Math.ceil(filteredReservations.length / itemsPerPage)
-  const paginatedReservations = filteredReservations.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+      return (
+        (purposeLower.includes(searchTermLower) || registrationLower.includes(searchTermLower)) &&
+        (statusFilter === "ALL" || reservation.status === statusFilter) &&
+        (categoryFilter === "ALL" || reservation.flight_category === categoryFilter)
+      )
+    })
+    .sort((a, b) => {
+      const difference = new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+      return sortOrder === "newest" ? -difference : difference
+    })
 
-  const handleEdit = (reservation: any) => {
+  const totalPages = Math.max(1, Math.ceil(filteredReservations.length / ITEMS_PER_PAGE))
+  const page = Math.min(currentPage, totalPages)
+  const paginatedReservations = filteredReservations.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE)
+
+  const handleEdit = (reservation: Reservation) => {
     setSelectedReservation(reservation)
     setIsEditDialogOpen(true)
   }
@@ -145,13 +140,13 @@ export default function MyReservations() {
       setIsEditDialogOpen(false)
       toast({
         title: "Réservation mise à jour",
-        description: `La réservation pour l'avion ${selectedReservation.aircraft.registration_number} a été mise à jour.`,
+        description: `La réservation de ${selectedReservation.aircraft.registration_number} a été modifiée.`,
       })
     } catch {
       toast({
         variant: "destructive",
-        title: "Erreur lors de la mise à jour",
-        description: "Une erreur est survenue lors de la mise à jour de la réservation.",
+        title: "Modification impossible",
+        description: "La réservation n'a pas pu être modifiée. Réessayez dans un instant.",
       })
     }
   }
@@ -176,34 +171,45 @@ export default function MyReservations() {
           variables: { input: data },
           refetchQueries: [{ query: GET_MY_TEMPLATES }],
         })
-        toast({ title: "Mod\u00e8le mis \u00e0 jour" })
+        toast({ title: "Modèle mis à jour" })
       } else {
         await createTemplate({
           variables: { input: data },
           refetchQueries: [{ query: GET_MY_TEMPLATES }],
         })
-        toast({ title: "Mod\u00e8le cr\u00e9\u00e9" })
+        toast({ title: "Modèle créé" })
       }
       setIsTemplateDialogOpen(false)
     } catch {
-      toast({ variant: "destructive", title: "Erreur", description: "Impossible de sauvegarder le mod\u00e8le." })
+      toast({
+        variant: "destructive",
+        title: "Enregistrement impossible",
+        description: "Le modèle n'a pas pu être enregistré. Réessayez dans un instant.",
+      })
     }
   }
 
-  const handleDeleteTemplate = async (id: number) => {
+  const handleDeleteTemplate = async () => {
+    if (!templateToDelete) return
     try {
       await deleteTemplate({
-        variables: { id },
+        variables: { id: templateToDelete.id },
         refetchQueries: [{ query: GET_MY_TEMPLATES }],
       })
-      toast({ title: "Mod\u00e8le supprim\u00e9" })
+      toast({ title: "Modèle supprimé" })
     } catch {
-      toast({ variant: "destructive", title: "Erreur", description: "Impossible de supprimer le mod\u00e8le." })
+      toast({
+        variant: "destructive",
+        title: "Suppression impossible",
+        description: "Le modèle n'a pas pu être supprimé. Réessayez dans un instant.",
+      })
+    } finally {
+      setTemplateToDelete(null)
     }
   }
 
   const handleUseTemplate = (template: ReservationTemplate) => {
-    // Navigate to reservation page with template data as query params
+    // The calendar opens its reservation form pre-filled with these values.
     const params = new URLSearchParams()
     if (template.aircraft?.id) params.set("aircraft_id", template.aircraft.id.toString())
     if (template.preferred_start_time) params.set("start_time", template.preferred_start_time)
@@ -214,164 +220,140 @@ export default function MyReservations() {
     router.push(`/reservations?${params.toString()}`)
   }
 
-  const renderPageNumbers = () => {
-    const pageNumbers = []
-    const maxVisiblePages = 5
-    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2))
-    const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1)
+  // The reservations query waits for the signed-in user.
+  const isLoading = loading || (!userId && !error)
 
-    if (endPage - startPage + 1 < maxVisiblePages) {
-      startPage = Math.max(1, endPage - maxVisiblePages + 1)
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      pageNumbers.push(
-        <PaginationItem key={i}>
-          <PaginationLink onClick={() => setCurrentPage(i)} isActive={i === currentPage}>
-            {i}
-          </PaginationLink>
-        </PaginationItem>,
+  const renderReservations = () => {
+    if (isLoading) {
+      return (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-44 w-full rounded-xl" />
+          ))}
+        </div>
       )
     }
 
-    return pageNumbers
-  }
+    if (error) {
+      return <ErrorState onRetry={() => refetch()} />
+    }
 
-  if (loading) {
+    if (allReservations.length === 0) {
+      return <EmptyState />
+    }
+
     return (
-      <div className="w-full">
-        <h1 className="mb-6 text-2xl font-semibold tracking-tight">Mes réservations</h1>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, i) => (
-            <Skeleton key={i} className="h-64 w-full" />
-          ))}
-        </div>
-      </div>
+      <>
+        <ReservationFilters
+          searchTerm={searchTerm}
+          setSearchTerm={onFilterChange(setSearchTerm)}
+          statusFilter={statusFilter}
+          setStatusFilter={onFilterChange(setStatusFilter)}
+          categoryFilter={categoryFilter}
+          setCategoryFilter={onFilterChange(setCategoryFilter)}
+          sortOrder={sortOrder}
+          setSortOrder={onFilterChange(setSortOrder)}
+          resetFilters={resetFilters}
+          hasActiveFilters={hasActiveFilters}
+        />
+
+        {paginatedReservations.length > 0 ? (
+          <>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {paginatedReservations.map((reservation) => (
+                <ReservationCard key={reservation.id} reservation={reservation} onEdit={handleEdit} />
+              ))}
+            </div>
+            <ListPager
+              page={page}
+              pageCount={totalPages}
+              onPageChange={setCurrentPage}
+              total={filteredReservations.length}
+              noun={["réservation", "réservations"]}
+            />
+          </>
+        ) : (
+          <EmptyState hasFilters onResetFilters={resetFilters} />
+        )}
+      </>
     )
   }
-
-  if (error) {
-    return (
-      <div className="w-full">
-        <h1 className="mb-6 text-2xl font-semibold tracking-tight">Mes réservations</h1>
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Erreur</AlertTitle>
-          <AlertDescription>
-            Une erreur est survenue lors du chargement des réservations. Veuillez réessayer plus tard.
-          </AlertDescription>
-        </Alert>
-      </div>
-    )
-  }
-
-  const allReservations = data?.userReservations || []
 
   return (
-    <div className="w-full">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Mes réservations</h1>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        className="mb-0"
+        title="Mes réservations"
+        description="Vos réservations d'avion et les modèles qui vous font gagner du temps."
+        actions={
+          <Button asChild>
+            <Link href="/reservations">
+              <Plus className="h-4 w-4" />
+              Nouvelle réservation
+            </Link>
+          </Button>
+        }
+      />
 
       {allReservations.length > 0 && <StatsCards reservations={allReservations} />}
 
-      {/* Templates section */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold flex items-center gap-2">
-            <BookTemplate className="h-5 w-5" />
-            Mes mod&egrave;les
-          </h2>
-          <Button size="sm" onClick={handleCreateTemplate}>
-            <Plus className="h-4 w-4 mr-1" />
-            Nouveau mod&egrave;le
-          </Button>
-        </div>
-        {templates.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-            {templates.map((template) => (
-              <TemplateCard
-                key={template.id}
-                template={template}
-                onUse={handleUseTemplate}
-                onEdit={handleEditTemplate}
-                onDelete={handleDeleteTemplate}
-              />
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-muted-foreground mb-6">
-            Aucun mod&egrave;le. Cr&eacute;ez-en un pour r&eacute;server plus rapidement.
-          </p>
-        )}
-      </div>
+      <Tabs defaultValue="reservations" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="reservations">Réservations</TabsTrigger>
+          <TabsTrigger value="templates">
+            Modèles{templates.length > 0 ? ` (${templates.length})` : ""}
+          </TabsTrigger>
+        </TabsList>
 
-      <ReservationFilters
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        statusFilter={statusFilter}
-        setStatusFilter={setStatusFilter}
-        categoryFilter={categoryFilter}
-        setCategoryFilter={setCategoryFilter}
-        sortOrder={sortOrder}
-        setSortOrder={setSortOrder}
-        flightCategoryMapping={flightCategoryMapping}
-        resetFilters={resetFilters}
-        hasActiveFilters={hasActiveFilters}
-      />
+        <TabsContent value="reservations" className="mt-0 space-y-6">
+          {renderReservations()}
+        </TabsContent>
 
-      {paginatedReservations.length > 0 ? (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            {paginatedReservations.map((reservation: any) => (
-              <ReservationCard
-                key={reservation.id}
-                reservation={reservation}
-                onEdit={handleEdit}
-                flightCategoryMapping={flightCategoryMapping}
-              />
-            ))}
-          </div>
-
-          {totalPages > 1 && (
-            <Pagination className="mt-8">
-              <PaginationContent>
-                {currentPage > 1 && (
-                  <PaginationItem>
-                    <PaginationPrevious onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))} />
-                  </PaginationItem>
-                )}
-
-                {renderPageNumbers()}
-
-                {currentPage < totalPages && (
-                  <PaginationItem>
-                    <PaginationNext onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))} />
-                  </PaginationItem>
-                )}
-              </PaginationContent>
-            </Pagination>
+        <TabsContent value="templates" className="mt-0 space-y-6">
+          {templates.length > 0 ? (
+            <>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Un modèle préremplit le formulaire de réservation pour vos vols habituels.
+                </p>
+                <Button variant="outline" onClick={handleCreateTemplate} className="self-start sm:self-auto">
+                  <BookmarkPlus className="h-4 w-4" />
+                  Nouveau modèle
+                </Button>
+              </div>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {templates.map((template) => (
+                  <TemplateCard
+                    key={template.id}
+                    template={template}
+                    onUse={handleUseTemplate}
+                    onEdit={handleEditTemplate}
+                    onDelete={setTemplateToDelete}
+                  />
+                ))}
+              </div>
+            </>
+          ) : (
+            <SharedEmptyState
+              icon={BookmarkPlus}
+              title="Aucun modèle de réservation"
+              description="Enregistrez vos vols habituels (avion, horaire, catégorie) pour réserver en deux clics."
+              action={
+                <Button onClick={handleCreateTemplate}>
+                  <Plus className="h-4 w-4" />
+                  Créer un modèle
+                </Button>
+              }
+            />
           )}
-        </>
-      ) : (
-        <EmptyState
-          message={
-            hasActiveFilters
-              ? "Aucune réservation ne correspond à vos critères de recherche."
-              : "Vous n'avez pas encore de réservations."
-          }
-          hasFilters={hasActiveFilters}
-          onResetFilters={resetFilters}
-        />
-      )}
+        </TabsContent>
+      </Tabs>
 
       <ReservationEditDialog
         isOpen={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
         reservation={selectedReservation}
         onSave={handleSaveEdit}
-        flightCategoryMapping={flightCategoryMapping}
-        flightCategoryReverseMapping={flightCategoryReverseMapping}
       />
 
       <TemplateDialog
@@ -382,6 +364,32 @@ export default function MyReservations() {
         onSave={handleSaveTemplate}
         loading={creatingTemplate || updatingTemplate}
       />
+
+      <AlertDialog open={templateToDelete !== null} onOpenChange={(open) => !open && setTemplateToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer ce modèle ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Le modèle « {templateToDelete?.name} » sera définitivement supprimé. Vos réservations existantes ne sont
+              pas modifiées.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingTemplate}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deletingTemplate}
+              onClick={(event) => {
+                event.preventDefault()
+                void handleDeleteTemplate()
+              }}
+            >
+              {deletingTemplate && <Loader2 className="h-4 w-4 animate-spin" />}
+              Supprimer le modèle
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

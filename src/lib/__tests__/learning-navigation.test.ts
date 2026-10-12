@@ -1,4 +1,4 @@
-import { adjacentLessons, learningRoutes } from '../learning-navigation';
+import { adjacentLessons, learningRoutes, videoEmbedUrl } from '../learning-navigation';
 
 const course = {
   modules: [
@@ -65,5 +65,23 @@ describe('learningRoutes', () => {
     expect(learningRoutes.lesson(4, 9)).toBe('/instruction/e-learning/4/9');
     expect(learningRoutes.evaluation('7')).toBe('/instruction/evaluation/7');
     expect(learningRoutes.course(2)).toBe('/instruction/courses/2');
+  });
+});
+
+describe('videoEmbedUrl', () => {
+  it('transforme un lien YouTube en adresse de lecteur', () => {
+    expect(videoEmbedUrl('https://www.youtube.com/watch?v=abc_123-x')).toBe('https://www.youtube.com/embed/abc_123-x');
+    expect(videoEmbedUrl('https://www.youtube.com/watch?list=PL1&v=abc')).toBe('https://www.youtube.com/embed/abc');
+    expect(videoEmbedUrl('https://youtu.be/abc?t=10')).toBe('https://www.youtube.com/embed/abc');
+  });
+
+  it('laisse les autres liens tels quels', () => {
+    expect(videoEmbedUrl('https://www.youtube.com/embed/abc')).toBe('https://www.youtube.com/embed/abc');
+    expect(videoEmbedUrl(' https://player.vimeo.com/video/1 ')).toBe('https://player.vimeo.com/video/1');
+  });
+
+  it('vaut null sans lien', () => {
+    expect(videoEmbedUrl('')).toBeNull();
+    expect(videoEmbedUrl(null)).toBeNull();
   });
 });

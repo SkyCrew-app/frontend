@@ -1,69 +1,55 @@
 "use client"
 
 import { useMutation, useQuery } from "@apollo/client"
-import { useState, useEffect } from "react"
+import { useMemo, useState } from "react"
+import Link from "next/link"
+import { Plus } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/hooks/use-toast"
 import { GET_USER_FLIGHT_PLANS, UPDATE_FLIGHT_PLAN } from "@/graphql/flights"
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination"
 import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
+import { PageHeader } from "@/components/layout/PageHeader"
+import { ErrorState } from "@/components/layout/ErrorState"
 import { FlightPlanCard } from "@/components/flight-plan/flight-plan-card"
-import { FlightPlanFilters } from "@/components/flight-plan/flight-plan-filters"
+import { FlightPlanFilters, type FlightPlanSortOrder } from "@/components/flight-plan/flight-plan-filters"
 import { FlightPlanEditDialog } from "@/components/flight-plan/flight-plan-edit-dialog"
 import { EmptyState } from "@/components/flight-plan/empty-state"
 import { StatsCards } from "@/components/flight-plan/stats-cards"
-import { AlertCircle } from "lucide-react"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { ListPager } from "@/components/reservation/list-pager"
 import type { Flight } from "@/interfaces/flight"
 
-const flightTypeTranslations = {
-  VFR: "VFR",
-  IFR: "IFR",
-  SVFR: "SVFR",
-  training: "Entraînement",
-  "Generated via AI": "Généré par IA",
-}
+const ITEMS_PER_PAGE = 6
 
-const reservationStatusTranslations = {
-  PENDING: "En attente",
-  CONFIRMED: "Confirmé",
-  CANCELLED: "Annulé",
-}
+const startTimeOf = (flight: Flight) => new Date(flight.reservation?.start_time || 0).getTime()
 
 export default function MyFlightPlans() {
   const userEmail = useCurrentUser()
   const userData = useUserData(userEmail)
-  const [userId, setUserId] = useState<string | null>(null)
+  const userId: string | number | null = userData?.id ?? null
   const [selectedFlight, setSelectedFlight] = useState<Flight | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const { toast } = useToast()
 
   const [searchTerm, setSearchTerm] = useState("")
   const [flightTypeFilter, setFlightTypeFilter] = useState("ALL")
-  const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest")
-
+  const [sortOrder, setSortOrder] = useState<FlightPlanSortOrder>("newest")
   const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 6
 
-  useEffect(() => {
-    if (userData) {
-      setUserId(userData.id)
-    }
-  }, [userData])
-
-  const { data, loading, error } = useQuery(GET_USER_FLIGHT_PLANS, {
+  const { data, loading, error, refetch } = useQuery(GET_USER_FLIGHT_PLANS, {
     variables: { userId },
     skip: !userId,
   })
 
   const [updateFlightPlan] = useMutation(UPDATE_FLIGHT_PLAN)
+
+  // Any change of filter or sort goes back to the first page.
+  const onFilterChange =
+    <T,>(setter: (value: T) => void) =>
+    (value: T) => {
+      setter(value)
+      setCurrentPage(1)
+    }
 
   const resetFilters = () => {
     setSearchTerm("")
@@ -73,28 +59,28 @@ export default function MyFlightPlans() {
 
   const hasActiveFilters = searchTerm !== "" || flightTypeFilter !== "ALL"
 
-  const filteredFlightPlans =
-    data?.getFlightsByUser
-      ?.filter((flight: Flight) => {
-        const searchTermLower = searchTerm.toLowerCase()
-        const originLower = flight.origin_icao.toLowerCase()
-        const destinationLower = flight.destination_icao.toLowerCase()
+  const allFlightPlans: Flight[] = useMemo(() => data?.getFlightsByUser ?? [], [data])
 
-        return (
-          (originLower.includes(searchTermLower) || destinationLower.includes(searchTermLower)) &&
-          (flightTypeFilter === "ALL" || flight.flight_type === flightTypeFilter)
-        )
-      })
-      .sort((a: Flight, b: Flight) => {
-        if (sortOrder === "newest") {
-          return new Date(b.reservation?.start_time || 0).getTime() - new Date(a.reservation?.start_time || 0).getTime()
-        } else {
-          return new Date(a.reservation?.start_time || 0).getTime() - new Date(b.reservation?.start_time || 0).getTime()
-        }
-      }) || []
+  const flightTypes = useMemo(
+    () => Array.from(new Set(allFlightPlans.map((flight) => flight.flight_type).filter(Boolean))).sort(),
+    [allFlightPlans],
+  )
 
-  const totalPages = Math.ceil(filteredFlightPlans.length / itemsPerPage)
-  const paginatedFlightPlans = filteredFlightPlans.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+  const filteredFlightPlans = allFlightPlans
+    .filter((flight) => {
+      const search = searchTerm.trim().toLowerCase()
+      const haystack = [flight.origin_icao, flight.destination_icao, flight.reservation?.aircraft?.registration_number]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase()
+
+      return haystack.includes(search) && (flightTypeFilter === "ALL" || flight.flight_type === flightTypeFilter)
+    })
+    .sort((a, b) => (sortOrder === "newest" ? startTimeOf(b) - startTimeOf(a) : startTimeOf(a) - startTimeOf(b)))
+
+  const totalPages = Math.max(1, Math.ceil(filteredFlightPlans.length / ITEMS_PER_PAGE))
+  const page = Math.min(currentPage, totalPages)
+  const paginatedFlightPlans = filteredFlightPlans.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE)
 
   const handleEdit = (flight: Flight) => {
     setSelectedFlight(flight)
@@ -103,7 +89,7 @@ export default function MyFlightPlans() {
 
   const handleSaveEdit = async (
     flightType: string,
-    weatherConditions: string,
+    weatherConditions: string | undefined,
     numberOfPassengers: number | undefined,
   ) => {
     if (!selectedFlight) return
@@ -114,7 +100,8 @@ export default function MyFlightPlans() {
           input: {
             id: selectedFlight.id,
             flight_type: flightType,
-            weather_conditions: weatherConditions,
+            // Left out when the list did not load the current value, so it is not overwritten.
+            ...(weatherConditions !== undefined ? { weather_conditions: weatherConditions } : {}),
             number_of_passengers: numberOfPassengers,
           },
         },
@@ -124,142 +111,100 @@ export default function MyFlightPlans() {
       setIsEditDialogOpen(false)
       toast({
         title: "Plan de vol mis à jour",
-        description: `Le plan de vol ${selectedFlight.origin_icao} - ${selectedFlight.destination_icao} a été mis à jour.`,
+        description: `Le plan de vol ${selectedFlight.origin_icao} → ${selectedFlight.destination_icao} a été modifié.`,
       })
     } catch {
       toast({
         variant: "destructive",
-        title: "Erreur lors de la mise à jour",
-        description: "Une erreur est survenue lors de la mise à jour du plan de vol.",
+        title: "Modification impossible",
+        description: "Le plan de vol n'a pas pu être modifié. Réessayez dans un instant.",
       })
     }
   }
 
-  const renderPageNumbers = () => {
-    const pageNumbers = []
-    const maxVisiblePages = 5
-    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2))
-    const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1)
+  // The flight plans query waits for the signed-in user.
+  const isLoading = loading || (!userId && !error)
 
-    if (endPage - startPage + 1 < maxVisiblePages) {
-      startPage = Math.max(1, endPage - maxVisiblePages + 1)
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      pageNumbers.push(
-        <PaginationItem key={i}>
-          <PaginationLink onClick={() => setCurrentPage(i)} isActive={i === currentPage}>
-            {i}
-          </PaginationLink>
-        </PaginationItem>,
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-48 w-full rounded-xl" />
+          ))}
+        </div>
       )
     }
 
-    return pageNumbers
-  }
+    if (error) {
+      return <ErrorState onRetry={() => refetch()} />
+    }
 
-  if (loading) {
+    if (allFlightPlans.length === 0) {
+      return <EmptyState />
+    }
+
     return (
-      <div className="w-full">
-        <h1 className="mb-6 text-2xl font-semibold tracking-tight">Mes plans de vol</h1>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, i) => (
-            <Skeleton key={i} className="h-64 w-full" />
-          ))}
-        </div>
-      </div>
+      <>
+        <StatsCards flights={allFlightPlans} />
+
+        <FlightPlanFilters
+          searchTerm={searchTerm}
+          setSearchTerm={onFilterChange(setSearchTerm)}
+          flightTypeFilter={flightTypeFilter}
+          setFlightTypeFilter={onFilterChange(setFlightTypeFilter)}
+          sortOrder={sortOrder}
+          setSortOrder={onFilterChange(setSortOrder)}
+          flightTypes={flightTypes}
+          resetFilters={resetFilters}
+          hasActiveFilters={hasActiveFilters}
+        />
+
+        {paginatedFlightPlans.length > 0 ? (
+          <>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {paginatedFlightPlans.map((flight) => (
+                <FlightPlanCard key={flight.id} flight={flight} onEdit={handleEdit} />
+              ))}
+            </div>
+            <ListPager
+              page={page}
+              pageCount={totalPages}
+              onPageChange={setCurrentPage}
+              total={filteredFlightPlans.length}
+              noun={["plan de vol", "plans de vol"]}
+            />
+          </>
+        ) : (
+          <EmptyState hasFilters onResetFilters={resetFilters} />
+        )}
+      </>
     )
   }
-
-  if (error) {
-    return (
-      <div className="w-full">
-        <h1 className="mb-6 text-2xl font-semibold tracking-tight">Mes plans de vol</h1>
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Erreur</AlertTitle>
-          <AlertDescription>
-            Une erreur est survenue lors du chargement des plans de vol. Veuillez réessayer plus tard.
-          </AlertDescription>
-        </Alert>
-      </div>
-    )
-  }
-
-  const allFlightPlans = data?.getFlightsByUser || []
 
   return (
-    <div className="w-full">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Mes plans de vol</h1>
-      </div>
-
-      {allFlightPlans.length > 0 && <StatsCards flights={allFlightPlans} />}
-
-      <FlightPlanFilters
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        flightTypeFilter={flightTypeFilter}
-        setFlightTypeFilter={setFlightTypeFilter}
-        sortOrder={sortOrder}
-        setSortOrder={setSortOrder}
-        flightTypeTranslations={flightTypeTranslations}
-        resetFilters={resetFilters}
-        hasActiveFilters={hasActiveFilters}
+    <div className="space-y-6">
+      <PageHeader
+        className="mb-0"
+        title="Mes plans de vol"
+        description="Les plans de vol préparés à partir de vos réservations."
+        actions={
+          <Button asChild>
+            <Link href="/reservations/my">
+              <Plus className="h-4 w-4" />
+              Nouveau plan de vol
+            </Link>
+          </Button>
+        }
       />
 
-      {paginatedFlightPlans.length > 0 ? (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            {paginatedFlightPlans.map((flight: Flight) => (
-              <FlightPlanCard
-                key={flight.id}
-                flight={flight}
-                onEdit={handleEdit}
-                flightTypeTranslations={flightTypeTranslations}
-                reservationStatusTranslations={reservationStatusTranslations}
-              />
-            ))}
-          </div>
-
-          {totalPages > 1 && (
-            <Pagination className="mt-8">
-              <PaginationContent>
-                {currentPage > 1 && (
-                  <PaginationItem>
-                    <PaginationPrevious onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))} />
-                  </PaginationItem>
-                )}
-
-                {renderPageNumbers()}
-
-                {currentPage < totalPages && (
-                  <PaginationItem>
-                    <PaginationNext onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))} />
-                  </PaginationItem>
-                )}
-              </PaginationContent>
-            </Pagination>
-          )}
-        </>
-      ) : (
-        <EmptyState
-          message={
-            hasActiveFilters
-              ? "Aucun plan de vol ne correspond à vos critères de recherche."
-              : "Vous n'avez pas encore de plans de vol."
-          }
-          hasFilters={hasActiveFilters}
-          onResetFilters={resetFilters}
-        />
-      )}
+      {renderContent()}
 
       <FlightPlanEditDialog
         isOpen={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
         flight={selectedFlight}
         onSave={handleSaveEdit}
-        flightTypeTranslations={flightTypeTranslations}
       />
     </div>
   )

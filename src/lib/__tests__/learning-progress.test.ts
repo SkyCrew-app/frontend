@@ -1,5 +1,7 @@
 import {
+  averageScore,
   courseLessonIds,
+  evaluationsToTake,
   latestEvaluationAttempts,
   lessonTotals,
   moduleProgress,
@@ -148,5 +150,37 @@ describe('stableIndex', () => {
 
   it('vaut 0 pour une liste vide', () => {
     expect(stableIndex(3, 0)).toBe(0);
+  });
+});
+
+describe('evaluationsToTake', () => {
+  const attempt = (id: number, evaluationId: number, passed: boolean) => ({
+    id,
+    score: passed ? 90 : 40,
+    passed,
+    completed_at: '2026-10-01T10:00:00Z',
+    evaluation: { id: evaluationId },
+  });
+
+  it('garde les évaluations jamais passées ou échouées à la dernière tentative', () => {
+    const latest = latestEvaluationAttempts([attempt(1, 10, true), attempt(2, 11, false)]);
+    expect(evaluationsToTake([{ id: 10 }, { id: 11 }, { id: '12' }], latest)).toEqual([{ id: 11 }, { id: '12' }]);
+  });
+
+  it('accepte une liste absente', () => {
+    expect(evaluationsToTake(null, new Map())).toEqual([]);
+  });
+});
+
+describe('averageScore', () => {
+  const scored = (id: number, score: number | null) => ({ id, score, passed: false, completed_at: null });
+
+  it('fait la moyenne arrondie des tentatives notées', () => {
+    expect(averageScore([scored(1, 80), scored(2, 65), scored(3, null)])).toBe(73);
+  });
+
+  it('vaut null sans tentative notée', () => {
+    expect(averageScore([])).toBeNull();
+    expect(averageScore([scored(1, null)])).toBeNull();
   });
 });

@@ -1,153 +1,173 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useMemo } from "react"
 import { useQuery } from "@apollo/client"
-import { useRouter } from "next/navigation"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import {
-  BookOpen,
-  Calendar,
-  GraduationCap,
-  LayoutDashboard,
-  AlertCircle,
-} from "lucide-react"
+import { Award, BookOpen, CalendarClock, ClipboardList } from "lucide-react"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
+import { PageHeader } from "@/components/layout/PageHeader"
+import { StatCard } from "@/components/layout/StatCard"
+import { ErrorState } from "@/components/layout/ErrorState"
 import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
-import { motion } from "framer-motion"
+import { UpcomingCoursesCard } from "@/components/learning-home/upcoming-courses-card"
+import { ELearningProgressCard } from "@/components/learning-home/e-learning-progress-card"
+import { EvaluationsCard, type EvaluationToTake } from "@/components/learning-home/evaluations-card"
+import { upcomingCourses, type InstructionCourse } from "@/components/courses/course-helpers"
+import { GET_COURSE_BY_USER_ID } from "@/graphql/course"
+import { GET_EVALUATIONS, GET_USER_EVALUATION_RESULTS, GET_USER_INSTRUCTION_SUMMARY } from "@/graphql/evaluation"
 import type { InstructionSummary } from "@/interfaces/instruction"
-import { OverviewTab } from "@/components/learning-home/overview-tab"
-import { CoursesTab } from "@/components/learning-home/courses-tab"
-import { ELearningTab } from "@/components/learning-home/e-learning-tab"
-import { Button } from "@/components/ui/button"
-import { GET_USER_INSTRUCTION_SUMMARY } from "@/graphql/evaluation"
-import { learningRoutes } from "@/lib/learning-navigation"
+import { formatDate } from "@/lib/format"
+import {
+  averageScore,
+  evaluationsToTake,
+  latestEvaluationAttempts,
+  lessonTotals,
+  percentage,
+  type EvaluationAttempt,
+} from "@/lib/learning-progress"
 
-const fadeIn = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { duration: 0.5 } },
+function OverviewSkeleton() {
+  return (
+    <>
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <Skeleton key={index} className="h-[104px] rounded-xl" />
+        ))}
+      </div>
+      <div className="grid gap-4 lg:grid-cols-2">
+        {Array.from({ length: 3 }).map((_, index) => (
+          <Card key={index}>
+            <CardHeader>
+              <Skeleton className="h-6 w-40" />
+              <Skeleton className="h-4 w-64 max-w-full" />
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </>
+  )
 }
 
 export default function InstructionHome() {
-  const router = useRouter()
   const userEmail = useCurrentUser()
   const userData = useUserData(userEmail)
-  const [userId, setUserId] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState("overview")
+  const userId: number | null = userData ? Number(userData.id) : null
+  const skip = userId === null
 
-  useEffect(() => {
-    if (userData) {
-      setUserId(userData.id)
-    }
-  }, [userData])
-
-  const { data, loading, error } = useQuery(GET_USER_INSTRUCTION_SUMMARY, {
+  // The progress changes on other pages: always ask again on arrival.
+  const summaryQuery = useQuery<{ getUserInstructionSummary: InstructionSummary }>(GET_USER_INSTRUCTION_SUMMARY, {
     variables: { userId },
-    skip: !userId,
+    skip,
+    fetchPolicy: "cache-and-network",
+  })
+  const coursesQuery = useQuery<{ getCoursesByUserId: InstructionCourse[] }>(GET_COURSE_BY_USER_ID, {
+    variables: { userId },
+    skip,
+    fetchPolicy: "cache-and-network",
+  })
+  const evaluationsQuery = useQuery<{ getEvaluations: EvaluationToTake[] }>(GET_EVALUATIONS, { skip })
+  const attemptsQuery = useQuery<{ getUserEvaluationResults: EvaluationAttempt[] }>(GET_USER_EVALUATION_RESULTS, {
+    variables: { userId },
+    skip,
+    fetchPolicy: "cache-and-network",
   })
 
-  const summaryData: InstructionSummary = data?.getUserInstructionSummary || {
-    upcomingCourses: [],
-    recentCourses: [],
-    learningProgress: {
-      completedCourses: 0,
-      totalCourses: 0,
-      completedLessons: 0,
-      totalLessons: 0,
-    },
-    evaluations: {
-      completed: 0,
-      upcoming: 0,
-      averageScore: 0,
-    },
-    eLearningCourses: [],
-  }
+  const summary = summaryQuery.data?.getUserInstructionSummary
+  const nextCourses = useMemo(
+    () => upcomingCourses(coursesQuery.data?.getCoursesByUserId),
+    [coursesQuery.data],
+  )
+  const latestAttempts = useMemo(
+    () => latestEvaluationAttempts(attemptsQuery.data?.getUserEvaluationResults),
+    [attemptsQuery.data],
+  )
+  const toTake = useMemo(
+    () => evaluationsToTake(evaluationsQuery.data?.getEvaluations, latestAttempts),
+    [evaluationsQuery.data, latestAttempts],
+  )
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[70vh]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-          <p className="text-muted-foreground animate-pulse">Chargement de vos données d'instruction...</p>
-        </div>
-      </div>
-    )
-  }
+  const loading =
+    skip ||
+    (summaryQuery.loading && !summary) ||
+    (coursesQuery.loading && !coursesQuery.data) ||
+    (evaluationsQuery.loading && !evaluationsQuery.data) ||
+    (attemptsQuery.loading && !attemptsQuery.data)
 
-  if (error) {
-    return (
-      <div className="p-6">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Erreur</AlertTitle>
-          <AlertDescription>
-            Une erreur est survenue lors du chargement des données d'instruction.
-            <br />
-            {error.message}
-          </AlertDescription>
-        </Alert>
-      </div>
-    )
-  }
+  const lessons = lessonTotals(summary?.eLearningCourses)
+  const evaluationsError = Boolean(evaluationsQuery.error || attemptsQuery.error)
+  const passedCount = [...latestAttempts.values()].filter((attempt) => attempt.passed).length
+  const average = averageScore(latestAttempts.values())
 
   return (
-    <div className="space-y-8">
-      <motion.div
-        initial="hidden"
-        animate="visible"
-        variants={fadeIn}
-      >
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
-              Centre d'instruction
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Gérez vos formations, cours et évaluations en un seul endroit
-            </p>
+    <div className="space-y-6">
+      <PageHeader
+        className="mb-0"
+        title="Centre d'instruction"
+        description="Vos prochains cours, votre progression en ligne et vos évaluations."
+      />
+
+      {loading ? (
+        <OverviewSkeleton />
+      ) : summaryQuery.error && !summary ? (
+        <ErrorState onRetry={() => summaryQuery.refetch()} />
+      ) : (
+        <>
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <StatCard
+              label="Leçons terminées"
+              value={`${lessons.completed} / ${lessons.total}`}
+              hint={lessons.total > 0 ? `${percentage(lessons.completed, lessons.total)} % des cours en ligne` : "Aucune leçon publiée"}
+              icon={BookOpen}
+              tone="primary"
+            />
+            <StatCard
+              label="Cours à venir"
+              value={coursesQuery.error ? "—" : nextCourses.length}
+              hint={nextCourses[0] ? `Prochain le ${formatDate(nextCourses[0].startTime)}` : "Aucun cours planifié"}
+              icon={CalendarClock}
+              tone="info"
+            />
+            <StatCard
+              label="Évaluations à passer"
+              value={evaluationsError ? "—" : toTake.length}
+              hint={`${passedCount} réussie${passedCount > 1 ? "s" : ""}`}
+              icon={ClipboardList}
+              tone="warning"
+            />
+            <StatCard
+              label="Score moyen"
+              value={average === null ? "—" : `${average} %`}
+              hint="Sur vos évaluations passées"
+              icon={Award}
+              tone="success"
+            />
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Button onClick={() => router.push("/instruction/courses")} className="shadow-sm">
-              <Calendar className="mr-2 h-4 w-4" />
-              <span className="hidden sm:inline">Mes</span> Cours
-            </Button>
-            <Button variant="outline" onClick={() => router.push(learningRoutes.eLearning)} className="shadow-sm">
-              <BookOpen className="mr-2 h-4 w-4" />
-              E-Learning
-            </Button>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            <UpcomingCoursesCard
+              courses={nextCourses.slice(0, 5)}
+              userId={userId}
+              error={Boolean(coursesQuery.error) && !coursesQuery.data}
+              onRetry={() => coursesQuery.refetch()}
+            />
+            <ELearningProgressCard courses={summary?.eLearningCourses ?? []} />
+            <EvaluationsCard
+              evaluations={toTake}
+              latestAttempts={latestAttempts}
+              error={evaluationsError}
+              onRetry={() => {
+                evaluationsQuery.refetch()
+                attemptsQuery.refetch()
+              }}
+            />
           </div>
-        </div>
-      </motion.div>
-
-      <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <div className="overflow-x-auto pb-2">
-          <TabsList className="flex md:grid md:grid-cols-3 p-1 shadow-md rounded-lg w-max md:w-[500px]">
-            <TabsTrigger value="overview" className="flex items-center">
-              <LayoutDashboard className="mr-2 h-4 w-4" />
-              <span className="truncate">Vue d'ensemble</span>
-            </TabsTrigger>
-            <TabsTrigger value="courses" className="flex items-center">
-              <GraduationCap className="mr-2 h-4 w-4" />
-              <span className="truncate">Cours</span>
-            </TabsTrigger>
-            <TabsTrigger value="e-learning" className="flex items-center">
-              <BookOpen className="mr-2 h-4 w-4" />
-              <span className="truncate">E-Learning</span>
-            </TabsTrigger>
-          </TabsList>
-        </div>
-
-        <TabsContent value="overview">
-          <OverviewTab data={summaryData} setActiveTab={setActiveTab} />
-        </TabsContent>
-
-        <TabsContent value="courses">
-          <CoursesTab data={summaryData} />
-        </TabsContent>
-
-        <TabsContent value="e-learning">
-          <ELearningTab data={summaryData} />
-        </TabsContent>
-      </Tabs>
+        </>
+      )}
     </div>
   )
 }

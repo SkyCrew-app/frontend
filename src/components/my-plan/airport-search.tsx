@@ -9,13 +9,16 @@ import { cn } from "@/lib/utils"
 import { aviationAPI, type Airport } from "@/lib/aviation-api"
 
 interface AirportSearchProps {
+  /** Id of the trigger button, so a <Label htmlFor> can point at it. */
+  id?: string
+  invalid?: boolean
   value: string
   onChange: (value: string) => void
   label: string
   placeholder?: string
 }
 
-export function AirportSearch({ value, onChange, label, placeholder }: AirportSearchProps) {
+export function AirportSearch({ id, invalid = false, value, onChange, label, placeholder }: AirportSearchProps) {
   const [open, setOpen] = useState(false)
   const [airports, setAirports] = useState<Airport[]>([])
   const [searchQuery, setSearchQuery] = useState("")
@@ -33,7 +36,7 @@ export function AirportSearch({ value, onChange, label, placeholder }: AirportSe
           setError(null)
         } catch (err) {
           console.error("Erreur lors du chargement de l'aéroport:", err)
-          setError("Impossible de charger les détails de l'aéroport. Vérifiez votre connexion API.")
+          setError("Les détails de l'aérodrome n'ont pas pu être chargés.")
         } finally {
           setLoading(false)
         }
@@ -53,10 +56,10 @@ export function AirportSearch({ value, onChange, label, placeholder }: AirportSe
           const results = await aviationAPI.searchAirports(searchQuery)
           setAirports(results)
           if (results.length === 0) {
-            setError("Aucun aéroport trouvé pour cette recherche")
+            setError("Aucun aérodrome trouvé pour cette recherche.")
           }
         } catch (err) {
-          setError("Erreur lors de la recherche des aéroports. Vérifiez votre connexion API.")
+          setError("La recherche d'aérodromes est indisponible pour le moment.")
           console.error(err)
         } finally {
           setLoading(false)
@@ -73,31 +76,40 @@ export function AirportSearch({ value, onChange, label, placeholder }: AirportSe
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" role="combobox" aria-expanded={open} className="w-full justify-between">
-          <div className="flex items-center">
-            <Plane className="mr-2 h-4 w-4" />
+        <Button
+          id={id}
+          type="button"
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          aria-invalid={invalid}
+          className={cn("w-full justify-between font-normal", invalid && "border-destructive")}
+        >
+          <span className="flex min-w-0 items-center gap-2">
+            <Plane className="h-4 w-4 shrink-0 text-muted-foreground" />
             {selectedAirport ? (
               <span className="truncate">
-                {selectedAirport.name} ({selectedAirport.icao})
+                {selectedAirport.icao} — {selectedAirport.name}
               </span>
             ) : value ? (
               value
             ) : (
-              label
+              <span className="truncate text-muted-foreground">{label}</span>
             )}
-          </div>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </span>
+          <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[400px] p-0">
-        <Command>
-          <CommandInput placeholder={placeholder || "Rechercher un aéroport..."} onValueChange={setSearchQuery} />
+      <PopoverContent className="w-[min(400px,calc(100vw-2rem))] p-0" align="start">
+        {/* Results are already filtered by the search API (by code, name or city). */}
+        <Command shouldFilter={false}>
+          <CommandInput placeholder={placeholder || "Code OACI, nom ou ville"} onValueChange={setSearchQuery} />
           <CommandList>
             <CommandEmpty>
               {loading ? (
                 <div className="flex items-center justify-center p-4">
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Recherche en cours...
+                  Recherche en cours…
                 </div>
               ) : error ? (
                 <div className="flex items-center justify-center p-4 text-warning">
@@ -105,7 +117,7 @@ export function AirportSearch({ value, onChange, label, placeholder }: AirportSe
                   {error}
                 </div>
               ) : (
-                "Aucun aéroport trouvé."
+                "Saisissez au moins deux caractères."
               )}
             </CommandEmpty>
             <CommandGroup className="max-h-[300px] overflow-y-auto">
@@ -113,8 +125,9 @@ export function AirportSearch({ value, onChange, label, placeholder }: AirportSe
                 <CommandItem
                   key={airport.id}
                   value={airport.icao}
-                  onSelect={(currentValue) => {
-                    onChange(currentValue)
+                  onSelect={() => {
+                    // Not the value handed by the list, which is lower-cased.
+                    onChange(airport.icao)
                     setOpen(false)
                   }}
                 >

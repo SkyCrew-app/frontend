@@ -2,19 +2,24 @@
 
 import { useMemo } from "react"
 import { useQuery } from "@apollo/client"
-import { GET_USER_FLIGHT_PLANS } from "@/graphql/flights"
-import { Skeleton } from "@/components/ui/skeleton"
 import { Clock } from "lucide-react"
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts"
 import { format, parseISO, startOfMonth } from "date-fns"
 import { fr } from "date-fns/locale"
+import { formatFlightDuration } from "@/lib/format"
+import { GET_USER_FLIGHT_PLANS } from "@/graphql/flights"
+import { WIDGET_REGISTRY } from "@/interfaces/dashboard"
+import { Skeleton } from "@/components/ui/skeleton"
+import WidgetContainer, { WidgetEmpty, WidgetError, WidgetLink } from "../WidgetContainer"
 
 interface FlightHoursStatsWidgetProps {
   userId: number | null
 }
 
+const AXIS_TICK = { fontSize: 12, fill: "hsl(var(--muted-foreground))" }
+
 export default function FlightHoursStatsWidget({ userId }: FlightHoursStatsWidgetProps) {
-  const { data, loading } = useQuery(GET_USER_FLIGHT_PLANS, {
+  const { data, loading, error, refetch } = useQuery(GET_USER_FLIGHT_PLANS, {
     variables: { userId: userId ? Number(userId) : 0 },
     skip: !userId,
   })
@@ -35,61 +40,66 @@ export default function FlightHoursStatsWidget({ userId }: FlightHoursStatsWidge
       }
     })
 
-    const sortedMonths = Object.keys(monthMap).sort()
-    const last6 = sortedMonths.slice(-6)
+    const last6 = Object.keys(monthMap).sort().slice(-6)
 
     const chart = last6.map((key) => ({
       month: format(parseISO(`${key}-01`), "MMM yy", { locale: fr }),
       heures: Math.round(monthMap[key] * 10) / 10,
     }))
 
-    return { chartData: chart, totalHours: Math.round(total * 10) / 10 }
+    return { chartData: chart, totalHours: total }
   }, [data])
 
-  if (loading) {
-    return (
-      <div className="space-y-3">
-        <Skeleton className="h-8 w-24" />
-        <Skeleton className="h-40 w-full" />
-      </div>
-    )
-  }
+  const renderContent = () => {
+    if (!userId || loading) {
+      return (
+        <div className="space-y-3" aria-hidden="true">
+          <Skeleton className="h-8 w-24" />
+          <Skeleton className="h-40 w-full" />
+        </div>
+      )
+    }
+    if (error && !data) return <WidgetError onRetry={() => refetch()} />
+    if (totalHours === 0) return <WidgetEmpty icon={Clock} title="Aucune heure de vol enregistrée" />
 
-  if (totalHours === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-6 text-center">
-        <Clock className="h-8 w-8 text-muted-foreground mb-2" />
-        <p className="text-sm text-muted-foreground">Aucune heure de vol enregistrée</p>
+      <div>
+        <p className="mb-4 flex items-baseline gap-2">
+          <span className="text-2xl font-semibold tracking-tight tabular-nums">{formatFlightDuration(totalHours)}</span>
+          <span className="text-sm text-muted-foreground">au total</span>
+        </p>
+
+        {chartData.length > 0 && (
+          <ResponsiveContainer width="100%" height={160}>
+            <BarChart data={chartData}>
+              <XAxis dataKey="month" tick={AXIS_TICK} stroke="hsl(var(--border))" tickLine={false} />
+              <YAxis tick={AXIS_TICK} width={30} stroke="hsl(var(--border))" tickLine={false} />
+              <Tooltip
+                cursor={{ fill: "hsl(var(--muted))" }}
+                contentStyle={{
+                  backgroundColor: "hsl(var(--popover))",
+                  color: "hsl(var(--popover-foreground))",
+                  border: "1px solid hsl(var(--border))",
+                  borderRadius: "8px",
+                  fontSize: "12px",
+                }}
+                formatter={(value: number) => [formatFlightDuration(value), "Heures de vol"]}
+              />
+              <Bar dataKey="heures" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
       </div>
     )
   }
 
   return (
-    <div>
-      <div className="flex items-center gap-2 mb-4">
-        <Clock className="h-5 w-5 text-info" />
-        <span className="text-2xl font-bold">{totalHours}h</span>
-        <span className="text-sm text-muted-foreground">au total</span>
-      </div>
-
-      {chartData.length > 0 && (
-        <ResponsiveContainer width="100%" height={160}>
-          <BarChart data={chartData}>
-            <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-            <YAxis tick={{ fontSize: 12 }} width={30} />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: "hsl(var(--background))",
-                border: "1px solid hsl(var(--border))",
-                borderRadius: "8px",
-                fontSize: "12px",
-              }}
-              formatter={(value: number) => [`${value}h`, "Heures"]}
-            />
-            <Bar dataKey="heures" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      )}
-    </div>
+    <WidgetContainer
+      title={WIDGET_REGISTRY["flight-hours-stats"].label}
+      description={chartData.length > 0 ? "Par mois, sur les derniers mois volés" : undefined}
+      action={<WidgetLink href="/logbook">Carnet de vol</WidgetLink>}
+    >
+      {renderContent()}
+    </WidgetContainer>
   )
 }

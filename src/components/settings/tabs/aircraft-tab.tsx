@@ -1,14 +1,27 @@
 "use client"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
-import { Checkbox } from "@/components/ui/checkbox"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Separator } from "@/components/ui/separator"
+import Link from "next/link"
+import { useQuery } from "@apollo/client"
 import { useFormContext } from "react-hook-form"
-import { motion } from "framer-motion"
-import { Plane, Fuel, DollarSign } from "lucide-react"
+import { Plane } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { EmptyState } from "@/components/layout/EmptyState"
+import { ErrorState } from "@/components/layout/ErrorState"
+import { GET_AIRCRAFTS } from "@/graphql/planes"
+import { formatMoney } from "@/lib/format"
+import { FUEL_MANAGEMENT_OPTIONS, type FuelManagement, type SettingsFormValues } from "@/lib/settings"
+import { SettingsField, SettingsSection, UnitInput, errorMessage } from "../settings-field"
+
+interface Aircraft {
+  id: number | string
+  registration_number: string
+  model?: string | null
+  hourly_cost?: number | null
+}
 
 export function AircraftTab() {
   const {
@@ -16,105 +29,103 @@ export function AircraftTab() {
     watch,
     setValue,
     formState: { errors },
-  } = useFormContext()
-  const aircraftTypes = watch("aircraftTypes") || []
+  } = useFormContext<SettingsFormValues>()
   const fuelManagement = watch("fuelManagement")
+  const { data, loading, error, refetch } = useQuery<{ getAircrafts: Aircraft[] }>(GET_AIRCRAFTS)
+  const aircrafts = data?.getAircrafts ?? []
+
+  const manageAircrafts = (
+    <Button asChild variant="outline" size="sm">
+      <Link href="/administration/planes">Gérer les avions</Link>
+    </Button>
+  )
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-      <Card className="border-t-4 border-t-primary">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-xl">Gestion des avions</CardTitle>
-          <CardDescription>Configurez les types d'avions et les tarifs.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold flex items-center gap-2">
-              <Plane className="h-5 w-5 text-info" />
-              Types d'avions et tarifs horaires
-            </h3>
-            {aircraftTypes.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                Aucun avion disponible. Veuillez en ajouter dans la section gestion de flotte.
-              </p>
-            ) : (
-              aircraftTypes.map((aircraft: any, index: any) => (
-                <div
-                  key={aircraft.type}
-                  className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 p-3 border rounded-md hover:bg-muted/10"
-                >
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      id={`aircraft-${aircraft.type}`}
-                      checked={aircraft.isAvailable}
-                      onCheckedChange={(checked) => {
-                        const updatedAircraftTypes = [...aircraftTypes]
-                        updatedAircraftTypes[index] = { ...aircraft, isAvailable: !!checked }
-                        setValue("aircraftTypes", updatedAircraftTypes)
-                      }}
-                    />
-                    <Label
-                      htmlFor={`aircraft-${aircraft.type}`}
-                      className={`flex-grow ${aircraft.isAvailable ? "" : "text-muted-foreground"}`}
-                    >
-                      {aircraft.type}
-                    </Label>
-                  </div>
-                  <div className="flex items-center gap-2 ml-auto">
-                    <Input
-                      type="number"
-                      {...register(`aircraftTypes.${index}.hourlyRate`, { valueAsNumber: true })}
-                      className={`w-24 ${aircraft.isAvailable ? "" : "bg-muted text-muted-foreground"}`}
-                      placeholder="Tarif/h"
-                      disabled={!aircraft.isAvailable}
-                    />
-                    <span className={aircraft.isAvailable ? "font-medium" : "text-muted-foreground"}>€/h</span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-          <Separator />
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold flex items-center gap-2">
-              <Fuel className="h-5 w-5 text-info" />
-              Gestion du carburant
-            </h3>
+    <div className="space-y-6">
+      <SettingsSection
+        title="Carburant"
+        description="Qui fait le plein, et le prix du litre utilisé pour estimer les coûts d'exploitation."
+      >
+        <div className="grid gap-6 md:grid-cols-2">
+          <fieldset className="space-y-3">
+            <legend className="text-sm font-medium leading-none">Gestion du carburant</legend>
             <RadioGroup
               value={fuelManagement}
-              onValueChange={(value) => setValue("fuelManagement", value as "self-service" | "staff-only" | "external")}
-              className="space-y-2"
+              onValueChange={(value) => setValue("fuelManagement", value as FuelManagement, { shouldDirty: true })}
+              className="gap-3"
             >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="self-service" id="fuel-self-service" />
-                <Label htmlFor="fuel-self-service">Libre-service</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="staff-only" id="fuel-staff-only" />
-                <Label htmlFor="fuel-staff-only">Personnel uniquement</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="external" id="fuel-external" />
-                <Label htmlFor="fuel-external">Fournisseur externe</Label>
-              </div>
+              {FUEL_MANAGEMENT_OPTIONS.map((option) => (
+                <div key={option.value} className="flex items-start gap-2">
+                  <RadioGroupItem value={option.value} id={`fuel-${option.value}`} className="mt-0.5" />
+                  <div className="space-y-1">
+                    <Label htmlFor={`fuel-${option.value}`}>{option.label}</Label>
+                    <p className="text-xs text-muted-foreground">{option.hint}</p>
+                  </div>
+                </div>
+              ))}
             </RadioGroup>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="fuel-price" className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4 text-info" />
-              Prix du carburant (€/L)
-            </Label>
-            <Input
+          </fieldset>
+          <SettingsField id="fuel-price" label="Prix du carburant" required error={errorMessage(errors.fuelPrice)}>
+            <UnitInput
               id="fuel-price"
-              type="number"
-              {...register("fuelPrice", { valueAsNumber: true })}
+              unit="€/L"
               min="0"
               step="0.01"
+              placeholder="2,35"
+              aria-invalid={errors.fuelPrice ? true : undefined}
+              {...register("fuelPrice", { valueAsNumber: true })}
             />
-            {errors.fuelPrice && <p className="text-sm text-destructive">{errors.fuelPrice.message as string}</p>}
+          </SettingsField>
+        </div>
+      </SettingsSection>
+
+      <SettingsSection
+        title="Tarifs horaires des avions"
+        description="Le tarif de chaque avion se modifie dans sa fiche, depuis la gestion des avions."
+        action={aircrafts.length > 0 ? manageAircrafts : undefined}
+      >
+        {error ? (
+          <ErrorState onRetry={() => refetch()} />
+        ) : loading ? (
+          <div className="space-y-2" aria-busy="true">
+            {[0, 1, 2].map((row) => (
+              <Skeleton key={row} className="h-10 w-full" />
+            ))}
           </div>
-        </CardContent>
-      </Card>
-    </motion.div>
+        ) : aircrafts.length === 0 ? (
+          <EmptyState
+            icon={Plane}
+            title="Aucun avion"
+            description="Ajoutez les avions du club depuis la gestion des avions."
+            action={manageAircrafts}
+          />
+        ) : (
+          <div className="overflow-x-auto rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Immatriculation</TableHead>
+                  <TableHead>Modèle</TableHead>
+                  <TableHead className="text-right">Tarif horaire</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {aircrafts.map((aircraft) => (
+                  <TableRow key={aircraft.id}>
+                    <TableCell className="font-medium">{aircraft.registration_number}</TableCell>
+                    <TableCell>{aircraft.model || "—"}</TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {aircraft.hourly_cost === null || aircraft.hourly_cost === undefined
+                        ? "—"
+                        : `${formatMoney(aircraft.hourly_cost)} / h`}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </SettingsSection>
+    </div>
   )
 }

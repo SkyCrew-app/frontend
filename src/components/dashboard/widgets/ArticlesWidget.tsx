@@ -1,150 +1,108 @@
 "use client"
 
-import { useEffect } from "react"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
-import { Calendar, Info, ArrowRight } from "lucide-react"
-import { Skeleton } from "@/components/ui/skeleton"
-import { useQuery } from "@apollo/client"
-import { GET_ARTICLES } from "@/graphql/articles"
-import { useToast } from "@/components/hooks/use-toast"
 import Link from "next/link"
+import { useQuery } from "@apollo/client"
+import { Newspaper } from "lucide-react"
+import { formatDate } from "@/lib/format"
+import { cn } from "@/lib/utils"
 import { getBackendBaseUrl } from "@/lib/runtime-config"
+import { GET_ARTICLES } from "@/graphql/articles"
+import { WIDGET_REGISTRY } from "@/interfaces/dashboard"
+import { Skeleton } from "@/components/ui/skeleton"
+import WidgetContainer, { WidgetEmpty, WidgetError, WidgetLink } from "../WidgetContainer"
 
-export default function ArticlesWidget() {
-  const { data: articlesData, loading: articlesLoading, error: articlesError } = useQuery(GET_ARTICLES)
-  const { toast } = useToast()
+const MAX_ARTICLES = 3
 
-  useEffect(() => {
-    if (articlesError) {
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger les articles.",
-        variant: "destructive",
-      })
+interface ArticlesWidgetProps {
+  /** True when the widget spans two columns: articles sit side by side. */
+  wide?: boolean
+}
+
+export default function ArticlesWidget({ wide = false }: ArticlesWidgetProps) {
+  const { data, loading, error, refetch } = useQuery(GET_ARTICLES)
+
+  const articles: any[] = data?.articles || []
+  const latest = [...articles]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, MAX_ARTICLES)
+  // Pictures are shown only when at least one article has one: no stand-in images.
+  const showPictures = latest.some((article) => article.photo_url)
+  const layout = wide ? "grid gap-4 sm:grid-cols-3" : "flex flex-col gap-4"
+
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <div className={layout} aria-hidden="true">
+          {Array.from({ length: MAX_ARTICLES }, (_, i) => (
+            <div key={i} className="space-y-2">
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-full" />
+            </div>
+          ))}
+        </div>
+      )
     }
-  }, [articlesError, toast])
+    if (error && articles.length === 0) return <WidgetError onRetry={() => refetch()} />
+    if (latest.length === 0) {
+      return (
+        <WidgetEmpty
+          icon={Newspaper}
+          title="Aucun article pour le moment"
+          description="Les actualités de l'aéroclub s'afficheront ici."
+        />
+      )
+    }
 
-  const articles = articlesData?.articles || []
-
-  if (articlesLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {[1, 2, 3].map((i) => (
-          <Card key={i} className="overflow-hidden">
-            <Skeleton className="h-48 w-full" />
-            <CardContent className="pt-4">
-              <Skeleton className="h-6 w-3/4 mb-2" />
-              <Skeleton className="h-4 w-full mb-1" />
-              <Skeleton className="h-4 w-full mb-1" />
-              <Skeleton className="h-4 w-2/3" />
-            </CardContent>
-          </Card>
+      <div className={layout}>
+        {latest.map((article) => (
+          <Link
+            key={article.id}
+            href={`/articles/${article.id}`}
+            className={cn(
+              "group -m-2 flex gap-3 rounded-lg p-2 transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              wide && "flex-col",
+            )}
+          >
+            {showPictures &&
+              (article.photo_url ? (
+                <img
+                  src={`${getBackendBaseUrl()}${article.photo_url}`}
+                  alt={article.title}
+                  loading="lazy"
+                  className={cn("rounded-lg object-cover", wide ? "aspect-video w-full" : "h-16 w-24 shrink-0")}
+                />
+              ) : (
+                <div
+                  className={cn(
+                    "flex items-center justify-center rounded-lg bg-muted text-muted-foreground",
+                    wide ? "aspect-video w-full" : "h-16 w-24 shrink-0",
+                  )}
+                  aria-hidden="true"
+                >
+                  <Newspaper className="h-5 w-5" />
+                </div>
+              ))}
+            <div className="min-w-0">
+              <p className="text-xs text-muted-foreground">{formatDate(article.createdAt)}</p>
+              <p className="mt-0.5 line-clamp-2 text-sm font-medium group-hover:underline">{article.title}</p>
+              {article.description && (
+                <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{article.description}</p>
+              )}
+            </div>
+          </Link>
         ))}
       </div>
     )
   }
 
-  if (articles.length === 0) {
-    return (
-      <Card className="bg-muted/30 dark:bg-muted/20 border-dashed">
-        <CardContent className="flex flex-col items-center justify-center py-10">
-          <Info className="h-10 w-10 text-muted-foreground mb-2" />
-          <p className="text-center text-lg text-muted-foreground font-medium">
-            Aucun article pour le moment
-          </p>
-          <p className="text-center text-sm text-muted-foreground mt-1">
-            Les actualités de l&apos;aéroclub seront affichées ici
-          </p>
-        </CardContent>
-      </Card>
-    )
-  }
-
   return (
-    <div>
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-base font-semibold flex items-center gap-2">
-          <Info className="h-4 w-4 text-info" />
-          Actualités
-        </h3>
-        <Link
-          href="/articles"
-          className="text-info hover:text-info text-sm font-medium flex items-center"
-        >
-          Voir tout
-          <ArrowRight className="ml-1 h-4 w-4" />
-        </Link>
-      </div>
-
-      <div className="relative">
-        <Carousel className="w-full">
-          <CarouselContent className="-ml-2 md:-ml-4">
-            {articles.map((article: any) => (
-              <CarouselItem key={article.id} className="pl-2 md:pl-4 sm:basis-1/2 lg:basis-1/2">
-                <Card className="overflow-hidden h-full border hover:shadow-md transition-all">
-                  <div className="relative h-48 overflow-hidden">
-                    <img
-                      src={
-                        article.photo_url
-                          ? `${getBackendBaseUrl()}${article.photo_url}`
-                          : "https://placehold.co/600x400"
-                      }
-                      alt={article.title}
-                      className="w-full h-full object-cover transition-transform hover:scale-105 duration-500"
-                      loading="lazy"
-                    />
-                    <div className="absolute top-2 right-2 flex gap-1">
-                      {article.tags &&
-                        article.tags.slice(0, 2).map((tag: string) => (
-                          <Badge key={tag} className="bg-black/70 hover:bg-black/80 text-white backdrop-blur-sm">
-                            {tag}
-                          </Badge>
-                        ))}
-                      {article.tags && article.tags.length > 2 && (
-                        <Badge className="bg-black/70 hover:bg-black/80 text-white backdrop-blur-sm">
-                          +{article.tags.length - 2}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                  <CardContent className="p-4 h-44 flex flex-col">
-                    <Badge
-                      variant="outline"
-                      className="mb-2 text-xs flex w-fit items-center gap-1 text-muted-foreground"
-                    >
-                      <Calendar className="w-3 h-3" />
-                      {new Date(article.createdAt).toLocaleDateString("fr-FR", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })}
-                    </Badge>
-                    <h3 className="font-bold text-lg mb-2 line-clamp-2">{article.title}</h3>
-                    <p className="text-sm text-muted-foreground line-clamp-3 mb-4 flex-1">
-                      {article.description}
-                    </p>
-                    <Link
-                      href={`/articles/${article.id}`}
-                      className="text-info hover:text-info text-sm font-medium flex items-center"
-                    >
-                      Lire l&apos;article complet
-                      <ArrowRight className="ml-1 h-4 w-4" />
-                    </Link>
-                  </CardContent>
-                </Card>
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-          <div className="absolute -left-1 top-1/2 -translate-y-1/2">
-            <CarouselPrevious className="bg-card/80 backdrop-blur-sm hover:bg-card" />
-          </div>
-          <div className="absolute -right-1 top-1/2 -translate-y-1/2">
-            <CarouselNext className="bg-card/80 backdrop-blur-sm hover:bg-card" />
-          </div>
-        </Carousel>
-      </div>
-    </div>
+    <WidgetContainer
+      title={WIDGET_REGISTRY["articles"].label}
+      action={<WidgetLink href="/articles">Tout voir</WidgetLink>}
+    >
+      {renderContent()}
+    </WidgetContainer>
   )
 }

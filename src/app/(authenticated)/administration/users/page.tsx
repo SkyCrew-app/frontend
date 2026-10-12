@@ -1,78 +1,58 @@
 "use client"
 
-import type React from "react"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useQuery, useMutation, useLazyQuery } from "@apollo/client"
-import { motion } from "framer-motion"
 import { useToast } from "@/components/hooks/use-toast"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { Button } from "@/components/ui/button"
-import { AlertCircle } from "lucide-react"
 import { CREATE_USER, GET_USERS, UPDATE_USER, GET_USER_DETAILS } from "@/graphql/user"
 import { CREATE_LICENSE } from "@/graphql/licences"
 import { GET_ROLES } from "@/graphql/roles"
 import type { User, Role, UserDetails } from "@/interfaces/user"
+import { PageHeader } from "@/components/layout/PageHeader"
+import { ErrorState } from "@/components/layout/ErrorState"
 import { UsersTable } from "@/components/admin-user/users-table"
 import { CreateUserForm } from "@/components/admin-user/create-user-form"
 import { EditUserForm } from "@/components/admin-user/edit-user-form"
-import { AddLicenseForm } from "@/components/admin-user/add-license-form"
+import { AddLicenseForm, type LicenseFormValues } from "@/components/admin-user/add-license-form"
 import { UserDetailsDialog } from "@/components/admin-user/user-details"
 import { UserFilters } from "@/components/admin-user/user-filters"
 import { PaginationControls } from "@/components/admin-user/pagination-controls"
 import { calendarDayToISOString } from "@/lib/datetime"
 
-const fadeIn = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { duration: 0.4 } },
-}
+const USERS_PER_PAGE = 10
 
 export default function AdministrationPage() {
-  const [users, setUsers] = useState<User[]>([])
-  const [roles, setRoles] = useState<Role[]>([])
   const [selectedRole, setSelectedRole] = useState<string | null>(null)
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false)
+  const [isLicenseDialogOpen, setIsLicenseDialogOpen] = useState(false)
+  const [licenseUserId, setLicenseUserId] = useState<string | null>(null)
+  // Set when the licence dialog was opened from a member sheet, to come back to it.
+  const [returnToDetails, setReturnToDetails] = useState(false)
+  const [selectedUserDetails, setSelectedUserDetails] = useState<UserDetails | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
-  const [selectedUserDetails, setSelectedUserDetails] = useState<UserDetails | null>(null)
-  const [currentReservationPage, setCurrentReservationPage] = useState(1)
-  const [currentLicensePage, setCurrentLicensePage] = useState(1)
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [expirationDate, setExpirationDate] = useState<Date | null>(null)
-  const [issueDate, setIssueDate] = useState<Date | null>(null)
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const [filterRole, setFilterRole] = useState<string | null>(null)
   const [filterConfirmed, setFilterConfirmed] = useState<boolean | null>(null)
   const [filter2FA, setFilter2FA] = useState<boolean | null>(null)
-  const itemsPerPage = 3
-  const [usersPerPage] = useState(10)
-  const [isFilterOpen, setIsFilterOpen] = useState(false)
 
   const { toast } = useToast()
 
-  const { loading, error, data, refetch } = useQuery(GET_USERS, {
-    onCompleted: (data) => {
-      setUsers(data.getUsers || [])
-    },
+  const { loading, error, data, refetch } = useQuery<{ getUsers: User[] }>(GET_USERS, {
     fetchPolicy: "cache-and-network",
   })
+  const { data: rolesData } = useQuery<{ roles: Role[] }>(GET_ROLES)
 
-  useQuery(GET_ROLES, {
-    onCompleted: (data) => setRoles(data.roles),
+  const users: User[] = data?.getUsers ?? []
+  const roles: Role[] = rolesData?.roles ?? []
+
+  const [createUser, { loading: creating }] = useMutation(CREATE_USER)
+  const [updateUser, { loading: updating }] = useMutation(UPDATE_USER)
+  const [onAddLicense, { loading: addingLicense }] = useMutation(CREATE_LICENSE)
+  const [getUserDetails] = useLazyQuery<{ getUserDetails: UserDetails }>(GET_USER_DETAILS, {
+    fetchPolicy: "network-only",
   })
-
-  const [createUser] = useMutation(CREATE_USER)
-  const [updateUser] = useMutation(UPDATE_USER)
-  const [onAddLicense] = useMutation(CREATE_LICENSE)
-  const [getUserDetails] = useLazyQuery<{ getUserDetails: UserDetails }>(GET_USER_DETAILS)
-
-  useEffect(() => {
-    if (data?.getUsers) {
-      setUsers(data.getUsers)
-    }
-  }, [data])
 
   const handleCreateUser = async (userData: {
     first_name: string
@@ -83,20 +63,17 @@ export default function AdministrationPage() {
     try {
       await createUser({ variables: userData })
       toast({
-        title: "Utilisateur créé avec succès",
-        description: "L'utilisateur va recevoir un email pour confirmer son compte.",
-        variant: "default",
+        title: "Membre ajouté",
+        description: "Il va recevoir un e-mail pour activer son compte.",
       })
       setIsCreateDialogOpen(false)
       refetch()
-    } catch (error) {
-      if (error instanceof Error) {
-        toast({
-          title: "Erreur lors de la création de l'utilisateur",
-          description: error.message,
-          variant: "destructive",
-        })
-      }
+    } catch {
+      toast({
+        title: "Le membre n'a pas pu être ajouté",
+        description: "Vérifiez que cette adresse e-mail n'est pas déjà utilisée, puis réessayez.",
+        variant: "destructive",
+      })
     }
   }
 
@@ -112,108 +89,80 @@ export default function AdministrationPage() {
         variables: {
           updateUserInput: {
             ...userData,
+            // An empty date input is not a date: leave the field out.
+            date_of_birth: userData.date_of_birth || undefined,
             roleId: selectedRole ? Number(selectedRole) : null,
           },
         },
       })
-      toast({
-        title: "Utilisateur mis à jour avec succès",
-        variant: "default",
-      })
+      toast({ title: "Membre mis à jour" })
       setIsEditDialogOpen(false)
       refetch()
-    } catch (error) {
-      if (error instanceof Error) {
-        toast({
-          title: "Erreur lors de la mise à jour de l'utilisateur",
-          description: error.message,
-          variant: "destructive",
-        })
-      }
+    } catch {
+      toast({
+        title: "Les modifications n'ont pas pu être enregistrées",
+        description: "Réessayez dans un instant.",
+        variant: "destructive",
+      })
     }
   }
 
+  const loadUserDetails = async (userId: string) => {
+    const result = await getUserDetails({ variables: { id: Number.parseInt(userId) } })
+    if (result.data?.getUserDetails) {
+      setSelectedUserDetails(result.data.getUserDetails)
+      return
+    }
+    setIsDetailsDialogOpen(false)
+    toast({
+      title: "La fiche du membre n'a pas pu être chargée",
+      description: "Réessayez dans un instant.",
+      variant: "destructive",
+    })
+  }
+
+  // The dialog opens at once with a skeleton, then fills in.
   const handleViewDetails = (userId: string) => {
-    getUserDetails({
-      variables: { id: Number.parseInt(userId) },
-      onCompleted: (data) => {
-        setSelectedUserDetails(data.getUserDetails)
-        setIsDetailsDialogOpen(true)
-      },
-      onError: (error) => {
-        toast({
-          title: "Erreur",
-          description: "Impossible de charger les détails de l'utilisateur: " + error.message,
-          variant: "destructive",
-        })
-      },
-    })
+    setSelectedUserDetails(null)
+    setIsDetailsDialogOpen(true)
+    loadUserDetails(userId)
   }
 
-  const handleSubmitLicences = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const formData = new FormData(e.target as HTMLFormElement)
-
-    if (!selectedUserId) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez sélectionner un utilisateur.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    if (!issueDate) {
-      toast({
-        title: "Veuillez sélectionner une date de délivrance",
-        variant: "destructive",
-      })
-      return
-    }
-
-    const files = formData.getAll("documents") as File[]
-    const validFiles = files.filter((file) => file.size > 0)
-
-    onAddLicense({
-      variables: {
-        createLicenseInput: {
-          user_id: Number.parseInt(selectedUserId),
-          license_type: formData.get("license_type") as string,
-          license_number: formData.get("license_number") as string,
-          expiration_date: calendarDayToISOString(expirationDate),
-          issue_date: calendarDayToISOString(issueDate),
-          certification_authority: (formData.get("certification_authority") as string) || null,
-          status: (formData.get("status") as string) || "active",
+  const handleSubmitLicense = async (values: LicenseFormValues) => {
+    try {
+      await onAddLicense({
+        variables: {
+          createLicenseInput: {
+            user_id: Number.parseInt(values.userId),
+            license_type: values.license_type,
+            license_number: values.license_number,
+            expiration_date: calendarDayToISOString(values.expirationDate),
+            issue_date: calendarDayToISOString(values.issueDate),
+            certification_authority: values.certification_authority || null,
+            status: values.status || "active",
+          },
+          documents: values.documents.length > 0 ? values.documents : null,
         },
-        documents: validFiles.length > 0 ? validFiles : null,
-      },
-    })
-      .then(() => {
-        toast({
-          title: "Licence ajoutée avec succès",
-          variant: "default",
-        })
-        setIsDialogOpen(false)
-        if (selectedUserDetails && selectedUserId === selectedUserDetails.id) {
-          handleViewDetails(selectedUserId)
-        }
       })
-      .catch((error) => {
-        if (error instanceof Error) {
-          toast({
-            title: "Erreur lors de l'ajout de la licence",
-            description: error.message,
-            variant: "destructive",
-          })
-        }
+      toast({ title: "Licence ajoutée" })
+      setIsLicenseDialogOpen(false)
+      if (returnToDetails) handleViewDetails(values.userId)
+    } catch {
+      toast({
+        title: "La licence n'a pas pu être ajoutée",
+        description: "Vérifiez les informations saisies, puis réessayez.",
+        variant: "destructive",
       })
+    }
   }
 
+  const search = searchTerm.trim().toLowerCase()
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
-      (user.first_name?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
-      (user.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase())
+      search === "" ||
+      `${user.first_name ?? ""} ${user.last_name ?? ""}`.toLowerCase().includes(search) ||
+      `${user.last_name ?? ""} ${user.first_name ?? ""}`.toLowerCase().includes(search) ||
+      user.email.toLowerCase().includes(search)
 
     const matchesRole = filterRole === null || user.role?.id.toString() === filterRole
     const matchesConfirmed = filterConfirmed === null || user.isEmailConfirmed === filterConfirmed
@@ -222,34 +171,26 @@ export default function AdministrationPage() {
     return matchesSearch && matchesRole && matchesConfirmed && matches2FA
   })
 
-  const handleExpirationDateChange = (date: Date | undefined) => {
-    if (date && issueDate && date < issueDate) {
-      toast({
-        title: "Erreur",
-        description: "La date d'expiration ne peut pas être antérieure à la date d'émission.",
-        variant: "destructive",
-      })
-      return
-    }
-    setExpirationDate(date ?? null)
-  }
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / USERS_PER_PAGE))
+  // A narrower filter or a refreshed list can leave the current page out of range.
+  const page = Math.min(currentPage, totalPages)
+  const currentUsers = filteredUsers.slice((page - 1) * USERS_PER_PAGE, page * USERS_PER_PAGE)
+  const hasFilters = search !== "" || filterRole !== null || filterConfirmed !== null || filter2FA !== null
 
-  const indexOfLastUser = currentPage * usersPerPage
-  const indexOfFirstUser = indexOfLastUser - usersPerPage
-  const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser)
-
-  const paginate = (pageNumber: number) => {
-    if (pageNumber < 1 || pageNumber > Math.ceil(filteredUsers.length / usersPerPage)) {
-      return
+  // Any change of filter goes back to the first page.
+  const withPageReset =
+    <T,>(setter: (value: T) => void) =>
+    (value: T) => {
+      setter(value)
+      setCurrentPage(1)
     }
-    setCurrentPage(pageNumber)
-  }
 
   const resetFilters = () => {
     setFilterRole(null)
     setFilterConfirmed(null)
     setFilter2FA(null)
     setSearchTerm("")
+    setCurrentPage(1)
   }
 
   const handleEditUser = (user: User) => {
@@ -258,78 +199,91 @@ export default function AdministrationPage() {
     setIsEditDialogOpen(true)
   }
 
-  if (error) {
-    return (
-      <div className="w-full">
-        <Alert variant="destructive" className="mb-6">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Erreur</AlertTitle>
-          <AlertDescription>
-            Une erreur est survenue lors du chargement des utilisateurs: {error.message}
-          </AlertDescription>
-        </Alert>
-        <Button onClick={() => refetch()}>Réessayer</Button>
-      </div>
-    )
+  const handleEditFromDetails = (userId: string) => {
+    const user = users.find((candidate) => candidate.id === userId)
+    if (!user) return
+    setIsDetailsDialogOpen(false)
+    handleEditUser(user)
   }
 
+  const openLicenseDialog = (userId: string | null) => {
+    setLicenseUserId(userId)
+    setReturnToDetails(false)
+    setIsLicenseDialogOpen(true)
+  }
+
+  // One dialog at a time: the sheet closes, and reopens once the licence is saved.
+  const openLicenseFromDetails = (userId: string) => {
+    setIsDetailsDialogOpen(false)
+    setLicenseUserId(userId)
+    setReturnToDetails(true)
+    setIsLicenseDialogOpen(true)
+  }
+
+  const failed = Boolean(error) && users.length === 0
+
   return (
-    <motion.div initial="hidden" animate="visible" variants={fadeIn} className="w-full">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Gestion des membres</h1>
-          <p className="text-muted-foreground mt-1">Gérez les utilisateurs, leurs licences et leurs informations</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <CreateUserForm
-            isOpen={isCreateDialogOpen}
-            onOpenChange={setIsCreateDialogOpen}
-            onSubmit={handleCreateUser}
-          />
-
-          <AddLicenseForm
-            isOpen={isDialogOpen}
-            onOpenChange={setIsDialogOpen}
-            users={users}
-            loading={loading}
-            selectedUserId={selectedUserId}
-            setSelectedUserId={setSelectedUserId}
-            issueDate={issueDate}
-            setIssueDate={setIssueDate}
-            expirationDate={expirationDate}
-            setExpirationDate={setExpirationDate}
-            onSubmit={handleSubmitLicences}
-            onExpirationDateChange={handleExpirationDateChange}
-          />
-        </div>
-      </div>
-
-      <UserFilters
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        filterRole={filterRole}
-        setFilterRole={setFilterRole}
-        filterConfirmed={filterConfirmed}
-        setFilterConfirmed={setFilterConfirmed}
-        filter2FA={filter2FA}
-        setFilter2FA={setFilter2FA}
-        isFilterOpen={isFilterOpen}
-        setIsFilterOpen={setIsFilterOpen}
-        resetFilters={resetFilters}
-        roles={roles}
+    <div className="space-y-6">
+      <PageHeader
+        title="Membres"
+        description="Les membres du club, leurs rôles et leurs licences."
+        className="mb-0"
+        actions={
+          <>
+            <AddLicenseForm
+              isOpen={isLicenseDialogOpen}
+              onOpenChange={(open) => (open ? openLicenseDialog(null) : setIsLicenseDialogOpen(false))}
+              users={users}
+              loading={loading}
+              defaultUserId={licenseUserId}
+              saving={addingLicense}
+              onSubmit={handleSubmitLicense}
+            />
+            <CreateUserForm
+              isOpen={isCreateDialogOpen}
+              onOpenChange={setIsCreateDialogOpen}
+              saving={creating}
+              onSubmit={handleCreateUser}
+            />
+          </>
+        }
       />
 
-      <UsersTable users={currentUsers} loading={loading} onEdit={handleEditUser} onViewDetails={handleViewDetails} />
+      {failed ? (
+        <ErrorState onRetry={() => refetch()} />
+      ) : (
+        <>
+          <UserFilters
+            searchTerm={searchTerm}
+            setSearchTerm={withPageReset(setSearchTerm)}
+            filterRole={filterRole}
+            setFilterRole={withPageReset(setFilterRole)}
+            filterConfirmed={filterConfirmed}
+            setFilterConfirmed={withPageReset(setFilterConfirmed)}
+            filter2FA={filter2FA}
+            setFilter2FA={withPageReset(setFilter2FA)}
+            resetFilters={resetFilters}
+            roles={roles}
+          />
 
-      {filteredUsers.length > 0 && (
-        <PaginationControls
-          currentPage={currentPage}
-          totalItems={filteredUsers.length}
-          itemsPerPage={usersPerPage}
-          onPageChange={paginate}
-          indexOfFirstItem={indexOfFirstUser}
-          indexOfLastItem={indexOfLastUser}
-        />
+          <UsersTable
+            users={currentUsers}
+            loading={loading && users.length === 0}
+            filtered={hasFilters}
+            onEdit={handleEditUser}
+            onViewDetails={handleViewDetails}
+            onAddLicense={openLicenseDialog}
+            onResetFilters={resetFilters}
+          />
+
+          <PaginationControls
+            currentPage={page}
+            totalItems={filteredUsers.length}
+            itemsPerPage={USERS_PER_PAGE}
+            onPageChange={setCurrentPage}
+            itemLabel={filteredUsers.length > 1 ? "membres" : "membre"}
+          />
+        </>
       )}
 
       <EditUserForm
@@ -339,6 +293,7 @@ export default function AdministrationPage() {
         roles={roles}
         selectedRole={selectedRole}
         onRoleChange={setSelectedRole}
+        saving={updating}
         onSubmit={handleUpdateUser}
       />
 
@@ -346,12 +301,9 @@ export default function AdministrationPage() {
         isOpen={isDetailsDialogOpen}
         onOpenChange={setIsDetailsDialogOpen}
         userDetails={selectedUserDetails}
-        currentReservationPage={currentReservationPage}
-        setCurrentReservationPage={setCurrentReservationPage}
-        currentLicensePage={currentLicensePage}
-        setCurrentLicensePage={setCurrentLicensePage}
-        itemsPerPage={itemsPerPage}
+        onEdit={handleEditFromDetails}
+        onAddLicense={openLicenseFromDetails}
       />
-    </motion.div>
+    </div>
   )
 }

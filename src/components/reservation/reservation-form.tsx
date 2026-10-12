@@ -1,27 +1,27 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { format } from "date-fns"
-import { fr } from "date-fns/locale"
 import { Loader2 } from "lucide-react"
 import { FlightCategoryError } from "@/components/reservation/flight-category-error"
+import { FLIGHT_CATEGORY_OPTIONS } from "@/components/reservation/flight-category"
 
-interface Aircraft {
-  id: number
-  registration_number: string
+export interface ReservationSlotSummary {
+  aircraft: string
+  /** Long date, e.g. "mercredi 23 octobre 2024". */
+  date: string
+  start: string
+  end: string
 }
 
 interface ReservationFormProps {
   isEdit?: boolean
-  selectedAircraft?: number | null
-  aircraftData?: any
-  selectedTimeRange?: { start: string | null; end: string | null }
-  currentDate?: Date
+  /** The slot being booked or edited, shown read-only above the fields. */
+  summary?: ReservationSlotSummary
   purpose: string
   setPurpose: (value: string) => void
   notes: string
@@ -29,32 +29,13 @@ interface ReservationFormProps {
   flightCategory: string
   setFlightCategory: (value: string) => void
   onSubmit: () => void
+  onCancel: () => void
   isSubmitting: boolean
-  startTime?: string
-  endTime?: string
 }
-
-const flightCategoryMapping = {
-  LOCAL: "Local",
-  CROSS_COUNTRY: "Vol longue distance",
-  INSTRUCTION: "Instruction",
-  TOURISM: "Tourisme",
-  TRAINING: "Entraînement",
-  MAINTENANCE: "Maintenance",
-  PRIVATE: "Privé",
-  CORPORATE: "Affaires",
-}
-
-const flightCategoryReverseMapping = Object.fromEntries(
-  Object.entries(flightCategoryMapping).map(([key, value]) => [value, key]),
-)
 
 export function ReservationForm({
   isEdit = false,
-  selectedAircraft,
-  aircraftData,
-  selectedTimeRange,
-  currentDate,
+  summary,
   purpose,
   setPurpose,
   notes,
@@ -62,126 +43,107 @@ export function ReservationForm({
   flightCategory,
   setFlightCategory,
   onSubmit,
+  onCancel,
   isSubmitting,
-  startTime,
-  endTime,
 }: ReservationFormProps) {
-  const [selectedCategoryFr, setSelectedCategoryFr] = useState<string | undefined>(
-    flightCategory ? flightCategoryMapping[flightCategory as keyof typeof flightCategoryMapping] : undefined,
-  )
-
-  useEffect(() => {
-    if (flightCategory) {
-      setSelectedCategoryFr(flightCategoryMapping[flightCategory as keyof typeof flightCategoryMapping])
-    }
-  }, [flightCategory])
-
   const [categoryError, setCategoryError] = useState(false)
 
-  // La catégorie est obligatoire à la création (enum requis par l'API).
-  const handleSubmit = () => {
-    if (!isEdit && !flightCategory) {
+  // The category is a required enum of the API.
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault()
+    if (!flightCategory) {
       setCategoryError(true)
       return
     }
     onSubmit()
   }
 
-  const getAircraftName = () => {
-    if (!selectedAircraft || !aircraftData) return ""
-    const aircraft = aircraftData.getAircrafts.find((a: Aircraft) => a.id === selectedAircraft)
-    return aircraft ? aircraft.registration_number : ""
-  }
-
-  const formattedDate = currentDate ? format(currentDate, "EEEE d MMMM yyyy", { locale: fr }) : ""
-
   return (
-    <div className="space-y-4">
-      {!isEdit && (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label className="text-muted-foreground">Avion</Label>
-              <p className="font-medium">{getAircraftName()}</p>
-            </div>
-            <div>
-              <Label className="text-muted-foreground">Date</Label>
-              <p className="font-medium">{formattedDate}</p>
-            </div>
+    <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+      {summary && (
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-3 rounded-lg bg-muted/50 p-3 text-sm">
+          <div>
+            <dt className="text-xs text-muted-foreground">Avion</dt>
+            <dd className="font-medium">{summary.aircraft}</dd>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label className="text-muted-foreground">Heure de début</Label>
-              <p className="font-medium">{selectedTimeRange?.start || startTime}</p>
-            </div>
-            <div>
-              <Label className="text-muted-foreground">Heure de fin</Label>
-              <p className="font-medium">{selectedTimeRange?.end || endTime}</p>
-            </div>
+          <div>
+            <dt className="text-xs text-muted-foreground">Date</dt>
+            <dd className="font-medium">{summary.date}</dd>
           </div>
-
-          <Separator />
-        </>
+          <div>
+            <dt className="text-xs text-muted-foreground">Début</dt>
+            <dd className="font-medium tabular-nums">{summary.start}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-muted-foreground">Fin</dt>
+            <dd className="font-medium tabular-nums">{summary.end}</dd>
+          </div>
+        </dl>
       )}
 
-      <div className="space-y-4">
-        <div>
-          <Label htmlFor="purpose">But de la réservation</Label>
-          <Input
-            id="purpose"
-            placeholder="Ex: Vol d'entraînement, Instruction..."
-            value={purpose}
-            onChange={(e) => setPurpose(e.target.value)}
-          />
-        </div>
-
-        <div>
-          <Label htmlFor="category">Catégorie de vol</Label>
-          <Select
-            value={selectedCategoryFr}
-            onValueChange={(value) => {
-              setSelectedCategoryFr(value)
-              setFlightCategory(flightCategoryReverseMapping[value])
-              setCategoryError(false)
-            }}
-          >
-            <SelectTrigger id="category" aria-invalid={categoryError} className={categoryError ? "border-destructive" : ""}>
-              <SelectValue placeholder="Sélectionner une catégorie" />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.values(flightCategoryMapping).map((categoryFr) => (
-                <SelectItem key={categoryFr} value={categoryFr}>
-                  {categoryFr}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <FlightCategoryError visible={categoryError} />
-        </div>
-
-        <div>
-          <Label htmlFor="notes">Notes supplémentaires</Label>
-          <Textarea
-            id="notes"
-            placeholder="Informations complémentaires..."
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            rows={3}
-          />
-        </div>
+      <div className="space-y-2">
+        <Label htmlFor="purpose">But de la réservation</Label>
+        <Input
+          id="purpose"
+          placeholder="Ex. : tours de piste, navigation vers Deauville"
+          value={purpose}
+          onChange={(e) => setPurpose(e.target.value)}
+        />
       </div>
 
-      <div className="flex justify-end pt-4">
-        <Button onClick={handleSubmit} disabled={isSubmitting}>
-          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isEdit ? "Mettre à jour" : "Créer la réservation"}
+      <div className="space-y-2">
+        <Label htmlFor="category">
+          Catégorie de vol{" "}
+          <span className="text-destructive" aria-hidden="true">
+            *
+          </span>
+        </Label>
+        <Select
+          value={flightCategory || undefined}
+          onValueChange={(value) => {
+            setFlightCategory(value)
+            setCategoryError(false)
+          }}
+        >
+          <SelectTrigger
+            id="category"
+            aria-invalid={categoryError}
+            aria-required="true"
+            className={categoryError ? "border-destructive" : ""}
+          >
+            <SelectValue placeholder="Sélectionner une catégorie" />
+          </SelectTrigger>
+          <SelectContent>
+            {FLIGHT_CATEGORY_OPTIONS.map((category) => (
+              <SelectItem key={category.value} value={category.value}>
+                {category.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <FlightCategoryError visible={categoryError} />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="notes">Notes</Label>
+        <Textarea
+          id="notes"
+          placeholder="Passagers, plein à prévoir, consignes particulières…"
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          rows={3}
+        />
+      </div>
+
+      <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
+        <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
+          Annuler
+        </Button>
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+          {isEdit ? "Enregistrer" : "Créer la réservation"}
         </Button>
       </div>
-    </div>
+    </form>
   )
-}
-
-function Separator() {
-  return <div className="h-px bg-border my-4" />
 }

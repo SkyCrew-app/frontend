@@ -1,25 +1,29 @@
 'use client';
 
+import { REGEXP_ONLY_DIGITS } from "input-otp";
+import { Loader2 } from "lucide-react";
 import {
   InputOTP,
   InputOTPGroup,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useMutation } from "@apollo/client";
 import { useRouter } from "next/navigation";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { VERIFY_2FA_SECRET } from "@/graphql/user";
 import { useToast } from "@/components/hooks/use-toast";
+import { AuthCard, AuthLink, FieldError } from "@/app/auth/_components/AuthCard";
+
+const CODE_LENGTH = 6;
 
 export default function TwoFactorAuthPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const [otp, setOtp] = useState(Array(6).fill(""));
+  const [otp, setOtp] = useState("");
+  const [codeError, setCodeError] = useState<string | null>(null);
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
-  const inputRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [verify2FASecret, { loading }] = useMutation(VERIFY_2FA_SECRET);
 
   useEffect(() => {
@@ -36,33 +40,21 @@ export default function TwoFactorAuthPage() {
     setPendingEmail(email);
   }, [router, toast]);
 
-  const handleChange = (index: number, value: string) => {
-    if (!/^\d*$/.test(value)) return;
-    const newOtp = [...otp];
-    newOtp[index] = value.slice(0, 1);
-    setOtp(newOtp);
-
-    if (value && index < otp.length - 1) {
-      inputRefs.current[index + 1]?.focus();
-    }
-  };
-
-  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Backspace" && !otp[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus();
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!pendingEmail) {
       toast({
         variant: "destructive",
-        title: "Erreur",
-        description: "Email introuvable. Veuillez vous reconnecter.",
+        title: "Session expirée",
+        description: "Veuillez vous reconnecter.",
       });
       router.push('/');
+      return;
+    }
+
+    if (otp.length < CODE_LENGTH) {
+      setCodeError(`Saisissez les ${CODE_LENGTH} chiffres du code.`);
       return;
     }
 
@@ -70,63 +62,56 @@ export default function TwoFactorAuthPage() {
       await verify2FASecret({
         variables: {
           email: pendingEmail,
-          token: otp.join(""),
+          token: otp,
         },
       });
 
       sessionStorage.removeItem('2fa_pending_email');
       router.push("/dashboard");
     } catch {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Le code OTP est invalide.",
-      });
+      setCodeError("Ce code est invalide ou a expiré. Saisissez le code actuellement affiché par votre application.");
+      setOtp("");
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Authentification à deux facteurs</CardTitle>
-          <CardDescription>
-            Entrez le code à 6 chiffres généré par votre application d&apos;authentification.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit}>
-            <Label htmlFor="otp-0">Code OTP</Label>
-            <InputOTP maxLength={6}>
-              <InputOTPGroup>
-                {Array.from({ length: 6 }, (_, index) => (
-                  <InputOTPSlot
-                    key={index}
-                    index={index}
-                    ref={(el) => {
-                      inputRefs.current[index] = el;
-                    }}
-                  >
-                    <input
-                      id={`otp-${index}`}
-                      className="w-full h-full text-center bg-transparent border-none outline-none"
-                      value={otp[index]}
-                      onChange={(e) => handleChange(index, e.target.value)}
-                      onKeyDown={(e) => handleKeyDown(index, e)}
-                      maxLength={1}
-                      autoComplete="one-time-code"
-                      inputMode="numeric"
-                    />
-                  </InputOTPSlot>
-                ))}
-              </InputOTPGroup>
-            </InputOTP>
-            <Button type="submit" disabled={loading || !pendingEmail} className="mt-4 w-full">
-              {loading ? "Vérification..." : "Valider"}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+    <AuthCard
+      title="Double authentification"
+      description="Saisissez le code à 6 chiffres affiché par votre application d'authentification."
+      footer={<AuthLink href="/">Retour à la connexion</AuthLink>}
+    >
+      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+        <div className="flex flex-col items-center gap-1.5">
+          <Label htmlFor="otp">Code de vérification</Label>
+          <InputOTP
+            id="otp"
+            maxLength={CODE_LENGTH}
+            pattern={REGEXP_ONLY_DIGITS}
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            autoFocus
+            value={otp}
+            onChange={(value) => {
+              setOtp(value);
+              setCodeError(null);
+            }}
+            disabled={loading}
+            aria-invalid={!!codeError}
+            aria-describedby={codeError ? "otp-error" : undefined}
+          >
+            <InputOTPGroup>
+              {Array.from({ length: CODE_LENGTH }, (_, index) => (
+                <InputOTPSlot key={index} index={index} className="h-11 w-11 text-base" />
+              ))}
+            </InputOTPGroup>
+          </InputOTP>
+          <FieldError id="otp-error">{codeError}</FieldError>
+        </div>
+        <Button type="submit" disabled={loading || !pendingEmail || otp.length < CODE_LENGTH} className="w-full">
+          {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+          Vérifier le code
+        </Button>
+      </form>
+    </AuthCard>
   );
 }

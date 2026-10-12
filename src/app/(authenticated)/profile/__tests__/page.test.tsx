@@ -3,6 +3,7 @@ import { render, screen, waitFor, fireEvent, within } from '@testing-library/rea
 import ProfilePage from '../page';
 import { MockedProvider, MockedResponse } from '@apollo/client/testing';
 import { GET_ME, GET_USER_BY_EMAIL, UPDATE_NOTIFICATION_SETTINGS, UPDATE_USER } from '@/graphql/user';
+import { GraphQLError } from 'graphql';
 import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
 
@@ -17,9 +18,6 @@ jest.mock('@/components/hooks/use-toast', () => ({
   toast: (...args: unknown[]) => mockToast(...args),
   useToast: () => ({ toast: (...args: unknown[]) => mockToast(...args) }),
 }));
-
-// jsdom n'implémente pas scrollIntoView, utilisé par le formulaire de profil.
-window.HTMLElement.prototype.scrollIntoView = jest.fn();
 
 const mockAxios = new MockAdapter(axios);
 
@@ -91,30 +89,19 @@ const renderPage = (mocks: MockedResponse[]) =>
     </MockedProvider>
   );
 
-const setViewport = (isMobile: boolean) => {
-  (window.matchMedia as jest.Mock).mockImplementation((query: string) => ({
-    matches: isMobile,
-    media: query,
-    onchange: null,
-    addListener: jest.fn(),
-    removeListener: jest.fn(),
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
-    dispatchEvent: jest.fn(),
-  }));
+// Radix active un onglet au mousedown.
+const openTab = (name: string) => {
+  fireEvent.mouseDown(screen.getByRole('tab', { name }));
+  expect(screen.getByRole('tab', { name })).toHaveAttribute('aria-selected', 'true');
 };
 
-const openProfileSection = async () => {
-  await screen.findByText(`John Doe - ${EMAIL}`);
-  fireEvent.click(screen.getByRole('heading', { name: 'Profil' }));
-  expect(screen.getByRole('heading', { name: 'Modifier votre profil' })).toBeInTheDocument();
+const waitForProfile = async () => {
+  await waitFor(() => {
+    expect(screen.getByLabelText('Prénom')).toHaveValue('John');
+  });
 };
 
 describe('ProfilePage Component', () => {
-  beforeEach(() => {
-    setViewport(false);
-  });
-
   afterEach(() => {
     jest.restoreAllMocks();
     mockPush.mockClear();
@@ -122,74 +109,110 @@ describe('ProfilePage Component', () => {
     mockAxios.reset();
   });
 
-  test('affiche le chargement puis les données utilisateur dans les cartes', async () => {
+  test('affiche le chargement puis les onglets avec le formulaire de profil pré-rempli', async () => {
     const { container } = renderPage([meMock, userMock(() => ({ ...baseUser, licenses }), 30)]);
 
-    expect(screen.getByRole('heading', { name: 'Mon profil' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Mon profil' })).toBeInTheDocument();
 
-    // Squelettes pendant le chargement de l'utilisateur (1 titre + 6 cartes).
+    // Squelettes pendant le chargement de l'utilisateur (onglets + contenu).
     await waitFor(() => {
-      expect(container.querySelectorAll('.animate-pulse')).toHaveLength(7);
+      expect(container.querySelectorAll('.animate-pulse')).toHaveLength(2);
     });
 
-    expect(await screen.findByText(`John Doe - ${EMAIL}`)).toBeInTheDocument();
+    await waitForProfile();
     expect(container.querySelectorAll('.animate-pulse')).toHaveLength(0);
-    expect(screen.getByText('Email: Activé - SMS: Désactivé')).toBeInTheDocument();
-    expect(screen.getByText('2 licences')).toBeInTheDocument();
+    // Le titre de la page reste le seul h1.
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
 
-    ['Profil', 'Notifications', 'Préférences', 'Licences', 'Mot de passe', 'Activer le 2FA'].forEach((title) => {
-      expect(screen.getByRole('heading', { name: title })).toBeInTheDocument();
+    ['Profil', 'Sécurité', 'Notifications', 'Préférences', 'Licences'].forEach((name) => {
+      expect(screen.getByRole('tab', { name })).toBeInTheDocument();
     });
-  });
+    expect(screen.getByRole('tab', { name: 'Profil' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: 'Sécurité' })).toHaveAttribute('aria-selected', 'false');
 
-  test('affiche un toast d\'erreur et les libellés par défaut si la requête utilisateur échoue', async () => {
-    renderPage([
-      meMock,
-      {
-        request: { query: GET_USER_BY_EMAIL, variables: { email: EMAIL } },
-        error: new Error('Erreur réseau'),
-        maxUsageCount: Number.POSITIVE_INFINITY,
-      },
-    ]);
-
-    await waitFor(() => {
-      expect(mockToast).toHaveBeenCalledWith({
-        variant: 'destructive',
-        title: 'Erreur',
-        description: 'Erreur lors de la récupération des données utilisateur',
-      });
-    });
-
-    expect(screen.getByRole('heading', { name: 'Mon profil' })).toBeInTheDocument();
-    expect(screen.getByText('Informations personnelles')).toBeInTheDocument();
-    expect(screen.getByText('Paramètres de notifications')).toBeInTheDocument();
-    expect(screen.getByText('Aucune licence')).toBeInTheDocument();
-    expect(screen.queryByText(/John Doe/)).not.toBeInTheDocument();
-
-    // Le toast de la page ne doit pas se répéter à chaque nouveau rendu.
-    const pageToasts = mockToast.mock.calls.filter(
-      ([toast]) => toast.description === 'Erreur lors de la récupération des données utilisateur',
-    );
-    expect(pageToasts).toHaveLength(1);
-  });
-
-  test('permet d\'ouvrir la carte profil avec le formulaire pré-rempli puis de revenir', async () => {
-    renderPage([meMock, userMock()]);
-
-    await openProfileSection();
-
-    expect(screen.queryByRole('heading', { name: 'Notifications' })).not.toBeInTheDocument();
-    expect(screen.getByLabelText('Prénom')).toHaveValue('John');
+    // Le formulaire est directement visible, sans carte ni dialogue à ouvrir.
+    expect(screen.getByLabelText('Prénom')).toBeVisible();
     expect(screen.getByLabelText('Nom')).toHaveValue('Doe');
     expect(screen.getByLabelText('Email')).toHaveValue(EMAIL);
     expect(screen.getByLabelText('Numéro de téléphone')).toHaveValue('0123456789');
     expect(screen.getByLabelText('Adresse')).toHaveValue('123 Rue de Paris');
     expect(screen.getByLabelText('Date de naissance')).toHaveValue('1990-01-01');
+    // Un seul panneau visible à la fois.
+    expect(screen.getAllByRole('tabpanel')).toHaveLength(1);
+    expect(screen.getByLabelText('Mot de passe actuel')).not.toBeVisible();
+  });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Retour' }));
+  test('affiche un état d\'erreur sans toast si la requête utilisateur échoue, puis recharge sur demande', async () => {
+    let failing = true;
+    renderPage([
+      meMock,
+      {
+        request: { query: GET_USER_BY_EMAIL, variables: { email: EMAIL } },
+        result: () =>
+          failing ? { errors: [new GraphQLError('Erreur réseau')] } : { data: { userByEmail: baseUser } },
+        maxUsageCount: Number.POSITIVE_INFINITY,
+      },
+    ]);
 
-    expect(screen.queryByRole('heading', { name: 'Modifier votre profil' })).not.toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Notifications' })).toBeInTheDocument();
+    expect(await screen.findByText('Chargement impossible')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Mon profil' })).toBeInTheDocument();
+    // Pas de formulaire vide à enregistrer par erreur.
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Prénom')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Erreur réseau/)).not.toBeInTheDocument();
+
+    // La page ne signale plus un simple chargement raté par un toast.
+    const pageToasts = mockToast.mock.calls.filter(
+      ([toast]) => toast.description === 'Erreur lors de la récupération des données utilisateur',
+    );
+    expect(pageToasts).toHaveLength(0);
+
+    failing = false;
+    fireEvent.click(screen.getByRole('button', { name: 'Réessayer' }));
+
+    await waitForProfile();
+    expect(screen.queryByText('Chargement impossible')).not.toBeInTheDocument();
+  });
+
+  test('conserve la saisie en cours quand on change d\'onglet', async () => {
+    renderPage([meMock, userMock()]);
+
+    await waitForProfile();
+
+    fireEvent.change(screen.getByLabelText('Prénom'), { target: { value: 'Jane' } });
+
+    openTab('Sécurité');
+    expect(screen.getByLabelText('Prénom')).not.toBeVisible();
+    expect(screen.getByLabelText('Mot de passe actuel')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Activer le 2FA' })).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Mot de passe actuel'), { target: { value: 'secret' } });
+
+    openTab('Profil');
+    expect(screen.getByLabelText('Prénom')).toBeVisible();
+    expect(screen.getByLabelText('Prénom')).toHaveValue('Jane');
+
+    openTab('Sécurité');
+    expect(screen.getByLabelText('Mot de passe actuel')).toHaveValue('secret');
+  });
+
+  test('annule les modifications non enregistrées du profil', async () => {
+    renderPage([meMock, userMock()]);
+
+    await waitForProfile();
+
+    const cancel = screen.getByRole('button', { name: 'Annuler' });
+    expect(cancel).toBeDisabled();
+
+    fireEvent.change(screen.getByLabelText('Prénom'), { target: { value: '' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Enregistrer les modifications' }));
+    expect(screen.getByText('Le prénom est requis.')).toBeInTheDocument();
+
+    expect(cancel).toBeEnabled();
+    fireEvent.click(cancel);
+
+    expect(screen.getByLabelText('Prénom')).toHaveValue('John');
+    expect(screen.queryByText('Le prénom est requis.')).not.toBeInTheDocument();
+    expect(cancel).toBeDisabled();
   });
 
   test('affiche des erreurs de validation et n\'envoie rien si le formulaire est incorrect', async () => {
@@ -204,7 +227,7 @@ describe('ProfilePage Component', () => {
       },
     ]);
 
-    await openProfileSection();
+    await waitForProfile();
 
     fireEvent.change(screen.getByLabelText('Prénom'), { target: { value: '' } });
     fireEvent.change(screen.getByLabelText('Nom'), { target: { value: 'D' } });
@@ -217,7 +240,13 @@ describe('ProfilePage Component', () => {
     expect(screen.getByText("L'email n'est pas valide")).toBeInTheDocument();
     expect(screen.getByText(/Le numéro de téléphone n'est pas valide\./)).toBeInTheDocument();
     expect(screen.getByLabelText('Prénom')).toHaveClass('border-destructive');
+    expect(screen.getByLabelText('Prénom')).toHaveAttribute('aria-invalid', 'true');
     expect(screen.getByLabelText('Adresse')).not.toHaveClass('border-destructive');
+
+    // Le premier champ à corriger reçoit le focus.
+    await waitFor(() => {
+      expect(screen.getByLabelText('Prénom')).toHaveFocus();
+    });
 
     // La saisie efface l'erreur du champ concerné.
     fireEvent.change(screen.getByLabelText('Prénom'), { target: { value: 'Jane' } });
@@ -257,7 +286,7 @@ describe('ProfilePage Component', () => {
       },
     ]);
 
-    await openProfileSection();
+    await waitForProfile();
 
     fireEvent.change(screen.getByLabelText('Prénom'), { target: { value: 'Jane' } });
     fireEvent.change(screen.getByLabelText('Numéro de téléphone'), { target: { value: '0611223344' } });
@@ -265,7 +294,12 @@ describe('ProfilePage Component', () => {
 
     expect(screen.getByRole('button', { name: 'Enregistrement...' })).toBeDisabled();
 
-    expect(await screen.findByText('Vos informations ont été enregistrées avec succès.')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(mockToast).toHaveBeenCalledWith({
+        title: 'Succès',
+        description: 'Profil mis à jour avec succès',
+      });
+    });
 
     expect(variableMatcher).toHaveBeenCalledTimes(1);
     expect(variableMatcher).toHaveBeenCalledWith({
@@ -280,18 +314,17 @@ describe('ProfilePage Component', () => {
       },
       image: null,
     });
-    expect(mockToast).toHaveBeenCalledWith({
-      title: 'Succès',
-      description: 'Profil mis à jour avec succès',
-    });
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Enregistrer les modifications' })).toBeEnabled();
     });
 
-    // Après le refetch, la carte récapitulative reflète le nouveau prénom.
-    fireEvent.click(screen.getByRole('button', { name: 'Retour' }));
-    expect(await screen.findByText(`Jane Doe - ${EMAIL}`)).toBeInTheDocument();
+    // Après le refetch, le formulaire correspond aux données du serveur : plus rien à annuler.
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Annuler' })).toBeDisabled();
+    });
+    expect(screen.getByLabelText('Prénom')).toHaveValue('Jane');
+    expect(screen.getByLabelText('Numéro de téléphone')).toHaveValue('0611223344');
   });
 
   test('affiche un toast d\'erreur si la mise à jour du profil échoue', async () => {
@@ -307,7 +340,7 @@ describe('ProfilePage Component', () => {
       },
     ]);
 
-    await openProfileSection();
+    await waitForProfile();
 
     fireEvent.change(screen.getByLabelText('Prénom'), { target: { value: 'Jane' } });
     fireEvent.click(screen.getByRole('button', { name: 'Enregistrer les modifications' }));
@@ -320,10 +353,15 @@ describe('ProfilePage Component', () => {
       });
     });
     expect(consoleError).toHaveBeenCalledWith('Erreur lors de la mise à jour du profil:', expect.any(Error));
-    expect(screen.queryByText('Vos informations ont été enregistrées avec succès.')).not.toBeInTheDocument();
+    expect(mockToast).not.toHaveBeenCalledWith({
+      title: 'Succès',
+      description: 'Profil mis à jour avec succès',
+    });
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Enregistrer les modifications' })).toBeEnabled();
     });
+    // La saisie est conservée pour un nouvel essai.
+    expect(screen.getByLabelText('Prénom')).toHaveValue('Jane');
   });
 
   test('active les notifications SMS en conservant les autres réglages puis reflète la réponse du serveur', async () => {
@@ -352,8 +390,8 @@ describe('ProfilePage Component', () => {
       },
     ]);
 
-    await screen.findByText('Email: Activé - SMS: Désactivé');
-    fireEvent.click(screen.getByRole('heading', { name: 'Notifications' }));
+    await waitForProfile();
+    openTab('Notifications');
 
     const smsSwitch = screen.getByRole('switch', { name: 'Notifications par SMS' });
     expect(screen.getByRole('switch', { name: 'Notifications par email' })).toBeChecked();
@@ -361,24 +399,26 @@ describe('ProfilePage Component', () => {
 
     fireEvent.click(smsSwitch);
 
-    expect(
-      await screen.findByText('Vos préférences de notification ont été enregistrées avec succès.'),
-    ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(mockToast).toHaveBeenCalledWith({
+        title: 'Succès',
+        description: 'Paramètres de notification mis à jour avec succès',
+      });
+    });
     expect(variableMatcher).toHaveBeenCalledTimes(1);
     expect(variableMatcher).toHaveBeenCalledWith({
       email_notifications_enabled: true,
       sms_notifications_enabled: true,
       newsletter_subscribed: true,
     });
-    expect(mockToast).toHaveBeenCalledWith({
-      title: 'Succès',
-      description: 'Paramètres de notification mis à jour avec succès',
-    });
     expect(smsSwitch).toBeChecked();
 
-    // Après le refetch, la carte récapitulative reflète le nouvel état.
-    fireEvent.click(screen.getByRole('button', { name: 'Retour' }));
-    expect(await screen.findByText('Email: Activé - SMS: Activé')).toBeInTheDocument();
+    // Après le refetch, l'interrupteur redevient utilisable et reste activé.
+    await waitFor(() => {
+      expect(smsSwitch).toBeEnabled();
+    });
+    expect(smsSwitch).toBeChecked();
+    expect(screen.getByRole('switch', { name: 'Notifications par email' })).toBeChecked();
   });
 
   test('affiche les suggestions d\'adresses lors de la saisie et permet d\'en choisir une', async () => {
@@ -391,14 +431,17 @@ describe('ProfilePage Component', () => {
 
     renderPage([meMock, userMock()]);
 
-    await openProfileSection();
+    await waitForProfile();
 
     fireEvent.change(screen.getByLabelText('Adresse'), { target: { value: '10 Rue de Riv' } });
 
     expect(await screen.findByText('10 Rue de Rivoli 75004 Paris')).toBeInTheDocument();
     expect(screen.getByText('10 Rue de Rivoli 06000 Nice')).toBeInTheDocument();
     expect(mockAxios.history.get).toHaveLength(1);
-    expect(mockAxios.history.get[0].url).toBe('https://api-adresse.data.gouv.fr/search/?q=10 Rue de Riv&limit=5');
+    // La saisie est encodée : une adresse contenant « & » ou « # » ne casse plus la recherche.
+    expect(mockAxios.history.get[0].url).toBe(
+      'https://api-adresse.data.gouv.fr/search/?q=10%20Rue%20de%20Riv&limit=5',
+    );
 
     fireEvent.click(screen.getByText('10 Rue de Rivoli 06000 Nice'));
 
@@ -409,45 +452,76 @@ describe('ProfilePage Component', () => {
   test('demande confirmation avant de rediriger vers l\'activation du 2FA', async () => {
     renderPage([meMock, userMock()]);
 
-    await screen.findByText(`John Doe - ${EMAIL}`);
+    await waitForProfile();
+    openTab('Sécurité');
 
-    fireEvent.click(screen.getByRole('heading', { name: 'Activer le 2FA' }));
-    expect(screen.getByRole('heading', { name: 'Activation du 2FA' })).toBeInTheDocument();
-    expect(
-      screen.getByText("Voulez-vous vraiment activer l'authentification à deux facteurs ?")
-    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Activer le 2FA' }));
+    expect(screen.getByRole('alertdialog', { name: 'Activer la double authentification ?' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Annuler' }));
-    expect(screen.queryByRole('heading', { name: 'Activation du 2FA' })).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    });
     expect(mockPush).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole('heading', { name: 'Activer le 2FA' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Oui, activer' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Activer le 2FA' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Configurer le 2FA' }));
 
     expect(mockPush).toHaveBeenCalledTimes(1);
     expect(mockPush).toHaveBeenCalledWith('/administration/2fa');
   });
 
-  test('affiche la version mobile en onglets avec le profil et les licences', async () => {
-    setViewport(true);
-    renderPage([meMock, userMock(() => ({ ...baseUser, licenses }))]);
+  test('affiche les licences avec leur statut, la plus proche de l\'expiration en premier', async () => {
+    const soon = new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString();
+    renderPage([
+      meMock,
+      userMock(() => ({
+        ...baseUser,
+        licenses: [
+          ...licenses,
+          {
+            id: '3',
+            certification_authority: 'DGAC',
+            license_number: 'CPL-0003',
+            license_type: 'CPL',
+            issue_date: '2022-03-01T10:00:00.000Z',
+            expiration_date: soon,
+            is_valid: true,
+            status: 'active',
+          },
+        ],
+      })),
+    ]);
 
-    await waitFor(() => {
-      expect(screen.getByLabelText('Prénom')).toHaveValue('John');
-    });
-
-    expect(screen.getByRole('tab', { name: 'Profil' })).toHaveAttribute('aria-selected', 'true');
-    expect(screen.getByRole('tab', { name: 'Paramètres' })).toHaveAttribute('aria-selected', 'false');
-    expect(screen.getByRole('tab', { name: 'Sécurité' })).toBeInTheDocument();
-    // Pas de grille de cartes en mobile.
-    expect(screen.queryByRole('heading', { name: 'Mot de passe' })).not.toBeInTheDocument();
+    await waitForProfile();
+    openTab('Licences');
 
     const panel = screen.getByRole('tabpanel');
-    expect(within(panel).getByText('Mes licences')).toBeInTheDocument();
+    expect(within(panel).getByRole('heading', { name: 'Mes licences' })).toBeInTheDocument();
+
+    const titles = within(panel)
+      .getAllByText(/^(PPL|ULM|CPL)$/)
+      .map((element) => element.textContent);
+    expect(titles).toEqual(['ULM', 'CPL', 'PPL']);
+
     expect(within(panel).getByText('PPL-0001')).toBeInTheDocument();
-    expect(within(panel).getByText('DGAC')).toBeInTheDocument();
-    expect(within(panel).getByText('Valide')).toBeInTheDocument();
+    expect(within(panel).getByText('EASA')).toBeInTheDocument();
     expect(within(panel).getByText('ULM-0002')).toBeInTheDocument();
-    expect(within(panel).getByText('Non valide')).toBeInTheDocument();
+    expect(within(panel).getByText('10 mai 2030')).toBeInTheDocument();
+    // Un statut lisible par licence, jamais le code du serveur.
+    expect(within(panel).getByText('Valide')).toBeInTheDocument();
+    expect(within(panel).getByText('Expire bientôt')).toBeInTheDocument();
+    expect(within(panel).getByText('Expirée')).toBeInTheDocument();
+    expect(within(panel).queryByText('Active')).not.toBeInTheDocument();
+    expect(within(panel).queryByText('active')).not.toBeInTheDocument();
+  });
+
+  test('affiche un état vide quand le membre n\'a aucune licence', async () => {
+    renderPage([meMock, userMock()]);
+
+    await waitForProfile();
+    openTab('Licences');
+
+    expect(within(screen.getByRole('tabpanel')).getByText('Aucune licence enregistrée')).toBeInTheDocument();
   });
 });

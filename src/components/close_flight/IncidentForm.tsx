@@ -1,15 +1,35 @@
 "use client"
 
+import { useEffect } from "react"
 import { useFormContext } from "react-hook-form"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { format } from "date-fns"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from "@/components/ui/form"
 import { Switch } from "@/components/ui/switch"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { AlertTriangle } from 'lucide-react'
-import { useEffect } from "react"
+
+const RequiredMark = () => (
+  <span className="text-destructive" aria-hidden="true">
+    {" "}
+    *
+  </span>
+)
+
+const SEVERITIES = [
+  { value: "low", label: "Faible" },
+  { value: "medium", label: "Moyenne" },
+  { value: "high", label: "Élevée" },
+]
+
+// Value of a datetime-local input in local time (toISOString would shift it to UTC).
+const toDateTimeLocal = (value: unknown) => {
+  if (!value) return ""
+  const date = new Date(value as string | number | Date)
+  return Number.isNaN(date.getTime()) ? "" : format(date, "yyyy-MM-dd'T'HH:mm")
+}
 
 export default function IncidentForm() {
   const { control, watch, setValue, getValues } = useFormContext()
@@ -17,6 +37,7 @@ export default function IncidentForm() {
 
   useEffect(() => {
     if (incidentOccurred) {
+      // A new incident is always created open; the club follows it up afterwards.
       setValue("incident_status", "Ouvert")
       if (!getValues("incident_date")) {
         setValue("incident_date", new Date())
@@ -27,20 +48,18 @@ export default function IncidentForm() {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center space-x-2">
-          <AlertTriangle className="h-5 w-5 text-muted-foreground" />
-          <CardTitle>Incident</CardTitle>
-        </div>
+        <CardTitle className="text-lg">Incident</CardTitle>
+        <CardDescription>Panne, anomalie, dommage ou événement de sécurité survenu pendant le vol.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <FormField
           control={control}
           name="incidentOccurred"
           render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+            <FormItem className="flex flex-row items-center justify-between gap-4 rounded-lg border p-4">
               <div className="space-y-0.5">
-                <FormLabel className="text-base">Incident survenu pendant le vol</FormLabel>
-                <FormDescription>Signalez tout incident ou anomalie observé pendant le vol</FormDescription>
+                <FormLabel>Un incident est survenu pendant ce vol</FormLabel>
+                <FormDescription>Le signalement est transmis au club avec la clôture du vol.</FormDescription>
               </div>
               <FormControl>
                 <Switch
@@ -69,75 +88,132 @@ export default function IncidentForm() {
         />
 
         {incidentOccurred && (
-          <div className="space-y-4">
-            <FormField
-              control={control}
-              name="incident_date"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Date de l'incident</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="datetime-local"
-                      {...field}
-                      value={field.value ? new Date(field.value).toISOString().slice(0, 16) : ""}
-                      onChange={(e) => field.onChange(new Date(e.target.value))}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <FormField
+                control={control}
+                name="incident_date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Date et heure de l&apos;incident</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="datetime-local"
+                        name={field.name}
+                        ref={field.ref}
+                        onBlur={field.onBlur}
+                        value={toDateTimeLocal(field.value)}
+                        onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : undefined)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={control}
-              name="severity_level"
-              render={({ field }) => (
-                <FormItem className="space-y-3">
-                  <FormLabel>Gravité de l'incident</FormLabel>
-                  <FormControl>
-                    <RadioGroup
-                      onValueChange={field.onChange}
-                      value={field.value}
-                      className="flex flex-col space-y-1"
-                    >
-                      <FormItem className="flex items-center space-x-3 space-y-0">
-                        <FormControl>
-                          <RadioGroupItem value="low" />
-                        </FormControl>
-                        <FormLabel className="font-normal">Faible</FormLabel>
-                      </FormItem>
-                      <FormItem className="flex items-center space-x-3 space-y-0">
-                        <FormControl>
-                          <RadioGroupItem value="medium" />
-                        </FormControl>
-                        <FormLabel className="font-normal">Moyenne</FormLabel>
-                      </FormItem>
-                      <FormItem className="flex items-center space-x-3 space-y-0">
-                        <FormControl>
-                          <RadioGroupItem value="high" />
-                        </FormControl>
-                        <FormLabel className="font-normal">Élevée</FormLabel>
-                      </FormItem>
-                    </RadioGroup>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormField
+                control={control}
+                name="incident_category"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Catégorie
+                      <RequiredMark />
+                    </FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Sélectionner une catégorie" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="mechanical">Mécanique</SelectItem>
+                        <SelectItem value="electrical">Électrique</SelectItem>
+                        <SelectItem value="weather">Météorologique</SelectItem>
+                        <SelectItem value="human_error">Erreur humaine</SelectItem>
+                        <SelectItem value="other">Autre</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <FormField
+                control={control}
+                name="severity_level"
+                render={({ field }) => (
+                  <FormItem className="space-y-3">
+                    <FormLabel>
+                      Gravité
+                      <RequiredMark />
+                    </FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        value={field.value}
+                        className="flex flex-wrap gap-x-6 gap-y-2"
+                      >
+                        {SEVERITIES.map((severity) => (
+                          <FormItem key={severity.value} className="flex items-center gap-2 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value={severity.value} />
+                            </FormControl>
+                            <FormLabel className="font-normal">{severity.label}</FormLabel>
+                          </FormItem>
+                        ))}
+                      </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={control}
+                name="incident_priority"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Priorité de traitement
+                      <RequiredMark />
+                    </FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Sélectionner une priorité" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="low">Basse</SelectItem>
+                        <SelectItem value="medium">Moyenne</SelectItem>
+                        <SelectItem value="high">Haute</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <FormField
               control={control}
               name="incident_description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description de l'incident</FormLabel>
+                  <FormLabel>
+                    Description
+                    <RequiredMark />
+                  </FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Décrivez l'incident en détail..."
+                      placeholder="Que s'est-il passé, à quel moment du vol, dans quelles conditions ?"
                       className="resize-none"
                       rows={4}
                       {...field}
+                      value={field.value ?? ""}
                     />
                   </FormControl>
                   <FormMessage />
@@ -145,105 +221,47 @@ export default function IncidentForm() {
               )}
             />
 
-            <FormField
-              control={control}
-              name="damage_report"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Rapport de dommages</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Décrivez les dommages éventuels..."
-                      className="resize-none"
-                      rows={4}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={control}
-              name="corrective_actions"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Actions correctives</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Décrivez les actions correctives prises ou à prendre..."
-                      className="resize-none"
-                      rows={4}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={control}
-              name="incident_status"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Statut de l'incident</FormLabel>
-                  <FormControl>
-                    <Input {...field} value="Ouvert" disabled />
-                  </FormControl>
-                  <FormDescription>Le statut de l'incident est automatiquement défini sur "Ouvert"</FormDescription>
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={control}
-              name="incident_priority"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Priorité de l'incident</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <FormField
+                control={control}
+                name="damage_report"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Dommages constatés</FormLabel>
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Sélectionnez une priorité" />
-                      </SelectTrigger>
+                      <Textarea
+                        placeholder="Ex. : pneu avant gauche à plat, aucune autre trace"
+                        className="resize-none"
+                        rows={3}
+                        {...field}
+                        value={field.value ?? ""}
+                      />
                     </FormControl>
-                    <SelectContent>
-                      <SelectItem value="low">Basse</SelectItem>
-                      <SelectItem value="medium">Moyenne</SelectItem>
-                      <SelectItem value="high">Haute</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={control}
-              name="incident_category"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Catégorie de l'incident</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
+              <FormField
+                control={control}
+                name="corrective_actions"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Actions correctives</FormLabel>
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Sélectionnez une catégorie" />
-                      </SelectTrigger>
+                      <Textarea
+                        placeholder="Ce qui a été fait, ou ce qu'il reste à faire avant le prochain vol"
+                        className="resize-none"
+                        rows={3}
+                        {...field}
+                        value={field.value ?? ""}
+                      />
                     </FormControl>
-                    <SelectContent>
-                      <SelectItem value="mechanical">Mécanique</SelectItem>
-                      <SelectItem value="electrical">Électrique</SelectItem>
-                      <SelectItem value="weather">Météorologique</SelectItem>
-                      <SelectItem value="human_error">Erreur humaine</SelectItem>
-                      <SelectItem value="other">Autre</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </div>
         )}
       </CardContent>

@@ -2,11 +2,12 @@
 
 import { useState } from "react"
 import { useMutation } from "@apollo/client"
-import { motion } from "framer-motion"
+import { Plus } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { setMonth } from "date-fns"
+import { PageHeader } from "@/components/layout/PageHeader"
 import { toast } from "@/components/hooks/use-toast"
 import { ExportDialog } from "./ExportDialog"
 import FinancialReportComponent from "./FinancialReportComponent"
@@ -16,13 +17,20 @@ import ExpenseForm from "./ExpenseForm"
 import BudgetForecast from "./BudgetForecast"
 import { GENERATE_FINANCIAL_REPORT_PDF, GENERATE_FINANCIAL_REPORT_EXCEL } from "@/graphql/finance"
 import type { GenerateReportResponse, GenerateReportVariables } from "@/interfaces/finance"
-import { BarChart3, PieChart, TrendingUp, Calculator, PlusCircle, CalendarIcon } from "lucide-react"
+
+const MONTHS = Array.from({ length: 12 }, (_, index) => {
+  const name = new Date(2024, index, 1).toLocaleString("fr-FR", { month: "long" })
+  return { value: index.toString(), label: name.charAt(0).toUpperCase() + name.slice(1) }
+})
+
+const YEARS_SHOWN = 5
 
 export default function FinancialDashboard() {
   const [period, setPeriod] = useState("monthly")
-  const [date, setDate] = useState<Date>(new Date())
+  const [date, setDate] = useState<Date>(() => new Date())
   const [activeTab, setActiveTab] = useState("financial")
   const [isExporting, setIsExporting] = useState(false)
+  const [isExpenseDialogOpen, setIsExpenseDialogOpen] = useState(false)
 
   const [generatePDF] = useMutation<GenerateReportResponse, GenerateReportVariables>(GENERATE_FINANCIAL_REPORT_PDF)
   const [generateExcel] = useMutation<GenerateReportResponse, GenerateReportVariables>(GENERATE_FINANCIAL_REPORT_EXCEL)
@@ -33,130 +41,132 @@ export default function FinancialDashboard() {
       const mutation = format === "pdf" ? generatePDF : generateExcel
       const { data } = await mutation({ variables: { startDate, endDate } })
       const url = data?.generatePdfFinancialReport || data?.generateCsvFinancialReport
-      if (url) {
-        window.open(url, "_blank")
-        toast({
-          title: `Export ${format.toUpperCase()} réussi`,
-          description: "Le rapport a été généré avec succès",
-          variant: "default",
-        })
-      } else {
-        throw new Error("No URL returned")
-      }
+      if (!url) throw new Error("No URL returned")
+
+      window.open(url, "_blank")
+      toast({
+        title: "Rapport généré",
+        description: "Le fichier s'ouvre dans un nouvel onglet.",
+      })
+      return true
     } catch (error) {
-      console.error(`Erreur lors de l'export ${format}:`, error)
+      console.error("Financial report export failed:", error)
       toast({
         variant: "destructive",
-        title: "Erreur d'exportation",
-        description: `Erreur lors de la génération du ${format.toUpperCase()}: ${error instanceof Error ? error.message : "Unknown error"}`,
+        title: "Export impossible",
+        description: "Le rapport n'a pas pu être généré. Réessayez dans un instant.",
       })
+      return false
     } finally {
       setIsExporting(false)
     }
   }
 
+  const currentYear = new Date().getFullYear()
+  const years = Array.from({ length: YEARS_SHOWN }, (_, index) => currentYear - index)
+
+  // Shown above the tabs whose figures depend on a period.
+  const periodFilter = (
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <Select value={period} onValueChange={setPeriod}>
+        <SelectTrigger className="sm:w-40" aria-label="Type de période">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="monthly">Par mois</SelectItem>
+          <SelectItem value="annual">Par année</SelectItem>
+        </SelectContent>
+      </Select>
+
+      {period === "monthly" && (
+        <Select
+          value={date.getMonth().toString()}
+          onValueChange={(value) => setDate(new Date(date.getFullYear(), Number.parseInt(value, 10), 1))}
+        >
+          <SelectTrigger className="sm:w-40" aria-label="Mois">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {MONTHS.map((month) => (
+              <SelectItem key={month.value} value={month.value}>
+                {month.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+
+      <Select
+        value={date.getFullYear().toString()}
+        onValueChange={(value) => setDate(new Date(Number.parseInt(value, 10), date.getMonth(), 1))}
+      >
+        <SelectTrigger className="sm:w-28" aria-label="Année">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {years.map((year) => (
+            <SelectItem key={year} value={year.toString()}>
+              {year}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  )
+
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-      <Card className="p-6 bg-card rounded-xl border-t-4 border-t-primary">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 space-y-4 md:space-y-0">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-muted-foreground">Période d'analyse</label>
-              <Select value={period} onValueChange={setPeriod}>
-                <SelectTrigger className="w-[180px] bg-card">
-                  <SelectValue placeholder="Sélectionner la période" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="monthly">Mensuel</SelectItem>
-                  <SelectItem value="annual">Annuel</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+    <div className="space-y-6">
+      <PageHeader
+        title="Finances"
+        description="Revenus, dépenses et prévisions de l'aéroclub."
+        className="mb-0"
+        actions={
+          <>
+            <ExportDialog onExport={handleExport} isLoading={isExporting} />
+            <Button onClick={() => setIsExpenseDialogOpen(true)}>
+              <Plus className="h-4 w-4" />
+              Ajouter une dépense
+            </Button>
+          </>
+        }
+      />
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-muted-foreground">{period === "monthly" ? "Mois" : "Année"}</label>
-              <Select
-                value={date.getMonth().toString()}
-                onValueChange={(value) => setDate(setMonth(new Date(), Number.parseInt(value)))}
-              >
-                <SelectTrigger className="w-[180px] bg-card">
-                  <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
-                  <SelectValue placeholder="Sélectionner le mois" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: 12 }, (_, i) => {
-                    const date = new Date(2024, i, 1)
-                    return (
-                      <SelectItem key={i} value={i.toString()}>
-                        {date.toLocaleString("fr-FR", { month: "long" })}
-                      </SelectItem>
-                    )
-                  })}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <ExportDialog onExport={handleExport} isLoading={isExporting} />
-        </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="financial">Synthèse</TabsTrigger>
+          <TabsTrigger value="expenses">Dépenses</TabsTrigger>
+          <TabsTrigger value="operating">Coûts par avion</TabsTrigger>
+          <TabsTrigger value="forecast">Prévisions</TabsTrigger>
+        </TabsList>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-5 mb-8 bg-muted/30 p-1 rounded-lg">
-            <TabsTrigger
-              value="financial"
-              className="data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-md transition-all"
-            >
-              <BarChart3 className="mr-2 h-4 w-4" />
-              <span>Rapport financier</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="expenses"
-              className="data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-md transition-all"
-            >
-              <PieChart className="mr-2 h-4 w-4" />
-              <span>Dépenses</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="operating"
-              className="data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-md transition-all"
-            >
-              <Calculator className="mr-2 h-4 w-4" />
-              <span>Coûts d'exploitation</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="forecast"
-              className="data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-md transition-all"
-            >
-              <TrendingUp className="mr-2 h-4 w-4" />
-              <span>Prévisions</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="add-expense"
-              className="data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-md transition-all"
-            >
-              <PlusCircle className="mr-2 h-4 w-4" />
-              <span>Ajouter dépense</span>
-            </TabsTrigger>
-          </TabsList>
+        <TabsContent value="financial" className="mt-6">
+          <FinancialReportComponent />
+        </TabsContent>
+        <TabsContent value="expenses" className="mt-6 space-y-6">
+          {periodFilter}
+          <ExpensesReport period={period} date={date} />
+        </TabsContent>
+        <TabsContent value="operating" className="mt-6 space-y-6">
+          {periodFilter}
+          <OperatingCosts period={period} date={date} />
+        </TabsContent>
+        <TabsContent value="forecast" className="mt-6">
+          <BudgetForecast />
+        </TabsContent>
+      </Tabs>
 
-          <div className="mt-2">
-            <TabsContent value="financial">
-              <FinancialReportComponent />
-            </TabsContent>
-            <TabsContent value="expenses">
-              <ExpensesReport period={period} date={date} />
-            </TabsContent>
-            <TabsContent value="operating">
-              <OperatingCosts period={period} date={date} />
-            </TabsContent>
-            <TabsContent value="forecast">
-              <BudgetForecast />
-            </TabsContent>
-            <TabsContent value="add-expense">
-              <ExpenseForm />
-            </TabsContent>
-          </div>
-        </Tabs>
-      </Card>
-    </motion.div>
+      <Dialog open={isExpenseDialogOpen} onOpenChange={setIsExpenseDialogOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Ajouter une dépense</DialogTitle>
+            <DialogDescription>Elle sera comptée dans les dépenses de la période correspondante.</DialogDescription>
+          </DialogHeader>
+          <ExpenseForm
+            onSuccess={() => setIsExpenseDialogOpen(false)}
+            onCancel={() => setIsExpenseDialogOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+    </div>
   )
 }

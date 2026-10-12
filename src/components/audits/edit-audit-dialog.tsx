@@ -3,19 +3,26 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { useQuery, useMutation } from "@apollo/client"
-import { Loader2, Save } from "lucide-react"
+import { Loader2 } from "lucide-react"
 import { UPDATE_AUDIT, UPDATE_AUDIT_ITEM, GET_AUDIT_ENUMS } from "@/graphql/audit"
-import { AuditResultType, AuditFrequencyType, AuditCategoryType } from "@/interfaces/audit"
+import { AuditResultType, AuditFrequencyType } from "@/interfaces/audit"
 import { calculateNextAuditDate } from "@/lib/utils"
-import { getChangedAuditItems } from "@/lib/audit"
+import { auditCategoryLabel, auditFrequencyLabel, auditResult, getChangedAuditItems } from "@/lib/audit"
+import { formatDate } from "@/lib/format"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/components/hooks/use-toast"
 import { DatePicker } from "@/components/ui/date-picker"
 
@@ -38,7 +45,6 @@ export function EditAuditDialog({ isOpen, onClose, audit, onSuccess }: EditAudit
     auditItems: [] as any[],
   })
   const [activeTab, setActiveTab] = useState("details")
-  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
 
   const { data: enumsData } = useQuery(GET_AUDIT_ENUMS)
 
@@ -76,14 +82,6 @@ export function EditAuditDialog({ isOpen, onClose, audit, onSuccess }: EditAudit
       [field]: value,
     }))
 
-    if (validationErrors[field]) {
-      setValidationErrors((prev) => {
-        const newErrors = { ...prev }
-        delete newErrors[field]
-        return newErrors
-      })
-    }
-
     if (field === "auditFrequency" || field === "auditDate") {
       const date = field === "auditDate" ? value : formData.auditDate
       const frequency = field === "auditFrequency" ? value : formData.auditFrequency
@@ -112,17 +110,10 @@ export function EditAuditDialog({ isOpen, onClose, audit, onSuccess }: EditAudit
     }))
   }
 
-  const validateForm = () => {
-    const errors: Record<string, string> = {}
-
-    setValidationErrors(errors)
-    return Object.keys(errors).length === 0
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!validateForm() || updateLoading) {
+    if (updateLoading) {
       return
     }
 
@@ -142,9 +133,12 @@ export function EditAuditDialog({ isOpen, onClose, audit, onSuccess }: EditAudit
             },
           },
         })
-      } catch (error) {
-        const message = error instanceof Error ? error.message : "Erreur inconnue"
-        toast({ variant: "destructive", description: `Erreur lors de la mise à jour: ${message}` })
+      } catch {
+        toast({
+          variant: "destructive",
+          title: "Enregistrement impossible",
+          description: "L'audit n'a pas pu être mis à jour. Réessayez dans un instant.",
+        })
         return
       }
 
@@ -156,16 +150,18 @@ export function EditAuditDialog({ isOpen, onClose, audit, onSuccess }: EditAudit
       const failures = results.filter((result): result is PromiseRejectedResult => result.status === "rejected")
 
       if (failures.length > 0) {
-        const reason = failures[0].reason
-        const message = reason instanceof Error ? reason.message : "Erreur inconnue"
         toast({
           variant: "destructive",
-          description: `Audit mis à jour, mais ${failures.length} élément(s) sur ${itemUpdates.length} n'ont pas pu être enregistrés: ${message}`,
+          title: "Enregistrement incomplet",
+          description:
+            failures.length === 1
+              ? `L'audit est mis à jour, mais 1 élément sur ${itemUpdates.length} n'a pas pu être enregistré. Réessayez.`
+              : `L'audit est mis à jour, mais ${failures.length} éléments sur ${itemUpdates.length} n'ont pas pu être enregistrés. Réessayez.`,
         })
         return
       }
 
-      toast({ variant: "default", description: "Audit mis à jour avec succès" })
+      toast({ title: "Audit mis à jour" })
       onSuccess()
     } finally {
       setUpdateLoading(false)
@@ -173,235 +169,213 @@ export function EditAuditDialog({ isOpen, onClose, audit, onSuccess }: EditAudit
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto p-4 sm:p-6">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && !updateLoading && onClose()}>
+      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-base sm:text-lg">Modifier l'audit</DialogTitle>
+          <DialogTitle>Modifier l'audit</DialogTitle>
+          <DialogDescription>
+            Audit du {formatDate(audit?.audit_date)}
+            {audit?.aircraft?.registration_number ? ` · ${audit.aircraft.registration_number}` : ""}
+          </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6 mt-2 sm:mt-4">
-          <Tabs defaultValue="details" value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid grid-cols-2 mb-4">
-              <TabsTrigger value="details" className="text-xs sm:text-sm">
-                Détails de l'audit
-              </TabsTrigger>
-              <TabsTrigger value="items" className="text-xs sm:text-sm">
-                Éléments à vérifier ({formData.auditItems.length})
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList>
+              <TabsTrigger value="details">Informations</TabsTrigger>
+              <TabsTrigger value="items" className="gap-1.5">
+                Éléments vérifiés
+                <span className="text-xs tabular-nums text-muted-foreground">{formData.auditItems.length}</span>
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="details" className="space-y-4 sm:space-y-6">
-              <div className="grid gap-4 sm:gap-6 sm:grid-cols-2">
-                <div className="space-y-1 sm:space-y-2">
-                  <Label htmlFor="audit-date">
-                    Date d'audit <span className="text-destructive">*</span>
-                  </Label>
-                  <DatePicker
-                    date={formData.auditDate}
-                    onSelect={(date) => date && handleInputChange("auditDate", date)}
-                    placeholder="Sélectionner une date"
-                    clearable={false}
+            <TabsContent value="details" className="mt-4 space-y-6">
+              <fieldset className="space-y-4">
+                <legend className="text-sm font-semibold">Audit</legend>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2" role="group" aria-labelledby="edit-audit-date-label">
+                    <Label id="edit-audit-date-label">
+                      Date de l'audit <span className="text-destructive">*</span>
+                    </Label>
+                    <DatePicker
+                      date={formData.auditDate}
+                      onSelect={(date) => date && handleInputChange("auditDate", date)}
+                      placeholder="Sélectionner une date"
+                      clearable={false}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-audit-result">
+                      Résultat <span className="text-destructive">*</span>
+                    </Label>
+                    <Select
+                      value={formData.auditResult}
+                      onValueChange={(value) => handleInputChange("auditResult", value)}
+                    >
+                      <SelectTrigger id="edit-audit-result">
+                        <SelectValue placeholder="Sélectionner un résultat" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {enumsData?.auditResultTypes?.map((result: string) => (
+                          <SelectItem key={result} value={result}>
+                            {auditResult(result).label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </fieldset>
+
+              <fieldset className="space-y-4">
+                <legend className="text-sm font-semibold">Planification</legend>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-audit-frequency">
+                      Fréquence <span className="text-destructive">*</span>
+                    </Label>
+                    <Select
+                      value={formData.auditFrequency}
+                      onValueChange={(value) => handleInputChange("auditFrequency", value)}
+                    >
+                      <SelectTrigger id="edit-audit-frequency">
+                        <SelectValue placeholder="Sélectionner une fréquence" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {enumsData?.auditFrequencyTypes?.map((frequency: string) => (
+                          <SelectItem key={frequency} value={frequency}>
+                            {auditFrequencyLabel(frequency)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2" role="group" aria-labelledby="edit-next-audit-date-label">
+                    <Label id="edit-next-audit-date-label">Prochain audit</Label>
+                    <DatePicker
+                      date={formData.nextAuditDate || undefined}
+                      onSelect={(date) => handleInputChange("nextAuditDate", date)}
+                      placeholder="Non planifié"
+                      clearable
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Calculé à partir de la date et de la fréquence ; vous pouvez le modifier.
+                    </p>
+                  </div>
+                </div>
+              </fieldset>
+
+              <fieldset className="space-y-4">
+                <legend className="text-sm font-semibold">Constats</legend>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-audit-notes">Notes</Label>
+                  <Textarea
+                    id="edit-audit-notes"
+                    placeholder="Ex. : légère corrosion sur le capot moteur, à surveiller"
+                    value={formData.auditNotes}
+                    onChange={(e) => handleInputChange("auditNotes", e.target.value)}
+                    rows={3}
                   />
                 </div>
 
-                <div className="space-y-1 sm:space-y-2">
-                  <Label htmlFor="audit-result">
-                    Résultat d'audit <span className="text-destructive">*</span>
-                  </Label>
-                  <Select
-                    value={formData.auditResult}
-                    onValueChange={(value) => handleInputChange("auditResult", value)}
-                    required
-                  >
-                    <SelectTrigger id="audit-result">
-                      <SelectValue placeholder="Sélectionner un résultat" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {enumsData?.auditResultTypes?.map((result: string) => (
-                        <SelectItem key={result} value={result}>
-                          {result === AuditResultType.CONFORME && "Conforme"}
-                          {result === AuditResultType.NON_CONFORME && "Non conforme"}
-                          {result === AuditResultType.CONFORME_AVEC_REMARQUES && "Conforme avec remarques"}
-                          {result === AuditResultType.NON_APPLICABLE && "Non applicable"}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-1 sm:space-y-2">
-                  <Label htmlFor="audit-frequency">
-                    Fréquence d'audit <span className="text-destructive">*</span>
-                  </Label>
-                  <Select
-                    value={formData.auditFrequency}
-                    onValueChange={(value) => handleInputChange("auditFrequency", value)}
-                    required
-                  >
-                    <SelectTrigger id="audit-frequency">
-                      <SelectValue placeholder="Sélectionner une fréquence" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {enumsData?.auditFrequencyTypes?.map((frequency: string) => (
-                        <SelectItem key={frequency} value={frequency}>
-                          {frequency === AuditFrequencyType.QUOTIDIEN && "Quotidien"}
-                          {frequency === AuditFrequencyType.HEBDOMADAIRE && "Hebdomadaire"}
-                          {frequency === AuditFrequencyType.MENSUEL && "Mensuel"}
-                          {frequency === AuditFrequencyType.TRIMESTRIEL && "Trimestriel"}
-                          {frequency === AuditFrequencyType.SEMESTRIEL && "Semestriel"}
-                          {frequency === AuditFrequencyType.ANNUEL && "Annuel"}
-                          {frequency === AuditFrequencyType.BIANNUEL && "Biannuel"}
-                          {frequency === AuditFrequencyType.HEURES_DE_VOL && "Heures de vol"}
-                          {frequency === AuditFrequencyType.APRES_INCIDENT && "Après incident"}
-                          {frequency === AuditFrequencyType.AUTRE && "Autre"}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-1 sm:space-y-2">
-                  <Label htmlFor="next-audit-date">Date du prochain audit</Label>
-                  <DatePicker
-                    date={formData.nextAuditDate || undefined}
-                    onSelect={(date) => handleInputChange("nextAuditDate", date)}
-                    placeholder="Sélectionner une date"
-                    clearable
+                <div className="space-y-2">
+                  <Label htmlFor="edit-corrective-actions">Actions correctives</Label>
+                  <Textarea
+                    id="edit-corrective-actions"
+                    placeholder="Ex. : remplacer la durite carburant avant le prochain vol"
+                    value={formData.correctiveActions}
+                    onChange={(e) => handleInputChange("correctiveActions", e.target.value)}
+                    rows={3}
                   />
                 </div>
-              </div>
-
-              <div className="space-y-1 sm:space-y-2">
-                <Label htmlFor="audit-notes">Notes d'audit</Label>
-                <Textarea
-                  id="audit-notes"
-                  placeholder="Saisissez vos notes d'audit ici..."
-                  value={formData.auditNotes}
-                  onChange={(e) => handleInputChange("auditNotes", e.target.value)}
-                  rows={3}
-                />
-              </div>
-
-              <div className="space-y-1 sm:space-y-2">
-                <Label htmlFor="corrective-actions">Actions correctives</Label>
-                <Textarea
-                  id="corrective-actions"
-                  placeholder="Décrivez les actions correctives à mettre en place..."
-                  value={formData.correctiveActions}
-                  onChange={(e) => handleInputChange("correctiveActions", e.target.value)}
-                  rows={3}
-                />
-              </div>
+              </fieldset>
             </TabsContent>
 
-            <TabsContent value="items" className="space-y-4 sm:space-y-6">
+            <TabsContent value="items" className="mt-4 space-y-4">
               {formData.auditItems.length > 0 ? (
-                <ScrollArea className="h-[50vh] pr-4">
-                  <div className="space-y-4">
-                    {formData.auditItems.map((item, index) => (
-                      <Card key={item.id || index}>
-                        <CardHeader className="pb-2">
-                          <CardTitle className="text-base">{item.description}</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          <div className="grid gap-4 sm:grid-cols-2">
-                            <div className="space-y-1">
-                              <Label htmlFor={`item-${index}-category`}>Catégorie</Label>
-                              <Select
-                                value={item.category}
-                                onValueChange={(value) => handleAuditItemChange(index, "category", value)}
-                              >
-                                <SelectTrigger id={`item-${index}-category`}>
-                                  <SelectValue placeholder="Sélectionner une catégorie" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {enumsData?.auditCategoryTypes?.map((category: string) => (
-                                    <SelectItem key={category} value={category}>
-                                      {category === AuditCategoryType.CELLULE && "Cellule"}
-                                      {category === AuditCategoryType.MOTEUR && "Moteur"}
-                                      {category === AuditCategoryType.AVIONIQUE && "Avionique"}
-                                      {category === AuditCategoryType.TRAIN_ATTERRISSAGE && "Train d'atterrissage"}
-                                      {category === AuditCategoryType.SYSTEME_CARBURANT && "Système carburant"}
-                                      {category === AuditCategoryType.SYSTEME_ELECTRIQUE && "Système électrique"}
-                                      {category === AuditCategoryType.DOCUMENTATION && "Documentation"}
-                                      {category === AuditCategoryType.EQUIPEMENT_SECURITE && "Équipement de sécurité"}
-                                      {category === AuditCategoryType.AUTRE && "Autre"}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
+                formData.auditItems.map((item, index) => (
+                  <fieldset key={item.id || index} className="space-y-4 rounded-lg border p-4">
+                    <legend className="px-1 text-sm font-semibold">{item.description}</legend>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor={`item-${index}-category`}>Catégorie</Label>
+                        <Select
+                          value={item.category}
+                          onValueChange={(value) => handleAuditItemChange(index, "category", value)}
+                        >
+                          <SelectTrigger id={`item-${index}-category`}>
+                            <SelectValue placeholder="Sélectionner une catégorie" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {enumsData?.auditCategoryTypes?.map((category: string) => (
+                              <SelectItem key={category} value={category}>
+                                {auditCategoryLabel(category)}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
 
-                            <div className="space-y-1">
-                              <Label htmlFor={`item-${index}-result`}>Résultat</Label>
-                              <Select
-                                value={item.result}
-                                onValueChange={(value) => handleAuditItemChange(index, "result", value)}
-                              >
-                                <SelectTrigger id={`item-${index}-result`}>
-                                  <SelectValue placeholder="Sélectionner un résultat" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {enumsData?.auditResultTypes?.map((result: string) => (
-                                    <SelectItem key={result} value={result}>
-                                      {result === AuditResultType.CONFORME && "Conforme"}
-                                      {result === AuditResultType.NON_CONFORME && "Non conforme"}
-                                      {result === AuditResultType.CONFORME_AVEC_REMARQUES && "Conforme avec remarques"}
-                                      {result === AuditResultType.NON_APPLICABLE && "Non applicable"}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </div>
+                      <div className="space-y-2">
+                        <Label htmlFor={`item-${index}-result`}>Résultat</Label>
+                        <Select
+                          value={item.result}
+                          onValueChange={(value) => handleAuditItemChange(index, "result", value)}
+                        >
+                          <SelectTrigger id={`item-${index}-result`}>
+                            <SelectValue placeholder="Sélectionner un résultat" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {enumsData?.auditResultTypes?.map((result: string) => (
+                              <SelectItem key={result} value={result}>
+                                {auditResult(result).label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
 
-                          <div className="space-y-1">
-                            <Label htmlFor={`item-${index}-notes`}>Notes</Label>
-                            <Textarea
-                              id={`item-${index}-notes`}
-                              placeholder="Notes sur cet élément d'audit..."
-                              value={item.notes || ""}
-                              onChange={(e) => handleAuditItemChange(index, "notes", e.target.value)}
-                              rows={2}
-                            />
-                          </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`item-${index}-notes`}>Notes</Label>
+                      <Textarea
+                        id={`item-${index}-notes`}
+                        placeholder="Ex. : niveau d'huile complété, 0,5 L"
+                        value={item.notes || ""}
+                        onChange={(e) => handleAuditItemChange(index, "notes", e.target.value)}
+                        rows={2}
+                      />
+                    </div>
 
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id={`item-${index}-requires-action`}
-                              checked={item.requires_action}
-                              onChange={(e) => handleAuditItemChange(index, "requires_action", e.target.checked)}
-                              className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
-                            />
-                            <Label htmlFor={`item-${index}-requires-action`} className="text-xs">
-                              Nécessite une action corrective
-                            </Label>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </ScrollArea>
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id={`item-${index}-requires-action`}
+                        checked={Boolean(item.requires_action)}
+                        onCheckedChange={(checked) => handleAuditItemChange(index, "requires_action", checked === true)}
+                      />
+                      <Label htmlFor={`item-${index}-requires-action`} className="font-normal">
+                        Nécessite une action corrective
+                      </Label>
+                    </div>
+                  </fieldset>
+                ))
               ) : (
-                <div className="flex h-48 w-full items-center justify-center rounded-lg border border-dashed p-8 text-center">
-                  <div className="space-y-2">
-                    <p className="text-lg font-medium">Aucun élément d'audit</p>
-                    <p className="text-sm text-muted-foreground">Cet audit ne contient aucun élément à vérifier.</p>
-                  </div>
-                </div>
+                <p className="rounded-lg border border-dashed px-6 py-10 text-center text-sm text-muted-foreground">
+                  Cet audit ne contient aucun élément vérifié.
+                </p>
               )}
             </TabsContent>
           </Tabs>
 
-          <DialogFooter className="mt-4 sm:mt-6 flex-col sm:flex-row gap-2 sm:gap-0">
-            <Button type="button" variant="outline" onClick={onClose}>
+          <DialogFooter className="gap-2 sm:space-x-0">
+            <Button type="button" variant="outline" onClick={onClose} disabled={updateLoading}>
               Annuler
             </Button>
-            <Button type="submit" disabled={updateLoading} className="flex items-center gap-1.5">
+            <Button type="submit" disabled={updateLoading}>
               {updateLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-              <Save className="h-4 w-4" />
-              Enregistrer les modifications
+              Enregistrer
             </Button>
           </DialogFooter>
         </form>

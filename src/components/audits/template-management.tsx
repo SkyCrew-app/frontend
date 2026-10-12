@@ -4,16 +4,16 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { useQuery, useMutation } from "@apollo/client"
 import {
-  Plus,
-  Save,
-  Trash2,
-  Edit,
   ChevronDown,
   ChevronUp,
-  Loader2,
-  GripVertical,
   Copy,
-  AlertTriangle,
+  FileText,
+  GripVertical,
+  Loader2,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Trash2,
   X,
 } from "lucide-react"
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd"
@@ -25,8 +25,10 @@ import {
   GET_AUDIT_ENUMS,
 } from "@/graphql/audit"
 import { AuditCategoryType, AuditFrequencyType, CriticalityLevel } from "@/interfaces/audit"
-import { getAuditCategoryLabel, getAuditFrequencyLabel, getCriticalityLabel } from "@/lib/utils"
-import { toAuditTemplateItemInput } from "@/lib/audit"
+import { cn } from "@/lib/utils"
+import { auditCategoryLabel, auditCriticality, auditFrequencyLabel, toAuditTemplateItemInput } from "@/lib/audit"
+import { EmptyState } from "@/components/layout/EmptyState"
+import { ErrorState } from "@/components/layout/ErrorState"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -41,6 +43,14 @@ import {
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Skeleton } from "@/components/ui/skeleton"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -66,47 +76,53 @@ export function TemplateManagement() {
   const [expandedTemplate, setExpandedTemplate] = useState<number | null>(null)
   const userEmail = useCurrentUser()
   const userData = useUserData(userEmail)
-  const [userId, setUserId] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (userData) {
-      setUserId(userData.id)
-    }
-  }, [userData])
+  const userId: string | null = userData?.id ?? null
 
   const { loading, error, data, refetch } = useQuery(GET_AUDIT_TEMPLATE)
   const { data: enumsData } = useQuery(GET_AUDIT_ENUMS)
 
   const [createTemplate, { loading: createLoading }] = useMutation(CREATE_AUDIT_TEMPLATE, {
     onCompleted: () => {
-      toast({ description: "Modèle d'audit créé avec succès" })
+      toast({ title: "Modèle créé" })
       refetch()
       setIsCreateDialogOpen(false)
     },
-    onError: (error) => {
-      toast({ variant: "destructive", description: `Erreur: ${error.message}` })
+    onError: () => {
+      toast({
+        variant: "destructive",
+        title: "Création impossible",
+        description: "Le modèle n'a pas pu être créé. Vérifiez les informations puis réessayez.",
+      })
     },
   })
 
   const [updateTemplate, { loading: updateLoading }] = useMutation(UPDATE_AUDIT_TEMPLATE, {
     onCompleted: () => {
-      toast({ description: "Modèle d'audit mis à jour avec succès" })
+      toast({ title: "Modèle mis à jour" })
       refetch()
       setIsEditDialogOpen(false)
     },
-    onError: (error) => {
-      toast({ variant: "destructive", description: `Erreur: ${error.message}` })
+    onError: () => {
+      toast({
+        variant: "destructive",
+        title: "Enregistrement impossible",
+        description: "Le modèle n'a pas pu être mis à jour. Réessayez dans un instant.",
+      })
     },
   })
 
   const [deleteTemplate, { loading: deleteLoading }] = useMutation(DELETE_AUDIT_TEMPLATE, {
     onCompleted: () => {
-      toast({ description: "Modèle d'audit supprimé avec succès" })
+      toast({ title: "Modèle supprimé" })
       refetch()
       setIsDeleteDialogOpen(false)
     },
-    onError: (error) => {
-      toast({ variant: "destructive", description: `Erreur: ${error.message}` })
+    onError: () => {
+      toast({
+        variant: "destructive",
+        title: "Suppression impossible",
+        description: "Le modèle n'a pas pu être supprimé. Réessayez dans un instant.",
+      })
     },
   })
 
@@ -155,168 +171,140 @@ export function TemplateManagement() {
     setExpandedTemplate(expandedTemplate === templateId ? null : templateId)
   }
 
-  if (loading) {
-    return (
-      <div className="flex h-48 w-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
-        Erreur lors du chargement des modèles d'audit: {error.message}
-      </div>
-    )
-  }
+  const newTemplateButton = (
+    <Button onClick={handleCreateTemplate}>
+      <Plus className="h-4 w-4" />
+      Nouveau modèle
+    </Button>
+  )
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Modèles d'audit</h2>
-        <Button onClick={handleCreateTemplate} className="flex items-center gap-1.5">
-          <Plus className="h-4 w-4" />
-          Nouveau modèle
-        </Button>
+    <div className="space-y-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-lg font-semibold">Modèles d'audit</h2>
+          <p className="text-sm text-muted-foreground">
+            Un modèle fournit la liste des éléments à vérifier lors d'un audit.
+          </p>
+        </div>
+        {newTemplateButton}
       </div>
 
-      {templates.length === 0 ? (
-        <div className="flex h-48 w-full items-center justify-center rounded-lg border border-dashed p-8 text-center">
-          <div className="space-y-2">
-            <p className="text-lg font-medium">Aucun modèle d'audit</p>
-            <p className="text-sm text-muted-foreground">Commencez par créer un nouveau modèle d'audit.</p>
-          </div>
+      {loading ? (
+        <div className="grid gap-4">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <Skeleton key={index} className="h-40 w-full rounded-xl" />
+          ))}
         </div>
+      ) : error ? (
+        <ErrorState onRetry={() => refetch()} />
+      ) : templates.length === 0 ? (
+        <EmptyState
+          icon={FileText}
+          title="Aucun modèle d'audit"
+          description="Créez un premier modèle pour préparer la liste des éléments à vérifier."
+          action={newTemplateButton}
+        />
       ) : (
         <div className="grid gap-4">
-          {templates.map((template) => (
-            <Card key={template.id} className="overflow-hidden">
-              <CardHeader className="pb-2">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="text-lg">{template.name}</CardTitle>
-                    <CardDescription>{template.description}</CardDescription>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDuplicateTemplate(template)}
-                      title="Dupliquer"
-                    >
-                      <Copy className="h-4 w-4" />
-                      <span className="sr-only">Dupliquer</span>
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleEditTemplate(template)} title="Modifier">
-                      <Edit className="h-4 w-4" />
-                      <span className="sr-only">Modifier</span>
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDeleteTemplate(template)}
-                      title="Supprimer"
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      <span className="sr-only">Supprimer</span>
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="pb-2">
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                  <div className="flex flex-col">
-                    <span className="text-xs text-muted-foreground">Fréquence recommandée</span>
-                    <span className="text-sm font-medium">
-                      {getAuditFrequencyLabel(template.recommended_frequency)}
-                    </span>
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-xs text-muted-foreground">Types d'aéronefs</span>
-                    <span className="text-sm font-medium">
-                      {template.applicable_aircraft_types?.join(", ") || "Tous"}
-                    </span>
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-xs text-muted-foreground">Statut</span>
-                    <span className="text-sm font-medium">
-                      {template.is_active ? (
-                        <Badge
-                          variant="outline"
-                          className="bg-success/15 text-success"
-                        >
-                          Actif
-                        </Badge>
-                      ) : (
-                        <Badge
-                          variant="outline"
-                          className="bg-muted text-foreground"
-                        >
-                          Inactif
-                        </Badge>
-                      )}
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter className="pt-0">
-                <Button
-                  variant="ghost"
-                  className="w-full justify-between"
-                  onClick={() => toggleTemplateExpand(template.id)}
-                >
-                  <span>
-                    {template.items?.length || 0} élément{template.items?.length !== 1 ? "s" : ""}
-                  </span>
-                  {expandedTemplate === template.id ? (
-                    <ChevronUp className="h-4 w-4" />
-                  ) : (
-                    <ChevronDown className="h-4 w-4" />
-                  )}
-                </Button>
-              </CardFooter>
-              {expandedTemplate === template.id && (
-                <div className="border-t px-6 py-4">
-                  <h4 className="mb-3 text-sm font-medium">Éléments du modèle</h4>
-                  {template.items?.length > 0 ? (
-                    <div className="space-y-2">
-                      {template.items.map((item: any) => (
-                        <div key={item.id} className="rounded-md border p-3">
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <h5 className="font-medium">{item.title}</h5>
-                              <p className="text-xs text-muted-foreground">{item.description}</p>
-                            </div>
-                            <Badge
-                              variant="outline"
-                              className={
-                                item.criticality === CriticalityLevel.CRITIQUE
-                                  ? "bg-destructive/15 text-destructive"
-                                  : item.criticality === CriticalityLevel.MAJEUR
-                                    ? "bg-warning/15 text-warning"
-                                    : item.criticality === CriticalityLevel.MINEUR
-                                      ? "bg-info/15 text-info"
-                                      : "bg-muted text-foreground"
-                              }
-                            >
-                              {getCriticalityLabel(item.criticality)}
-                            </Badge>
-                          </div>
-                          <div className="mt-2 text-xs">
-                            <span className="font-medium">Catégorie:</span> {getAuditCategoryLabel(item.category)}
-                          </div>
-                        </div>
-                      ))}
+          {templates.map((template) => {
+            const itemCount = template.items?.length || 0
+            const expanded = expandedTemplate === template.id
+            return (
+              <Card key={template.id}>
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <CardTitle className="text-base">{template.name}</CardTitle>
+                      {template.description && <CardDescription>{template.description}</CardDescription>}
                     </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">Aucun élément dans ce modèle.</p>
-                  )}
-                </div>
-              )}
-            </Card>
-          ))}
+                    <div className="flex shrink-0 items-center gap-1">
+                      <Badge variant={template.is_active ? "success" : "neutral"}>
+                        {template.is_active ? "Actif" : "Inactif"}
+                      </Badge>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-9 w-9"
+                            aria-label={`Actions pour le modèle ${template.name}`}
+                            title="Actions"
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem className="gap-2" onSelect={() => handleEditTemplate(template)}>
+                            <Pencil className="h-4 w-4" />
+                            Modifier
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="gap-2" onSelect={() => handleDuplicateTemplate(template)}>
+                            <Copy className="h-4 w-4" />
+                            Dupliquer
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="gap-2 text-destructive focus:text-destructive"
+                            onSelect={() => handleDeleteTemplate(template)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Supprimer
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="pb-3">
+                  <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                      <dt className="text-xs text-muted-foreground">Fréquence recommandée</dt>
+                      <dd className="text-sm font-medium">{auditFrequencyLabel(template.recommended_frequency)}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-muted-foreground">Types d'aéronefs</dt>
+                      <dd className="text-sm font-medium">
+                        {template.applicable_aircraft_types?.join(", ") || "Tous"}
+                      </dd>
+                    </div>
+                  </dl>
+                </CardContent>
+                <CardFooter className="flex-col items-stretch gap-3 border-t py-3">
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-between"
+                    aria-expanded={expanded}
+                    onClick={() => toggleTemplateExpand(template.id)}
+                  >
+                    <span>
+                      {itemCount} élément{itemCount !== 1 ? "s" : ""} à vérifier
+                    </span>
+                    {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  </Button>
+                  {expanded &&
+                    (itemCount > 0 ? (
+                      <ul className="divide-y rounded-lg border">
+                        {template.items.map((item: any) => (
+                          <li key={item.id} className="flex items-start justify-between gap-3 p-3">
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium">{item.title}</p>
+                              {item.description && <p className="text-sm text-muted-foreground">{item.description}</p>}
+                              <p className="mt-1 text-xs text-muted-foreground">{auditCategoryLabel(item.category)}</p>
+                            </div>
+                            <Badge variant={auditCriticality(item.criticality).variant} className="shrink-0">
+                              {auditCriticality(item.criticality).label}
+                            </Badge>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="px-4 text-sm text-muted-foreground">Aucun élément dans ce modèle.</p>
+                    ))}
+                </CardFooter>
+              </Card>
+            )
+          })}
         </div>
       )}
 
@@ -374,22 +362,30 @@ export function TemplateManagement() {
         mode="edit"
       />
 
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={(open) => !open && !deleteLoading && setIsDeleteDialogOpen(false)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Êtes-vous sûr de vouloir supprimer ce modèle ?</AlertDialogTitle>
+            <AlertDialogTitle>Supprimer ce modèle ?</AlertDialogTitle>
             <AlertDialogDescription>
-              Cette action est irréversible. Toutes les données associées à ce modèle seront définitivement supprimées.
+              Le modèle « {selectedTemplate?.name} » et ses éléments seront définitivement supprimés. Les audits déjà
+              réalisés ne sont pas modifiés.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteLoading}>Annuler</AlertDialogCancel>
             <AlertDialogAction
-              onClick={confirmDeleteTemplate}
+              // Keep the dialog open until the mutation answers.
+              onClick={(e) => {
+                e.preventDefault()
+                confirmDeleteTemplate()
+              }}
               disabled={deleteLoading}
-              className="bg-destructive hover:bg-destructive/90"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {deleteLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {deleteLoading && <Loader2 className="h-4 w-4 animate-spin" />}
               Supprimer
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -471,6 +467,7 @@ function TemplateFormDialog({
       items: [],
     })
     setValidationErrors({})
+    setNewAircraftType("")
   }
 
   const resetItemForm = () => {
@@ -507,6 +504,19 @@ function TemplateFormDialog({
       ...prev,
       [field]: value,
     }))
+
+    if (field === "title") {
+      clearItemTitleError()
+    }
+  }
+
+  const clearItemTitleError = () => {
+    setValidationErrors((prev) => {
+      if (!prev.itemTitle) return prev
+      const next = { ...prev }
+      delete next.itemTitle
+      return next
+    })
   }
 
   const addAircraftType = () => {
@@ -542,17 +552,13 @@ function TemplateFormDialog({
       resetItemForm()
       setCurrentItemIndex(null)
     }
+    clearItemTitleError()
     setIsItemFormOpen(true)
   }
 
   const saveItem = () => {
-    const errors: Record<string, string> = {}
     if (!itemFormData.title.trim()) {
-      errors.itemTitle = "Le titre est requis"
-    }
-
-    if (Object.keys(errors).length > 0) {
-      setValidationErrors(errors)
+      setValidationErrors((prev) => ({ ...prev, itemTitle: "Indiquez le titre de l'élément." }))
       return
     }
 
@@ -578,11 +584,7 @@ function TemplateFormDialog({
     handleInputChange("items", newItems)
   }
 
-  const [, setIsDragging] = useState(false)
-
   const handleDragEnd = (result: any) => {
-    setIsDragging(false)
-
     if (!result.destination) return
 
     if (result.destination.index === result.source.index) return
@@ -599,19 +601,15 @@ function TemplateFormDialog({
     handleInputChange("items", updatedItems)
   }
 
-  const handleDragStart = () => {
-    setIsDragging(true)
-  }
-
   const validateForm = () => {
     const errors: Record<string, string> = {}
 
     if (!formData.name.trim()) {
-      errors.name = "Le nom du modèle est requis"
+      errors.name = "Indiquez le nom du modèle."
     }
 
     if (formData.items.length === 0) {
-      errors.items = "Au moins un élément d'audit est requis"
+      errors.items = "Ajoutez au moins un élément à vérifier."
     }
 
     setValidationErrors(errors)
@@ -634,137 +632,160 @@ function TemplateFormDialog({
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
-            {mode === "create" ? "Créer un nouveau modèle d'audit" : "Modifier le modèle d'audit"}
-          </DialogTitle>
+          <DialogTitle>{mode === "create" ? "Créer un modèle d'audit" : "Modifier le modèle d'audit"}</DialogTitle>
           <DialogDescription>
-            {mode === "create"
-              ? "Définissez les détails et les éléments du nouveau modèle d'audit."
-              : "Modifiez les détails et les éléments du modèle d'audit existant."}
+            Décrivez le modèle puis listez les éléments à vérifier, dans l'ordre de l'inspection.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="template-name">
-                Nom du modèle <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="template-name"
-                value={formData.name}
-                onChange={(e) => handleInputChange("name", e.target.value)}
-                placeholder="Nom du modèle d'audit"
-                className={validationErrors.name ? "border-destructive" : ""}
-              />
-              {validationErrors.name && <p className="text-xs text-destructive">{validationErrors.name}</p>}
+        <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+          <fieldset className="space-y-4">
+            <legend className="text-sm font-semibold">Informations générales</legend>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor={`${mode}-template-name`}>
+                  Nom du modèle <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id={`${mode}-template-name`}
+                  value={formData.name}
+                  onChange={(e) => handleInputChange("name", e.target.value)}
+                  placeholder="Ex. : Visite annuelle DR400"
+                  aria-invalid={Boolean(validationErrors.name)}
+                  className={cn(validationErrors.name && "border-destructive")}
+                />
+                {validationErrors.name && <p className="text-sm text-destructive">{validationErrors.name}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor={`${mode}-template-frequency`}>
+                  Fréquence recommandée <span className="text-destructive">*</span>
+                </Label>
+                <Select
+                  value={formData.recommended_frequency}
+                  onValueChange={(value) => handleInputChange("recommended_frequency", value)}
+                >
+                  <SelectTrigger id={`${mode}-template-frequency`}>
+                    <SelectValue placeholder="Sélectionner une fréquence" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {enumsData?.auditFrequencyTypes?.map((frequency: string) => (
+                      <SelectItem key={frequency} value={frequency}>
+                        {auditFrequencyLabel(frequency)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="template-frequency">
-                Fréquence recommandée <span className="text-destructive">*</span>
-              </Label>
-              <Select
-                value={formData.recommended_frequency}
-                onValueChange={(value) => handleInputChange("recommended_frequency", value)}
-              >
-                <SelectTrigger id="template-frequency">
-                  <SelectValue placeholder="Sélectionner une fréquence" />
-                </SelectTrigger>
-                <SelectContent>
-                  {enumsData?.auditFrequencyTypes?.map((frequency: string) => (
-                    <SelectItem key={frequency} value={frequency}>
-                      {getAuditFrequencyLabel(frequency as AuditFrequencyType)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="template-description">Description</Label>
-            <Textarea
-              id="template-description"
-              value={formData.description}
-              onChange={(e) => handleInputChange("description", e.target.value)}
-              placeholder="Description du modèle d'audit"
-              rows={3}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Types d'aéronefs applicables</Label>
-            <div className="flex items-center gap-2">
-              <Input
-                value={newAircraftType}
-                onChange={(e) => setNewAircraftType(e.target.value)}
-                placeholder="Ajouter un type d'aéronef"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault()
-                    addAircraftType()
-                  }
-                }}
+              <Label htmlFor={`${mode}-template-description`}>Description</Label>
+              <Textarea
+                id={`${mode}-template-description`}
+                value={formData.description}
+                onChange={(e) => handleInputChange("description", e.target.value)}
+                placeholder="Ex. : contrôle complet de la cellule et du moteur avant la saison"
+                rows={2}
               />
-              <Button type="button" onClick={addAircraftType} className="shrink-0">
-                Ajouter
-              </Button>
             </div>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {formData.applicable_aircraft_types.map((type) => (
-                <Badge key={type} variant="secondary" className="flex items-center gap-1">
-                  {type}
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-4 w-4 p-0 ml-1"
-                    onClick={() => removeAircraftType(type)}
-                  >
-                    <X className="h-3 w-3" />
-                    <span className="sr-only">Supprimer</span>
-                  </Button>
-                </Badge>
-              ))}
-              {formData.applicable_aircraft_types.length === 0 && (
-                <span className="text-sm text-muted-foreground">Aucun type d'aéronef spécifié (applicable à tous)</span>
-              )}
+
+            {/* CreateAuditTemplateInput has no is_active: a new template is always active. */}
+            {mode === "edit" && (
+              <div className="flex items-start gap-3">
+                <Switch
+                  id="edit-template-active"
+                  checked={formData.is_active}
+                  onCheckedChange={(checked) => handleInputChange("is_active", checked)}
+                />
+                <div>
+                  <Label htmlFor="edit-template-active">Modèle actif</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Un modèle inactif n'est plus proposé à la création d'un audit.
+                  </p>
+                </div>
+              </div>
+            )}
+          </fieldset>
+
+          <fieldset className="space-y-3">
+            <legend className="text-sm font-semibold">Aéronefs concernés</legend>
+            <div className="space-y-2">
+              <Label htmlFor={`${mode}-template-aircraft-type`}>Type d'aéronef</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id={`${mode}-template-aircraft-type`}
+                  value={newAircraftType}
+                  onChange={(e) => setNewAircraftType(e.target.value)}
+                  placeholder="Ex. : DR400"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault()
+                      addAircraftType()
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={addAircraftType}
+                  disabled={!newAircraftType.trim()}
+                  className="shrink-0"
+                >
+                  Ajouter
+                </Button>
+              </div>
             </div>
-          </div>
+            {formData.applicable_aircraft_types.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Aucun type précisé : le modèle vaut pour tous les aéronefs.</p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {formData.applicable_aircraft_types.map((type) => (
+                  <Badge key={type} variant="neutral" className="gap-1 py-1 pr-1">
+                    {type}
+                    <button
+                      type="button"
+                      onClick={() => removeAircraftType(type)}
+                      aria-label={`Retirer ${type}`}
+                      title={`Retirer ${type}`}
+                      className="rounded-full p-0.5 hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </fieldset>
 
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="template-active"
-              checked={formData.is_active}
-              onCheckedChange={(checked) => handleInputChange("is_active", checked)}
-            />
-            <Label htmlFor="template-active">Modèle actif</Label>
-          </div>
-
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label>
-                Éléments d'audit <span className="text-destructive">*</span>
-              </Label>
-              <Button type="button" onClick={() => openItemForm()} className="flex items-center gap-1.5" size="sm">
+          <fieldset className="space-y-3">
+            <legend className="sr-only">Éléments à vérifier</legend>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold" aria-hidden="true">
+                  Éléments à vérifier <span className="text-destructive">*</span>
+                </p>
+                {formData.items.length > 1 && (
+                  <p className="text-xs text-muted-foreground">Faites glisser la poignée pour changer l'ordre.</p>
+                )}
+              </div>
+              <Button type="button" variant="outline" size="sm" onClick={() => openItemForm()}>
                 <Plus className="h-4 w-4" />
                 Ajouter un élément
               </Button>
             </div>
 
-            {validationErrors.items && (
-              <div className="flex items-center gap-2 text-sm text-destructive">
-                <AlertTriangle className="h-4 w-4" />
-                {validationErrors.items}
-              </div>
-            )}
+            {validationErrors.items && <p className="text-sm text-destructive">{validationErrors.items}</p>}
 
-            <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-              <div className="space-y-2 min-h-[100px] border border-dashed rounded-md p-2">
+            {formData.items.length === 0 ? (
+              <p className="rounded-lg border border-dashed px-6 py-8 text-center text-sm text-muted-foreground">
+                Aucun élément pour le moment. Ajoutez les points à contrôler pendant l'audit.
+              </p>
+            ) : (
+              <DragDropContext onDragEnd={handleDragEnd}>
                 <Droppable
                   droppableId="audit-items"
                   isDropDisabled={Boolean(isItemFormOpen)}
@@ -772,238 +793,225 @@ function TemplateFormDialog({
                   ignoreContainerClipping={false}
                 >
                   {(provided) => (
-                    <div
-                      {...provided.droppableProps}
-                      ref={provided.innerRef}
-                      className="space-y-2"
-                      style={{ minHeight: "10px" }}
-                    >
-                      {formData.items.length > 0 ? (
-                        <>
-                          {formData.items.map((item, index) => (
-                            <Draggable
-                              key={`item-${index}`}
-                              draggableId={`item-${index}`}
-                              index={index}
-                              isDragDisabled={Boolean(isItemFormOpen)}
+                    <div {...provided.droppableProps} ref={provided.innerRef}>
+                      {formData.items.map((item, index) => (
+                        <Draggable
+                          key={`item-${index}`}
+                          draggableId={`item-${index}`}
+                          index={index}
+                          isDragDisabled={Boolean(isItemFormOpen)}
+                        >
+                          {(provided) => (
+                            <div
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              className="mb-2 flex items-start gap-2 rounded-lg border bg-card p-3"
                             >
-                              {(provided) => (
-                                <div
-                                  ref={provided.innerRef}
-                                  {...provided.draggableProps}
-                                  {...provided.dragHandleProps}
-                                  className="rounded-md border p-3 mb-2"
-                                >
-                                  <div className="flex items-start gap-2">
-                                    <div className="mt-1 cursor-move text-muted-foreground">
-                                      <GripVertical className="h-5 w-5" />
-                                    </div>
-                                    <div className="flex-1">
-                                      <div className="flex items-start justify-between">
-                                        <div>
-                                          <h5 className="font-medium">{item.title}</h5>
-                                          <p className="text-xs text-muted-foreground">{item.description}</p>
-                                        </div>
-                                        <div className="flex items-center gap-1">
-                                          <Badge
-                                            variant="outline"
-                                            className={
-                                              item.criticality === CriticalityLevel.CRITIQUE
-                                                ? "bg-destructive/15 text-destructive"
-                                                : item.criticality === CriticalityLevel.MAJEUR
-                                                  ? "bg-warning/15 text-warning"
-                                                  : item.criticality === CriticalityLevel.MINEUR
-                                                    ? "bg-info/15 text-info"
-                                                    : "bg-muted text-foreground"
-                                            }
-                                          >
-                                            {getCriticalityLabel(item.criticality)}
-                                          </Badge>
-                                          <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => openItemForm(index)}
-                                            className="h-7 w-7"
-                                          >
-                                            <Edit className="h-3.5 w-3.5" />
-                                            <span className="sr-only">Modifier</span>
-                                          </Button>
-                                          <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => removeItem(index)}
-                                            className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                          >
-                                            <Trash2 className="h-3.5 w-3.5" />
-                                            <span className="sr-only">Supprimer</span>
-                                          </Button>
-                                        </div>
-                                      </div>
-                                      <div className="mt-2 text-xs">
-                                        <span className="font-medium">Catégorie:</span>{" "}
-                                        {getAuditCategoryLabel(item.category)}
-                                      </div>
-                                    </div>
-                                  </div>
+                              <div
+                                {...provided.dragHandleProps}
+                                aria-label={`Déplacer ${item.title}`}
+                                title="Déplacer"
+                                className="mt-0.5 cursor-grab rounded-sm text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                              >
+                                <GripVertical className="h-5 w-5" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium">{item.title}</p>
+                                {item.description && (
+                                  <p className="text-sm text-muted-foreground">{item.description}</p>
+                                )}
+                                <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                                  <Badge variant={auditCriticality(item.criticality).variant}>
+                                    {auditCriticality(item.criticality).label}
+                                  </Badge>
+                                  <span className="text-xs text-muted-foreground">
+                                    {auditCategoryLabel(item.category)}
+                                  </span>
                                 </div>
-                              )}
-                            </Draggable>
-                          ))}
-                        </>
-                      ) : (
-                        <div className="flex h-24 w-full items-center justify-center text-center">
-                          <div>
-                            <p className="text-sm font-medium">Aucun élément d'audit</p>
-                            <p className="text-xs text-muted-foreground">
-                              Ajoutez des éléments à vérifier lors de l'audit.
-                            </p>
-                          </div>
-                        </div>
-                      )}
+                              </div>
+                              <div className="flex shrink-0 items-center">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => openItemForm(index)}
+                                  className="h-9 w-9"
+                                  aria-label={`Modifier ${item.title}`}
+                                  title="Modifier"
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => removeItem(index)}
+                                  className="h-9 w-9 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                                  aria-label={`Retirer ${item.title}`}
+                                  title="Retirer du modèle"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                        </Draggable>
+                      ))}
                       {provided.placeholder}
                     </div>
                   )}
                 </Droppable>
-              </div>
-            </DragDropContext>
-          </div>
+              </DragDropContext>
+            )}
+          </fieldset>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>
               Annuler
             </Button>
-            <Button type="submit" disabled={isLoading} className="flex items-center gap-1.5">
+            <Button type="submit" disabled={isLoading}>
               {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-              <Save className="h-4 w-4" />
-              {mode === "create" ? "Créer le modèle" : "Enregistrer les modifications"}
+              {mode === "create" ? "Créer le modèle" : "Enregistrer"}
             </Button>
           </DialogFooter>
         </form>
       </DialogContent>
 
       <Dialog open={isItemFormOpen} onOpenChange={setIsItemFormOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
-              {currentItemIndex !== null ? "Modifier l'élément d'audit" : "Ajouter un élément d'audit"}
-            </DialogTitle>
+            <DialogTitle>{currentItemIndex !== null ? "Modifier l'élément" : "Ajouter un élément"}</DialogTitle>
+            <DialogDescription>Un point à contrôler pendant l'audit.</DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="item-title">
-                Titre <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="item-title"
-                value={itemFormData.title}
-                onChange={(e) => handleItemInputChange("title", e.target.value)}
-                placeholder="Titre de l'élément"
-                className={validationErrors.itemTitle ? "border-destructive" : ""}
-              />
-              {validationErrors.itemTitle && <p className="text-xs text-destructive">{validationErrors.itemTitle}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="item-description">Description</Label>
-              <Textarea
-                id="item-description"
-                value={itemFormData.description}
-                onChange={(e) => handleItemInputChange("description", e.target.value)}
-                placeholder="Description détaillée de l'élément à vérifier"
-                rows={3}
-              />
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-6">
+            <fieldset className="space-y-4">
+              <legend className="text-sm font-semibold">Élément</legend>
               <div className="space-y-2">
-                <Label htmlFor="item-category">Catégorie</Label>
-                <Select
-                  value={itemFormData.category}
-                  onValueChange={(value) => handleItemInputChange("category", value)}
-                >
-                  <SelectTrigger id="item-category">
-                    <SelectValue placeholder="Sélectionner une catégorie" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {enumsData?.auditCategoryTypes?.map((category: string) => (
-                      <SelectItem key={category} value={category}>
-                        {getAuditCategoryLabel(category as AuditCategoryType)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label htmlFor={`${mode}-item-title`}>
+                  Titre <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id={`${mode}-item-title`}
+                  value={itemFormData.title}
+                  onChange={(e) => handleItemInputChange("title", e.target.value)}
+                  placeholder="Ex. : Niveau d'huile moteur"
+                  aria-invalid={Boolean(validationErrors.itemTitle)}
+                  className={cn(validationErrors.itemTitle && "border-destructive")}
+                />
+                {validationErrors.itemTitle && (
+                  <p className="text-sm text-destructive">{validationErrors.itemTitle}</p>
+                )}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="item-criticality">Niveau de criticité</Label>
-                <Select
-                  value={itemFormData.criticality}
-                  onValueChange={(value) => handleItemInputChange("criticality", value)}
-                >
-                  <SelectTrigger id="item-criticality">
-                    <SelectValue placeholder="Sélectionner un niveau" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {enumsData?.criticalityLevels?.map((level: string) => (
-                      <SelectItem key={level} value={level}>
-                        {getCriticalityLabel(level as CriticalityLevel)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label htmlFor={`${mode}-item-description`}>Description</Label>
+                <Textarea
+                  id={`${mode}-item-description`}
+                  value={itemFormData.description}
+                  onChange={(e) => handleItemInputChange("description", e.target.value)}
+                  placeholder="Ex. : vérifier le niveau à la jauge, moteur froid"
+                  rows={2}
+                />
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="item-inspection-method">Méthode d'inspection</Label>
-              <Input
-                id="item-inspection-method"
-                value={itemFormData.inspection_method}
-                onChange={(e) => handleItemInputChange("inspection_method", e.target.value)}
-                placeholder="Comment inspecter cet élément"
-              />
-            </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor={`${mode}-item-category`}>Catégorie</Label>
+                  <Select
+                    value={itemFormData.category}
+                    onValueChange={(value) => handleItemInputChange("category", value)}
+                  >
+                    <SelectTrigger id={`${mode}-item-category`}>
+                      <SelectValue placeholder="Sélectionner une catégorie" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {enumsData?.auditCategoryTypes?.map((category: string) => (
+                        <SelectItem key={category} value={category}>
+                          {auditCategoryLabel(category)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="item-expected-result">Résultat attendu</Label>
-              <Input
-                id="item-expected-result"
-                value={itemFormData.expected_result}
-                onChange={(e) => handleItemInputChange("expected_result", e.target.value)}
-                placeholder="Résultat attendu de l'inspection"
-              />
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor={`${mode}-item-criticality`}>Criticité</Label>
+                  <Select
+                    value={itemFormData.criticality}
+                    onValueChange={(value) => handleItemInputChange("criticality", value)}
+                  >
+                    <SelectTrigger id={`${mode}-item-criticality`}>
+                      <SelectValue placeholder="Sélectionner un niveau" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {enumsData?.criticalityLevels?.map((level: string) => (
+                        <SelectItem key={level} value={level}>
+                          {auditCriticality(level).label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </fieldset>
 
-            <div className="space-y-2">
-              <Label htmlFor="item-reference">Documentation de référence</Label>
-              <Input
-                id="item-reference"
-                value={itemFormData.reference_documentation}
-                onChange={(e) => handleItemInputChange("reference_documentation", e.target.value)}
-                placeholder="Référence à la documentation technique"
-              />
-            </div>
+            <fieldset className="space-y-4">
+              <legend className="text-sm font-semibold">Inspection</legend>
+              <div className="space-y-2">
+                <Label htmlFor={`${mode}-item-inspection-method`}>Méthode d'inspection</Label>
+                <Input
+                  id={`${mode}-item-inspection-method`}
+                  value={itemFormData.inspection_method}
+                  onChange={(e) => handleItemInputChange("inspection_method", e.target.value)}
+                  placeholder="Ex. : contrôle visuel"
+                />
+              </div>
 
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="item-photo"
-                checked={itemFormData.requires_photo_evidence}
-                onCheckedChange={(checked) => handleItemInputChange("requires_photo_evidence", checked)}
-              />
-              <Label htmlFor="item-photo">Nécessite une preuve photographique</Label>
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor={`${mode}-item-expected-result`}>Résultat attendu</Label>
+                <Input
+                  id={`${mode}-item-expected-result`}
+                  value={itemFormData.expected_result}
+                  onChange={(e) => handleItemInputChange("expected_result", e.target.value)}
+                  placeholder="Ex. : niveau entre mini et maxi"
+                />
+              </div>
 
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="item-mandatory"
-                checked={itemFormData.is_mandatory}
-                onCheckedChange={(checked) => handleItemInputChange("is_mandatory", checked)}
-              />
-              <Label htmlFor="item-mandatory">Élément obligatoire</Label>
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor={`${mode}-item-reference`}>Documentation de référence</Label>
+                <Input
+                  id={`${mode}-item-reference`}
+                  value={itemFormData.reference_documentation}
+                  onChange={(e) => handleItemInputChange("reference_documentation", e.target.value)}
+                  placeholder="Ex. : manuel de maintenance, chapitre 12"
+                />
+              </div>
+            </fieldset>
+
+            <fieldset className="space-y-3">
+              <legend className="text-sm font-semibold">Options</legend>
+              <div className="flex items-center gap-3">
+                <Switch
+                  id={`${mode}-item-mandatory`}
+                  checked={itemFormData.is_mandatory}
+                  onCheckedChange={(checked) => handleItemInputChange("is_mandatory", checked)}
+                />
+                <Label htmlFor={`${mode}-item-mandatory`} className="font-normal">
+                  Élément obligatoire
+                </Label>
+              </div>
+              <div className="flex items-center gap-3">
+                <Switch
+                  id={`${mode}-item-photo`}
+                  checked={itemFormData.requires_photo_evidence}
+                  onCheckedChange={(checked) => handleItemInputChange("requires_photo_evidence", checked)}
+                />
+                <Label htmlFor={`${mode}-item-photo`} className="font-normal">
+                  Photo à joindre comme preuve
+                </Label>
+              </div>
+            </fieldset>
           </div>
 
           <DialogFooter>
@@ -1011,7 +1019,7 @@ function TemplateFormDialog({
               Annuler
             </Button>
             <Button type="button" onClick={saveItem}>
-              {currentItemIndex !== null ? "Mettre à jour" : "Ajouter"}
+              {currentItemIndex !== null ? "Enregistrer l'élément" : "Ajouter l'élément"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -81,3 +81,18 @@ export function stableIndex(seed: number | string, length: number): number {
   }
   return hash % length
 }
+
+// Evaluations still to pass: never taken, or not passed at the latest attempt.
+export function evaluationsToTake<T extends WithId>(
+  evaluations: T[] | null | undefined,
+  latestAttempts: ReadonlyMap<number, EvaluationAttempt>,
+): T[] {
+  return (evaluations ?? []).filter((evaluation) => latestAttempts.get(Number(evaluation.id))?.passed !== true)
+}
+
+// Mean score of the attempts that have one, null when there is none.
+export function averageScore(attempts: Iterable<EvaluationAttempt>): number | null {
+  const scores = [...attempts].map((attempt) => attempt.score).filter((score): score is number => score !== null)
+  if (scores.length === 0) return null
+  return Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length)
+}

@@ -1,10 +1,7 @@
 "use client"
 
-import { useMemo, useState, useEffect } from "react"
-import { useTheme } from "next-themes"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { TrendingUp } from "lucide-react"
+import { useMemo } from "react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -45,7 +42,7 @@ function haversineNm(lat1: number, lon1: number, lat2: number, lon2: number): nu
 function formatAlt(alt: number): string {
   if (!alt || alt <= 0) return "GND"
   if (alt >= 5000) return `FL${Math.round(alt / 100).toString().padStart(3, "0")}`
-  return `${alt}ft`
+  return `${alt} ft`
 }
 
 type Phase = "climb" | "cruise" | "descent" | "ground"
@@ -58,59 +55,26 @@ function getPhase(type: string): Phase {
   return "cruise"
 }
 
+// Theme tokens, so the chart follows light and dark mode like the rest of the app.
 const PHASE_COLORS: Record<Phase, string> = {
-  climb: "#22C55E",
-  cruise: "#E040FB",
-  descent: "#F59E0B",
-  ground: "#64748B",
+  climb: "hsl(var(--success))",
+  cruise: "hsl(var(--primary))",
+  descent: "hsl(var(--warning))",
+  ground: "hsl(var(--muted-foreground))",
 }
 
-/* ------------------------------------------------------------------ */
-/*  Theme-adaptive palette                                             */
-/* ------------------------------------------------------------------ */
-
-interface SvgPalette {
-  chartBg: string
-  gridAlt: string
-  gridDist: string
-  axisText: string
-  axisLabel: string
-  groundLine: string
-  identMajor: string
-  identMinor: string
-  altLabel: string
-  dotStroke: string
-  gradientFrom: string
-  gradientTo: string
-}
-
-const PALETTE_DARK: SvgPalette = {
-  chartBg: "rgba(15,15,25,0.4)",
-  gridAlt: "rgba(255,255,255,0.06)",
-  gridDist: "rgba(255,255,255,0.04)",
-  axisText: "#888",
-  axisLabel: "#aaa",
-  groundLine: "#444",
-  identMajor: "#fff",
-  identMinor: "#bbb",
-  altLabel: "#999",
-  dotStroke: "rgba(0,0,0,0.6)",
+const pal = {
+  chartBg: "hsl(var(--muted) / 0.5)",
+  gridAlt: "hsl(var(--border))",
+  gridDist: "hsl(var(--border))",
+  axisText: "hsl(var(--muted-foreground))",
+  axisLabel: "hsl(var(--muted-foreground))",
+  groundLine: "hsl(var(--muted-foreground))",
+  identMajor: "hsl(var(--foreground))",
+  identMinor: "hsl(var(--muted-foreground))",
+  altLabel: "hsl(var(--muted-foreground))",
+  dotStroke: "hsl(var(--card))",
   gradientFrom: "0.15",
-  gradientTo: "0.02",
-}
-
-const PALETTE_LIGHT: SvgPalette = {
-  chartBg: "rgba(241,245,249,0.8)",
-  gridAlt: "rgba(0,0,0,0.08)",
-  gridDist: "rgba(0,0,0,0.06)",
-  axisText: "#555",
-  axisLabel: "#444",
-  groundLine: "#cbd5e1",
-  identMajor: "#1e293b",
-  identMinor: "#64748b",
-  altLabel: "#64748b",
-  dotStroke: "rgba(255,255,255,0.8)",
-  gradientFrom: "0.12",
   gradientTo: "0.02",
 }
 
@@ -119,12 +83,6 @@ const PALETTE_LIGHT: SvgPalette = {
 /* ------------------------------------------------------------------ */
 
 export function VerticalProfile({ waypoints, maxAltitude, className = "" }: VerticalProfileProps) {
-  const { resolvedTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => setMounted(true), [])
-
-  const pal = mounted && resolvedTheme === "light" ? PALETTE_LIGHT : PALETTE_DARK
-
   const profileData = useMemo(() => {
     if (!waypoints || waypoints.length < 2) return null
 
@@ -224,15 +182,12 @@ export function VerticalProfile({ waypoints, maxAltitude, className = "" }: Vert
   }
 
   return (
-    <Card className={`shadow-lg border-border/50 ${className}`}>
+    <Card className={className}>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2">
-          <TrendingUp className="h-5 w-5 text-primary" />
-          <span>Profil vertical</span>
-          <Badge variant="outline" className="ml-auto font-mono text-xs">
-            {maxDist.toFixed(0)} NM — Alt max {formatAlt(Math.max(...points.map((p) => p.alt)))}
-          </Badge>
-        </CardTitle>
+        <CardTitle className="text-base">Profil vertical</CardTitle>
+        <CardDescription>
+          {maxDist.toFixed(0)} NM · altitude maximale {formatAlt(Math.max(...points.map((p) => p.alt)))}
+        </CardDescription>
       </CardHeader>
 
       <CardContent className="p-2 md:p-4">
@@ -302,7 +257,7 @@ export function VerticalProfile({ waypoints, maxAltitude, className = "" }: Vert
               fontSize="9"
               fontFamily="monospace"
             >
-              ALT (ft)
+              Altitude (ft)
             </text>
             <text
               x={padding.left + chartW / 2}
@@ -318,8 +273,8 @@ export function VerticalProfile({ waypoints, maxAltitude, className = "" }: Vert
             {/* Fill under curve */}
             <defs>
               <linearGradient id="profile-fill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#E040FB" stopOpacity={pal.gradientFrom} />
-                <stop offset="100%" stopColor="#E040FB" stopOpacity={pal.gradientTo} />
+                <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={pal.gradientFrom} />
+                <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={pal.gradientTo} />
               </linearGradient>
             </defs>
             <path d={fillData} fill="url(#profile-fill)" />
@@ -417,7 +372,7 @@ export function VerticalProfile({ waypoints, maxAltitude, className = "" }: Vert
         </div>
 
         {/* Phase legend */}
-        <div className="flex items-center justify-center gap-6 mt-3 text-xs text-muted-foreground">
+        <div className="mt-3 flex flex-wrap items-center justify-center gap-x-6 gap-y-1 text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5">
             <span className="w-4 h-1 rounded bg-success inline-block"></span> Montée
           </span>

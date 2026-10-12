@@ -1,51 +1,69 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useEffect, useMemo, useState } from "react"
+import Link from "next/link"
 import { useQuery, useMutation } from "@apollo/client"
-import { format } from "date-fns"
 import { fr } from "date-fns/locale"
 import { useEditor, EditorContent } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
 import { TextStyle } from "@tiptap/extension-text-style"
 import { Color } from "@tiptap/extension-color"
-import { motion, AnimatePresence } from "framer-motion"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { useToast } from "@/components/hooks/use-toast"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Calendar } from "@/components/ui/calendar"
-import { Textarea } from "@/components/ui/textarea"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
   Bold,
+  CalendarIcon,
+  FileText,
   Italic,
-  UnderlineIcon,
+  Link as LinkIcon,
   List,
   ListOrdered,
-  Type,
-  CalendarIcon,
-  Search,
-  PlusCircle,
-  Edit,
-  Trash2,
-  Image as ImageIcon,
-  FileText,
-  Tag,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
-  Link,
-  Unlink,
   Loader2,
+  Newspaper,
+  Pencil,
+  Plus,
+  Search,
+  SearchX,
+  Trash2,
+  UnderlineIcon,
+  Unlink,
+  X,
 } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Button, buttonVariants } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Card, CardContent } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Calendar } from "@/components/ui/calendar"
+import { PageHeader } from "@/components/layout/PageHeader"
+import { EmptyState } from "@/components/layout/EmptyState"
+import { ErrorState } from "@/components/layout/ErrorState"
+import { ArticleImage } from "@/components/articles/article-image"
+import { useToast } from "@/components/hooks/use-toast"
 import { GET_ARTICLES, CREATE_ARTICLE, UPDATE_ARTICLE, DELETE_ARTICLE } from "@/graphql/articles"
+import { formatDate } from "@/lib/format"
+import { cn } from "@/lib/utils"
 import FontSize from "./setFontSize"
 
 interface Article {
@@ -57,47 +75,107 @@ interface Article {
   createdAt: string
   eventDate: string | null
   photo_url: string | null
-  documents_url: string[] | null
+  documents_url?: string[] | null
+}
+
+interface ArticleFormData {
+  title: string
+  description: string
+  tags: string
+  text: string
+  eventDate: Date | null
+}
+
+interface FormErrors {
+  title?: string
+  description?: string
+  text?: string
 }
 
 const TAGS = ["Actualités", "Événements", "Formation", "Réglementation", "Sécurité", "Technique", "Information"]
 
-// Animation variants
-const fadeIn = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
-}
+const EMPTY_FORM: ArticleFormData = { title: "", description: "", tags: "", text: "", eventDate: null }
 
-const staggerContainer = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-}
+const FONT_SIZES = [
+  { value: "12px", label: "Très petit" },
+  { value: "14px", label: "Petit" },
+  { value: "16px", label: "Normal" },
+  { value: "18px", label: "Grand" },
+  { value: "20px", label: "Très grand" },
+  { value: "24px", label: "Énorme" },
+]
+
+const parseTags = (tags: string) =>
+  tags
+    .split(",")
+    .map((tag) => tag.trim())
+    .filter(Boolean)
+
+const isEmptyHtml = (html: string) => html.replace(/<[^>]*>/g, "").trim() === ""
+
+const formatFileSize = (bytes: number) =>
+  `${new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 2 }).format(bytes / 1024 / 1024)} Mo`
+
+const RequiredMark = () => (
+  <span className="text-destructive" aria-hidden="true">
+    {" "}
+    *
+  </span>
+)
+
+const FieldError = ({ id, message }: { id: string; message?: string }) =>
+  message ? (
+    <p id={id} className="text-sm text-destructive">
+      {message}
+    </p>
+  ) : null
 
 const MenuButton = ({
   onClick,
   isActive,
   icon,
   label,
-}: { onClick: () => void; isActive: boolean; icon: React.ReactNode; label: string }) => (
+  disabled,
+}: {
+  onClick: () => void
+  isActive: boolean
+  icon: React.ReactNode
+  label: string
+  disabled?: boolean
+}) => (
   <Button
     type="button"
     variant={isActive ? "secondary" : "ghost"}
-    size="sm"
+    size="icon"
     onClick={onClick}
-    className="flex items-center gap-1 h-8"
+    disabled={disabled}
+    className="h-9 w-9"
+    aria-label={label}
+    aria-pressed={isActive}
     title={label}
   >
     {icon}
-    <span className="hidden md:inline text-xs">{label}</span>
   </Button>
 )
 
-const RichTextEditor = ({ content, onChange }: { content: string; onChange: (content: string) => void }) => {
+const ToolbarSeparator = () => <div className="mx-1 h-6 w-px bg-border" aria-hidden="true" />
+
+const RichTextEditor = ({
+  content,
+  onChange,
+  invalid,
+  labelledBy,
+  describedBy,
+}: {
+  content: string
+  onChange: (content: string) => void
+  invalid?: boolean
+  labelledBy?: string
+  describedBy?: string
+}) => {
+  const [isLinkOpen, setIsLinkOpen] = useState(false)
+  const [linkUrl, setLinkUrl] = useState("")
+
   const editor = useEditor({
     // Rendered in the browser only: the page is also rendered on the server.
     immediatelyRender: false,
@@ -117,52 +195,45 @@ const RichTextEditor = ({ content, onChange }: { content: string; onChange: (con
   })
 
   if (!editor) {
-    return null
+    return <Skeleton className="h-[300px] w-full" />
   }
-
-  const fontSizes = [
-    { value: "12px", label: "Très petit" },
-    { value: "14px", label: "Petit" },
-    { value: "16px", label: "Normal" },
-    { value: "18px", label: "Grand" },
-    { value: "20px", label: "Très grand" },
-    { value: "24px", label: "Énorme" },
-  ]
 
   const setFontSize = (size: string) => {
     editor.chain().focus().setFontSize(size).run()
   }
 
-  // Fonction pour ajouter un lien
-  const addLink = () => {
-    const url = window.prompt("URL:")
-    if (url) {
-      // Sélectionner le texte actuel et le remplacer par un lien
-      const { from, to } = editor.state.selection
-      const text = editor.state.doc.textBetween(from, to, "")
+  const isLinkActive = editor.isActive("link")
 
-      if (text) {
-        // Si du texte est sélectionné, on le remplace par un lien
-        editor.chain().focus().deleteSelection().insertContent(`<a href="${url}" target="_blank">${text}</a>`).run()
-      } else {
-        // Si aucun texte n'est sélectionné, on insère un nouveau lien
-        editor.chain().focus().insertContent(`<a href="${url}" target="_blank">${url}</a>`).run()
-      }
-    }
+  const openLinkPopover = (open: boolean) => {
+    if (open) setLinkUrl(editor.getAttributes("link").href ?? "")
+    setIsLinkOpen(open)
   }
 
-  // Fonction pour supprimer un lien
-  const removeLink = () => {
-    // Sélectionner le lien actuel et le remplacer par son texte
-    const { from, to } = editor.state.selection
-    const text = editor.state.doc.textBetween(from, to, "")
+  const applyLink = () => {
+    const value = linkUrl.trim()
+    if (!value) return
+    const href = /^(https?:\/\/|mailto:|tel:|\/)/i.test(value) ? value : `https://${value}`
 
-    editor.chain().focus().deleteSelection().insertContent(text).run()
+    if (editor.state.selection.empty && !isLinkActive) {
+      // Nothing selected: the address itself becomes the link text.
+      editor
+        .chain()
+        .focus()
+        .insertContent({ type: "text", text: value, marks: [{ type: "link", attrs: { href } }] })
+        .run()
+    } else {
+      editor.chain().focus().extendMarkRange("link").setLink({ href }).run()
+    }
+    setIsLinkOpen(false)
+  }
+
+  const removeLink = () => {
+    editor.chain().focus().extendMarkRange("link").unsetLink().run()
   }
 
   return (
-    <div className="border rounded-md overflow-hidden shadow-sm">
-      <div className="flex flex-wrap gap-1 p-2 border-b bg-muted/50">
+    <div className={cn("overflow-hidden rounded-md border", invalid && "border-destructive")}>
+      <div className="flex flex-wrap items-center gap-1 border-b bg-muted/50 p-2" role="toolbar" aria-label="Mise en forme">
         <MenuButton
           onClick={() => editor.chain().focus().toggleBold().run()}
           isActive={editor.isActive("bold")}
@@ -181,12 +252,12 @@ const RichTextEditor = ({ content, onChange }: { content: string; onChange: (con
           icon={<UnderlineIcon className="h-4 w-4" />}
           label="Souligné"
         />
-        <div className="h-6 w-px bg-border mx-1"></div>
+        <ToolbarSeparator />
         <MenuButton
           onClick={() => editor.chain().focus().toggleBulletList().run()}
           isActive={editor.isActive("bulletList")}
           icon={<List className="h-4 w-4" />}
-          label="Liste"
+          label="Liste à puces"
         />
         <MenuButton
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
@@ -194,57 +265,64 @@ const RichTextEditor = ({ content, onChange }: { content: string; onChange: (con
           icon={<ListOrdered className="h-4 w-4" />}
           label="Liste numérotée"
         />
-        <div className="h-6 w-px bg-border mx-1"></div>
-        {/* Remplaçons les boutons d'alignement par des alternatives */}
-        <MenuButton
-          onClick={() => {
-            // Appliquer une classe CSS pour l'alignement à gauche
-            editor.chain().focus().run()
-            // Insérer un div avec style text-align: left
-            document.execCommand("justifyLeft")
-          }}
-          isActive={false}
-          icon={<AlignLeft className="h-4 w-4" />}
-          label="Gauche"
-        />
-        <MenuButton
-          onClick={() => {
-            // Appliquer une classe CSS pour l'alignement au centre
-            editor.chain().focus().run()
-            // Insérer un div avec style text-align: center
-            document.execCommand("justifyCenter")
-          }}
-          isActive={false}
-          icon={<AlignCenter className="h-4 w-4" />}
-          label="Centre"
-        />
-        <MenuButton
-          onClick={() => {
-            // Appliquer une classe CSS pour l'alignement à droite
-            editor.chain().focus().run()
-            // Insérer un div avec style text-align: right
-            document.execCommand("justifyRight")
-          }}
-          isActive={false}
-          icon={<AlignRight className="h-4 w-4" />}
-          label="Droite"
-        />
-        <div className="h-6 w-px bg-border mx-1"></div>
-        <MenuButton onClick={addLink} isActive={false} icon={<Link className="h-4 w-4" />} label="Lien" />
+        <ToolbarSeparator />
+        <Popover open={isLinkOpen} onOpenChange={openLinkPopover}>
+          <PopoverTrigger asChild>
+            <Button
+              type="button"
+              variant={isLinkActive ? "secondary" : "ghost"}
+              size="icon"
+              className="h-9 w-9"
+              aria-label={isLinkActive ? "Modifier le lien" : "Ajouter un lien"}
+              aria-pressed={isLinkActive}
+              title={isLinkActive ? "Modifier le lien" : "Ajouter un lien"}
+            >
+              <LinkIcon className="h-4 w-4" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="start" className="w-80 space-y-3">
+            <div className="space-y-2">
+              <Label htmlFor="editor-link-url">Adresse du lien</Label>
+              <Input
+                id="editor-link-url"
+                type="url"
+                inputMode="url"
+                placeholder="https://www.exemple.fr"
+                value={linkUrl}
+                onChange={(e) => setLinkUrl(e.target.value)}
+                onKeyDown={(e) => {
+                  // Enter must set the link, not submit the article form around the editor.
+                  if (e.key === "Enter") {
+                    e.preventDefault()
+                    applyLink()
+                  }
+                }}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => setIsLinkOpen(false)}>
+                Annuler
+              </Button>
+              <Button type="button" size="sm" onClick={applyLink} disabled={!linkUrl.trim()}>
+                Appliquer
+              </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
         <MenuButton
           onClick={removeLink}
           isActive={false}
+          disabled={!isLinkActive}
           icon={<Unlink className="h-4 w-4" />}
-          label="Supprimer lien"
+          label="Retirer le lien"
         />
-        <div className="h-6 w-px bg-border mx-1"></div>
+        <ToolbarSeparator />
         <Select onValueChange={setFontSize}>
-          <SelectTrigger className="w-[140px] h-8">
-            <Type className="h-4 w-4 mr-2" />
+          <SelectTrigger className="h-9 w-[150px]" aria-label="Taille du texte">
             <SelectValue placeholder="Taille du texte" />
           </SelectTrigger>
           <SelectContent>
-            {fontSizes.map((size) => (
+            {FONT_SIZES.map((size) => (
               <SelectItem key={size.value} value={size.value}>
                 {size.label}
               </SelectItem>
@@ -256,31 +334,29 @@ const RichTextEditor = ({ content, onChange }: { content: string; onChange: (con
         editor={editor}
         className="overflow-y-auto bg-background"
         style={{ minHeight: "250px", maxHeight: "400px" }}
+        aria-labelledby={labelledBy}
+        aria-describedby={describedBy}
       />
     </div>
   )
 }
 
 export default function ArticlesAdminPage() {
-  const [articles, setArticles] = useState<Article[]>([])
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [articleToDelete, setArticleToDelete] = useState<string | null>(null)
+  const [articleToDelete, setArticleToDelete] = useState<Article | null>(null)
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [isEventDateOpen, setIsEventDateOpen] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedImage, setSelectedImage] = useState<File | null>(null)
   const [selectedDocument, setSelectedDocument] = useState<File | null>(null)
+  // Bumped to empty a file input, which cannot be cleared through its value.
+  const [fileInputKey, setFileInputKey] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    tags: "",
-    text: "",
-    eventDate: null as Date | null,
-    photo: null as File | null,
-    documents: null as File | null,
-  })
+  const [formData, setFormData] = useState<ArticleFormData>(EMPTY_FORM)
+  const [errors, setErrors] = useState<FormErrors>({})
 
   const { toast } = useToast()
   const { data, loading, error, refetch } = useQuery(GET_ARTICLES)
@@ -288,22 +364,65 @@ export default function ArticlesAdminPage() {
   const [updateArticle] = useMutation(UPDATE_ARTICLE)
   const [deleteArticle] = useMutation(DELETE_ARTICLE)
 
-  React.useEffect(() => {
-    if (data?.articles) setArticles(data.articles)
-  }, [data])
+  const articles: Article[] = useMemo(() => data?.articles ?? [], [data])
+
+  const imagePreview = useMemo(() => (selectedImage ? URL.createObjectURL(selectedImage) : null), [selectedImage])
+  useEffect(() => {
+    return () => {
+      if (imagePreview) URL.revokeObjectURL(imagePreview)
+    }
+  }, [imagePreview])
+
+  const openCreate = () => {
+    setIsEditing(false)
+    setSelectedArticle(null)
+    setFormData(EMPTY_FORM)
+    setErrors({})
+    setSelectedImage(null)
+    setSelectedDocument(null)
+    setIsDialogOpen(true)
+  }
+
+  const openEdit = (article: Article) => {
+    setIsEditing(true)
+    setSelectedArticle(article)
+    setFormData({
+      title: article.title,
+      description: article.description,
+      tags: (article.tags ?? []).join(", "),
+      text: article.text,
+      eventDate: article.eventDate ? new Date(article.eventDate) : null,
+    })
+    setErrors({})
+    // Files picked for another article must not follow into this one.
+    setSelectedImage(null)
+    setSelectedDocument(null)
+    setIsDialogOpen(true)
+  }
+
+  const validate = (): FormErrors => {
+    const next: FormErrors = {}
+    if (!formData.title.trim()) next.title = "Donnez un titre à l'article."
+    if (!formData.description.trim()) next.description = "Ajoutez un résumé : il est affiché dans la liste des actualités."
+    if (isEmptyHtml(formData.text)) next.text = "Rédigez le contenu de l'article."
+    return next
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (isSubmitting) return
+
+    const nextErrors = validate()
+    setErrors(nextErrors)
+    if (Object.keys(nextErrors).length > 0) return
+
     setIsSubmitting(true)
 
     const variables = {
       title: formData.title,
       description: formData.description,
       text: formData.text,
-      tags: formData.tags
-        .split(",")
-        .filter((tag) => tag.trim())
-        .map((tag: string) => tag.trim()),
+      tags: parseTags(formData.tags),
       eventDate: formData.eventDate?.toISOString(),
       photo: selectedImage,
       documents: selectedDocument ? [selectedDocument] : [],
@@ -325,22 +444,22 @@ export default function ArticlesAdminPage() {
           },
         })
         toast({
-          title: "Article mis à jour avec succès.",
-          description: `L'article "${formData.title}" a été mis à jour.`,
+          title: "Article mis à jour",
+          description: `« ${formData.title} » a été enregistré.`,
         })
       } else {
         await createArticle({ variables })
         toast({
-          title: "Article créé avec succès.",
-          description: `L'article "${formData.title}" a été créé.`,
+          title: "Article publié",
+          description: `« ${formData.title} » est visible dans les actualités.`,
         })
       }
       setIsDialogOpen(false)
       refetch()
-    } catch (error: any) {
+    } catch {
       toast({
-        title: "Erreur",
-        description: error.message,
+        title: isEditing ? "Enregistrement impossible" : "Publication impossible",
+        description: "L'article n'a pas pu être enregistré. Vérifiez les champs et les fichiers, puis réessayez.",
         variant: "destructive",
       })
     } finally {
@@ -348,492 +467,544 @@ export default function ArticlesAdminPage() {
     }
   }
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      setSelectedImage(file)
-    }
-  }
-
-  const handleDocumentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      setSelectedDocument(file)
-    }
-  }
-
-  const confirmDelete = (id: string) => {
-    setArticleToDelete(id)
-    setIsDeleteDialogOpen(true)
-  }
-
   const handleDelete = async () => {
-    if (!articleToDelete) return
+    if (!articleToDelete || isDeleting) return
 
+    setIsDeleting(true)
     try {
-      await deleteArticle({ variables: { id: articleToDelete } })
+      await deleteArticle({ variables: { id: articleToDelete.id } })
       toast({
-        title: "Article supprimé avec succès.",
-        description: "L'article a été définitivement supprimé.",
+        title: "Article supprimé",
+        description: `« ${articleToDelete.title} » a été supprimé.`,
       })
-      setIsDeleteDialogOpen(false)
+      setIsDeleteOpen(false)
       refetch()
-    } catch (error: any) {
+    } catch {
       toast({
-        title: "Erreur",
-        description: error.message,
+        title: "Suppression impossible",
+        description: "L'article n'a pas pu être supprimé. Réessayez dans un instant.",
         variant: "destructive",
       })
+    } finally {
+      setIsDeleting(false)
     }
   }
 
-  const filteredArticles = articles.filter(
-    (article) =>
-      article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      article.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      article.tags.some((tag) => tag.toLowerCase().includes(searchTerm.toLowerCase())),
-  )
+  const filteredArticles = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase()
+    if (!term) return articles
+    return articles.filter(
+      (article) =>
+        article.title.toLowerCase().includes(term) ||
+        article.description.toLowerCase().includes(term) ||
+        (article.tags ?? []).some((tag) => tag.toLowerCase().includes(term)),
+    )
+  }, [articles, searchTerm])
+
+  const formTags = parseTags(formData.tags)
+  const availableTags = TAGS.filter((tag) => !formTags.includes(tag))
+
+  const addTag = (tag: string) => {
+    setFormData((current) => {
+      const currentTags = parseTags(current.tags)
+      return currentTags.includes(tag) ? current : { ...current, tags: [...currentTags, tag].join(", ") }
+    })
+  }
+
+  const removeTag = (tag: string) => {
+    setFormData((current) => ({
+      ...current,
+      tags: parseTags(current.tags)
+        .filter((item) => item !== tag)
+        .join(", "),
+    }))
+  }
+
+  const existingDocuments = isEditing ? (selectedArticle?.documents_url?.length ?? 0) : 0
 
   return (
-    <motion.div
-      initial="hidden"
-      animate="visible"
-      variants={staggerContainer}
-      className="space-y-8"
-    >
-      <motion.div variants={fadeIn} className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">Gestion des articles</h1>
-        <p className="text-muted-foreground">Créez, modifiez et gérez les articles publiés sur le site de l'aéroclub</p>
-      </motion.div>
+    <div className="space-y-6">
+      <PageHeader
+        title="Articles"
+        description="Rédigez et gérez les actualités visibles par les membres."
+        className="mb-0"
+        actions={
+          <Button onClick={openCreate}>
+            <Plus className="h-4 w-4" />
+            Nouvel article
+          </Button>
+        }
+      />
 
-      <motion.div
-        variants={fadeIn}
-        className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
-      >
-        <div className="relative w-full md:w-auto">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative sm:w-full sm:max-w-xs">
+          <Search
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden="true"
+          />
           <Input
-            placeholder="Rechercher un article..."
+            type="search"
+            aria-label="Rechercher un article"
+            placeholder="Rechercher par titre ou thème…"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 w-full md:w-[300px]"
+            className="pl-9"
           />
         </div>
-        <Button
-          onClick={() => {
-            setIsEditing(false)
-            setFormData({
-              title: "",
-              description: "",
-              tags: "",
-              text: "",
-              eventDate: null,
-              photo: null,
-              documents: null,
-            })
-            setSelectedImage(null)
-            setSelectedDocument(null)
-            setIsDialogOpen(true)
-          }}
-          className="bg-info hover:bg-info/90 text-info-foreground"
-        >
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Ajouter un Article
-        </Button>
-      </motion.div>
-
-      {loading ? (
-        <div className="space-y-4">
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-64 w-full" />
-        </div>
-      ) : error ? (
-        <Alert variant="destructive">
-          <AlertDescription>Impossible de charger les articles. Veuillez réessayer plus tard.</AlertDescription>
-        </Alert>
-      ) : filteredArticles.length === 0 ? (
-        <motion.div variants={fadeIn} className="text-center py-12">
-          <div className="mx-auto w-24 h-24 rounded-full bg-muted flex items-center justify-center mb-4">
-            <FileText className="h-12 w-12 text-muted-foreground" />
-          </div>
-          <h3 className="text-lg font-medium">Aucun article trouvé</h3>
-          <p className="text-muted-foreground mt-1">
-            {searchTerm ? "Aucun article ne correspond à votre recherche." : "Commencez par créer un nouvel article."}
+        {!loading && !error && articles.length > 0 && (
+          <p className="text-sm text-muted-foreground sm:ml-auto">
+            {filteredArticles.length === articles.length
+              ? `${articles.length} article${articles.length > 1 ? "s" : ""}`
+              : `${filteredArticles.length} sur ${articles.length}`}
           </p>
-          {searchTerm && (
-            <Button variant="outline" className="mt-4" onClick={() => setSearchTerm("")}>
+        )}
+      </div>
+
+      {loading && !data ? (
+        <Card role="status" aria-label="Chargement des articles">
+          <CardContent className="space-y-3 p-6">
+            {Array.from({ length: 5 }, (_, index) => (
+              <div key={index} className="flex items-center gap-4">
+                <Skeleton className="h-12 w-20 shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-1/2" />
+                  <Skeleton className="h-3 w-3/4" />
+                </div>
+                <Skeleton className="hidden h-4 w-24 sm:block" />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      ) : error ? (
+        <ErrorState onRetry={() => refetch()} />
+      ) : articles.length === 0 ? (
+        <EmptyState
+          icon={Newspaper}
+          title="Aucun article pour le moment"
+          description="Publiez une première actualité : elle apparaîtra sur le tableau de bord des membres."
+          action={
+            <Button onClick={openCreate}>
+              <Plus className="h-4 w-4" />
+              Nouvel article
+            </Button>
+          }
+        />
+      ) : filteredArticles.length === 0 ? (
+        <EmptyState
+          icon={SearchX}
+          title="Aucun article ne correspond"
+          description="Essayez un autre mot ou effacez la recherche."
+          action={
+            <Button variant="outline" onClick={() => setSearchTerm("")}>
               Effacer la recherche
             </Button>
-          )}
-        </motion.div>
+          }
+        />
       ) : (
-        <motion.div variants={fadeIn} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <AnimatePresence>
-            {filteredArticles.map((article) => (
-              <motion.div
-                key={article.id}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.2 }}
-              >
-                <Card className="h-full flex flex-col overflow-hidden hover:shadow-md transition-shadow">
-                  {article.photo_url && (
-                    <div className="aspect-video w-full overflow-hidden bg-muted">
-                      <img
-                        src={article.photo_url || "/placeholder.svg"}
-                        alt={article.title}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
-                  <CardHeader className="pb-2">
-                    <div className="flex flex-wrap gap-1 mb-2">
-                      {article.tags.map((tag) => (
-                        <Badge key={tag} variant="secondary" className="text-xs">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                    <CardTitle className="line-clamp-2">{article.title}</CardTitle>
-                    <CardDescription className="flex items-center text-xs">
-                      <CalendarIcon className="h-3 w-3 mr-1" />
-                      {format(new Date(article.createdAt), "PPP", { locale: fr })}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="pb-2 flex-grow">
-                    <p className="text-sm text-muted-foreground line-clamp-3">{article.description}</p>
-                  </CardContent>
-                  <CardContent className="pt-0 pb-4 flex flex-wrap justify-end gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedArticle(article)
-                        setFormData({
-                          title: article.title,
-                          description: article.description,
-                          tags: article.tags.join(", "),
-                          text: article.text,
-                          eventDate: article.eventDate ? new Date(article.eventDate) : null,
-                          photo: null,
-                          documents: null,
-                        })
-                        setIsEditing(true)
-                        setIsDialogOpen(true)
-                      }}
-                    >
-                      <Edit className="h-4 w-4 mr-1" />
-                      Modifier
-                    </Button>
-                    <Button variant="destructive" size="sm" onClick={() => confirmDelete(article.id)}>
-                      <Trash2 className="h-4 w-4 mr-1" />
-                      Supprimer
-                    </Button>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </motion.div>
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Article</TableHead>
+                  <TableHead>Thèmes</TableHead>
+                  <TableHead>Publié le</TableHead>
+                  <TableHead>Événement</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredArticles.map((article) => (
+                  <TableRow key={article.id}>
+                    <TableCell>
+                      <div className="flex min-w-[16rem] items-center gap-3">
+                        <ArticleImage
+                          src={article.photo_url}
+                          alt=""
+                          className="aspect-video w-20 shrink-0 rounded-md"
+                          iconClassName="h-5 w-5"
+                        />
+                        <div className="min-w-0">
+                          <Link
+                            href={`/articles/${article.id}`}
+                            className="line-clamp-1 font-medium hover:underline focus-visible:underline focus-visible:outline-none"
+                            title="Voir l'article tel que les membres le lisent"
+                          >
+                            {article.title}
+                          </Link>
+                          <p className="line-clamp-1 text-sm text-muted-foreground">{article.description}</p>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {article.tags?.length ? (
+                        <div className="flex min-w-[8rem] flex-wrap gap-1">
+                          {article.tags.map((tag) => (
+                            <Badge key={tag} variant="secondary">
+                              {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">{formatDate(article.createdAt)}</TableCell>
+                    <TableCell className="whitespace-nowrap">{formatDate(article.eventDate)}</TableCell>
+                    <TableCell>
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-9 w-9"
+                          onClick={() => openEdit(article)}
+                          aria-label={`Modifier l'article « ${article.title} »`}
+                          title="Modifier"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-9 w-9 text-destructive hover:text-destructive"
+                          onClick={() => {
+                            setArticleToDelete(article)
+                            setIsDeleteOpen(true)
+                          }}
+                          aria-label={`Supprimer l'article « ${article.title} »`}
+                          title="Supprimer"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       )}
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] p-0 flex flex-col overflow-hidden">
-          <DialogHeader className="px-6 pt-6 pb-2">
-            <DialogTitle className="text-xl">
-              {isEditing ? "Modifier l'Article" : "Créer un nouvel article"}
-            </DialogTitle>
+      <Dialog open={isDialogOpen} onOpenChange={(open) => !isSubmitting && setIsDialogOpen(open)}>
+        <DialogContent className="flex max-h-[90vh] max-w-3xl flex-col gap-0 overflow-hidden p-0">
+          <DialogHeader className="border-b px-6 py-4">
+            <DialogTitle>{isEditing ? "Modifier l'article" : "Nouvel article"}</DialogTitle>
+            <DialogDescription>
+              {isEditing
+                ? "Les modifications sont visibles par les membres dès l'enregistrement."
+                : "L'article est visible par les membres dès sa publication."}
+            </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="flex flex-col flex-grow overflow-hidden">
-            <Tabs defaultValue="info" className="flex flex-col flex-grow overflow-hidden">
-              <TabsList className="grid w-full grid-cols-3 px-6">
-                <TabsTrigger value="info" className="flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
-                  <span>Informations</span>
-                </TabsTrigger>
-                <TabsTrigger value="content" className="flex items-center gap-2">
-                  <AlignLeft className="h-4 w-4" />
-                  <span>Contenu</span>
-                </TabsTrigger>
-                <TabsTrigger value="media" className="flex items-center gap-2">
-                  <ImageIcon className="h-4 w-4" />
-                  <span>Médias</span>
-                </TabsTrigger>
-              </TabsList>
-              <div className="flex-grow overflow-hidden">
-                <TabsContent value="info" className="h-full overflow-y-auto p-6 space-y-4">
+          <form onSubmit={handleSubmit} noValidate className="flex min-h-0 flex-1 flex-col">
+            <div className="min-h-0 flex-1 space-y-8 overflow-y-auto px-6 py-6">
+              <section className="space-y-4">
+                <h3 className="text-sm font-semibold">Présentation</h3>
+                <div className="space-y-2">
+                  <Label htmlFor="title">
+                    Titre
+                    <RequiredMark />
+                  </Label>
+                  <Input
+                    id="title"
+                    value={formData.title}
+                    onChange={(e) => {
+                      const title = e.target.value
+                      setFormData((current) => ({ ...current, title }))
+                      if (errors.title) setErrors((current) => ({ ...current, title: undefined }))
+                    }}
+                    required
+                    placeholder="Ex. : Journée portes ouvertes du 14 juin"
+                    aria-invalid={Boolean(errors.title)}
+                    aria-describedby={errors.title ? "title-error" : undefined}
+                  />
+                  <FieldError id="title-error" message={errors.title} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="description">
+                    Résumé
+                    <RequiredMark />
+                  </Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => {
+                      const description = e.target.value
+                      setFormData((current) => ({ ...current, description }))
+                      if (errors.description) setErrors((current) => ({ ...current, description: undefined }))
+                    }}
+                    required
+                    placeholder="Une ou deux phrases affichées dans la liste des actualités"
+                    className="resize-none"
+                    rows={3}
+                    aria-invalid={Boolean(errors.description)}
+                    aria-describedby={errors.description ? "description-error" : undefined}
+                  />
+                  <FieldError id="description-error" message={errors.description} />
+                </div>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="title" className="text-sm font-medium flex items-center">
-                      Titre <span className="text-destructive ml-1">*</span>
-                    </Label>
-                    <Input
-                      id="title"
-                      value={formData.title}
-                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      required
-                      placeholder="Titre de l'article"
-                      className="w-full"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="description" className="text-sm font-medium flex items-center">
-                      Description <span className="text-destructive ml-1">*</span>
-                    </Label>
-                    <Textarea
-                      id="description"
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      required
-                      placeholder="Brève description de l'article"
-                      className="w-full resize-none"
-                      rows={3}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="tags" className="text-sm font-medium flex items-center">
-                      <Tag className="h-4 w-4 mr-1" />
-                      Tags
-                    </Label>
-                    <Select
-                      onValueChange={(value) => {
-                        const currentTags = formData.tags
-                          .split(",")
-                          .filter((tag) => tag.trim())
-                          .map((tag) => tag.trim())
-
-                        if (!currentTags.includes(value)) {
-                          const newTags = [...currentTags, value].join(", ")
-                          setFormData({ ...formData, tags: newTags })
-                        }
-                      }}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Sélectionnez des tags" />
+                    <Label htmlFor="tags">Thèmes</Label>
+                    <Select value="" onValueChange={addTag} disabled={availableTags.length === 0}>
+                      <SelectTrigger id="tags">
+                        <SelectValue
+                          placeholder={availableTags.length === 0 ? "Tous les thèmes sont ajoutés" : "Ajouter un thème"}
+                        />
                       </SelectTrigger>
                       <SelectContent>
-                        {TAGS.map((tag) => (
+                        {availableTags.map((tag) => (
                           <SelectItem key={tag} value={tag}>
                             {tag}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
-
-                    {/* Afficher les tags sélectionnés */}
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {formData.tags
-                        .split(",")
-                        .filter((tag) => tag.trim())
-                        .map((tag, index) => (
-                          <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                            {tag.trim()}
+                    {formTags.length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {formTags.map((tag) => (
+                          <Badge key={tag} variant="secondary" className="gap-1 pr-1">
+                            {tag}
                             <button
                               type="button"
-                              onClick={() => {
-                                const newTags = formData.tags
-                                  .split(",")
-                                  .filter((t) => t.trim() !== tag.trim())
-                                  .join(", ")
-                                setFormData({ ...formData, tags: newTags })
-                              }}
-                              className="ml-1 rounded-full hover:bg-muted p-0.5"
+                              onClick={() => removeTag(tag)}
+                              className="rounded-full p-0.5 hover:bg-background/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                              aria-label={`Retirer le thème ${tag}`}
                             >
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="14"
-                                height="14"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              >
-                                <line x1="18" y1="6" x2="6" y2="18"></line>
-                                <line x1="6" y1="6" x2="18" y2="18"></line>
-                              </svg>
-                              <span className="sr-only">Supprimer</span>
+                              <X className="h-3 w-3" />
                             </button>
                           </Badge>
                         ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        Les thèmes permettent aux membres de filtrer les actualités.
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="event-date">Date de l'événement</Label>
+                    <div className="flex gap-2">
+                      <Popover open={isEventDateOpen} onOpenChange={setIsEventDateOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            id="event-date"
+                            type="button"
+                            variant="outline"
+                            className={cn(
+                              "min-w-0 flex-1 justify-start font-normal",
+                              !formData.eventDate && "text-muted-foreground",
+                            )}
+                          >
+                            <CalendarIcon className="h-4 w-4" />
+                            {formData.eventDate ? formatDate(formData.eventDate) : "Aucune date"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={formData.eventDate ?? undefined}
+                            onSelect={(date) => {
+                              setFormData((current) => ({ ...current, eventDate: date ?? null }))
+                              if (date) setIsEventDateOpen(false)
+                            }}
+                            initialFocus
+                            locale={fr}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      {formData.eventDate && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setFormData((current) => ({ ...current, eventDate: null }))}
+                          aria-label="Retirer la date de l'événement"
+                          title="Retirer la date"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Les tags aident à catégoriser et à retrouver facilement les articles.
+                      Facultatif. À renseigner si l'article annonce un événement.
                     </p>
                   </div>
+                </div>
+              </section>
+
+              <section className="space-y-2">
+                <h3 id="article-content-label" className="text-sm font-semibold">
+                  Contenu
+                  <RequiredMark />
+                </h3>
+                <RichTextEditor
+                  content={formData.text}
+                  onChange={(text) => {
+                    setFormData((current) => ({ ...current, text }))
+                    setErrors((current) => (current.text ? { ...current, text: undefined } : current))
+                  }}
+                  invalid={Boolean(errors.text)}
+                  labelledBy="article-content-label"
+                  describedBy={errors.text ? "text-error" : undefined}
+                />
+                <FieldError id="text-error" message={errors.text} />
+              </section>
+
+              <section className="space-y-4">
+                <h3 className="text-sm font-semibold">Fichiers</h3>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium flex items-center">
-                      <CalendarIcon className="h-4 w-4 mr-1" />
-                      Date d'Événement
-                    </Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button variant="outline" className="w-full justify-start text-left font-normal">
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {formData.eventDate
-                            ? format(formData.eventDate, "PPP", { locale: fr })
-                            : "Sélectionner une date (optionnel)"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={formData.eventDate || undefined}
-                          onSelect={(date) => setFormData({ ...formData, eventDate: date || null })}
-                          initialFocus
-                          locale={fr}
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <p className="text-xs text-muted-foreground">
-                      Optionnel. Utilisez ce champ si l'article concerne un événement à une date spécifique.
-                    </p>
-                  </div>
-                </TabsContent>
-                <TabsContent value="content" className="h-full overflow-y-auto p-6 space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="text" className="text-sm font-medium flex items-center">
-                      Contenu de l'article <span className="text-destructive ml-1">*</span>
-                    </Label>
-                    <RichTextEditor
-                      content={formData.text}
-                      onChange={(content) => setFormData({ ...formData, text: content })}
+                    <Label htmlFor="photo">Image principale</Label>
+                    <Input
+                      key={`photo-${fileInputKey}`}
+                      id="photo"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) setSelectedImage(file)
+                      }}
+                      className="cursor-pointer"
                     />
-                    <p className="text-xs text-muted-foreground">
-                      Utilisez l'éditeur pour formater votre texte, ajouter des listes, des liens, etc.
-                    </p>
-                  </div>
-                </TabsContent>
-                <TabsContent value="media" className="h-full overflow-y-auto p-6 space-y-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="photo" className="text-sm font-medium flex items-center">
-                      <ImageIcon className="h-4 w-4 mr-1" />
-                      Image principale
-                    </Label>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Input
-                          id="photo"
-                          type="file"
-                          accept="image/*"
-                          onChange={handleImageChange}
-                          className="cursor-pointer"
-                        />
-                        <p className="text-xs text-muted-foreground mt-1">Format recommandé: JPG ou PNG, max 2MB</p>
-                      </div>
-                      <div className="flex items-center justify-center border rounded-md p-2 bg-muted/30 h-[100px]">
+                    <div className="flex items-center gap-3">
+                      <ArticleImage
+                        src={imagePreview ?? (isEditing ? selectedArticle?.photo_url : null)}
+                        alt="Aperçu de l'image principale"
+                        className="aspect-video w-24 shrink-0 rounded-md"
+                        iconClassName="h-5 w-5"
+                      />
+                      <div className="min-w-0 text-xs text-muted-foreground">
                         {selectedImage ? (
-                          <div className="text-sm text-center">
-                            <p className="font-medium">{selectedImage.name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {(selectedImage.size / 1024 / 1024).toFixed(2)} MB
-                            </p>
-                          </div>
+                          <>
+                            <p className="truncate font-medium text-foreground">{selectedImage.name}</p>
+                            <p>{formatFileSize(selectedImage.size)}</p>
+                            <Button
+                              type="button"
+                              variant="link"
+                              size="sm"
+                              className="h-auto p-0 text-xs"
+                              onClick={() => {
+                                setSelectedImage(null)
+                                setFileInputKey((key) => key + 1)
+                              }}
+                            >
+                              Retirer ce fichier
+                            </Button>
+                          </>
                         ) : isEditing && selectedArticle?.photo_url ? (
-                          <div className="text-sm text-center">
-                            <p className="font-medium">Image existante</p>
-                            <p className="text-xs text-muted-foreground">
-                              Laissez vide pour conserver l'image actuelle
-                            </p>
-                          </div>
+                          <p>Image actuelle. Choisissez un fichier pour la remplacer.</p>
                         ) : (
-                          <div className="text-sm text-center text-muted-foreground">
-                            <ImageIcon className="h-8 w-8 mx-auto mb-1 opacity-50" />
-                            <p>Aucune image sélectionnée</p>
-                          </div>
+                          <p>JPG ou PNG, 2 Mo maximum conseillé.</p>
                         )}
                       </div>
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="document" className="text-sm font-medium flex items-center">
-                      <FileText className="h-4 w-4 mr-1" />
-                      Documents complémentaires
-                    </Label>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Input
-                          id="document"
-                          type="file"
-                          accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
-                          onChange={handleDocumentChange}
-                          className="cursor-pointer"
-                        />
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Formats acceptés: PDF, Word, Excel, PowerPoint
-                        </p>
+                    <Label htmlFor="document">Document joint</Label>
+                    <Input
+                      key={`document-${fileInputKey}`}
+                      id="document"
+                      type="file"
+                      accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) setSelectedDocument(file)
+                      }}
+                      className="cursor-pointer"
+                    />
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="flex aspect-video w-24 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground"
+                        aria-hidden="true"
+                      >
+                        <FileText className="h-5 w-5 opacity-60" />
                       </div>
-                      <div className="flex items-center justify-center border rounded-md p-2 bg-muted/30 h-[100px]">
+                      <div className="min-w-0 text-xs text-muted-foreground">
                         {selectedDocument ? (
-                          <div className="text-sm text-center">
-                            <p className="font-medium">{selectedDocument.name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {(selectedDocument.size / 1024 / 1024).toFixed(2)} MB
-                            </p>
-                          </div>
-                        ) : isEditing && selectedArticle?.documents_url?.length ? (
-                          <div className="text-sm text-center">
-                            <p className="font-medium">
-                              Documents existants ({selectedArticle?.documents_url?.length})
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              Laissez vide pour conserver les documents actuels
-                            </p>
-                          </div>
+                          <>
+                            <p className="truncate font-medium text-foreground">{selectedDocument.name}</p>
+                            <p>{formatFileSize(selectedDocument.size)}</p>
+                            <Button
+                              type="button"
+                              variant="link"
+                              size="sm"
+                              className="h-auto p-0 text-xs"
+                              onClick={() => {
+                                setSelectedDocument(null)
+                                setFileInputKey((key) => key + 1)
+                              }}
+                            >
+                              Retirer ce fichier
+                            </Button>
+                          </>
+                        ) : existingDocuments > 0 ? (
+                          <p>
+                            {existingDocuments} document{existingDocuments > 1 ? "s" : ""} déjà joint
+                            {existingDocuments > 1 ? "s" : ""}. Choisissez un fichier pour le
+                            {existingDocuments > 1 ? "s" : ""} remplacer.
+                          </p>
                         ) : (
-                          <div className="text-sm text-center text-muted-foreground">
-                            <FileText className="h-8 w-8 mx-auto mb-1 opacity-50" />
-                            <p>Aucun document sélectionné</p>
-                          </div>
+                          <p>PDF, Word, Excel ou PowerPoint.</p>
                         )}
                       </div>
                     </div>
                   </div>
-                </TabsContent>
-              </div>
-            </Tabs>
-            <DialogFooter className="px-6 py-4 border-t mt-auto">
+                </div>
+              </section>
+            </div>
+
+            <DialogFooter className="border-t px-6 py-4">
               <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} disabled={isSubmitting}>
                 Annuler
               </Button>
-              <Button type="submit" disabled={isSubmitting} className="bg-info hover:bg-info/90 text-info-foreground">
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {isEditing ? "Enregistrement..." : "Création..."}
-                  </>
-                ) : (
-                  <>{isEditing ? "Enregistrer les modifications" : "Créer l'article"}</>
-                )}
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                {isSubmitting
+                  ? isEditing
+                    ? "Enregistrement…"
+                    : "Publication…"
+                  : isEditing
+                    ? "Enregistrer"
+                    : "Publier l'article"}
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-xl">Confirmer la suppression</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <p className="text-muted-foreground">
-              Êtes-vous sûr de vouloir supprimer cet article ? Cette action est irréversible.
-            </p>
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
-              Annuler
-            </Button>
-            <Button type="button" variant="destructive" onClick={handleDelete}>
-              <Trash2 className="mr-2 h-4 w-4" />
-              Supprimer définitivement
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </motion.div>
+      <AlertDialog
+        open={isDeleteOpen}
+        onOpenChange={(open) => {
+          // The article is kept in state so its title stays readable while the dialog closes.
+          if (!open && !isDeleting) setIsDeleteOpen(false)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer cet article ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              L'article « {articleToDelete?.title} » sera définitivement supprimé. Cette action est
+              irréversible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              className={buttonVariants({ variant: "destructive" })}
+              disabled={isDeleting}
+              onClick={(e) => {
+                // Keep the dialog open until the server has answered.
+                e.preventDefault()
+                handleDelete()
+              }}
+            >
+              {isDeleting && <Loader2 className="h-4 w-4 animate-spin" />}
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
   )
 }

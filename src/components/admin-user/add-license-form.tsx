@@ -1,214 +1,274 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
+import { DatePicker } from "@/components/ui/date-picker"
 import { Skeleton } from "@/components/ui/skeleton"
-import { format } from "date-fns"
-import { fr } from "date-fns/locale"
-import { BadgeCheck, CalendarIcon, Check, ChevronsUpDown } from "lucide-react"
+import { BadgeCheck, Check, ChevronsUpDown, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { User } from "@/interfaces/user"
+
+export interface LicenseFormValues {
+  userId: string
+  license_type: string
+  license_number: string
+  issueDate: Date
+  expirationDate: Date | null
+  certification_authority: string
+  status: string
+  documents: File[]
+}
 
 interface AddLicenseFormProps {
   isOpen: boolean
   onOpenChange: (open: boolean) => void
   users: User[]
   loading: boolean
-  selectedUserId: string | null
-  setSelectedUserId: (id: string | null) => void
-  issueDate: Date | null
-  setIssueDate: (date: Date | null) => void
-  expirationDate: Date | null
-  setExpirationDate: (date: Date | null) => void
-  onSubmit: (e: React.FormEvent) => void
-  onExpirationDateChange: (date: Date | undefined) => void
+  /** Member preselected when the dialog is opened from a row of the table. */
+  defaultUserId?: string | null
+  saving?: boolean
+  onSubmit: (values: LicenseFormValues) => void
 }
+
+type Errors = Partial<Record<"user" | "license_type" | "license_number" | "issueDate" | "expirationDate", string>>
+
+const Required = () => (
+  <span className="text-destructive" aria-hidden="true">
+    {" *"}
+  </span>
+)
+
+const FieldError = ({ message }: { message?: string }) =>
+  message ? <p className="text-sm text-destructive">{message}</p> : null
 
 export function AddLicenseForm({
   isOpen,
   onOpenChange,
   users,
   loading,
-  selectedUserId,
-  setSelectedUserId,
-  issueDate,
-  setIssueDate,
-  expirationDate,
+  defaultUserId = null,
+  saving = false,
   onSubmit,
-  onExpirationDateChange,
 }: AddLicenseFormProps) {
-  const [open, setOpen] = useState(false)
+  const [userPickerOpen, setUserPickerOpen] = useState(false)
+  const [userId, setUserId] = useState<string | null>(defaultUserId)
+  const [licenseType, setLicenseType] = useState("")
+  const [status, setStatus] = useState("active")
+  const [issueDate, setIssueDate] = useState<Date | undefined>()
+  const [expirationDate, setExpirationDate] = useState<Date | undefined>()
+  const [errors, setErrors] = useState<Errors>({})
+
+  // Start from a clean form each time the dialog opens.
+  useEffect(() => {
+    if (!isOpen) return
+    setUserId(defaultUserId)
+    setLicenseType("")
+    setStatus("active")
+    setIssueDate(undefined)
+    setExpirationDate(undefined)
+    setErrors({})
+  }, [isOpen, defaultUserId])
+
+  const selectedUser = users.find((user) => user.id === userId)
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const formData = new FormData(e.target as HTMLFormElement)
+    const licenseNumber = ((formData.get("license_number") as string) ?? "").trim()
+
+    const nextErrors: Errors = {}
+    if (!userId) nextErrors.user = "Choisissez le membre concerné."
+    if (!licenseType) nextErrors.license_type = "Choisissez le type de licence."
+    if (!licenseNumber) nextErrors.license_number = "Indiquez le numéro de la licence."
+    if (!issueDate) nextErrors.issueDate = "Indiquez la date de délivrance."
+    if (issueDate && expirationDate && expirationDate < issueDate) {
+      nextErrors.expirationDate = "La date d'expiration ne peut pas précéder la date de délivrance."
+    }
+    setErrors(nextErrors)
+    if (Object.keys(nextErrors).length > 0 || !userId || !issueDate) return
+
+    const files = (formData.getAll("documents") as File[]).filter((file) => file.size > 0)
+
+    onSubmit({
+      userId,
+      license_type: licenseType,
+      license_number: licenseNumber,
+      issueDate,
+      expirationDate: expirationDate ?? null,
+      certification_authority: ((formData.get("certification_authority") as string) ?? "").trim(),
+      status,
+      documents: files,
+    })
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
-          <BadgeCheck className="mr-2 h-4 w-4" />
+        <Button variant="outline">
+          <BadgeCheck className="h-4 w-4" />
           Ajouter une licence
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-lg p-6 rounded-lg shadow-lg">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">Ajouter une nouvelle licence</DialogTitle>
+          <DialogTitle>Ajouter une licence</DialogTitle>
+          <DialogDescription>Enregistrez la licence ou la qualification d'un membre.</DialogDescription>
         </DialogHeader>
-        <form onSubmit={onSubmit}>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="user" className="text-right font-semibold">
-                Utilisateur
-              </Label>
-              <Popover open={open} onOpenChange={setOpen}>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" role="combobox" aria-expanded={open} className="col-span-3 justify-between">
-                    {selectedUserId && users.length > 0
-                      ? (users.find((user) => user.id === selectedUserId)?.email ?? "Sélectionnez un utilisateur...")
-                      : "Sélectionnez un utilisateur..."}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[300px] p-0">
-                  {loading ? (
-                    <Skeleton className="w-full h-16" />
-                  ) : users.length > 0 ? (
-                    <Command>
-                      <CommandInput placeholder="Rechercher un utilisateur..." />
-                      <CommandList>
-                        <CommandEmpty>Aucun utilisateur trouvé.</CommandEmpty>
-                        <CommandGroup>
-                          {users.map((user) => (
-                            <CommandItem
-                              key={String(user.id)}
-                              onSelect={() => {
-                                setSelectedUserId(user.id === selectedUserId ? null : user.id)
-                                setOpen(false)
-                              }}
-                            >
-                              <Check
-                                className={cn("mr-2 h-4 w-4", selectedUserId === user.id ? "opacity-100" : "opacity-0")}
-                              />
-                              {user.first_name} {user.last_name} ({user.email})
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  ) : (
-                    <CommandEmpty>Aucun utilisateur trouvé.</CommandEmpty>
-                  )}
-                </PopoverContent>
-              </Popover>
-            </div>
+        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+          <div className="space-y-2">
+            <Label htmlFor="license_user">
+              Membre
+              <Required />
+            </Label>
+            <Popover open={userPickerOpen} onOpenChange={setUserPickerOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  id="license_user"
+                  type="button"
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={userPickerOpen}
+                  className={cn("w-full justify-between font-normal", !selectedUser && "text-muted-foreground")}
+                >
+                  <span className="truncate">
+                    {selectedUser ? `${selectedUser.first_name} ${selectedUser.last_name}` : "Choisir un membre"}
+                  </span>
+                  <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[--radix-popover-trigger-width] min-w-[280px] p-0" align="start">
+                {loading && users.length === 0 ? (
+                  <div className="space-y-2 p-3">
+                    <Skeleton className="h-8 w-full" />
+                    <Skeleton className="h-8 w-full" />
+                  </div>
+                ) : (
+                  <Command>
+                    <CommandInput placeholder="Rechercher un membre" />
+                    <CommandList>
+                      <CommandEmpty>Aucun membre trouvé.</CommandEmpty>
+                      <CommandGroup>
+                        {users.map((user) => (
+                          <CommandItem
+                            key={String(user.id)}
+                            value={`${user.first_name} ${user.last_name} ${user.email}`}
+                            onSelect={() => {
+                              setUserId(user.id)
+                              setErrors((current) => ({ ...current, user: undefined }))
+                              setUserPickerOpen(false)
+                            }}
+                          >
+                            <Check className={cn("mr-2 h-4 w-4", userId === user.id ? "opacity-100" : "opacity-0")} />
+                            <span className="min-w-0">
+                              <span className="block truncate">
+                                {user.first_name} {user.last_name}
+                              </span>
+                              <span className="block truncate text-xs text-muted-foreground">{user.email}</span>
+                            </span>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                )}
+              </PopoverContent>
+            </Popover>
+            <FieldError message={errors.user} />
+          </div>
 
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="license_type" className="text-right font-semibold">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="license_type">
                 Type de licence
+                <Required />
               </Label>
-              <Select name="license_type" required>
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Sélectionnez le type" />
+              <Select
+                value={licenseType}
+                onValueChange={(value) => {
+                  setLicenseType(value)
+                  setErrors((current) => ({ ...current, license_type: undefined }))
+                }}
+              >
+                <SelectTrigger id="license_type">
+                  <SelectValue placeholder="Choisir un type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="PPL">PPL</SelectItem>
-                  <SelectItem value="CPL">CPL</SelectItem>
-                  <SelectItem value="ATPL">ATPL</SelectItem>
-                  <SelectItem value="FI">FI</SelectItem>
+                  <SelectItem value="PPL">PPL – pilote privé</SelectItem>
+                  <SelectItem value="CPL">CPL – pilote professionnel</SelectItem>
+                  <SelectItem value="ATPL">ATPL – pilote de ligne</SelectItem>
+                  <SelectItem value="FI">FI – instructeur</SelectItem>
                 </SelectContent>
               </Select>
+              <FieldError message={errors.license_type} />
             </div>
-
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="license_number" className="text-right font-semibold">
+            <div className="space-y-2">
+              <Label htmlFor="license_number">
                 Numéro de licence
+                <Required />
               </Label>
-              <Input
-                id="license_number"
-                name="license_number"
-                className="col-span-3"
-                placeholder="Numéro de licence"
-                required
+              <Input id="license_number" name="license_number" placeholder="FRA.FCL.PA00123456" />
+              <FieldError message={errors.license_number} />
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label>
+                Date de délivrance
+                <Required />
+              </Label>
+              <DatePicker
+                date={issueDate}
+                onSelect={(date) => {
+                  setIssueDate(date)
+                  setErrors((current) => ({ ...current, issueDate: undefined }))
+                }}
+                placeholder="Choisir une date"
+                toDate={new Date()}
               />
+              <FieldError message={errors.issueDate} />
             </div>
-
-            <div className="space-y-6">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="issue_date" className="text-right font-semibold">
-                  Date d'émission
-                </Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="col-span-3 w-full text-left">
-                      {issueDate ? format(issueDate, "PPP", { locale: fr }) : "Choisissez une date"}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={issueDate ?? undefined}
-                      onSelect={(date) => setIssueDate(date ?? null)}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="expiration_date" className="text-right font-semibold">
-                  Date d'expiration
-                </Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="col-span-3 w-full text-left">
-                      {expirationDate ? format(expirationDate, "PPP", { locale: fr }) : "Choisissez une date"}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={expirationDate ?? undefined}
-                      onSelect={onExpirationDateChange}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="certification_authority" className="text-right font-semibold">
-                Autorité de certification
-              </Label>
-              <Input
-                id="certification_authority"
-                name="certification_authority"
-                className="col-span-3"
-                placeholder="Autorité de certification"
+            <div className="space-y-2">
+              <Label>Date d'expiration</Label>
+              <DatePicker
+                date={expirationDate}
+                onSelect={(date) => {
+                  setExpirationDate(date)
+                  setErrors((current) => ({ ...current, expirationDate: undefined }))
+                }}
+                placeholder="Sans expiration"
+                fromDate={issueDate}
+                clearable
               />
+              <FieldError message={errors.expirationDate} />
             </div>
+          </div>
 
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="documents" className="text-right font-semibold">
-                Documents
-              </Label>
-              <Input id="documents" name="documents" type="file" multiple className="col-span-3" />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="certification_authority">Autorité de délivrance</Label>
+              <Input id="certification_authority" name="certification_authority" placeholder="DGAC" />
             </div>
-
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="status" className="text-right font-semibold">
-                Statut
-              </Label>
-              <Select name="status" defaultValue="active">
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Sélectionnez le statut" />
+            <div className="space-y-2">
+              <Label htmlFor="license_status">Statut</Label>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger id="license_status">
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="active">Active</SelectItem>
@@ -218,12 +278,20 @@ export function AddLicenseForm({
               </Select>
             </div>
           </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+
+          <div className="space-y-2">
+            <Label htmlFor="documents">Justificatifs</Label>
+            <Input id="documents" name="documents" type="file" multiple />
+            <p className="text-xs text-muted-foreground">Facultatif. Scan ou photo de la licence, plusieurs fichiers possibles.</p>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
               Annuler
             </Button>
-            <Button type="submit" className="bg-primary text-primary-foreground hover:bg-primary/90">
-              Ajouter
+            <Button type="submit" disabled={saving}>
+              {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+              Ajouter la licence
             </Button>
           </DialogFooter>
         </form>

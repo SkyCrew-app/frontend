@@ -1,606 +1,342 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
-import { useQuery, useMutation } from "@apollo/client"
-import { GET_COURSES, CREATE_COURSE, UPDATE_COURSE, DELETE_COURSE } from "@/graphql/learningAdmin"
+import { useMutation, useQuery } from "@apollo/client"
+import { BookOpen, Loader2, Plus, Search } from "lucide-react"
+import { CREATE_COURSE, DELETE_COURSE, GET_COURSES, UPDATE_COURSE } from "@/graphql/learningAdmin"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-import { Badge } from "@/components/ui/badge"
-import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
-import { PlusCircle, Book, Edit, Trash2, Search, Filter, CheckCircle2, Info, Loader2 } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Textarea } from "@/components/ui/textarea"
+import { EmptyState } from "@/components/layout/EmptyState"
+import { ErrorState } from "@/components/layout/ErrorState"
 import { toast } from "@/components/hooks/use-toast"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { ConfirmDeleteDialog } from "./ConfirmDeleteDialog"
+import { FormField } from "./FormField"
+import { RowActions } from "./RowActions"
 
-enum LicenseType {
-  PPL = "PPL",
-  CPL = "CPL",
-  ATPL = "ATPL",
+const LICENSES = ["PPL", "CPL", "ATPL"]
+// The select needs a value for "no licence"; the API gets null.
+const NO_LICENSE = "none"
+
+interface CourseRow {
+  id: number | string
+  title: string
+  description?: string | null
+  category?: string | null
+  required_license?: string | null
 }
 
+interface CourseForm {
+  // Absent while creating a course.
+  id: number | string | null
+  title: string
+  description: string
+  category: string
+  license: string
+}
+
+const emptyForm: CourseForm = { id: null, title: "", description: "", category: "", license: NO_LICENSE }
+
 export function CourseManagement() {
-  const [title, setTitle] = useState("")
-  const [description, setDescription] = useState("")
-  const [category, setCategory] = useState("")
-  const [requiredLicense, setRequiredLicense] = useState<LicenseType | "">("")
-  const [editingCourse, setEditingCourse] = useState<any>(null)
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
-  const [filterLicense, setFilterLicense] = useState<string>("all")
-  const [activeTab, setActiveTab] = useState("list")
+  const [filterLicense, setFilterLicense] = useState("all")
+  const [form, setForm] = useState<CourseForm>(emptyForm)
+  const [isFormOpen, setIsFormOpen] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+  const [courseToDelete, setCourseToDelete] = useState<CourseRow | null>(null)
 
-  const { data, loading, error, refetch } = useQuery(GET_COURSES)
-  const [createCourse, { loading: createLoading }] = useMutation(CREATE_COURSE, {
-    onCompleted: () => {
-      refetch()
-      toast({
-        title: "Cours créé avec succès",
-        description: "Le cours a été ajouté à la plateforme.",
-        variant: "default",
-      })
-      resetForm()
-      setActiveTab("list")
-    },
-    onError: (error) => {
-      toast({
-        title: "Erreur lors de la création",
-        description: error.message,
-        variant: "destructive",
-      })
-    },
+  const { data, loading, error, refetch } = useQuery<{ getCourses: CourseRow[] }>(GET_COURSES, {
+    fetchPolicy: "cache-and-network",
   })
+  const [createCourse, { loading: creating }] = useMutation(CREATE_COURSE)
+  const [updateCourse, { loading: updating }] = useMutation(UPDATE_COURSE)
+  const [deleteCourse, { loading: deleting }] = useMutation(DELETE_COURSE)
+  const saving = creating || updating
+  const isEdit = form.id !== null
 
-  const [updateCourse, { loading: updateLoading }] = useMutation(UPDATE_COURSE, {
-    onCompleted: () => {
-      refetch()
-      setIsEditDialogOpen(false)
-      toast({
-        title: "Cours mis à jour",
-        description: "Les modifications ont été enregistrées avec succès.",
-        variant: "default",
-      })
-    },
-    onError: (error) => {
-      toast({
-        title: "Erreur lors de la mise à jour",
-        description: error.message,
-        variant: "destructive",
-      })
-    },
-  })
-
-  const [deleteCourse, { loading: deleteLoading }] = useMutation(DELETE_COURSE, {
-    onCompleted: () => {
-      refetch()
-      toast({
-        title: "Cours supprimé",
-        description: "Le cours a été supprimé avec succès.",
-        variant: "default",
-      })
-    },
-    onError: (error) => {
-      toast({
-        title: "Erreur lors de la suppression",
-        description: error.message,
-        variant: "destructive",
-      })
-    },
-  })
-
-  const resetForm = () => {
-    setTitle("")
-    setDescription("")
-    setCategory("")
-    setRequiredLicense("")
+  const openCreate = () => {
+    setForm(emptyForm)
+    setSubmitted(false)
+    setIsFormOpen(true)
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const openEdit = (course: CourseRow) => {
+    setForm({
+      id: course.id,
+      title: course.title,
+      description: course.description ?? "",
+      category: course.category ?? "",
+      license: course.required_license || NO_LICENSE,
+    })
+    setSubmitted(false)
+    setIsFormOpen(true)
+  }
+
+  const titleError = form.title.trim() ? null : "Donnez un titre au cours."
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault()
+    setSubmitted(true)
+    if (titleError) return
+
+    const input = {
+      title: form.title.trim(),
+      description: form.description,
+      category: form.category.trim(),
+      required_license: form.license === NO_LICENSE ? null : form.license,
+    }
+
     try {
-      await createCourse({
-        variables: {
-          createCourseInput: {
-            title,
-            description,
-            category,
-            required_license: requiredLicense || null,
-          },
-        },
+      if (form.id !== null) {
+        await updateCourse({ variables: { id: Number(form.id), updateCourseInput: input } })
+        toast({ title: "Cours modifié", description: "Les changements ont été enregistrés." })
+      } else {
+        await createCourse({ variables: { createCourseInput: input } })
+        toast({ title: "Cours créé", description: "Ajoutez-lui maintenant des modules dans l'onglet Modules." })
+      }
+      setIsFormOpen(false)
+      refetch()
+    } catch {
+      toast({
+        title: isEdit ? "Cours non modifié" : "Cours non créé",
+        description: "L'enregistrement a échoué. Vérifiez les informations puis réessayez.",
+        variant: "destructive",
       })
-    } catch (err) {
-      console.error("Error creating course:", err)
     }
   }
 
-  const handleUpdateCourse = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleDelete = async () => {
+    if (!courseToDelete) return
     try {
-      await updateCourse({
-        variables: {
-          id: parseFloat(editingCourse.id),
-          updateCourseInput: {
-            title: editingCourse.title,
-            description: editingCourse.description,
-            category: editingCourse.category,
-            required_license: editingCourse.required_license || null,
-          },
-        },
+      await deleteCourse({ variables: { id: Number(courseToDelete.id) } })
+      setCourseToDelete(null)
+      refetch()
+      toast({ title: "Cours supprimé", description: "Le cours a été retiré du catalogue." })
+    } catch {
+      toast({
+        title: "Cours non supprimé",
+        description: "La suppression a échoué. Réessayez dans un instant.",
+        variant: "destructive",
       })
-    } catch (err) {
-      console.error("Error updating course:", err)
     }
   }
 
-  const handleDeleteCourse = async (id: string) => {
-    try {
-      await deleteCourse({
-        variables: { id: Number.parseInt(id) },
-      })
-    } catch (err) {
-      console.error("Error deleting course:", err)
-    }
-  }
+  const search = searchTerm.trim().toLowerCase()
+  const courses = data?.getCourses
+  const filteredCourses = (courses ?? []).filter((course) => {
+    const matchesSearch =
+      !search ||
+      course.title.toLowerCase().includes(search) ||
+      (course.description ?? "").toLowerCase().includes(search) ||
+      (course.category ?? "").toLowerCase().includes(search)
+    const matchesLicense =
+      filterLicense === "all" ||
+      (filterLicense === NO_LICENSE ? !course.required_license : course.required_license === filterLicense)
+    return matchesSearch && matchesLicense
+  })
+  const isFiltered = search !== "" || filterLicense !== "all"
 
-  const openEditDialog = (course: any) => {
-    setEditingCourse(course)
-    setIsEditDialogOpen(true)
-  }
-
-  // Filtrer les cours
-  const filteredCourses = data?.getCourses
-    ? data.getCourses.filter((course: any) => {
-        const matchesSearch =
-          course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          course.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          course.category?.toLowerCase().includes(searchTerm.toLowerCase())
-
-        const matchesLicense =
-          filterLicense === "all" ||
-          (filterLicense === "none" && !course.required_license) ||
-          course.required_license === filterLicense
-
-        return matchesSearch && matchesLicense
-      })
-    : []
-
-  // Animation variants
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
-  }
-
-  const item = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0 },
-  }
+  const createButton = (
+    <Button onClick={openCreate}>
+      <Plus className="h-4 w-4" />
+      Créer un cours
+    </Button>
+  )
 
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-      <TabsList className="grid w-full grid-cols-2">
-        <TabsTrigger value="list" className="flex items-center gap-2">
-          <Book className="h-4 w-4" />
-          Liste des cours
-        </TabsTrigger>
-        <TabsTrigger value="create" className="flex items-center gap-2">
-          <PlusCircle className="h-4 w-4" />
-          Créer un cours
-        </TabsTrigger>
-      </TabsList>
-
-      <TabsContent value="list" className="space-y-6">
-        <div className="flex flex-col sm:flex-row justify-between gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Rechercher un cours..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-full"
-            />
-          </div>
-          <Select value={filterLicense} onValueChange={setFilterLicense}>
-            <SelectTrigger className="w-full sm:w-[200px]">
-              <div className="flex items-center">
-                <Filter className="mr-2 h-4 w-4" />
-                <SelectValue placeholder="Filtrer par licence" />
-              </div>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Toutes les licences</SelectItem>
-              <SelectItem value="none">Aucune licence requise</SelectItem>
-              <SelectItem value={LicenseType.PPL}>PPL</SelectItem>
-              <SelectItem value={LicenseType.CPL}>CPL</SelectItem>
-              <SelectItem value={LicenseType.ATPL}>ATPL</SelectItem>
-            </SelectContent>
-          </Select>
+    <div className="space-y-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative w-full sm:max-w-xs">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="search"
+            aria-label="Rechercher un cours"
+            placeholder="Rechercher un cours, ex. navigation"
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            className="pl-9"
+          />
         </div>
-
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <Card key={i} className="overflow-hidden">
-                <CardHeader className="pb-2">
-                  <Skeleton className="h-6 w-3/4" />
-                  <Skeleton className="h-4 w-1/2 mt-2" />
-                </CardHeader>
-                <CardContent>
-                  <Skeleton className="h-20 w-full" />
-                </CardContent>
-                <CardFooter className="flex justify-end space-x-2">
-                  <Skeleton className="h-9 w-24" />
-                  <Skeleton className="h-9 w-24" />
-                </CardFooter>
-              </Card>
+        <Select value={filterLicense} onValueChange={setFilterLicense}>
+          <SelectTrigger className="w-full sm:w-52" aria-label="Filtrer par licence requise">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Toutes les licences</SelectItem>
+            <SelectItem value={NO_LICENSE}>Sans licence requise</SelectItem>
+            {LICENSES.map((license) => (
+              <SelectItem key={license} value={license}>
+                {license}
+              </SelectItem>
             ))}
-          </div>
-        ) : error ? (
-          <Card className="bg-destructive/10 border-destructive/30 text-destructive">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Info className="h-5 w-5 mr-2" />
-                Erreur de chargement
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p>{error.message}</p>
-            </CardContent>
-            <CardFooter>
-              <Button variant="outline" onClick={() => refetch()}>
-                Réessayer
-              </Button>
-            </CardFooter>
-          </Card>
-        ) : (
-          <>
-            {filteredCourses.length === 0 ? (
-              <div className="text-center py-12">
-                <Book className="mx-auto h-12 w-12 text-muted-foreground opacity-20" />
-                <h3 className="mt-4 text-lg font-medium">Aucun cours trouvé</h3>
-                <p className="text-muted-foreground mt-2">
-                  {searchTerm || filterLicense !== "all"
-                    ? "Aucun cours ne correspond à vos critères de recherche."
-                    : "Commencez par créer un nouveau cours."}
-                </p>
-                {(searchTerm || filterLicense !== "all") && (
-                  <Button
-                    variant="outline"
-                    className="mt-4"
-                    onClick={() => {
-                      setSearchTerm("")
-                      setFilterLicense("all")
-                    }}
-                  >
-                    Réinitialiser les filtres
-                  </Button>
-                )}
-                <Button className="mt-4 ml-2" onClick={() => setActiveTab("create")}>
-                  <PlusCircle className="h-4 w-4 mr-2" />
-                  Créer un cours
-                </Button>
-              </div>
-            ) : (
-              <motion.div
-                variants={container}
-                initial="hidden"
-                animate="show"
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+          </SelectContent>
+        </Select>
+        <div className="sm:ml-auto">{createButton}</div>
+      </div>
+
+      {loading && !courses ? (
+        <div className="space-y-2 rounded-xl border bg-card p-4">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <Skeleton key={index} className="h-12 w-full" />
+          ))}
+        </div>
+      ) : error && !courses ? (
+        <ErrorState onRetry={() => refetch()} />
+      ) : filteredCourses.length === 0 ? (
+        <EmptyState
+          icon={BookOpen}
+          title={isFiltered ? "Aucun cours ne correspond" : "Aucun cours pour le moment"}
+          description={
+            isFiltered
+              ? "Modifiez la recherche ou le filtre de licence."
+              : "Créez un premier cours, puis ajoutez-lui des modules et des leçons."
+          }
+          action={
+            isFiltered ? (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSearchTerm("")
+                  setFilterLicense("all")
+                }}
               >
-                <AnimatePresence>
-                  {filteredCourses.map((course: any) => (
-                    <motion.div key={course.id} variants={item} layout>
-                      <Card className="h-full flex flex-col hover:shadow-md transition-shadow">
-                        <CardHeader className="pb-2">
-                          <div className="flex justify-between items-start">
-                            <CardTitle className="text-lg flex items-center">
-                              <Book className="w-5 h-5 mr-2 text-info" />
-                              <span className="line-clamp-1">{course.title}</span>
-                            </CardTitle>
-                            {course.category && (
-                              <Badge variant="outline" className="ml-2 shrink-0">
-                                {course.category}
-                              </Badge>
-                            )}
-                          </div>
-                          {course.required_license && (
-                            <Badge className="bg-info/15 text-info mt-1">
-                              Licence {course.required_license}
-                            </Badge>
-                          )}
-                        </CardHeader>
-                        <CardContent className="flex-grow">
-                          <p className="text-sm text-muted-foreground line-clamp-3">
-                            {course.description || "Aucune description disponible."}
-                          </p>
-                        </CardContent>
-                        <CardFooter className="flex justify-end space-x-2 pt-2 border-t">
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => openEditDialog(course)}
-                                  disabled={updateLoading}
-                                >
-                                  <Edit className="w-4 h-4 mr-2" />
-                                  Modifier
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Modifier les informations du cours</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
+                Effacer les filtres
+              </Button>
+            ) : (
+              createButton
+            )
+          }
+        />
+      ) : (
+        <div className="overflow-x-auto rounded-xl border bg-card">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Cours</TableHead>
+                <TableHead>Catégorie</TableHead>
+                <TableHead>Licence requise</TableHead>
+                <TableHead className="w-24">
+                  <span className="sr-only">Actions</span>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredCourses.map((course) => (
+                <TableRow key={course.id}>
+                  <TableCell className="min-w-[14rem]">
+                    <p className="font-medium">{course.title}</p>
+                    {course.description && (
+                      <p className="line-clamp-1 max-w-xl text-sm text-muted-foreground">{course.description}</p>
+                    )}
+                  </TableCell>
+                  <TableCell>{course.category || "—"}</TableCell>
+                  <TableCell>{course.required_license || "—"}</TableCell>
+                  <TableCell>
+                    <RowActions
+                      name={`le cours ${course.title}`}
+                      onEdit={() => openEdit(course)}
+                      onDelete={() => setCourseToDelete(course)}
+                    />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
-                          <AlertDialog>
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <AlertDialogTrigger asChild>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                      disabled={deleteLoading}
-                                    >
-                                      <Trash2 className="w-4 h-4 mr-2" />
-                                      Supprimer
-                                    </Button>
-                                  </AlertDialogTrigger>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Supprimer définitivement ce cours</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Êtes-vous sûr de vouloir supprimer le cours "{course.title}" ? Cette action est
-                                  irréversible et supprimera également tous les modules et leçons associés.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Annuler</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleDeleteCourse(course.id)}
-                                  className="bg-destructive hover:bg-destructive/90"
-                                >
-                                  {deleteLoading ? (
-                                    <>
-                                      <Loader2 className="animate-spin h-4 w-4 mr-2" />
-                                      Suppression...
-                                    </>
-                                  ) : (
-                                    <>Supprimer</>
-                                  )}
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </CardFooter>
-                      </Card>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-              </motion.div>
-            )}
-          </>
-        )}
-      </TabsContent>
-
-      <TabsContent value="create">
-        <Card className="border-t-4 border-t-primary">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <PlusCircle className="w-5 h-5 mr-2 text-info" />
-              Créer un nouveau cours
-            </CardTitle>
-            <CardDescription>Remplissez les détails du cours ci-dessous</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">
-                  Titre du cours <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="title"
-                  placeholder="Titre du cours"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">Description du cours</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Description détaillée du cours"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  rows={4}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="category">Catégorie</Label>
-                  <Input
-                    id="category"
-                    placeholder="Ex: Navigation, Météorologie, etc."
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="license">Licence requise</Label>
-                  <Select value={requiredLicense} onValueChange={(value) => setRequiredLicense(value as LicenseType)}>
-                    <SelectTrigger id="license">
-                      <SelectValue placeholder="Sélectionner une licence (optionnel)" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Aucune</SelectItem>
-                      <SelectItem value={LicenseType.PPL}>PPL</SelectItem>
-                      <SelectItem value={LicenseType.CPL}>CPL</SelectItem>
-                      <SelectItem value={LicenseType.ATPL}>ATPL</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="pt-4 flex justify-between">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setActiveTab("list")
-                    resetForm()
-                  }}
-                >
-                  Annuler
-                </Button>
-                <Button type="submit" className="w-full md:w-auto" disabled={createLoading}>
-                  {createLoading ? (
-                    <>
-                      <Loader2 className="animate-spin h-4 w-4 mr-2" />
-                      Création en cours...
-                    </>
-                  ) : (
-                    <>
-                      <PlusCircle className="w-4 h-4 mr-2" />
-                      Créer le cours
-                    </>
-                  )}
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      </TabsContent>
-
-      {/* Dialog de modification */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
+      <Dialog open={isFormOpen} onOpenChange={(open) => !saving && setIsFormOpen(open)}>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Modifier le cours</DialogTitle>
-            <DialogDescription>Modifiez les informations du cours ci-dessous</DialogDescription>
+            <DialogTitle>{isEdit ? "Modifier le cours" : "Créer un cours"}</DialogTitle>
+            <DialogDescription>
+              {isEdit
+                ? "Ces informations sont visibles dans le catalogue des membres."
+                : "Le cours apparaît dans le catalogue ; ses modules et ses leçons s'ajoutent ensuite."}
+            </DialogDescription>
           </DialogHeader>
 
-          {editingCourse && (
-            <form onSubmit={handleUpdateCourse} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-title">
-                  Titre du cours <span className="text-destructive">*</span>
-                </Label>
+          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+            <FormField label="Titre" htmlFor="course-title" required error={submitted ? titleError : null}>
+              <Input
+                id="course-title"
+                placeholder="Ex. Météorologie pour le PPL"
+                value={form.title}
+                onChange={(event) => setForm({ ...form, title: event.target.value })}
+                aria-invalid={submitted && !!titleError}
+              />
+            </FormField>
+
+            <FormField label="Description" htmlFor="course-description" hint="Deux ou trois phrases sur ce que le cours apprend.">
+              <Textarea
+                id="course-description"
+                placeholder="Ex. Lire une carte TEMSI, comprendre les fronts et préparer un vol en sécurité."
+                value={form.description}
+                onChange={(event) => setForm({ ...form, description: event.target.value })}
+                rows={4}
+              />
+            </FormField>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FormField label="Catégorie" htmlFor="course-category">
                 <Input
-                  id="edit-title"
-                  value={editingCourse.title}
-                  onChange={(e) => setEditingCourse({ ...editingCourse, title: e.target.value })}
-                  required
+                  id="course-category"
+                  placeholder="Ex. Navigation"
+                  value={form.category}
+                  onChange={(event) => setForm({ ...form, category: event.target.value })}
                 />
-              </div>
+              </FormField>
 
-              <div className="space-y-2">
-                <Label htmlFor="edit-description">Description du cours</Label>
-                <Textarea
-                  id="edit-description"
-                  value={editingCourse.description || ""}
-                  onChange={(e) => setEditingCourse({ ...editingCourse, description: e.target.value })}
-                  rows={4}
-                />
-              </div>
+              <FormField label="Licence requise" htmlFor="course-license">
+                <Select value={form.license} onValueChange={(value) => setForm({ ...form, license: value })}>
+                  <SelectTrigger id="course-license">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={NO_LICENSE}>Aucune</SelectItem>
+                    {LICENSES.map((license) => (
+                      <SelectItem key={license} value={license}>
+                        {license}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormField>
+            </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-category">Catégorie</Label>
-                  <Input
-                    id="edit-category"
-                    value={editingCourse.category || ""}
-                    onChange={(e) => setEditingCourse({ ...editingCourse, category: e.target.value })}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="edit-license">Licence requise</Label>
-                  <Select
-                    value={editingCourse.required_license || ""}
-                    onValueChange={(value) => setEditingCourse({ ...editingCourse, required_license: value })}
-                  >
-                    <SelectTrigger id="edit-license">
-                      <SelectValue placeholder="Sélectionner une licence (optionnel)" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Aucune</SelectItem>
-                      <SelectItem value={LicenseType.PPL}>PPL</SelectItem>
-                      <SelectItem value={LicenseType.CPL}>CPL</SelectItem>
-                      <SelectItem value={LicenseType.ATPL}>ATPL</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsEditDialogOpen(false)}
-                  disabled={updateLoading}
-                >
-                  Annuler
-                </Button>
-                <Button type="submit" disabled={updateLoading}>
-                  {updateLoading ? (
-                    <>
-                      <Loader2 className="animate-spin h-4 w-4 mr-2" />
-                      Enregistrement...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="w-4 h-4 mr-2" />
-                      Enregistrer les modifications
-                    </>
-                  )}
-                </Button>
-              </DialogFooter>
-            </form>
-          )}
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setIsFormOpen(false)} disabled={saving}>
+                Annuler
+              </Button>
+              <Button type="submit" disabled={saving}>
+                {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+                {isEdit ? "Enregistrer" : "Créer le cours"}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
-    </Tabs>
+
+      <ConfirmDeleteDialog
+        open={courseToDelete !== null}
+        onOpenChange={(open) => !open && setCourseToDelete(null)}
+        title="Supprimer ce cours ?"
+        description={`Le cours « ${courseToDelete?.title ?? ""} » sera définitivement supprimé, avec ses modules et ses leçons.`}
+        onConfirm={handleDelete}
+        loading={deleting}
+      />
+    </div>
   )
 }

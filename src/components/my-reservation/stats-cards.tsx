@@ -42,7 +42,7 @@ export function StatsCards({ reservations }: StatsCardsProps) {
   ]
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
       {stats.map((stat) => (
         <StatCard key={stat.title} label={stat.title} value={stat.value} icon={stat.icon} tone={stat.tone} />
       ))}

@@ -1,17 +1,25 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useMemo, useState } from "react"
 import { useQuery } from "@apollo/client"
-import { motion } from "framer-motion"
-import { Newspaper, Filter, Search, Calendar, Tag, ArrowUpDown, Loader2 } from "lucide-react"
+import { LayoutGrid, List, Newspaper, Search, SearchX, Tag, X } from "lucide-react"
 import { GET_ARTICLES } from "@/graphql/articles"
 import { ArticleCard } from "@/components/articles/article-card"
+import { PageHeader } from "@/components/layout/PageHeader"
+import { EmptyState } from "@/components/layout/EmptyState"
+import { ErrorState } from "@/components/layout/ErrorState"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Card } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface Article {
   id: string
@@ -19,28 +27,46 @@ interface Article {
   description: string
   text: string
   tags: string[]
-  photo_url: string
+  photo_url: string | null
   createdAt: string
   eventDate: string | null
 }
 
+type SortOrder = "newest" | "oldest"
+type ViewMode = "grid" | "list"
+
 export default function ArticlesPage() {
-  const { loading, error, data } = useQuery(GET_ARTICLES)
+  const { loading, error, data, refetch } = useQuery(GET_ARTICLES)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedTags, setSelectedTags] = useState<string[]>([])
-  const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest")
-  const [allTags, setAllTags] = useState<string[]>([])
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
+  const [sortOrder, setSortOrder] = useState<SortOrder>("newest")
+  const [viewMode, setViewMode] = useState<ViewMode>("grid")
 
-  useEffect(() => {
-    if (data?.articles) {
-      const tags = new Set<string>()
-      data.articles.forEach((article: Article) => {
-        article.tags?.forEach((tag: string) => tags.add(tag))
+  const articles: Article[] = useMemo(() => data?.articles ?? [], [data])
+
+  const allTags = useMemo(() => {
+    const tags = new Set<string>()
+    articles.forEach((article) => article.tags?.forEach((tag) => tags.add(tag)))
+    return Array.from(tags).sort((a, b) => a.localeCompare(b, "fr"))
+  }, [articles])
+
+  const filteredArticles = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase()
+    return articles
+      .filter((article) => {
+        const matchesSearch =
+          term === "" ||
+          article.title.toLowerCase().includes(term) ||
+          article.description.toLowerCase().includes(term)
+        const matchesTags = selectedTags.length === 0 || selectedTags.some((tag) => article.tags?.includes(tag))
+        return matchesSearch && matchesTags
       })
-      setAllTags(Array.from(tags).sort())
-    }
-  }, [data])
+      .sort((a, b) => {
+        const dateA = new Date(a.eventDate || a.createdAt).getTime()
+        const dateB = new Date(b.eventDate || b.createdAt).getTime()
+        return sortOrder === "newest" ? dateB - dateA : dateA - dateB
+      })
+  }, [articles, searchTerm, selectedTags, sortOrder])
 
   const toggleTag = (tag: string) => {
     setSelectedTags((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]))
@@ -49,310 +75,162 @@ export default function ArticlesPage() {
   const clearFilters = () => {
     setSelectedTags([])
     setSearchTerm("")
-    setSortOrder("newest")
   }
 
-  const filteredArticles = data?.articles
-    ? data.articles
-        .filter((article: Article) => {
-          const matchesSearch =
-            searchTerm === "" ||
-            article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            article.description.toLowerCase().includes(searchTerm.toLowerCase())
-
-          const matchesTags = selectedTags.length === 0 || selectedTags.some((tag) => article.tags?.includes(tag))
-
-          return matchesSearch && matchesTags
-        })
-        .sort((a: Article, b: Article) => {
-          const dateA = new Date(a.eventDate || a.createdAt).getTime()
-          const dateB = new Date(b.eventDate || b.createdAt).getTime()
-          return sortOrder === "newest" ? dateB - dateA : dateA - dateB
-        })
-    : []
-
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
-  }
-
-  if (loading)
-    return (
-      <div className="flex h-96 w-full items-center justify-center">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-      </div>
-    )
-
-  if (error)
-    return (
-      <div className="w-full">
-        <div className="rounded-lg bg-destructive/10 p-6 text-destructive">
-          <h3 className="text-lg font-medium">Erreur de chargement</h3>
-          <p className="mt-2">{error.message}</p>
-        </div>
-      </div>
-    )
+  const hasFilters = selectedTags.length > 0 || searchTerm.trim() !== ""
+  const gridClass =
+    viewMode === "grid" ? "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" : "flex flex-col gap-4"
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-background/80 pb-12">
-      <div className="w-full">
-        <div className="mb-8">
-          <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-            <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
-              <Newspaper className="h-8 w-8 text-primary" />
-              Actualités
-            </h1>
-            <p className="mt-2 text-muted-foreground">Découvrez les dernières actualités et événements</p>
-          </motion.div>
+    <div className="space-y-6">
+      <PageHeader
+        title="Actualités"
+        description="Les nouvelles et les événements de l'aéroclub."
+        className="mb-0"
+      />
 
-          <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="relative w-full max-w-md">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Rechercher un article..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="outline" size="sm" className="sm:hidden">
-                    <Filter className="mr-2 h-4 w-4" />
-                    Filtres
-                    {selectedTags.length > 0 && (
-                      <Badge variant="secondary" className="ml-2">
-                        {selectedTags.length}
-                      </Badge>
-                    )}
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="right">
-                  <SheetHeader>
-                    <SheetTitle>Filtres</SheetTitle>
-                    <SheetDescription>Filtrez les articles par tags ou date</SheetDescription>
-                  </SheetHeader>
-                  <div className="mt-6 space-y-6">
-                    <div>
-                      <h3 className="mb-3 flex items-center gap-2 font-medium">
-                        <Tag className="h-4 w-4 text-primary" />
-                        Tags
-                      </h3>
-                      <div className="flex flex-wrap gap-2">
-                        {allTags.map((tag) => (
-                          <Badge
-                            key={tag}
-                            variant={selectedTags.includes(tag) ? "default" : "outline"}
-                            className="cursor-pointer"
-                            onClick={() => toggleTag(tag)}
-                          >
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <h3 className="mb-3 flex items-center gap-2 font-medium">
-                        <Calendar className="h-4 w-4 text-primary" />
-                        Tri par date
-                      </h3>
-                      <div className="flex gap-2">
-                        <Button
-                          variant={sortOrder === "newest" ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setSortOrder("newest")}
-                        >
-                          Plus récents
-                        </Button>
-                        <Button
-                          variant={sortOrder === "oldest" ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setSortOrder("oldest")}
-                        >
-                          Plus anciens
-                        </Button>
-                      </div>
-                    </div>
-                    {(selectedTags.length > 0 || searchTerm || sortOrder !== "newest") && (
-                      <Button variant="ghost" size="sm" className="w-full" onClick={clearFilters}>
-                        Réinitialiser les filtres
-                      </Button>
-                    )}
-                  </div>
-                </SheetContent>
-              </Sheet>
-
-              <div className="hidden items-center gap-2 sm:flex">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      <Filter className="mr-2 h-4 w-4" />
-                      Tags
-                      {selectedTags.length > 0 && (
-                        <Badge variant="secondary" className="ml-2">
-                          {selectedTags.length}
-                        </Badge>
-                      )}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    <div className="flex max-h-[300px] flex-col gap-1 overflow-y-auto p-2">
-                      {allTags.map((tag) => (
-                        <DropdownMenuItem
-                          key={tag}
-                          className={`cursor-pointer rounded-md ${
-                            selectedTags.includes(tag) ? "bg-primary/10 font-medium text-primary" : ""
-                          }`}
-                          onClick={(e) => {
-                            e.preventDefault()
-                            toggleTag(tag)
-                          }}
-                        >
-                          {tag}
-                        </DropdownMenuItem>
-                      ))}
-                    </div>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      <ArrowUpDown className="mr-2 h-4 w-4" />
-                      {sortOrder === "newest" ? "Plus récents" : "Plus anciens"}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => setSortOrder("newest")}>Plus récents</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setSortOrder("oldest")}>Plus anciens</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                <Tabs
-                  defaultValue="grid"
-                  value={viewMode}
-                  onValueChange={(value) => setViewMode(value as "grid" | "list")}
-                  className="hidden sm:block"
-                >
-                  <TabsList className="grid h-8 w-16 grid-cols-2">
-                    <TabsTrigger value="grid" className="h-7 px-2">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <rect width="7" height="7" x="3" y="3" rx="1" />
-                        <rect width="7" height="7" x="14" y="3" rx="1" />
-                        <rect width="7" height="7" x="14" y="14" rx="1" />
-                        <rect width="7" height="7" x="3" y="14" rx="1" />
-                      </svg>
-                    </TabsTrigger>
-                    <TabsTrigger value="list" className="h-7 px-2">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <line x1="3" x2="21" y1="6" y2="6" />
-                        <line x1="3" x2="21" y1="12" y2="12" />
-                        <line x1="3" x2="21" y1="18" y2="18" />
-                      </svg>
-                    </TabsTrigger>
-                  </TabsList>
-                </Tabs>
-
-                {(selectedTags.length > 0 || searchTerm || sortOrder !== "newest") && (
-                  <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8 px-2">
-                    Réinitialiser
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {selectedTags.length > 0 && (
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              <span className="text-sm text-muted-foreground">Filtres actifs:</span>
-              {selectedTags.map((tag) => (
-                <Badge key={tag} variant="secondary" className="flex items-center gap-1" onClick={() => toggleTag(tag)}>
-                  {tag}
-                  <button
-                    className="ml-1 rounded-full p-0.5 hover:bg-background/20"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      toggleTag(tag)
-                    }}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="12"
-                      height="12"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M18 6 6 18" />
-                      <path d="m6 6 12 12" />
-                    </svg>
-                  </button>
-                </Badge>
-              ))}
-            </div>
-          )}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative sm:w-full sm:max-w-xs">
+          <Search
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden="true"
+          />
+          <Input
+            type="search"
+            aria-label="Rechercher un article"
+            placeholder="Rechercher un article…"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-9"
+          />
         </div>
 
-        {filteredArticles.length > 0 ? (
-          <motion.div
-            variants={container}
-            initial="hidden"
-            animate="show"
-            className={
-              viewMode === "grid" ? "grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" : "flex flex-col gap-6"
-            }
-          >
-            {filteredArticles.map((article: Article) => (
-              <ArticleCard key={article.id} article={article} viewMode={viewMode} />
-            ))}
-          </motion.div>
-        ) : (
-          <div className="flex h-64 flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-              <Newspaper className="h-6 w-6 text-primary" />
-            </div>
-            <h3 className="mt-4 text-lg font-medium">Aucun article trouvé</h3>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Essayez de modifier vos critères de recherche ou de supprimer les filtres.
-            </p>
-            {(selectedTags.length > 0 || searchTerm) && (
-              <Button variant="outline" size="sm" onClick={clearFilters} className="mt-4">
-                Réinitialiser les filtres
-              </Button>
-            )}
+        <div className="flex flex-wrap items-center gap-2">
+          {allTags.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  <Tag className="h-4 w-4" />
+                  Thèmes
+                  {selectedTags.length > 0 && <Badge variant="secondary">{selectedTags.length}</Badge>}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="max-h-72 w-56 overflow-y-auto">
+                {allTags.map((tag) => (
+                  <DropdownMenuCheckboxItem
+                    key={tag}
+                    checked={selectedTags.includes(tag)}
+                    onCheckedChange={() => toggleTag(tag)}
+                    // Several themes can be ticked without reopening the menu.
+                    onSelect={(e) => e.preventDefault()}
+                  >
+                    {tag}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+
+          <Select value={sortOrder} onValueChange={(value) => setSortOrder(value as SortOrder)}>
+            <SelectTrigger className="w-auto min-w-[10rem]" aria-label="Ordre d'affichage">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">Plus récents d'abord</SelectItem>
+              <SelectItem value="oldest">Plus anciens d'abord</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* On a phone both views are a single column: the switch would change nothing. */}
+          <div className="hidden items-center gap-1 sm:flex" role="group" aria-label="Affichage">
+            <Button
+              variant={viewMode === "grid" ? "secondary" : "ghost"}
+              size="icon"
+              onClick={() => setViewMode("grid")}
+              aria-label="Afficher en grille"
+              aria-pressed={viewMode === "grid"}
+              title="Afficher en grille"
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === "list" ? "secondary" : "ghost"}
+              size="icon"
+              onClick={() => setViewMode("list")}
+              aria-label="Afficher en liste"
+              aria-pressed={viewMode === "list"}
+              title="Afficher en liste"
+            >
+              <List className="h-4 w-4" />
+            </Button>
           </div>
-        )}
+        </div>
       </div>
+
+      {selectedTags.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm text-muted-foreground">Thèmes choisis :</span>
+          {selectedTags.map((tag) => (
+            <Badge key={tag} variant="secondary" className="gap-1 pr-1">
+              {tag}
+              <button
+                type="button"
+                className="rounded-full p-0.5 hover:bg-background/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                onClick={() => toggleTag(tag)}
+                aria-label={`Retirer le thème ${tag}`}
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          ))}
+          <Button variant="ghost" size="sm" onClick={clearFilters}>
+            Tout effacer
+          </Button>
+        </div>
+      )}
+
+      {loading && !data ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" role="status" aria-label="Chargement des articles">
+          {Array.from({ length: 6 }, (_, index) => (
+            <Card key={index} className="overflow-hidden">
+              <Skeleton className="aspect-video w-full rounded-none" />
+              <div className="space-y-3 p-5">
+                <Skeleton className="h-3 w-32" />
+                <Skeleton className="h-5 w-3/4" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-2/3" />
+              </div>
+            </Card>
+          ))}
+        </div>
+      ) : error ? (
+        <ErrorState onRetry={() => refetch()} />
+      ) : articles.length === 0 ? (
+        <EmptyState
+          icon={Newspaper}
+          title="Aucun article pour le moment"
+          description="Les actualités de l'aéroclub s'afficheront ici dès leur publication."
+        />
+      ) : filteredArticles.length === 0 ? (
+        <EmptyState
+          icon={SearchX}
+          title="Aucun article ne correspond"
+          description="Modifiez votre recherche ou retirez des thèmes."
+          action={
+            hasFilters ? (
+              <Button variant="outline" onClick={clearFilters}>
+                Effacer la recherche
+              </Button>
+            ) : undefined
+          }
+        />
+      ) : (
+        <div className={gridClass}>
+          {filteredArticles.map((article) => (
+            <ArticleCard key={article.id} article={article} viewMode={viewMode} />
+          ))}
+        </div>
+      )}
     </div>
   )
 }

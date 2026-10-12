@@ -1,57 +1,32 @@
 "use client"
 
 import { useCallback } from "react"
-import { useParams, useRouter } from "next/navigation"
+import Link from "next/link"
+import { useParams } from "next/navigation"
 import { useQuery, useMutation } from "@apollo/client"
-import { format } from "date-fns"
-import { fr } from "date-fns/locale"
-import { motion } from "framer-motion"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ArrowLeft, AlertTriangle, ClipboardCheck, CheckCircle2, Clock } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 import { useToast } from "@/components/hooks/use-toast"
+import { PageHeader } from "@/components/layout/PageHeader"
+import { ErrorState } from "@/components/layout/ErrorState"
 import {
   GET_CHECKLIST_SUBMISSION,
   UPDATE_CHECKLIST_SUBMISSION,
   COMPLETE_CHECKLIST_SUBMISSION,
 } from "@/graphql/checklist"
-import {
-  ChecklistSubmission,
-  ChecklistSubmissionStatus,
-  ChecklistResponse,
-} from "@/interfaces/checklist"
+import { ChecklistSubmission, ChecklistSubmissionStatus, ChecklistResponse } from "@/interfaces/checklist"
 import { ChecklistForm } from "@/components/checklists/ChecklistForm"
-
-function getStatusBadge(status: string) {
-  switch (status) {
-    case ChecklistSubmissionStatus.COMPLETED:
-      return (
-        <Badge className="bg-success/15 text-success gap-1">
-          <CheckCircle2 className="h-3 w-3" />
-          Terminée
-        </Badge>
-      )
-    case ChecklistSubmissionStatus.IN_PROGRESS:
-      return (
-        <Badge className="bg-info/15 text-info gap-1">
-          <Clock className="h-3 w-3" />
-          En cours
-        </Badge>
-      )
-    default:
-      return <Badge variant="secondary">{status}</Badge>
-  }
-}
+import { checklistStatus } from "@/lib/checklist-items"
+import { formatDateTime } from "@/lib/format"
 
 export default function ChecklistDetailPage() {
   const params = useParams()
-  const router = useRouter()
   const { toast } = useToast()
   const id = Number(params.id)
 
-  const { data, loading, error } = useQuery(GET_CHECKLIST_SUBMISSION, {
+  const { data, loading, error, refetch } = useQuery(GET_CHECKLIST_SUBMISSION, {
     variables: { id },
     skip: !id,
     fetchPolicy: "network-only",
@@ -62,14 +37,15 @@ export default function ChecklistDetailPage() {
 
   const submission: ChecklistSubmission | undefined = data?.checklistSubmission
 
+  // Resolves to false when the save failed: the form then shows it and offers to retry.
   const handleUpdate = useCallback(
-    async (responses: ChecklistResponse[]) => {
+    async (responses: ChecklistResponse[]): Promise<boolean> => {
       try {
         await updateSubmission({
           variables: {
             input: {
               id,
-              responses: responses.map(r => ({
+              responses: responses.map((r) => ({
                 itemId: r.itemId,
                 checked: r.checked,
                 note: r.note || undefined,
@@ -77,13 +53,14 @@ export default function ChecklistDetailPage() {
             },
           },
         })
-      } catch (error) {
-        console.error("Auto-save error:", error)
+        return true
+      } catch {
         toast({
           variant: "destructive",
-          title: "Erreur de sauvegarde",
-          description: "Les modifications n'ont pas pu être enregistrées.",
+          title: "Réponses non enregistrées",
+          description: "Vérifiez votre connexion : vos dernières réponses n'ont pas pu être enregistrées.",
         })
+        return false
       }
     },
     [id, updateSubmission, toast],
@@ -95,90 +72,83 @@ export default function ChecklistDetailPage() {
         variables: { id },
         refetchQueries: [{ query: GET_CHECKLIST_SUBMISSION, variables: { id } }],
       })
-      toast({
-        title: "Checklist terminée",
-        description: "La checklist a été complétée avec succès.",
-      })
-    } catch (error) {
+      toast({ title: "Checklist terminée" })
+    } catch {
       toast({
         variant: "destructive",
-        title: "Erreur",
-        description: (error as Error).message || "Impossible de terminer la checklist.",
+        title: "La checklist n'a pas pu être terminée",
+        description: "Vérifiez que tous les points obligatoires sont cochés, puis réessayez.",
       })
     }
   }, [id, completeSubmission, toast])
 
-  if (loading) {
+  const backButton = (
+    <Button variant="outline" asChild>
+      <Link href="/checklists">
+        <ArrowLeft className="h-4 w-4" />
+        Mes checklists
+      </Link>
+    </Button>
+  )
+
+  if (loading && !submission) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-[400px] w-full" />
+      <div className="mx-auto max-w-3xl space-y-6">
+        <PageHeader title={<Skeleton className="h-8 w-56" />} actions={backButton} className="mb-0" />
+        <Skeleton className="h-10 w-full" />
+        <div className="space-y-2">
+          {Array.from({ length: 6 }, (_, i) => (
+            <Skeleton key={i} className="h-14 w-full" />
+          ))}
+        </div>
       </div>
     )
   }
 
   if (error || !submission) {
     return (
-      <Card className="border-destructive/30 bg-destructive/10">
-        <CardContent className="p-6 text-destructive flex items-center">
-          <AlertTriangle className="h-6 w-6 mr-3" />
-          <div>
-            <h3 className="font-semibold">Erreur de chargement</h3>
-            <p>Impossible de charger la checklist. Veuillez réessayer plus tard.</p>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="mx-auto max-w-3xl space-y-6">
+        <PageHeader title="Checklist" actions={backButton} className="mb-0" />
+        <ErrorState
+          description="Cette checklist n'a pas pu être chargée. Elle n'existe peut-être plus."
+          onRetry={() => refetch()}
+        />
+      </div>
     )
   }
 
-  return (
-    <div className="space-y-6">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <Button
-          variant="ghost"
-          onClick={() => router.push("/checklists")}
-          className="mb-4 gap-1"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Retour aux checklists
-        </Button>
+  const status = checklistStatus(submission.status)
+  const isCompleted = submission.status === ChecklistSubmissionStatus.COMPLETED
 
-        <Card>
-          <CardHeader>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-3">
-                <ClipboardCheck className="h-6 w-6 text-primary" />
-                <div>
-                  <CardTitle className="text-xl">{submission.template.name}</CardTitle>
-                  <p className="text-sm text-muted-foreground mt-0.5">
-                    {submission.template.aircraft_model}
-                    {submission.template.description && ` — ${submission.template.description}`}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {getStatusBadge(submission.status)}
-                <span className="text-xs text-muted-foreground">
-                  {format(new Date(submission.started_at), "dd MMM yyyy HH:mm", { locale: fr })}
-                </span>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <ChecklistForm
-              submission={submission}
-              items={submission.template.items || []}
-              onUpdate={handleUpdate}
-              onComplete={handleComplete}
-            />
-          </CardContent>
-        </Card>
-      </motion.div>
+  return (
+    <div className="mx-auto max-w-3xl space-y-6">
+      <PageHeader
+        title={submission.template.name}
+        description={submission.template.aircraft_model}
+        actions={backButton}
+        className="mb-0"
+      />
+
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+        <Badge variant={status.variant}>{status.label}</Badge>
+        <span>
+          {isCompleted && submission.completed_at
+            ? `Terminée le ${formatDateTime(submission.completed_at)}`
+            : `Commencée le ${formatDateTime(submission.started_at)}`}
+        </span>
+      </div>
+
+      {submission.template.description && (
+        <p className="text-sm text-muted-foreground">{submission.template.description}</p>
+      )}
+
+      <ChecklistForm
+        key={submission.id}
+        submission={submission}
+        items={submission.template.items || []}
+        onUpdate={handleUpdate}
+        onComplete={handleComplete}
+      />
     </div>
   )
 }

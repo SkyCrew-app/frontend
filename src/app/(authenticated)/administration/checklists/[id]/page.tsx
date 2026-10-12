@@ -1,17 +1,21 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useState } from "react"
+import type { FormEvent } from "react"
+import Link from "next/link"
+import { useParams } from "next/navigation"
 import { useQuery, useMutation } from "@apollo/client"
-import { motion } from "framer-motion"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ArrowLeft, Save, AlertTriangle, ClipboardCheck } from "lucide-react"
+import { ArrowLeft, Loader2 } from "lucide-react"
 import { useToast } from "@/components/hooks/use-toast"
+import { PageHeader } from "@/components/layout/PageHeader"
+import { ErrorState } from "@/components/layout/ErrorState"
 import {
   GET_CHECKLIST_TEMPLATE,
   UPDATE_CHECKLIST_TEMPLATE,
@@ -30,18 +34,14 @@ import { ChecklistTemplateEditor } from "@/components/checklists/ChecklistTempla
 
 export default function AdminChecklistDetailPage() {
   const params = useParams()
-  const router = useRouter()
   const { toast } = useToast()
   const id = Number(params.id)
 
-  const [templateInfo, setTemplateInfo] = useState({
-    name: "",
-    description: "",
-    aircraft_model: "",
-  })
-  const [hasChanges, setHasChanges] = useState(false)
+  // Only the fields being edited: adding or moving an item reloads the template
+  // and must not wipe what is typed here.
+  const [infoEdits, setInfoEdits] = useState<Partial<Record<"name" | "description" | "aircraft_model", string>>>({})
 
-  const { data, loading, error } = useQuery(GET_CHECKLIST_TEMPLATE, {
+  const { data, loading, error, refetch } = useQuery(GET_CHECKLIST_TEMPLATE, {
     variables: { id },
     skip: !id,
     fetchPolicy: "network-only",
@@ -55,22 +55,25 @@ export default function AdminChecklistDetailPage() {
 
   const template: ChecklistTemplate | undefined = data?.checklistTemplate
 
-  useEffect(() => {
-    if (template) {
-      setTemplateInfo({
-        name: template.name,
-        description: template.description || "",
-        aircraft_model: template.aircraft_model,
-      })
-    }
-  }, [template])
+  const templateInfo = {
+    name: infoEdits.name ?? template?.name ?? "",
+    description: infoEdits.description ?? template?.description ?? "",
+    aircraft_model: infoEdits.aircraft_model ?? template?.aircraft_model ?? "",
+  }
+  const hasChanges =
+    !!template &&
+    (templateInfo.name !== template.name ||
+      templateInfo.description !== (template.description || "") ||
+      templateInfo.aircraft_model !== template.aircraft_model)
+  const infoValid = templateInfo.name.trim() !== "" && templateInfo.aircraft_model.trim() !== ""
 
-  const handleInfoChange = (field: string, value: string) => {
-    setTemplateInfo((prev) => ({ ...prev, [field]: value }))
-    setHasChanges(true)
+  const handleInfoChange = (field: "name" | "description" | "aircraft_model", value: string) => {
+    setInfoEdits((prev) => ({ ...prev, [field]: value }))
   }
 
-  const handleSaveInfo = async () => {
+  const handleSaveInfo = async (event: FormEvent) => {
+    event.preventDefault()
+    if (!hasChanges || !infoValid) return
     try {
       await updateTemplate({
         variables: {
@@ -83,16 +86,13 @@ export default function AdminChecklistDetailPage() {
         },
         refetchQueries: [{ query: GET_CHECKLIST_TEMPLATE, variables: { id } }],
       })
-      setHasChanges(false)
-      toast({
-        title: "Modèle mis à jour",
-        description: "Les informations du modèle ont été enregistrées.",
-      })
-    } catch (error) {
+      setInfoEdits({})
+      toast({ title: "Modèle enregistré" })
+    } catch {
       toast({
         variant: "destructive",
-        title: "Erreur",
-        description: (error as Error).message || "Impossible de sauvegarder les modifications.",
+        title: "Les modifications n'ont pas pu être enregistrées",
+        description: "Réessayez dans un instant.",
       })
     }
   }
@@ -106,16 +106,13 @@ export default function AdminChecklistDetailPage() {
         variables: { input },
         refetchQueries: [{ query: GET_CHECKLIST_TEMPLATE, variables: { id } }],
       })
-      toast({
-        title: "Item ajouté",
-        description: `L'item "${input.item_name}" a été ajouté.`,
-      })
+      toast({ title: "Point ajouté", description: input.item_name })
       return true
-    } catch (error) {
+    } catch {
       toast({
         variant: "destructive",
-        title: "Erreur",
-        description: (error as Error).message || "Impossible d'ajouter l'item.",
+        title: "Le point n'a pas pu être ajouté",
+        description: "Réessayez dans un instant.",
       })
       return false
     }
@@ -130,16 +127,13 @@ export default function AdminChecklistDetailPage() {
         variables: { input },
         refetchQueries: [{ query: GET_CHECKLIST_TEMPLATE, variables: { id } }],
       })
-      toast({
-        title: "Item modifié",
-        description: `L'item "${input.item_name}" a été enregistré.`,
-      })
+      toast({ title: "Point enregistré", description: input.item_name })
       return true
-    } catch (error) {
+    } catch {
       toast({
         variant: "destructive",
-        title: "Erreur",
-        description: (error as Error).message || "Impossible de modifier l'item.",
+        title: "Le point n'a pas pu être enregistré",
+        description: "Réessayez dans un instant.",
       })
       return false
     }
@@ -151,15 +145,12 @@ export default function AdminChecklistDetailPage() {
         variables: { id: Number(itemId) },
         refetchQueries: [{ query: GET_CHECKLIST_TEMPLATE, variables: { id } }],
       })
-      toast({
-        title: "Item supprimé",
-        description: "L'item a été supprimé de la checklist.",
-      })
-    } catch (error) {
+      toast({ title: "Point supprimé" })
+    } catch {
       toast({
         variant: "destructive",
-        title: "Erreur",
-        description: (error as Error).message || "Impossible de supprimer l'item.",
+        title: "Le point n'a pas pu être supprimé",
+        description: "Réessayez dans un instant.",
       })
     }
   }
@@ -177,82 +168,96 @@ export default function AdminChecklistDetailPage() {
           })),
         },
       })
-    } catch (error) {
+    } catch {
       toast({
         variant: "destructive",
-        title: "Erreur",
-        description: (error as Error).message || "Impossible de réordonner les items.",
+        title: "Le nouvel ordre n'a pas pu être enregistré",
+        description: "Les points ont repris leur ordre précédent.",
       })
     }
   }
 
-  if (loading) {
+  const backButton = (
+    <Button variant="outline" asChild>
+      <Link href="/administration/checklists">
+        <ArrowLeft className="h-4 w-4" />
+        Tous les modèles
+      </Link>
+    </Button>
+  )
+
+  if (loading && !template) {
     return (
       <div className="space-y-6">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-[200px] w-full" />
-        <Skeleton className="h-[400px] w-full" />
+        <PageHeader title={<Skeleton className="h-8 w-56" />} actions={backButton} className="mb-0" />
+        <Skeleton className="h-64 w-full rounded-xl" />
+        <Skeleton className="h-72 w-full rounded-xl" />
       </div>
     )
   }
 
   if (error || !template) {
     return (
-      <Card className="border-destructive/30 bg-destructive/10">
-        <CardContent className="p-6 text-destructive flex items-center">
-          <AlertTriangle className="h-6 w-6 mr-3" />
-          <div>
-            <h3 className="font-semibold">Erreur de chargement</h3>
-            <p>Impossible de charger le modèle de checklist.</p>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        <PageHeader title="Modèle de checklist" actions={backButton} className="mb-0" />
+        <ErrorState
+          description="Ce modèle n'a pas pu être chargé. Il n'existe peut-être plus."
+          onRetry={() => refetch()}
+        />
+      </div>
     )
   }
 
   return (
     <div className="space-y-6">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="space-y-6"
-      >
-        <Button
-          variant="ghost"
-          onClick={() => router.push("/administration/checklists")}
-          className="gap-1"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Retour aux modèles
-        </Button>
+      <PageHeader
+        title={
+          <span className="flex flex-wrap items-center gap-3">
+            {template.name}
+            <Badge variant={template.is_active ? "success" : "neutral"}>{template.is_active ? "Actif" : "Inactif"}</Badge>
+          </span>
+        }
+        description={`Modèle de checklist · ${template.aircraft_model}`}
+        actions={backButton}
+        className="mb-0"
+      />
 
-        <div className="flex items-center gap-3">
-          <ClipboardCheck className="h-7 w-7 text-primary" />
-          <h1 className="text-2xl font-semibold tracking-tight">Modifier le modèle</h1>
-        </div>
-
-        {/* Template info */}
-        <Card>
+      <Card>
+        <form onSubmit={handleSaveInfo}>
           <CardHeader>
-            <CardTitle className="text-lg">Informations du modèle</CardTitle>
+            <CardTitle className="text-base">Informations</CardTitle>
+            <CardDescription>Ce que le pilote voit avant de commencer la checklist.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="edit-name">Nom du modèle</Label>
+                <Label htmlFor="edit-name">
+                  Nom du modèle
+                  <span className="text-destructive" aria-hidden="true">
+                    {" *"}
+                  </span>
+                </Label>
                 <Input
                   id="edit-name"
                   value={templateInfo.name}
                   onChange={(e) => handleInfoChange("name", e.target.value)}
+                  placeholder="Prévol DR400"
+                  required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-model">Modèle d&apos;avion</Label>
+                <Label htmlFor="edit-model">
+                  Modèle d&apos;avion
+                  <span className="text-destructive" aria-hidden="true">
+                    {" *"}
+                  </span>
+                </Label>
                 <Input
                   id="edit-model"
                   value={templateInfo.aircraft_model}
                   onChange={(e) => handleInfoChange("aircraft_model", e.target.value)}
+                  placeholder="Robin DR400"
+                  required
                 />
               </div>
             </div>
@@ -262,34 +267,31 @@ export default function AdminChecklistDetailPage() {
                 id="edit-desc"
                 value={templateInfo.description}
                 onChange={(e) => handleInfoChange("description", e.target.value)}
-                placeholder="Description du modèle..."
+                placeholder="Visite prévol complète, à faire avant chaque premier vol de la journée"
               />
             </div>
-            {hasChanges && (
-              <div className="flex justify-end">
-                <Button onClick={handleSaveInfo} disabled={saving} className="gap-1">
-                  <Save className="h-4 w-4" />
-                  {saving ? "Enregistrement..." : "Enregistrer"}
-                </Button>
-              </div>
-            )}
           </CardContent>
-        </Card>
+          <CardFooter className="flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-end">
+            {hasChanges && <p className="text-sm text-muted-foreground sm:mr-auto">Modifications non enregistrées</p>}
+            <Button type="button" variant="outline" onClick={() => setInfoEdits({})} disabled={!hasChanges || saving}>
+              Annuler
+            </Button>
+            <Button type="submit" disabled={!hasChanges || !infoValid || saving}>
+              {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+              Enregistrer
+            </Button>
+          </CardFooter>
+        </form>
+      </Card>
 
-        {/* Items editor */}
-        <Card>
-          <CardContent className="pt-6">
-            <ChecklistTemplateEditor
-              template={template}
-              items={template.items || []}
-              onAddItem={handleAddItem}
-              onUpdateItem={handleUpdateItem}
-              onDeleteItem={handleDeleteItem}
-              onReorder={handleReorder}
-            />
-          </CardContent>
-        </Card>
-      </motion.div>
+      <ChecklistTemplateEditor
+        template={template}
+        items={template.items || []}
+        onAddItem={handleAddItem}
+        onUpdateItem={handleUpdateItem}
+        onDeleteItem={handleDeleteItem}
+        onReorder={handleReorder}
+      />
     </div>
   )
 }

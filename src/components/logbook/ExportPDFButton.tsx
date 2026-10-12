@@ -2,16 +2,19 @@
 
 import { useMutation } from "@apollo/client"
 import { Button } from "@/components/ui/button"
-import { Download, Loader2 } from "lucide-react"
+import { FileDown, Loader2 } from "lucide-react"
 import { EXPORT_LOGBOOK_PDF } from "@/graphql/logbook"
 import type { LogbookFilter } from "@/interfaces/logbook"
 import { useToast } from "@/components/hooks/use-toast"
+import { downloadBase64Pdf } from "@/lib/download"
 
 interface ExportPDFButtonProps {
   filter: LogbookFilter
+  disabled?: boolean
 }
 
-export default function ExportPDFButton({ filter }: ExportPDFButtonProps) {
+/** Downloads the logbook as a PDF, with the filters currently applied. */
+export default function ExportPDFButton({ filter, disabled = false }: ExportPDFButtonProps) {
   const { toast } = useToast()
   const [exportPDF, { loading }] = useMutation(EXPORT_LOGBOOK_PDF)
 
@@ -22,51 +25,25 @@ export default function ExportPDFButton({ filter }: ExportPDFButtonProps) {
       })
 
       if (data?.exportLogbookPDF) {
-        const byteCharacters = atob(data.exportLogbookPDF)
-        const byteNumbers = new Array(byteCharacters.length)
-        for (let i = 0; i < byteCharacters.length; i++) {
-          byteNumbers[i] = byteCharacters.charCodeAt(i)
-        }
-        const byteArray = new Uint8Array(byteNumbers)
-        const blob = new Blob([byteArray], { type: "application/pdf" })
-
-        const url = URL.createObjectURL(blob)
-        const link = document.createElement("a")
-        link.href = url
-        link.download = "carnet-de-vol.pdf"
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-        URL.revokeObjectURL(url)
-
+        downloadBase64Pdf(data.exportLogbookPDF, "carnet-de-vol.pdf")
         toast({
-          title: "Export réussi",
-          description: "Votre carnet de vol a été téléchargé.",
+          title: "Carnet de vol exporté",
+          description: "Le fichier carnet-de-vol.pdf a été téléchargé.",
         })
       }
-    } catch (error) {
-      console.error("Erreur export PDF:", error)
+    } catch {
       toast({
         variant: "destructive",
-        title: "Erreur",
-        description: "Impossible d'exporter le carnet de vol.",
+        title: "Export impossible",
+        description: "Le PDF du carnet de vol n'a pas pu être généré. Réessayez dans un instant.",
       })
     }
   }
 
   return (
-    <Button onClick={handleExport} disabled={loading} variant="outline">
-      {loading ? (
-        <>
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          Export en cours...
-        </>
-      ) : (
-        <>
-          <Download className="mr-2 h-4 w-4" />
-          Exporter PDF
-        </>
-      )}
+    <Button onClick={handleExport} disabled={loading || disabled} variant="outline">
+      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
+      {loading ? "Export en cours…" : "Exporter en PDF"}
     </Button>
   )
 }

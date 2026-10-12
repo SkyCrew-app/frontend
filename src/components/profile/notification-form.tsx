@@ -2,12 +2,11 @@
 
 import React, { useState, useEffect } from "react"
 import { useMutation } from "@apollo/client"
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { UPDATE_NOTIFICATION_SETTINGS } from "@/graphql/user"
 import { useToast } from "@/components/hooks/use-toast"
-import { motion } from "framer-motion"
 import { buildNotificationSettings } from "@/lib/notification-settings"
 
 interface NotificationFormProps {
@@ -23,7 +22,6 @@ export function NotificationForm({ userData, refetch }: NotificationFormProps) {
   })
 
   const [isUpdating, setIsUpdating] = useState(false)
-  const [saveSuccess, setSaveSuccess] = useState(false)
 
   const { toast } = useToast()
   const [updateNotifications] = useMutation(UPDATE_NOTIFICATION_SETTINGS)
@@ -46,7 +44,6 @@ export function NotificationForm({ userData, refetch }: NotificationFormProps) {
     if (!userData) return
 
     setNotifications(prev => ({ ...prev, [name]: checked }))
-    setSaveSuccess(false)
 
     setIsUpdating(true)
 
@@ -60,7 +57,6 @@ export function NotificationForm({ userData, refetch }: NotificationFormProps) {
           title: "Succès",
           description: "Paramètres de notification mis à jour avec succès",
         })
-        setSaveSuccess(true)
         await refetch()
       } else {
         throw new Error("La mise à jour a échoué")
@@ -82,60 +78,44 @@ export function NotificationForm({ userData, refetch }: NotificationFormProps) {
     }
   }
 
+  const settings = [
+    {
+      name: "email_notifications_enabled" as const,
+      label: "Notifications par email",
+      description: "Réservations, rappels et messages du club dans votre boîte mail.",
+    },
+    {
+      name: "sms_notifications_enabled" as const,
+      label: "Notifications par SMS",
+      description: "Les alertes importantes sur votre téléphone.",
+    },
+  ]
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-    >
-      <Card className="w-full">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-xl font-semibold">Paramètres de notifications</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-            <div>
-              <Label htmlFor="email_notifications_enabled" className="text-base font-medium cursor-pointer">
-                Notifications par email
+    <Card>
+      <CardHeader>
+        <CardTitle>Notifications</CardTitle>
+        <CardDescription>Chaque changement est enregistré immédiatement.</CardDescription>
+      </CardHeader>
+      <CardContent className="divide-y border-t p-0">
+        {settings.map((setting) => (
+          <div key={setting.name} className="flex items-center justify-between gap-4 px-6 py-4">
+            <div className="min-w-0">
+              <Label htmlFor={setting.name} className="cursor-pointer">
+                {setting.label}
               </Label>
-              <p className="text-sm text-muted-foreground mt-1">Recevez des mises à jour par email</p>
+              <p className="mt-1 text-sm text-muted-foreground">{setting.description}</p>
             </div>
             <Switch
-              id="email_notifications_enabled"
-              checked={notifications.email_notifications_enabled}
-              onCheckedChange={(checked) => handleSwitchChange("email_notifications_enabled", checked)}
+              id={setting.name}
+              checked={notifications[setting.name]}
+              onCheckedChange={(checked) => handleSwitchChange(setting.name, checked)}
               disabled={isUpdating || !userData}
-              className="data-[state=checked]:bg-primary"
+              className="shrink-0"
             />
           </div>
-
-          <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-            <div>
-              <Label htmlFor="sms_notifications_enabled" className="text-base font-medium cursor-pointer">
-                Notifications par SMS
-              </Label>
-              <p className="text-sm text-muted-foreground mt-1">Recevez des alertes importantes par SMS</p>
-            </div>
-            <Switch
-              id="sms_notifications_enabled"
-              checked={notifications.sms_notifications_enabled}
-              onCheckedChange={(checked) => handleSwitchChange("sms_notifications_enabled", checked)}
-              disabled={isUpdating || !userData}
-              className="data-[state=checked]:bg-primary"
-            />
-          </div>
-
-          {saveSuccess && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-success/10 text-success p-3 rounded-md text-sm border border-success/30"
-            >
-              Vos préférences de notification ont été enregistrées avec succès.
-            </motion.div>
-          )}
-        </CardContent>
-      </Card>
-    </motion.div>
+        ))}
+      </CardContent>
+    </Card>
   )
 }

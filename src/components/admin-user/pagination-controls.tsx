@@ -1,20 +1,14 @@
 "use client"
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination"
+import { ChevronLeft, ChevronRight } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 interface PaginationControlsProps {
   currentPage: number
   totalItems: number
   itemsPerPage: number
   onPageChange: (page: number) => void
-  indexOfFirstItem: number
-  indexOfLastItem: number
+  /** Plural noun shown after the total, e.g. "membres". */
+  itemLabel?: string
 }
 
 export function PaginationControls({
@@ -22,60 +16,45 @@ export function PaginationControls({
   totalItems,
   itemsPerPage,
   onPageChange,
-  indexOfFirstItem,
-  indexOfLastItem,
+  itemLabel = "membres",
 }: PaginationControlsProps) {
   const totalPages = Math.ceil(totalItems / itemsPerPage)
 
   if (totalItems === 0) return null
 
+  const first = (currentPage - 1) * itemsPerPage + 1
+  const last = Math.min(currentPage * itemsPerPage, totalItems)
+
   return (
-    <div className="flex justify-between items-center">
-      <p className="text-sm text-muted-foreground">
-        Affichage de {indexOfFirstItem + 1} à {Math.min(indexOfLastItem, totalItems)} sur {totalItems} utilisateurs
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <p className="text-sm tabular-nums text-muted-foreground">
+        {first}–{last} sur {totalItems} {itemLabel}
       </p>
-      <Pagination>
-        <PaginationContent>
-          <PaginationItem>
-            <PaginationPrevious
-              onClick={() => onPageChange(currentPage - 1)}
-              className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
-            />
-          </PaginationItem>
-          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-            // Logique pour afficher les pages autour de la page courante
-            let pageNum
-
-            if (totalPages <= 5) {
-              pageNum = i + 1
-            } else if (currentPage <= 3) {
-              pageNum = i + 1
-              if (i === 4) pageNum = totalPages
-            } else if (currentPage >= totalPages - 2) {
-              pageNum = totalPages - 4 + i
-              if (i === 0) pageNum = 1
-            } else {
-              pageNum = currentPage - 2 + i
-              if (i === 0) pageNum = 1
-              if (i === 4) pageNum = totalPages
-            }
-
-            return (
-              <PaginationItem key={i}>
-                <PaginationLink onClick={() => onPageChange(pageNum)} isActive={currentPage === pageNum}>
-                  {pageNum}
-                </PaginationLink>
-              </PaginationItem>
-            )
-          })}
-          <PaginationItem>
-            <PaginationNext
-              onClick={() => onPageChange(currentPage + 1)}
-              className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
-            />
-          </PaginationItem>
-        </PaginationContent>
-      </Pagination>
+      {totalPages > 1 && (
+        <nav className="flex items-center gap-2" aria-label="Pagination">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(currentPage - 1)}
+            disabled={currentPage <= 1}
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Précédent
+          </Button>
+          <span className="px-1 text-sm tabular-nums text-muted-foreground">
+            Page {currentPage} sur {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onPageChange(currentPage + 1)}
+            disabled={currentPage >= totalPages}
+          >
+            Suivant
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </nav>
+      )}
     </div>
   )
 }

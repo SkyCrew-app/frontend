@@ -1,8 +1,7 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Navigation } from "lucide-react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { flightTypeLabel } from "@/components/flight/flight-type"
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -64,7 +63,7 @@ function haversineNm(lat1: number, lon1: number, lat2: number, lon2: number): nu
 }
 
 function formatAlt(alt: number): string {
-  if (!alt || alt <= 0) return "-"
+  if (!alt || alt <= 0) return "—"
   if (alt >= 5000) return `FL${Math.round(alt / 100).toString().padStart(3, "0")}`
   return `${alt}`
 }
@@ -87,20 +86,6 @@ function getPhaseLabel(type: string): string {
     case "NDB": return "NDB"
     case "FIX": return "FIX"
     default: return type || ""
-  }
-}
-
-function getPhaseColor(type: string): string {
-  switch (type?.toUpperCase()) {
-    case "TOC": return "text-success"
-    case "TOD": return "text-warning"
-    case "SID": return "text-primary"
-    case "STAR": return "text-primary"
-    case "APP": return "text-brand"
-    case "VOR": return "text-info"
-    case "NDB": return "text-destructive"
-    case "FIX": return "text-success"
-    default: return "text-muted-foreground"
   }
 }
 
@@ -160,7 +145,7 @@ export function NavLog({
       gs: Math.round(gs),
       wca,
       ete: formatTime(eteMin),
-      eta: wp2.time_from_dep_min !== undefined ? formatTime(wp2.time_from_dep_min) : "-",
+      eta: wp2.time_from_dep_min !== undefined ? formatTime(wp2.time_from_dep_min) : "—",
       fuelRem: wp2.fuel_remaining_liters ?? null,
       cumDist,
     })
@@ -168,67 +153,62 @@ export function NavLog({
 
   const totalDistNm = cumDist
 
+  const subtitle = [
+    `${departureIcao} → ${arrivalIcao}`,
+    aircraft ? `${aircraft.registration_number} (${aircraft.model})` : null,
+    pilotName ? `commandant de bord : ${pilotName}` : null,
+    flightType ? flightTypeLabel(flightType) : null,
+  ]
+    .filter(Boolean)
+    .join(" · ")
+
   return (
-    <Card className="border-border/50">
+    <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center justify-between flex-wrap gap-2">
-          <div className="flex items-center gap-2">
-            <Navigation className="h-5 w-5 text-primary" />
-            <span>Navigation Log</span>
-            <Badge variant="outline" className="font-mono text-xs">
-              {departureIcao} → {arrivalIcao}
-            </Badge>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            {aircraft && (
-              <Badge variant="secondary" className="font-mono text-xs">
-                {aircraft.registration_number} ({aircraft.model})
-              </Badge>
-            )}
-            {pilotName && (
-              <Badge variant="secondary" className="text-xs">
-                PIC: {pilotName}
-              </Badge>
-            )}
-            {flightType && (
-              <Badge variant="outline" className="text-xs">
-                {flightType}
-              </Badge>
-            )}
-          </div>
-        </CardTitle>
+        <CardTitle className="text-base">Journal de navigation</CardTitle>
+        <CardDescription>{subtitle}</CardDescription>
       </CardHeader>
 
       <CardContent className="p-0">
-        {/* Aircraft info bar */}
-        {aircraft && (
-          <div className="px-6 py-3 bg-muted/50 border-b border-border/50 flex flex-wrap gap-x-6 gap-y-1 text-xs font-mono text-muted-foreground">
-            <span>A/C: <strong className="text-foreground">{aircraft.registration_number}</strong></span>
-            <span>Type: <strong className="text-foreground">{aircraft.model}</strong></span>
-            {aircraft.cruiseSpeed && <span>Vcrz: <strong className="text-foreground">{aircraft.cruiseSpeed} km/h</strong></span>}
-            {aircraft.consumption && <span>Conso: <strong className="text-foreground">{aircraft.consumption} L/h</strong></span>}
-            {aircraft.maxAltitude && <span>Plafond: <strong className="text-foreground">{aircraft.maxAltitude} ft</strong></span>}
+        {/* Aircraft performance used for the computation */}
+        {aircraft && (aircraft.cruiseSpeed || aircraft.consumption || aircraft.maxAltitude) && (
+          <div className="flex flex-wrap gap-x-6 gap-y-1 border-y bg-muted/50 px-6 py-2 text-xs text-muted-foreground">
+            {aircraft.cruiseSpeed && (
+              <span>
+                Vitesse de croisière : <strong className="text-foreground">{aircraft.cruiseSpeed} km/h</strong>
+              </span>
+            )}
+            {aircraft.consumption && (
+              <span>
+                Consommation : <strong className="text-foreground">{aircraft.consumption} L/h</strong>
+              </span>
+            )}
+            {aircraft.maxAltitude && (
+              <span>
+                Plafond : <strong className="text-foreground">{aircraft.maxAltitude} ft</strong>
+              </span>
+            )}
           </div>
         )}
 
         {/* Nav log table */}
         <div className="overflow-x-auto">
-          <table className="w-full text-xs font-mono">
+          <table className="w-full whitespace-nowrap font-mono text-xs tabular-nums">
             <thead>
-              <tr className="bg-muted/80 border-b border-border">
-                <th className="px-3 py-2 text-left font-semibold">FROM</th>
-                <th className="px-3 py-2 text-left font-semibold">TO</th>
-                <th className="px-3 py-2 text-center font-semibold">TYPE</th>
-                <th className="px-3 py-2 text-right font-semibold">TRK°</th>
-                <th className="px-3 py-2 text-right font-semibold">WCA</th>
-                <th className="px-3 py-2 text-right font-semibold">HDG°</th>
-                <th className="px-3 py-2 text-right font-semibold">DIST</th>
-                <th className="px-3 py-2 text-right font-semibold">CUM</th>
-                <th className="px-3 py-2 text-right font-semibold">ALT</th>
-                <th className="px-3 py-2 text-right font-semibold">GS</th>
-                <th className="px-3 py-2 text-right font-semibold">ETE</th>
-                <th className="px-3 py-2 text-right font-semibold">ETA</th>
-                <th className="px-3 py-2 text-right font-semibold">REM</th>
+              <tr className="border-b bg-muted/40 text-muted-foreground">
+                <th className="px-3 py-2 text-left font-medium">De</th>
+                <th className="px-3 py-2 text-left font-medium">Vers</th>
+                <th className="px-3 py-2 text-center font-medium">Type</th>
+                <th className="px-3 py-2 text-right font-medium" title="Route (track)">TRK</th>
+                <th className="px-3 py-2 text-right font-medium" title="Correction de dérive">WCA</th>
+                <th className="px-3 py-2 text-right font-medium" title="Cap à suivre">HDG</th>
+                <th className="px-3 py-2 text-right font-medium" title="Distance du tronçon">Dist.</th>
+                <th className="px-3 py-2 text-right font-medium" title="Distance cumulée (NM)">Cumul</th>
+                <th className="px-3 py-2 text-right font-medium" title="Altitude (ft) ou niveau de vol">Alt.</th>
+                <th className="px-3 py-2 text-right font-medium" title="Vitesse sol">GS</th>
+                <th className="px-3 py-2 text-right font-medium" title="Temps de vol du tronçon">ETE</th>
+                <th className="px-3 py-2 text-right font-medium" title="Temps écoulé depuis le départ">Cumul t.</th>
+                <th className="px-3 py-2 text-right font-medium" title="Carburant restant">Carb.</th>
               </tr>
             </thead>
             <tbody>
@@ -245,17 +225,17 @@ export function NavLog({
                       : "bg-muted/30"
 
                 return (
-                  <tr key={i} className={`${rowBg} border-b border-border/30 hover:bg-muted/50 transition-colors`}>
+                  <tr key={i} className={`${rowBg} border-b border-border/50`}>
                     <td className="px-3 py-2 font-semibold">{leg.from}</td>
                     <td className="px-3 py-2 font-semibold">{leg.to}</td>
-                    <td className={`px-3 py-2 text-center ${getPhaseColor(leg.toType)}`}>
+                    <td className="px-3 py-2 text-center text-muted-foreground">
                       {getPhaseLabel(leg.toType)}
                     </td>
-                    <td className="px-3 py-2 text-right text-primary">
+                    <td className="px-3 py-2 text-right">
                       {Math.round(leg.track).toString().padStart(3, "0")}°
                     </td>
-                    <td className="px-3 py-2 text-right text-warning">
-                      {leg.wca !== 0 ? `${leg.wca > 0 ? "+" : ""}${leg.wca.toFixed(1)}°` : "-"}
+                    <td className="px-3 py-2 text-right text-muted-foreground">
+                      {leg.wca !== 0 ? `${leg.wca > 0 ? "+" : ""}${leg.wca.toFixed(1)}°` : "—"}
                     </td>
                     <td className="px-3 py-2 text-right font-semibold text-primary">
                       {Math.round(hdg).toString().padStart(3, "0")}°
@@ -267,16 +247,16 @@ export function NavLog({
                         {formatAlt(leg.alt)}
                       </span>
                     </td>
-                    <td className="px-3 py-2 text-right text-info">{leg.gs}kt</td>
+                    <td className="px-3 py-2 text-right">{leg.gs} kt</td>
                     <td className="px-3 py-2 text-right">{leg.ete}</td>
                     <td className="px-3 py-2 text-right font-semibold">{leg.eta}</td>
                     <td className="px-3 py-2 text-right">
                       {leg.fuelRem !== null ? (
-                        <span className={leg.fuelRem < 10 ? "text-destructive font-bold" : "text-success"}>
-                          {leg.fuelRem.toFixed(1)}L
+                        <span className={leg.fuelRem < 10 ? "font-bold text-destructive" : undefined}>
+                          {leg.fuelRem.toFixed(1)} L
                         </span>
                       ) : (
-                        "-"
+                        "—"
                       )}
                     </td>
                   </tr>
@@ -284,15 +264,15 @@ export function NavLog({
               })}
             </tbody>
             <tfoot>
-              <tr className="bg-muted/60 border-t-2 border-border font-semibold">
-                <td className="px-3 py-2" colSpan={6}>TOTAUX</td>
+              <tr className="border-t-2 bg-muted/40 font-semibold">
+                <td className="px-3 py-2" colSpan={6}>Total</td>
                 <td className="px-3 py-2 text-right">{totalDistNm.toFixed(1)} NM</td>
                 <td className="px-3 py-2 text-right text-muted-foreground">
                   {totalDistanceKm ? `${totalDistanceKm.toFixed(0)} km` : ""}
                 </td>
                 <td className="px-3 py-2" colSpan={2}></td>
                 <td className="px-3 py-2 text-right" colSpan={2}>
-                  {totalTimeHours ? formatTime(totalTimeHours * 60) : "-"}
+                  {totalTimeHours ? formatTime(totalTimeHours * 60) : "—"}
                 </td>
                 <td className="px-3 py-2"></td>
               </tr>
