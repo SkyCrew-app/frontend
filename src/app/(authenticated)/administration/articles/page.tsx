@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useMemo, useState } from "react"
+import React, { useMemo, useState } from "react"
 import Link from "next/link"
 import { useQuery, useMutation } from "@apollo/client"
 import { fr } from "date-fns/locale"
@@ -111,7 +111,9 @@ const parseTags = (tags: string) =>
     .map((tag) => tag.trim())
     .filter(Boolean)
 
-const isEmptyHtml = (html: string) => html.replace(/<[^>]*>/g, "").trim() === ""
+// Empty once the markup is set aside: "<p></p>" has no text.
+const isEmptyHtml = (html: string) =>
+  (new DOMParser().parseFromString(html, "text/html").body.textContent ?? "").trim() === ""
 
 const formatFileSize = (bytes: number) =>
   `${new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 2 }).format(bytes / 1024 / 1024)} Mo`
@@ -365,13 +367,6 @@ export default function ArticlesAdminPage() {
   const [deleteArticle] = useMutation(DELETE_ARTICLE)
 
   const articles: Article[] = useMemo(() => data?.articles ?? [], [data])
-
-  const imagePreview = useMemo(() => (selectedImage ? URL.createObjectURL(selectedImage) : null), [selectedImage])
-  useEffect(() => {
-    return () => {
-      if (imagePreview) URL.revokeObjectURL(imagePreview)
-    }
-  }, [imagePreview])
 
   const openCreate = () => {
     setIsEditing(false)
@@ -868,7 +863,7 @@ export default function ArticlesAdminPage() {
                     />
                     <div className="flex items-center gap-3">
                       <ArticleImage
-                        src={imagePreview ?? (isEditing ? selectedArticle?.photo_url : null)}
+                        src={selectedImage ? null : isEditing ? selectedArticle?.photo_url : null}
                         alt="Aperçu de l'image principale"
                         className="aspect-video w-24 shrink-0 rounded-md"
                         iconClassName="h-5 w-5"
