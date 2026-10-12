@@ -10,6 +10,7 @@ import CommandPalette from "@/components/command/CommandPalette"
 import OfflineIndicator from "@/components/ui/OfflineIndicator"
 import DemoBanner from "@/components/ui/DemoBanner"
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts"
+import { useMounted } from "@/components/hooks/useMounted"
 
 interface MainLayoutProps {
   children: ReactNode
@@ -17,6 +18,9 @@ interface MainLayoutProps {
 
 export default function MainLayout({ children }: MainLayoutProps) {
   const [isMobileOpen, setIsMobileOpen] = useState(false)
+  // Les pages lisent des données gardées dans le navigateur : on attend d'y être
+  // pour les afficher, sinon le rendu du serveur et celui du navigateur diffèrent.
+  const mounted = useMounted()
   const { isCommandPaletteOpen, setCommandPaletteOpen } = useKeyboardShortcuts()
 
   const handleToggleMobileMenu = () => {
@@ -48,9 +52,9 @@ export default function MainLayout({ children }: MainLayoutProps) {
           <Navbar onToggleMobileMenu={handleToggleMobileMenu} />
           <OfflineIndicator />
           <main id="main-content" role="main" aria-label="Contenu principal" className="flex-1 overflow-y-auto overflow-x-hidden" tabIndex={-1}>
-            <div className="p-4 md:p-6 lg:p-8">
+            <div className="mx-auto w-full max-w-[1440px] p-4 md:p-6 lg:p-8">
               <Breadcrumbs />
-              {children}
+              {mounted ? children : null}
             </div>
           </main>
         </div>

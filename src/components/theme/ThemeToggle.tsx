@@ -18,7 +18,7 @@ export default function ThemeToggle() {
     theme === "dark" ? (
       <Moon className="h-5 w-5 text-foreground/70" />
     ) : theme === "light" ? (
-      <Sun className="h-5 w-5 text-amber-500" />
+      <Sun className="h-5 w-5 text-warning" />
     ) : (
       <Monitor className="h-5 w-5 text-foreground/70" />
     )
@@ -46,7 +46,7 @@ export default function ThemeToggle() {
         onClick={() => setTheme("light")}
         className={`flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-secondary ${theme === "light" ? "bg-secondary" : ""}`}
       >
-        <Sun className="h-4 w-4 text-amber-500" />
+        <Sun className="h-4 w-4 text-warning" />
         <span>Clair</span>
       </CustomDropdownItem>
       <CustomDropdownItem

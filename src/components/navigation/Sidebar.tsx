@@ -172,7 +172,7 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
       {/* Mobile sidebar overlay */}
       {isMobileOpen && (
         <div
-          className="md:hidden fixed inset-0 bg-primary/30 dark:bg-black/50 z-40 backdrop-blur-sm transition-opacity"
+          className="md:hidden fixed inset-0 bg-primary/30 z-40 backdrop-blur-sm transition-opacity"
           onClick={onCloseMobileMenu}
         />
       )}
@@ -181,7 +181,7 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
       <aside
         role="navigation"
         aria-label="Navigation principale"
-        className={`fixed md:sticky top-0 left-0 h-screen w-64 bg-sidebar text-sidebar-foreground border-r border-sidebar-border shadow-lg flex flex-col overflow-hidden z-50 transition-transform duration-300 ease-in-out ${
+        className={`fixed md:sticky top-0 left-0 h-screen w-64 bg-sidebar text-sidebar-foreground border-r border-sidebar-border flex flex-col overflow-hidden z-50 transition-transform duration-300 ease-in-out ${
           isMobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         }`}
       >
@@ -313,28 +313,24 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
               return (
                 <motion.li
                   key={item.name}
-                  className="mb-2"
                   variants={menuItemVariants}
-                  initial="closed"
+                  initial={false}
                   animate="open"
-                  transition={{ delay: menuItems.indexOf(item) * 0.05 }}
                 >
                   <div className="relative">
                     <Link
                       href={item.path}
                       className={cn(
-                        "flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 ease-in-out group",
+                        "flex items-center px-2.5 py-2 text-sm font-medium rounded-lg transition-colors duration-150 group",
                         isActive
-                          ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md shadow-sidebar-primary/20"
-                          : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                          ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                          : "text-sidebar-foreground/75 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
                       )}
                     >
                       <div
                         className={cn(
-                          "flex items-center justify-center h-8 w-8 rounded-lg mr-3",
-                          isActive
-                            ? "bg-white/20"
-                            : "bg-sidebar-accent/50 group-hover:bg-sidebar-accent",
+                          "flex items-center justify-center h-7 w-7 rounded-md mr-3 transition-colors duration-150",
+                          isActive ? "bg-sidebar-primary" : "bg-transparent",
                         )}
                       >
                         <item.icon
@@ -354,10 +350,7 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
                             toggleMenu(item.path)
                           }}
                           className={cn(
-                            "absolute right-3 p-1 rounded-md",
-                            isActive
-                              ? "text-sidebar-primary-foreground/80 hover:text-sidebar-primary-foreground hover:bg-white/20"
-                              : "text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent",
+                            "absolute right-2 p-1 rounded-md text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent",
                           )}
                         >
                           <ChevronRight
@@ -376,7 +369,7 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
                           animate="open"
                           exit="closed"
                           variants={subMenuVariants}
-                          className="mt-1 ml-12 space-y-1 overflow-hidden"
+                          className="mt-1 ml-6 pl-3 border-l border-sidebar-border space-y-0.5 overflow-hidden"
                         >
                           {item.subItems.map((subItem) => {
                             const isSubActive = pathname === subItem.path
@@ -386,10 +379,10 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
                                 <Link
                                   href={subItem.path}
                                   className={cn(
-                                    "block py-2 px-4 rounded-lg text-sm transition-colors duration-150 ease-in-out",
+                                    "block py-1.5 px-3 rounded-md text-sm transition-colors duration-150",
                                     isSubActive
-                                      ? "bg-sidebar-primary/20 text-sidebar-primary-foreground font-medium"
-                                      : "text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                                      ? "text-sidebar-primary font-medium"
+                                      : "text-sidebar-foreground/60 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
                                   )}
                                 >
                                   {subItem.name}

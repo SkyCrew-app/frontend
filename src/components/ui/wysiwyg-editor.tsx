@@ -58,7 +58,7 @@ export function WysiwygEditor({
       Link.configure({
         openOnClick: false,
         HTMLAttributes: {
-          class: "text-blue-500 underline cursor-pointer",
+          class: "text-info underline cursor-pointer",
         },
       }),
       Image.configure({
@@ -245,7 +245,7 @@ export function WysiwygEditor({
 
       {editor && (
         <BubbleMenu editor={editor}>
-          <div className="flex bg-white dark:bg-gray-800 p-1 rounded-md shadow-lg border">
+          <div className="flex bg-card p-1 rounded-md shadow-lg border">
             <Toggle
               size="sm"
               pressed={editor.isActive("bold")}

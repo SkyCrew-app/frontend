@@ -129,11 +129,11 @@ export default function ELearningPage() {
     return (
       <div className="flex flex-col lg:flex-row min-h-screen bg-background" suppressHydrationWarning>
         <div className="flex-1 flex flex-col overflow-hidden">
-          <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 p-4 flex items-center">
-            <h1 className="text-xl font-semibold truncate">Chargement...</h1>
+          <header className="bg-card shadow-sm border-b border-border p-4 flex items-center">
+            <h1 className="text-2xl font-semibold tracking-tight truncate">Chargement...</h1>
           </header>
           <main className="flex-1 overflow-x-hidden overflow-y-auto bg-background">
-            <div className="container mx-auto px-4 py-6 max-w-6xl">
+            <div className="mx-auto max-w-6xl">
               <Skeleton className="h-12 w-3/4" />
               <Skeleton className="h-[200px] w-full mt-4" />
             </div>
@@ -152,15 +152,15 @@ export default function ELearningPage() {
 
       {/* Sidebar */}
       <aside
-        className={`bg-white dark:bg-gray-800 w-full lg:w-80 lg:min-h-screen flex flex-col transition-all duration-300 ease-in-out ${sidebarOpen ? "fixed inset-0 z-30" : "hidden lg:flex"}`}
+        className={`bg-card w-full lg:w-80 lg:min-h-screen flex flex-col transition-all duration-300 ease-in-out ${sidebarOpen ? "fixed inset-0 z-30" : "hidden lg:flex"}`}
       >
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+        <div className="p-4 border-b border-border flex items-center justify-between">
           <h2 className="text-xl font-semibold">Cours disponibles</h2>
           <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setSidebarOpen(false)}>
             <X className="h-5 w-5" />
           </Button>
         </div>
-        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="p-4 border-b border-border">
           <CourseSearch
             searchTerm={searchTerm}
             setSearchTerm={handleSetSearchTerm}
@@ -181,24 +181,24 @@ export default function ELearningPage() {
 
       {/* Contenu principal */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 p-4 flex items-center">
+        <header className="bg-card shadow-sm border-b border-border p-4 flex items-center">
           <Button variant="outline" size="icon" className="lg:hidden mr-4" onClick={() => setSidebarOpen(!sidebarOpen)}>
             <Menu className="h-5 w-5" />
           </Button>
-          <h1 className="text-xl font-semibold truncate">
+          <h1 className="text-2xl font-semibold tracking-tight truncate">
             {course ? course.title : "Plateforme d'apprentissage en ligne"}
           </h1>
         </header>
 
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-background">
-          <div className="container mx-auto px-4 py-6 max-w-6xl">
+          <div className="mx-auto max-w-6xl">
             {courseLoading ? (
               <div className="space-y-4">
                 <Skeleton className="h-12 w-3/4" />
                 <Skeleton className="h-[200px] w-full" />
               </div>
             ) : courseError ? (
-              <div className="bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-100 p-6 rounded-lg shadow-sm">
+              <div className="bg-destructive/15 text-destructive p-6 rounded-lg shadow-sm">
                 <h3 className="text-lg font-medium mb-2">Erreur de chargement</h3>
                 <p>{courseError.message}</p>
               </div>
@@ -223,9 +223,9 @@ export default function ELearningPage() {
               </div>
             ) : (
               <div className="text-center py-16 px-4">
-                <div className="max-w-md mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8 border border-gray-200 dark:border-gray-700">
+                <div className="max-w-md mx-auto bg-card rounded-lg shadow-sm p-8 border border-border">
                   <h2 className="text-2xl font-bold mb-4">Bienvenue sur la plateforme d'apprentissage</h2>
-                  <p className="text-gray-600 dark:text-gray-400 mb-6">
+                  <p className="text-muted-foreground mb-6">
                     Sélectionnez un cours dans la liste pour commencer votre apprentissage.
                   </p>
                   <Button

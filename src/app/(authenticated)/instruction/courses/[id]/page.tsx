@@ -82,7 +82,7 @@ export default function CourseDetails() {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-4 sm:p-6 flex items-center justify-center min-h-[70vh]">
+      <div className="flex items-center justify-center min-h-[70vh]">
         <div className="text-center space-y-4">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
           <p className="text-muted-foreground">Chargement des détails du cours...</p>
@@ -93,7 +93,7 @@ export default function CourseDetails() {
 
   if (error || !data || !data.getCourseInstructionById) {
     return (
-      <div className="container mx-auto p-4 sm:p-6 max-w-2xl">
+      <div className="mx-auto max-w-2xl">
         <Alert variant="destructive" className="mb-6">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Erreur</AlertTitle>
@@ -190,13 +190,13 @@ export default function CourseDetails() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "SCHEDULED":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+        return "bg-info/15 text-info"
       case "IN_PROGRESS":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+        return "bg-warning/15 text-warning"
       case "COMPLETED":
-        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+        return "bg-success/15 text-success"
       default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
+        return "bg-muted text-foreground"
     }
   }
 
@@ -219,7 +219,7 @@ export default function CourseDetails() {
   const validComments = course.comments ? course.comments.filter((comment: any) => comment.author) : []
 
   return (
-    <div className="container mx-auto p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {errorMessage && (
         <Alert variant="destructive" className="mb-4">
           <AlertCircle className="h-4 w-4" />
@@ -240,12 +240,12 @@ export default function CourseDetails() {
         </Badge>
       </div>
 
-      <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Détails du Cours</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">Détails du cours</h1>
 
       <div className="grid gap-4 sm:gap-6 md:grid-cols-3">
         <Card className="md:col-span-2">
           <CardHeader className="p-4 sm:p-6">
-            <CardTitle>Informations du Cours</CardTitle>
+            <CardTitle>Informations du cours</CardTitle>
           </CardHeader>
           <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0 grid gap-4 sm:gap-6">
             <div className="flex flex-row items-center gap-3 sm:gap-4">
@@ -308,7 +308,7 @@ export default function CourseDetails() {
               </div>
               {course.rating && (
                 <div className="flex items-center space-x-1">
-                  <Star className="w-4 h-4 sm:w-5 sm:h-5 fill-yellow-400 text-yellow-400" />
+                  <Star className="w-4 h-4 sm:w-5 sm:h-5 fill-warning text-warning" />
                   <span className="text-base sm:text-lg font-semibold">{course.rating}/5</span>
                 </div>
               )}
@@ -375,7 +375,7 @@ export default function CourseDetails() {
             {activeTab === "competencies" && (
               <div className="space-y-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold">Compétences du Cours</h3>
+                  <h3 className="text-lg font-semibold">Compétences du cours</h3>
                   <Badge variant="outline" className="ml-2">
                     {validatedCompetencies}/{totalCompetencies}
                   </Badge>
@@ -460,8 +460,8 @@ export default function CourseDetails() {
                               key={i}
                               className={`w-5 h-5 ${
                                 i < course.rating
-                                  ? "fill-yellow-400 text-yellow-400"
-                                  : "fill-gray-200 text-gray-200 dark:fill-gray-700 dark:text-gray-700"
+                                  ? "fill-warning text-warning"
+                                  : "fill-muted-foreground/40 text-muted-foreground/40 "
                               }`}
                             />
                           ))}
@@ -510,8 +510,8 @@ export default function CourseDetails() {
                             key={i}
                             className={`w-5 h-5 cursor-pointer ${
                               i < newRating
-                                ? "fill-yellow-400 text-yellow-400"
-                                : "fill-gray-200 text-gray-200 dark:fill-gray-700 dark:text-gray-700"
+                                ? "fill-warning text-warning"
+                                : "fill-muted-foreground/40 text-muted-foreground/40 "
                             }`}
                             onClick={() => setNewRating(i + 1)}
                           />

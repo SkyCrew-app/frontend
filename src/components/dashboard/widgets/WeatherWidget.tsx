@@ -80,9 +80,9 @@ export default function WeatherWidget({ preferredAerodrome }: WeatherWidgetProps
   const getWeatherConditionIcon = () => {
     if (!weatherData) return <Cloud className="h-5 w-5" />
     const cloudPct = weatherData.cloud_pct || 0
-    if (cloudPct < 30) return <Sun className="h-5 w-5 text-yellow-500" />
-    if (cloudPct < 70) return <Cloud className="h-5 w-5 text-blue-400" />
-    return <Cloud className="h-5 w-5 text-gray-500" />
+    if (cloudPct < 30) return <Sun className="h-5 w-5 text-warning" />
+    if (cloudPct < 70) return <Cloud className="h-5 w-5 text-info" />
+    return <Cloud className="h-5 w-5 text-muted-foreground" />
   }
 
   const getWeatherConditionText = () => {
@@ -135,7 +135,7 @@ export default function WeatherWidget({ preferredAerodrome }: WeatherWidgetProps
           <Card className="overflow-hidden border-t-4 border-t-primary hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Température</CardTitle>
-              <Sun className="h-4 w-4 text-yellow-500" />
+              <Sun className="h-4 w-4 text-warning" />
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{weatherData?.temp || "--"}°C</div>
@@ -145,7 +145,7 @@ export default function WeatherWidget({ preferredAerodrome }: WeatherWidgetProps
         </motion.div>
 
         <motion.div variants={itemVariants}>
-          <Card className="overflow-hidden border-t-4 border-t-indigo-500 hover:shadow-md transition-shadow">
+          <Card className="overflow-hidden border-t-4 border-t-info hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Conditions</CardTitle>
               {getWeatherConditionIcon()}
@@ -160,10 +160,10 @@ export default function WeatherWidget({ preferredAerodrome }: WeatherWidgetProps
         </motion.div>
 
         <motion.div variants={itemVariants}>
-          <Card className="overflow-hidden border-t-4 border-t-amber-500 hover:shadow-md transition-shadow">
+          <Card className="overflow-hidden border-t-4 border-t-warning hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Soleil</CardTitle>
-              <Sun className="h-4 w-4 text-amber-500" />
+              <Sun className="h-4 w-4 text-warning" />
             </CardHeader>
             <CardContent>
               <div className="flex justify-between items-center">
@@ -200,15 +200,15 @@ export default function WeatherWidget({ preferredAerodrome }: WeatherWidgetProps
           <Card className="overflow-hidden border-t-4 border-t-accent hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Vent</CardTitle>
-              <Wind className="h-4 w-4 text-accent" />
+              <Wind className="h-4 w-4 text-brand" />
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{weatherData?.wind_speed || "--"} km/h</div>
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <div className="relative">
-                  <div className="w-5 h-5 rounded-full border border-gray-300 flex items-center justify-center">
+                  <div className="w-5 h-5 rounded-full border border-border flex items-center justify-center">
                     <div
-                      className="absolute w-3 h-0.5 bg-gray-500 origin-center"
+                      className="absolute w-3 h-0.5 bg-muted-foreground origin-center"
                       style={{
                         transform: `rotate(${weatherData?.wind_degrees || 0}deg)`,
                         transformOrigin: "center",

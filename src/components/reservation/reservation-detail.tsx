@@ -1,5 +1,6 @@
 "use client"
 
+import { reservationStatus } from "@/lib/reservation-status"
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
 import { Button } from "@/components/ui/button"
@@ -16,19 +17,6 @@ interface ReservationDetailProps {
 }
 
 export function ReservationDetail({ reservation, onEdit, onDelete, canEdit }: ReservationDetailProps) {
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "CONFIRMED":
-        return <Badge className="bg-green-500">Confirmée</Badge>
-      case "PENDING":
-        return <Badge className="bg-amber-500">En attente</Badge>
-      case "CANCELLED":
-        return <Badge className="bg-red-500">Annulée</Badge>
-      default:
-        return <Badge>{status}</Badge>
-    }
-  }
-
   const flightCategoryMapping = {
     LOCAL: "Local",
     CROSS_COUNTRY: "Vol longue distance",
@@ -44,7 +32,7 @@ export function ReservationDetail({ reservation, onEdit, onDelete, canEdit }: Re
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">{reservation.purpose || "Réservation"}</h3>
-        {getStatusBadge(reservation.status)}
+        <Badge variant={reservationStatus(reservation.status).variant}>{reservationStatus(reservation.status).label}</Badge>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

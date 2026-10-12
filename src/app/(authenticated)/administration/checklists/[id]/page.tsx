@@ -188,7 +188,7 @@ export default function AdminChecklistDetailPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto py-6 space-y-6">
+      <div className="space-y-6">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-[200px] w-full" />
         <Skeleton className="h-[400px] w-full" />
@@ -198,8 +198,8 @@ export default function AdminChecklistDetailPage() {
 
   if (error || !template) {
     return (
-      <Card className="border-red-200 bg-red-50 dark:bg-red-950 dark:border-red-800">
-        <CardContent className="p-6 text-red-800 dark:text-red-300 flex items-center">
+      <Card className="border-destructive/30 bg-destructive/10">
+        <CardContent className="p-6 text-destructive flex items-center">
           <AlertTriangle className="h-6 w-6 mr-3" />
           <div>
             <h3 className="font-semibold">Erreur de chargement</h3>
@@ -211,7 +211,7 @@ export default function AdminChecklistDetailPage() {
   }
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="space-y-6">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -229,7 +229,7 @@ export default function AdminChecklistDetailPage() {
 
         <div className="flex items-center gap-3">
           <ClipboardCheck className="h-7 w-7 text-primary" />
-          <h1 className="text-2xl font-bold sm:text-3xl">Modifier le modèle</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Modifier le modèle</h1>
         </div>
 
         {/* Template info */}

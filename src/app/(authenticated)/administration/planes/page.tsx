@@ -17,8 +17,8 @@ export default function FleetManagementPage() {
   const { refetch } = useQuery<AircraftsResponse>(GET_AIRCRAFTS, { skip: true })
 
   return (
-    <div className="min-h-screen bg-gradient-to-b">
-      <div className="container mx-auto px-2 py-6 sm:px-4 sm:py-8">
+    <div className="w-full">
+      <div className="w-full">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -27,9 +27,9 @@ export default function FleetManagementPage() {
         >
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="flex items-center gap-2 text-2xl font-bold sm:text-3xl md:text-4xl">
+              <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
                 <Plane className="h-6 w-6 text-primary sm:h-7 sm:w-7 md:h-8 md:w-8" />
-                Gestion de la Flotte
+                Gestion de la flotte
               </h1>
               <p className="mt-1 text-sm text-muted-foreground sm:text-base">
                 Gérez les aéronefs de votre flotte, leurs caractéristiques et leur disponibilité
@@ -42,26 +42,26 @@ export default function FleetManagementPage() {
             </Button>
           </div>
 
-          <Card className="border-t-4 border-t-primary shadow-md">
+          <Card className="border-t-4 border-t-primary">
             <CardHeader className="pb-2">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <CardTitle className="text-lg sm:text-xl">Flotte d'aéronefs</CardTitle>
+                  <CardTitle className="text-lg sm:text-xl">Aéronefs</CardTitle>
                   <CardDescription>Consultez et gérez tous les aéronefs de votre flotte</CardDescription>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <Badge
                     variant="outline"
-                    className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
+                    className="bg-success/15 text-success"
                   >
                     Disponible
                   </Badge>
-                  <Badge variant="outline" className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">
+                  <Badge variant="outline" className="bg-destructive/15 text-destructive">
                     Indisponible
                   </Badge>
                   <Badge
                     variant="outline"
-                    className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300"
+                    className="bg-warning/15 text-warning"
                   >
                     Réservé
                   </Badge>

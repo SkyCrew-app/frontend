@@ -46,6 +46,14 @@ const config: Config = {
   				DEFAULT: 'hsl(var(--destructive))',
   				foreground: 'hsl(var(--destructive-foreground))'
   			},
+  			brand: {
+  				DEFAULT: 'hsl(var(--brand))',
+  				foreground: 'hsl(var(--brand-foreground))'
+  			},
+  			info: {
+  				DEFAULT: 'hsl(var(--info))',
+  				foreground: 'hsl(var(--info-foreground))'
+  			},
   			warning: {
   				DEFAULT: 'hsl(var(--warning))',
   				foreground: 'hsl(var(--warning-foreground))'
@@ -62,7 +70,8 @@ const config: Config = {
   				'2': 'hsl(var(--chart-2))',
   				'3': 'hsl(var(--chart-3))',
   				'4': 'hsl(var(--chart-4))',
-  				'5': 'hsl(var(--chart-5))'
+  				'5': 'hsl(var(--chart-5))',
+  				'6': 'hsl(var(--chart-6))'
   			},
   			sidebar: {
   				DEFAULT: 'hsl(var(--sidebar-background))',
@@ -74,6 +83,13 @@ const config: Config = {
   				border: 'hsl(var(--sidebar-border))',
   				ring: 'hsl(var(--sidebar-ring))'
   			}
+  		},
+  		boxShadow: {
+  			sm: '0 1px 2px 0 hsl(var(--shadow-color) / 0.06)',
+  			DEFAULT: '0 1px 3px 0 hsl(var(--shadow-color) / 0.08), 0 1px 2px -1px hsl(var(--shadow-color) / 0.06)',
+  			md: '0 4px 8px -2px hsl(var(--shadow-color) / 0.10), 0 2px 4px -2px hsl(var(--shadow-color) / 0.06)',
+  			lg: '0 12px 20px -6px hsl(var(--shadow-color) / 0.14), 0 4px 8px -4px hsl(var(--shadow-color) / 0.08)',
+  			xl: '0 20px 32px -8px hsl(var(--shadow-color) / 0.18), 0 8px 12px -6px hsl(var(--shadow-color) / 0.08)'
   		},
   		borderRadius: {
   			lg: 'var(--radius)',

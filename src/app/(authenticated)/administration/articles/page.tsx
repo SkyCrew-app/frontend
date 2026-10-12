@@ -399,10 +399,10 @@ export default function ArticlesAdminPage() {
       initial="hidden"
       animate="visible"
       variants={staggerContainer}
-      className="container mx-auto p-6 space-y-8"
+      className="space-y-8"
     >
       <motion.div variants={fadeIn} className="space-y-2">
-        <h1 className="text-3xl font-bold">Gestion des Articles</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Gestion des articles</h1>
         <p className="text-muted-foreground">Créez, modifiez et gérez les articles publiés sur le site de l'aéroclub</p>
       </motion.div>
 
@@ -435,7 +435,7 @@ export default function ArticlesAdminPage() {
             setSelectedDocument(null)
             setIsDialogOpen(true)
           }}
-          className="bg-blue-600 hover:bg-blue-700 text-white"
+          className="bg-info hover:bg-info/90 text-info-foreground"
         >
           <PlusCircle className="mr-2 h-4 w-4" />
           Ajouter un Article
@@ -542,7 +542,7 @@ export default function ArticlesAdminPage() {
         <DialogContent className="max-w-4xl max-h-[90vh] p-0 flex flex-col overflow-hidden">
           <DialogHeader className="px-6 pt-6 pb-2">
             <DialogTitle className="text-xl">
-              {isEditing ? "Modifier l'Article" : "Créer un Nouvel Article"}
+              {isEditing ? "Modifier l'Article" : "Créer un nouvel article"}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="flex flex-col flex-grow overflow-hidden">
@@ -565,7 +565,7 @@ export default function ArticlesAdminPage() {
                 <TabsContent value="info" className="h-full overflow-y-auto p-6 space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="title" className="text-sm font-medium flex items-center">
-                      Titre <span className="text-red-500 ml-1">*</span>
+                      Titre <span className="text-destructive ml-1">*</span>
                     </Label>
                     <Input
                       id="title"
@@ -578,7 +578,7 @@ export default function ArticlesAdminPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="description" className="text-sm font-medium flex items-center">
-                      Description <span className="text-red-500 ml-1">*</span>
+                      Description <span className="text-destructive ml-1">*</span>
                     </Label>
                     <Textarea
                       id="description"
@@ -694,7 +694,7 @@ export default function ArticlesAdminPage() {
                 <TabsContent value="content" className="h-full overflow-y-auto p-6 space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="text" className="text-sm font-medium flex items-center">
-                      Contenu de l'article <span className="text-red-500 ml-1">*</span>
+                      Contenu de l'article <span className="text-destructive ml-1">*</span>
                     </Label>
                     <RichTextEditor
                       content={formData.text}
@@ -798,7 +798,7 @@ export default function ArticlesAdminPage() {
               <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} disabled={isSubmitting}>
                 Annuler
               </Button>
-              <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white">
+              <Button type="submit" disabled={isSubmitting} className="bg-info hover:bg-info/90 text-info-foreground">
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -125,7 +125,7 @@ export function FlightPlanActions({ flightPlanId, flightDetails, onExport, onVal
         </DialogTrigger>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Exporter le Plan de Vol</DialogTitle>
+            <DialogTitle>Exporter le plan de vol</DialogTitle>
             <DialogDescription>Choisissez le format d'exportation pour votre plan de vol.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -171,7 +171,7 @@ export function FlightPlanActions({ flightPlanId, flightDetails, onExport, onVal
       <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Partager le Plan de Vol</DialogTitle>
+            <DialogTitle>Partager le plan de vol</DialogTitle>
             <DialogDescription>Copiez le lien ci-dessous pour partager ce plan de vol.</DialogDescription>
           </DialogHeader>
           <div className="flex items-center space-x-2 mt-4">
@@ -189,12 +189,12 @@ export function FlightPlanActions({ flightPlanId, flightDetails, onExport, onVal
         <DialogTrigger asChild>
           <Button variant="default" className="px-6">
             <Check className="mr-2 h-4 w-4" />
-            Valider le Plan de Vol
+            Valider le plan de vol
           </Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Valider le Plan de Vol</DialogTitle>
+            <DialogTitle>Valider le plan de vol</DialogTitle>
             <DialogDescription>
               Êtes-vous sûr de vouloir valider ce plan de vol ? Cette action confirmera que vous avez vérifié toutes les
               informations et que le plan est prêt à être utilisé.

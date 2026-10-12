@@ -202,7 +202,7 @@ export default function SettingsPage() {
 
   if (aircraftError || administrationError) {
     return (
-      <div className="text-center text-red-500 p-6 border border-red-200 rounded-md">
+      <div className="text-center text-destructive p-6 border border-destructive/30 rounded-md">
         <p className="font-semibold mb-2">Erreur lors du chargement des données :</p>
         {aircraftError && <p>Impossible de charger les avions.</p>}
         {administrationError && <p>Impossible de charger les paramètres.</p>}
@@ -232,13 +232,13 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen">
-      <div className="container mx-auto px-4 py-8">
+      <div className="w-full">
         <motion.div initial="hidden" animate="visible" variants={fadeIn} className="mb-8">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
             <div>
-              <h1 className="text-3xl md:text-4xl font-bold flex items-center gap-2">
-                <Settings className="h-8 w-8 text-blue-500" />
-                Paramètres de l'Aéroclub
+              <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
+                <Settings className="h-8 w-8 text-info" />
+                Paramètres de l'aéroclub
               </h1>
               <p className="text-muted-foreground mt-1">
                 Configurez les paramètres généraux, les opérations, les avions et les membres de l'aéroclub
@@ -344,7 +344,7 @@ export default function SettingsPage() {
                       <Button
                         type="button"
                         disabled={isSubmitting}
-                        className="order-1 sm:order-2 bg-blue-600 hover:bg-blue-700"
+                        className="order-1 sm:order-2 bg-info hover:bg-info/90"
                       >
                         <Save className="mr-2 h-4 w-4" />
                         {isSubmitting ? "Enregistrement..." : "Enregistrer les modifications"}
@@ -362,7 +362,7 @@ export default function SettingsPage() {
                         <AlertDialogCancel>Annuler</AlertDialogCancel>
                         <AlertDialogAction
                           onClick={() => form.handleSubmit(onSubmit)()}
-                          className="bg-blue-600 hover:bg-blue-700"
+                          className="bg-info hover:bg-info/90"
                         >
                           Confirmer
                         </AlertDialogAction>

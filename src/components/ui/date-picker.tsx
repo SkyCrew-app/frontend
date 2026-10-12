@@ -92,7 +92,7 @@ export function DatePicker({
               table: "text-xs",
               head_cell: "text-2xs font-medium text-muted-foreground px-1",
               cell: "text-xs p-0",
-              day: "h-8 w-8 text-xs rounded-md aria-selected:bg-blue-600 aria-selected:text-white hover:bg-accent focus:bg-accent focus:outline-none",
+              day: "h-8 w-8 text-xs rounded-md aria-selected:bg-primary aria-selected:text-primary-foreground hover:bg-accent focus:bg-accent focus:outline-none",
               nav_button: "h-7 w-7 bg-transparent p-0 opacity-70 hover:opacity-100",
               nav_button_previous: "absolute left-2",
               nav_button_next: "absolute right-2",

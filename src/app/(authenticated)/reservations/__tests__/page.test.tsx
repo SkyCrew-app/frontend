@@ -196,10 +196,10 @@ describe('ReservationCalendar', () => {
     const { container } = renderPage();
 
     expect(container.querySelectorAll('.animate-pulse')).toHaveLength(3);
-    expect(screen.queryByRole('heading', { name: 'Calendrier des Réservations' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Calendrier des réservations' })).not.toBeInTheDocument();
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
 
-    expect(await screen.findByRole('heading', { name: 'Calendrier des Réservations' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Calendrier des réservations' })).toBeInTheDocument();
     expect(container.querySelectorAll('.animate-pulse')).toHaveLength(0);
     expect(screen.getByRole('button', { name: 'mercredi 23 octobre 2024' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Jour précédent/ })).toBeInTheDocument();
@@ -218,7 +218,7 @@ describe('ReservationCalendar', () => {
     const reservedRow = within(getRowFor('F-ABCD'));
     const reservedCell = reservedRow.getByText('Navigation solo').closest('td');
     expect(reservedCell).toHaveAttribute('colspan', '2');
-    expect(reservedCell).toHaveClass('bg-amber-500');
+    expect(reservedCell).toHaveClass('bg-warning/15');
     expect(reservedRow.getAllByText('Libre')).toHaveLength(3);
 
     // F-EFGH : aucun vol, les 5 créneaux sont libres.
@@ -247,7 +247,7 @@ describe('ReservationCalendar', () => {
       screen.getByText('Impossible de charger les réservations. Veuillez réessayer plus tard.'),
     ).toBeInTheDocument();
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Calendrier des Réservations' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Calendrier des réservations' })).not.toBeInTheDocument();
   });
 
   it("doit ouvrir le détail d'une réservation au clic sur son créneau", async () => {

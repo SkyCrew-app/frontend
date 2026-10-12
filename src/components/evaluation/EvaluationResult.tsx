@@ -61,7 +61,7 @@ export function EvaluationResult({ score, passed, passScore, onRetry, onContinue
             </div>
             <div className="h-8 w-full bg-muted rounded-full overflow-hidden flex items-center">
               <div
-                className={`h-full ${passed ? "bg-green-500" : "bg-red-500"} rounded-full flex items-center justify-center`}
+                className={`h-full ${passed ? "bg-success" : "bg-destructive"} rounded-full flex items-center justify-center`}
                 style={{ width: `${score}%` }}
               >
                 <span className="px-2 text-sm font-bold text-white">{score}%</span>
@@ -78,7 +78,7 @@ export function EvaluationResult({ score, passed, passScore, onRetry, onContinue
                   transition={{ delay: 0.5 }}
                   className="absolute -z-10 opacity-20"
                 >
-                  <Sparkles className="w-8 h-8 text-yellow-400" />
+                  <Sparkles className="w-8 h-8 text-warning" />
                 </motion.div>
                 <Button onClick={onContinue} className="w-full" size="lg">
                   Continuer

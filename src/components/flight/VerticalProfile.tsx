@@ -228,7 +228,7 @@ export function VerticalProfile({ waypoints, maxAltitude, className = "" }: Vert
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2">
           <TrendingUp className="h-5 w-5 text-primary" />
-          <span>Profil Vertical</span>
+          <span>Profil vertical</span>
           <Badge variant="outline" className="ml-auto font-mono text-xs">
             {maxDist.toFixed(0)} NM — Alt max {formatAlt(Math.max(...points.map((p) => p.alt)))}
           </Badge>
@@ -419,13 +419,13 @@ export function VerticalProfile({ waypoints, maxAltitude, className = "" }: Vert
         {/* Phase legend */}
         <div className="flex items-center justify-center gap-6 mt-3 text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5">
-            <span className="w-4 h-1 rounded bg-green-500 inline-block"></span> Montée
+            <span className="w-4 h-1 rounded bg-success inline-block"></span> Montée
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-4 h-1 rounded bg-fuchsia-500 inline-block"></span> Croisière
+            <span className="w-4 h-1 rounded bg-primary inline-block"></span> Croisière
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-4 h-1 rounded bg-amber-500 inline-block"></span> Descente
+            <span className="w-4 h-1 rounded bg-warning inline-block"></span> Descente
           </span>
         </div>
       </CardContent>

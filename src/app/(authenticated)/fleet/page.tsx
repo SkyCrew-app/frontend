@@ -1,5 +1,6 @@
 "use client"
 
+import { useThemeColors } from "@/components/hooks/useThemeColors"
 import type React from "react"
 
 import { useState } from "react"
@@ -87,13 +88,14 @@ export default function FleetDashboard() {
   const maintenancePercentage = totalAircrafts ? Math.round((maintenanceCount / totalAircrafts) * 100) : 0
   const reservedPercentage = totalAircrafts ? Math.round((reservedCount / totalAircrafts) * 100) : 0
 
+  const themeColors = useThemeColors()
+
   const availabilityChartData = {
     labels: ["Disponible", "En maintenance", "Réservé"],
     datasets: [
       {
         data: [availableCount, maintenanceCount, reservedCount],
-        backgroundColor: ["#10b981", "#f59e0b", "#3b82f6"],
-        hoverBackgroundColor: ["#34d399", "#fbbf24", "#60a5fa"],
+        backgroundColor: themeColors ? [themeColors.success, themeColors.warning, themeColors.info] : undefined,
         borderWidth: 0,
       },
     ],
@@ -114,23 +116,18 @@ export default function FleetDashboard() {
           data?.getAircrafts.filter((a) => a.maintenances?.some((m) => m.maintenance_type === "CLEANING")).length || 0,
           data?.getAircrafts.filter((a) => a.maintenances?.some((m) => m.maintenance_type === "OTHER")).length || 0,
         ],
-        backgroundColor: [
-          "rgba(255, 99, 132, 0.7)",
-          "rgba(54, 162, 235, 0.7)",
-          "rgba(255, 206, 86, 0.7)",
-          "rgba(75, 192, 192, 0.7)",
-          "rgba(153, 102, 255, 0.7)",
-          "rgba(255, 159, 64, 0.7)",
-        ],
-        borderColor: [
-          "rgba(255, 99, 132, 1)",
-          "rgba(54, 162, 235, 1)",
-          "rgba(255, 206, 86, 1)",
-          "rgba(75, 192, 192, 1)",
-          "rgba(153, 102, 255, 1)",
-          "rgba(255, 159, 64, 1)",
-        ],
-        borderWidth: 1,
+        backgroundColor: themeColors
+          ? [
+              themeColors["chart-2"],
+              themeColors["chart-3"],
+              themeColors["chart-4"],
+              themeColors["chart-5"],
+              themeColors["chart-6"],
+              themeColors["chart-1"],
+            ]
+          : undefined,
+        borderRadius: 4,
+        borderWidth: 0,
       },
     ],
   }
@@ -190,10 +187,10 @@ export default function FleetDashboard() {
   }
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Tableau de Bord de la Flotte</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Flotte</h1>
           <p className="text-muted-foreground mt-1">Gérez et surveillez l'état de votre flotte d'aéronefs</p>
         </div>
         <div>
@@ -211,21 +208,21 @@ export default function FleetDashboard() {
           value={availableCount}
           percentage={availablePercentage}
           icon={CheckCircle}
-          color="text-green-500"
+          tone="success"
         />
         <StatCard
-          title="En Maintenance"
+          title="En maintenance"
           value={maintenanceCount}
           percentage={maintenancePercentage}
           icon={Wrench}
-          color="text-amber-500"
+          tone="warning"
         />
         <StatCard
           title="Réservés"
           value={reservedCount}
           percentage={reservedPercentage}
           icon={Calendar}
-          color="text-blue-500"
+          tone="info"
         />
       </div>
 
@@ -233,7 +230,7 @@ export default function FleetDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Disponibilité des Aéronefs</CardTitle>
+            <CardTitle>Disponibilité des aéronefs</CardTitle>
             <CardDescription>Répartition de l'état actuel de la flotte</CardDescription>
           </CardHeader>
           <CardContent>
@@ -250,6 +247,7 @@ export default function FleetDashboard() {
                       plugins: {
                         legend: {
                           position: "bottom",
+                          labels: { color: themeColors?.["muted-foreground"], usePointStyle: true, boxHeight: 8 },
                         },
                       },
                       cutout: "65%",
@@ -263,7 +261,7 @@ export default function FleetDashboard() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Types de Maintenance</CardTitle>
+            <CardTitle>Types de maintenance</CardTitle>
             <CardDescription>Répartition des types de maintenance effectués</CardDescription>
           </CardHeader>
           <CardContent>
@@ -282,10 +280,18 @@ export default function FleetDashboard() {
                       },
                     },
                     scales: {
+                      x: {
+                        grid: { display: false },
+                        border: { color: themeColors?.border },
+                        ticks: { color: themeColors?.["muted-foreground"] },
+                      },
                       y: {
                         beginAtZero: true,
+                        grid: { color: themeColors?.border },
+                        border: { display: false },
                         ticks: {
                           precision: 0,
+                          color: themeColors?.["muted-foreground"],
                         },
                       },
                     },
@@ -301,7 +307,7 @@ export default function FleetDashboard() {
       <Card>
         <CardHeader>
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <CardTitle>Liste des Aéronefs</CardTitle>
+            <CardTitle>Liste des aéronefs</CardTitle>
             <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
               <div className="relative">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -343,7 +349,7 @@ export default function FleetDashboard() {
                 </Badge>
               </TabsTrigger>
               <TabsTrigger value="maintenance">
-                En Maintenance
+                En maintenance
                 <Badge variant="secondary" className="ml-2">
                   {maintenanceCount}
                 </Badge>
@@ -365,7 +371,7 @@ export default function FleetDashboard() {
                     <TableHead className="w-[15%]">Disponibilité</TableHead>
                     <TableHead className="w-[15%]">Maintenance</TableHead>
                     <TableHead className="w-[15%]">Heures de vol</TableHead>
-                    <TableHead className="w-[15%]">Coût Horaire</TableHead>
+                    <TableHead className="w-[15%]">Coût horaire</TableHead>
                     <TableHead className="w-[10%] text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>

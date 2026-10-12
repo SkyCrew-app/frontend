@@ -260,7 +260,7 @@ export default function AdministrationPage() {
 
   if (error) {
     return (
-      <div className="container mx-auto p-6">
+      <div className="w-full">
         <Alert variant="destructive" className="mb-6">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Erreur</AlertTitle>
@@ -274,10 +274,10 @@ export default function AdministrationPage() {
   }
 
   return (
-    <motion.div initial="hidden" animate="visible" variants={fadeIn} className="container mx-auto p-6">
+    <motion.div initial="hidden" animate="visible" variants={fadeIn} className="w-full">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Gestion des membres</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Gestion des membres</h1>
           <p className="text-muted-foreground mt-1">Gérez les utilisateurs, leurs licences et leurs informations</p>
         </div>
         <div className="flex flex-wrap gap-2">

@@ -13,11 +13,11 @@ interface ChecklistHistoryProps {
 function getStatusBadge(status: string) {
   switch (status) {
     case ChecklistSubmissionStatus.COMPLETED:
-      return <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">Terminée</Badge>
+      return <Badge className="bg-success/15 text-success">Terminée</Badge>
     case ChecklistSubmissionStatus.IN_PROGRESS:
-      return <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">En cours</Badge>
+      return <Badge className="bg-info/15 text-info">En cours</Badge>
     case ChecklistSubmissionStatus.CANCELLED:
-      return <Badge className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">Annulée</Badge>
+      return <Badge className="bg-destructive/15 text-destructive">Annulée</Badge>
     default:
       return <Badge variant="secondary">{status}</Badge>
   }

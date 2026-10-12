@@ -57,13 +57,13 @@ export default function FinancialDashboard() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-      <Card className="p-6 bg-card shadow-xl rounded-xl border-t-4 border-t-primary">
+      <Card className="p-6 bg-card rounded-xl border-t-4 border-t-primary">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 space-y-4 md:space-y-0">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-500">Période d'analyse</label>
+              <label className="text-sm font-medium text-muted-foreground">Période d'analyse</label>
               <Select value={period} onValueChange={setPeriod}>
-                <SelectTrigger className="w-[180px] bg-white">
+                <SelectTrigger className="w-[180px] bg-card">
                   <SelectValue placeholder="Sélectionner la période" />
                 </SelectTrigger>
                 <SelectContent>
@@ -74,13 +74,13 @@ export default function FinancialDashboard() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-500">{period === "monthly" ? "Mois" : "Année"}</label>
+              <label className="text-sm font-medium text-muted-foreground">{period === "monthly" ? "Mois" : "Année"}</label>
               <Select
                 value={date.getMonth().toString()}
                 onValueChange={(value) => setDate(setMonth(new Date(), Number.parseInt(value)))}
               >
-                <SelectTrigger className="w-[180px] bg-white">
-                  <CalendarIcon className="mr-2 h-4 w-4 text-gray-400" />
+                <SelectTrigger className="w-[180px] bg-card">
+                  <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
                   <SelectValue placeholder="Sélectionner le mois" />
                 </SelectTrigger>
                 <SelectContent>
@@ -103,38 +103,38 @@ export default function FinancialDashboard() {
           <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 lg:grid-cols-5 mb-8 bg-muted/30 p-1 rounded-lg">
             <TabsTrigger
               value="financial"
-              className="data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-md transition-all"
+              className="data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-md transition-all"
             >
               <BarChart3 className="mr-2 h-4 w-4" />
-              <span>Rapport Financier</span>
+              <span>Rapport financier</span>
             </TabsTrigger>
             <TabsTrigger
               value="expenses"
-              className="data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-md transition-all"
+              className="data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-md transition-all"
             >
               <PieChart className="mr-2 h-4 w-4" />
               <span>Dépenses</span>
             </TabsTrigger>
             <TabsTrigger
               value="operating"
-              className="data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-md transition-all"
+              className="data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-md transition-all"
             >
               <Calculator className="mr-2 h-4 w-4" />
-              <span>Coûts d'Exploitation</span>
+              <span>Coûts d'exploitation</span>
             </TabsTrigger>
             <TabsTrigger
               value="forecast"
-              className="data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-md transition-all"
+              className="data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-md transition-all"
             >
               <TrendingUp className="mr-2 h-4 w-4" />
               <span>Prévisions</span>
             </TabsTrigger>
             <TabsTrigger
               value="add-expense"
-              className="data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-md transition-all"
+              className="data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-sm rounded-md transition-all"
             >
               <PlusCircle className="mr-2 h-4 w-4" />
-              <span>Ajouter Dépense</span>
+              <span>Ajouter dépense</span>
             </TabsTrigger>
           </TabsList>
 

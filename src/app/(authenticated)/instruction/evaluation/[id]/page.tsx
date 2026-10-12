@@ -140,7 +140,7 @@ export default function EvaluationPage({ params }: { params: Promise<{ id: strin
 
   if (loading)
     return (
-      <div className="container mx-auto py-8 px-4">
+      <div className="w-full">
         <div className="max-w-4xl mx-auto space-y-4">
           <Skeleton className="h-12 w-3/4 mx-auto" />
           <Skeleton className="h-6 w-1/2 mx-auto" />
@@ -156,7 +156,7 @@ export default function EvaluationPage({ params }: { params: Promise<{ id: strin
 
   if (error)
     return (
-      <div className="container mx-auto py-8 px-4">
+      <div className="w-full">
         <Alert variant="destructive" className="max-w-xl mx-auto">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Erreur</AlertTitle>
@@ -176,8 +176,8 @@ export default function EvaluationPage({ params }: { params: Promise<{ id: strin
   const isAnswered = currentQuestionData.id.toString() in userAnswers
 
   return (
-    <div className="container mx-auto py-4 sm:py-8 px-4 sm:px-6 lg:px-8">
-      <Card className="w-full max-w-4xl mx-auto shadow-lg border-t-4 border-t-primary">
+    <div className="w-full">
+      <Card className="w-full max-w-4xl mx-auto border-t-4 border-t-primary">
         <CardHeader className="text-center pb-2 sm:pb-4">
           <div className="flex items-center justify-center gap-2 text-primary text-xs mb-1">
             <Clock className="h-3 w-3" />

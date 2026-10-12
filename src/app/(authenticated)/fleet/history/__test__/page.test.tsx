@@ -79,7 +79,7 @@ const renderPage = (mocks: MockedResponse[] = [successMock()]) =>
 
 /** Carte (Card) d'un avion, identifiée par son immatriculation. */
 const getAircraftCard = (registration: string) => {
-  const card = screen.getByText(registration).closest('.shadow-lg');
+  const card = screen.getByText(registration).closest('[data-aircraft-card]');
   if (!card) throw new Error(`Carte introuvable pour ${registration}`);
   return within(card as HTMLElement);
 };
@@ -93,10 +93,10 @@ describe('AircraftHistory Component', () => {
     const { container } = renderPage();
 
     expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
-    expect(screen.queryByText('Historique des Vols et Maintenances')).not.toBeInTheDocument();
+    expect(screen.queryByText('Historique des vols et maintenances')).not.toBeInTheDocument();
 
     expect(
-      await screen.findByRole('heading', { name: 'Historique des Vols et Maintenances' }),
+      await screen.findByRole('heading', { name: 'Historique des vols et maintenances' }),
     ).toBeInTheDocument();
     expect(container.querySelector('.animate-pulse')).not.toBeInTheDocument();
   });
@@ -307,7 +307,7 @@ describe('AircraftHistory Component', () => {
     renderPage([successMock({ getHistoryAircraft: [] })]);
 
     expect(await screen.findByText('Aucun avion trouvé.')).toBeInTheDocument();
-    expect(screen.queryByText('Historique des Vols et Maintenances')).not.toBeInTheDocument();
+    expect(screen.queryByText('Historique des vols et maintenances')).not.toBeInTheDocument();
     expect(screen.queryByRole('tab')).not.toBeInTheDocument();
   });
 
@@ -326,7 +326,7 @@ describe('AircraftHistory Component', () => {
     expect(mockToast).toHaveBeenCalledTimes(1);
 
     expect(container).toBeEmptyDOMElement();
-    expect(screen.queryByText('Historique des Vols et Maintenances')).not.toBeInTheDocument();
+    expect(screen.queryByText('Historique des vols et maintenances')).not.toBeInTheDocument();
     expect(screen.queryByText('Aucun avion trouvé.')).not.toBeInTheDocument();
   });
 });

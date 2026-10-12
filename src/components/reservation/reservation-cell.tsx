@@ -16,13 +16,13 @@ export function ReservationCell({ reservation, colSpan, onClick }: ReservationCe
   const getStatusColor = (status: string) => {
     switch (status) {
       case "CONFIRMED":
-        return "bg-green-500 hover:bg-green-600"
+        return "bg-success/15 text-success border-l-2 border-l-success hover:bg-success/25"
       case "PENDING":
-        return "bg-amber-500 hover:bg-amber-600"
+        return "bg-warning/15 text-warning border-l-2 border-l-warning hover:bg-warning/25"
       case "CANCELLED":
-        return "bg-red-300 hover:bg-red-400"
+        return "bg-destructive/10 text-destructive border-l-2 border-l-destructive line-through hover:bg-destructive/20"
       default:
-        return "bg-blue-500 hover:bg-blue-600"
+        return "bg-info/15 text-info border-l-2 border-l-info hover:bg-info/25"
     }
   }
 
@@ -31,7 +31,7 @@ export function ReservationCell({ reservation, colSpan, onClick }: ReservationCe
   return (
     <TableCell
       colSpan={colSpan}
-      className={`text-center p-0 text-white cursor-pointer transition-colors ${statusColor}`}
+      className={`text-center p-0 font-medium cursor-pointer transition-colors ${statusColor}`}
       onClick={onClick}
     >
       <HoverCard>

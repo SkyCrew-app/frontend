@@ -99,7 +99,7 @@ export function RoleManager() {
 
   if (error) {
     return (
-      <div className="p-4 border border-red-200 bg-red-50 text-red-800 rounded-md">
+      <div className="p-4 border border-destructive/30 bg-destructive/10 text-destructive rounded-md">
         Une erreur est survenue lors du chargement des rôles.
       </div>
     )
@@ -107,10 +107,10 @@ export function RoleManager() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-      <Card className="border-t-4 border-t-primary shadow-md">
+      <Card className="border-t-4 border-t-primary">
         <CardHeader className="pb-2">
           <CardTitle className="text-xl flex items-center gap-2">
-            <UserCog className="h-5 w-5 text-blue-500" />
+            <UserCog className="h-5 w-5 text-info" />
             Gestion des rôles
           </CardTitle>
           <CardDescription>Configurez les rôles des utilisateurs de l'aéroclub.</CardDescription>
@@ -124,7 +124,7 @@ export function RoleManager() {
               <DialogTrigger asChild>
                 <Button
                   variant="outline"
-                  className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 hover:text-blue-800"
+                  className="bg-info/10 border-info/30 text-info hover:bg-info/15 hover:text-info"
                 >
                   <PlusCircle className="mr-2 h-4 w-4" /> Ajouter un rôle
                 </Button>
@@ -170,7 +170,7 @@ export function RoleManager() {
                     </TableRow>
                   ) : (
                     roles.map((role) => (
-                      <TableRow key={role.id} className="hover:bg-blue-50/30">
+                      <TableRow key={role.id} className="hover:bg-info/5">
                         <TableCell className="font-medium">{role.role_name}</TableCell>
                         <TableCell>
                           <RoleActions

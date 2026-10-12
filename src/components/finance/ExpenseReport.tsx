@@ -34,15 +34,15 @@ interface CustomLabelProps {
 }
 
 const COLORS = [
-  "#0ea5e9", // Blue
-  "#10b981", // Green
-  "#f59e0b", // Yellow
-  "#ef4444", // Red
-  "#8b5cf6", // Purple
-  "#ec4899", // Pink
-  "#14b8a6", // Teal
-  "#f97316", // Orange
-  "#6366f1", // Indigo
+  "hsl(var(--chart-2))", // Blue
+  "hsl(var(--chart-4))", // Green
+  "hsl(var(--chart-5))", // Yellow
+  "hsl(var(--destructive))", // Red
+  "hsl(var(--chart-6))", // Purple
+  "hsl(var(--chart-3))", // Pink
+  "hsl(var(--success))", // Teal
+  "hsl(var(--chart-3))", // Orange
+  "hsl(var(--chart-6))", // Indigo
 ]
 
 // Animation variants
@@ -65,10 +65,10 @@ const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
   if (active && payload && payload.length > 0) {
     const data = payload[0]
     return (
-      <div className="bg-white p-4 rounded-lg shadow-lg border">
-        <p className="font-medium text-gray-900">{data.name}</p>
-        <p className="text-gray-600">{`${data.value.toLocaleString()} €`}</p>
-        <p className="text-sm text-gray-500">{`${((data.value / data.payload.total) * 100).toFixed(1)}%`}</p>
+      <div className="bg-card p-4 rounded-lg shadow-lg border">
+        <p className="font-medium text-foreground">{data.name}</p>
+        <p className="text-muted-foreground">{`${data.value.toLocaleString()} €`}</p>
+        <p className="text-sm text-muted-foreground">{`${((data.value / data.payload.total) * 100).toFixed(1)}%`}</p>
       </div>
     )
   }
@@ -89,7 +89,7 @@ const CustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, name, value, 
       <text
         x={x}
         y={y}
-        fill="#374151"
+        fill="hsl(var(--foreground))"
         textAnchor={x > cx ? "start" : "end"}
         dominantBaseline="central"
         className="text-[10px] sm:text-xs lg:text-sm font-medium"
@@ -99,7 +99,7 @@ const CustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, name, value, 
       <text
         x={x}
         y={y + 14}
-        fill="#6B7280"
+        fill="hsl(var(--muted-foreground))"
         textAnchor={x > cx ? "start" : "end"}
         dominantBaseline="central"
         className="text-[9px] sm:text-[11px] lg:text-xs"
@@ -129,7 +129,7 @@ export default function ExpensesReport({ period, date }: { period: string; date:
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-12 w-12 animate-spin text-blue-500" />
+          <Loader2 className="h-12 w-12 animate-spin text-info" />
           <p className="text-muted-foreground animate-pulse">Analyse des dépenses en cours...</p>
         </div>
       </div>
@@ -176,13 +176,13 @@ export default function ExpensesReport({ period, date }: { period: string; date:
           <Alert variant="destructive" className="mb-6">
             <AlertTriangle className="h-5 w-5" />
             <div>
-              <AlertTitle className="text-lg font-semibold">Alerte Dépassement de Budget</AlertTitle>
+              <AlertTitle className="text-lg font-semibold">Alerte dépassement de budget</AlertTitle>
               <AlertDescription>
                 Les dépenses totales ({totalExpenses.toLocaleString()} €) dépassent le budget{" "}
                 {period === "monthly" ? "mensuel" : "annuel"} ({budget.toLocaleString()} €).
-                <div className="mt-2 w-full bg-red-200 rounded-full h-2.5">
+                <div className="mt-2 w-full bg-destructive/20 rounded-full h-2.5">
                   <div
-                    className="bg-red-600 h-2.5 rounded-full"
+                    className="bg-destructive h-2.5 rounded-full"
                     style={{ width: `${Math.min(budgetPercentage, 100)}%` }}
                   ></div>
                 </div>
@@ -197,13 +197,13 @@ export default function ExpensesReport({ period, date }: { period: string; date:
       )}
 
       <motion.div variants={fadeIn}>
-        <Card className="shadow-lg border-t-4 border-t-purple-500">
-          <CardHeader className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950/30 dark:to-indigo-950/30 rounded-t-lg">
-            <CardTitle className="text-xl font-bold text-purple-700 flex items-center">
-              <Receipt className="mr-2 h-5 w-5 text-purple-500" />
+        <Card className="border-t-4 border-t-primary">
+          <CardHeader className="bg-gradient-to-r from-primary/10 to-info/10 rounded-t-lg">
+            <CardTitle className="text-xl font-bold text-primary flex items-center">
+              <Receipt className="mr-2 h-5 w-5 text-primary" />
               Répartition des Dépenses {period === "monthly" ? "Mensuelles" : "Annuelles"}
             </CardTitle>
-            <CardDescription className="text-sm text-gray-500">
+            <CardDescription className="text-sm text-muted-foreground">
               Période du {format(startDate, "PPP", { locale: fr })} au {format(endDate, "PPP", { locale: fr })}
             </CardDescription>
           </CardHeader>
@@ -222,7 +222,7 @@ export default function ExpensesReport({ period, date }: { period: string; date:
                         innerRadius="45%"
                         paddingAngle={2}
                         minAngle={3}
-                        fill="#8884d8"
+                        fill="hsl(var(--chart-6))"
                         dataKey="value"
                         label={({ cx, cy, midAngle, innerRadius, outerRadius, name, value }) => (
                           <CustomLabel
@@ -259,8 +259,8 @@ export default function ExpensesReport({ period, date }: { period: string; date:
                   </ResponsiveContainer>
                 </div>
                 <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
-                  <div className="text-2xl font-bold text-gray-800">{totalExpenses.toLocaleString()} €</div>
-                  <div className="text-sm text-gray-500">Total des dépenses</div>
+                  <div className="text-2xl font-bold text-foreground">{totalExpenses.toLocaleString()} €</div>
+                  <div className="text-sm text-muted-foreground">Total des dépenses</div>
                 </div>
               </div>
               <div className="w-full overflow-x-auto">
@@ -276,7 +276,7 @@ export default function ExpensesReport({ period, date }: { period: string; date:
                     {chartData.map((item, index) => {
                       const percentage = (item.value / totalExpenses) * 100
                       return (
-                        <TableRow key={index} className="hover:bg-gray-50">
+                        <TableRow key={index} className="hover:bg-muted/50">
                           <TableCell className="font-medium">
                             <div className="flex items-center gap-2">
                               <div
@@ -291,7 +291,7 @@ export default function ExpensesReport({ period, date }: { period: string; date:
                           </TableCell>
                           <TableCell className="text-right whitespace-nowrap">
                             <Badge
-                              className={percentage > 25 ? "bg-red-100 text-red-800" : "bg-blue-100 text-blue-800"}
+                              className={percentage > 25 ? "bg-destructive/15 text-destructive" : "bg-info/15 text-info"}
                             >
                               {percentage.toFixed(1)}%
                             </Badge>
@@ -313,38 +313,38 @@ export default function ExpensesReport({ period, date }: { period: string; date:
           </CardContent>
           <CardFooter className="bg-muted/30 pt-4">
             <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card className="bg-blue-50 border-blue-200">
+              <Card className="bg-info/10 border-info/30">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-sm font-medium text-blue-700">
+                      <h3 className="text-sm font-medium text-info">
                         Budget {period === "monthly" ? "Mensuel" : "Annuel"}
                       </h3>
-                      <p className="text-2xl font-bold text-blue-800">{budget.toLocaleString()} €</p>
+                      <p className="text-2xl font-bold text-info">{budget.toLocaleString()} €</p>
                     </div>
-                    <div className="p-3 bg-blue-100 rounded-full">
-                      <ArrowDown className="h-6 w-6 text-blue-600" />
+                    <div className="p-3 bg-info/15 rounded-full">
+                      <ArrowDown className="h-6 w-6 text-info" />
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className={isOverBudget ? "bg-red-50 border-red-200" : "bg-green-50 border-green-200"}>
+              <Card className={isOverBudget ? "bg-destructive/10 border-destructive/30" : "bg-success/10 border-success/30"}>
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className={`text-sm font-medium ${isOverBudget ? "text-red-700" : "text-green-700"}`}>
+                      <h3 className={`text-sm font-medium ${isOverBudget ? "text-destructive" : "text-success"}`}>
                         {isOverBudget ? "Dépassement" : "Reste disponible"}
                       </h3>
-                      <p className={`text-2xl font-bold ${isOverBudget ? "text-red-800" : "text-green-800"}`}>
+                      <p className={`text-2xl font-bold ${isOverBudget ? "text-destructive" : "text-success"}`}>
                         {Math.abs(budget - totalExpenses).toLocaleString()} €
                       </p>
                     </div>
-                    <div className={`p-3 rounded-full ${isOverBudget ? "bg-red-100" : "bg-green-100"}`}>
+                    <div className={`p-3 rounded-full ${isOverBudget ? "bg-destructive/15" : "bg-success/15"}`}>
                       {isOverBudget ? (
-                        <ArrowUp className="h-6 w-6 text-red-600" />
+                        <ArrowUp className="h-6 w-6 text-destructive" />
                       ) : (
-                        <ArrowDown className="h-6 w-6 text-green-600" />
+                        <ArrowDown className="h-6 w-6 text-success" />
                       )}
                     </div>
                   </div>

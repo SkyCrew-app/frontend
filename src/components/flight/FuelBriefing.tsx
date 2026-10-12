@@ -66,7 +66,7 @@ export function FuelBriefing({ fuelPolicy, windSummary, performanceProfile, esti
   if (!hasFuel && !hasWind && !performanceProfile) return null
 
   return (
-    <Card className="shadow-lg border-border/50">
+    <Card className="border-border/50">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -182,7 +182,7 @@ function WindInfoCard({
   return (
     <div
       className={`bg-muted/50 rounded-lg p-3 text-center ${
-        highlight ? "ring-1 ring-amber-500/50" : ""
+        highlight ? "ring-1 ring-warning/50" : ""
       }`}
     >
       <div className="text-lg mb-1">{icon}</div>

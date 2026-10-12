@@ -84,13 +84,13 @@ export function AuditDetails({ isOpen, onClose, audit, onEdit }: AuditDetailsPro
   const getAuditResultIcon = (result: AuditResultType) => {
     switch (result) {
       case AuditResultType.CONFORME:
-        return <CheckCircle className="h-4 w-4 text-green-500" />
+        return <CheckCircle className="h-4 w-4 text-success" />
       case AuditResultType.NON_CONFORME:
-        return <AlertTriangle className="h-4 w-4 text-red-500" />
+        return <AlertTriangle className="h-4 w-4 text-destructive" />
       case AuditResultType.CONFORME_AVEC_REMARQUES:
-        return <AlertCircle className="h-4 w-4 text-amber-500" />
+        return <AlertCircle className="h-4 w-4 text-warning" />
       case AuditResultType.NON_APPLICABLE:
-        return <XCircle className="h-4 w-4 text-gray-500" />
+        return <XCircle className="h-4 w-4 text-muted-foreground" />
       default:
         return null
     }
@@ -114,13 +114,13 @@ export function AuditDetails({ isOpen, onClose, audit, onEdit }: AuditDetailsPro
   const getAuditResultBadgeVariant = (result: AuditResultType) => {
     switch (result) {
       case AuditResultType.CONFORME:
-        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
+        return "bg-success/15 text-success"
       case AuditResultType.NON_CONFORME:
-        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
+        return "bg-destructive/15 text-destructive"
       case AuditResultType.CONFORME_AVEC_REMARQUES:
-        return "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300"
+        return "bg-warning/15 text-warning"
       case AuditResultType.NON_APPLICABLE:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
+        return "bg-muted text-foreground"
       default:
         return ""
     }
@@ -129,13 +129,13 @@ export function AuditDetails({ isOpen, onClose, audit, onEdit }: AuditDetailsPro
   const getCriticalityBadgeVariant = (criticality: CriticalityLevel) => {
     switch (criticality) {
       case CriticalityLevel.CRITIQUE:
-        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
+        return "bg-destructive/15 text-destructive"
       case CriticalityLevel.MAJEUR:
-        return "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300"
+        return "bg-warning/15 text-warning"
       case CriticalityLevel.MINEUR:
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
+        return "bg-info/15 text-info"
       case CriticalityLevel.INFO:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
+        return "bg-muted text-foreground"
       default:
         return ""
     }
@@ -217,7 +217,7 @@ export function AuditDetails({ isOpen, onClose, audit, onEdit }: AuditDetailsPro
               {audit?.is_closed ? (
                 <Badge
                   variant="outline"
-                  className="h-5 sm:h-6 text-2xs sm:text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
+                  className="h-5 sm:h-6 text-2xs sm:text-xs bg-success/15 text-success"
                 >
                   <CheckSquare className="mr-0.5 h-3 w-3" />
                   Clôturé
@@ -225,7 +225,7 @@ export function AuditDetails({ isOpen, onClose, audit, onEdit }: AuditDetailsPro
               ) : isOverdue() ? (
                 <Badge
                   variant="outline"
-                  className="h-5 sm:h-6 text-2xs sm:text-xs bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
+                  className="h-5 sm:h-6 text-2xs sm:text-xs bg-destructive/15 text-destructive"
                 >
                   <Clock className="mr-0.5 h-3 w-3" />
                   En retard
@@ -233,7 +233,7 @@ export function AuditDetails({ isOpen, onClose, audit, onEdit }: AuditDetailsPro
               ) : (
                 <Badge
                   variant="outline"
-                  className="h-5 sm:h-6 text-2xs sm:text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
+                  className="h-5 sm:h-6 text-2xs sm:text-xs bg-info/15 text-info"
                 >
                   <Clock className="mr-0.5 h-3 w-3" />
                   En cours
@@ -263,7 +263,7 @@ export function AuditDetails({ isOpen, onClose, audit, onEdit }: AuditDetailsPro
 
           <TabsContent value="details" className="mt-0 px-3 sm:px-5 md:px-6 py-3 sm:py-4">
             <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
-              <Card className="shadow-sm">
+              <Card >
                 <CardHeader className="pb-1.5 px-3 sm:px-4">
                   <CardTitle className="text-xs sm:text-sm">Informations générales</CardTitle>
                 </CardHeader>
@@ -306,7 +306,7 @@ export function AuditDetails({ isOpen, onClose, audit, onEdit }: AuditDetailsPro
                         <Calendar className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-primary" />
                         <span className="font-medium">Prochain audit</span>
                       </div>
-                      <span className={isOverdue() ? "text-red-600 dark:text-red-400" : ""}>
+                      <span className={isOverdue() ? "text-destructive" : ""}>
                         {formatDate(audit.next_audit_date)}
                       </span>
                     </div>
@@ -334,7 +334,7 @@ export function AuditDetails({ isOpen, onClose, audit, onEdit }: AuditDetailsPro
                 </CardContent>
               </Card>
 
-              <Card className="shadow-sm">
+              <Card >
                 <CardHeader className="pb-1.5 px-3 sm:px-4">
                   <CardTitle className="text-xs sm:text-sm">Notes et actions correctives</CardTitle>
                 </CardHeader>
@@ -426,7 +426,7 @@ export function AuditDetails({ isOpen, onClose, audit, onEdit }: AuditDetailsPro
                                     {item.requires_action && (
                                       <Badge
                                         variant="outline"
-                                        className="bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300 text-[10px] h-4 px-1 flex items-center gap-0.5"
+                                        className="bg-warning/15 text-warning text-[10px] h-4 px-1 flex items-center gap-0.5"
                                       >
                                         <FileWarning className="h-2.5 w-2.5" />
                                         Action requise
@@ -435,7 +435,7 @@ export function AuditDetails({ isOpen, onClose, audit, onEdit }: AuditDetailsPro
                                     {item.requires_photo_evidence && (
                                       <Badge
                                         variant="outline"
-                                        className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 text-[10px] h-4 px-1 flex items-center gap-0.5"
+                                        className="bg-info/15 text-info text-[10px] h-4 px-1 flex items-center gap-0.5"
                                       >
                                         <Camera className="h-2.5 w-2.5" />
                                         Photo requise
@@ -452,7 +452,7 @@ export function AuditDetails({ isOpen, onClose, audit, onEdit }: AuditDetailsPro
                   ) : (
                     <div className="space-y-4">
                       {Object.entries(groupedItems).map(([category, items]: [string, any]) => (
-                        <Card key={category} className="shadow-sm overflow-hidden">
+                        <Card key={category} className="overflow-hidden">
                           <CardHeader className="py-2.5 px-4">
                             <CardTitle className="text-xs sm:text-sm flex items-center gap-1.5">
                               <FileText className="h-3.5 w-3.5 text-primary" />
@@ -492,7 +492,7 @@ export function AuditDetails({ isOpen, onClose, audit, onEdit }: AuditDetailsPro
                                     {item.requires_action && (
                                       <Badge
                                         variant="outline"
-                                        className="bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300 text-2xs flex items-center gap-0.5"
+                                        className="bg-warning/15 text-warning text-2xs flex items-center gap-0.5"
                                       >
                                         <FileWarning className="mr-0.5 h-3 w-3" />
                                         Action requise
@@ -501,7 +501,7 @@ export function AuditDetails({ isOpen, onClose, audit, onEdit }: AuditDetailsPro
                                     {item.requires_photo_evidence && (
                                       <Badge
                                         variant="outline"
-                                        className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 text-2xs flex items-center gap-0.5"
+                                        className="bg-info/15 text-info text-2xs flex items-center gap-0.5"
                                       >
                                         <Camera className="mr-0.5 h-3 w-3" />
                                         Preuve photo requise

@@ -187,7 +187,7 @@ export function MobileReservationForm({
             setCategoryError(false)
           }}
         >
-          <SelectTrigger id="category" aria-invalid={categoryError} className={categoryError ? "border-red-500" : ""}>
+          <SelectTrigger id="category" aria-invalid={categoryError} className={categoryError ? "border-destructive" : ""}>
             <SelectValue placeholder="Sélectionner une catégorie" />
           </SelectTrigger>
           <SelectContent>

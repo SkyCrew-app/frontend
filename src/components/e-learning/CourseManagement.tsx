@@ -265,7 +265,7 @@ export function CourseManagement() {
             ))}
           </div>
         ) : error ? (
-          <Card className="bg-red-50 border-red-200 text-red-800 dark:bg-red-900/20 dark:border-red-800 dark:text-red-300">
+          <Card className="bg-destructive/10 border-destructive/30 text-destructive">
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Info className="h-5 w-5 mr-2" />
@@ -323,7 +323,7 @@ export function CourseManagement() {
                         <CardHeader className="pb-2">
                           <div className="flex justify-between items-start">
                             <CardTitle className="text-lg flex items-center">
-                              <Book className="w-5 h-5 mr-2 text-blue-500" />
+                              <Book className="w-5 h-5 mr-2 text-info" />
                               <span className="line-clamp-1">{course.title}</span>
                             </CardTitle>
                             {course.category && (
@@ -333,7 +333,7 @@ export function CourseManagement() {
                             )}
                           </div>
                           {course.required_license && (
-                            <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 mt-1">
+                            <Badge className="bg-info/15 text-info mt-1">
                               Licence {course.required_license}
                             </Badge>
                           )}
@@ -371,7 +371,7 @@ export function CourseManagement() {
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
                                       disabled={deleteLoading}
                                     >
                                       <Trash2 className="w-4 h-4 mr-2" />
@@ -396,7 +396,7 @@ export function CourseManagement() {
                                 <AlertDialogCancel>Annuler</AlertDialogCancel>
                                 <AlertDialogAction
                                   onClick={() => handleDeleteCourse(course.id)}
-                                  className="bg-red-500 hover:bg-red-600"
+                                  className="bg-destructive hover:bg-destructive/90"
                                 >
                                   {deleteLoading ? (
                                     <>
@@ -422,10 +422,10 @@ export function CourseManagement() {
       </TabsContent>
 
       <TabsContent value="create">
-        <Card className="border-t-4 border-t-primary shadow-md">
+        <Card className="border-t-4 border-t-primary">
           <CardHeader>
             <CardTitle className="flex items-center">
-              <PlusCircle className="w-5 h-5 mr-2 text-blue-500" />
+              <PlusCircle className="w-5 h-5 mr-2 text-info" />
               Créer un nouveau cours
             </CardTitle>
             <CardDescription>Remplissez les détails du cours ci-dessous</CardDescription>
@@ -434,7 +434,7 @@ export function CourseManagement() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="title">
-                  Titre du cours <span className="text-red-500">*</span>
+                  Titre du cours <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="title"
@@ -525,7 +525,7 @@ export function CourseManagement() {
             <form onSubmit={handleUpdateCourse} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-title">
-                  Titre du cours <span className="text-red-500">*</span>
+                  Titre du cours <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="edit-title"

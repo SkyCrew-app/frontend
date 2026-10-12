@@ -173,9 +173,9 @@ export function DateRangePicker({
               head_cell: "text-muted-foreground rounded-md w-8 font-normal text-[0.8rem] px-1",
               row: "flex w-full mt-2 justify-between",
               cell: "text-center text-xs p-0 relative [&:has([aria-selected])]:bg-accent first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
-              day: "h-8 w-8 p-0 font-normal aria-selected:opacity-100 rounded-md aria-selected:bg-blue-600 aria-selected:text-white hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground transition-colors",
+              day: "h-8 w-8 p-0 font-normal aria-selected:opacity-100 rounded-md aria-selected:bg-primary aria-selected:text-primary-foreground hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground transition-colors",
               day_selected:
-                "bg-blue-600 text-white hover:bg-blue-600 hover:text-white focus:bg-blue-600 focus:text-white",
+                "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground focus:bg-primary/90 focus:text-primary-foreground",
               day_today: "bg-accent/70 text-accent-foreground font-medium",
               day_outside: "text-muted-foreground opacity-50",
               day_disabled: "text-muted-foreground opacity-50",

@@ -15,14 +15,14 @@ export function FreeCell({ isSelected, onMouseDown, onMouseEnter, onMouseUp }: F
       className={`text-center p-0 cursor-pointer select-none transition-colors ${
         isSelected
           ? "bg-primary hover:bg-primary/90"
-          : "bg-muted/30 hover:bg-muted/50 dark:bg-muted/20 dark:hover:bg-muted/40"
+          : "hover:bg-accent"
       }`}
       onMouseDown={onMouseDown}
       onMouseEnter={onMouseEnter}
       onMouseUp={onMouseUp}
     >
       <div className="p-2 h-full flex items-center justify-center text-sm">
-        <span className={isSelected ? "text-white" : "text-muted-foreground"}>Libre</span>
+        <span className={isSelected ? "text-primary-foreground" : "text-muted-foreground/60"}>Libre</span>
       </div>
     </TableCell>
   )

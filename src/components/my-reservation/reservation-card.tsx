@@ -1,5 +1,6 @@
 "use client"
 
+import { reservationStatus } from "@/lib/reservation-status"
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -16,38 +17,19 @@ interface ReservationCardProps {
 }
 
 export function ReservationCard({ reservation, onEdit, flightCategoryMapping }: ReservationCardProps) {
-  const getStatusVariant = (status: string) => {
-    switch (status) {
-      case "PENDING":
-        return "secondary"
-      case "CONFIRMED":
-        return "default"
-      case "CANCELLED":
-        return "destructive"
-      default:
-        return "default"
-    }
-  }
-
-  const statusTranslations = {
-    PENDING: "En attente",
-    CONFIRMED: "Confirmé",
-    CANCELLED: "Annulé",
-  }
-
   const startDate = new Date(reservation.start_time)
   const endDate = new Date(reservation.end_time)
   const durationHours = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60)
 
   return (
-    <Card className="h-full flex flex-col shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden">
+    <Card className="h-full flex flex-col transition-shadow hover:shadow-md overflow-hidden">
       <CardHeader className="pb-2 flex flex-row justify-between items-center">
         <CardTitle className="text-lg flex items-center">
           <Plane className="h-5 w-5 mr-2 text-primary" />
           {reservation.aircraft.registration_number}
         </CardTitle>
-        <Badge variant={getStatusVariant(reservation.status)}>
-          {statusTranslations[reservation.status as keyof typeof statusTranslations]}
+        <Badge variant={reservationStatus(reservation.status).variant}>
+          {reservationStatus(reservation.status).label}
         </Badge>
       </CardHeader>
       <CardContent className="flex-grow space-y-3">

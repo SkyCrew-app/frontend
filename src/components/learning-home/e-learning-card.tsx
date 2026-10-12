@@ -41,7 +41,7 @@ export function ELearningCard({ course, onClick, compact = false }: ELearningCar
         </div>
         <Badge
           variant="outline"
-          className="bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-950/30 dark:border-blue-800 dark:text-blue-300"
+          className="bg-info/10 border-info/30 text-info"
         >
           {course.completedLessons}/{course.totalLessons} leçons
         </Badge>
@@ -58,7 +58,7 @@ export function ELearningCard({ course, onClick, compact = false }: ELearningCar
       )}
       {!compact && (
         <div className="mt-4">
-          <Button size="sm" className="bg-indigo-500 hover:bg-indigo-600">
+          <Button size="sm" className="bg-info hover:bg-info/90">
             <Play className="mr-2 h-4 w-4" />
             Continuer
           </Button>

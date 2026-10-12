@@ -28,7 +28,7 @@ interface TemplateCardProps {
 
 export function TemplateCard({ template, onUse, onEdit, onDelete }: TemplateCardProps) {
   return (
-    <Card className="h-full flex flex-col shadow-md hover:shadow-lg transition-shadow duration-300">
+    <Card className="h-full flex flex-col hover:shadow-md transition-shadow duration-300">
       <CardHeader className="pb-2 flex flex-row justify-between items-center">
         <CardTitle className="text-lg truncate">{template.name}</CardTitle>
         <Badge variant="outline">

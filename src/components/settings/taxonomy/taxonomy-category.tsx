@@ -34,13 +34,13 @@ export function TaxonomyCategory({
           <Badge
             key={item}
             variant="secondary"
-            className="text-sm bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+            className="text-sm bg-info/15 text-info"
           >
             {item}
             <Button
               variant="ghost"
               size="sm"
-              className="ml-2 h-auto p-0 text-blue-700 hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-100"
+              className="ml-2 h-auto p-0 text-info hover:text-info"
               onClick={() => onRemoveItem(item)}
             >
               <X className="h-3 w-3" />
@@ -64,7 +64,7 @@ export function TaxonomyCategory({
             }
           }}
         />
-        <Button onClick={onAddItem} className="bg-blue-600 hover:bg-blue-700 text-white">
+        <Button onClick={onAddItem} className="bg-info hover:bg-info/90 text-info-foreground">
           <Plus className="h-4 w-4 mr-1" />
           Ajouter
         </Button>

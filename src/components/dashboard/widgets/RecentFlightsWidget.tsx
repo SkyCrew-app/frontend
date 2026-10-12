@@ -1,5 +1,6 @@
 "use client"
 
+import { formatFlightDuration } from "@/lib/format"
 import { useQuery } from "@apollo/client"
 import { GET_USER_FLIGHT_PLANS } from "@/graphql/flights"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -44,11 +45,11 @@ export default function RecentFlightsWidget({ userId }: RecentFlightsWidgetProps
   if (recentFlights.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-6 text-center">
-        <Plane className="h-8 w-8 text-gray-400 mb-2" />
-        <p className="text-sm text-gray-500">Aucun vol récent</p>
+        <Plane className="h-8 w-8 text-muted-foreground mb-2" />
+        <p className="text-sm text-muted-foreground">Aucun vol récent</p>
         <Link
           href="/reservations/flight-plans"
-          className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 mt-2"
+          className="text-sm text-info hover:text-info mt-2"
         >
           Créer un plan de vol
         </Link>
@@ -64,8 +65,8 @@ export default function RecentFlightsWidget({ userId }: RecentFlightsWidgetProps
           href={`/reservations/flight-plans/${flight.id}`}
           className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
         >
-          <div className="flex items-center justify-center h-10 w-10 rounded bg-indigo-50 dark:bg-indigo-950">
-            <Plane className="h-5 w-5 text-indigo-500 rotate-45" />
+          <div className="flex items-center justify-center h-10 w-10 rounded bg-info/10">
+            <Plane className="h-5 w-5 text-info rotate-45" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium flex items-center gap-1">
@@ -74,7 +75,7 @@ export default function RecentFlightsWidget({ userId }: RecentFlightsWidgetProps
               {flight.destination_icao || "---"}
             </p>
             <p className="text-xs text-muted-foreground">
-              {flight.flight_hours ? `${flight.flight_hours}h` : "--"} |{" "}
+              {flight.flight_hours ? formatFlightDuration(flight.flight_hours) : "--"} ·{" "}
               {flight.reservation?.start_time
                 ? new Date(flight.reservation.start_time).toLocaleDateString("fr-FR", {
                     day: "numeric",

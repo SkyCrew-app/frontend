@@ -70,7 +70,7 @@ export function LicensesSection({ licenses = [] }: LicensesSectionProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <Card className="w-full shadow-md">
+      <Card className="w-full">
         <CardHeader className="pb-4">
           <div className="flex justify-between items-center">
             <CardTitle className="text-xl font-semibold">Mes licences</CardTitle>
@@ -132,7 +132,7 @@ export function LicensesSection({ licenses = [] }: LicensesSectionProps) {
                 <LicenseCard key={license.id} license={license} />
               ))
             ) : (
-              <div className="col-span-full text-center text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 p-6 rounded-lg">
+              <div className="col-span-full text-center text-muted-foreground bg-muted p-6 rounded-lg">
                 <h3 className="text-lg font-semibold mb-2">Aucune licence</h3>
                 <p>Vous n'avez pas encore de licence enregistrée.</p>
               </div>

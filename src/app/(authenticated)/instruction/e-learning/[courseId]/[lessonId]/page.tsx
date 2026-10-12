@@ -49,15 +49,15 @@ const slideUp = {
 }
 
 const LessonSkeleton = () => (
-  <div className="container mx-auto p-4 md:p-6 space-y-6 max-w-7xl">
+  <div className="space-y-6">
     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
       <Skeleton className="h-8 w-[200px]" />
       <Skeleton className="h-8 w-[100px]" />
     </div>
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="lg:col-span-2 space-y-6">
-        <Card className="shadow-md overflow-hidden border-t-4 border-t-primary">
-          <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30">
+        <Card className="overflow-hidden border-t-4 border-t-primary">
+          <CardHeader className="bg-info/10">
             <Skeleton className="h-12 w-full" />
           </CardHeader>
           <CardContent className="p-6">
@@ -70,8 +70,8 @@ const LessonSkeleton = () => (
         </Card>
       </div>
       <div className="space-y-6">
-        <Card className="shadow-md border-t-4 border-t-amber-500">
-          <CardHeader className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30">
+        <Card className="border-t-4 border-t-warning">
+          <CardHeader className="bg-gradient-to-r from-warning/10 to-brand/10">
             <Skeleton className="h-8 w-full" />
           </CardHeader>
           <CardContent className="p-6">
@@ -81,7 +81,7 @@ const LessonSkeleton = () => (
             <Skeleton className="h-8 w-full" />
           </CardFooter>
         </Card>
-        <Card className="shadow-md">
+        <Card >
           <CardHeader className="pb-2">
             <Skeleton className="h-8 w-full" />
           </CardHeader>
@@ -221,7 +221,7 @@ export default function LessonPage() {
       initial="hidden"
       animate="visible"
       variants={fadeIn}
-      className="container mx-auto p-4 md:p-6 space-y-6 max-w-7xl"
+      className="space-y-6"
     >
       {/* Header avec navigation */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -248,10 +248,10 @@ export default function LessonPage() {
             exit={{ opacity: 0, y: -20 }}
             className="w-full"
           >
-            <Alert className="bg-green-50 border-green-200 dark:bg-green-950/30 dark:border-green-800">
-              <Trophy className="h-5 w-5 text-green-600 dark:text-green-400" />
-              <AlertTitle className="text-green-800 dark:text-green-300">Félicitations !</AlertTitle>
-              <AlertDescription className="text-green-700 dark:text-green-400">
+            <Alert className="bg-success/10 border-success/30">
+              <Trophy className="h-5 w-5 text-success" />
+              <AlertTitle className="text-success">Félicitations !</AlertTitle>
+              <AlertDescription className="text-success">
                 Vous avez terminé cette leçon avec succès.
               </AlertDescription>
             </Alert>
@@ -263,15 +263,15 @@ export default function LessonPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Colonne principale */}
         <motion.div variants={slideUp} className="lg:col-span-2 space-y-6">
-          <Card className="shadow-md overflow-hidden border-t-4 border-t-primary">
-            <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30">
+          <Card className="overflow-hidden border-t-4 border-t-primary">
+            <CardHeader className="bg-info/10">
               <div className="flex justify-between items-start">
                 <div>
-                  <h1 className="text-2xl md:text-3xl font-bold">{lesson.title}</h1>
+                  <h1 className="text-2xl font-semibold tracking-tight">{lesson.title}</h1>
                   <p className="text-muted-foreground mt-1">{lesson.description}</p>
                 </div>
                 {isCompleted && (
-                  <Badge className="bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300 flex items-center gap-1 px-3 py-1">
+                  <Badge className="bg-success/15 text-success flex items-center gap-1 px-3 py-1">
                     <CheckCircle className="h-4 w-4" />
                     Terminé
                   </Badge>
@@ -289,14 +289,14 @@ export default function LessonPage() {
                   <TabsTrigger
                     value="video"
                     disabled={!lesson.video_url}
-                    className="flex items-center gap-2 data-[state=active]:bg-blue-50 dark:data-[state=active]:bg-blue-950/30"
+                    className="flex items-center gap-2 data-[state=active]:bg-info/10"
                   >
                     <Video className="h-4 w-4" />
                     Vidéo
                   </TabsTrigger>
                   <TabsTrigger
                     value="content"
-                    className="flex items-center gap-2 data-[state=active]:bg-blue-50 dark:data-[state=active]:bg-blue-950/30"
+                    className="flex items-center gap-2 data-[state=active]:bg-info/10"
                   >
                     <FileText className="h-4 w-4" />
                     Contenu
@@ -388,10 +388,10 @@ export default function LessonPage() {
         {/* Colonne latérale */}
         <motion.div variants={slideUp} className="space-y-6">
           {/* Carte des ressources */}
-          <Card className="shadow-md border-t-4 border-t-amber-500">
-            <CardHeader className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30">
+          <Card className="border-t-4 border-t-warning">
+            <CardHeader className="bg-gradient-to-r from-warning/10 to-brand/10">
               <h2 className="text-xl font-semibold flex items-center gap-2">
-                <Paperclip className="h-5 w-5 text-amber-500" />
+                <Paperclip className="h-5 w-5 text-warning" />
                 Ressources
               </h2>
             </CardHeader>
@@ -408,7 +408,7 @@ export default function LessonPage() {
                           <Button
                             variant="outline"
                             asChild
-                            className="w-full justify-between group hover:bg-amber-50 hover:text-amber-700 dark:hover:bg-amber-950/30 dark:hover:text-amber-300 transition-colors"
+                            className="w-full justify-between group hover:bg-warning/10 hover:text-warning transition-colors"
                           >
                             <a href={attachmentUrl} target="_blank" rel="noopener noreferrer">
                               <div className="flex items-center">
@@ -436,7 +436,7 @@ export default function LessonPage() {
               <Button
                 onClick={handleComplete}
                 disabled={isCompleting}
-                className={`w-full ${isCompleted ? "bg-green-600 hover:bg-green-700" : "bg-blue-600 hover:bg-blue-700"}`}
+                className={`w-full ${isCompleted ? "bg-success hover:bg-success/90" : "bg-info hover:bg-info/90"}`}
               >
                 {isCompleting ? (
                   <span className="flex items-center">
@@ -478,7 +478,7 @@ export default function LessonPage() {
           </Card>
 
           {/* Carte de navigation du cours */}
-          <Card className="shadow-md">
+          <Card >
             <CardHeader className="pb-2">
               <h2 className="text-lg font-semibold">Navigation rapide</h2>
             </CardHeader>
@@ -487,10 +487,10 @@ export default function LessonPage() {
               <Button
                 variant="outline"
                 asChild
-                className="w-full justify-start hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-950/30 dark:hover:text-blue-300 transition-colors"
+                className="w-full justify-start hover:bg-info/10 hover:text-info transition-colors"
               >
                 <Link href={`/instruction/e-learning/${courseId}`}>
-                  <BookOpen className="mr-2 h-4 w-4 text-blue-500" />
+                  <BookOpen className="mr-2 h-4 w-4 text-info" />
                   Sommaire du cours
                 </Link>
               </Button>

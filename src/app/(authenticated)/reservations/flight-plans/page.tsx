@@ -160,8 +160,8 @@ export default function MyFlightPlans() {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">Mes Plans de Vol</h1>
+      <div className="w-full">
+        <h1 className="mb-6 text-2xl font-semibold tracking-tight">Mes plans de vol</h1>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
             <Skeleton key={i} className="h-64 w-full" />
@@ -173,8 +173,8 @@ export default function MyFlightPlans() {
 
   if (error) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">Mes Plans de Vol</h1>
+      <div className="w-full">
+        <h1 className="mb-6 text-2xl font-semibold tracking-tight">Mes plans de vol</h1>
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Erreur</AlertTitle>
@@ -189,9 +189,9 @@ export default function MyFlightPlans() {
   const allFlightPlans = data?.getFlightsByUser || []
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-        <h1 className="text-3xl font-bold">Mes Plans de Vol</h1>
+    <div className="w-full">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+        <h1 className="text-2xl font-semibold tracking-tight">Mes plans de vol</h1>
       </div>
 
       {allFlightPlans.length > 0 && <StatsCards flights={allFlightPlans} />}

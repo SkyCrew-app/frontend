@@ -172,19 +172,19 @@ export default function CreateCustomFlightPlan() {
   }
 
   return (
-    <div className="container mx-auto py-10">
-      <h1 className="text-4xl font-bold mb-10 text-center">Créer un Plan de Vol Personnalisé</h1>
+    <div className="w-full">
+      <h1 className="mb-6 text-2xl font-semibold tracking-tight">Créer un plan de vol</h1>
 
       <Tabs defaultValue="manual" className="mb-10">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="manual">Création Manuelle</TabsTrigger>
+          <TabsTrigger value="manual">Création manuelle</TabsTrigger>
           <TabsTrigger value="ai">Génération IA</TabsTrigger>
         </TabsList>
 
         <TabsContent value="manual">
           <Card>
             <CardHeader>
-              <CardTitle>Création Manuelle du Plan de Vol</CardTitle>
+              <CardTitle>Création manuelle du plan de vol</CardTitle>
             </CardHeader>
             <CardContent>
               <Stepper steps={steps} currentStep={currentStep} />
@@ -382,7 +382,7 @@ export default function CreateCustomFlightPlan() {
                 <Button
                   onClick={handleSubmit}
                   disabled={createLoading || userId === null}
-                  className="bg-green-500 hover:bg-green-600">
+                  className="bg-success hover:bg-success/90">
                   {createLoading ? (
                     <>
                       <Spinner className="mr-2" />
@@ -402,7 +402,7 @@ export default function CreateCustomFlightPlan() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Sparkles className="h-5 w-5" />
-                Génération IA du Plan de Vol
+                Génération IA du Plan de vol
               </CardTitle>
             </CardHeader>
             <CardContent>

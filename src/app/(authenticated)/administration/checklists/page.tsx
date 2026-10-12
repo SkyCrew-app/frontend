@@ -97,7 +97,7 @@ export default function AdminChecklistsPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto py-6 space-y-6">
+      <div className="space-y-6">
         <Skeleton className="h-12 w-64" />
         <Skeleton className="h-[400px] w-full" />
       </div>
@@ -106,8 +106,8 @@ export default function AdminChecklistsPage() {
 
   if (error) {
     return (
-      <Card className="border-red-200 bg-red-50 dark:bg-red-950 dark:border-red-800">
-        <CardContent className="p-6 text-red-800 dark:text-red-300 flex items-center">
+      <Card className="border-destructive/30 bg-destructive/10">
+        <CardContent className="p-6 text-destructive flex items-center">
           <AlertTriangle className="h-6 w-6 mr-3" />
           <div>
             <h3 className="font-semibold">Erreur de chargement</h3>
@@ -119,8 +119,8 @@ export default function AdminChecklistsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b">
-      <div className="container mx-auto px-2 py-6 sm:px-4 sm:py-8">
+    <div className="w-full">
+      <div className="w-full">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -129,7 +129,7 @@ export default function AdminChecklistsPage() {
         >
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="flex items-center gap-2 text-2xl font-bold sm:text-3xl md:text-4xl">
+              <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
                 <ClipboardCheck className="h-6 w-6 text-primary sm:h-7 sm:w-7 md:h-8 md:w-8" />
                 Gestion des Checklists
               </h1>
@@ -144,7 +144,7 @@ export default function AdminChecklistsPage() {
             </Button>
           </div>
 
-          <Card className="border-t-4 border-t-primary shadow-md">
+          <Card className="border-t-4 border-t-primary">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg sm:text-xl">Modèles de checklists</CardTitle>
               <CardDescription>
@@ -188,7 +188,7 @@ export default function AdminChecklistsPage() {
                                 variant={template.is_active ? "default" : "secondary"}
                                 className={
                                   template.is_active
-                                    ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
+                                    ? "bg-success/15 text-success"
                                     : ""
                                 }
                               >

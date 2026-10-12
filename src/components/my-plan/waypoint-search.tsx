@@ -95,12 +95,12 @@ export function WaypointSearch({ waypoints, onChange }: WaypointSearchProps) {
   }
 
   const getWaypointTypeColor = (type: string) => {
-    if (type.includes("VOR")) return "bg-blue-100 text-blue-800"
-    if (type.includes("NDB")) return "bg-purple-100 text-purple-800"
-    if (type.includes("DME")) return "bg-yellow-100 text-yellow-800"
-    if (type.includes("ILS")) return "bg-green-100 text-green-800"
-    if (type.includes("TACAN")) return "bg-red-100 text-red-800"
-    return "bg-gray-100 text-gray-800"
+    if (type.includes("VOR")) return "bg-info/15 text-info"
+    if (type.includes("NDB")) return "bg-primary/15 text-primary"
+    if (type.includes("DME")) return "bg-warning/15 text-warning"
+    if (type.includes("ILS")) return "bg-success/15 text-success"
+    if (type.includes("TACAN")) return "bg-destructive/15 text-destructive"
+    return "bg-muted text-foreground"
   }
 
   return (
@@ -126,7 +126,7 @@ export function WaypointSearch({ waypoints, onChange }: WaypointSearchProps) {
                     Recherche en cours...
                   </div>
                 ) : error ? (
-                  <div className="flex items-center justify-center p-4 text-amber-500">
+                  <div className="flex items-center justify-center p-4 text-warning">
                     <AlertTriangle className="mr-2 h-4 w-4" />
                     {error}
                   </div>
