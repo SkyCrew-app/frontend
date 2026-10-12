@@ -68,11 +68,11 @@ export default function AccountOverview() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-      <Card className="h-full shadow-md">
+      <Card className="h-full">
         <CardHeader className="pb-2">
           <CardTitle className="text-xl font-semibold flex items-center">
             <Wallet className="mr-2 h-5 w-5 text-primary" />
-            Solde du Compte
+            Solde du compte
           </CardTitle>
           <CardDescription>Votre solde actuel et statistiques financières</CardDescription>
         </CardHeader>
@@ -85,18 +85,18 @@ export default function AccountOverview() {
           <div className="space-y-4 mt-6">
             <div className="bg-muted/50 p-4 rounded-lg border">
               <div className="flex items-center text-sm font-medium text-muted-foreground mb-1">
-                <TrendingUp className="mr-1 h-4 w-4 text-green-500" />
-                Total Rechargé
+                <TrendingUp className="mr-1 h-4 w-4 text-success" />
+                Total rechargé
               </div>
-              <p className="text-2xl font-semibold text-green-600">€{totalDeposits.toFixed(2)}</p>
+              <p className="text-2xl font-semibold text-success">€{totalDeposits.toFixed(2)}</p>
             </div>
 
             <div className="bg-muted/50 p-4 rounded-lg border">
               <div className="flex items-center text-sm font-medium text-muted-foreground mb-1">
-                <CreditCard className="mr-1 h-4 w-4 text-red-500" />
-                Total Dépensé
+                <CreditCard className="mr-1 h-4 w-4 text-destructive" />
+                Total dépensé
               </div>
-              <p className="text-2xl font-semibold text-red-600">€{totalSpent.toFixed(2)}</p>
+              <p className="text-2xl font-semibold text-destructive">€{totalSpent.toFixed(2)}</p>
             </div>
           </div>
         </CardContent>

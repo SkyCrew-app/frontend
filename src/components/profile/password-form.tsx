@@ -114,7 +114,7 @@ export function PasswordForm() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <Card className="w-full shadow-md">
+      <Card className="w-full">
         <CardHeader className="pb-4">
           <CardTitle className="text-xl font-semibold">Changer le mot de passe</CardTitle>
         </CardHeader>
@@ -127,18 +127,18 @@ export function PasswordForm() {
                 type={showCurrentPassword ? "text" : "password"}
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
-                className={cn(errors.currentPassword ? "border-red-500" : "", "mt-1 pr-10")}
+                className={cn(errors.currentPassword ? "border-destructive" : "", "mt-1 pr-10")}
               />
               <button
                 type="button"
                 onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none"
                 aria-label={showCurrentPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
               >
                 {showCurrentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
-            {errors.currentPassword && <p className="text-red-500 text-sm mt-1">{errors.currentPassword}</p>}
+            {errors.currentPassword && <p className="text-destructive text-sm mt-1">{errors.currentPassword}</p>}
           </div>
 
           <div>
@@ -149,18 +149,18 @@ export function PasswordForm() {
                 type={showNewPassword ? "text" : "password"}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className={cn(errors.newPassword ? "border-red-500" : "", "mt-1 pr-10")}
+                className={cn(errors.newPassword ? "border-destructive" : "", "mt-1 pr-10")}
               />
               <button
                 type="button"
                 onClick={() => setShowNewPassword(!showNewPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none"
                 aria-label={showNewPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
               >
                 {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
-            {errors.newPassword && <p className="text-red-500 text-sm mt-1">{errors.newPassword}</p>}
+            {errors.newPassword && <p className="text-destructive text-sm mt-1">{errors.newPassword}</p>}
           </div>
 
           <div>
@@ -171,25 +171,25 @@ export function PasswordForm() {
                 type={showConfirmPassword ? "text" : "password"}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className={cn(errors.confirmPassword ? "border-red-500" : "", "mt-1 pr-10")}
+                className={cn(errors.confirmPassword ? "border-destructive" : "", "mt-1 pr-10")}
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none"
                 aria-label={showConfirmPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
               >
                 {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
-            {errors.confirmPassword && <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>}
+            {errors.confirmPassword && <p className="text-destructive text-sm mt-1">{errors.confirmPassword}</p>}
           </div>
 
           {saveSuccess && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-green-50 text-green-700 p-3 rounded-md text-sm border border-green-200"
+              className="bg-success/10 text-success p-3 rounded-md text-sm border border-success/30"
             >
               Votre mot de passe a été modifié avec succès.
             </motion.div>

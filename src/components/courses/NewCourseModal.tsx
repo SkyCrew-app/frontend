@@ -113,7 +113,7 @@ export default function NewCourseModal({ isOpen, onClose, onSuccess, instructorI
     >
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Nouveau Cours</DialogTitle>
+          <DialogTitle>Nouveau cours</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 gap-4">

@@ -16,9 +16,9 @@ export function ELearningTab({ data }: ELearningTabProps) {
   const router = useRouter()
 
   return (
-    <Card className="shadow-md hover:shadow-lg transition-shadow">
-      <CardHeader className="bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-950/30 dark:to-blue-950/30 rounded-t-lg">
-        <CardTitle>Mes Cours E-Learning</CardTitle>
+    <Card className="hover:shadow-md transition-shadow">
+      <CardHeader className="bg-info/10 rounded-t-lg">
+        <CardTitle>Mes cours E-Learning</CardTitle>
         <CardDescription>Suivez votre progression dans les cours en ligne</CardDescription>
       </CardHeader>
       <CardContent className="pt-6">

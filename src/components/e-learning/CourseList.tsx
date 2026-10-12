@@ -41,7 +41,7 @@ export function CourseList({
   if (coursesError) {
     return (
       <div className="p-3" suppressHydrationWarning>
-        <div className="text-red-600 dark:text-red-400 text-sm p-3">
+        <div className="text-destructive text-sm p-3">
           <AlertCircle className="h-4 w-4 inline mr-1" />
           {coursesError.message}
         </div>
@@ -52,7 +52,7 @@ export function CourseList({
   if (courses.length === 0) {
     return (
       <div className="p-3 text-center" suppressHydrationWarning>
-        <p className="text-gray-500 dark:text-gray-400 text-sm py-4">Aucun cours trouvé</p>
+        <p className="text-muted-foreground text-sm py-4">Aucun cours trouvé</p>
       </div>
     )
   }
@@ -73,7 +73,7 @@ export function CourseList({
           >
             <Book
               className={`h-4 w-4 mr-2 flex-shrink-0 ${
-                selectedCourseId === course.id ? "text-primary" : "text-gray-500 dark:text-gray-400"
+                selectedCourseId === course.id ? "text-primary" : "text-muted-foreground"
               }`}
             />
             <div className="flex flex-col items-start">

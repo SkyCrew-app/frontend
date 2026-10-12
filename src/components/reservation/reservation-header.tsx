@@ -26,7 +26,7 @@ export function ReservationHeader({ currentDate, setCurrentDate, disabledDays, i
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Calendrier des Réservations</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Calendrier des réservations</h1>
           <p className="text-muted-foreground mt-1">Gérez et planifiez vos réservations d'aéronefs</p>
         </div>
 
@@ -60,8 +60,8 @@ export function ReservationHeader({ currentDate, setCurrentDate, disabledDays, i
       </div>
 
       {isDayClosed && (
-        <Card className="border-yellow-200 bg-yellow-50 dark:bg-yellow-950 dark:border-yellow-800">
-          <CardContent className="p-4 text-yellow-800 dark:text-yellow-300 flex items-center justify-center">
+        <Card className="border-warning/30 bg-warning/10">
+          <CardContent className="p-4 text-warning flex items-center justify-center">
             <CalendarIcon className="h-5 w-5 mr-2" />
             <span>Votre aéroclub est fermé ce jour ({format(currentDate, "EEEE", { locale: fr })})</span>
           </CardContent>

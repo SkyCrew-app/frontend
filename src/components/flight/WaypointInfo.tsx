@@ -24,15 +24,15 @@ export function WaypointInfo({ waypoints: rawWaypoints, onFocusWaypoint }: Waypo
   const getWaypointTypeColor = (type: string) => {
     switch (type) {
       case "APT":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
+        return "bg-info/15 text-info"
       case "VOR":
-        return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300"
+        return "bg-primary/15 text-primary"
       case "NDB":
-        return "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300"
+        return "bg-warning/15 text-warning"
       case "FIX":
-        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
+        return "bg-success/15 text-success"
       default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300"
+        return "bg-muted text-foreground"
     }
   }
 

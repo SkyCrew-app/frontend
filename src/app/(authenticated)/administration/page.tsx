@@ -53,7 +53,7 @@ const itemVariants = {
   },
 }
 
-const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#6366f1", "#ec4899"]
+const COLORS = ["hsl(var(--chart-2))", "hsl(var(--chart-4))", "hsl(var(--chart-5))", "hsl(var(--chart-6))", "hsl(var(--chart-3))"]
 
 export default function AdminHomePage() {
   const [activeTab, setActiveTab] = useState("overview")
@@ -133,13 +133,13 @@ export default function AdminHomePage() {
   function getStatusBadge(status: ReservationStatus) {
     switch (status) {
       case ReservationStatus.CONFIRMED:
-        return <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">Confirmée</Badge>
+        return <Badge variant="success">Confirmée</Badge>
       case ReservationStatus.PENDING:
         return (
-          <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">En attente</Badge>
+          <Badge variant="warning">En attente</Badge>
         )
       case ReservationStatus.CANCELLED:
-        return <Badge className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">Annulée</Badge>
+        return <Badge variant="danger">Annulée</Badge>
       default:
         return <Badge variant="outline">Inconnue</Badge>
     }
@@ -164,7 +164,7 @@ export default function AdminHomePage() {
 
   if (error) {
     return (
-      <div className="container mx-auto p-6">
+      <div className="w-full">
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Erreur</AlertTitle>
@@ -180,9 +180,9 @@ export default function AdminHomePage() {
   }
 
   return (
-    <motion.div initial="hidden" animate="visible" variants={containerVariants} className="container mx-auto p-6">
+    <motion.div initial="hidden" animate="visible" variants={containerVariants} className="w-full">
       <motion.div variants={itemVariants} className="mb-8">
-        <h1 className="text-3xl font-bold">Tableau de bord d'administration</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Tableau de bord d'administration</h1>
         <p className="text-muted-foreground mt-1">
           Bienvenue dans le centre d'administration de SkyCrew. Gérez votre aéroclub en un coup d'œil.
         </p>
@@ -202,7 +202,7 @@ export default function AdminHomePage() {
               <Card className="border-t-4 border-t-primary overflow-hidden">
                 <CardHeader className="pb-2">
                   <CardTitle className="flex items-center text-lg font-medium">
-                    <Users className="mr-2 h-5 w-5 text-blue-500" />
+                    <Users className="mr-2 h-5 w-5 text-info" />
                     Utilisateurs
                   </CardTitle>
                 </CardHeader>
@@ -215,7 +215,7 @@ export default function AdminHomePage() {
                   <p className="text-sm text-muted-foreground mt-1">Membres de l'aéroclub</p>
                 </CardContent>
                 <CardFooter className="pt-0">
-                  <Button variant="ghost" size="sm" className="text-blue-500 hover:text-blue-700 p-0" asChild>
+                  <Button variant="ghost" size="sm" className="text-info hover:text-info p-0" asChild>
                     <Link href="/administration">Voir tous les utilisateurs →</Link>
                   </Button>
                 </CardFooter>
@@ -223,10 +223,10 @@ export default function AdminHomePage() {
             </motion.div>
 
             <motion.div variants={itemVariants}>
-              <Card className="border-t-4 border-t-green-500 overflow-hidden">
+              <Card className="border-t-4 border-t-success overflow-hidden">
                 <CardHeader className="pb-2">
                   <CardTitle className="flex items-center text-lg font-medium">
-                    <Plane className="mr-2 h-5 w-5 text-green-500" />
+                    <Plane className="mr-2 h-5 w-5 text-success" />
                     Avions
                   </CardTitle>
                 </CardHeader>
@@ -239,7 +239,7 @@ export default function AdminHomePage() {
                   <p className="text-sm text-muted-foreground mt-1">{stats.availableAircrafts} avions disponibles</p>
                 </CardContent>
                 <CardFooter className="pt-0">
-                  <Button variant="ghost" size="sm" className="text-green-500 hover:text-green-700 p-0" asChild>
+                  <Button variant="ghost" size="sm" className="text-success hover:text-success p-0" asChild>
                     <Link href="/settings?tab=aircraft">Gérer la flotte →</Link>
                   </Button>
                 </CardFooter>
@@ -247,10 +247,10 @@ export default function AdminHomePage() {
             </motion.div>
 
             <motion.div variants={itemVariants}>
-              <Card className="border-t-4 border-t-amber-500 overflow-hidden">
+              <Card className="border-t-4 border-t-warning overflow-hidden">
                 <CardHeader className="pb-2">
                   <CardTitle className="flex items-center text-lg font-medium">
-                    <Calendar className="mr-2 h-5 w-5 text-amber-500" />
+                    <Calendar className="mr-2 h-5 w-5 text-warning" />
                     Réservations
                   </CardTitle>
                 </CardHeader>
@@ -265,7 +265,7 @@ export default function AdminHomePage() {
                   </p>
                 </CardContent>
                 <CardFooter className="pt-0">
-                  <Button variant="ghost" size="sm" className="text-amber-500 hover:text-amber-700 p-0" asChild>
+                  <Button variant="ghost" size="sm" className="text-warning hover:text-warning p-0" asChild>
                     <Link href="/reservations">Voir les réservations →</Link>
                   </Button>
                 </CardFooter>
@@ -273,10 +273,10 @@ export default function AdminHomePage() {
             </motion.div>
 
             <motion.div variants={itemVariants}>
-              <Card className="border-t-4 border-t-indigo-500 overflow-hidden">
+              <Card className="border-t-4 border-t-info overflow-hidden">
                 <CardHeader className="pb-2">
                   <CardTitle className="flex items-center text-lg font-medium">
-                    <Clock className="mr-2 h-5 w-5 text-indigo-500" />
+                    <Clock className="mr-2 h-5 w-5 text-info" />
                     Heures de vol
                   </CardTitle>
                 </CardHeader>
@@ -287,7 +287,7 @@ export default function AdminHomePage() {
                   <p className="text-sm text-muted-foreground mt-1">Heures de vol ce mois-ci</p>
                 </CardContent>
                 <CardFooter className="pt-0">
-                  <Button variant="ghost" size="sm" className="text-indigo-500 hover:text-indigo-700 p-0" asChild>
+                  <Button variant="ghost" size="sm" className="text-info hover:text-info p-0" asChild>
                     <Link href="/flights">Voir les vols →</Link>
                   </Button>
                 </CardFooter>
@@ -310,7 +310,7 @@ export default function AdminHomePage() {
                     asChild
                   >
                     <Link href="/administration">
-                      <Users className="h-6 w-6 mb-1 text-blue-500" />
+                      <Users className="h-6 w-6 mb-1 text-info" />
                       <span className="text-sm text-center">Utilisateurs</span>
                     </Link>
                   </Button>
@@ -321,7 +321,7 @@ export default function AdminHomePage() {
                     asChild
                   >
                     <Link href="/settings?tab=aircraft">
-                      <Plane className="h-6 w-6 mb-1 text-green-500" />
+                      <Plane className="h-6 w-6 mb-1 text-success" />
                       <span className="text-sm text-center">Avions</span>
                     </Link>
                   </Button>
@@ -332,7 +332,7 @@ export default function AdminHomePage() {
                     asChild
                   >
                     <Link href="/admin-e-learning">
-                      <Award className="h-6 w-6 mb-1 text-amber-500" />
+                      <Award className="h-6 w-6 mb-1 text-warning" />
                       <span className="text-sm text-center">Formation</span>
                     </Link>
                   </Button>
@@ -343,7 +343,7 @@ export default function AdminHomePage() {
                     asChild
                   >
                     <Link href="/finance">
-                      <CreditCard className="h-6 w-6 mb-1 text-indigo-500" />
+                      <CreditCard className="h-6 w-6 mb-1 text-info" />
                       <span className="text-sm text-center">Finances</span>
                     </Link>
                   </Button>
@@ -354,7 +354,7 @@ export default function AdminHomePage() {
                     asChild
                   >
                     <Link href="/articles-admin">
-                      <FileText className="h-6 w-6 mb-1 text-purple-500" />
+                      <FileText className="h-6 w-6 mb-1 text-primary" />
                       <span className="text-sm text-center">Articles</span>
                     </Link>
                   </Button>
@@ -365,7 +365,7 @@ export default function AdminHomePage() {
                     asChild
                   >
                     <Link href="/settings">
-                      <Settings className="h-6 w-6 mb-1 text-gray-500" />
+                      <Settings className="h-6 w-6 mb-1 text-muted-foreground" />
                       <span className="text-sm text-center">Paramètres</span>
                     </Link>
                   </Button>
@@ -380,7 +380,7 @@ export default function AdminHomePage() {
               <Card className="h-full">
                 <CardHeader>
                   <CardTitle className="flex items-center">
-                    <Shield className="mr-2 h-5 w-5 text-blue-500" />
+                    <Shield className="mr-2 h-5 w-5 text-info" />
                     Répartition des rôles
                   </CardTitle>
                   <CardDescription>Distribution des utilisateurs par rôle</CardDescription>
@@ -400,7 +400,7 @@ export default function AdminHomePage() {
                             cy="50%"
                             labelLine={false}
                             outerRadius={100}
-                            fill="#8884d8"
+                            fill="hsl(var(--chart-6))"
                             dataKey="value"
                             label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                           >
@@ -421,7 +421,7 @@ export default function AdminHomePage() {
               <Card className="h-full">
                 <CardHeader>
                   <CardTitle className="flex items-center">
-                    <BarChart3 className="mr-2 h-5 w-5 text-amber-500" />
+                    <BarChart3 className="mr-2 h-5 w-5 text-warning" />
                     Types de réservations
                   </CardTitle>
                   <CardDescription>Répartition des réservations par catégorie</CardDescription>
@@ -482,8 +482,8 @@ export default function AdminHomePage() {
                       <Link key={reservation.id} href={`/reservations/${reservation.id}`} className="block">
                         <div className="flex flex-col md:flex-row md:items-center justify-between p-4 border rounded-lg transition-colors hover:bg-muted/50 group relative">
                           <div className="flex items-start space-x-4">
-                            <div className="bg-amber-100 dark:bg-amber-900/30 p-2 rounded-full">
-                              <Calendar className="h-5 w-5 text-amber-500" />
+                            <div className="bg-warning/15 p-2 rounded-full">
+                              <Calendar className="h-5 w-5 text-warning" />
                             </div>
                             <div>
                               <div className="font-medium">
@@ -499,7 +499,7 @@ export default function AdminHomePage() {
                           </div>
                           <div className="mt-2 md:mt-0 flex items-center space-x-2">
                             {getStatusBadge(reservation.status)}
-                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                            <Badge variant="outline" className="bg-info/10 text-info border-info/30">
                               {formatFlightCategory(reservation.flight_category)}
                             </Badge>
                             <ChevronRight className="h-5 w-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity ml-2" />
@@ -527,7 +527,7 @@ export default function AdminHomePage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
-                    <Clock className="mr-2 h-5 w-5 text-blue-500" />
+                    <Clock className="mr-2 h-5 w-5 text-info" />
                     Vols récents
                   </CardTitle>
                   <CardDescription>Les derniers vols enregistrés</CardDescription>
@@ -546,8 +546,8 @@ export default function AdminHomePage() {
                       {recentFlights.map((flight: any) => (
                         <Link key={flight.id} href={`/reservations/flight-plans/${flight.id}`} className="block">
                           <div className="flex items-start space-x-4 p-4 border rounded-lg transition-colors hover:bg-muted/50 group relative">
-                            <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-full">
-                              <Plane className="h-5 w-5 text-blue-500" />
+                            <div className="bg-info/15 p-2 rounded-full">
+                              <Plane className="h-5 w-5 text-info" />
                             </div>
                             <div className="flex-grow">
                               <div className="font-medium">
@@ -581,7 +581,7 @@ export default function AdminHomePage() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
-                    <AlertTriangle className="mr-2 h-5 w-5 text-red-500" />
+                    <AlertTriangle className="mr-2 h-5 w-5 text-destructive" />
                     Incidents récents
                   </CardTitle>
                   <CardDescription>Les derniers incidents signalés</CardDescription>
@@ -600,8 +600,8 @@ export default function AdminHomePage() {
                       {recentIncidents.map((incident: any) => (
                         <Link key={incident.id} href={`/incidents/${incident.id}`} className="block">
                           <div className="flex items-start space-x-4 p-4 border rounded-lg transition-colors hover:bg-muted/50 group relative">
-                            <div className="bg-red-100 dark:bg-red-900/30 p-2 rounded-full">
-                              <AlertTriangle className="h-5 w-5 text-red-500" />
+                            <div className="bg-destructive/15 p-2 rounded-full">
+                              <AlertTriangle className="h-5 w-5 text-destructive" />
                             </div>
                             <div className="flex-grow">
                               <div className="font-medium">

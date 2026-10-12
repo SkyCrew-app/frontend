@@ -1,5 +1,6 @@
 "use client"
 
+import { reservationStatus } from "@/lib/reservation-status"
 import { useQuery } from "@apollo/client"
 import { GET_USER_RESERVATIONS } from "@/graphql/reservation"
 import { Badge } from "@/components/ui/badge"
@@ -43,22 +44,16 @@ export default function UpcomingReservationsWidget({ userId }: UpcomingReservati
   if (upcoming.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-6 text-center">
-        <Calendar className="h-8 w-8 text-gray-400 mb-2" />
-        <p className="text-sm text-gray-500">Aucune réservation à venir</p>
+        <Calendar className="h-8 w-8 text-muted-foreground mb-2" />
+        <p className="text-sm text-muted-foreground">Aucune réservation à venir</p>
         <Link
           href="/reservations"
-          className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 mt-2"
+          className="text-sm text-info hover:text-info mt-2"
         >
           Réserver un avion
         </Link>
       </div>
     )
-  }
-
-  const statusColors: Record<string, string> = {
-    confirmed: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
-    pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
-    cancelled: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
   }
 
   return (
@@ -69,8 +64,8 @@ export default function UpcomingReservationsWidget({ userId }: UpcomingReservati
           href={`/reservations`}
           className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
         >
-          <div className="flex items-center justify-center h-10 w-10 rounded bg-blue-50 dark:bg-blue-950">
-            <Plane className="h-5 w-5 text-blue-500 rotate-45" />
+          <div className="flex items-center justify-center h-10 w-10 rounded bg-info/10">
+            <Plane className="h-5 w-5 text-info rotate-45" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">
@@ -85,13 +80,8 @@ export default function UpcomingReservationsWidget({ userId }: UpcomingReservati
               })}
             </p>
           </div>
-          <Badge
-            variant="secondary"
-            className={`text-xs ${statusColors[reservation.status] || ""}`}
-          >
-            {reservation.status === "confirmed" ? "Confirmée" :
-             reservation.status === "pending" ? "En attente" :
-             reservation.status === "cancelled" ? "Annulée" : reservation.status}
+          <Badge variant={reservationStatus(reservation.status).variant} className="text-xs">
+            {reservationStatus(reservation.status).label}
           </Badge>
         </Link>
       ))}

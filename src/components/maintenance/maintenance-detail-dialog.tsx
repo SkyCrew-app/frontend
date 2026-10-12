@@ -82,7 +82,7 @@ export function MaintenanceDetailDialog({
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogTitle>Détails de la Maintenance</DialogTitle>
+        <DialogTitle>Détails de la maintenance</DialogTitle>
         <DialogDescription>
           Informations complètes sur la maintenance de l'aéronef {maintenance.aircraft.registration_number}
         </DialogDescription>
@@ -215,7 +215,7 @@ export function MaintenanceDetailDialog({
                               className="flex items-center p-4 hover:bg-muted transition-colors"
                               aria-label={`Document ${index + 1} - ${maintenanceFileName(url)}`}
                             >
-                              <FileTextIcon className="h-8 w-8 mr-4 text-blue-500" aria-hidden="true" />
+                              <FileTextIcon className="h-8 w-8 mr-4 text-info" aria-hidden="true" />
                               <div>
                                 <div className="font-medium">Document {index + 1}</div>
                                 <div className="text-sm text-muted-foreground break-all">{maintenanceFileName(url)}</div>

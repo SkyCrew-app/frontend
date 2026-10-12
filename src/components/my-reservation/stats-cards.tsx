@@ -1,6 +1,6 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { StatCard, type StatTone } from "@/components/layout/StatCard"
 import { CalendarCheck, CalendarClock, CalendarX, Calendar } from "lucide-react"
 import type { Reservation } from "@/interfaces/reservation"
 
@@ -19,50 +19,33 @@ export function StatsCards({ reservations }: StatsCardsProps) {
       title: "Total",
       value: totalReservations,
       icon: Calendar,
-      color: "text-blue-500",
-      bgColor: "bg-blue-100 dark:bg-blue-950",
+      tone: "info" as StatTone,
     },
     {
       title: "Confirmées",
       value: confirmedReservations,
       icon: CalendarCheck,
-      color: "text-green-500",
-      bgColor: "bg-green-100 dark:bg-green-950",
+      tone: "success" as StatTone,
     },
     {
       title: "En attente",
       value: pendingReservations,
       icon: CalendarClock,
-      color: "text-amber-500",
-      bgColor: "bg-amber-100 dark:bg-amber-950",
+      tone: "warning" as StatTone,
     },
     {
       title: "Annulées",
       value: cancelledReservations,
       icon: CalendarX,
-      color: "text-red-500",
-      bgColor: "bg-red-100 dark:bg-red-950",
+      tone: "danger" as StatTone,
     },
   ]
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-      {stats.map((stat) => {
-        const Icon = stat.icon
-        return (
-          <Card key={stat.title} className="border-none shadow-sm">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">{stat.title}</CardTitle>
-            </CardHeader>
-            <CardContent className="flex items-center justify-between">
-              <span className="text-2xl font-bold">{stat.value}</span>
-              <div className={`p-2 rounded-full ${stat.bgColor}`}>
-                <Icon className={`h-5 w-5 ${stat.color}`} />
-              </div>
-            </CardContent>
-          </Card>
-        )
-      })}
+      {stats.map((stat) => (
+        <StatCard key={stat.title} label={stat.title} value={stat.value} icon={stat.icon} tone={stat.tone} />
+      ))}
     </div>
   )
 }

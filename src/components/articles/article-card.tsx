@@ -49,8 +49,7 @@ export function ArticleCard({ article, viewMode }: ArticleCardProps) {
   if (viewMode === "list") {
     return (
       <motion.div variants={item}>
-        <Card
-          className="overflow-hidden transition-all hover:shadow-md"
+        <Card className="overflow-hidden transition-all hover:shadow-md"
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
@@ -116,8 +115,7 @@ export function ArticleCard({ article, viewMode }: ArticleCardProps) {
 
   return (
     <motion.div variants={item}>
-      <Card
-        className="h-full overflow-hidden transition-all hover:shadow-md"
+      <Card className="h-full overflow-hidden transition-all hover:shadow-md"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >

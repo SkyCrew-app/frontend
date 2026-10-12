@@ -50,7 +50,7 @@ export function AddLicenseForm({
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-white">
+        <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
           <BadgeCheck className="mr-2 h-4 w-4" />
           Ajouter une licence
         </Button>
@@ -222,7 +222,7 @@ export function AddLicenseForm({
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Annuler
             </Button>
-            <Button type="submit" className="bg-primary text-white hover:bg-primary/90">
+            <Button type="submit" className="bg-primary text-primary-foreground hover:bg-primary/90">
               Ajouter
             </Button>
           </DialogFooter>

@@ -556,7 +556,7 @@ export function MaintenanceFormDialog({
                   {documentFiles.map((file, index) => (
                     <div key={index} className="flex items-center justify-between p-2 border rounded-md">
                       <div className="flex items-center">
-                        <FileTextIcon className="w-8 h-8 mr-2 text-blue-500" />
+                        <FileTextIcon className="w-8 h-8 mr-2 text-info" />
                         <span className="text-sm truncate max-w-[150px]">{file.name}</span>
                       </div>
                       <Button

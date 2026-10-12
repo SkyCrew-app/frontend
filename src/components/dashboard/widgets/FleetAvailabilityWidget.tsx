@@ -31,8 +31,8 @@ export default function FleetAvailabilityWidget() {
   if (aircrafts.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-6 text-center">
-        <Plane className="h-8 w-8 text-gray-400 mb-2" />
-        <p className="text-sm text-gray-500">Aucun avion dans la flotte</p>
+        <Plane className="h-8 w-8 text-muted-foreground mb-2" />
+        <p className="text-sm text-muted-foreground">Aucun avion dans la flotte</p>
       </div>
     )
   }
@@ -40,19 +40,19 @@ export default function FleetAvailabilityWidget() {
   const statusConfig: Record<string, { label: string; className: string }> = {
     available: {
       label: "Disponible",
-      className: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+      className: "bg-success/15 text-success",
     },
     reserved: {
       label: "Réservé",
-      className: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
+      className: "bg-info/15 text-info",
     },
     maintenance: {
       label: "Maintenance",
-      className: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300",
+      className: "bg-brand/15 text-brand",
     },
     unavailable: {
       label: "Indisponible",
-      className: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
+      className: "bg-destructive/15 text-destructive",
     },
   }
 
@@ -66,8 +66,8 @@ export default function FleetAvailabilityWidget() {
             href="/fleet"
             className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
           >
-            <div className="flex items-center justify-center h-10 w-10 rounded bg-blue-50 dark:bg-blue-950">
-              <Plane className="h-5 w-5 text-blue-500 rotate-45" />
+            <div className="flex items-center justify-center h-10 w-10 rounded bg-info/10">
+              <Plane className="h-5 w-5 text-info rotate-45" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium">{aircraft.registration_number}</p>

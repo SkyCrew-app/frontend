@@ -10,15 +10,15 @@ export function StatusBadge({ status }: StatusBadgeProps) {
   const getStatusBadgeVariant = (status: MaintenanceStatus) => {
     switch (status) {
       case "PLANNED":
-        return "outline"
+        return "info"
       case "IN_PROGRESS":
-        return "secondary"
+        return "warning"
       case "COMPLETED":
-        return "default"
+        return "success"
       case "CANCELLED":
-        return "destructive"
+        return "danger"
       default:
-        return "outline"
+        return "neutral"
     }
   }
 

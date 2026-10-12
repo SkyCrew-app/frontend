@@ -76,7 +76,7 @@ export default function BudgetForecast() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-12 w-12 animate-spin text-blue-500" />
+          <Loader2 className="h-12 w-12 animate-spin text-info" />
           <p className="text-muted-foreground animate-pulse">Calcul des prévisions budgétaires...</p>
         </div>
       </div>
@@ -138,10 +138,10 @@ export default function BudgetForecast() {
 
   return (
     <motion.div variants={staggerContainer} initial="hidden" animate="visible">
-      <Card className="shadow-lg border-t-4 border-t-indigo-500">
+      <Card className="border-t-4 border-t-info">
         <CardHeader>
-          <CardTitle className="text-2xl font-bold text-indigo-700">Prévisions Budgétaires</CardTitle>
-          <CardDescription className="text-sm text-gray-500">
+          <CardTitle className="text-2xl font-bold text-info">Prévisions budgétaires</CardTitle>
+          <CardDescription className="text-sm text-muted-foreground">
             Prévisions détaillées mois par mois sur les 6 prochains mois
           </CardDescription>
         </CardHeader>
@@ -157,63 +157,63 @@ export default function BudgetForecast() {
                   bottom: 10,
                 }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="month" tick={{ fill: "#6b7280", fontSize: 12 }} tickLine={{ stroke: "#e5e7eb" }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="month" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} tickLine={{ stroke: "hsl(var(--border))" }} />
                 <YAxis
-                  tick={{ fill: "#6b7280", fontSize: 12 }}
-                  tickLine={{ stroke: "#e5e7eb" }}
+                  tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                  tickLine={{ stroke: "hsl(var(--border))" }}
                   tickFormatter={(value) => `${(value / 1000).toFixed(0)}k€`}
                 />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "white",
+                    backgroundColor: "hsl(var(--popover))",
                     borderRadius: "8px",
-                    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-                    border: "1px solid #e5e7eb",
+                    boxShadow: "0 4px 8px -2px hsl(var(--shadow-color) / 0.12)",
+                    border: "1px solid hsl(var(--border))",
                   }}
                   formatter={(value: number) => [`${value.toLocaleString()} €`, undefined]}
                   labelFormatter={(label) => `Mois: ${label}`}
                 />
                 <Legend verticalAlign="top" height={36} wrapperStyle={{ paddingTop: "10px" }} />
-                <ReferenceLine y={0} stroke="#cbd5e1" strokeWidth={1} />
+                <ReferenceLine y={0} stroke="hsl(var(--border))" strokeWidth={1} />
                 <Line
                   type="monotone"
                   dataKey="revenus"
                   name="Revenus prévus"
-                  stroke="#0ea5e9"
+                  stroke="hsl(var(--chart-2))"
                   strokeWidth={3}
-                  dot={{ r: 4, fill: "#0ea5e9", strokeWidth: 2, stroke: "white" }}
-                  activeDot={{ r: 6, fill: "#0ea5e9", stroke: "white", strokeWidth: 2 }}
+                  dot={{ r: 4, fill: "hsl(var(--chart-2))", strokeWidth: 2, stroke: "hsl(var(--card))" }}
+                  activeDot={{ r: 6, fill: "hsl(var(--chart-2))", stroke: "hsl(var(--card))", strokeWidth: 2 }}
                 />
                 <Line
                   type="monotone"
                   dataKey="depenses"
                   name="Dépenses prévues"
-                  stroke="#ef4444"
+                  stroke="hsl(var(--destructive))"
                   strokeWidth={3}
-                  dot={{ r: 4, fill: "#ef4444", strokeWidth: 2, stroke: "white" }}
-                  activeDot={{ r: 6, fill: "#ef4444", stroke: "white", strokeWidth: 2 }}
+                  dot={{ r: 4, fill: "hsl(var(--destructive))", strokeWidth: 2, stroke: "hsl(var(--card))" }}
+                  activeDot={{ r: 6, fill: "hsl(var(--destructive))", stroke: "hsl(var(--card))", strokeWidth: 2 }}
                 />
                 <Line
                   type="monotone"
                   dataKey="resultatNet"
                   name="Résultat net prévu"
-                  stroke="#10b981"
+                  stroke="hsl(var(--chart-4))"
                   strokeWidth={3}
                   strokeDasharray="5 5"
-                  dot={{ r: 4, fill: "#10b981", strokeWidth: 2, stroke: "white" }}
-                  activeDot={{ r: 6, fill: "#10b981", stroke: "white", strokeWidth: 2 }}
+                  dot={{ r: 4, fill: "hsl(var(--chart-4))", strokeWidth: 2, stroke: "hsl(var(--card))" }}
+                  activeDot={{ r: 6, fill: "hsl(var(--chart-4))", stroke: "hsl(var(--card))", strokeWidth: 2 }}
                 />
               </LineChart>
             </ResponsiveContainer>
           </motion.div>
 
           <motion.div variants={fadeIn} className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 shadow-sm">
+            <Card className="bg-info/10 border-info/30">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-blue-700">Revenus prévus</h3>
-                  <div className={`flex items-center ${revenueTrend >= 0 ? "text-green-600" : "text-red-600"}`}>
+                  <h3 className="text-lg font-semibold text-info">Revenus prévus</h3>
+                  <div className={`flex items-center ${revenueTrend >= 0 ? "text-success" : "text-destructive"}`}>
                     {revenueTrend >= 0 ? (
                       <TrendingUp className="h-5 w-5 mr-1" />
                     ) : (
@@ -222,8 +222,8 @@ export default function BudgetForecast() {
                     <span className="font-medium">{Math.abs(revenueTrend).toFixed(1)}%</span>
                   </div>
                 </div>
-                <p className="text-3xl font-bold text-blue-800">{totals.revenus.toLocaleString()} €</p>
-                <div className="mt-4 text-sm text-blue-600">
+                <p className="text-3xl font-bold text-info">{totals.revenus.toLocaleString()} €</p>
+                <div className="mt-4 text-sm text-info">
                   <div className="flex items-center">
                     <ArrowRight className="h-4 w-4 mr-1" />
                     <span>Moyenne mensuelle: {(totals.revenus / 6).toLocaleString()} €</span>
@@ -232,11 +232,11 @@ export default function BudgetForecast() {
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200 shadow-sm">
+            <Card className="bg-destructive/10 border-destructive/30">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-red-700">Dépenses prévues</h3>
-                  <div className={`flex items-center ${expenseTrend <= 0 ? "text-green-600" : "text-red-600"}`}>
+                  <h3 className="text-lg font-semibold text-destructive">Dépenses prévues</h3>
+                  <div className={`flex items-center ${expenseTrend <= 0 ? "text-success" : "text-destructive"}`}>
                     {expenseTrend >= 0 ? (
                       <TrendingUp className="h-5 w-5 mr-1" />
                     ) : (
@@ -245,8 +245,8 @@ export default function BudgetForecast() {
                     <span className="font-medium">{Math.abs(expenseTrend).toFixed(1)}%</span>
                   </div>
                 </div>
-                <p className="text-3xl font-bold text-red-800">{totals.depenses.toLocaleString()} €</p>
-                <div className="mt-4 text-sm text-red-600">
+                <p className="text-3xl font-bold text-destructive">{totals.depenses.toLocaleString()} €</p>
+                <div className="mt-4 text-sm text-destructive">
                   <div className="flex items-center">
                     <ArrowRight className="h-4 w-4 mr-1" />
                     <span>Moyenne mensuelle: {(totals.depenses / 6).toLocaleString()} €</span>
@@ -255,11 +255,11 @@ export default function BudgetForecast() {
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 shadow-sm">
+            <Card className="bg-success/10 border-success/30">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-green-700">Résultat net prévu</h3>
-                  <div className={`flex items-center ${profitTrend >= 0 ? "text-green-600" : "text-red-600"}`}>
+                  <h3 className="text-lg font-semibold text-success">Résultat net prévu</h3>
+                  <div className={`flex items-center ${profitTrend >= 0 ? "text-success" : "text-destructive"}`}>
                     {profitTrend >= 0 ? (
                       <TrendingUp className="h-5 w-5 mr-1" />
                     ) : (
@@ -268,8 +268,8 @@ export default function BudgetForecast() {
                     <span className="font-medium">{Math.abs(profitTrend).toFixed(1)}%</span>
                   </div>
                 </div>
-                <p className="text-3xl font-bold text-green-800">{totals.resultatNet.toLocaleString()} €</p>
-                <div className="mt-4 text-sm text-green-600">
+                <p className="text-3xl font-bold text-success">{totals.resultatNet.toLocaleString()} €</p>
+                <div className="mt-4 text-sm text-success">
                   <div className="flex items-center">
                     <ArrowRight className="h-4 w-4 mr-1" />
                     <span>Moyenne mensuelle: {(totals.resultatNet / 6).toLocaleString()} €</span>
@@ -281,8 +281,8 @@ export default function BudgetForecast() {
 
           <motion.div variants={fadeIn}>
             {totals.resultatNet < 0 ? (
-              <Alert className="bg-red-50 border-red-200 text-red-800">
-                <AlertTriangle className="h-5 w-5 text-red-500" />
+              <Alert className="bg-destructive/10 border-destructive/30 text-destructive">
+                <AlertTriangle className="h-5 w-5 text-destructive" />
                 <div>
                   <AlertTitle className="text-lg font-semibold">Alerte de déficit prévu</AlertTitle>
                   <AlertDescription>
@@ -292,8 +292,8 @@ export default function BudgetForecast() {
                 </div>
               </Alert>
             ) : (
-              <Alert className="bg-green-50 border-green-200 text-green-800">
-                <TrendingUp className="h-5 w-5 text-green-500" />
+              <Alert className="bg-success/10 border-success/30 text-success">
+                <TrendingUp className="h-5 w-5 text-success" />
                 <div>
                   <AlertTitle className="text-lg font-semibold">Prévisions positives</AlertTitle>
                   <AlertDescription>

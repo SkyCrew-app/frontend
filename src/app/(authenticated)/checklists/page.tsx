@@ -29,21 +29,21 @@ function getStatusBadge(status: string) {
   switch (status) {
     case ChecklistSubmissionStatus.COMPLETED:
       return (
-        <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 gap-1">
+        <Badge className="bg-success/15 text-success gap-1">
           <CheckCircle2 className="h-3 w-3" />
           Terminée
         </Badge>
       )
     case ChecklistSubmissionStatus.IN_PROGRESS:
       return (
-        <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 gap-1">
+        <Badge className="bg-info/15 text-info gap-1">
           <Clock className="h-3 w-3" />
           En cours
         </Badge>
       )
     case ChecklistSubmissionStatus.CANCELLED:
       return (
-        <Badge className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">
+        <Badge className="bg-destructive/15 text-destructive">
           Annulée
         </Badge>
       )
@@ -123,7 +123,7 @@ export default function ChecklistsPage() {
 
   if (loadingSubmissions) {
     return (
-      <div className="container mx-auto py-6 space-y-6">
+      <div className="space-y-6">
         <Skeleton className="h-12 w-64" />
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {[...Array(3)].map((_, i) => (
@@ -136,8 +136,8 @@ export default function ChecklistsPage() {
 
   if (errorSubmissions) {
     return (
-      <Card className="border-red-200 bg-red-50 dark:bg-red-950 dark:border-red-800">
-        <CardContent className="p-6 text-red-800 dark:text-red-300 flex items-center">
+      <Card className="border-destructive/30 bg-destructive/10">
+        <CardContent className="p-6 text-destructive flex items-center">
           <AlertTriangle className="h-6 w-6 mr-3" />
           <div>
             <h3 className="font-semibold">Erreur de chargement</h3>
@@ -149,7 +149,7 @@ export default function ChecklistsPage() {
   }
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="space-y-6">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -157,7 +157,7 @@ export default function ChecklistsPage() {
       >
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="flex items-center gap-2 text-2xl font-bold sm:text-3xl md:text-4xl">
+            <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
               <ClipboardCheck className="h-6 w-6 text-primary sm:h-7 sm:w-7 md:h-8 md:w-8" />
               Checklists pré-vol
             </h1>
@@ -177,16 +177,14 @@ export default function ChecklistsPage() {
       {inProgress.length > 0 && (
         <div className="space-y-3">
           <h2 className="text-lg font-semibold flex items-center gap-2">
-            <Clock className="h-5 w-5 text-blue-500" />
+            <Clock className="h-5 w-5 text-info" />
             En cours
           </h2>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {inProgress.map((sub) => {
               const { checked, total } = getProgress(sub)
               return (
-                <Card
-                  key={sub.id}
-                  className="cursor-pointer hover:shadow-md transition-shadow border-l-4 border-l-blue-500"
+                <Card key={sub.id} className="cursor-pointer hover:shadow-md transition-shadow border-l-4 border-l-info"
                   onClick={() => router.push(`/checklists/${sub.id}`)}
                 >
                   <CardHeader className="pb-2">
@@ -216,16 +214,14 @@ export default function ChecklistsPage() {
       {completed.length > 0 && (
         <div className="space-y-3">
           <h2 className="text-lg font-semibold flex items-center gap-2">
-            <CheckCircle2 className="h-5 w-5 text-green-500" />
+            <CheckCircle2 className="h-5 w-5 text-success" />
             Terminées
           </h2>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {completed.map((sub) => {
               const { checked, total } = getProgress(sub)
               return (
-                <Card
-                  key={sub.id}
-                  className="cursor-pointer hover:shadow-md transition-shadow"
+                <Card key={sub.id} className="cursor-pointer hover:shadow-md transition-shadow"
                   onClick={() => router.push(`/checklists/${sub.id}`)}
                 >
                   <CardHeader className="pb-2">
@@ -288,7 +284,7 @@ export default function ChecklistsPage() {
               </Select>
               {loadingTemplates && <p className="text-xs text-muted-foreground">Chargement des modèles...</p>}
               {templates.length === 0 && !loadingTemplates && (
-                <p className="text-xs text-red-500">Aucun modèle de checklist actif disponible.</p>
+                <p className="text-xs text-destructive">Aucun modèle de checklist actif disponible.</p>
               )}
             </div>
           </div>

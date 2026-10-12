@@ -90,8 +90,8 @@ export default function MaintenanceTablePage() {
 
   if (error) {
     return (
-      <div className="container mx-auto py-6 space-y-4" role="alert">
-        <h1 className="text-2xl font-bold">Erreur de chargement</h1>
+      <div className="space-y-4" role="alert">
+        <h1 className="text-2xl font-semibold tracking-tight">Erreur de chargement</h1>
         <p className="text-muted-foreground">
           Impossible de charger les maintenances. Veuillez réessayer plus tard.
         </p>
@@ -238,10 +238,10 @@ export default function MaintenanceTablePage() {
   const completedCount = maintenances.filter((m) => m.status === "COMPLETED").length
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Gestion des Maintenances</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Gestion des maintenances</h1>
           <p className="text-muted-foreground mt-1">Suivez et gérez les maintenances de votre flotte d'aéronefs</p>
         </div>
         <div className="flex items-center gap-2">
@@ -251,7 +251,7 @@ export default function MaintenanceTablePage() {
           </Button>
           <Button size="sm" onClick={handleCreateMaintenance} aria-label="Créer une nouvelle maintenance">
             <PlusIcon className="h-4 w-4 mr-2" aria-hidden="true" />
-            Nouvelle Maintenance
+            Nouvelle maintenance
           </Button>
         </div>
       </div>

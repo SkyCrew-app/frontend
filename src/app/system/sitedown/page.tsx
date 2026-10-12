@@ -106,7 +106,7 @@ export default function SiteDownPage() {
   // Rendu conditionnel basé sur l'état de la page
   if (pageState === "loading") {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-muted/50 to-background">
         <div className="flex flex-col items-center gap-2">
           <Loader2 className="h-10 w-10 animate-spin text-primary" />
           <p className="text-sm text-muted-foreground">Vérification de l'état du service...</p>
@@ -117,11 +117,11 @@ export default function SiteDownPage() {
 
   if (pageState === "error") {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-slate-50 to-white p-4 dark:from-slate-950 dark:to-slate-900">
-        <div className="w-full max-w-md rounded-lg border border-red-200 bg-red-50 p-6 text-center dark:border-red-900 dark:bg-red-950/30">
-          <AlertCircle className="mx-auto mb-4 h-12 w-12 text-red-600 dark:text-red-400" />
-          <h2 className="mb-2 text-xl font-bold text-red-800 dark:text-red-300">Erreur de connexion</h2>
-          <p className="mb-4 text-sm text-red-700 dark:text-red-300">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-muted/50 to-background p-4">
+        <div className="w-full max-w-md rounded-lg border border-destructive/30 bg-destructive/10 p-6 text-center">
+          <AlertCircle className="mx-auto mb-4 h-12 w-12 text-destructive" />
+          <h2 className="mb-2 text-xl font-bold text-destructive">Erreur de connexion</h2>
+          <p className="mb-4 text-sm text-destructive">
             Impossible de se connecter au serveur pour vérifier l'état du service.
             {error && <span className="block mt-2 text-xs">{error.message}</span>}
           </p>
@@ -143,13 +143,13 @@ export default function SiteDownPage() {
 
   if (pageState === "available") {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-slate-50 to-white p-4 dark:from-slate-950 dark:to-slate-900">
-        <div className="w-full max-w-md rounded-lg border border-green-200 bg-green-50 p-6 text-center dark:border-green-900 dark:bg-green-950/30">
-          <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-green-600 dark:text-green-400" />
-          <h2 className="mb-2 text-xl font-bold text-green-800 dark:text-green-300">Service disponible</h2>
-          <p className="mb-4 text-sm text-green-700 dark:text-green-300">{statusMessage}</p>
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-muted/50 to-background p-4">
+        <div className="w-full max-w-md rounded-lg border border-success/30 bg-success/10 p-6 text-center">
+          <CheckCircle2 className="mx-auto mb-4 h-12 w-12 text-success" />
+          <h2 className="mb-2 text-xl font-bold text-success">Service disponible</h2>
+          <p className="mb-4 text-sm text-success">{statusMessage}</p>
           <div className="flex justify-center">
-            <Loader2 className="h-5 w-5 animate-spin text-green-600 dark:text-green-400" />
+            <Loader2 className="h-5 w-5 animate-spin text-success" />
           </div>
         </div>
       </div>
@@ -158,17 +158,17 @@ export default function SiteDownPage() {
 
   // État par défaut : service indisponible
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-slate-50 to-white p-4 dark:from-slate-950 dark:to-slate-900">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-muted/50 to-background p-4">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
         className="w-full max-w-md"
       >
-        <Card className="border-t-4 border-t-amber-500 shadow-lg dark:shadow-amber-900/10">
+        <Card className="border-t-4 border-t-warning">
           <CardHeader className="pb-4 text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
-              <ServerOff className="h-8 w-8 text-amber-600 dark:text-amber-400" />
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-warning/15">
+              <ServerOff className="h-8 w-8 text-warning" />
             </div>
             <CardTitle className="text-2xl">Service indisponible</CardTitle>
             <CardDescription className="text-base">
@@ -176,8 +176,8 @@ export default function SiteDownPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 pb-6 text-center">
-            <div className="rounded-lg bg-amber-50 p-4 dark:bg-amber-950/30">
-              <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
+            <div className="rounded-lg bg-warning/10 p-4">
+              <div className="flex items-center gap-2 text-warning">
                 <AlertTriangle className="h-5 w-5" />
                 <p className="text-sm font-medium">
                   Nos équipes techniques ont été notifiées et travaillent à résoudre le problème.
@@ -188,7 +188,7 @@ export default function SiteDownPage() {
             {statusMessage && (
               <div className="text-sm font-medium">
                 <p>
-                  Message du serveur: <span className="text-amber-600 dark:text-amber-400">{statusMessage}</span>
+                  Message du serveur: <span className="text-warning">{statusMessage}</span>
                 </p>
               </div>
             )}

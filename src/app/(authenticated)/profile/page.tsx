@@ -97,7 +97,7 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-4 space-y-6">
+      <div className="space-y-6">
         <Skeleton className="h-8 w-1/3 mx-auto mb-8" />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[...Array(6)].map((_, i) => (
@@ -111,8 +111,8 @@ export default function ProfilePage() {
 
   if (isMobile) {
     return (
-      <div className="container mx-auto p-4">
-        <h1 className="text-2xl font-bold text-center mb-6">Mon Profil</h1>
+      <div className="w-full">
+        <h1 className="mb-6 text-2xl font-semibold tracking-tight">Mon profil</h1>
 
         <Tabs defaultValue="profile" className="w-full" onValueChange={setActiveTab} value={activeTab}>
           <TabsList className="grid grid-cols-3 mb-6">
@@ -153,7 +153,7 @@ export default function ProfilePage() {
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg text-center max-w-sm mx-auto"
+              className="bg-card p-6 rounded-lg shadow-lg text-center max-w-sm mx-auto"
             >
               <p className="text-lg mb-4">Voulez-vous vraiment activer le 2FA ?</p>
               <div className="flex justify-center space-x-4">
@@ -170,8 +170,8 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="container mx-auto p-4 relative">
-      <h1 className="text-3xl font-bold text-center mb-8">Mon Profil</h1>
+    <div className="relative">
+      <h1 className="mb-6 text-2xl font-semibold tracking-tight">Mon profil</h1>
 
       {!activeSection && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
@@ -331,7 +331,7 @@ export default function ProfilePage() {
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg text-center max-w-md"
+            className="bg-card p-8 rounded-lg shadow-lg text-center max-w-md"
           >
             <h3 className="text-xl font-semibold mb-4">Activation du 2FA</h3>
             <p className="mb-6">Voulez-vous vraiment activer l'authentification à deux facteurs ?</p>

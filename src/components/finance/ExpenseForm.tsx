@@ -77,19 +77,19 @@ export default function ExpenseForm() {
   }
 
   const categories = [
-    { value: "maintenance", label: "Maintenance", icon: <Receipt className="h-4 w-4 text-blue-500" /> },
-    { value: "carburant", label: "Carburant", icon: <Receipt className="h-4 w-4 text-orange-500" /> },
-    { value: "assurance", label: "Assurance", icon: <Receipt className="h-4 w-4 text-green-500" /> },
-    { value: "salaires", label: "Salaires", icon: <Receipt className="h-4 w-4 text-purple-500" /> },
-    { value: "autres", label: "Autres", icon: <Receipt className="h-4 w-4 text-gray-500" /> },
+    { value: "maintenance", label: "Maintenance", icon: <Receipt className="h-4 w-4 text-info" /> },
+    { value: "carburant", label: "Carburant", icon: <Receipt className="h-4 w-4 text-brand" /> },
+    { value: "assurance", label: "Assurance", icon: <Receipt className="h-4 w-4 text-success" /> },
+    { value: "salaires", label: "Salaires", icon: <Receipt className="h-4 w-4 text-primary" /> },
+    { value: "autres", label: "Autres", icon: <Receipt className="h-4 w-4 text-muted-foreground" /> },
   ]
 
   return (
     <motion.div initial="hidden" animate="visible" variants={fadeIn}>
-      <Card className="max-w-2xl mx-auto shadow-lg">
-        <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 rounded-t-lg">
+      <Card className="max-w-2xl mx-auto">
+        <CardHeader className="bg-info/10 rounded-t-lg">
           <CardTitle className="flex items-center text-xl">
-            <PlusCircle className="mr-2 h-5 w-5 text-blue-500" />
+            <PlusCircle className="mr-2 h-5 w-5 text-info" />
             Ajouter une Dépense
           </CardTitle>
           <CardDescription>Enregistrez une nouvelle dépense pour le suivi financier de l'aéroclub</CardDescription>
@@ -201,8 +201,8 @@ export default function ExpenseForm() {
             )}
 
             {success && (
-              <Alert className="bg-green-50 border-green-200 text-green-800">
-                <CheckCircle2 className="h-4 w-4 text-green-500" />
+              <Alert className="bg-success/10 border-success/30 text-success">
+                <CheckCircle2 className="h-4 w-4 text-success" />
                 <AlertTitle>Succès</AlertTitle>
                 <AlertDescription>La dépense a été ajoutée avec succès!</AlertDescription>
               </Alert>
@@ -226,7 +226,7 @@ export default function ExpenseForm() {
             type="submit"
             onClick={handleSubmit}
             disabled={loading || !amount || !category}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
+            className="bg-info hover:bg-info/90 text-info-foreground"
           >
             {loading ? (
               <>

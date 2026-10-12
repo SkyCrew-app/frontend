@@ -36,7 +36,7 @@ export function ChecklistItemRow({
     <div
       className={cn(
         "rounded-lg border p-3 transition-colors",
-        checked ? "bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800" : "bg-background",
+        checked ? "bg-success/10 border-success/30 " : "bg-background",
       )}
     >
       <div className="flex items-start gap-3">
@@ -56,7 +56,7 @@ export function ChecklistItemRow({
             )}
           >
             {label}
-            {isRequired && <span className="text-red-500 ml-1">*</span>}
+            {isRequired && <span className="text-destructive ml-1">*</span>}
           </Label>
           {description && (
             <p className="text-xs text-muted-foreground mt-0.5">{description}</p>

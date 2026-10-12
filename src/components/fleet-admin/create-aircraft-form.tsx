@@ -350,7 +350,7 @@ export function CreateAircraftForm({ isOpen, onClose, onSuccess }: CreateAircraf
                     <div className="space-y-3">
                       <Label htmlFor="image">Image de l'aéronef</Label>
                       <div
-                        className="relative flex h-40 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700"
+                        className="relative flex h-40 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-border bg-muted/50 hover:bg-muted"
                         onClick={() => imageInputRef.current?.click()}
                       >
                         {imagePreview ? (
@@ -378,11 +378,11 @@ export function CreateAircraftForm({ isOpen, onClose, onSuccess }: CreateAircraf
                           </>
                         ) : (
                           <div className="flex flex-col items-center justify-center pb-6 pt-5">
-                            <Upload className="mb-2 h-8 w-8 text-gray-400" />
-                            <p className="mb-1 text-sm text-gray-500 dark:text-gray-400">
+                            <Upload className="mb-2 h-8 w-8 text-muted-foreground" />
+                            <p className="mb-1 text-sm text-muted-foreground">
                               <span className="font-semibold">Cliquez pour télécharger</span>
                             </p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">PNG, JPG ou JPEG</p>
+                            <p className="text-xs text-muted-foreground">PNG, JPG ou JPEG</p>
                           </div>
                         )}
                         <input
@@ -403,15 +403,15 @@ export function CreateAircraftForm({ isOpen, onClose, onSuccess }: CreateAircraf
                     <div className="space-y-3">
                       <Label htmlFor="document">Document (manuel, certificat, etc.)</Label>
                       <div
-                        className="relative flex h-40 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-800 dark:hover:bg-gray-700"
+                        className="relative flex h-40 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-border bg-muted/50 hover:bg-muted"
                         onClick={() => documentInputRef.current?.click()}
                       >
                         <div className="flex flex-col items-center justify-center pb-6 pt-5">
-                          <Upload className="mb-2 h-8 w-8 text-gray-400" />
-                          <p className="mb-1 text-sm text-gray-500 dark:text-gray-400">
+                          <Upload className="mb-2 h-8 w-8 text-muted-foreground" />
+                          <p className="mb-1 text-sm text-muted-foreground">
                             <span className="font-semibold">Cliquez pour télécharger</span>
                           </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">PDF, DOC ou DOCX</p>
+                          <p className="text-xs text-muted-foreground">PDF, DOC ou DOCX</p>
                           {documentFile && (
                             <div className="mt-2 flex items-center gap-1 text-sm font-medium text-primary">
                               <span className="truncate max-w-[150px]">{documentFile.name}</span>

@@ -102,7 +102,7 @@ export function AircraftDetailDialog({ aircraft, isOpen, onOpenChange }: Aircraf
                     {aircraft.documents_url.map((url, index) => (
                       <div key={index} className="flex items-center justify-between p-2 border rounded-md">
                         <div className="flex items-center">
-                          <FileText className="h-5 w-5 mr-2 text-blue-500" />
+                          <FileText className="h-5 w-5 mr-2 text-info" />
                           <span className="truncate max-w-[200px] sm:max-w-[300px]">
                             Document {index + 1} - {url.split("/").pop()}
                           </span>
@@ -111,7 +111,7 @@ export function AircraftDetailDialog({ aircraft, isOpen, onOpenChange }: Aircraf
                           href={`${getBackendBaseUrl()}${url}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-blue-500 hover:text-blue-700 flex items-center ml-2 flex-shrink-0"
+                          className="text-info hover:text-info flex items-center ml-2 flex-shrink-0"
                           aria-label={`Ouvrir le document ${index + 1}`}
                         >
                           <ExternalLink className="h-4 w-4" />

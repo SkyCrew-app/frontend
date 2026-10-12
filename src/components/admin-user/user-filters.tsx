@@ -56,7 +56,7 @@ export function UserFilters({
               <Filter className="h-4 w-4" />
               Filtres
               {(filterRole !== null || filterConfirmed !== null || filter2FA !== null) && (
-                <Badge className="ml-1 bg-primary text-white">
+                <Badge className="ml-1 bg-primary text-primary-foreground">
                   {[filterRole, filterConfirmed, filter2FA].filter((f) => f !== null).length}
                 </Badge>
               )}

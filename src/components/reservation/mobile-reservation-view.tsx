@@ -41,13 +41,13 @@ export function MobileReservationView({
   const getStatusColor = (status: string) => {
     switch (status) {
       case "CONFIRMED":
-        return "bg-green-100 text-green-800 border-green-200"
+        return "bg-success/15 text-success border-success/30"
       case "PENDING":
-        return "bg-amber-100 text-amber-800 border-amber-200"
+        return "bg-warning/15 text-warning border-warning/30"
       case "CANCELLED":
-        return "bg-red-100 text-red-800 border-red-200"
+        return "bg-destructive/15 text-destructive border-destructive/30"
       default:
-        return "bg-blue-100 text-blue-800 border-blue-200"
+        return "bg-info/15 text-info border-info/30"
     }
   }
 

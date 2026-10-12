@@ -177,7 +177,7 @@ export default function FlightRecap() {
       <Card>
         <CardHeader>
           <div className="flex items-center space-x-2">
-            <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+            <CheckCircle className="h-6 w-6 text-success" />
             <CardTitle>Vol déjà clôturé</CardTitle>
           </div>
           <CardDescription>
@@ -198,10 +198,10 @@ export default function FlightRecap() {
 
   if (isSubmitted) {
     return (
-      <Card className="border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800">
+      <Card className="border-success/30 bg-success/10">
         <CardHeader>
           <div className="flex items-center space-x-2">
-            <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+            <CheckCircle className="h-6 w-6 text-success" />
             <CardTitle>Vol clôturé avec succès</CardTitle>
           </div>
           <CardDescription>Le vol a été clôturé et enregistré dans le système.</CardDescription>
@@ -218,7 +218,7 @@ export default function FlightRecap() {
             </div>
             <div className="flex justify-between items-center">
               <span className="font-medium">Statut:</span>
-              <Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+              <Badge variant="outline" className="bg-success/15 text-success">
                 Terminé
               </Badge>
             </div>
@@ -242,10 +242,10 @@ export default function FlightRecap() {
 
   return (
     <ScrollArea className="h-[calc(100vh-4rem)] px-4 py-6">
-      <div className="container mx-auto max-w-4xl">
+      <div className="mx-auto max-w-4xl">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Clôture de vol</h1>
-          <Badge variant="outline" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">
+          <h1 className="text-2xl font-semibold tracking-tight">Clôture de vol</h1>
+          <Badge variant="outline" className="bg-warning/15 text-warning">
             En cours
           </Badge>
         </div>

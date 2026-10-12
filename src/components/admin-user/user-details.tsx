@@ -303,14 +303,14 @@ export function UserDetailsDialog({
                               {license.expiration_date && new Date(license.expiration_date) < new Date() ? (
                                 <Badge
                                   variant="outline"
-                                  className="bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800/30"
+                                  className="bg-destructive/15 text-destructive border-destructive/30"
                                 >
                                   Expirée
                                 </Badge>
                               ) : (
                                 <Badge
                                   variant="outline"
-                                  className="bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800/30"
+                                  className="bg-success/15 text-success border-success/30"
                                 >
                                   Valide
                                 </Badge>

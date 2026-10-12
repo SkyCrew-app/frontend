@@ -131,7 +131,7 @@ describe('FleetDashboard Component', () => {
   test('affiche les squelettes de chargement puis le contenu une fois les données reçues', async () => {
     renderPage();
 
-    expect(screen.getByRole('heading', { name: 'Tableau de Bord de la Flotte' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Flotte' })).toBeInTheDocument();
 
     // Pendant le chargement : 5 lignes squelettes, aucun graphique, compteurs à zéro.
     const loadingRows = getBodyRows();
@@ -185,7 +185,7 @@ describe('FleetDashboard Component', () => {
     // Compteurs des onglets.
     expect(screen.getByRole('tab', { name: /^Tous\s*10$/ })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /^Disponibles\s*6$/ })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /^En Maintenance\s*3$/ })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /^En maintenance\s*3$/ })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /^Réservés\s*1$/ })).toBeInTheDocument();
 
     // Données transmises aux graphiques.
@@ -261,9 +261,9 @@ describe('FleetDashboard Component', () => {
     renderPage();
     await screen.findByText('F-GABC');
 
-    await user.click(screen.getByRole('tab', { name: /^En Maintenance/ }));
+    await user.click(screen.getByRole('tab', { name: /^En maintenance/ }));
 
-    expect(screen.getByRole('tab', { name: /^En Maintenance/ })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: /^En maintenance/ })).toHaveAttribute('aria-selected', 'true');
     expect(getBodyRows()).toHaveLength(3);
     expect(screen.getByText('F-HMNT')).toBeInTheDocument();
     expect(screen.getByText('F-HMN7')).toBeInTheDocument();

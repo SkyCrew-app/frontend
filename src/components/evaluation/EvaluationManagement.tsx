@@ -437,7 +437,7 @@ export function EvaluationManagement() {
             ))}
           </div>
         ) : queryError ? (
-          <Card className="bg-red-50 border-red-200 text-red-800 dark:bg-red-900/20 dark:border-red-800 dark:text-red-300">
+          <Card className="bg-destructive/10 border-destructive/30 text-destructive">
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Info className="h-5 w-5 mr-2" />
@@ -489,7 +489,7 @@ export function EvaluationManagement() {
                           <CardHeader className="pb-2">
                             <div className="flex justify-between items-start">
                               <CardTitle className="text-lg flex items-center">
-                                <Book className="w-5 h-5 mr-2 text-blue-500" />
+                                <Book className="w-5 h-5 mr-2 text-info" />
                                 <span className="line-clamp-1">{evaluation.module?.title || "Module inconnu"}</span>
                               </CardTitle>
                               <Badge variant="outline">
@@ -530,7 +530,7 @@ export function EvaluationManagement() {
                               <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden flex flex-col">
                                 <DialogHeader>
                                   <DialogTitle className="flex items-center">
-                                    <ClipboardList className="w-5 h-5 mr-2 text-blue-500" />
+                                    <ClipboardList className="w-5 h-5 mr-2 text-info" />
                                     Questions de l'évaluation
                                   </DialogTitle>
                                 </DialogHeader>
@@ -599,7 +599,7 @@ export function EvaluationManagement() {
                                             >
                                               <AccordionTrigger className="px-4 py-2 hover:bg-muted/50">
                                                 <div className="flex items-center text-left">
-                                                  <Badge className="mr-3 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                                                  <Badge className="mr-3 bg-info/15 text-info">
                                                     {index + 1}
                                                   </Badge>
                                                   <span className="font-medium line-clamp-1">
@@ -617,12 +617,12 @@ export function EvaluationManagement() {
                                                           <div
                                                             className={`flex items-center p-2 rounded-md ${
                                                               option === question.correct_answer
-                                                                ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-300"
+                                                                ? "bg-success/10 text-success"
                                                                 : "bg-muted/50"
                                                             } w-full`}
                                                           >
                                                             {option === question.correct_answer && (
-                                                              <Check className="w-4 h-4 mr-2 text-green-500 shrink-0" />
+                                                              <Check className="w-4 h-4 mr-2 text-success shrink-0" />
                                                             )}
                                                             <span>{option}</span>
                                                           </div>
@@ -662,7 +662,7 @@ export function EvaluationManagement() {
                                                               <Button
                                                                 variant="outline"
                                                                 size="sm"
-                                                                className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
                                                                 disabled={deleteQuestionLoading}
                                                               >
                                                                 <Trash2 className="w-4 h-4 mr-2" />
@@ -687,7 +687,7 @@ export function EvaluationManagement() {
                                                           <AlertDialogCancel>Annuler</AlertDialogCancel>
                                                           <AlertDialogAction
                                                             onClick={() => handleDeleteQuestion(question.id)}
-                                                            className="bg-red-500 hover:bg-red-600"
+                                                            className="bg-destructive hover:bg-destructive/90"
                                                           >
                                                             {deleteQuestionLoading ? (
                                                               <>
@@ -745,7 +745,7 @@ export function EvaluationManagement() {
                                         <Button
                                           variant="outline"
                                           size="sm"
-                                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
                                           disabled={deleteEvalLoading}
                                         >
                                           <Trash2 className="w-4 h-4 mr-2" />
@@ -770,7 +770,7 @@ export function EvaluationManagement() {
                                     <AlertDialogCancel>Annuler</AlertDialogCancel>
                                     <AlertDialogAction
                                       onClick={() => handleDeleteEvaluation(evaluation.id)}
-                                      className="bg-red-500 hover:bg-red-600"
+                                      className="bg-destructive hover:bg-destructive/90"
                                     >
                                       {deleteEvalLoading ? (
                                         <>
@@ -798,17 +798,17 @@ export function EvaluationManagement() {
       </TabsContent>
 
       <TabsContent value="create">
-        <Card className="border-t-4 border-t-primary shadow-md">
+        <Card className="border-t-4 border-t-primary">
           <CardHeader>
             <CardTitle className="flex items-center">
               {step === 1 ? (
                 <>
-                  <PlusCircle className="w-5 h-5 mr-2 text-blue-500" />
+                  <PlusCircle className="w-5 h-5 mr-2 text-info" />
                   Créer une nouvelle évaluation
                 </>
               ) : (
                 <>
-                  <HelpCircle className="w-5 h-5 mr-2 text-blue-500" />
+                  <HelpCircle className="w-5 h-5 mr-2 text-info" />
                   Ajouter des questions à l'évaluation
                 </>
               )}
@@ -824,7 +824,7 @@ export function EvaluationManagement() {
               <form onSubmit={handleCreateEvaluation} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="module-select">
-                    Module associé <span className="text-red-500">*</span>
+                    Module associé <span className="text-destructive">*</span>
                   </Label>
                   <Select value={selectedModuleId} onValueChange={setSelectedModuleId} required>
                     <SelectTrigger id="module-select">
@@ -850,7 +850,7 @@ export function EvaluationManagement() {
 
                 <div className="space-y-2">
                   <Label htmlFor="pass-score">
-                    Score de réussite (%) <span className="text-red-500">*</span>
+                    Score de réussite (%) <span className="text-destructive">*</span>
                   </Label>
                   <Input
                     id="pass-score"
@@ -891,9 +891,9 @@ export function EvaluationManagement() {
             ) : (
               <form onSubmit={handleCreateQuestion} className="space-y-4">
                 {currentEvaluation && (
-                  <div className="bg-blue-50 p-3 rounded-md mb-4 dark:bg-blue-900/20">
+                  <div className="bg-info/10 p-3 rounded-md mb-4">
                     <h3 className="font-medium flex items-center">
-                      <Book className="w-4 h-4 mr-2 text-blue-500" />
+                      <Book className="w-4 h-4 mr-2 text-info" />
                       {currentEvaluation.module?.title || "Module inconnu"}
                     </h3>
                     <p className="text-sm text-muted-foreground mt-1">
@@ -906,7 +906,7 @@ export function EvaluationManagement() {
 
                 <div className="space-y-2">
                   <Label htmlFor="question-content">
-                    Question <span className="text-red-500">*</span>
+                    Question <span className="text-destructive">*</span>
                   </Label>
                   <Textarea
                     id="question-content"
@@ -921,7 +921,7 @@ export function EvaluationManagement() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label>
-                      Options de réponse <span className="text-red-500">*</span>
+                      Options de réponse <span className="text-destructive">*</span>
                     </Label>
                     <Button type="button" onClick={addOption} variant="outline" size="sm" className="h-7 text-xs">
                       <PlusCircle className="h-3 w-3 mr-1" />
@@ -945,7 +945,7 @@ export function EvaluationManagement() {
                           className="h-9 w-9 shrink-0"
                           onClick={() => removeOption(index)}
                         >
-                          <Trash2 className="h-4 w-4 text-red-500" />
+                          <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </div>
                     ))}
@@ -954,7 +954,7 @@ export function EvaluationManagement() {
 
                 <div className="space-y-2">
                   <Label>
-                    Réponse correcte <span className="text-red-500">*</span>
+                    Réponse correcte <span className="text-destructive">*</span>
                   </Label>
                   <RadioGroup value={correctAnswer} onValueChange={setCorrectAnswer} className="space-y-2">
                     {options.map(
@@ -1041,7 +1041,7 @@ export function EvaluationManagement() {
 
               <div className="space-y-2">
                 <Label htmlFor="edit-pass-score">
-                  Score de réussite (%) <span className="text-red-500">*</span>
+                  Score de réussite (%) <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="edit-pass-score"
@@ -1093,7 +1093,7 @@ export function EvaluationManagement() {
             <form onSubmit={handleUpdateQuestion} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-question-content">
-                  Question <span className="text-red-500">*</span>
+                  Question <span className="text-destructive">*</span>
                 </Label>
                 <Textarea
                   id="edit-question-content"
@@ -1115,7 +1115,7 @@ export function EvaluationManagement() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label>
-                    Options de réponse <span className="text-red-500">*</span>
+                    Options de réponse <span className="text-destructive">*</span>
                   </Label>
                   <Button
                     type="button"
@@ -1189,7 +1189,7 @@ export function EvaluationManagement() {
                           })
                         }}
                       >
-                        <Trash2 className="h-4 w-4 text-red-500" />
+                        <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>
                   ))}
@@ -1198,7 +1198,7 @@ export function EvaluationManagement() {
 
               <div className="space-y-2">
                 <Label>
-                  Réponse correcte <span className="text-red-500">*</span>
+                  Réponse correcte <span className="text-destructive">*</span>
                 </Label>
                 <RadioGroup
                   value={editingQuestion.correct_answer}

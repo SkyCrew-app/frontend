@@ -58,8 +58,8 @@ export default function FlightHoursStatsWidget({ userId }: FlightHoursStatsWidge
   if (totalHours === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-6 text-center">
-        <Clock className="h-8 w-8 text-gray-400 mb-2" />
-        <p className="text-sm text-gray-500">Aucune heure de vol enregistrée</p>
+        <Clock className="h-8 w-8 text-muted-foreground mb-2" />
+        <p className="text-sm text-muted-foreground">Aucune heure de vol enregistrée</p>
       </div>
     )
   }
@@ -67,7 +67,7 @@ export default function FlightHoursStatsWidget({ userId }: FlightHoursStatsWidge
   return (
     <div>
       <div className="flex items-center gap-2 mb-4">
-        <Clock className="h-5 w-5 text-blue-500" />
+        <Clock className="h-5 w-5 text-info" />
         <span className="text-2xl font-bold">{totalHours}h</span>
         <span className="text-sm text-muted-foreground">au total</span>
       </div>

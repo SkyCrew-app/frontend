@@ -194,7 +194,7 @@ export function EditAuditDialog({ isOpen, onClose, audit, onSuccess }: EditAudit
               <div className="grid gap-4 sm:gap-6 sm:grid-cols-2">
                 <div className="space-y-1 sm:space-y-2">
                   <Label htmlFor="audit-date">
-                    Date d'audit <span className="text-red-500">*</span>
+                    Date d'audit <span className="text-destructive">*</span>
                   </Label>
                   <DatePicker
                     date={formData.auditDate}
@@ -206,7 +206,7 @@ export function EditAuditDialog({ isOpen, onClose, audit, onSuccess }: EditAudit
 
                 <div className="space-y-1 sm:space-y-2">
                   <Label htmlFor="audit-result">
-                    Résultat d'audit <span className="text-red-500">*</span>
+                    Résultat d'audit <span className="text-destructive">*</span>
                   </Label>
                   <Select
                     value={formData.auditResult}
@@ -231,7 +231,7 @@ export function EditAuditDialog({ isOpen, onClose, audit, onSuccess }: EditAudit
 
                 <div className="space-y-1 sm:space-y-2">
                   <Label htmlFor="audit-frequency">
-                    Fréquence d'audit <span className="text-red-500">*</span>
+                    Fréquence d'audit <span className="text-destructive">*</span>
                   </Label>
                   <Select
                     value={formData.auditFrequency}
@@ -372,7 +372,7 @@ export function EditAuditDialog({ isOpen, onClose, audit, onSuccess }: EditAudit
                               id={`item-${index}-requires-action`}
                               checked={item.requires_action}
                               onChange={(e) => handleAuditItemChange(index, "requires_action", e.target.checked)}
-                              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                              className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
                             />
                             <Label htmlFor={`item-${index}-requires-action`} className="text-xs">
                               Nécessite une action corrective

@@ -64,7 +64,7 @@ export function FlightSummary({
   }
 
   return (
-    <Card className="shadow-lg hover:shadow-xl transition-shadow duration-300">
+    <Card className="hover:shadow-md transition-shadow duration-300">
       <CardContent className="p-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
           <div className="flex items-center mb-4 md:mb-0">
@@ -107,8 +107,8 @@ export function FlightSummary({
           <div className="col-span-1 space-y-2">
             <p className="text-sm text-muted-foreground">Départ</p>
             <div className="flex items-center">
-              <div className="bg-green-100 dark:bg-green-900 p-2 rounded-full mr-3">
-                <span className="text-green-700 dark:text-green-300 font-bold">{departure}</span>
+              <div className="bg-success/15 p-2 rounded-full mr-3">
+                <span className="text-success font-bold">{departure}</span>
               </div>
               <div>
                 <p className="font-semibold">{formatTime(departureTime)}</p>
@@ -126,9 +126,9 @@ export function FlightSummary({
 
           <div className="col-span-1 flex justify-center items-center">
             <div className="relative w-full">
-              <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-gray-300 dark:bg-gray-600 transform -translate-y-1/2"></div>
-              <div className="absolute top-1/2 left-0 w-3 h-3 rounded-full bg-green-500 transform -translate-y-1/2"></div>
-              <div className="absolute top-1/2 right-0 w-3 h-3 rounded-full bg-red-500 transform -translate-y-1/2"></div>
+              <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-muted-foreground/30 transform -translate-y-1/2"></div>
+              <div className="absolute top-1/2 left-0 w-3 h-3 rounded-full bg-success transform -translate-y-1/2"></div>
+              <div className="absolute top-1/2 right-0 w-3 h-3 rounded-full bg-destructive transform -translate-y-1/2"></div>
               <Plane className="absolute top-1/2 left-1/2 h-6 w-6 text-primary transform -translate-x-1/2 -translate-y-1/2 rotate-90" />
             </div>
           </div>
@@ -136,8 +136,8 @@ export function FlightSummary({
           <div className="col-span-1 space-y-2">
             <p className="text-sm text-muted-foreground">Arrivée</p>
             <div className="flex items-center">
-              <div className="bg-red-100 dark:bg-red-900 p-2 rounded-full mr-3">
-                <span className="text-red-700 dark:text-red-300 font-bold">{arrival}</span>
+              <div className="bg-destructive/15 p-2 rounded-full mr-3">
+                <span className="text-destructive font-bold">{arrival}</span>
               </div>
               <div>
                 <p className="font-semibold">{formatTime(arrivalTime)}</p>

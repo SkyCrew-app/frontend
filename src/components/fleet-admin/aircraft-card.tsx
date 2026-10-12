@@ -30,19 +30,19 @@ export function AircraftCard({ aircraft, onEdit, onDelete, onViewDetails }: Airc
   const getStatusColor = (status: AvailabilityStatus) => {
     switch (status) {
       case AvailabilityStatus.AVAILABLE:
-        return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
+        return "bg-success/15 text-success"
       case AvailabilityStatus.UNAVAILABLE:
-        return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
+        return "bg-destructive/15 text-destructive"
       case AvailabilityStatus.RESERVED:
-        return "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300"
+        return "bg-warning/15 text-warning"
       default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
+        return "bg-muted text-foreground"
     }
   }
 
   const getMaintenanceStatusColor = (status: string) => {
-    if (status === "OK") return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
-    return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
+    if (status === "OK") return "bg-success/15 text-success"
+    return "bg-destructive/15 text-destructive"
   }
 
   return (
@@ -53,7 +53,7 @@ export function AircraftCard({ aircraft, onEdit, onDelete, onViewDetails }: Airc
       className="w-full"
     >
       <Card className="h-full w-full overflow-hidden transition-all hover:shadow-md">
-        <div className="relative h-32 w-full overflow-hidden bg-gray-100 dark:bg-gray-800 sm:h-40">
+        <div className="relative h-32 w-full overflow-hidden bg-muted sm:h-40">
           {aircraft.image_url ? (
             <Image
               src={aircraft.image_url || "/placeholder.svg"}
@@ -64,7 +64,7 @@ export function AircraftCard({ aircraft, onEdit, onDelete, onViewDetails }: Airc
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center">
-              <Plane className="h-12 w-12 text-gray-400 sm:h-16 sm:w-16" />
+              <Plane className="h-12 w-12 text-muted-foreground sm:h-16 sm:w-16" />
             </div>
           )}
           <div className="absolute left-2 top-2 flex flex-wrap gap-1 max-w-[calc(100%-16px)]">

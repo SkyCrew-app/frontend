@@ -253,14 +253,14 @@ export function CreateAuditDialog({ isOpen, onClose, onSuccess }: CreateAuditDia
               <div className="grid gap-4 sm:gap-6 sm:grid-cols-2">
                 <div className="space-y-1 sm:space-y-2">
                   <Label htmlFor="aircraft">
-                    Aéronef <span className="text-red-500">*</span>
+                    Aéronef <span className="text-destructive">*</span>
                   </Label>
                   <Select
                     value={formData.aircraftId}
                     onValueChange={(value) => handleInputChange("aircraftId", value)}
                     required
                   >
-                    <SelectTrigger id="aircraft" className={validationErrors.aircraftId ? "border-red-500" : ""}>
+                    <SelectTrigger id="aircraft" className={validationErrors.aircraftId ? "border-destructive" : ""}>
                       <SelectValue placeholder="Sélectionner un aéronef" />
                     </SelectTrigger>
                     <SelectContent>
@@ -271,19 +271,19 @@ export function CreateAuditDialog({ isOpen, onClose, onSuccess }: CreateAuditDia
                       ))}
                     </SelectContent>
                   </Select>
-                  {validationErrors.aircraftId && <p className="text-xs text-red-500">{validationErrors.aircraftId}</p>}
+                  {validationErrors.aircraftId && <p className="text-xs text-destructive">{validationErrors.aircraftId}</p>}
                 </div>
 
                 <div className="space-y-1 sm:space-y-2">
                   <Label htmlFor="auditor">
-                    Auditeur <span className="text-red-500">*</span>
+                    Auditeur <span className="text-destructive">*</span>
                   </Label>
                   <Select
                     value={formData.auditorId}
                     onValueChange={(value) => handleInputChange("auditorId", value)}
                     required
                   >
-                    <SelectTrigger id="auditor" className={validationErrors.auditorId ? "border-red-500" : ""}>
+                    <SelectTrigger id="auditor" className={validationErrors.auditorId ? "border-destructive" : ""}>
                       <SelectValue placeholder="Sélectionner un auditeur" />
                     </SelectTrigger>
                     <SelectContent>
@@ -294,12 +294,12 @@ export function CreateAuditDialog({ isOpen, onClose, onSuccess }: CreateAuditDia
                       ))}
                     </SelectContent>
                   </Select>
-                  {validationErrors.auditorId && <p className="text-xs text-red-500">{validationErrors.auditorId}</p>}
+                  {validationErrors.auditorId && <p className="text-xs text-destructive">{validationErrors.auditorId}</p>}
                 </div>
 
                 <div className="space-y-1 sm:space-y-2">
                   <Label htmlFor="audit-date">
-                    Date d'audit <span className="text-red-500">*</span>
+                    Date d'audit <span className="text-destructive">*</span>
                   </Label>
                   <DatePicker
                     date={formData.auditDate}
@@ -311,7 +311,7 @@ export function CreateAuditDialog({ isOpen, onClose, onSuccess }: CreateAuditDia
 
                 <div className="space-y-1 sm:space-y-2">
                   <Label htmlFor="audit-result">
-                    Résultat d'audit <span className="text-red-500">*</span>
+                    Résultat d'audit <span className="text-destructive">*</span>
                   </Label>
                   <Select
                     value={formData.auditResult}
@@ -336,7 +336,7 @@ export function CreateAuditDialog({ isOpen, onClose, onSuccess }: CreateAuditDia
 
                 <div className="space-y-1 sm:space-y-2">
                   <Label htmlFor="audit-frequency">
-                    Fréquence d'audit <span className="text-red-500">*</span>
+                    Fréquence d'audit <span className="text-destructive">*</span>
                   </Label>
                   <Select
                     value={formData.auditFrequency}
@@ -534,7 +534,7 @@ export function CreateAuditDialog({ isOpen, onClose, onSuccess }: CreateAuditDia
                 </div>
               )}
 
-              <div className="bg-amber-50 border border-amber-200 rounded-md p-4 text-amber-800">
+              <div className="bg-warning/10 border border-warning/30 rounded-md p-4 text-warning">
                 <p className="text-sm flex items-center gap-2">
                   <FileText className="h-4 w-4" />
                   <span>

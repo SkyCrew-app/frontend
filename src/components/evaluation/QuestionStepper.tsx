@@ -150,7 +150,7 @@ function DesktopQuestionStepper({
                   isCurrent
                     ? "w-10 h-10 bg-primary text-primary-foreground shadow-md z-10"
                     : isAnswered
-                      ? "w-8 h-8 bg-green-500/20 text-green-600 hover:bg-green-500/30"
+                      ? "w-8 h-8 bg-success/20 text-success hover:bg-success/30"
                       : isPast
                         ? "w-8 h-8 bg-primary/20 text-primary hover:bg-primary/30"
                         : "w-8 h-8 bg-muted text-muted-foreground hover:bg-muted/80",
@@ -172,7 +172,7 @@ function DesktopQuestionStepper({
 
                 {/* Status indicator */}
                 {!isCurrent && isAnswered && (
-                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
+                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-success rounded-full border-2 border-white" />
                 )}
               </motion.button>
             </React.Fragment>

@@ -104,17 +104,17 @@ export function AuditStatistics() {
       {
         name: "Conforme",
         value: data.auditStatistics.conformCount,
-        color: "#22c55e", // vert
+        color: "hsl(var(--chart-4))", // vert
       },
       {
         name: "Non conforme",
         value: data.auditStatistics.nonConformCount,
-        color: "#ef4444", // rouge
+        color: "hsl(var(--destructive))", // rouge
       },
       {
         name: "Avec remarques",
         value: data.auditStatistics.conformWithRemarksCount,
-        color: "#f59e0b", // ambre
+        color: "hsl(var(--chart-5))", // ambre
       },
     ]
   }
@@ -126,26 +126,26 @@ export function AuditStatistics() {
       {
         name: "Ouverts",
         value: data.auditStatistics.openAudits,
-        color: "#3b82f6", // bleu
+        color: "hsl(var(--chart-2))", // bleu
       },
       {
         name: "Clôturés",
         value: data.auditStatistics.closedAudits,
-        color: "#8b5cf6", // violet
+        color: "hsl(var(--chart-6))", // violet
       },
     ]
   }
 
   const getRandomColor = (id: number) => {
     const colors = [
-      "#3b82f6", // bleu
-      "#ef4444", // rouge
-      "#8b5cf6", // violet
-      "#f59e0b", // ambre
-      "#10b981", // émeraude
-      "#ec4899", // rose
-      "#6366f1", // indigo
-      "#1E3A5F", // bleu profond
+      "hsl(var(--chart-2))", // bleu
+      "hsl(var(--destructive))", // rouge
+      "hsl(var(--chart-6))", // violet
+      "hsl(var(--chart-5))", // ambre
+      "hsl(var(--chart-4))", // émeraude
+      "hsl(var(--chart-3))", // rose
+      "hsl(var(--chart-6))", // indigo
+      "hsl(var(--chart-1))", // bleu profond
     ]
     return colors[id % colors.length]
   }
@@ -158,15 +158,15 @@ export function AuditStatistics() {
   const renderAuditResultIcon = (result: string) => {
     switch (result) {
       case "Conforme":
-        return <CheckCircle className="h-3 w-3 text-green-500" />
+        return <CheckCircle className="h-3 w-3 text-success" />
       case "Non conforme":
-        return <AlertTriangle className="h-3 w-3 text-red-500" />
+        return <AlertTriangle className="h-3 w-3 text-destructive" />
       case "Avec remarques":
-        return <AlertCircle className="h-3 w-3 text-amber-500" />
+        return <AlertCircle className="h-3 w-3 text-warning" />
       case "Ouverts":
-        return <AlertCircle className="h-3 w-3 text-blue-500" />
+        return <AlertCircle className="h-3 w-3 text-info" />
       case "Clôturés":
-        return <CheckCircle className="h-3 w-3 text-violet-500" />
+        return <CheckCircle className="h-3 w-3 text-primary" />
       default:
         return null
     }
@@ -191,7 +191,7 @@ export function AuditStatistics() {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white dark:bg-gray-800 p-2 border shadow-sm rounded-md text-2xs sm:text-xs">
+        <div className="bg-card p-2 border shadow-sm rounded-md text-2xs sm:text-xs">
           <p className="font-medium">{label}</p>
           {payload.map((entry: any, index: number) => (
             <div key={index} className="flex items-center gap-1 mt-1">
@@ -217,9 +217,9 @@ export function AuditStatistics() {
 
   if (error) {
     return (
-      <Card className="border-t-4 border-t-red-500 shadow-sm">
+      <Card className="border-t-4 border-t-destructive">
         <CardHeader className="px-3 py-3 sm:px-5 sm:py-4 md:px-6">
-          <CardTitle className="text-base sm:text-lg md:text-xl flex items-center gap-1.5 text-red-500">
+          <CardTitle className="text-base sm:text-lg md:text-xl flex items-center gap-1.5 text-destructive">
             <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5" />
             Erreur de chargement des statistiques
           </CardTitle>
@@ -234,7 +234,7 @@ export function AuditStatistics() {
   }
 
   return (
-    <Card className="border-t-4 border-t-primary shadow-sm">
+    <Card className="border-t-4 border-t-primary">
       <CardHeader className="px-3 py-3 sm:px-5 sm:py-4 md:px-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
@@ -309,22 +309,22 @@ export function AuditStatistics() {
                       bottom: 20,
                     }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                     <XAxis
                       dataKey="month"
                       tick={{ fontSize: isMobile ? 10 : 12 }}
                       tickLine={false}
-                      axisLine={{ stroke: "#e5e7eb" }}
+                      axisLine={{ stroke: "hsl(var(--border))" }}
                       tickMargin={8}
                     />
                     <YAxis
                       tick={{ fontSize: isMobile ? 10 : 12 }}
                       tickLine={false}
-                      axisLine={{ stroke: "#e5e7eb" }}
+                      axisLine={{ stroke: "hsl(var(--border))" }}
                       tickMargin={8}
                     />
                     <Tooltip content={<CustomTooltip />} />
-                    <Bar dataKey="count" name="Nombre d'audits" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="count" name="Nombre d'audits" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -341,7 +341,7 @@ export function AuditStatistics() {
               <NoDataMessage />
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-                <Card className="shadow-sm">
+                <Card >
                   <CardHeader className="pb-1.5 px-3 sm:px-4">
                     <CardTitle className="text-xs sm:text-sm">Distribution par résultat</CardTitle>
                   </CardHeader>
@@ -355,7 +355,7 @@ export function AuditStatistics() {
                             cy="50%"
                             labelLine={false}
                             outerRadius={isMobile ? 70 : 80}
-                            fill="#8884d8"
+                            fill="hsl(var(--chart-6))"
                             dataKey="value"
                           >
                             {resultsData.map((entry, index) => (
@@ -370,7 +370,7 @@ export function AuditStatistics() {
                   </CardContent>
                 </Card>
 
-                <Card className="shadow-sm">
+                <Card >
                   <CardHeader className="pb-1.5 px-3 sm:px-4">
                     <CardTitle className="text-xs sm:text-sm">Distribution par statut</CardTitle>
                   </CardHeader>
@@ -384,7 +384,7 @@ export function AuditStatistics() {
                             cy="50%"
                             labelLine={false}
                             outerRadius={isMobile ? 70 : 80}
-                            fill="#8884d8"
+                            fill="hsl(var(--chart-6))"
                             dataKey="value"
                           >
                             {statusData.map((entry, index) => (
@@ -431,8 +431,8 @@ export function AuditStatistics() {
                       width={isMobile ? 40 : 60}
                     />
                     <Tooltip content={<CustomTooltip />} />
-                    <Bar dataKey="value" name="Total d'audits" fill="#3b82f6" radius={[0, 4, 4, 0]} />
-                    <Bar dataKey="nonConform" name="Non conformes" fill="#ef4444" radius={[0, 4, 4, 0]} />
+                    <Bar dataKey="value" name="Total d'audits" fill="hsl(var(--chart-2))" radius={[0, 4, 4, 0]} />
+                    <Bar dataKey="nonConform" name="Non conformes" fill="hsl(var(--destructive))" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>

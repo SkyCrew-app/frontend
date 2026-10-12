@@ -88,7 +88,7 @@ export function NotificationForm({ userData, refetch }: NotificationFormProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <Card className="w-full shadow-md">
+      <Card className="w-full">
         <CardHeader className="pb-4">
           <CardTitle className="text-xl font-semibold">Paramètres de notifications</CardTitle>
         </CardHeader>
@@ -98,7 +98,7 @@ export function NotificationForm({ userData, refetch }: NotificationFormProps) {
               <Label htmlFor="email_notifications_enabled" className="text-base font-medium cursor-pointer">
                 Notifications par email
               </Label>
-              <p className="text-sm text-gray-500 mt-1">Recevez des mises à jour par email</p>
+              <p className="text-sm text-muted-foreground mt-1">Recevez des mises à jour par email</p>
             </div>
             <Switch
               id="email_notifications_enabled"
@@ -114,7 +114,7 @@ export function NotificationForm({ userData, refetch }: NotificationFormProps) {
               <Label htmlFor="sms_notifications_enabled" className="text-base font-medium cursor-pointer">
                 Notifications par SMS
               </Label>
-              <p className="text-sm text-gray-500 mt-1">Recevez des alertes importantes par SMS</p>
+              <p className="text-sm text-muted-foreground mt-1">Recevez des alertes importantes par SMS</p>
             </div>
             <Switch
               id="sms_notifications_enabled"
@@ -129,7 +129,7 @@ export function NotificationForm({ userData, refetch }: NotificationFormProps) {
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-green-50 text-green-700 p-3 rounded-md text-sm border border-green-200"
+              className="bg-success/10 text-success p-3 rounded-md text-sm border border-success/30"
             >
               Vos préférences de notification ont été enregistrées avec succès.
             </motion.div>

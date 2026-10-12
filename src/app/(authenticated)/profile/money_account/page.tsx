@@ -36,9 +36,9 @@ export default function MoneyAccountPage() {
         animate="visible"
         variants={containerVariants}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.h1 className="text-3xl font-bold mb-8 text-center md:text-left" variants={itemVariants}>
-            Gestion Financière
+        <div className="w-full">
+          <motion.h1 className="mb-6 text-2xl font-semibold tracking-tight" variants={itemVariants}>
+            Gestion financière
           </motion.h1>
 
           <motion.div className="grid gap-8 md:grid-cols-2" variants={itemVariants}>
@@ -56,8 +56,8 @@ export default function MoneyAccountPage() {
 
   return (
     <div className="min-h-screen py-6">
-      <div className="max-w-7xl mx-auto px-4">
-        <h1 className="text-2xl font-bold mb-6 text-center">Gestion Financière</h1>
+      <div className="w-full">
+        <h1 className="mb-6 text-2xl font-semibold tracking-tight">Gestion financière</h1>
 
         <Tabs defaultValue="overview" className="w-full" onValueChange={setActiveTab} value={activeTab}>
           <TabsList className="grid grid-cols-3 mb-6">

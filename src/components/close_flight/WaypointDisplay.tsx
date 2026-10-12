@@ -22,7 +22,7 @@ export default function WaypointsDisplay({ waypoints }: WaypointsDisplayProps) {
     parsedWaypoints = JSON.parse(waypoints)
   } catch (error) {
     console.error("Erreur lors de l'analyse des points de cheminement:", error)
-    return <div className="text-red-500">Format de points de cheminement invalide</div>
+    return <div className="text-destructive">Format de points de cheminement invalide</div>
   }
 
   if (!Array.isArray(parsedWaypoints) || parsedWaypoints.length === 0) {

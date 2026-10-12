@@ -170,7 +170,7 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
             >
               <Bell className="h-5 w-5 text-foreground/70" />
               {unreadNotificationsCount > 0 && (
-                <span className="absolute top-0 right-0 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 text-[10px] font-bold text-white bg-gradient-to-r from-red-500 to-pink-500 rounded-full border-2 border-card">
+                <span className="absolute top-0 right-0 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 text-[10px] font-bold text-destructive-foreground bg-destructive rounded-full border-2 border-card">
                   {unreadNotificationsCount > 99 ? "99+" : unreadNotificationsCount}
                 </span>
               )}
@@ -295,7 +295,7 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
             className="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-secondary"
           >
             <User className="h-4 w-4 text-muted-foreground" />
-            <span>Mon Profil</span>
+            <span>Mon profil</span>
           </CustomDropdownItem>
           <CustomDropdownItem
             onClick={handleAmount}
@@ -303,7 +303,7 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
           >
             <CreditCard className="h-4 w-4 text-muted-foreground" />
             <div className="flex flex-col">
-              <span>Mon Solde</span>
+              <span>Mon solde</span>
               <span className="text-sm font-semibold text-primary">{userAccountBalance} €</span>
             </div>
           </CustomDropdownItem>

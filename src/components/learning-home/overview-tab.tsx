@@ -62,10 +62,10 @@ export function OverviewTab({ data }: OverviewTabProps) {
         className="grid grid-cols-1 md:grid-cols-2 gap-6"
       >
         <motion.div variants={cardVariant}>
-          <Card className="h-full shadow-md hover:shadow-lg transition-shadow border-t-4 border-t-primary flex flex-col">
+          <Card className="h-full hover:shadow-md transition-shadow border-t-4 border-t-primary flex flex-col">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg flex items-center">
-                <BookOpen className="mr-2 h-5 w-5 text-blue-500" />
+                <BookOpen className="mr-2 h-5 w-5 text-info" />
                 Progression d'apprentissage
               </CardTitle>
             </CardHeader>
@@ -107,10 +107,10 @@ export function OverviewTab({ data }: OverviewTabProps) {
         </motion.div>
 
         <motion.div variants={cardVariant}>
-          <Card className="h-full shadow-md hover:shadow-lg transition-shadow border-t-4 border-t-amber-500">
+          <Card className="h-full hover:shadow-md transition-shadow border-t-4 border-t-warning">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg flex items-center">
-                <ListChecks className="mr-2 h-5 w-5 text-amber-500" />
+                <ListChecks className="mr-2 h-5 w-5 text-warning" />
                 Évaluations
               </CardTitle>
             </CardHeader>
@@ -118,8 +118,8 @@ export function OverviewTab({ data }: OverviewTabProps) {
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-sm">Score moyen</span>
-                  <div className="flex items-center bg-amber-50 dark:bg-amber-950/30 px-2 py-1 rounded-full">
-                    <Star className="h-4 w-4 fill-amber-400 text-amber-400 mr-1" />
+                  <div className="flex items-center bg-warning/10 px-2 py-1 rounded-full">
+                    <Star className="h-4 w-4 fill-warning text-warning mr-1" />
                     <span className="font-medium">{data.evaluations.averageScore.toFixed(2)}%</span>
                   </div>
                 </div>
@@ -128,7 +128,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
                   <span className="text-sm">Évaluations complétées</span>
                   <Badge
                     variant="secondary"
-                    className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                    className="bg-success/15 text-success"
                   >
                     {data.evaluations.completed}
                   </Badge>
@@ -137,7 +137,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
                   <span className="text-sm">Évaluations à venir</span>
                   <Badge
                     variant="outline"
-                    className="border-blue-200 text-blue-800 dark:border-blue-700 dark:text-blue-200"
+                    className="border-info/30 text-info"
                   >
                     {data.evaluations.upcoming}
                   </Badge>
@@ -156,8 +156,8 @@ export function OverviewTab({ data }: OverviewTabProps) {
 
       {/* Prochains cours */}
       <motion.div variants={cardVariant} initial="hidden" animate="visible">
-        <Card className="shadow-md hover:shadow-lg transition-shadow">
-          <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 rounded-t-lg">
+        <Card className="hover:shadow-md transition-shadow">
+          <CardHeader className="bg-info/10 rounded-t-lg">
             <CardTitle className="flex items-center">
               <Calendar className="mr-2 h-5 w-5 text-primary" />
               Prochains cours
@@ -167,7 +167,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
             <div className="space-y-4">
               <div className="flex items-center">
                 <h3 className="text-sm font-medium flex items-center">
-                  <Sparkles className="mr-2 h-4 w-4 text-blue-500" />À venir
+                  <Sparkles className="mr-2 h-4 w-4 text-info" />À venir
                 </h3>
                 <Separator className="flex-1 mx-4" />
               </div>
@@ -190,7 +190,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
 
               <div className="flex items-center pt-2">
                 <h3 className="text-sm font-medium flex items-center">
-                  <Clock className="mr-2 h-4 w-4 text-green-500" />
+                  <Clock className="mr-2 h-4 w-4 text-success" />
                   Récemment complétés
                 </h3>
                 <Separator className="flex-1 mx-4" />
@@ -225,37 +225,37 @@ export function OverviewTab({ data }: OverviewTabProps) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Accès rapides */}
         <motion.div variants={cardVariant} initial="hidden" animate="visible" className="col-span-1">
-          <Card className="h-full shadow-md hover:shadow-lg transition-shadow">
-            <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30 rounded-t-lg">
+          <Card className="h-full hover:shadow-md transition-shadow">
+            <CardHeader className="bg-primary/10 rounded-t-lg">
               <CardTitle className="text-lg flex items-center">
-                <Sparkles className="mr-2 h-5 w-5 text-purple-500" />
+                <Sparkles className="mr-2 h-5 w-5 text-primary" />
                 Accès rapides
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 pt-4">
               <Button
                 variant="outline"
-                className="w-full justify-start hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-950/30 dark:hover:text-blue-300 transition-colors"
+                className="w-full justify-start hover:bg-info/10 hover:text-info transition-colors"
                 onClick={() => router.push(learningRoutes.eLearning)}
                 disabled
               >
-                <Play className="mr-2 h-4 w-4 text-blue-500" />
+                <Play className="mr-2 h-4 w-4 text-info" />
                 Continuer mon apprentissage
               </Button>
               <Button
                 variant="outline"
-                className="w-full justify-start hover:bg-amber-50 hover:text-amber-700 dark:hover:bg-amber-950/30 dark:hover:text-amber-300 transition-colors"
+                className="w-full justify-start hover:bg-warning/10 hover:text-warning transition-colors"
                 onClick={() => router.push(learningRoutes.evaluations)}
               >
-                <ListChecks className="mr-2 h-4 w-4 text-amber-500" />
+                <ListChecks className="mr-2 h-4 w-4 text-warning" />
                 Passer une évaluation
               </Button>
               <Button
                 variant="outline"
-                className="w-full justify-start hover:bg-green-50 hover:text-green-700 dark:hover:bg-green-950/30 dark:hover:text-green-300 transition-colors"
+                className="w-full justify-start hover:bg-success/10 hover:text-success transition-colors"
                 onClick={() => router.push("/instruction/courses")}
               >
-                <Calendar className="mr-2 h-4 w-4 text-green-500" />
+                <Calendar className="mr-2 h-4 w-4 text-success" />
                 Planifier un cours
               </Button>
             </CardContent>
@@ -264,10 +264,10 @@ export function OverviewTab({ data }: OverviewTabProps) {
 
         {/* E-Learning Courses */}
         <motion.div variants={cardVariant} initial="hidden" animate="visible" className="col-span-1 md:col-span-2">
-          <Card className="h-full shadow-md hover:shadow-lg transition-shadow">
-            <CardHeader className="bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-950/30 dark:to-blue-950/30 rounded-t-lg">
+          <Card className="h-full hover:shadow-md transition-shadow">
+            <CardHeader className="bg-info/10 rounded-t-lg">
               <CardTitle className="text-lg flex items-center">
-                <BookOpen className="mr-2 h-5 w-5 text-indigo-500" />
+                <BookOpen className="mr-2 h-5 w-5 text-info" />
                 Cours E-Learning
               </CardTitle>
             </CardHeader>

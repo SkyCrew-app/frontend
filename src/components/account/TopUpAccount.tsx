@@ -272,7 +272,7 @@ export default function TopUpAccount() {
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
       <ClientPayPalProvider>
-        <Card className="h-full shadow-md">
+        <Card className="h-full">
           <CardHeader className="pb-2">
             <CardTitle className="text-xl font-semibold flex items-center">
               <Wallet className="mr-2 h-5 w-5 text-primary" />
@@ -327,7 +327,7 @@ export default function TopUpAccount() {
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="stripe" className="flex items-center">
                     <CreditCard className="mr-2 h-4 w-4" />
-                    Carte Bancaire
+                    Carte bancaire
                   </TabsTrigger>
                   <TabsTrigger value="paypal">
                     <svg

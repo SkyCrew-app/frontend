@@ -90,7 +90,7 @@ export default function InstructionHome() {
   }
 
   return (
-    <div className="container mx-auto p-4 md:p-6 space-y-8">
+    <div className="space-y-8">
       <motion.div
         initial="hidden"
         animate="visible"
@@ -98,8 +98,8 @@ export default function InstructionHome() {
       >
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
-              Centre d'Instruction
+            <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
+              Centre d'instruction
             </h1>
             <p className="text-muted-foreground mt-1">
               Gérez vos formations, cours et évaluations en un seul endroit

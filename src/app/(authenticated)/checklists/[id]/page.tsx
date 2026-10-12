@@ -28,14 +28,14 @@ function getStatusBadge(status: string) {
   switch (status) {
     case ChecklistSubmissionStatus.COMPLETED:
       return (
-        <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 gap-1">
+        <Badge className="bg-success/15 text-success gap-1">
           <CheckCircle2 className="h-3 w-3" />
           Terminée
         </Badge>
       )
     case ChecklistSubmissionStatus.IN_PROGRESS:
       return (
-        <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 gap-1">
+        <Badge className="bg-info/15 text-info gap-1">
           <Clock className="h-3 w-3" />
           En cours
         </Badge>
@@ -110,7 +110,7 @@ export default function ChecklistDetailPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto py-6 space-y-6">
+      <div className="space-y-6">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-[400px] w-full" />
@@ -120,8 +120,8 @@ export default function ChecklistDetailPage() {
 
   if (error || !submission) {
     return (
-      <Card className="border-red-200 bg-red-50 dark:bg-red-950 dark:border-red-800">
-        <CardContent className="p-6 text-red-800 dark:text-red-300 flex items-center">
+      <Card className="border-destructive/30 bg-destructive/10">
+        <CardContent className="p-6 text-destructive flex items-center">
           <AlertTriangle className="h-6 w-6 mr-3" />
           <div>
             <h3 className="font-semibold">Erreur de chargement</h3>
@@ -133,7 +133,7 @@ export default function ChecklistDetailPage() {
   }
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="space-y-6">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}

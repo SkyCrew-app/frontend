@@ -253,7 +253,7 @@ export function ModuleManagement() {
         </div>
 
         {!selectedCourseId ? (
-          <Card className="bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-300">
+          <Card className="bg-info/10 border-info/30 text-info">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg flex items-center">
                 <Info className="h-5 w-5 mr-2" />
@@ -298,7 +298,7 @@ export function ModuleManagement() {
             ))}
           </div>
         ) : error ? (
-          <Card className="bg-red-50 border-red-200 text-red-800 dark:bg-red-900/20 dark:border-red-800 dark:text-red-300">
+          <Card className="bg-destructive/10 border-destructive/30 text-destructive">
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Info className="h-5 w-5 mr-2" />
@@ -354,7 +354,7 @@ export function ModuleManagement() {
                       <Card className="h-full flex flex-col hover:shadow-md transition-shadow">
                         <CardHeader className="pb-2">
                           <CardTitle className="text-lg flex items-center">
-                            <Layers className="w-5 h-5 mr-2 text-blue-500" />
+                            <Layers className="w-5 h-5 mr-2 text-info" />
                             <span className="line-clamp-1">{module.title}</span>
                           </CardTitle>
                           {module.lessons && (
@@ -396,7 +396,7 @@ export function ModuleManagement() {
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
                                       disabled={deleteLoading}
                                     >
                                       <Trash2 className="w-4 h-4 mr-2" />
@@ -421,7 +421,7 @@ export function ModuleManagement() {
                                 <AlertDialogCancel>Annuler</AlertDialogCancel>
                                 <AlertDialogAction
                                   onClick={() => handleDeleteModule(module.id)}
-                                  className="bg-red-500 hover:bg-red-600"
+                                  className="bg-destructive hover:bg-destructive/90"
                                 >
                                   {deleteLoading ? (
                                     <>
@@ -447,10 +447,10 @@ export function ModuleManagement() {
       </TabsContent>
 
       <TabsContent value="create">
-        <Card className="border-t-4 border-t-primary shadow-md">
+        <Card className="border-t-4 border-t-primary">
           <CardHeader>
             <CardTitle className="flex items-center">
-              <PlusCircle className="w-5 h-5 mr-2 text-blue-500" />
+              <PlusCircle className="w-5 h-5 mr-2 text-info" />
               Créer un nouveau module
             </CardTitle>
             <CardDescription>Remplissez les détails du module ci-dessous</CardDescription>
@@ -459,7 +459,7 @@ export function ModuleManagement() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="course-select">
-                  Cours parent <span className="text-red-500">*</span>
+                  Cours parent <span className="text-destructive">*</span>
                 </Label>
                 <Select value={courseId} onValueChange={setCourseId} required defaultValue={selectedCourseId}>
                   <SelectTrigger id="course-select">
@@ -485,7 +485,7 @@ export function ModuleManagement() {
 
               <div className="space-y-2">
                 <Label htmlFor="module-title">
-                  Titre du module <span className="text-red-500">*</span>
+                  Titre du module <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="module-title"
@@ -548,7 +548,7 @@ export function ModuleManagement() {
             <form onSubmit={handleUpdateModule} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-title">
-                  Titre du module <span className="text-red-500">*</span>
+                  Titre du module <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="edit-title"

@@ -111,7 +111,7 @@ export function AircraftList() {
 
   if (error)
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700 dark:border-red-900 dark:bg-red-950/50 dark:text-red-300">
+      <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-destructive">
         Erreur lors du chargement des aéronefs: {error.message}
       </div>
     )

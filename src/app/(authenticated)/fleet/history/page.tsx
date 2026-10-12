@@ -75,11 +75,11 @@ export default function AircraftHistory() {
   };
 
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-8 text-center">Historique des Vols et Maintenances</h1>
+    <div className="w-full">
+      <h1 className="mb-6 text-2xl font-semibold tracking-tight">Historique des vols et maintenances</h1>
       <div className="space-y-6">
         {data.getHistoryAircraft.map((aircraft: any) => (
-          <Card key={aircraft.id} className="shadow-lg hover:shadow-xl transition-shadow duration-300">
+          <Card key={aircraft.id} data-aircraft-card className="overflow-hidden">
             <CardHeader className="bg-primary/10">
               <CardTitle className="flex items-center justify-between">
                 <span>{aircraft.registration_number}</span>
