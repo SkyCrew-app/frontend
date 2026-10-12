@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.6.0](https://github.com/SkyCrew-app/frontend/compare/2.5.0...2.6.0) (2026-10-12)
+
+
+### Features
+
+* **app:** :sparkles: safe top-ups, flight PDF, attachment removal and lesson navigation ([#126](https://github.com/SkyCrew-app/frontend/issues/126)) ([b4d873f](https://github.com/SkyCrew-app/frontend/commit/b4d873f66b2fe85df0a8834beb1c910c7ec14d64))
+
 ## [2.5.0](https://github.com/SkyCrew-app/frontend/compare/2.4.0...2.5.0) (2026-10-11)
 
 
