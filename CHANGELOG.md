@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.7.0](https://github.com/SkyCrew-app/frontend/compare/2.6.0...2.7.0) (2026-10-12)
+
+
+### Features
+
+* **ui:** :lipstick: harmonise the design system across light and dark themes ([#132](https://github.com/SkyCrew-app/frontend/issues/132)) ([6d2279f](https://github.com/SkyCrew-app/frontend/commit/6d2279f31b8cc99e0075601497e403c01027d65d))
+
 ## [2.6.0](https://github.com/SkyCrew-app/frontend/compare/2.5.0...2.6.0) (2026-10-12)
 
 
