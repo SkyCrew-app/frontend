@@ -6,7 +6,6 @@ import { format, addHours, eachHourOfInterval, isSameDay } from "date-fns"
 import { fr } from "date-fns/locale"
 import { CalendarOff, Clock, Plane, Plus } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -98,6 +97,8 @@ export default function ReservationCalendar() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [isNewDialogOpen, setIsNewDialogOpen] = useState(false)
   const [prefill, setPrefill] = useState<NewReservationPrefill | undefined>(undefined)
+  // The new reservation form reads its initial values when it mounts: a new key gives a fresh form.
+  const [newFormKey, setNewFormKey] = useState(0)
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null)
   const [isReservationDialogOpen, setIsReservationDialogOpen] = useState(false)
   const [purpose, setPurpose] = useState("")
@@ -185,6 +186,7 @@ export default function ReservationCalendar() {
     const fromUrl = readPrefillFromUrl()
     if (!fromUrl) return
     setPrefill(fromUrl)
+    setNewFormKey((key) => key + 1)
     setIsNewDialogOpen(true)
     window.history.replaceState(null, "", window.location.pathname)
   }, [])
@@ -586,13 +588,13 @@ export default function ReservationCalendar() {
         <div className="flex flex-col gap-2 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <ul className="flex flex-wrap items-center gap-x-4 gap-y-1" aria-label="Légende">
             {LEGEND_STATUSES.map((status) => (
-              <li key={status} className="flex items-center gap-1.5">
+              <li key={status} className="flex items-center gap-2">
                 <span className={cn("h-2.5 w-2.5 rounded-sm", reservationDotClass(status))} aria-hidden="true" />
                 {reservationStatus(status).label}
               </li>
             ))}
             {currentSlotIndex >= 0 && (
-              <li className="flex items-center gap-1.5">
+              <li className="flex items-center gap-2">
                 <span className="h-2.5 w-2.5 rounded-sm bg-primary/30" aria-hidden="true" />
                 Heure en cours
               </li>
@@ -615,7 +617,13 @@ export default function ReservationCalendar() {
         title="Calendrier des réservations"
         description="Disponibilité des avions du club, jour par jour."
         actions={
-          <Button onClick={() => setIsNewDialogOpen(true)} disabled={aircrafts.length === 0}>
+          <Button
+            onClick={() => {
+              setNewFormKey((key) => key + 1)
+              setIsNewDialogOpen(true)
+            }}
+            disabled={aircrafts.length === 0}
+          >
             <Plus className="h-4 w-4" />
             Nouvelle réservation
           </Button>
@@ -627,119 +635,85 @@ export default function ReservationCalendar() {
       {renderDay()}
 
       {/* Creation from the slots selected in the grid */}
-      <Dialog
+      <ReservationForm
         open={isCreateDialogOpen}
         onOpenChange={(open) => {
           setIsCreateDialogOpen(open)
           if (!open) resetSlotForm()
         }}
-      >
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Créer une réservation</DialogTitle>
-            <DialogDescription>Vérifiez le créneau choisi, puis précisez votre vol.</DialogDescription>
-          </DialogHeader>
-          {slotSelection && (
-            <ReservationForm
-              summary={{
+        title="Créer une réservation"
+        description="Vérifiez le créneau choisi, puis précisez votre vol."
+        summary={
+          slotSelection
+            ? {
                 aircraft: selectedAircraftRegistration,
                 date: longDate(slotSelection.start),
                 start: format(slotSelection.start, "HH:mm"),
                 end: format(slotSelection.end, "HH:mm"),
-              }}
-              purpose={purpose}
-              setPurpose={setPurpose}
-              notes={notes}
-              setNotes={setNotes}
-              flightCategory={flightCategory}
-              setFlightCategory={setFlightCategory}
-              onSubmit={handleCreateFromSlot}
-              onCancel={() => {
-                setIsCreateDialogOpen(false)
-                resetSlotForm()
-              }}
-              isSubmitting={isCreating}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+              }
+            : undefined
+        }
+        purpose={purpose}
+        setPurpose={setPurpose}
+        notes={notes}
+        setNotes={setNotes}
+        flightCategory={flightCategory}
+        setFlightCategory={setFlightCategory}
+        onSubmit={handleCreateFromSlot}
+        isSubmitting={isCreating}
+      />
 
       {/* Creation from the "Nouvelle réservation" button or a template */}
       {aircrafts.length > 0 && (
-        <Dialog
+        <NewReservationForm
+          key={newFormKey}
           open={isNewDialogOpen}
           onOpenChange={(open) => {
             setIsNewDialogOpen(open)
             if (!open) setPrefill(undefined)
           }}
-        >
-          <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Nouvelle réservation</DialogTitle>
-              <DialogDescription>Choisissez l&apos;avion, le jour et l&apos;horaire de votre vol.</DialogDescription>
-            </DialogHeader>
-            <NewReservationForm
-              aircrafts={aircrafts}
-              currentDate={currentDate}
-              prefill={prefill}
-              isClosedDay={isClosedDay}
-              onSubmit={handleCreateFromForm}
-              onCancel={() => {
-                setIsNewDialogOpen(false)
-                setPrefill(undefined)
-              }}
-              isSubmitting={isCreating}
-            />
-          </DialogContent>
-        </Dialog>
+          aircrafts={aircrafts}
+          currentDate={currentDate}
+          prefill={prefill}
+          isClosedDay={isClosedDay}
+          onSubmit={handleCreateFromForm}
+          isSubmitting={isCreating}
+        />
       )}
 
       {selectedReservation && (
-        <Dialog open={isReservationDialogOpen} onOpenChange={setIsReservationDialogOpen}>
-          <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Détails de la réservation</DialogTitle>
-              <DialogDescription className="sr-only">
-                Informations de la réservation sélectionnée dans le calendrier.
-              </DialogDescription>
-            </DialogHeader>
-            <ReservationDetail
-              reservation={selectedReservation}
-              onEdit={() => handleUpdate(selectedReservation)}
-              onDelete={handleDeleteReservation}
-              canEdit={isOwnReservation(selectedReservation)}
-            />
-          </DialogContent>
-        </Dialog>
+        <ReservationDetail
+          open={isReservationDialogOpen}
+          onOpenChange={setIsReservationDialogOpen}
+          reservation={selectedReservation}
+          onEdit={() => handleUpdate(selectedReservation)}
+          onDelete={handleDeleteReservation}
+          canEdit={isOwnReservation(selectedReservation)}
+        />
       )}
 
       {selectedReservation && (
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Modifier la réservation</DialogTitle>
-              <DialogDescription>L&apos;avion et l&apos;horaire ne sont pas modifiables.</DialogDescription>
-            </DialogHeader>
-            <ReservationForm
-              isEdit
-              summary={{
-                aircraft: selectedReservation.aircraft.registration_number,
-                date: longDate(new Date(selectedReservation.start_time)),
-                start: format(new Date(selectedReservation.start_time), "HH:mm"),
-                end: format(new Date(selectedReservation.end_time), "HH:mm"),
-              }}
-              purpose={editPurpose}
-              setPurpose={setEditPurpose}
-              notes={editNotes}
-              setNotes={setEditNotes}
-              flightCategory={editFlightCategory}
-              setFlightCategory={setEditFlightCategory}
-              onSubmit={handleUpdateReservation}
-              onCancel={() => setIsEditDialogOpen(false)}
-              isSubmitting={isUpdating}
-            />
-          </DialogContent>
-        </Dialog>
+        <ReservationForm
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          title="Modifier la réservation"
+          description="L'avion et l'horaire ne sont pas modifiables."
+          isEdit
+          summary={{
+            aircraft: selectedReservation.aircraft.registration_number,
+            date: longDate(new Date(selectedReservation.start_time)),
+            start: format(new Date(selectedReservation.start_time), "HH:mm"),
+            end: format(new Date(selectedReservation.end_time), "HH:mm"),
+          }}
+          purpose={editPurpose}
+          setPurpose={setEditPurpose}
+          notes={editNotes}
+          setNotes={setEditNotes}
+          flightCategory={editFlightCategory}
+          setFlightCategory={setEditFlightCategory}
+          onSubmit={handleUpdateReservation}
+          isSubmitting={isUpdating}
+        />
       )}
     </div>
   )

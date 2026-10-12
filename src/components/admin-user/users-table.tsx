@@ -154,16 +154,16 @@ export function UsersTable({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => onViewDetails(user.id)}>
-                        <Eye className="mr-2 h-4 w-4" />
+                        <Eye className="h-4 w-4" />
                         Voir la fiche
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => onEdit(user)}>
-                        <Pencil className="mr-2 h-4 w-4" />
+                        <Pencil className="h-4 w-4" />
                         Modifier
                       </DropdownMenuItem>
                       {onAddLicense && (
                         <DropdownMenuItem onClick={() => onAddLicense(user.id)}>
-                          <BadgeCheck className="mr-2 h-4 w-4" />
+                          <BadgeCheck className="h-4 w-4" />
                           Ajouter une licence
                         </DropdownMenuItem>
                       )}

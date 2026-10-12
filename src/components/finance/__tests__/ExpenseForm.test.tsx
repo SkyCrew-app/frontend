@@ -47,10 +47,10 @@ const REAL_TIMERS = [
   "cancelIdleCallback",
 ] as const
 
-const renderForm = (mocks: MockedResponse[] = [], props: React.ComponentProps<typeof ExpenseForm> = {}) =>
+const renderForm = (mocks: MockedResponse[] = [], props: Partial<React.ComponentProps<typeof ExpenseForm>> = {}) =>
   render(
     <MockedProvider mocks={mocks} addTypename={false}>
-      <ExpenseForm {...props} />
+      <ExpenseForm open {...props} />
     </MockedProvider>,
   )
 

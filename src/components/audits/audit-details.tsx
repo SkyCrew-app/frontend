@@ -16,14 +16,7 @@ import {
 import { formatDate } from "@/lib/format"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import { SidePanel } from "@/components/layout/SidePanel"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -105,20 +98,35 @@ export function AuditDetails({ isOpen, onClose, audit, onEdit, onClosed }: Audit
   }, {})
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Audit du {formatDate(audit?.audit_date)}</DialogTitle>
-          <DialogDescription>
-            {[audit?.aircraft?.registration_number, audit?.aircraft?.model].filter(Boolean).join(" · ") || "—"}
-          </DialogDescription>
-          <div className="flex flex-wrap justify-center gap-2 pt-1 sm:justify-start">
+    <>
+      <SidePanel
+        open={isOpen}
+        onOpenChange={(open) => !open && onClose()}
+        title={`Audit du ${formatDate(audit?.audit_date)}`}
+        description={
+          [audit?.aircraft?.registration_number, audit?.aircraft?.model].filter(Boolean).join(" · ") || "—"
+        }
+        footer={
+          <>
+            <Button variant="outline" onClick={onEdit}>
+              <Pencil className="h-4 w-4" />
+              Modifier
+            </Button>
+            {!audit?.is_closed && (
+              <Button onClick={() => setIsCloseConfirmOpen(true)} disabled={!userId}>
+                <CheckSquare className="h-4 w-4" />
+                Clôturer l'audit
+              </Button>
+            )}
+          </>
+        }
+      >
+        <div className="space-y-6">
+          <div className="flex flex-wrap gap-2">
             <Badge variant={result.variant}>{result.label}</Badge>
             <Badge variant={status.variant}>{status.label}</Badge>
           </div>
-        </DialogHeader>
 
-        <div className="space-y-6">
           <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3">
             <Fact label="Auditeur">{auditor || "—"}</Fact>
             <Fact label="Fréquence">{auditFrequencyLabel(audit?.audit_frequency)}</Fact>
@@ -214,22 +222,7 @@ export function AuditDetails({ isOpen, onClose, audit, onEdit, onClosed }: Audit
           </section>
         </div>
 
-        <DialogFooter className="gap-2 sm:space-x-0">
-          <Button variant="outline" onClick={onClose}>
-            Fermer
-          </Button>
-          <Button variant="outline" onClick={onEdit}>
-            <Pencil className="h-4 w-4" />
-            Modifier
-          </Button>
-          {!audit?.is_closed && (
-            <Button onClick={() => setIsCloseConfirmOpen(true)} disabled={!userId}>
-              <CheckSquare className="h-4 w-4" />
-              Clôturer l'audit
-            </Button>
-          )}
-        </DialogFooter>
-      </DialogContent>
+      </SidePanel>
 
       <AlertDialog open={isCloseConfirmOpen} onOpenChange={(open) => !open && !closeLoading && setIsCloseConfirmOpen(false)}>
         <AlertDialogContent>
@@ -256,6 +249,6 @@ export function AuditDetails({ isOpen, onClose, audit, onEdit, onClosed }: Audit
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Dialog>
+    </>
   )
 }

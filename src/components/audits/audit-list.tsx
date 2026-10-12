@@ -206,7 +206,7 @@ export function AuditList({
                       <button
                         type="button"
                         onClick={() => handleSort(column.field)}
-                        className="inline-flex items-center gap-1 rounded-sm hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        className="inline-flex items-center gap-2 rounded-sm hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       >
                         {column.label}
                         {sortField === column.field &&

@@ -54,7 +54,7 @@ export default function RecentFlightsWidget({ userId }: RecentFlightsWidgetProps
             href={`/reservations/flight-plans/${flight.id}`}
             icon={Plane}
             title={
-              <span className="inline-flex items-center gap-1.5">
+              <span className="inline-flex items-center gap-2">
                 {flight.origin_icao || "—"}
                 <ArrowRight className="h-3 w-3 text-muted-foreground" aria-label="vers" />
                 {flight.destination_icao || "—"}

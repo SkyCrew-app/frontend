@@ -1,12 +1,11 @@
 "use client"
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
+import { useEffect, useState, type ReactNode } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Loader2 } from "lucide-react"
+import { SidePanel } from "@/components/layout/SidePanel"
 import { FlightCategoryError } from "@/components/reservation/flight-category-error"
 import { FLIGHT_CATEGORY_OPTIONS } from "@/components/reservation/flight-category"
 
@@ -19,6 +18,10 @@ export interface ReservationSlotSummary {
 }
 
 interface ReservationFormProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  title: string
+  description?: ReactNode
   isEdit?: boolean
   /** The slot being booked or edited, shown read-only above the fields. */
   summary?: ReservationSlotSummary
@@ -28,12 +31,16 @@ interface ReservationFormProps {
   setNotes: (value: string) => void
   flightCategory: string
   setFlightCategory: (value: string) => void
-  onSubmit: () => void
-  onCancel: () => void
+  onSubmit: () => void | Promise<void>
   isSubmitting: boolean
 }
 
+/** Side panel with the purpose, category and notes of a reservation whose slot is already chosen. */
 export function ReservationForm({
+  open,
+  onOpenChange,
+  title,
+  description,
   isEdit = false,
   summary,
   purpose,
@@ -43,107 +50,113 @@ export function ReservationForm({
   flightCategory,
   setFlightCategory,
   onSubmit,
-  onCancel,
   isSubmitting,
 }: ReservationFormProps) {
   const [categoryError, setCategoryError] = useState(false)
 
+  useEffect(() => {
+    if (open) setCategoryError(false)
+  }, [open])
+
   // The category is a required enum of the API.
-  const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault()
+  const handleSubmit = async () => {
     if (!flightCategory) {
       setCategoryError(true)
       return
     }
-    onSubmit()
+    await onSubmit()
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-      {summary && (
-        <dl className="grid grid-cols-2 gap-x-4 gap-y-3 rounded-lg bg-muted/50 p-3 text-sm">
-          <div>
-            <dt className="text-xs text-muted-foreground">Avion</dt>
-            <dd className="font-medium">{summary.aircraft}</dd>
-          </div>
-          <div>
-            <dt className="text-xs text-muted-foreground">Date</dt>
-            <dd className="font-medium">{summary.date}</dd>
-          </div>
-          <div>
-            <dt className="text-xs text-muted-foreground">Début</dt>
-            <dd className="font-medium tabular-nums">{summary.start}</dd>
-          </div>
-          <div>
-            <dt className="text-xs text-muted-foreground">Fin</dt>
-            <dd className="font-medium tabular-nums">{summary.end}</dd>
-          </div>
-        </dl>
-      )}
+    <SidePanel
+      open={open}
+      onOpenChange={(next) => {
+        if (!next && isSubmitting) return
+        onOpenChange(next)
+      }}
+      title={title}
+      description={description}
+      size="md"
+      onSubmit={handleSubmit}
+      submitLabel={isEdit ? "Enregistrer" : "Créer la réservation"}
+      submitting={isSubmitting}
+    >
+      <div className="space-y-4">
+        {summary && (
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-3 rounded-lg bg-muted/50 p-3 text-sm">
+            <div>
+              <dt className="text-xs text-muted-foreground">Avion</dt>
+              <dd className="font-medium">{summary.aircraft}</dd>
+            </div>
+            <div>
+              <dt className="text-xs text-muted-foreground">Date</dt>
+              <dd className="font-medium">{summary.date}</dd>
+            </div>
+            <div>
+              <dt className="text-xs text-muted-foreground">Début</dt>
+              <dd className="font-medium tabular-nums">{summary.start}</dd>
+            </div>
+            <div>
+              <dt className="text-xs text-muted-foreground">Fin</dt>
+              <dd className="font-medium tabular-nums">{summary.end}</dd>
+            </div>
+          </dl>
+        )}
 
-      <div className="space-y-2">
-        <Label htmlFor="purpose">But de la réservation</Label>
-        <Input
-          id="purpose"
-          placeholder="Ex. : tours de piste, navigation vers Deauville"
-          value={purpose}
-          onChange={(e) => setPurpose(e.target.value)}
-        />
-      </div>
+        <div className="space-y-2">
+          <Label htmlFor="purpose">But de la réservation</Label>
+          <Input
+            id="purpose"
+            placeholder="Ex. : tours de piste, navigation vers Deauville"
+            value={purpose}
+            onChange={(e) => setPurpose(e.target.value)}
+          />
+        </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="category">
-          Catégorie de vol{" "}
-          <span className="text-destructive" aria-hidden="true">
-            *
-          </span>
-        </Label>
-        <Select
-          value={flightCategory || undefined}
-          onValueChange={(value) => {
-            setFlightCategory(value)
-            setCategoryError(false)
-          }}
-        >
-          <SelectTrigger
-            id="category"
-            aria-invalid={categoryError}
-            aria-required="true"
-            className={categoryError ? "border-destructive" : ""}
+        <div className="space-y-2">
+          <Label htmlFor="category">
+            Catégorie de vol{" "}
+            <span className="text-destructive" aria-hidden="true">
+              *
+            </span>
+          </Label>
+          <Select
+            value={flightCategory || undefined}
+            onValueChange={(value) => {
+              setFlightCategory(value)
+              setCategoryError(false)
+            }}
           >
-            <SelectValue placeholder="Sélectionner une catégorie" />
-          </SelectTrigger>
-          <SelectContent>
-            {FLIGHT_CATEGORY_OPTIONS.map((category) => (
-              <SelectItem key={category.value} value={category.value}>
-                {category.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <FlightCategoryError visible={categoryError} />
-      </div>
+            <SelectTrigger
+              id="category"
+              aria-invalid={categoryError}
+              aria-required="true"
+              className={categoryError ? "border-destructive" : ""}
+            >
+              <SelectValue placeholder="Sélectionner une catégorie" />
+            </SelectTrigger>
+            <SelectContent>
+              {FLIGHT_CATEGORY_OPTIONS.map((category) => (
+                <SelectItem key={category.value} value={category.value}>
+                  {category.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <FlightCategoryError visible={categoryError} />
+        </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="notes">Notes</Label>
-        <Textarea
-          id="notes"
-          placeholder="Passagers, plein à prévoir, consignes particulières…"
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          rows={3}
-        />
+        <div className="space-y-2">
+          <Label htmlFor="notes">Notes</Label>
+          <Textarea
+            id="notes"
+            placeholder="Passagers, plein à prévoir, consignes particulières…"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={3}
+          />
+        </div>
       </div>
-
-      <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
-        <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
-          Annuler
-        </Button>
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-          {isEdit ? "Enregistrer" : "Créer la réservation"}
-        </Button>
-      </div>
-    </form>
+    </SidePanel>
   )
 }

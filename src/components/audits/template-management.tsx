@@ -1,6 +1,5 @@
 "use client"
 
-import type React from "react"
 import { useState, useEffect } from "react"
 import { useQuery, useMutation } from "@apollo/client"
 import {
@@ -33,14 +32,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import { SidePanel } from "@/components/layout/SidePanel"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -218,7 +210,7 @@ export function TemplateManagement() {
                       <CardTitle className="text-base">{template.name}</CardTitle>
                       {template.description && <CardDescription>{template.description}</CardDescription>}
                     </div>
-                    <div className="flex shrink-0 items-center gap-1">
+                    <div className="flex shrink-0 items-center gap-2">
                       <Badge variant={template.is_active ? "success" : "neutral"}>
                         {template.is_active ? "Actif" : "Inactif"}
                       </Badge>
@@ -556,11 +548,16 @@ function TemplateFormDialog({
     setIsItemFormOpen(true)
   }
 
-  const saveItem = () => {
+  const validateItemTitle = () => {
     if (!itemFormData.title.trim()) {
       setValidationErrors((prev) => ({ ...prev, itemTitle: "Indiquez le titre de l'élément." }))
-      return
+      return false
     }
+    return true
+  }
+
+  const saveItem = () => {
+    if (!validateItemTitle()) return
 
     const newItem = {
       ...itemFormData,
@@ -601,6 +598,15 @@ function TemplateFormDialog({
     handleInputChange("items", updatedItems)
   }
 
+  // Checked when leaving the first step, where the field is.
+  const validateName = () => {
+    if (!formData.name.trim()) {
+      setValidationErrors((prev) => ({ ...prev, name: "Indiquez le nom du modèle." }))
+      return false
+    }
+    return true
+  }
+
   const validateForm = () => {
     const errors: Record<string, string> = {}
 
@@ -616,9 +622,7 @@ function TemplateFormDialog({
     return Object.keys(errors).length === 0
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-
+  const handleSubmit = () => {
     if (!validateForm()) {
       return
     }
@@ -631,399 +635,399 @@ function TemplateFormDialog({
     onSubmit(submissionData)
   }
 
-  return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{mode === "create" ? "Créer un modèle d'audit" : "Modifier le modèle d'audit"}</DialogTitle>
-          <DialogDescription>
-            Décrivez le modèle puis listez les éléments à vérifier, dans l'ordre de l'inspection.
-          </DialogDescription>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="space-y-6" noValidate>
-          <fieldset className="space-y-4">
-            <legend className="text-sm font-semibold">Informations générales</legend>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor={`${mode}-template-name`}>
-                  Nom du modèle <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id={`${mode}-template-name`}
-                  value={formData.name}
-                  onChange={(e) => handleInputChange("name", e.target.value)}
-                  placeholder="Ex. : Visite annuelle DR400"
-                  aria-invalid={Boolean(validationErrors.name)}
-                  className={cn(validationErrors.name && "border-destructive")}
-                />
-                {validationErrors.name && <p className="text-sm text-destructive">{validationErrors.name}</p>}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor={`${mode}-template-frequency`}>
-                  Fréquence recommandée <span className="text-destructive">*</span>
-                </Label>
-                <Select
-                  value={formData.recommended_frequency}
-                  onValueChange={(value) => handleInputChange("recommended_frequency", value)}
-                >
-                  <SelectTrigger id={`${mode}-template-frequency`}>
-                    <SelectValue placeholder="Sélectionner une fréquence" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {enumsData?.auditFrequencyTypes?.map((frequency: string) => (
-                      <SelectItem key={frequency} value={frequency}>
-                        {auditFrequencyLabel(frequency)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor={`${mode}-template-description`}>Description</Label>
-              <Textarea
-                id={`${mode}-template-description`}
-                value={formData.description}
-                onChange={(e) => handleInputChange("description", e.target.value)}
-                placeholder="Ex. : contrôle complet de la cellule et du moteur avant la saison"
-                rows={2}
-              />
-            </div>
-
-            {/* CreateAuditTemplateInput has no is_active: a new template is always active. */}
-            {mode === "edit" && (
-              <div className="flex items-start gap-3">
-                <Switch
-                  id="edit-template-active"
-                  checked={formData.is_active}
-                  onCheckedChange={(checked) => handleInputChange("is_active", checked)}
-                />
-                <div>
-                  <Label htmlFor="edit-template-active">Modèle actif</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Un modèle inactif n'est plus proposé à la création d'un audit.
-                  </p>
-                </div>
-              </div>
-            )}
-          </fieldset>
-
-          <fieldset className="space-y-3">
-            <legend className="text-sm font-semibold">Aéronefs concernés</legend>
-            <div className="space-y-2">
-              <Label htmlFor={`${mode}-template-aircraft-type`}>Type d'aéronef</Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  id={`${mode}-template-aircraft-type`}
-                  value={newAircraftType}
-                  onChange={(e) => setNewAircraftType(e.target.value)}
-                  placeholder="Ex. : DR400"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault()
-                      addAircraftType()
-                    }
-                  }}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={addAircraftType}
-                  disabled={!newAircraftType.trim()}
-                  className="shrink-0"
-                >
-                  Ajouter
-                </Button>
-              </div>
-            </div>
-            {formData.applicable_aircraft_types.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Aucun type précisé : le modèle vaut pour tous les aéronefs.</p>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {formData.applicable_aircraft_types.map((type) => (
-                  <Badge key={type} variant="neutral" className="gap-1 py-1 pr-1">
-                    {type}
-                    <button
-                      type="button"
-                      onClick={() => removeAircraftType(type)}
-                      aria-label={`Retirer ${type}`}
-                      title={`Retirer ${type}`}
-                      className="rounded-full p-0.5 hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </fieldset>
-
-          <fieldset className="space-y-3">
-            <legend className="sr-only">Éléments à vérifier</legend>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm font-semibold" aria-hidden="true">
-                  Éléments à vérifier <span className="text-destructive">*</span>
-                </p>
-                {formData.items.length > 1 && (
-                  <p className="text-xs text-muted-foreground">Faites glisser la poignée pour changer l'ordre.</p>
-                )}
-              </div>
-              <Button type="button" variant="outline" size="sm" onClick={() => openItemForm()}>
-                <Plus className="h-4 w-4" />
-                Ajouter un élément
-              </Button>
-            </div>
-
-            {validationErrors.items && <p className="text-sm text-destructive">{validationErrors.items}</p>}
-
-            {formData.items.length === 0 ? (
-              <p className="rounded-lg border border-dashed px-6 py-8 text-center text-sm text-muted-foreground">
-                Aucun élément pour le moment. Ajoutez les points à contrôler pendant l'audit.
-              </p>
-            ) : (
-              <DragDropContext onDragEnd={handleDragEnd}>
-                <Droppable
-                  droppableId="audit-items"
-                  isDropDisabled={Boolean(isItemFormOpen)}
-                  isCombineEnabled={false}
-                  ignoreContainerClipping={false}
-                >
-                  {(provided) => (
-                    <div {...provided.droppableProps} ref={provided.innerRef}>
-                      {formData.items.map((item, index) => (
-                        <Draggable
-                          key={`item-${index}`}
-                          draggableId={`item-${index}`}
-                          index={index}
-                          isDragDisabled={Boolean(isItemFormOpen)}
-                        >
-                          {(provided) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              className="mb-2 flex items-start gap-2 rounded-lg border bg-card p-3"
-                            >
-                              <div
-                                {...provided.dragHandleProps}
-                                aria-label={`Déplacer ${item.title}`}
-                                title="Déplacer"
-                                className="mt-0.5 cursor-grab rounded-sm text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                              >
-                                <GripVertical className="h-5 w-5" />
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <p className="text-sm font-medium">{item.title}</p>
-                                {item.description && (
-                                  <p className="text-sm text-muted-foreground">{item.description}</p>
-                                )}
-                                <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                                  <Badge variant={auditCriticality(item.criticality).variant}>
-                                    {auditCriticality(item.criticality).label}
-                                  </Badge>
-                                  <span className="text-xs text-muted-foreground">
-                                    {auditCategoryLabel(item.category)}
-                                  </span>
-                                </div>
-                              </div>
-                              <div className="flex shrink-0 items-center">
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => openItemForm(index)}
-                                  className="h-9 w-9"
-                                  aria-label={`Modifier ${item.title}`}
-                                  title="Modifier"
-                                >
-                                  <Pencil className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => removeItem(index)}
-                                  className="h-9 w-9 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                                  aria-label={`Retirer ${item.title}`}
-                                  title="Retirer du modèle"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </div>
-                          )}
-                        </Draggable>
-                      ))}
-                      {provided.placeholder}
-                    </div>
-                  )}
-                </Droppable>
-              </DragDropContext>
-            )}
-          </fieldset>
-
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
-              Annuler
-            </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-              {mode === "create" ? "Créer le modèle" : "Enregistrer"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-
-      <Dialog open={isItemFormOpen} onOpenChange={setIsItemFormOpen}>
-        <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{currentItemIndex !== null ? "Modifier l'élément" : "Ajouter un élément"}</DialogTitle>
-            <DialogDescription>Un point à contrôler pendant l'audit.</DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-6">
-            <fieldset className="space-y-4">
-              <legend className="text-sm font-semibold">Élément</legend>
-              <div className="space-y-2">
-                <Label htmlFor={`${mode}-item-title`}>
-                  Titre <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id={`${mode}-item-title`}
-                  value={itemFormData.title}
-                  onChange={(e) => handleItemInputChange("title", e.target.value)}
-                  placeholder="Ex. : Niveau d'huile moteur"
-                  aria-invalid={Boolean(validationErrors.itemTitle)}
-                  className={cn(validationErrors.itemTitle && "border-destructive")}
-                />
-                {validationErrors.itemTitle && (
-                  <p className="text-sm text-destructive">{validationErrors.itemTitle}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor={`${mode}-item-description`}>Description</Label>
-                <Textarea
-                  id={`${mode}-item-description`}
-                  value={itemFormData.description}
-                  onChange={(e) => handleItemInputChange("description", e.target.value)}
-                  placeholder="Ex. : vérifier le niveau à la jauge, moteur froid"
-                  rows={2}
-                />
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor={`${mode}-item-category`}>Catégorie</Label>
-                  <Select
-                    value={itemFormData.category}
-                    onValueChange={(value) => handleItemInputChange("category", value)}
-                  >
-                    <SelectTrigger id={`${mode}-item-category`}>
-                      <SelectValue placeholder="Sélectionner une catégorie" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {enumsData?.auditCategoryTypes?.map((category: string) => (
-                        <SelectItem key={category} value={category}>
-                          {auditCategoryLabel(category)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor={`${mode}-item-criticality`}>Criticité</Label>
-                  <Select
-                    value={itemFormData.criticality}
-                    onValueChange={(value) => handleItemInputChange("criticality", value)}
-                  >
-                    <SelectTrigger id={`${mode}-item-criticality`}>
-                      <SelectValue placeholder="Sélectionner un niveau" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {enumsData?.criticalityLevels?.map((level: string) => (
-                        <SelectItem key={level} value={level}>
-                          {auditCriticality(level).label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </fieldset>
-
-            <fieldset className="space-y-4">
-              <legend className="text-sm font-semibold">Inspection</legend>
-              <div className="space-y-2">
-                <Label htmlFor={`${mode}-item-inspection-method`}>Méthode d'inspection</Label>
-                <Input
-                  id={`${mode}-item-inspection-method`}
-                  value={itemFormData.inspection_method}
-                  onChange={(e) => handleItemInputChange("inspection_method", e.target.value)}
-                  placeholder="Ex. : contrôle visuel"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor={`${mode}-item-expected-result`}>Résultat attendu</Label>
-                <Input
-                  id={`${mode}-item-expected-result`}
-                  value={itemFormData.expected_result}
-                  onChange={(e) => handleItemInputChange("expected_result", e.target.value)}
-                  placeholder="Ex. : niveau entre mini et maxi"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor={`${mode}-item-reference`}>Documentation de référence</Label>
-                <Input
-                  id={`${mode}-item-reference`}
-                  value={itemFormData.reference_documentation}
-                  onChange={(e) => handleItemInputChange("reference_documentation", e.target.value)}
-                  placeholder="Ex. : manuel de maintenance, chapitre 12"
-                />
-              </div>
-            </fieldset>
-
-            <fieldset className="space-y-3">
-              <legend className="text-sm font-semibold">Options</legend>
-              <div className="flex items-center gap-3">
-                <Switch
-                  id={`${mode}-item-mandatory`}
-                  checked={itemFormData.is_mandatory}
-                  onCheckedChange={(checked) => handleItemInputChange("is_mandatory", checked)}
-                />
-                <Label htmlFor={`${mode}-item-mandatory`} className="font-normal">
-                  Élément obligatoire
-                </Label>
-              </div>
-              <div className="flex items-center gap-3">
-                <Switch
-                  id={`${mode}-item-photo`}
-                  checked={itemFormData.requires_photo_evidence}
-                  onCheckedChange={(checked) => handleItemInputChange("requires_photo_evidence", checked)}
-                />
-                <Label htmlFor={`${mode}-item-photo`} className="font-normal">
-                  Photo à joindre comme preuve
-                </Label>
-              </div>
-            </fieldset>
+  const generalStep = (
+    <>
+      <fieldset className="space-y-4">
+        <legend className="sr-only">Informations générales</legend>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor={`${mode}-template-name`}>
+              Nom du modèle <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id={`${mode}-template-name`}
+              value={formData.name}
+              onChange={(e) => handleInputChange("name", e.target.value)}
+              placeholder="Ex. : Visite annuelle DR400"
+              aria-invalid={Boolean(validationErrors.name)}
+              className={cn(validationErrors.name && "border-destructive")}
+            />
+            {validationErrors.name && <p className="text-sm text-destructive">{validationErrors.name}</p>}
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setIsItemFormOpen(false)}>
-              Annuler
+          <div className="space-y-2">
+            <Label htmlFor={`${mode}-template-frequency`}>
+              Fréquence recommandée <span className="text-destructive">*</span>
+            </Label>
+            <Select
+              value={formData.recommended_frequency}
+              onValueChange={(value) => handleInputChange("recommended_frequency", value)}
+            >
+              <SelectTrigger id={`${mode}-template-frequency`}>
+                <SelectValue placeholder="Sélectionner une fréquence" />
+              </SelectTrigger>
+              <SelectContent>
+                {enumsData?.auditFrequencyTypes?.map((frequency: string) => (
+                  <SelectItem key={frequency} value={frequency}>
+                    {auditFrequencyLabel(frequency)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor={`${mode}-template-description`}>Description</Label>
+          <Textarea
+            id={`${mode}-template-description`}
+            value={formData.description}
+            onChange={(e) => handleInputChange("description", e.target.value)}
+            placeholder="Ex. : contrôle complet de la cellule et du moteur avant la saison"
+            rows={2}
+          />
+        </div>
+
+        {/* CreateAuditTemplateInput has no is_active: a new template is always active. */}
+        {mode === "edit" && (
+          <div className="flex items-start gap-3">
+            <Switch
+              id="edit-template-active"
+              checked={formData.is_active}
+              onCheckedChange={(checked) => handleInputChange("is_active", checked)}
+            />
+            <div>
+              <Label htmlFor="edit-template-active">Modèle actif</Label>
+              <p className="text-xs text-muted-foreground">
+                Un modèle inactif n'est plus proposé à la création d'un audit.
+              </p>
+            </div>
+          </div>
+        )}
+      </fieldset>
+
+      <fieldset className="space-y-3">
+        <legend className="text-sm font-semibold">Aéronefs concernés</legend>
+        <div className="space-y-2">
+          <Label htmlFor={`${mode}-template-aircraft-type`}>Type d'aéronef</Label>
+          <div className="flex items-center gap-2">
+            <Input
+              id={`${mode}-template-aircraft-type`}
+              value={newAircraftType}
+              onChange={(e) => setNewAircraftType(e.target.value)}
+              placeholder="Ex. : DR400"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault()
+                  addAircraftType()
+                }
+              }}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={addAircraftType}
+              disabled={!newAircraftType.trim()}
+              className="shrink-0"
+            >
+              Ajouter
             </Button>
-            <Button type="button" onClick={saveItem}>
-              {currentItemIndex !== null ? "Enregistrer l'élément" : "Ajouter l'élément"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </Dialog>
+          </div>
+        </div>
+        {formData.applicable_aircraft_types.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Aucun type précisé : le modèle vaut pour tous les aéronefs.</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {formData.applicable_aircraft_types.map((type) => (
+              <Badge key={type} variant="neutral" className="gap-1 py-1 pr-1">
+                {type}
+                <button
+                  type="button"
+                  onClick={() => removeAircraftType(type)}
+                  aria-label={`Retirer ${type}`}
+                  title={`Retirer ${type}`}
+                  className="rounded-full p-0.5 hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </Badge>
+            ))}
+          </div>
+        )}
+      </fieldset>
+    </>
+  )
+
+  const itemsStep = (
+    <fieldset className="space-y-3">
+      <legend className="sr-only">Éléments à vérifier</legend>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-sm font-semibold" aria-hidden="true">
+            Éléments à vérifier <span className="text-destructive">*</span>
+          </p>
+          {formData.items.length > 1 && (
+            <p className="text-xs text-muted-foreground">Faites glisser la poignée pour changer l'ordre.</p>
+          )}
+        </div>
+        <Button type="button" variant="outline" size="sm" onClick={() => openItemForm()}>
+          <Plus className="h-4 w-4" />
+          Ajouter un élément
+        </Button>
+      </div>
+
+      {validationErrors.items && <p className="text-sm text-destructive">{validationErrors.items}</p>}
+
+      {formData.items.length === 0 ? (
+        <p className="rounded-lg border border-dashed px-6 py-8 text-center text-sm text-muted-foreground">
+          Aucun élément pour le moment. Ajoutez les points à contrôler pendant l'audit.
+        </p>
+      ) : (
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <Droppable
+            droppableId="audit-items"
+            isDropDisabled={Boolean(isItemFormOpen)}
+            isCombineEnabled={false}
+            ignoreContainerClipping={false}
+          >
+            {(provided) => (
+              <div {...provided.droppableProps} ref={provided.innerRef}>
+                {formData.items.map((item, index) => (
+                  <Draggable
+                    key={`item-${index}`}
+                    draggableId={`item-${index}`}
+                    index={index}
+                    isDragDisabled={Boolean(isItemFormOpen)}
+                  >
+                    {(provided) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        className="mb-2 flex items-start gap-2 rounded-lg border bg-card p-3"
+                      >
+                        <div
+                          {...provided.dragHandleProps}
+                          aria-label={`Déplacer ${item.title}`}
+                          title="Déplacer"
+                          className="mt-0.5 cursor-grab rounded-sm text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                          <GripVertical className="h-5 w-5" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium">{item.title}</p>
+                          {item.description && (
+                            <p className="text-sm text-muted-foreground">{item.description}</p>
+                          )}
+                          <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                            <Badge variant={auditCriticality(item.criticality).variant}>
+                              {auditCriticality(item.criticality).label}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">
+                              {auditCategoryLabel(item.category)}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex shrink-0 items-center">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => openItemForm(index)}
+                            className="h-9 w-9"
+                            aria-label={`Modifier ${item.title}`}
+                            title="Modifier"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeItem(index)}
+                            className="h-9 w-9 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            aria-label={`Retirer ${item.title}`}
+                            title="Retirer du modèle"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
+      )}
+    </fieldset>
+  )
+
+  const itemMainStep = (
+    <fieldset className="space-y-4">
+      <legend className="sr-only">Élément</legend>
+      <div className="space-y-2">
+        <Label htmlFor={`${mode}-item-title`}>
+          Titre <span className="text-destructive">*</span>
+        </Label>
+        <Input
+          id={`${mode}-item-title`}
+          value={itemFormData.title}
+          onChange={(e) => handleItemInputChange("title", e.target.value)}
+          placeholder="Ex. : Niveau d'huile moteur"
+          aria-invalid={Boolean(validationErrors.itemTitle)}
+          className={cn(validationErrors.itemTitle && "border-destructive")}
+        />
+        {validationErrors.itemTitle && (
+          <p className="text-sm text-destructive">{validationErrors.itemTitle}</p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor={`${mode}-item-description`}>Description</Label>
+        <Textarea
+          id={`${mode}-item-description`}
+          value={itemFormData.description}
+          onChange={(e) => handleItemInputChange("description", e.target.value)}
+          placeholder="Ex. : vérifier le niveau à la jauge, moteur froid"
+          rows={2}
+        />
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor={`${mode}-item-category`}>Catégorie</Label>
+          <Select
+            value={itemFormData.category}
+            onValueChange={(value) => handleItemInputChange("category", value)}
+          >
+            <SelectTrigger id={`${mode}-item-category`}>
+              <SelectValue placeholder="Sélectionner une catégorie" />
+            </SelectTrigger>
+            <SelectContent>
+              {enumsData?.auditCategoryTypes?.map((category: string) => (
+                <SelectItem key={category} value={category}>
+                  {auditCategoryLabel(category)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor={`${mode}-item-criticality`}>Criticité</Label>
+          <Select
+            value={itemFormData.criticality}
+            onValueChange={(value) => handleItemInputChange("criticality", value)}
+          >
+            <SelectTrigger id={`${mode}-item-criticality`}>
+              <SelectValue placeholder="Sélectionner un niveau" />
+            </SelectTrigger>
+            <SelectContent>
+              {enumsData?.criticalityLevels?.map((level: string) => (
+                <SelectItem key={level} value={level}>
+                  {auditCriticality(level).label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+    </fieldset>
+  )
+
+  const itemInspectionStep = (
+    <>
+      <fieldset className="space-y-4">
+        <legend className="sr-only">Inspection</legend>
+        <div className="space-y-2">
+          <Label htmlFor={`${mode}-item-inspection-method`}>Méthode d'inspection</Label>
+          <Input
+            id={`${mode}-item-inspection-method`}
+            value={itemFormData.inspection_method}
+            onChange={(e) => handleItemInputChange("inspection_method", e.target.value)}
+            placeholder="Ex. : contrôle visuel"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor={`${mode}-item-expected-result`}>Résultat attendu</Label>
+          <Input
+            id={`${mode}-item-expected-result`}
+            value={itemFormData.expected_result}
+            onChange={(e) => handleItemInputChange("expected_result", e.target.value)}
+            placeholder="Ex. : niveau entre mini et maxi"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor={`${mode}-item-reference`}>Documentation de référence</Label>
+          <Input
+            id={`${mode}-item-reference`}
+            value={itemFormData.reference_documentation}
+            onChange={(e) => handleItemInputChange("reference_documentation", e.target.value)}
+            placeholder="Ex. : manuel de maintenance, chapitre 12"
+          />
+        </div>
+      </fieldset>
+
+      <fieldset className="space-y-3">
+        <legend className="text-sm font-semibold">Options</legend>
+        <div className="flex items-center gap-3">
+          <Switch
+            id={`${mode}-item-mandatory`}
+            checked={itemFormData.is_mandatory}
+            onCheckedChange={(checked) => handleItemInputChange("is_mandatory", checked)}
+          />
+          <Label htmlFor={`${mode}-item-mandatory`} className="font-normal">
+            Élément obligatoire
+          </Label>
+        </div>
+        <div className="flex items-center gap-3">
+          <Switch
+            id={`${mode}-item-photo`}
+            checked={itemFormData.requires_photo_evidence}
+            onCheckedChange={(checked) => handleItemInputChange("requires_photo_evidence", checked)}
+          />
+          <Label htmlFor={`${mode}-item-photo`} className="font-normal">
+            Photo à joindre comme preuve
+          </Label>
+        </div>
+      </fieldset>
+    </>
+  )
+
+  return (
+    <>
+      <SidePanel
+        open={isOpen}
+        onOpenChange={(open) => !open && onClose()}
+        title={mode === "create" ? "Créer un modèle d'audit" : "Modifier le modèle d'audit"}
+        description="Décrivez le modèle puis listez les éléments à vérifier, dans l'ordre de l'inspection."
+        onSubmit={handleSubmit}
+        submitLabel={mode === "create" ? "Créer le modèle" : "Enregistrer"}
+        submitting={isLoading}
+        steps={[
+          { title: "Informations générales", content: generalStep, validate: validateName },
+          { title: "Éléments à vérifier", content: itemsStep },
+        ]}
+      />
+
+      {/* A sibling of the template panel, so its form is never nested in the other one. */}
+      <SidePanel
+        open={isItemFormOpen}
+        onOpenChange={setIsItemFormOpen}
+        title={currentItemIndex !== null ? "Modifier l'élément" : "Ajouter un élément"}
+        description="Un point à contrôler pendant l'audit."
+        onSubmit={saveItem}
+        submitLabel={currentItemIndex !== null ? "Enregistrer l'élément" : "Ajouter l'élément"}
+        size="md"
+        steps={[
+          { title: "Élément", content: itemMainStep, validate: validateItemTitle },
+          { title: "Inspection", content: itemInspectionStep },
+        ]}
+      />
+    </>
   )
 }

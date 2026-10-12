@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useForm, FormProvider } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import Link from "next/link"
-import { AlertTriangle, ArrowLeft, CheckCircle, FileDown, FileSearch, Loader2 } from "lucide-react"
+import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle, FileDown, FileSearch, Loader2 } from "lucide-react"
 import { ApolloError, useMutation, useQuery } from "@apollo/client"
 import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -27,6 +27,8 @@ import { ErrorState } from "@/components/layout/ErrorState"
 import FlightDetailsForm from "@/components/close_flight/FlightDetailsForm"
 import IncidentForm from "@/components/close_flight/IncidentForm"
 import FlightNotesForm from "@/components/close_flight/FlightNotesForm"
+import WaypointsDisplay from "@/components/close_flight/WaypointDisplay"
+import { StepIndicator } from "@/components/close_flight/StepIndicator"
 import { flightTypeLabel } from "@/components/flight/flight-type"
 import {
   EXPORT_FLIGHT_RECAP_PDF,
@@ -45,6 +47,36 @@ import { formatDateTime, formatDecimal, formatFlightDuration } from "@/lib/forma
 const apiMessage = (error: unknown, fallback: string) =>
   (error instanceof ApolloError ? error.graphQLErrors[0]?.message : undefined) || fallback
 
+// The form is filled in three short steps; each one only checks its own fields.
+const STEPS: { title: string; fields: (keyof FlightRecapFormValues)[] }[] = [
+  {
+    title: "Vol réalisé",
+    fields: [
+      "flight_hours",
+      "distance_km",
+      "origin_icao",
+      "destination_icao",
+      "flight_type",
+      "number_of_passengers",
+      "weather_conditions",
+    ],
+  },
+  {
+    title: "Incident",
+    fields: [
+      "incidentOccurred",
+      "incident_date",
+      "incident_category",
+      "severity_level",
+      "incident_priority",
+      "incident_description",
+      "damage_report",
+      "corrective_actions",
+    ],
+  },
+  { title: "Remarques", fields: ["flightNotes"] },
+]
+
 function Fact({ label, value, hint }: { label: string; value: React.ReactNode; hint?: React.ReactNode }) {
   return (
     <div className="min-w-0">
@@ -59,6 +91,7 @@ export default function FlightRecap() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [pendingValues, setPendingValues] = useState<FlightRecapFormValues | null>(null)
+  const [step, setStep] = useState(0)
   const router = useRouter()
   const params = useParams()
   const id = params.id as string
@@ -113,6 +146,18 @@ export default function FlightRecap() {
 
   const flight = data?.getFlightById
   const aircraftId = toIntId(flight?.reservation?.aircraft?.id)
+
+  const isLastStep = step === STEPS.length - 1
+
+  const goToNextStep = async () => {
+    if (await methods.trigger(STEPS[step].fields)) setStep((current) => Math.min(current + 1, STEPS.length - 1))
+  }
+
+  // An error left on an earlier step must be seen: go back to the first step that has one.
+  const showFirstInvalidStep = (errors: object) => {
+    const invalid = STEPS.findIndex(({ fields }) => fields.some((field) => field in errors))
+    if (invalid >= 0) setStep(invalid)
+  }
 
   // Closing cannot be undone by the pilot: ask once before sending.
   const requestClose = (formData: FlightRecapFormValues) => {
@@ -228,7 +273,7 @@ export default function FlightRecap() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-4xl space-y-6">
+      <div className="space-y-6">
         <PageHeader className="mb-0" title="Clôturer le vol" />
         <Skeleton className="h-36 w-full rounded-xl" />
         <Skeleton className="h-80 w-full rounded-xl" />
@@ -239,7 +284,7 @@ export default function FlightRecap() {
 
   if (error) {
     return (
-      <div className="mx-auto max-w-4xl space-y-6">
+      <div className="space-y-6">
         <PageHeader className="mb-0" title="Clôturer le vol" />
         <ErrorState
           description="Le vol n'a pas pu être chargé. Vérifiez votre connexion puis réessayez."
@@ -251,7 +296,7 @@ export default function FlightRecap() {
 
   if (!flight) {
     return (
-      <div className="mx-auto max-w-4xl space-y-6">
+      <div className="space-y-6">
         <PageHeader className="mb-0" title="Clôturer le vol" />
         <EmptyState
           icon={FileSearch}
@@ -270,9 +315,9 @@ export default function FlightRecap() {
   // A flight is closed once: afterwards only an administrator can amend it.
   if (flight.closed_at && !isSubmitted) {
     return (
-      <div className="mx-auto max-w-4xl space-y-6">
+      <div className="space-y-6">
         <PageHeader className="mb-0" title="Clôturer le vol" description={route} actions={backButton} />
-        <Card>
+        <Card className="max-w-3xl">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <CheckCircle className="h-5 w-5 text-success" />
@@ -294,9 +339,9 @@ export default function FlightRecap() {
 
   if (isSubmitted) {
     return (
-      <div className="mx-auto max-w-4xl space-y-6">
+      <div className="space-y-6">
         <PageHeader className="mb-0" title="Clôturer le vol" description={route} />
-        <Card>
+        <Card className="max-w-3xl">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <CheckCircle className="h-5 w-5 text-success" />
@@ -333,7 +378,7 @@ export default function FlightRecap() {
   const pilotName = [flight.user?.first_name, flight.user?.last_name].filter(Boolean).join(" ")
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="space-y-6">
       <PageHeader
         className="mb-0"
         title="Clôturer le vol"
@@ -346,44 +391,103 @@ export default function FlightRecap() {
         }
       />
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg">{route}</CardTitle>
-          <CardDescription>Plan de vol prévu</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <dl className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            <Fact label="Avion" value={aircraft?.registration_number || "—"} hint={aircraft?.model} />
-            <Fact label="Pilote" value={pilotName || "—"} />
-            <Fact label="Départ prévu" value={formatDateTime(flight.reservation?.start_time)} />
-            <Fact label="Type de vol" value={flightTypeLabel(flight.flight_type)} />
-            <Fact label="Distance prévue" value={flight.distance_km ? `${formatDecimal(flight.distance_km)} km` : "—"} />
-            <Fact
-              label="Durée estimée"
-              value={flight.estimated_flight_time ? formatFlightDuration(flight.estimated_flight_time) : "—"}
-            />
-            <Fact label="Passagers" value={flight.number_of_passengers ?? 0} />
-          </dl>
-        </CardContent>
-      </Card>
+      <div className="grid gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <FormProvider {...methods}>
+            <form
+              onSubmit={(event) => {
+                // Enter in a field of an earlier step moves on instead of closing the flight.
+                if (!isLastStep) {
+                  event.preventDefault()
+                  void goToNextStep()
+                  return
+                }
+                void methods.handleSubmit(requestClose, showFirstInvalidStep)(event)
+              }}
+              noValidate
+            >
+              <StepIndicator
+                className="border-b px-6 py-3"
+                steps={STEPS.map(({ title }) => title)}
+                current={step}
+                onStepClick={setStep}
+              />
 
-      <FormProvider {...methods}>
-        <form onSubmit={methods.handleSubmit(requestClose)} className="space-y-6" noValidate>
-          <FlightDetailsForm />
-          <IncidentForm />
-          <FlightNotesForm />
+              <CardContent className="p-6">
+                {/* Every step stays mounted so that the form keeps its values. */}
+                <div hidden={step !== 0} role="group" aria-label={STEPS[0].title}>
+                  <FlightDetailsForm />
+                </div>
+                <div hidden={step !== 1} role="group" aria-label={STEPS[1].title}>
+                  <IncidentForm />
+                </div>
+                <div hidden={step !== 2} role="group" aria-label={STEPS[2].title}>
+                  <FlightNotesForm />
+                </div>
+              </CardContent>
 
-          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <Button variant="outline" type="button" onClick={() => router.back()} disabled={isSubmitting}>
-              Annuler
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-              Clôturer le vol
-            </Button>
-          </div>
-        </form>
-      </FormProvider>
+              <CardFooter className="flex flex-wrap justify-end gap-2 border-t px-6 py-4">
+                {step === 0 ? (
+                  <Button variant="outline" type="button" onClick={() => router.back()} disabled={isSubmitting}>
+                    Annuler
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    type="button"
+                    onClick={() => setStep((current) => current - 1)}
+                    disabled={isSubmitting}
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Précédent
+                  </Button>
+                )}
+                {isLastStep ? (
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                    Clôturer le vol
+                  </Button>
+                ) : (
+                  <Button type="submit">
+                    Suivant
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                )}
+              </CardFooter>
+            </form>
+          </FormProvider>
+        </Card>
+
+        <Card className="order-first self-start lg:order-none">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">{route}</CardTitle>
+            <CardDescription>Plan de vol prévu</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <dl className="grid grid-cols-2 gap-4">
+              <Fact label="Avion" value={aircraft?.registration_number || "—"} hint={aircraft?.model} />
+              <Fact label="Pilote" value={pilotName || "—"} />
+              <Fact label="Départ prévu" value={formatDateTime(flight.reservation?.start_time)} />
+              <Fact label="Type de vol" value={flightTypeLabel(flight.flight_type)} />
+              <Fact
+                label="Distance prévue"
+                value={flight.distance_km ? `${formatDecimal(flight.distance_km)} km` : "—"}
+              />
+              <Fact
+                label="Durée estimée"
+                value={flight.estimated_flight_time ? formatFlightDuration(flight.estimated_flight_time) : "—"}
+              />
+              <Fact label="Passagers" value={flight.number_of_passengers ?? 0} />
+            </dl>
+            {flight.waypoints && (
+              <div className="space-y-1 border-t pt-4">
+                <p className="text-xs text-muted-foreground">Points de route</p>
+                <WaypointsDisplay waypoints={flight.waypoints} compact />
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       <AlertDialog open={pendingValues !== null} onOpenChange={(open) => !open && !isSubmitting && setPendingValues(null)}>
         <AlertDialogContent>

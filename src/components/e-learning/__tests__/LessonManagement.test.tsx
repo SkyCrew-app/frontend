@@ -114,10 +114,14 @@ describe("LessonManagement", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Modifier la leçon Lire un METAR" }))
     const dialog = await screen.findByRole("dialog")
+    // Step 1 opens on the published fields; the text is on step 2.
+    expect(within(dialog).getByLabelText(/^Titre/)).toHaveValue("Lire un METAR")
+    await userEvent.click(within(dialog).getByRole("button", { name: "Suivant" }))
     const editor = within(dialog).getByLabelText("Contenu de la leçon")
     expect(editor).toHaveValue("<p>Le METAR est un message d'observation.</p>")
 
     await userEvent.type(editor, "<p>Suite.</p>")
+    await userEvent.click(within(dialog).getByRole("button", { name: "Suivant" }))
     await userEvent.click(within(dialog).getByRole("button", { name: "Enregistrer" }))
 
     await waitFor(() => expect(update).toHaveBeenCalledTimes(1))
@@ -141,11 +145,22 @@ describe("LessonManagement", () => {
     await userEvent.click(screen.getByRole("button", { name: "Créer une leçon" }))
     const dialog = await screen.findByRole("dialog")
     await userEvent.type(within(dialog).getByLabelText(/^Vidéo/), "youtube.com/abc")
-    await userEvent.click(within(dialog).getByRole("button", { name: "Créer la leçon" }))
+    await userEvent.click(within(dialog).getByRole("button", { name: "Suivant" }))
 
-    expect(within(dialog).getByText("Donnez un titre à la leçon.")).toBeInTheDocument()
-    expect(within(dialog).getByText("Rédigez le contenu de la leçon.")).toBeInTheDocument()
-    expect(within(dialog).getByText(/Collez l'adresse complète de la vidéo/)).toBeInTheDocument()
+    // The first step keeps the user until its fields are right.
+    expect(within(dialog).getByText("Donnez un titre à la leçon.")).toBeVisible()
+    expect(within(dialog).getByText(/Collez l'adresse complète de la vidéo/)).toBeVisible()
+    expect(within(dialog).getByLabelText(/^Titre/)).toBeVisible()
+
+    await userEvent.type(within(dialog).getByLabelText(/^Titre/), "Lire un SIGMET")
+    await userEvent.clear(within(dialog).getByLabelText(/^Vidéo/))
+    await userEvent.click(within(dialog).getByRole("button", { name: "Suivant" }))
+    expect(within(dialog).getByLabelText("Contenu de la leçon")).toBeVisible()
+
+    // So does the second one: a lesson needs its text.
+    await userEvent.click(within(dialog).getByRole("button", { name: "Suivant" }))
+    expect(within(dialog).getByText("Rédigez le contenu de la leçon.")).toBeVisible()
+    expect(within(dialog).queryByRole("button", { name: "Créer la leçon" })).not.toBeInTheDocument()
     expect(mockToast).not.toHaveBeenCalled()
   })
 })

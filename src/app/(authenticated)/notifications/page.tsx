@@ -302,7 +302,7 @@ export default function NotificationsPage() {
                         </div>
                       </div>
 
-                      <div className="flex shrink-0 items-center justify-end gap-1 pl-5 sm:pl-0">
+                      <div className="flex shrink-0 items-center justify-end gap-2 pl-5 sm:pl-0">
                         {notification.action_url && (
                           <Button
                             size="sm"

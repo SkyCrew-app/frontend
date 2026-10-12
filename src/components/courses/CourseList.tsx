@@ -112,7 +112,7 @@ export default function CourseList({ courses, userId, isAdministrator = false, o
                   </TableCell>
                   <TableCell className="text-right tabular-nums">
                     {course.rating ? (
-                      <span className="inline-flex items-center justify-end gap-1">
+                      <span className="inline-flex items-center justify-end gap-2">
                         <Star className="h-4 w-4 fill-warning text-warning" aria-hidden="true" />
                         {course.rating} / 5
                       </span>

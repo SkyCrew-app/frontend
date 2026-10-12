@@ -15,14 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import { SidePanel } from "@/components/layout/SidePanel"
 
 export interface ListItem {
   key: string
@@ -47,7 +40,7 @@ export function ItemList({ items, onEdit, onDelete }: ItemListProps) {
             <span className="break-words text-sm font-medium">{item.name}</span>
             {item.meta}
           </div>
-          <div className="flex shrink-0 items-center gap-1">
+          <div className="flex shrink-0 items-center gap-2">
             <Button
               type="button"
               variant="ghost"
@@ -90,12 +83,12 @@ interface NameDialogProps {
   existingNames: string[]
   duplicateMessage: string
   isSubmitting?: boolean
-  /** Shown above the footer, e.g. a warning about what the change affects. */
+  /** Shown under the field, e.g. a warning about what the change affects. */
   notice?: React.ReactNode
   onSubmit: (name: string) => void
 }
 
-/** Dialog with a single name field, used to add or rename an item. */
+/** Side panel with a single name field, used to add or rename an item. */
 export function NameDialog({
   open,
   onOpenChange,
@@ -115,7 +108,7 @@ export function NameDialog({
   const [name, setName] = React.useState(initialValue)
   const [error, setError] = React.useState<string | null>(null)
 
-  // Start from the current name each time the dialog opens.
+  // Start from the current name each time the panel opens.
   React.useEffect(() => {
     if (open) {
       setName(initialValue)
@@ -123,10 +116,8 @@ export function NameDialog({
     }
   }, [open, initialValue])
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    // Rendered inside the settings form: do not submit that one too.
-    event.stopPropagation()
+  // Rendered inside the settings form: SidePanel stops the submit event, so that one is not submitted too.
+  const handleSubmit = () => {
     const trimmed = name.trim()
     if (!trimmed) {
       setError("Indiquez un nom.")
@@ -144,53 +135,47 @@ export function NameDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={(next) => !isSubmitting && onOpenChange(next)}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
-        <form onSubmit={handleSubmit} noValidate className="space-y-4">
-          <DialogHeader>
-            <DialogTitle>{title}</DialogTitle>
-            <DialogDescription>{description}</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2">
-            <Label htmlFor={id}>
-              {label}
-              <span className="text-destructive" aria-hidden="true">
-                {" "}
-                *
-              </span>
-            </Label>
-            <Input
-              id={id}
-              value={name}
-              onChange={(event) => {
-                setName(event.target.value)
-                setError(null)
-              }}
-              placeholder={placeholder}
-              aria-invalid={error ? true : undefined}
-              aria-required="true"
-              autoComplete="off"
-              autoFocus
-            />
-            {error && (
-              <p role="alert" className="text-sm text-destructive">
-                {error}
-              </p>
-            )}
-          </div>
-          {notice}
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
-              Annuler
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-              {submitLabel}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+    <SidePanel
+      open={open}
+      onOpenChange={(next) => !isSubmitting && onOpenChange(next)}
+      title={title}
+      description={description}
+      onSubmit={handleSubmit}
+      submitLabel={submitLabel}
+      submitting={isSubmitting}
+      size="md"
+    >
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor={id}>
+            {label}
+            <span className="text-destructive" aria-hidden="true">
+              {" "}
+              *
+            </span>
+          </Label>
+          <Input
+            id={id}
+            value={name}
+            onChange={(event) => {
+              setName(event.target.value)
+              setError(null)
+            }}
+            placeholder={placeholder}
+            aria-invalid={error ? true : undefined}
+            aria-required="true"
+            autoComplete="off"
+            autoFocus
+          />
+          {error && (
+            <p role="alert" className="text-sm text-destructive">
+              {error}
+            </p>
+          )}
+        </div>
+        {notice}
+      </div>
+    </SidePanel>
   )
 }
 
