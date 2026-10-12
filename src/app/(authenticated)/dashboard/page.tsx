@@ -1,88 +1,77 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Badge } from "@/components/ui/badge"
-import { Plane } from "lucide-react"
-import { Skeleton } from "@/components/ui/skeleton"
+import { useMemo, useState } from "react"
+import { Settings2 } from "lucide-react"
 import { useQuery } from "@apollo/client"
+import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
+import { PageHeader } from "@/components/layout/PageHeader"
 import { GET_USER_PROFILE } from "@/graphql/user"
 import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
-import { DashboardWidgetConfig, DEFAULT_WIDGETS } from "@/interfaces/dashboard"
+import { DashboardWidgetConfig } from "@/interfaces/dashboard"
 import DashboardGrid from "@/components/dashboard/DashboardGrid"
+import WidgetSettingsDialog from "@/components/dashboard/WidgetSettingsDialog"
+import { normalizeWidgets } from "@/components/dashboard/widget-config"
 
 export default function DashboardPage() {
   const userEmail = useCurrentUser()
   const userData = useUserData(userEmail)
-  const [userId, setUserId] = useState<number | null>(null)
-  const [userAirport, setUserAirport] = useState<string | null>(null)
-  const [firstName, setFirstName] = useState<string | null>(null)
-  const [widgets, setWidgets] = useState<DashboardWidgetConfig[]>(DEFAULT_WIDGETS)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  // Layout chosen during this visit; before that, the one saved on the profile.
+  const [editedWidgets, setEditedWidgets] = useState<DashboardWidgetConfig[] | null>(null)
 
-  useEffect(() => {
-    if (userData) {
-      setUserId(userData.id)
-    }
-  }, [userData])
-
-  const { data: userInfo } = useQuery(GET_USER_PROFILE, {
+  const { data: userInfo, error } = useQuery(GET_USER_PROFILE, {
     variables: { email: userEmail },
     skip: !userEmail,
   })
 
-  useEffect(() => {
-    if (userInfo && userInfo.userByEmail) {
-      const { first_name, preferred_aerodrome, dashboard_widgets } = userInfo.userByEmail
-      if (first_name) {
-        setFirstName(first_name)
-      }
-      if (preferred_aerodrome) {
-        setUserAirport(preferred_aerodrome)
-      }
-      if (dashboard_widgets && dashboard_widgets.length > 0) {
-        setWidgets(
-          dashboard_widgets.map((w: any) => ({
-            widgetId: w.widgetId,
-            visible: w.visible,
-            order: w.order,
-            size: w.size,
-          }))
-        )
-      }
-    }
-  }, [userInfo])
+  const profile = userInfo?.userByEmail
+  const savedWidgets = useMemo(() => normalizeWidgets(profile?.dashboard_widgets), [profile?.dashboard_widgets])
+  const widgets = editedWidgets ?? savedWidgets
+
+  const userId = Number(userData?.id ?? profile?.id) || null
+  const firstName: string | null = profile?.first_name || null
+  const preferredAerodrome: string | null = profile?.preferred_aerodrome || null
+  // Without the profile the saved layout is unknown: wait rather than show another one first.
+  const profileLoading = !profile && !error
 
   return (
-    <div className="w-full">
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {firstName ? (
-              <>Bienvenue, {firstName}</>
-            ) : (
-              <Skeleton className="h-8 w-48" />
-            )}
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Voici votre tableau de bord personnalisé
-          </p>
-        </div>
-        {userAirport && (
-          <Badge
-            variant="outline"
-            className="px-3 py-1 flex items-center gap-1 w-fit bg-info/10 text-info border-info/30"
-          >
-            <Plane className="h-3.5 w-3.5 rotate-45" />
-            <span>{userAirport}</span>
-          </Badge>
-        )}
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        className="mb-0"
+        title={firstName ? `Bienvenue, ${firstName}` : "Tableau de bord"}
+        description="Votre activité et celle du club en un coup d'œil."
+        actions={
+          <Button variant="outline" onClick={() => setSettingsOpen(true)} disabled={profileLoading}>
+            <Settings2 className="h-4 w-4" />
+            Personnaliser
+          </Button>
+        }
+      />
 
-      <DashboardGrid
+      {profileLoading ? (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3" aria-hidden="true">
+          <Skeleton className="h-56 rounded-xl md:col-span-2" />
+          <Skeleton className="h-56 rounded-xl" />
+          <Skeleton className="h-56 rounded-xl" />
+          <Skeleton className="h-56 rounded-xl" />
+          <Skeleton className="h-56 rounded-xl" />
+        </div>
+      ) : (
+        <DashboardGrid
+          widgets={widgets}
+          userId={userId}
+          preferredAerodrome={preferredAerodrome}
+          onCustomize={() => setSettingsOpen(true)}
+        />
+      )}
+
+      <WidgetSettingsDialog
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
         widgets={widgets}
-        onWidgetsChange={setWidgets}
+        onWidgetsChange={setEditedWidgets}
         userId={userId}
-        userEmail={userEmail}
-        preferredAerodrome={userAirport}
       />
     </div>
   )

@@ -1,68 +1,51 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import { useTheme } from "next-themes"
-import { Sun, Moon, Monitor } from "lucide-react"
+import { Check, Sun, Moon, Monitor } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { CustomDropdown, CustomDropdownItem } from "@/components/ui/custom-dropdown"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { useMounted } from "@/components/hooks/useMounted"
+
+const THEMES = [
+  { value: "light", label: "Clair", icon: Sun },
+  { value: "dark", label: "Sombre", icon: Moon },
+  { value: "system", label: "Système", icon: Monitor },
+]
 
 export default function ThemeToggle() {
   const { theme, setTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
+  // The chosen theme is only known in the browser.
+  const mounted = useMounted()
 
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  const icon = mounted ? (
-    theme === "dark" ? (
-      <Moon className="h-5 w-5 text-foreground/70" />
-    ) : theme === "light" ? (
-      <Sun className="h-5 w-5 text-warning" />
-    ) : (
-      <Monitor className="h-5 w-5 text-foreground/70" />
-    )
-  ) : (
-    <div className="h-5 w-5" />
-  )
+  const CurrentIcon = THEMES.find((t) => t.value === theme)?.icon ?? Monitor
 
   return (
-    <CustomDropdown
-      trigger={
+    <DropdownMenu modal={false}>
+      <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
           size="icon"
-          className="rounded-full bg-secondary hover:bg-secondary/80"
-          suppressHydrationWarning
+          className="rounded-full"
+          aria-label="Changer le thème"
+          title="Changer le thème"
         >
-          {icon}
-          <span className="sr-only">Changer le th&egrave;me</span>
+          {mounted ? <CurrentIcon className="h-5 w-5" /> : <span className="h-5 w-5" />}
         </Button>
-      }
-      align="end"
-      className="w-44 p-1 rounded-xl"
-    >
-      <CustomDropdownItem
-        onClick={() => setTheme("light")}
-        className={`flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-secondary ${theme === "light" ? "bg-secondary" : ""}`}
-      >
-        <Sun className="h-4 w-4 text-warning" />
-        <span>Clair</span>
-      </CustomDropdownItem>
-      <CustomDropdownItem
-        onClick={() => setTheme("dark")}
-        className={`flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-secondary ${theme === "dark" ? "bg-secondary" : ""}`}
-      >
-        <Moon className="h-4 w-4 text-foreground/70" />
-        <span>Sombre</span>
-      </CustomDropdownItem>
-      <CustomDropdownItem
-        onClick={() => setTheme("system")}
-        className={`flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-secondary ${theme === "system" ? "bg-secondary" : ""}`}
-      >
-        <Monitor className="h-4 w-4 text-foreground/70" />
-        <span>Syst&egrave;me</span>
-      </CustomDropdownItem>
-    </CustomDropdown>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-44">
+        {THEMES.map(({ value, label, icon: Icon }) => (
+          <DropdownMenuItem key={value} onSelect={() => setTheme(value)} className="cursor-pointer">
+            <Icon className="h-4 w-4 text-muted-foreground" />
+            {label}
+            {mounted && theme === value && <Check className="ml-auto h-4 w-4" aria-label="Thème actuel" />}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }

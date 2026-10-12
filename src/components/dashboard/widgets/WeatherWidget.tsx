@@ -1,227 +1,199 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import type { ReactNode } from "react"
+import Link from "next/link"
+import { Cloud, CloudSun, MapPin, RefreshCw, Sun, Sunrise, Thermometer, Wind } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Cloud, Sun, Wind, RefreshCw } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/components/hooks/use-toast"
-import { motion } from "framer-motion"
+import { WIDGET_REGISTRY } from "@/interfaces/dashboard"
+import WidgetContainer, { WidgetEmpty, WidgetError } from "../WidgetContainer"
 
-interface WeatherWidgetProps {
-  userEmail: string | null
-  preferredAerodrome: string | null
+const API_BASE = "https://api.api-ninjas.com/v1"
+const API_HEADERS = { "X-Api-Key": "KX6n/kOCJpKDEl+/mF+5/g==p9iHRQBed2N8KbiU" }
+
+interface WeatherData {
+  temp?: number
+  feels_like?: number
+  humidity?: number
+  cloud_pct?: number
+  wind_speed?: number
+  wind_degrees?: number
+  sunrise?: number
+  sunset?: number
 }
 
-export default function WeatherWidget({ preferredAerodrome }: WeatherWidgetProps) {
-  const [weatherData, setWeatherData] = useState<any | null>(null)
+interface WeatherWidgetProps {
+  preferredAerodrome: string | null
+  /** True when the widget spans two columns: the four figures fit on one line. */
+  wide?: boolean
+}
+
+const figure = (value: number | undefined, unit: string) =>
+  value === undefined || value === null ? "—" : `${Math.round(value)}${unit}`
+
+const sunTime = (timestamp: number | undefined) =>
+  timestamp
+    ? new Date(timestamp * 1000).toLocaleTimeString("fr-FR", {
+        timeZone: "Europe/Paris",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "—"
+
+const skyCondition = (cloudPct: number | undefined): { label: string; icon: LucideIcon } => {
+  if (cloudPct === undefined || cloudPct === null) return { label: "—", icon: Cloud }
+  if (cloudPct < 30) return { label: "Ensoleillé", icon: Sun }
+  if (cloudPct < 70) return { label: "Éclaircies", icon: CloudSun }
+  return { label: "Nuageux", icon: Cloud }
+}
+
+function Tile({ label, icon: Icon, value, hint }: { label: string; icon: LucideIcon; value: ReactNode; hint: ReactNode }) {
+  return (
+    <div className="rounded-lg border bg-muted/30 p-3">
+      <p className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+        {label}
+        <Icon className="h-4 w-4" aria-hidden="true" />
+      </p>
+      <p className="mt-1 truncate text-xl font-semibold tracking-tight tabular-nums">{value}</p>
+      <p className="mt-0.5 truncate text-xs text-muted-foreground">{hint}</p>
+    </div>
+  )
+}
+
+export default function WeatherWidget({ preferredAerodrome, wide = false }: WeatherWidgetProps) {
+  const [weatherData, setWeatherData] = useState<WeatherData | null>(null)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [failed, setFailed] = useState(false)
   const { toast } = useToast()
 
-  const airportInformation = useCallback(async (aeroport: string) => {
-    try {
-      const response = await fetch(`https://api.api-ninjas.com/v1/airports?icao=${aeroport}`, {
-        headers: {
-          "X-Api-Key": "KX6n/kOCJpKDEl+/mF+5/g==p9iHRQBed2N8KbiU",
-        },
-      })
-      if (!response.ok) {
-        throw new Error("Erreur lors de la récupération des informations de l'aéroport")
-      }
-      const data = await response.json()
-      return data[0] || null
-    } catch (error) {
-      console.error("Erreur lors de la récupération des informations de l'aéroport:", error)
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger les informations de l'aéroport.",
-        variant: "destructive",
-      })
-      return null
-    }
-  }, [toast])
+  // `manual` is true when the member pressed the refresh button: only then is
+  // the outcome announced by a toast.
+  const fetchWeather = useCallback(
+    async (manual: boolean) => {
+      if (!preferredAerodrome) return
+      setIsRefreshing(true)
+      try {
+        const airportResponse = await fetch(`${API_BASE}/airports?icao=${encodeURIComponent(preferredAerodrome)}`, {
+          headers: API_HEADERS,
+        })
+        if (!airportResponse.ok) throw new Error("Aérodrome introuvable")
+        const airport = (await airportResponse.json())?.[0]
+        if (!airport?.latitude || !airport?.longitude) throw new Error("Aérodrome introuvable")
 
-  const fetchWeather = useCallback(async () => {
-    if (!preferredAerodrome) return
-    setIsRefreshing(true)
-    try {
-      const airportInfo = await airportInformation(preferredAerodrome)
-      const latitude = airportInfo?.latitude
-      const longitude = airportInfo?.longitude
-      const response = await fetch(`https://api.api-ninjas.com/v1/weather?lat=${latitude}&lon=${longitude}`, {
-        headers: {
-          "X-Api-Key": "KX6n/kOCJpKDEl+/mF+5/g==p9iHRQBed2N8KbiU",
-        },
-      })
-      const data = await response.json()
-      setWeatherData(data)
-      toast({
-        title: "Météo mise à jour",
-        description: "Les données météorologiques ont été actualisées.",
-        variant: "default",
-      })
-    } catch (error) {
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger les données météo.",
-        variant: "destructive",
-      })
-      console.error("Erreur lors de la récupération des données météo:", error)
-    } finally {
-      setIsRefreshing(false)
-    }
-  }, [preferredAerodrome, airportInformation, toast])
+        const response = await fetch(`${API_BASE}/weather?lat=${airport.latitude}&lon=${airport.longitude}`, {
+          headers: API_HEADERS,
+        })
+        if (!response.ok) throw new Error("Météo indisponible")
+        setWeatherData(await response.json())
+        setFailed(false)
+        if (manual) {
+          toast({ title: "Météo actualisée", description: `Conditions à jour pour ${preferredAerodrome}.` })
+        }
+      } catch (error) {
+        console.error("Erreur lors de la récupération des données météo:", error)
+        setFailed(true)
+        if (manual) {
+          toast({
+            title: "Actualisation impossible",
+            description: "La météo n'a pas pu être récupérée. Réessayez dans un instant.",
+            variant: "destructive",
+          })
+        }
+      } finally {
+        setIsRefreshing(false)
+      }
+    },
+    [preferredAerodrome, toast],
+  )
 
   useEffect(() => {
-    if (preferredAerodrome) {
-      fetchWeather()
+    fetchWeather(false)
+  }, [fetchWeather])
+
+  const sky = skyCondition(weatherData?.cloud_pct)
+  const grid = cn("grid grid-cols-2 gap-3", wide && "sm:grid-cols-4")
+
+  const renderContent = () => {
+    if (!preferredAerodrome) {
+      return (
+        <WidgetEmpty
+          icon={MapPin}
+          title="Aucun aérodrome préféré"
+          description="Indiquez votre aérodrome dans votre profil pour voir sa météo ici."
+          action={
+            <Button asChild variant="outline" size="sm">
+              <Link href="/profile">Compléter mon profil</Link>
+            </Button>
+          }
+        />
+      )
     }
-  }, [preferredAerodrome])
+    if (!weatherData && failed) return <WidgetError onRetry={() => fetchWeather(true)} />
+    if (!weatherData) {
+      return (
+        <div className={grid} aria-hidden="true">
+          {Array.from({ length: 4 }, (_, i) => (
+            <Skeleton key={i} className="h-[5.25rem] rounded-lg" />
+          ))}
+        </div>
+      )
+    }
 
-  const getWeatherConditionIcon = () => {
-    if (!weatherData) return <Cloud className="h-5 w-5" />
-    const cloudPct = weatherData.cloud_pct || 0
-    if (cloudPct < 30) return <Sun className="h-5 w-5 text-warning" />
-    if (cloudPct < 70) return <Cloud className="h-5 w-5 text-info" />
-    return <Cloud className="h-5 w-5 text-muted-foreground" />
-  }
-
-  const getWeatherConditionText = () => {
-    if (!weatherData) return "Inconnu"
-    const cloudPct = weatherData.cloud_pct || 0
-    if (cloudPct < 30) return "Ensoleillé"
-    if (cloudPct < 70) return "Partiellement nuageux"
-    return "Nuageux"
-  }
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1 },
-    },
-  }
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: { type: "spring", stiffness: 100 },
-    },
+    return (
+      <div className={grid}>
+        <Tile
+          label="Température"
+          icon={Thermometer}
+          value={figure(weatherData.temp, " °C")}
+          hint={`Ressenti ${figure(weatherData.feels_like, " °C")}`}
+        />
+        <Tile
+          label="Ciel"
+          icon={sky.icon}
+          value={sky.label}
+          hint={`Nuages ${figure(weatherData.cloud_pct, " %")} · Humidité ${figure(weatherData.humidity, " %")}`}
+        />
+        <Tile
+          label="Vent"
+          icon={Wind}
+          value={figure(weatherData.wind_speed, " km/h")}
+          hint={`Direction ${figure(weatherData.wind_degrees, "°")}`}
+        />
+        <Tile
+          label="Soleil"
+          icon={Sunrise}
+          value={`${sunTime(weatherData.sunrise)} – ${sunTime(weatherData.sunset)}`}
+          hint="Lever – coucher (heure de Paris)"
+        />
+      </div>
+    )
   }
 
   return (
-    <div>
-      <div className="flex items-center justify-end mb-3">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={fetchWeather}
-          disabled={isRefreshing}
-          className="flex items-center gap-1"
-        >
-          <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
-          <span className="hidden sm:inline">Actualiser</span>
-        </Button>
-      </div>
-
-      <motion.div
-        className="grid grid-cols-1 sm:grid-cols-2 gap-4"
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-      >
-        <motion.div variants={itemVariants}>
-          <Card className="overflow-hidden border-t-4 border-t-primary hover:shadow-md transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Température</CardTitle>
-              <Sun className="h-4 w-4 text-warning" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{weatherData?.temp || "--"}°C</div>
-              <p className="text-xs text-muted-foreground">Ressenti {weatherData?.feels_like || "--"}°C</p>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div variants={itemVariants}>
-          <Card className="overflow-hidden border-t-4 border-t-info hover:shadow-md transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Conditions</CardTitle>
-              {getWeatherConditionIcon()}
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{getWeatherConditionText()}</div>
-              <p className="text-xs text-muted-foreground">
-                Nuages: {weatherData?.cloud_pct || "--"}% | Humidité: {weatherData?.humidity || "--"}%
-              </p>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div variants={itemVariants}>
-          <Card className="overflow-hidden border-t-4 border-t-warning hover:shadow-md transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Soleil</CardTitle>
-              <Sun className="h-4 w-4 text-warning" />
-            </CardHeader>
-            <CardContent>
-              <div className="flex justify-between items-center">
-                <div>
-                  <div className="text-sm font-semibold">Lever</div>
-                  <div className="text-xl font-bold">
-                    {weatherData?.sunrise
-                      ? new Date(weatherData.sunrise * 1000).toLocaleTimeString("fr-FR", {
-                          timeZone: "Europe/Paris",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })
-                      : "--:--"}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-sm font-semibold text-right">Coucher</div>
-                  <div className="text-xl font-bold">
-                    {weatherData?.sunset
-                      ? new Date(weatherData.sunset * 1000).toLocaleTimeString("fr-FR", {
-                          timeZone: "Europe/Paris",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })
-                      : "--:--"}
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div variants={itemVariants}>
-          <Card className="overflow-hidden border-t-4 border-t-accent hover:shadow-md transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Vent</CardTitle>
-              <Wind className="h-4 w-4 text-brand" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{weatherData?.wind_speed || "--"} km/h</div>
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <div className="relative">
-                  <div className="w-5 h-5 rounded-full border border-border flex items-center justify-center">
-                    <div
-                      className="absolute w-3 h-0.5 bg-muted-foreground origin-center"
-                      style={{
-                        transform: `rotate(${weatherData?.wind_degrees || 0}deg)`,
-                        transformOrigin: "center",
-                      }}
-                    />
-                  </div>
-                </div>
-                <span>Direction: {weatherData?.wind_degrees || "--"}</span>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </motion.div>
-    </div>
+    <WidgetContainer
+      title={WIDGET_REGISTRY["weather"].label}
+      description={preferredAerodrome ? `Aérodrome ${preferredAerodrome}` : undefined}
+      action={
+        preferredAerodrome ? (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9"
+            onClick={() => fetchWeather(true)}
+            disabled={isRefreshing}
+            aria-label="Actualiser la météo"
+            title="Actualiser la météo"
+          >
+            <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
+          </Button>
+        ) : undefined
+      }
+    >
+      {renderContent()}
+    </WidgetContainer>
   )
 }

@@ -16,6 +16,10 @@ export const GET_AIRCRAFTS = gql`
       consumption
       cruiseSpeed
       maxAltitude
+      fuel_capacity
+      fuel_type
+      empty_weight
+      max_takeoff_weight
       maintenances {
         id
         maintenance_type

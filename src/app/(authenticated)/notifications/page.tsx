@@ -1,31 +1,17 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useMemo, useState } from "react"
 import { useQuery, useMutation } from "@apollo/client"
 import { useRouter } from "next/navigation"
-import {
-  Bell,
-  Check,
-  Trash2,
-  Filter,
-  AlertTriangle,
-  Info,
-  CheckCircle,
-  ChevronLeft,
-  ChevronRight,
-  CheckCheck,
-  Loader2,
-  X,
-  Clock,
-  Search,
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
+import { Bell, Check, CheckCheck, ChevronLeft, ChevronRight, Loader2, Search, Trash2 } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { formatTime } from "@/lib/format"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { GET_NOTIFICATIONS, SEEN_NOTIFICATION, REMOVE_NOTIFICATION } from "@/graphql/notifications"
-import { getNotificationTypeInFrench } from "@/interfaces/notification"
+import { Card } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,35 +21,48 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Skeleton } from "@/components/ui/skeleton"
+import { PageHeader } from "@/components/layout/PageHeader"
+import { EmptyState } from "@/components/layout/EmptyState"
+import { ErrorState } from "@/components/layout/ErrorState"
+import { useToast } from "@/components/hooks/use-toast"
+import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
+import { GET_NOTIFICATIONS, SEEN_NOTIFICATION, REMOVE_NOTIFICATION } from "@/graphql/notifications"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
-import { motion, AnimatePresence } from "framer-motion"
+  type AppNotification,
+  getNotificationTypeInFrench,
+  groupNotificationsByDay,
+  isHighPriority,
+} from "@/interfaces/notification"
+
+const PAGE_SIZE = 20
+
+type TabValue = "all" | "unread" | "high"
+type DeleteTarget = { kind: "one"; notification: AppNotification } | { kind: "all" }
+
+const plural = (count: number) => (count > 1 ? "s" : "")
 
 export default function NotificationsPage() {
   const router = useRouter()
+  const { toast } = useToast()
   const userEmail = useCurrentUser()
   const userData = useUserData(userEmail)
-  const [userId, setUserId] = useState<number | null>(null)
-  const [notifications, setNotifications] = useState<any[]>([])
-  const [filter, setFilter] = useState<string>("all")
-  const [currentPage, setCurrentPage] = useState(1)
-  const [isMarkingAllAsRead, setIsMarkingAllAsRead] = useState(false)
-  const [selectedTab, setSelectedTab] = useState("all")
+  const userId = userData ? Number.parseInt(userData.id) : null
+
+  const [selectedTab, setSelectedTab] = useState<TabValue>("all")
   const [searchQuery, setSearchQuery] = useState("")
-  const itemsPerPage = 5
+  const [currentPage, setCurrentPage] = useState(1)
+  const [busyId, setBusyId] = useState<number | null>(null)
+  const [isMarkingAllAsRead, setIsMarkingAllAsRead] = useState(false)
+  const [isDeletingAll, setIsDeletingAll] = useState(false)
+  // The target outlives the closing of the dialog so its text does not change while it fades out.
+  const [deleteTarget, setDeleteTarget] = useState<DeleteTarget>({ kind: "all" })
+  const [deleteOpen, setDeleteOpen] = useState(false)
 
   const {
     data: notificationsData,
     loading,
+    error,
     refetch: refetchNotifications,
   } = useQuery(GET_NOTIFICATIONS, {
     variables: { userId: userId || 0 },
@@ -73,591 +72,395 @@ export default function NotificationsPage() {
   const [seenNotification] = useMutation(SEEN_NOTIFICATION)
   const [removeNotification] = useMutation(REMOVE_NOTIFICATION)
 
-  useEffect(() => {
-    if (userData) {
-      setUserId(Number.parseInt(userData.id))
-    }
-  }, [userData])
+  // Newest first, whatever the order of the API.
+  const notifications = useMemo<AppNotification[]>(
+    () =>
+      [...(notificationsData?.notificationsByUser ?? [])].sort(
+        (a, b) => new Date(b.notification_date).getTime() - new Date(a.notification_date).getTime(),
+      ),
+    [notificationsData],
+  )
 
-  useEffect(() => {
-    if (notificationsData) {
-      setNotifications(notificationsData.notificationsByUser)
-    }
-  }, [notificationsData])
+  const unreadCount = notifications.filter((n) => !n.is_read).length
+  const highCount = notifications.filter(isHighPriority).length
 
-  useEffect(() => {
+  const filteredNotifications = useMemo(() => {
+    let filtered = notifications
+    if (selectedTab === "unread") filtered = filtered.filter((n) => !n.is_read)
+    if (selectedTab === "high") filtered = filtered.filter(isHighPriority)
+
+    const query = searchQuery.trim().toLowerCase()
+    if (query) {
+      filtered = filtered.filter(
+        (n) =>
+          (n.message ?? "").toLowerCase().includes(query) ||
+          getNotificationTypeInFrench(n.notification_type).toLowerCase().includes(query),
+      )
+    }
+    return filtered
+  }, [notifications, selectedTab, searchQuery])
+
+  const totalPages = Math.max(Math.ceil(filteredNotifications.length / PAGE_SIZE), 1)
+  // The list shrinks when notifications are deleted: never stay on a page that no longer exists.
+  const page = Math.min(currentPage, totalPages)
+  const pageItems = filteredNotifications.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const groups = groupNotificationsByDay(pageItems)
+
+  const isFiltered = selectedTab !== "all" || searchQuery.trim() !== ""
+  const filteredUnread = filteredNotifications.filter((n) => !n.is_read)
+  const bulkBusy = isMarkingAllAsRead || isDeletingAll
+
+  const handleTabChange = (value: string) => {
+    setSelectedTab(value as TabValue)
     setCurrentPage(1)
-  }, [filter])
+  }
 
-  const handleNotificationAction = async (notificationId: number, actionUrl?: string) => {
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value)
+    setCurrentPage(1)
+  }
+
+  const handleNotificationAction = async (notification: AppNotification, actionUrl?: string | null) => {
+    setBusyId(notification.id)
     try {
-      await seenNotification({ variables: { id: notificationId } })
-      refetchNotifications()
-      if (actionUrl) {
-        router.push(actionUrl)
+      if (!notification.is_read) {
+        await seenNotification({ variables: { id: notification.id } })
+        refetchNotifications()
       }
+      if (actionUrl) router.push(actionUrl)
     } catch (error) {
       console.error("Erreur lors du marquage de la notification comme vue:", error)
+      toast({
+        variant: "destructive",
+        title: "Action impossible",
+        description: "La notification n'a pas pu être marquée comme lue.",
+      })
+    } finally {
+      setBusyId(null)
     }
   }
 
-  const handleRemoveNotification = async (notificationId: number) => {
+  const handleRemoveNotification = async (notification: AppNotification) => {
+    setBusyId(notification.id)
     try {
-      await removeNotification({ variables: { id: notificationId } })
-      refetchNotifications()
+      await removeNotification({ variables: { id: notification.id } })
+      await refetchNotifications()
     } catch (error) {
       console.error("Erreur lors de la suppression de la notification:", error)
+      toast({
+        variant: "destructive",
+        title: "Suppression impossible",
+        description: "La notification n'a pas pu être supprimée.",
+      })
+    } finally {
+      setBusyId(null)
     }
   }
 
   const handleMarkAllAsRead = async () => {
+    const count = filteredUnread.length
     setIsMarkingAllAsRead(true)
     try {
-      const unreadNotifications = filteredNotifications.filter((n) => !n.is_read)
-      for (const notification of unreadNotifications) {
+      for (const notification of filteredUnread) {
         await seenNotification({ variables: { id: notification.id } })
       }
-      await refetchNotifications()
+      toast({ title: `${count} notification${plural(count)} marquée${plural(count)} comme lue${plural(count)}` })
     } catch (error) {
       console.error("Erreur lors du marquage des notifications comme lues:", error)
+      toast({
+        variant: "destructive",
+        title: "Action interrompue",
+        description: "Toutes les notifications n'ont pas pu être marquées comme lues.",
+      })
     } finally {
+      await refetchNotifications().catch(() => undefined)
       setIsMarkingAllAsRead(false)
     }
   }
 
   const handleRemoveAllNotifications = async () => {
+    const targets = filteredNotifications
+    setIsDeletingAll(true)
     try {
-      for (const notification of filteredNotifications) {
+      for (const notification of targets) {
         await removeNotification({ variables: { id: notification.id } })
       }
-      await refetchNotifications()
+      toast({ title: `${targets.length} notification${plural(targets.length)} supprimée${plural(targets.length)}` })
     } catch (error) {
       console.error("Erreur lors de la suppression des notifications:", error)
+      toast({
+        variant: "destructive",
+        title: "Suppression interrompue",
+        description: "Toutes les notifications n'ont pas pu être supprimées.",
+      })
+    } finally {
+      await refetchNotifications().catch(() => undefined)
+      setIsDeletingAll(false)
     }
   }
 
-  const getFilteredNotifications = () => {
-    let filtered = [...notifications]
-
-    if (selectedTab === "unread") {
-      filtered = filtered.filter((n) => !n.is_read)
-    } else if (selectedTab === "high") {
-      filtered = filtered.filter((n) => n.priority === "high")
-    }
-
-    if (filter !== "all") {
-      if (filter === "unread") {
-        filtered = filtered.filter((n) => !n.is_read)
-      } else {
-        filtered = filtered.filter((n) => n.priority === filter)
-      }
-    }
-
-    if (searchQuery.trim() !== "") {
-      const query = searchQuery.toLowerCase()
-      filtered = filtered.filter(
-        (n) =>
-          n.message.toLowerCase().includes(query) ||
-          getNotificationTypeInFrench(n.notification_type).toLowerCase().includes(query),
-      )
-    }
-
-    return filtered
+  const askDelete = (target: DeleteTarget) => {
+    setDeleteTarget(target)
+    setDeleteOpen(true)
   }
 
-  const filteredNotifications = getFilteredNotifications()
-
-  const totalPages = Math.ceil(filteredNotifications.length / itemsPerPage)
-  const paginatedNotifications = filteredNotifications.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
-  )
-
-  const priorityIcon = (priority: string) => {
-    switch (priority) {
-      case "high":
-        return <AlertTriangle className="h-5 w-5 text-destructive" />
-      case "medium":
-        return <Info className="h-5 w-5 text-warning" />
-      case "low":
-        return <CheckCircle className="h-5 w-5 text-success" />
-      default:
-        return <Bell className="h-5 w-5 text-info" />
-    }
+  const confirmDelete = () => {
+    if (deleteTarget.kind === "one") void handleRemoveNotification(deleteTarget.notification)
+    else void handleRemoveAllNotifications()
   }
 
-  const priorityColor = (priority: string) => {
-    switch (priority) {
-      case "high":
-        return "bg-destructive/15 text-destructive"
-      case "medium":
-        return "bg-warning/15 text-warning"
-      case "low":
-        return "bg-success/15 text-success"
-      default:
-        return "bg-info/15 text-info"
-    }
-  }
+  const isLoading = !userId || loading
+  const deleteCount = filteredNotifications.length
 
-  const priorityBorder = (priority: string) => {
-    switch (priority) {
-      case "high":
-        return "border-l-4 border-destructive"
-      case "medium":
-        return "border-l-4 border-warning"
-      case "low":
-        return "border-l-4 border-success"
-      default:
-        return "border-l-4 border-info"
-    }
-  }
-
-  const getTimeAgo = (dateString: string) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
-
-    if (diffInSeconds < 60) {
-      return `Il y a ${diffInSeconds} seconde${diffInSeconds !== 1 ? "s" : ""}`
-    }
-
-    const diffInMinutes = Math.floor(diffInSeconds / 60)
-    if (diffInMinutes < 60) {
-      return `Il y a ${diffInMinutes} minute${diffInMinutes !== 1 ? "s" : ""}`
-    }
-
-    const diffInHours = Math.floor(diffInMinutes / 60)
-    if (diffInHours < 24) {
-      return `Il y a ${diffInHours} heure${diffInHours !== 1 ? "s" : ""}`
-    }
-
-    const diffInDays = Math.floor(diffInHours / 24)
-    if (diffInDays < 30) {
-      return `Il y a ${diffInDays} jour${diffInDays !== 1 ? "s" : ""}`
-    }
-
-    return date.toLocaleString("fr-FR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    })
-  }
-
-  const renderContent = () => {
-    if (loading) {
+  const renderList = () => {
+    if (isLoading) {
       return (
-        <div className="mx-auto max-w-4xl">
-          <Skeleton className="h-12 w-64 mb-6" />
-          <div className="flex justify-between items-center mb-6">
-            <Skeleton className="h-10 w-32" />
-            <Skeleton className="h-10 w-32" />
-          </div>
-          <Skeleton className="h-40 w-full rounded-lg mb-6" />
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-28 w-full rounded-lg" />
+        <div className="space-y-3" aria-hidden="true">
+          <Skeleton className="h-4 w-28" />
+          <Card className="divide-y divide-border">
+            {Array.from({ length: 6 }, (_, i) => (
+              <div key={i} className="flex items-start gap-3 p-4">
+                <Skeleton className="mt-1.5 h-2 w-2 rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-48" />
+                  <Skeleton className="h-4 w-full max-w-md" />
+                </div>
+                <Skeleton className="h-9 w-9" />
+              </div>
             ))}
-          </div>
+          </Card>
         </div>
       )
     }
 
-    return (
-      <div className="w-full overflow-hidden">
-        <header className="mb-4">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-semibold tracking-tight">Notifications</h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Gérez vos alertes et restez informé des mises à jour importantes
-              </p>
-            </div>
+    if (error && notifications.length === 0) {
+      return <ErrorState onRetry={() => refetchNotifications()} />
+    }
 
-            <div className="flex flex-wrap gap-2">
-              {filteredNotifications.some((n) => !n.is_read) && (
-                <Button
-                  variant="outline"
-                  className="bg-card text-primary border-primary/30 hover:bg-primary/10 transition-all duration-300"
-                  onClick={handleMarkAllAsRead}
-                  disabled={isMarkingAllAsRead}
-                >
-                  {isMarkingAllAsRead ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <CheckCheck className="mr-2 h-4 w-4" />
-                  )}
-                  Tout marquer comme lu
-                </Button>
-              )}
-
-              {filteredNotifications.length > 0 && (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="bg-card text-destructive border-destructive/30 hover:bg-destructive/10 transition-all duration-300"
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Tout supprimer
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent className="bg-card">
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Cette action supprimera toutes les notifications filtrées actuellement affichées. Cette action
-                        est irréversible.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel className="bg-muted hover:bg-muted transition-all duration-300">
-                        Annuler
-                      </AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={handleRemoveAllNotifications}
-                        className="bg-destructive hover:bg-destructive/90 text-destructive-foreground transition-all duration-300"
-                      >
-                        Supprimer
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              )}
-            </div>
-          </div>
-        </header>
-
-        <Card className="mb-4 border border-border transition-all duration-300">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2">
-              <Bell className="h-5 w-5 text-primary" />
-              Centre de notifications
-            </CardTitle>
-            <CardDescription>
-              Vous avez {notifications.length} notifications, dont{" "}
-              <span className="font-medium text-info">{notifications.filter((n) => !n.is_read).length}</span> non
-              lues.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pb-1 space-y-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Rechercher dans vos notifications..."
-                className="pl-10 bg-muted/50 border-border"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              {searchQuery && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 text-muted-foreground hover:text-muted-foreground"
-                  onClick={() => setSearchQuery("")}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-
-            <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
-              <TabsList className="grid grid-cols-3 mb-4 bg-muted p-1">
-                <TabsTrigger
-                  value="all"
-                  className="data-[state=active]:bg-card transition-all duration-300"
-                >
-                  Toutes
-                  <Badge
-                    variant="secondary"
-                    className="ml-2 bg-muted text-foreground"
-                  >
-                    {notifications.length}
-                  </Badge>
-                </TabsTrigger>
-                <TabsTrigger
-                  value="unread"
-                  className="data-[state=active]:bg-card transition-all duration-300"
-                >
-                  Non lues
-                  <Badge
-                    variant="secondary"
-                    className="ml-2 bg-info/15 text-info"
-                  >
-                    {notifications.filter((n) => !n.is_read).length}
-                  </Badge>
-                </TabsTrigger>
-                <TabsTrigger
-                  value="high"
-                  className="data-[state=active]:bg-card transition-all duration-300"
-                >
-                  Prioritaires
-                  <Badge
-                    variant="secondary"
-                    className="ml-2 bg-destructive/15 text-destructive"
-                  >
-                    {notifications.filter((n) => n.priority === "high").length}
-                  </Badge>
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </CardContent>
-          <CardFooter className="pt-1 flex justify-between">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="bg-card text-foreground border-border hover:bg-muted transition-all duration-300"
-                >
-                  <Filter className="mr-2 h-4 w-4" />
-                  Filtrer par priorité
-                  {filter !== "all" && <Badge className="ml-2 bg-primary/10 text-primary">{filter}</Badge>}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-card border border-border shadow-lg">
-                <DropdownMenuItem
-                  className={`${filter === "all" ? "bg-primary/10 text-primary" : ""} cursor-pointer transition-colors duration-200`}
-                  onClick={() => setFilter("all")}
-                >
-                  Toutes les priorités
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className={`${filter === "unread" ? "bg-primary/10 text-primary" : ""} cursor-pointer transition-colors duration-200`}
-                  onClick={() => setFilter("unread")}
-                >
-                  Non lues
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  className={`${filter === "high" ? "bg-primary/10 text-primary" : ""} cursor-pointer transition-colors duration-200`}
-                  onClick={() => setFilter("high")}
-                >
-                  <AlertTriangle className="mr-2 h-4 w-4 text-destructive" />
-                  Priorité haute
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className={`${filter === "medium" ? "bg-primary/10 text-primary" : ""} cursor-pointer transition-colors duration-200`}
-                  onClick={() => setFilter("medium")}
-                >
-                  <Info className="mr-2 h-4 w-4 text-warning" />
-                  Priorité moyenne
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className={`${filter === "low" ? "bg-primary/10 text-primary" : ""} cursor-pointer transition-colors duration-200`}
-                  onClick={() => setFilter("low")}
-                >
-                  <CheckCircle className="mr-2 h-4 w-4 text-success" />
-                  Priorité basse
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <Badge variant="secondary" className="bg-muted text-foreground">
-              {filteredNotifications.length} notification{filteredNotifications.length !== 1 ? "s" : ""}
-            </Badge>
-          </CardFooter>
-        </Card>
-
-        {filteredNotifications.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center py-16 bg-card rounded-lg shadow-md border border-border"
-          >
-            <div className="inline-flex h-20 w-20 items-center justify-center rounded-full bg-muted mb-4">
-              <Bell className="h-10 w-10 text-muted-foreground" />
-            </div>
-            <h3 className="text-xl font-medium text-foreground mb-2">Aucune notification</h3>
-            <p className="text-muted-foreground max-w-md mx-auto">
-              {searchQuery
-                ? "Aucun résultat ne correspond à votre recherche. Essayez avec d'autres termes."
-                : "Vous n'avez aucune notification correspondant à vos critères de filtrage."}
-            </p>
-          </motion.div>
-        ) : (
-          <>
-            <AnimatePresence mode="wait">
-              <motion.ul
-                className="space-y-4"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                key={`${selectedTab}-${filter}-${currentPage}-${searchQuery}`}
+    if (filteredNotifications.length === 0) {
+      return (
+        <EmptyState
+          icon={Bell}
+          title={isFiltered ? "Aucune notification ne correspond" : "Aucune notification"}
+          description={
+            isFiltered
+              ? "Modifiez votre recherche ou changez d'onglet."
+              : "Les alertes sur vos réservations, vos cours et votre compte s'afficheront ici."
+          }
+          action={
+            isFiltered ? (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  handleSearchChange("")
+                  setSelectedTab("all")
+                }}
               >
-                {paginatedNotifications.map((notification) => (
-                  <motion.li
-                    key={notification.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.3 }}
-                    className={`bg-card rounded-lg shadow-sm hover:shadow-md overflow-hidden transition-all duration-300 ${
-                      !notification.is_read
-                        ? priorityBorder(notification.priority)
-                        : "border border-border"
-                    }`}
-                  >
-                    <div className="p-4 md:p-5 flex flex-col md:flex-row md:items-start gap-4">
-                      <div className="flex-shrink-0">
-                        <div className={`p-3 rounded-full ${priorityColor(notification.priority)}`}>
-                          {priorityIcon(notification.priority)}
+                Afficher toutes les notifications
+              </Button>
+            ) : undefined
+          }
+        />
+      )
+    }
+
+    return (
+      <>
+        {groups.map((group) => (
+          <section key={group.label} className="space-y-2">
+            <h2 className="text-sm font-medium text-muted-foreground">{group.label}</h2>
+            <Card className="overflow-hidden">
+              <ul className="divide-y divide-border">
+                {group.items.map((notification) => {
+                  const unread = !notification.is_read
+                  const busy = busyId === notification.id
+                  const type = getNotificationTypeInFrench(notification.notification_type)
+
+                  return (
+                    <li
+                      key={notification.id}
+                      className={cn(
+                        "flex flex-col gap-3 p-4 sm:flex-row sm:items-start",
+                        unread && "bg-primary/5",
+                      )}
+                    >
+                      <div className="flex min-w-0 flex-1 items-start gap-3">
+                        <span
+                          className={cn("mt-1.5 h-2 w-2 shrink-0 rounded-full", unread ? "bg-primary" : "bg-transparent")}
+                          aria-hidden="true"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                            <p className={cn("text-sm", unread ? "font-semibold" : "font-medium")}>{type}</p>
+                            {unread && <span className="sr-only">(non lue)</span>}
+                            {isHighPriority(notification) && <Badge variant="danger">Prioritaire</Badge>}
+                            <span className="text-xs text-muted-foreground tabular-nums">
+                              {formatTime(notification.notification_date)}
+                            </span>
+                          </div>
+                          <p className="mt-0.5 break-words text-sm text-muted-foreground">{notification.message}</p>
                         </div>
                       </div>
-                      <div className="flex-grow">
-                        <div className="flex flex-wrap items-center gap-2 mb-2">
-                          <h3 className="font-semibold text-lg text-foreground">
-                            {getNotificationTypeInFrench(notification.notification_type)}
-                          </h3>
-                          {!notification.is_read && (
-                            <Badge className="bg-info/15 text-info">
-                              Nouveau
-                            </Badge>
-                          )}
-                          <Badge className={`${priorityColor(notification.priority)}`}>
-                            {notification.priority === "high" && "Haute priorité"}
-                            {notification.priority === "medium" && "Priorité moyenne"}
-                            {notification.priority === "low" && "Priorité basse"}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-3">{notification.message}</p>
-                        <div className="flex items-center text-xs text-muted-foreground">
-                          <Clock className="h-3 w-3 mr-1" />
-                          {getTimeAgo(notification.notification_date)}
-                        </div>
-                      </div>
-                      <div className="flex md:flex-col gap-2 mt-3 md:mt-0">
-                        {!notification.is_read && (
-                          <Button
-                            onClick={() => handleNotificationAction(notification.id)}
-                            size="sm"
-                            variant="outline"
-                            className="text-info border-info/30 hover:bg-info/10 hover:text-info transition-all duration-300"
-                          >
-                            <Check className="h-4 w-4 mr-1" />
-                            <span className="hidden sm:inline">Marquer comme lu</span>
-                            <span className="inline sm:hidden">Lu</span>
-                          </Button>
-                        )}
+
+                      <div className="flex shrink-0 items-center justify-end gap-1 pl-5 sm:pl-0">
                         {notification.action_url && (
                           <Button
-                            onClick={() => handleNotificationAction(notification.id, notification.action_url)}
                             size="sm"
-                            variant="default"
-                            className="bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-300"
+                            variant="outline"
+                            disabled={busy || bulkBusy}
+                            onClick={() => handleNotificationAction(notification, notification.action_url)}
                           >
                             Voir
                           </Button>
                         )}
+                        {unread && (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-9 w-9"
+                            disabled={busy || bulkBusy}
+                            onClick={() => handleNotificationAction(notification)}
+                            aria-label={`Marquer comme lue : ${type}`}
+                            title="Marquer comme lue"
+                          >
+                            <Check className="h-4 w-4" />
+                          </Button>
+                        )}
                         <Button
-                          onClick={() => handleRemoveNotification(notification.id)}
-                          size="sm"
+                          size="icon"
                           variant="ghost"
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10 transition-all duration-300"
+                          className="h-9 w-9 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                          disabled={busy || bulkBusy}
+                          onClick={() => askDelete({ kind: "one", notification })}
+                          aria-label={`Supprimer : ${type}`}
+                          title="Supprimer"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
-                    </div>
-                  </motion.li>
-                ))}
-              </motion.ul>
-            </AnimatePresence>
+                    </li>
+                  )
+                })}
+              </ul>
+            </Card>
+          </section>
+        ))}
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex justify-center mt-8">
-                <nav className="flex items-center gap-1 bg-card p-1 rounded-lg shadow-sm border border-border">
-                  <Button
-                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                    disabled={currentPage === 1}
-                    variant="ghost"
-                    size="icon"
-                    className={`h-9 w-9 rounded-md transition-all duration-200 ${
-                      currentPage === 1 ? "opacity-50 cursor-not-allowed" : "hover:bg-muted"
-                    }`}
-                    aria-label="Page précédente"
-                  >
-                    <ChevronLeft className="h-5 w-5" />
-                  </Button>
-
-                  <div className="flex items-center gap-1">
-                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-                      const shouldShow =
-                        page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1)
-
-                      const showLeftEllipsis = page === currentPage - 1 && currentPage > 3
-                      const showRightEllipsis = page === currentPage + 1 && currentPage < totalPages - 2
-
-                      if (!shouldShow && !showLeftEllipsis && !showRightEllipsis) return null
-
-                      if (showLeftEllipsis) {
-                        return (
-                          <div
-                            key={`ellipsis-left-${page}`}
-                            className="flex flex-col justify-center h-9 px-1 text-muted-foreground"
-                          >
-                            ...
-                          </div>
-                        )
-                      }
-
-                      if (showRightEllipsis) {
-                        return (
-                          <div
-                            key={`ellipsis-right-${page}`}
-                            className="flex flex-col justify-center h-9 px-1 text-muted-foreground"
-                          >
-                            ...
-                          </div>
-                        )
-                      }
-
-                      return (
-                        <Button
-                          key={page}
-                          onClick={() => setCurrentPage(page)}
-                          variant={currentPage === page ? "default" : "ghost"}
-                          size="icon"
-                          className={`relative h-9 w-9 rounded-md transition-all duration-200 ${
-                            currentPage === page ? "bg-primary text-primary-foreground" : "hover:bg-muted"
-                          }`}
-                          aria-label={`Page ${page}`}
-                          aria-current={currentPage === page ? "page" : undefined}
-                        >
-                          {page}
-                          {currentPage === page && (
-                            <span
-                              className="absolute inset-0 rounded-md animate-pulse bg-primary/20 dark:bg-primary/30"
-                              style={{ animationDuration: "3s" }}
-                            ></span>
-                          )}
-                        </Button>
-                      )
-                    })}
-                  </div>
-
-                  <Button
-                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                    disabled={currentPage === totalPages}
-                    variant="ghost"
-                    size="icon"
-                    className={`h-9 w-9 rounded-md transition-all duration-200 ${
-                      currentPage === totalPages
-                        ? "opacity-50 cursor-not-allowed"
-                        : "hover:bg-muted"
-                    }`}
-                    aria-label="Page suivante"
-                  >
-                    <ChevronRight className="h-5 w-5" />
-                  </Button>
-                </nav>
-              </div>
-            )}
-          </>
+        {totalPages > 1 && (
+          <nav aria-label="Pagination" className="flex items-center justify-between gap-3">
+            <Button variant="outline" size="sm" onClick={() => setCurrentPage(page - 1)} disabled={page === 1}>
+              <ChevronLeft className="h-4 w-4" />
+              Précédent
+            </Button>
+            <p className="text-sm text-muted-foreground tabular-nums" aria-live="polite">
+              Page {page} sur {totalPages}
+            </p>
+            <Button variant="outline" size="sm" onClick={() => setCurrentPage(page + 1)} disabled={page === totalPages}>
+              Suivant
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </nav>
         )}
-      </div>
+      </>
     )
   }
 
-  return <div>{renderContent()}</div>
-}
+  return (
+    <div className="mx-auto max-w-4xl space-y-6">
+      <PageHeader
+        className="mb-0"
+        title="Notifications"
+        description={
+          isLoading || notifications.length === 0
+            ? undefined
+            : unreadCount > 0
+              ? `${unreadCount} non lue${plural(unreadCount)} sur ${notifications.length}`
+              : "Tout est lu."
+        }
+        actions={
+          filteredNotifications.length > 0 ? (
+            <>
+              <Button
+                variant="outline"
+                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                onClick={() => askDelete({ kind: "all" })}
+                disabled={bulkBusy}
+              >
+                {isDeletingAll ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                Tout supprimer
+              </Button>
+              <Button onClick={handleMarkAllAsRead} disabled={bulkBusy || filteredUnread.length === 0}>
+                {isMarkingAllAsRead ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <CheckCheck className="h-4 w-4" />
+                )}
+                Tout marquer comme lu
+              </Button>
+            </>
+          ) : undefined
+        }
+      />
 
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative w-full sm:max-w-xs">
+          <Search
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden="true"
+          />
+          <Input
+            type="search"
+            aria-label="Rechercher dans les notifications"
+            placeholder="Rechercher, ex. : réservation"
+            className="pl-9"
+            value={searchQuery}
+            onChange={(e) => handleSearchChange(e.target.value)}
+          />
+        </div>
+        <Tabs value={selectedTab} onValueChange={handleTabChange}>
+          <TabsList>
+            <TabsTrigger value="all">
+              Toutes
+              <span className="ml-1.5 text-xs text-muted-foreground tabular-nums">{notifications.length}</span>
+            </TabsTrigger>
+            <TabsTrigger value="unread">
+              Non lues
+              <span className="ml-1.5 text-xs text-muted-foreground tabular-nums">{unreadCount}</span>
+            </TabsTrigger>
+            <TabsTrigger value="high">
+              Prioritaires
+              <span className="ml-1.5 text-xs text-muted-foreground tabular-nums">{highCount}</span>
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
+
+      {renderList()}
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {deleteTarget.kind === "one"
+                ? "Supprimer cette notification ?"
+                : `Supprimer ${deleteCount} notification${plural(deleteCount)} ?`}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteTarget.kind === "one"
+                ? `« ${getNotificationTypeInFrench(deleteTarget.notification.notification_type)} » sera supprimée définitivement.`
+                : isFiltered
+                  ? "Seules les notifications de la liste filtrée seront supprimées. Cette action est définitive."
+                  : "Toutes vos notifications seront supprimées. Cette action est définitive."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction className={buttonVariants({ variant: "destructive" })} onClick={confirmDelete}>
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  )
+}

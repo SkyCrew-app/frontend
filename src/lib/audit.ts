@@ -91,9 +91,13 @@ export const getChangedAuditItems = (
   return updates
 }
 
+export type AuditStatusTab = "all" | "open" | "closed" | "nonconform" | "overdue"
+
 export interface AuditClientFilters {
   auditFrequency?: string | null
   overdueOnly?: boolean
+  // The status tab of the list; "overdue" is the same as overdueOnly.
+  tab?: AuditStatusTab | null
 }
 
 // An audit is overdue when it is still open and its next audit date has passed.
@@ -102,15 +106,130 @@ export const isAuditOverdue = (
   now: Date = new Date(),
 ) => !audit.is_closed && Boolean(audit.next_audit_date) && new Date(audit.next_audit_date as string | Date) < now
 
-// AuditFilterInput has no frequency nor overdue criteria: both are applied here.
+const matchesAuditTab = (
+  audit: { is_closed?: boolean | null; audit_result?: string | null; next_audit_date?: string | Date | null },
+  tab: AuditStatusTab | null | undefined,
+  now: Date,
+) => {
+  switch (tab) {
+    case "open":
+      return !audit.is_closed
+    case "closed":
+      return Boolean(audit.is_closed)
+    case "nonconform":
+      return audit.audit_result === "NON_CONFORME"
+    case "overdue":
+      return isAuditOverdue(audit, now)
+    default:
+      return true
+  }
+}
+
+// AuditFilterInput has no frequency nor overdue criteria: both are applied here,
+// as is the status tab, so that the counters of the other tabs stay available.
 export const filterAudits = <
-  T extends { audit_frequency?: string | null; is_closed?: boolean | null; next_audit_date?: string | Date | null },
+  T extends {
+    audit_frequency?: string | null
+    audit_result?: string | null
+    is_closed?: boolean | null
+    next_audit_date?: string | Date | null
+  },
 >(
   audits: T[],
-  { auditFrequency, overdueOnly }: AuditClientFilters,
+  { auditFrequency, overdueOnly, tab }: AuditClientFilters,
   now: Date = new Date(),
 ): T[] =>
   audits.filter(
     (audit) =>
-      (!auditFrequency || audit.audit_frequency === auditFrequency) && (!overdueOnly || isAuditOverdue(audit, now)),
+      (!auditFrequency || audit.audit_frequency === auditFrequency) &&
+      (!overdueOnly || isAuditOverdue(audit, now)) &&
+      matchesAuditTab(audit, tab, now),
   )
+
+export interface AuditStatusCounts {
+  total: number
+  open: number
+  closed: number
+  nonconform: number
+  overdue: number
+}
+
+export const countAuditsByStatus = (
+  audits: { is_closed?: boolean | null; audit_result?: string | null; next_audit_date?: string | Date | null }[],
+  now: Date = new Date(),
+): AuditStatusCounts => ({
+  total: audits.length,
+  open: audits.filter((audit) => !audit.is_closed).length,
+  closed: audits.filter((audit) => audit.is_closed).length,
+  nonconform: audits.filter((audit) => audit.audit_result === "NON_CONFORME").length,
+  overdue: audits.filter((audit) => isAuditOverdue(audit, now)).length,
+})
+
+// One wording and one colour per audit result, status, criticality, frequency
+// and category, wherever they are shown.
+export type AuditBadgeVariant = "success" | "warning" | "info" | "danger" | "neutral"
+
+interface AuditBadge {
+  label: string
+  variant: AuditBadgeVariant
+}
+
+const UNKNOWN: AuditBadge = { label: "Non renseigné", variant: "neutral" }
+
+const RESULTS: Record<string, AuditBadge> = {
+  CONFORME: { label: "Conforme", variant: "success" },
+  NON_CONFORME: { label: "Non conforme", variant: "danger" },
+  CONFORME_AVEC_REMARQUES: { label: "Conforme avec remarques", variant: "warning" },
+  NON_APPLICABLE: { label: "Non applicable", variant: "neutral" },
+}
+
+export const auditResult = (result: string | null | undefined): AuditBadge => RESULTS[result ?? ""] ?? UNKNOWN
+
+export const auditStatus = (
+  audit: { is_closed?: boolean | null; next_audit_date?: string | Date | null },
+  now: Date = new Date(),
+): AuditBadge => {
+  if (audit.is_closed) return { label: "Clôturé", variant: "success" }
+  if (isAuditOverdue(audit, now)) return { label: "En retard", variant: "danger" }
+  return { label: "En cours", variant: "info" }
+}
+
+const CRITICALITIES: Record<string, AuditBadge> = {
+  CRITIQUE: { label: "Critique", variant: "danger" },
+  MAJEUR: { label: "Majeur", variant: "warning" },
+  MINEUR: { label: "Mineur", variant: "info" },
+  INFO: { label: "Information", variant: "neutral" },
+}
+
+export const auditCriticality = (level: string | null | undefined): AuditBadge => CRITICALITIES[level ?? ""] ?? UNKNOWN
+
+const FREQUENCIES: Record<string, string> = {
+  QUOTIDIEN: "Quotidien",
+  HEBDOMADAIRE: "Hebdomadaire",
+  MENSUEL: "Mensuel",
+  TRIMESTRIEL: "Trimestriel",
+  SEMESTRIEL: "Semestriel",
+  ANNUEL: "Annuel",
+  BIANNUEL: "Tous les 2 ans",
+  HEURES_DE_VOL: "Selon les heures de vol",
+  APRES_INCIDENT: "Après incident",
+  AUTRE: "Autre",
+}
+
+export const auditFrequencyLabel = (frequency: string | null | undefined): string =>
+  FREQUENCIES[frequency ?? ""] ?? UNKNOWN.label
+
+const CATEGORIES: Record<string, string> = {
+  CELLULE: "Cellule",
+  MOTEUR: "Moteur",
+  AVIONIQUE: "Avionique",
+  TRAIN_ATTERRISSAGE: "Train d'atterrissage",
+  SYSTEME_CARBURANT: "Système carburant",
+  SYSTEME_ELECTRIQUE: "Système électrique",
+  DOCUMENTATION: "Documentation",
+  EQUIPEMENT_SECURITE: "Équipement de sécurité",
+  AUTRE: "Autre",
+}
+
+export const auditCategoryLabel = (category: string | null | undefined): string =>
+  CATEGORIES[category ?? ""] ?? UNKNOWN.label

@@ -1,156 +1,164 @@
 "use client"
 
+import { useMemo } from "react"
+import Link from "next/link"
+import { useParams } from "next/navigation"
 import { useQuery } from "@apollo/client"
-import { useParams, useRouter } from "next/navigation"
+import { endOfDay } from "date-fns"
+import { ArrowLeft, Calendar, CalendarPlus, Clock, FileSearch, FileText, Link2, Printer, Share2 } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
-import {
-  Calendar,
-  Tag,
-  Share2,
-  Printer,
-  ArrowLeft,
-  Clock,
-  User,
-  CalendarClock,
-  BookOpen,
-  AlertCircle,
-} from "lucide-react"
-import { useToast } from "@/components/hooks/use-toast"
-import { GET_ARTICLE_BY_ID } from "@/graphql/articles"
-import { motion } from "framer-motion"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Separator } from "@/components/ui/separator"
-import { useState, useEffect } from "react"
-import { getBackendBaseUrl } from "@/lib/runtime-config"
+import { PageHeader } from "@/components/layout/PageHeader"
+import { EmptyState } from "@/components/layout/EmptyState"
+import { ErrorState } from "@/components/layout/ErrorState"
+import { ArticleImage, articleFileName, articleFileUrl } from "@/components/articles/article-image"
+import { useToast } from "@/components/hooks/use-toast"
+import { GET_ARTICLE_BY_ID } from "@/graphql/articles"
+import { formatDate, formatDateTime } from "@/lib/format"
+
+interface Article {
+  id: string
+  title: string
+  description: string
+  text: string
+  tags: string[] | null
+  photo_url: string | null
+  createdAt: string
+  eventDate: string | null
+  documents_url: string[] | null
+}
+
+const WORDS_PER_MINUTE = 200
+
+// An event saved without a time is stored at midnight: show the day only.
+const hasTime = (date: Date) => date.getHours() !== 0 || date.getMinutes() !== 0
+
+const formatEventDate = (date: Date) => (hasTime(date) ? formatDateTime(date) : formatDate(date))
+
+const toCalendarStamp = (date: Date) => date.toISOString().replace(/-|:|\.\d\d\d/g, "")
+
+const BackLink = () => (
+  <Button asChild variant="ghost" size="sm" className="-ml-3 print:hidden">
+    <Link href="/articles">
+      <ArrowLeft className="h-4 w-4" />
+      Toutes les actualités
+    </Link>
+  </Button>
+)
 
 export default function ArticlePage() {
   const { id } = useParams()
   const { toast } = useToast()
-  const router = useRouter()
-  const [readingTime, setReadingTime] = useState<number>(0)
-  const [imageLoaded, setImageLoaded] = useState(false)
 
   const intId = Number.parseInt(id as string, 10)
 
-  const { data, loading, error } = useQuery(GET_ARTICLE_BY_ID, {
+  const { data, loading, error, refetch } = useQuery(GET_ARTICLE_BY_ID, {
     variables: { id: intId },
     skip: !id,
-    onError: () => {
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger l'article.",
-        variant: "destructive",
-      })
-    },
   })
 
-  useEffect(() => {
-    if (data?.article?.text) {
-      const wordCount = data.article.text.replace(/<[^>]*>/g, "").split(/\s+/).length
-      const readTime = Math.ceil(wordCount / 200)
-      setReadingTime(readTime)
-    }
-  }, [data])
+  const article: Article | undefined = data?.article
 
-  if (loading) {
+  const readingTime = useMemo(() => {
+    if (!article?.text) return 0
+    const words = article.text
+      .replace(/<[^>]*>/g, " ")
+      .split(/\s+/)
+      .filter(Boolean).length
+    return Math.max(1, Math.ceil(words / WORDS_PER_MINUTE))
+  }, [article?.text])
+
+  if (loading && !data) {
     return (
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-4 flex items-center">
-          <Skeleton className="h-10 w-24" />
+      <div className="mx-auto max-w-3xl space-y-6" role="status" aria-label="Chargement de l'article">
+        <BackLink />
+        <div className="space-y-3">
+          <Skeleton className="h-8 w-3/4" />
+          <Skeleton className="h-4 w-56" />
         </div>
-        <Card className="overflow-hidden">
-          <Skeleton className="h-72 w-full" />
-          <div className="p-6">
-            <Skeleton className="h-10 w-3/4 mb-4" />
-            <Skeleton className="h-5 w-1/3 mb-6" />
-            <Skeleton className="h-4 w-full mb-2" />
-            <Skeleton className="h-4 w-full mb-2" />
-            <Skeleton className="h-4 w-2/3 mb-6" />
-            <div className="grid grid-cols-3 gap-4 mb-6">
-              <Skeleton className="h-32 w-full" />
-              <Skeleton className="h-32 w-full" />
-              <Skeleton className="h-32 w-full" />
-            </div>
-            <Skeleton className="h-4 w-full mb-2" />
-            <Skeleton className="h-4 w-full mb-2" />
-            <Skeleton className="h-4 w-4/5" />
-          </div>
-        </Card>
+        <Skeleton className="aspect-[2/1] w-full rounded-xl" />
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-11/12" />
+          <Skeleton className="h-4 w-2/3" />
+        </div>
       </div>
     )
   }
 
-  if (error || !data?.article) {
+  if (error) {
     return (
-      <div className="max-w-4xl mx-auto">
-        <Button variant="ghost" className="mb-6 flex items-center" onClick={() => router.back()}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Retour
-        </Button>
-
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Article introuvable</AlertTitle>
-          <AlertDescription>
-            Nous n'avons pas pu trouver l'article que vous recherchez. Il a peut-être été supprimé ou déplacé.
-          </AlertDescription>
-        </Alert>
+      <div className="mx-auto max-w-3xl space-y-6">
+        <BackLink />
+        <ErrorState onRetry={() => refetch()} />
       </div>
     )
   }
 
-  const article = data.article
-  const formattedDate = new Date(article.createdAt).toLocaleDateString("fr-FR", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  })
+  if (!article) {
+    return (
+      <div className="mx-auto max-w-3xl space-y-6">
+        <BackLink />
+        <EmptyState
+          icon={FileSearch}
+          title="Article introuvable"
+          description="Cet article a peut-être été supprimé ou déplacé."
+          action={
+            <Button asChild variant="outline">
+              <Link href="/articles">Voir toutes les actualités</Link>
+            </Button>
+          }
+        />
+      </div>
+    )
+  }
 
-  const formattedEventDate = article.eventDate
-    ? new Date(article.eventDate).toLocaleDateString("fr-FR", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      })
-    : null
+  const tags = article.tags ?? []
+  const documents = article.documents_url ?? []
+  const eventDate = article.eventDate ? new Date(article.eventDate) : null
+  // An event without a time lasts the whole day.
+  const eventEnd = eventDate && !hasTime(eventDate) ? endOfDay(eventDate) : eventDate
+  const isUpcoming = eventEnd ? eventEnd.getTime() >= Date.now() : false
 
-  const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: article.title,
-          text: article.description,
-          url: window.location.href,
-        })
-      } catch (error) {
-        console.error("Error sharing:", error)
-      }
-    } else {
-      navigator.clipboard.writeText(window.location.href)
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href)
       toast({
         title: "Lien copié",
-        description: "Le lien de l'article a été copié dans le presse-papier.",
+        description: "Le lien de l'article est dans le presse-papiers.",
+      })
+    } catch {
+      toast({
+        title: "Copie impossible",
+        description: "Le lien n'a pas pu être copié. Copiez l'adresse depuis la barre du navigateur.",
+        variant: "destructive",
       })
     }
   }
 
-  const addToCalendar = (type: "google" | "apple" | "outlook") => {
-    if (!article.eventDate) {
-      toast({
-        title: "Erreur",
-        description: "Cet article n'a pas de date d'événement associée.",
-        variant: "destructive",
-      })
+  const handleShare = async () => {
+    if (!navigator.share) {
+      await copyToClipboard()
       return
     }
+    try {
+      await navigator.share({
+        title: article.title,
+        text: article.description,
+        url: window.location.href,
+      })
+    } catch {
+      // The share sheet was closed: nothing to report.
+    }
+  }
 
-    const eventDate = new Date(article.eventDate)
+  const addToCalendar = (type: "google" | "ics") => {
+    if (!eventDate) return
+
     const endDate = new Date(eventDate)
     endDate.setHours(endDate.getHours() + 2)
 
@@ -158,218 +166,140 @@ export default function ArticlePage() {
       window.open(
         `https://calendar.google.com/calendar/r/eventedit?text=${encodeURIComponent(article.title)}&details=${encodeURIComponent(
           article.description,
-        )}&dates=${eventDate.toISOString().replace(/-|:|\.\d\d\d/g, "")}/${endDate.toISOString().replace(/-|:|\.\d\d\d/g, "")}`,
+        )}&dates=${toCalendarStamp(eventDate)}/${toCalendarStamp(endDate)}`,
         "_blank",
       )
-    } else if (type === "apple" || type === "outlook") {
-      const calendarData = `BEGIN:VCALENDAR
+      return
+    }
+
+    const calendarData = `BEGIN:VCALENDAR
 VERSION:2.0
 BEGIN:VEVENT
 SUMMARY:${article.title}
 DESCRIPTION:${article.description}
-DTSTART:${eventDate.toISOString().replace(/-|:|\.\d\d\d/g, "")}
-DTEND:${endDate.toISOString().replace(/-|:|\.\d\d\d/g, "")}
+DTSTART:${toCalendarStamp(eventDate)}
+DTEND:${toCalendarStamp(endDate)}
 END:VEVENT
 END:VCALENDAR`
-      const blob = new Blob([calendarData], { type: "text/calendar" })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement("a")
-      a.href = url
-      a.download = `${article.title}.ics`
-      a.click()
-      URL.revokeObjectURL(url)
-    }
-  }
-
-  const handlePrint = () => {
-    window.print()
-  }
-
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(window.location.href)
-    toast({
-      title: "Lien copié",
-      description: "Le lien de l'article a été copié dans le presse-papier.",
-    })
+    const blob = new Blob([calendarData], { type: "text/calendar" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `${article.title}.ics`
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   return (
-    <div className="max-w-4xl mx-auto print:p-0">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-        <Button variant="ghost" className="mb-6 flex items-center print:hidden" onClick={() => router.back()}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Retour aux articles
-        </Button>
+    <article className="mx-auto max-w-3xl space-y-6">
+      <BackLink />
 
-        <Card className="overflow-hidden print:shadow-none">
-          <CardHeader className="p-0 relative">
-            <div className="relative w-full h-[400px] bg-muted/30">
-              {!imageLoaded && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Skeleton className="w-full h-full absolute" />
-                </div>
-              )}
-              <img
-                src={
-                  article.photo_url
-                    ? `${getBackendBaseUrl()}${article.photo_url}`
-                    : "https://via.placeholder.com/1200x600?text=Article+Image"
-                }
-                alt={article.title}
-                className={`w-full h-full object-cover transition-opacity duration-500 ${imageLoaded ? "opacity-100" : "opacity-0"}`}
-                onLoad={() => setImageLoaded(true)}
-              />
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent p-6">
-                <motion.h1
-                  className="text-white text-3xl md:text-4xl font-bold"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.2 }}
-                >
-                  {article.title}
-                </motion.h1>
-              </div>
-            </div>
-          </CardHeader>
-
-          <CardContent className="mt-6 print:mt-2">
-            <div className="flex flex-wrap items-center gap-3 mb-6 text-sm text-muted-foreground">
-              <div className="flex items-center">
-                <Calendar className="w-4 h-4 mr-1" />
-                <span>Publié le {formattedDate}</span>
-              </div>
-
-              <div className="flex items-center">
-                <Clock className="w-4 h-4 mr-1" />
-                <span>{readingTime} min de lecture</span>
-              </div>
-
-              {article.author && (
-                <div className="flex items-center">
-                  <User className="w-4 h-4 mr-1" />
-                  <span>{article.author}</span>
-                </div>
-              )}
-            </div>
-
-            {article.eventDate && (
-              <motion.div
-                className="mb-6 p-4 border border-primary/20 rounded-lg bg-primary/5"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.3 }}
-              >
-                <div className="flex items-start gap-3">
-                  <CalendarClock className="w-6 h-6 text-primary mt-1" />
-                  <div>
-                    <h3 className="font-semibold text-lg mb-1">Événement à venir</h3>
-                    <p className="text-muted-foreground">{formattedEventDate}</p>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" size="sm">
-                            <Calendar className="w-4 h-4 mr-2" />
-                            Ajouter au calendrier
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => addToCalendar("google")}>Google Calendar</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => addToCalendar("apple")}>Apple Calendar</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => addToCalendar("outlook")}>Outlook</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.4 }}>
-              <p className="text-lg font-medium mb-6">{article.description}</p>
-
-              {article.tags && article.tags.length > 0 && (
-                <div className="flex flex-wrap items-center gap-2 mb-6">
-                  {article.tags.map((tag: string) => (
-                    <Badge key={tag} variant="secondary" className="flex items-center">
-                      <Tag className="w-3 h-3 mr-1" /> {tag}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-
-              <Separator className="my-6" />
-
-              <div
-                className="mt-6 text-base leading-relaxed prose prose-headings:font-bold prose-headings:text-foreground prose-p:text-foreground prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-img:rounded-lg prose-img:shadow-md max-w-none"
-                dangerouslySetInnerHTML={{ __html: article.text }}
-              />
-            </motion.div>
-          </CardContent>
-
-          <CardFooter className="mt-6 flex flex-wrap justify-between gap-4 print:hidden">
-            <div className="flex items-center">
-              <BookOpen className="w-4 h-4 mr-2 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Article #{article.id}</span>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <Button variant="outline" onClick={copyToClipboard}>
-                <Share2 className="w-4 h-4 mr-2" />
-                Copier le lien
-              </Button>
-
-              <Button variant="outline" onClick={handleShare}>
-                <Share2 className="w-4 h-4 mr-2" />
-                Partager
-              </Button>
-
-              <Button variant="secondary" onClick={handlePrint}>
-                <Printer className="w-4 h-4 mr-2" />
-                Imprimer
-              </Button>
-            </div>
-          </CardFooter>
-        </Card>
-
-        {article.relatedArticles && article.relatedArticles.length > 0 && (
-          <motion.div
-            className="mt-12 print:hidden"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.6 }}
-          >
-            <h2 className="text-2xl font-bold mb-6">Articles similaires</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {article.relatedArticles.map((relatedArticle: any) => (
-                <Card key={relatedArticle.id} className="overflow-hidden hover:shadow-md transition-shadow">
-                  <div className="h-40 overflow-hidden">
-                    <img
-                      src={
-                        relatedArticle.photo_url
-                          ? `${getBackendBaseUrl()}${relatedArticle.photo_url}`
-                          : "https://via.placeholder.com/300x200?text=Article"
-                      }
-                      alt={relatedArticle.title}
-                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                    />
-                  </div>
-                  <CardContent className="p-4">
-                    <h3 className="font-semibold line-clamp-2 mb-2">{relatedArticle.title}</h3>
-                    <p className="text-sm text-muted-foreground line-clamp-3">{relatedArticle.description}</p>
-                    <Button
-                      variant="link"
-                      className="p-0 mt-2 h-auto"
-                      onClick={() => router.push(`/articles/${relatedArticle.id}`)}
-                    >
-                      Lire l'article
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </motion.div>
+      <div className="space-y-3">
+        <PageHeader title={article.title} className="mb-0" />
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5">
+            <Calendar className="h-4 w-4" aria-hidden="true" />
+            Publié le {formatDate(article.createdAt)}
+          </span>
+          {readingTime > 0 && (
+            <span className="inline-flex items-center gap-1.5">
+              <Clock className="h-4 w-4" aria-hidden="true" />
+              {readingTime} min de lecture
+            </span>
+          )}
+        </div>
+        {tags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {tags.map((tag) => (
+              <Badge key={tag} variant="secondary">
+                {tag}
+              </Badge>
+            ))}
+          </div>
         )}
-      </motion.div>
-    </div>
+      </div>
+
+      <ArticleImage
+        src={article.photo_url}
+        alt={`Illustration de l'article « ${article.title} »`}
+        className="aspect-[2/1] w-full rounded-xl"
+        iconClassName="h-10 w-10"
+      />
+
+      {eventDate && (
+        <div className="flex flex-col gap-3 rounded-xl border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-sm font-medium">Événement</p>
+              <Badge variant={isUpcoming ? "info" : "neutral"}>{isUpcoming ? "À venir" : "Passé"}</Badge>
+            </div>
+            <p className="mt-1 text-sm text-muted-foreground">{formatEventDate(eventDate)}</p>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="print:hidden">
+                <CalendarPlus className="h-4 w-4" />
+                Ajouter à mon agenda
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => addToCalendar("google")}>Google Agenda</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => addToCalendar("ics")}>
+                Apple, Outlook ou autre (fichier .ics)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      )}
+
+      {article.description && <p className="text-base font-medium leading-relaxed">{article.description}</p>}
+
+      <div
+        className="prose prose-sm max-w-none text-foreground sm:prose-base prose-headings:text-foreground prose-a:text-primary prose-strong:text-foreground prose-li:marker:text-muted-foreground prose-img:rounded-lg"
+        dangerouslySetInnerHTML={{ __html: article.text }}
+      />
+
+      {documents.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold">Documents joints</h2>
+          <ul className="space-y-2">
+            {documents.map((path) => (
+              <li key={path}>
+                <a
+                  href={articleFileUrl(path) ?? undefined}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 rounded-lg border bg-card p-3 text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <FileText className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                  <span className="min-w-0 truncate font-medium">{articleFileName(path)}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <Separator className="print:hidden" />
+
+      <div className="flex flex-wrap gap-2 print:hidden">
+        <Button variant="outline" onClick={handleShare}>
+          <Share2 className="h-4 w-4" />
+          Partager
+        </Button>
+        <Button variant="outline" onClick={copyToClipboard}>
+          <Link2 className="h-4 w-4" />
+          Copier le lien
+        </Button>
+        <Button variant="outline" onClick={handlePrint}>
+          <Printer className="h-4 w-4" />
+          Imprimer
+        </Button>
+      </div>
+    </article>
   )
+}
+
+function handlePrint() {
+  window.print()
 }

@@ -1,184 +1,49 @@
 "use client"
 
-import React from "react"
-import { motion } from "framer-motion"
-import { Check, ChevronLeft, ChevronRight } from "lucide-react"
-import { useMediaQuery } from "@/hooks/use-media-query"
 import { cn } from "@/lib/utils"
 
 interface QuestionStepperProps {
-  totalQuestions: number
   currentQuestion: number
-  answeredQuestions: number[]
-  onNavigate?: (index: number) => void
+  // One entry per question, in order: true once it has an answer.
+  answered: boolean[]
+  onNavigate: (index: number) => void
 }
 
-export function QuestionStepper({
-  totalQuestions,
-  currentQuestion,
-  answeredQuestions,
-  onNavigate,
-}: QuestionStepperProps) {
-  const isMobile = useMediaQuery("(max-width: 640px)")
-  const progressPercentage = ((currentQuestion + 1) / totalQuestions) * 100
+// The numbered buttons above a question: where the member is, what is answered, what is left.
+export function QuestionStepper({ currentQuestion, answered, onNavigate }: QuestionStepperProps) {
+  const answeredCount = answered.filter(Boolean).length
 
   return (
-    <div className="mb-6 px-2">
-      {/* Question navigation */}
-      <div className="mb-6">
-        {isMobile ? (
-          <MobileQuestionStepper
-            totalQuestions={totalQuestions}
-            currentQuestion={currentQuestion}
-            answeredQuestions={answeredQuestions}
-            onNavigate={onNavigate}
-          />
-        ) : (
-          <DesktopQuestionStepper
-            totalQuestions={totalQuestions}
-            currentQuestion={currentQuestion}
-            answeredQuestions={answeredQuestions}
-            onNavigate={onNavigate}
-          />
-        )}
-      </div>
-
-      {/* Progress bar */}
-      <div className="relative h-1.5 bg-muted rounded-full overflow-hidden">
-        <motion.div
-          className="absolute top-0 left-0 h-full bg-primary"
-          initial={{ width: "0%" }}
-          animate={{ width: `${progressPercentage}%` }}
-          transition={{ duration: 0.3 }}
-          style={{ width: `${progressPercentage}%` }}
-        />
-      </div>
-
-      {/* Progress stats */}
-      <div className="mt-3 flex justify-between items-center text-xs text-muted-foreground px-4">
-        <div>
-          Question {currentQuestion + 1} sur {totalQuestions}
-        </div>
-        <div>
-          {answeredQuestions.length} répondue{answeredQuestions.length > 1 ? "s" : ""}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function MobileQuestionStepper({
-  totalQuestions,
-  currentQuestion,
-  onNavigate,
-}: QuestionStepperProps) {
-  return (
-    <div className="flex items-center justify-between px-4">
-      <button
-        onClick={() => onNavigate?.(Math.max(0, currentQuestion - 1))}
-        disabled={currentQuestion === 0}
-        className={cn(
-          "w-8 h-8 flex items-center justify-center rounded-full",
-          "transition-colors duration-200",
-          currentQuestion === 0
-            ? "text-muted-foreground bg-muted cursor-not-allowed"
-            : "text-primary bg-primary/10 hover:bg-primary/20",
-        )}
-        aria-label="Question précédente"
-      >
-        <ChevronLeft className="w-4 h-4" />
-      </button>
-
-      <div className="flex flex-col items-center">
-        <div className="text-2xl font-bold text-primary">{currentQuestion + 1}</div>
-        <div className="text-xs text-muted-foreground">sur {totalQuestions}</div>
-      </div>
-
-      <button
-        onClick={() => onNavigate?.(Math.min(totalQuestions - 1, currentQuestion + 1))}
-        disabled={currentQuestion === totalQuestions - 1}
-        className={cn(
-          "w-8 h-8 flex items-center justify-center rounded-full",
-          "transition-colors duration-200",
-          currentQuestion === totalQuestions - 1
-            ? "text-muted-foreground bg-muted cursor-not-allowed"
-            : "text-primary bg-primary/10 hover:bg-primary/20",
-        )}
-        aria-label="Question suivante"
-      >
-        <ChevronRight className="w-4 h-4" />
-      </button>
-    </div>
-  )
-}
-
-function DesktopQuestionStepper({
-  totalQuestions,
-  currentQuestion,
-  answeredQuestions,
-  onNavigate,
-}: QuestionStepperProps) {
-  return (
-    <div className="px-6">
-      {/* Question bubbles */}
-      <div className="flex items-center justify-between max-w-2xl mx-auto">
-        {Array.from({ length: totalQuestions }).map((_, index) => {
-          const isAnswered = answeredQuestions.includes(index)
+    <nav aria-label="Questions de l'évaluation" className="space-y-3">
+      <ol className="flex flex-wrap gap-2">
+        {answered.map((isAnswered, index) => {
           const isCurrent = index === currentQuestion
-          const isPast = index < currentQuestion
-
           return (
-            <React.Fragment key={`question-${index}`}>
-              {/* Connector line */}
-              {index > 0 && (
-                <div className="flex-1 h-0.5 bg-muted relative mx-1">
-                  <motion.div
-                    className="absolute inset-0 bg-primary origin-left"
-                    initial={{ scaleX: 0 }}
-                    animate={{ scaleX: isPast ? 1 : 0 }}
-                    transition={{ duration: 0.3 }}
-                  />
-                </div>
-              )}
-
-              {/* Question bubble */}
-              <motion.button
-                onClick={() => onNavigate?.(index)}
+            <li key={index}>
+              <button
+                type="button"
+                onClick={() => onNavigate(index)}
+                aria-current={isCurrent ? "step" : undefined}
+                aria-label={`Question ${index + 1}, ${isAnswered ? "répondue" : "sans réponse"}`}
                 className={cn(
-                  "relative flex items-center justify-center rounded-full",
-                  "transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary",
+                  "flex h-9 w-9 items-center justify-center rounded-md border text-sm font-medium tabular-nums transition-colors",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
                   isCurrent
-                    ? "w-10 h-10 bg-primary text-primary-foreground shadow-md z-10"
+                    ? "border-primary bg-primary text-primary-foreground"
                     : isAnswered
-                      ? "w-8 h-8 bg-success/20 text-success hover:bg-success/30"
-                      : isPast
-                        ? "w-8 h-8 bg-primary/20 text-primary hover:bg-primary/30"
-                        : "w-8 h-8 bg-muted text-muted-foreground hover:bg-muted/80",
+                      ? "border-transparent bg-success/15 text-success hover:bg-success/25"
+                      : "border-border bg-background text-muted-foreground hover:bg-muted",
                 )}
-                initial={false}
-                animate={{
-                  scale: isCurrent ? 1.1 : 1,
-                }}
-                whileHover={{ scale: isCurrent ? 1.1 : 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ duration: 0.2 }}
-                aria-label={`Question ${index + 1}`}
               >
-                {isPast && isAnswered ? (
-                  <Check className="w-3 h-3 sm:w-4 sm:h-4" />
-                ) : (
-                  <span className="text-xs sm:text-sm font-medium">{index + 1}</span>
-                )}
-
-                {/* Status indicator */}
-                {!isCurrent && isAnswered && (
-                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-success rounded-full border-2 border-white" />
-                )}
-              </motion.button>
-            </React.Fragment>
+                {index + 1}
+              </button>
+            </li>
           )
         })}
-      </div>
-    </div>
+      </ol>
+      <p className="text-xs tabular-nums text-muted-foreground">
+        Réponses données : {answeredCount} sur {answered.length}
+      </p>
+    </nav>
   )
 }

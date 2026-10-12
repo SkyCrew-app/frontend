@@ -2,154 +2,117 @@
 
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { CalendarCheck, ChevronRight } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Badge } from "@/components/ui/badge"
-import type { Reservation } from "@/interfaces/reservation"
-import { Clock, User, Calendar, Plus } from "lucide-react"
 import { Label } from "@/components/ui/label"
+import { EmptyState } from "@/components/layout/EmptyState"
+import type { Reservation } from "@/interfaces/reservation"
+import { reservationStatus } from "@/lib/reservation-status"
+import { formatTime } from "@/lib/format"
+import { reservationPilotName } from "@/components/reservation/reservation-cell"
+
+interface Aircraft {
+  id: number
+  registration_number: string
+  model?: string
+}
 
 interface MobileReservationViewProps {
   currentDate: Date
-  aircrafts: any[]
+  aircrafts: Aircraft[]
   reservations: Reservation[]
   selectedAircraft: number | null
   setSelectedAircraft: (id: number | null) => void
-  onCreateReservation: () => void
+  currentUserId?: string | number | null
   onViewReservation: (reservation: Reservation) => void
 }
 
+const ALL_AIRCRAFT = "all"
+
+/** Day agenda for phones: the reservations of the day, optionally for one aircraft. */
 export function MobileReservationView({
   currentDate,
   aircrafts,
   reservations,
   selectedAircraft,
   setSelectedAircraft,
-  onCreateReservation,
+  currentUserId,
   onViewReservation,
 }: MobileReservationViewProps) {
   const filteredReservations = selectedAircraft
-    ? reservations.filter((r) => r.aircraft.id === selectedAircraft)
+    ? reservations.filter((r) => String(r.aircraft.id) === String(selectedAircraft))
     : reservations
 
   const sortedReservations = [...filteredReservations].sort(
     (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime(),
   )
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "CONFIRMED":
-        return "bg-success/15 text-success border-success/30"
-      case "PENDING":
-        return "bg-warning/15 text-warning border-warning/30"
-      case "CANCELLED":
-        return "bg-destructive/15 text-destructive border-destructive/30"
-      default:
-        return "bg-info/15 text-info border-info/30"
-    }
-  }
-
-  const handleAircraftSelection = (value: string) => {
-    if (value === "-1") {
-      setSelectedAircraft(null)
-    } else {
-      const aircraftId = Number.parseInt(value)
-      if (!isNaN(aircraftId)) {
-        setSelectedAircraft(aircraftId)
-      }
-    }
-  }
-
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-4">
-        <div>
-          <Label htmlFor="aircraft-select" className="mb-1 block">
-            Sélectionner un avion
-          </Label>
-          <Select value={selectedAircraft?.toString() || "-1"} onValueChange={handleAircraftSelection}>
-            <SelectTrigger id="aircraft-select">
-              <SelectValue placeholder="Tous les avions" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="-1">Tous les avions</SelectItem>
-              {aircrafts.map((aircraft) => (
-                <SelectItem key={aircraft.id} value={aircraft.id.toString()}>
-                  {aircraft.registration_number}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <Button onClick={onCreateReservation} className="w-full">
-          <Plus className="mr-2 h-4 w-4" />
-          Nouvelle réservation
-        </Button>
-      </div>
-
-      <div className="mt-6">
-        <h3 className="text-lg font-medium mb-3">
-          Réservations du {format(currentDate, "EEEE d MMMM yyyy", { locale: fr })}
-        </h3>
-
-        {sortedReservations.length > 0 ? (
-          <Accordion type="single" collapsible className="space-y-2">
-            {sortedReservations.map((reservation) => (
-              <AccordionItem
-                key={reservation.id}
-                value={reservation.id.toString()}
-                className={`border rounded-lg ${getStatusColor(reservation.status)}`}
-              >
-                <AccordionTrigger className="px-4 py-2 hover:no-underline">
-                  <div className="flex flex-col items-start text-left">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{reservation.aircraft.registration_number}</span>
-                      <Badge variant="outline" className="ml-2">
-                        {format(new Date(reservation.start_time), "HH:mm")} -{" "}
-                        {format(new Date(reservation.end_time), "HH:mm")}
-                      </Badge>
-                    </div>
-                    <span className="text-sm">{reservation.purpose || "Réservation"}</span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="px-4 pb-3 pt-1">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-muted-foreground" />
-                      <span>
-                        {reservation.user?.first_name} {reservation.user?.last_name}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span>{reservation.estimated_flight_hours} heure(s) estimée(s)</span>
-                    </div>
-                    {reservation.notes && <p className="text-sm mt-2">{reservation.notes}</p>}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full mt-2"
-                      onClick={() => onViewReservation(reservation)}
-                    >
-                      Voir détails
-                    </Button>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
+      <div className="space-y-2">
+        <Label htmlFor="aircraft-select">Avion</Label>
+        <Select
+          value={selectedAircraft?.toString() ?? ALL_AIRCRAFT}
+          onValueChange={(value) => setSelectedAircraft(value === ALL_AIRCRAFT ? null : Number.parseInt(value, 10))}
+        >
+          <SelectTrigger id="aircraft-select">
+            <SelectValue placeholder="Tous les avions" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL_AIRCRAFT}>Tous les avions</SelectItem>
+            {aircrafts.map((aircraft) => (
+              <SelectItem key={aircraft.id} value={aircraft.id.toString()}>
+                {aircraft.registration_number}
+                {aircraft.model ? ` — ${aircraft.model}` : ""}
+              </SelectItem>
             ))}
-          </Accordion>
-        ) : (
-          <Card>
-            <CardContent className="p-6 text-center text-muted-foreground">
-              <Calendar className="h-12 w-12 mx-auto mb-2 opacity-20" />
-              <p>Aucune réservation pour {selectedAircraft ? "cet avion" : "cette journée"}</p>
-            </CardContent>
-          </Card>
-        )}
+          </SelectContent>
+        </Select>
       </div>
+
+      <h2 className="text-lg font-semibold">Réservations du {format(currentDate, "EEEE d MMMM yyyy", { locale: fr })}</h2>
+
+      {sortedReservations.length > 0 ? (
+        <ul className="space-y-2">
+          {sortedReservations.map((reservation) => {
+            const status = reservationStatus(reservation.status)
+            const isMine =
+              currentUserId != null && reservation.user?.id != null && String(currentUserId) === String(reservation.user.id)
+            const pilot = isMine ? "Vous" : reservationPilotName(reservation)
+
+            return (
+              <li key={reservation.id}>
+                <button
+                  type="button"
+                  onClick={() => onViewReservation(reservation)}
+                  className="flex w-full items-center gap-3 rounded-lg border bg-card p-3 text-left transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <span className="text-sm font-semibold tabular-nums">
+                        {formatTime(reservation.start_time)} – {formatTime(reservation.end_time)}
+                      </span>
+                      <span className="text-sm font-medium">{reservation.aircraft.registration_number}</span>
+                      <Badge variant={status.variant}>{status.label}</Badge>
+                    </div>
+                    <p className="truncate text-sm text-muted-foreground">
+                      {[reservation.purpose || "Réservation", pilot].filter(Boolean).join(" · ")}
+                    </p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      ) : (
+        <EmptyState
+          icon={CalendarCheck}
+          title={selectedAircraft ? "Cet avion est libre toute la journée" : "Aucune réservation ce jour"}
+          description="Utilisez « Nouvelle réservation » pour réserver un créneau."
+        />
+      )}
     </div>
   )
 }

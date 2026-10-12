@@ -1,16 +1,12 @@
 "use client"
 
-import { Input } from "@/components/ui/input"
+import { format, parseISO } from "date-fns"
+import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { RotateCcw } from "lucide-react"
+import { DatePicker } from "@/components/ui/date-picker"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { LogbookFilter } from "@/interfaces/logbook"
+import { flightTypeLabel } from "@/components/flight/flight-type"
 
 interface Aircraft {
   id: number
@@ -22,94 +18,94 @@ interface LogbookFiltersProps {
   filter: LogbookFilter
   onFilterChange: (filter: LogbookFilter) => void
   aircraftList: Aircraft[]
+  /** Flight types the pilot can filter on. */
+  flightTypes: string[]
 }
 
-const FLIGHT_TYPES = [
-  { value: "VFR", label: "VFR" },
-  { value: "IFR", label: "IFR" },
-  { value: "SVFR", label: "SVFR" },
-]
+const toDate = (value: string | undefined) => (value ? parseISO(value) : undefined)
+const toFilterDate = (date: Date | undefined) => (date ? format(date, "yyyy-MM-dd") : undefined)
 
-export default function LogbookFilters({ filter, onFilterChange, aircraftList }: LogbookFiltersProps) {
-  const handleReset = () => {
-    onFilterChange({})
-  }
+/** One-row toolbar of the logbook: period, aircraft, flight type. */
+export default function LogbookFilters({ filter, onFilterChange, aircraftList, flightTypes }: LogbookFiltersProps) {
+  const hasActiveFilters = Boolean(filter.startDate || filter.endDate || filter.aircraftId || filter.flightType)
 
   return (
-    <div className="flex flex-wrap items-end gap-3">
-      <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-muted-foreground">Date de début</label>
-        <Input
-          type="date"
-          value={filter.startDate ?? ""}
-          onChange={(e) => onFilterChange({ ...filter, startDate: e.target.value || undefined })}
-          className="w-[160px]"
+    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+      <div className="sm:w-[200px]" role="group" aria-label="Date de début">
+        <DatePicker
+          date={toDate(filter.startDate)}
+          onSelect={(date) => onFilterChange({ ...filter, startDate: toFilterDate(date) })}
+          placeholder="Du"
+          toDate={toDate(filter.endDate)}
+          clearable
         />
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-muted-foreground">Date de fin</label>
-        <Input
-          type="date"
-          value={filter.endDate ?? ""}
-          onChange={(e) => onFilterChange({ ...filter, endDate: e.target.value || undefined })}
-          className="w-[160px]"
+      <div className="sm:w-[200px]" role="group" aria-label="Date de fin">
+        <DatePicker
+          date={toDate(filter.endDate)}
+          onSelect={(date) => onFilterChange({ ...filter, endDate: toFilterDate(date) })}
+          placeholder="Au"
+          fromDate={toDate(filter.startDate)}
+          clearable
         />
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-muted-foreground">Avion</label>
-        <Select
-          value={filter.aircraftId?.toString() ?? "all"}
-          onValueChange={(value) =>
-            onFilterChange({
-              ...filter,
-              aircraftId: value === "all" ? undefined : parseInt(value),
-            })
-          }
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Tous les avions" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tous les avions</SelectItem>
-            {aircraftList.map((aircraft) => (
-              <SelectItem key={aircraft.id} value={aircraft.id.toString()}>
-                {aircraft.registration_number} - {aircraft.model}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <Select
+        value={filter.aircraftId?.toString() ?? "all"}
+        onValueChange={(value) =>
+          onFilterChange({
+            ...filter,
+            aircraftId: value === "all" ? undefined : parseInt(value),
+          })
+        }
+      >
+        <SelectTrigger aria-label="Filtrer par avion" className="sm:w-[210px]">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Tous les avions</SelectItem>
+          {aircraftList.map((aircraft) => (
+            <SelectItem key={aircraft.id} value={aircraft.id.toString()}>
+              {aircraft.registration_number} — {aircraft.model}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
-      <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-muted-foreground">Nature du vol</label>
-        <Select
-          value={filter.flightType ?? "all"}
-          onValueChange={(value) =>
-            onFilterChange({
-              ...filter,
-              flightType: value === "all" ? undefined : value,
-            })
-          }
-        >
-          <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="Tous" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tous</SelectItem>
-            {FLIGHT_TYPES.map((type) => (
-              <SelectItem key={type.value} value={type.value}>
-                {type.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <Select
+        value={filter.flightType ?? "all"}
+        onValueChange={(value) =>
+          onFilterChange({
+            ...filter,
+            flightType: value === "all" ? undefined : value,
+          })
+        }
+      >
+        <SelectTrigger aria-label="Filtrer par type de vol" className="sm:w-[180px]">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Tous les types de vol</SelectItem>
+          {flightTypes.map((type) => (
+            <SelectItem key={type} value={type}>
+              {flightTypeLabel(type)}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
-      <Button variant="outline" size="icon" onClick={handleReset} title="Réinitialiser les filtres">
-        <RotateCcw className="h-4 w-4" />
-      </Button>
+      {hasActiveFilters && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onFilterChange({})}
+          className="self-start text-muted-foreground sm:self-auto"
+        >
+          <X className="h-4 w-4" />
+          Réinitialiser
+        </Button>
+      )}
     </div>
   )
 }

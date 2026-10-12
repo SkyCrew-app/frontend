@@ -17,8 +17,9 @@ import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
-import { CreditCard, Wallet, AlertCircle } from "lucide-react"
-import { motion } from "framer-motion"
+import { Skeleton } from "@/components/ui/skeleton"
+import { AlertCircle, Loader2 } from "lucide-react"
+import { formatMoney } from "@/lib/format"
 
 export function ClientPayPalProvider({ children }: { children: React.ReactNode }) {
   return (
@@ -104,9 +105,13 @@ function PayPalButtonsWrapper({ amount, userId, setAmount }: PayPalButtonsWrappe
 
   return (
     <div className="space-y-4">
-      <div className="p-4 border rounded-lg bg-muted/30">
-        <p className="text-sm text-muted-foreground mb-2">
-          Vous allez recharger votre compte de <strong>€{Number.parseFloat(amount).toFixed(2)}</strong> via PayPal.
+      <div className="space-y-3 rounded-lg border bg-muted/30 p-4">
+        <p className="text-sm text-muted-foreground">
+          Vous allez recharger votre compte de{" "}
+          <strong className="font-semibold text-foreground tabular-nums">
+            {formatMoney(Number.parseFloat(amount))}
+          </strong>{" "}
+          avec PayPal.
         </p>
         <PayPalButtons
           createOrder={createOrder}
@@ -117,7 +122,10 @@ function PayPalButtonsWrapper({ amount, userId, setAmount }: PayPalButtonsWrappe
         />
       </div>
       {isProcessing && (
-        <div className="text-center text-sm text-muted-foreground">Traitement en cours, veuillez patienter...</div>
+        <p className="flex items-center justify-center gap-2 text-sm text-muted-foreground" role="status">
+          <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+          Paiement en cours de traitement, ne fermez pas cette page.
+        </p>
       )}
     </div>
   )
@@ -180,17 +188,25 @@ function CheckoutForm({
   }
 
   return (
-    <div className="mt-4 space-y-4">
-      <div className="p-4 border rounded-lg bg-muted/30">
-        <p className="text-sm text-muted-foreground mb-4">
-          Vous allez recharger votre compte de <strong>€{Number.parseFloat(amount).toFixed(2)}</strong> via carte
-          bancaire.
+    <div className="space-y-4">
+      <div className="space-y-4 rounded-lg border bg-muted/30 p-4">
+        <p className="text-sm text-muted-foreground">
+          Vous allez recharger votre compte de{" "}
+          <strong className="font-semibold text-foreground tabular-nums">
+            {formatMoney(Number.parseFloat(amount))}
+          </strong>{" "}
+          par carte bancaire.
         </p>
         <PaymentElement />
       </div>
 
       <Button className="w-full" disabled={loading} onClick={handleConfirmStripePayment}>
-        {loading ? "Traitement en cours..." : "Payer avec Stripe"}
+        {loading && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+        {loading
+          ? "Paiement en cours..."
+          : Number.parseFloat(amount) > 0
+            ? `Payer ${formatMoney(Number.parseFloat(amount))}`
+            : "Payer"}
       </Button>
 
       {error && (
@@ -270,147 +286,102 @@ export default function TopUpAccount() {
   const predefinedAmounts = [10, 20, 50, 100]
 
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-      <ClientPayPalProvider>
-        <Card className="h-full">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xl font-semibold flex items-center">
-              <Wallet className="mr-2 h-5 w-5 text-primary" />
-              Recharger mon compte
-            </CardTitle>
-            <CardDescription>Ajoutez des fonds à votre compte via carte bancaire ou PayPal</CardDescription>
-          </CardHeader>
+    <ClientPayPalProvider>
+      <Card>
+        <CardHeader>
+          <CardTitle>Recharger mon compte</CardTitle>
+          <CardDescription>Choisissez un montant, puis payez par carte bancaire ou avec PayPal.</CardDescription>
+        </CardHeader>
 
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="amount" className="text-sm font-medium">
-                  Montant à recharger (€)
-                </Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  placeholder="Ex: 10"
-                  value={amount}
-                  onChange={handleAmountChange}
-                  className="mt-1"
-                  min="0"
-                  step="0.01"
-                />
-              </div>
+        <CardContent className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="amount">Montant à recharger (€)</Label>
+            <Input
+              id="amount"
+              type="number"
+              inputMode="decimal"
+              placeholder="50"
+              value={amount}
+              onChange={handleAmountChange}
+              className="tabular-nums"
+              min="0"
+              step="0.01"
+            />
+          </div>
 
-              <div className="flex flex-wrap gap-2">
-                {predefinedAmounts.map((amt) => (
-                  <Button
-                    key={amt}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setAmount(amt.toString())
-                      if (clientSecret) setClientSecret(null)
-                    }}
-                    className="flex-1"
-                  >
-                    €{amt}
-                  </Button>
-                ))}
-              </div>
+          <div className="grid grid-cols-4 gap-2" role="group" aria-label="Montants rapides">
+            {predefinedAmounts.map((amt) => (
+              <Button
+                key={amt}
+                type="button"
+                variant={amount === amt.toString() ? "secondary" : "outline"}
+                size="sm"
+                onClick={() => {
+                  setAmount(amt.toString())
+                  if (clientSecret) setClientSecret(null)
+                }}
+                className="tabular-nums"
+              >
+                {amt} €
+              </Button>
+            ))}
+          </div>
 
-              {error && (
-                <Alert variant="destructive" className="mt-2">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
+          {error && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          <Tabs defaultValue="stripe">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="stripe">Carte bancaire</TabsTrigger>
+              <TabsTrigger value="paypal">PayPal</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="stripe" className="mt-4 space-y-4">
+              {!clientSecret ? (
+                <Button
+                  className="w-full"
+                  onClick={handleInitStripeIntent}
+                  disabled={loadingStripeIntent || !userId || !amount || Number.parseFloat(amount) <= 0}
+                >
+                  {loadingStripeIntent && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+                  {loadingStripeIntent ? "Préparation du paiement..." : "Continuer vers le paiement par carte"}
+                </Button>
+              ) : (
+                <Elements
+                  stripe={stripePromise}
+                  options={{
+                    clientSecret,
+                    appearance: { theme: "stripe" },
+                  }}
+                >
+                  <CheckoutForm
+                    clientSecret={clientSecret}
+                    amount={amount}
+                    setAmount={setAmount}
+                    userId={userId ? Number.parseInt(userId) : 0}
+                  />
+                </Elements>
               )}
+            </TabsContent>
 
-              <Tabs defaultValue="stripe" className="mt-4">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="stripe" className="flex items-center">
-                    <CreditCard className="mr-2 h-4 w-4" />
-                    Carte bancaire
-                  </TabsTrigger>
-                  <TabsTrigger value="paypal">
-                    <svg
-                      className="h-4 w-4 mr-2 inline-block"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M19.5 8.5H4.5C3.4 8.5 2.5 9.4 2.5 10.5V17.5C2.5 18.6 3.4 19.5 4.5 19.5H19.5C20.6 19.5 21.5 18.6 21.5 17.5V10.5C21.5 9.4 20.6 8.5 19.5 8.5Z"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M7 15.5H7.01"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M3.5 11.5L21.5 11.5"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                    PayPal
-                  </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="stripe" className="mt-4 space-y-4">
-                  {!clientSecret ? (
-                    <div className="mt-4">
-                      <Button
-                        className="w-full"
-                        onClick={handleInitStripeIntent}
-                        disabled={loadingStripeIntent || !userId || !amount || Number.parseFloat(amount) <= 0}
-                      >
-                        {loadingStripeIntent ? "Initialisation..." : "Initialiser le paiement par carte"}
-                      </Button>
-                    </div>
-                  ) : (
-                    <Elements
-                      stripe={stripePromise}
-                      options={{
-                        clientSecret,
-                        appearance: { theme: "stripe" },
-                      }}
-                    >
-                      <CheckoutForm
-                        clientSecret={clientSecret}
-                        amount={amount}
-                        setAmount={setAmount}
-                        userId={userId ? Number.parseInt(userId) : 0}
-                      />
-                    </Elements>
-                  )}
-                </TabsContent>
-
-                <TabsContent value="paypal" className="mt-4">
-                  {!userId ? (
-                    <div className="p-4 border rounded-lg bg-muted/30 text-center">
-                      <p className="text-sm text-muted-foreground">Chargement de votre compte...</p>
-                    </div>
-                  ) : Number.parseFloat(amount) > 0 ? (
-                    <PayPalButtonsWrapper amount={amount} userId={Number(userId)} setAmount={setAmount} />
-                  ) : (
-                    <div className="p-4 border rounded-lg bg-muted/30 text-center">
-                      <p className="text-sm text-muted-foreground">
-                        Veuillez saisir un montant pour continuer avec PayPal
-                      </p>
-                    </div>
-                  )}
-                </TabsContent>
-              </Tabs>
-            </div>
-          </CardContent>
-        </Card>
-      </ClientPayPalProvider>
-    </motion.div>
+            <TabsContent value="paypal" className="mt-4">
+              {!userId ? (
+                <Skeleton className="h-24 w-full rounded-lg" />
+              ) : Number.parseFloat(amount) > 0 ? (
+                <PayPalButtonsWrapper amount={amount} userId={Number(userId)} setAmount={setAmount} />
+              ) : (
+                <p className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">
+                  Saisissez un montant pour payer avec PayPal.
+                </p>
+              )}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+    </ClientPayPalProvider>
   )
 }

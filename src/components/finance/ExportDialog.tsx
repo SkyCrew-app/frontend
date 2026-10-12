@@ -1,156 +1,154 @@
 "use client"
 
 import { useState } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
+import { fr } from "date-fns/locale"
+import { CalendarIcon, Download, Loader2 } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { formatDate } from "@/lib/format"
 import { cn } from "@/lib/utils"
-import { format as dateFormat } from "date-fns"
-import { fr } from "date-fns/locale"
-import { CalendarIcon, FileText, Download, Loader2 } from "lucide-react"
+
+type ExportFormat = "pdf" | "excel"
 
 interface ExportDialogProps {
-  onExport: (format: "pdf" | "excel", startDate: Date, endDate: Date) => void
+  /** Resolves to true when the report was generated; the dialog then closes. */
+  onExport: (format: ExportFormat, startDate: Date, endDate: Date) => Promise<boolean> | boolean | void
   isLoading: boolean
+}
+
+interface DateFieldProps {
+  id: string
+  label: string
+  value: Date | undefined
+  onChange: (date: Date | undefined) => void
+  disabledDays?: (date: Date) => boolean
+}
+
+function DateField({ id, label, value, onChange, disabledDays }: DateFieldProps) {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={id}>
+        {label}
+        <span className="text-destructive" aria-hidden="true">
+          {" "}
+          *
+        </span>
+      </Label>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            id={id}
+            type="button"
+            variant="outline"
+            className={cn("w-full justify-start font-normal", !value && "text-muted-foreground")}
+          >
+            <CalendarIcon className="h-4 w-4" />
+            {value ? formatDate(value) : "Choisir une date"}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={value}
+            onSelect={(date) => {
+              onChange(date)
+              if (date) setOpen(false)
+            }}
+            disabled={disabledDays}
+            initialFocus
+            locale={fr}
+          />
+        </PopoverContent>
+      </Popover>
+    </div>
+  )
 }
 
 export function ExportDialog({ onExport, isLoading }: ExportDialogProps) {
   const [open, setOpen] = useState(false)
   const [startDate, setStartDate] = useState<Date>()
   const [endDate, setEndDate] = useState<Date>()
-  const [exportFormat, setExportFormat] = useState<"pdf" | "excel">("pdf")
+  const [exportFormat, setExportFormat] = useState<ExportFormat>("pdf")
 
-  const handleExport = () => {
-    if (startDate && endDate) {
-      onExport(exportFormat, startDate, endDate)
-      setOpen(false)
-    }
+  const invalidRange = Boolean(startDate && endDate && startDate > endDate)
+
+  const handleExport = async () => {
+    if (!startDate || !endDate || invalidRange) return
+    const done = await onExport(exportFormat, startDate, endDate)
+    // Stay open after a failure so the dates are not lost.
+    if (done !== false) setOpen(false)
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(next) => !isLoading && setOpen(next)}>
       <DialogTrigger asChild>
-        <Button variant="default" className="bg-info hover:bg-info/90 text-info-foreground">
-          <Download className="mr-2 h-4 w-4" />
-          Exporter rapport
+        <Button variant="outline">
+          <Download className="h-4 w-4" />
+          Exporter
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold flex items-center">
-            <FileText className="mr-2 h-5 w-5 text-info" />
-            Exporter le rapport financier
-          </DialogTitle>
+          <DialogTitle>Exporter le rapport financier</DialogTitle>
+          <DialogDescription>Choisissez le format et la période à inclure dans le rapport.</DialogDescription>
         </DialogHeader>
-        <div className="grid gap-6 py-4">
+
+        <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="format" className="text-sm font-medium">
-              Format d'exportation
-            </Label>
-            <Select value={exportFormat} onValueChange={(value: "pdf" | "excel") => setExportFormat(value)}>
-              <SelectTrigger className="w-full" id="format">
-                <SelectValue placeholder="Sélectionner le format" />
+            <Label htmlFor="export-format">Format</Label>
+            <Select value={exportFormat} onValueChange={(value: ExportFormat) => setExportFormat(value)}>
+              <SelectTrigger id="export-format">
+                <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="pdf" className="flex items-center">
-                  <div className="flex items-center">
-                    <div className="w-4 h-4 mr-2 rounded-full bg-destructive"></div>
-                    PDF
-                  </div>
-                </SelectItem>
-                <SelectItem value="excel" className="flex items-center">
-                  <div className="flex items-center">
-                    <div className="w-4 h-4 mr-2 rounded-full bg-success"></div>
-                    Excel
-                  </div>
-                </SelectItem>
+                <SelectItem value="pdf">PDF</SelectItem>
+                <SelectItem value="excel">Tableur (Excel)</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="startDate" className="text-sm font-medium">
-              Date de début
-            </Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  id="startDate"
-                  variant={"outline"}
-                  className={cn("w-full justify-start text-left font-normal", !startDate && "text-muted-foreground")}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {startDate ? dateFormat(startDate, "P", { locale: fr }) : <span>Choisir une date</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={startDate}
-                  onSelect={setStartDate}
-                  initialFocus
-                  locale={fr}
-                  className="rounded-md border"
-                />
-              </PopoverContent>
-            </Popover>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <DateField
+              id="export-start-date"
+              label="Du"
+              value={startDate}
+              onChange={setStartDate}
+              disabledDays={(date) => (endDate ? date > endDate : false)}
+            />
+            <DateField
+              id="export-end-date"
+              label="Au"
+              value={endDate}
+              onChange={setEndDate}
+              disabledDays={(date) => (startDate ? date < startDate : false)}
+            />
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="endDate" className="text-sm font-medium">
-              Date de fin
-            </Label>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  id="endDate"
-                  variant={"outline"}
-                  className={cn("w-full justify-start text-left font-normal", !endDate && "text-muted-foreground")}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {endDate ? dateFormat(endDate, "P", { locale: fr }) : <span>Choisir une date</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={endDate}
-                  onSelect={setEndDate}
-                  initialFocus
-                  locale={fr}
-                  className="rounded-md border"
-                  disabled={(date) => (startDate ? date < startDate : false)}
-                />
-              </PopoverContent>
-            </Popover>
-            {startDate && endDate && startDate > endDate && (
-              <p className="text-sm text-destructive mt-1">La date de fin doit être postérieure à la date de début</p>
-            )}
-          </div>
+          {invalidRange && (
+            <p className="text-sm text-destructive">La date de fin doit être postérieure à la date de début.</p>
+          )}
         </div>
+
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isLoading}>
             Annuler
           </Button>
-          <Button
-            onClick={handleExport}
-            disabled={isLoading || !startDate || !endDate || startDate > endDate}
-            className="bg-info hover:bg-info/90"
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Exportation...
-              </>
-            ) : (
-              <>
-                <Download className="mr-2 h-4 w-4" />
-                Exporter
-              </>
-            )}
+          <Button type="button" onClick={handleExport} disabled={isLoading || !startDate || !endDate || invalidRange}>
+            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+            {isLoading ? "Export en cours…" : "Exporter"}
           </Button>
         </DialogFooter>
       </DialogContent>

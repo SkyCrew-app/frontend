@@ -1,4 +1,3 @@
-import { Card, CardContent } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
 type Waypoint = {
@@ -14,57 +13,62 @@ type WaypointsDisplayProps = {
   waypoints: string
 }
 
+const isDetailed = (waypoint: unknown): waypoint is Waypoint =>
+  !!waypoint &&
+  typeof waypoint === "object" &&
+  typeof (waypoint as Waypoint).lat === "number" &&
+  typeof (waypoint as Waypoint).lon === "number"
+
+/** Read-only route of the flight plan, shown on the closing page. */
 export default function WaypointsDisplay({ waypoints }: WaypointsDisplayProps) {
   if (!waypoints) return null
 
-  let parsedWaypoints: Waypoint[] = []
+  let parsedWaypoints: unknown[] = []
   try {
-    parsedWaypoints = JSON.parse(waypoints)
-  } catch (error) {
-    console.error("Erreur lors de l'analyse des points de cheminement:", error)
-    return <div className="text-destructive">Format de points de cheminement invalide</div>
+    const parsed = typeof waypoints === "string" ? JSON.parse(waypoints) : waypoints
+    parsedWaypoints = Array.isArray(parsed) ? parsed : []
+  } catch {
+    return <p className="text-sm text-muted-foreground">Les points de route de ce plan ne sont pas lisibles.</p>
   }
 
-  if (!Array.isArray(parsedWaypoints) || parsedWaypoints.length === 0) {
-    return <div className="text-muted-foreground">Aucun point de cheminement</div>
+  if (parsedWaypoints.length === 0) {
+    return <p className="text-sm text-muted-foreground">Vol direct, sans point de route.</p>
   }
 
-  const formatCoordinate = (value: number) => {
-    return value.toFixed(4)
-  }
-
-  const formatAltitude = (alt: number) => {
-    return alt === 0 ? "Sol" : `${alt} ft`
+  // Plans prepared by hand only keep the identifiers of their points.
+  if (!parsedWaypoints.every(isDetailed)) {
+    return <p className="text-sm">{parsedWaypoints.map((waypoint) => String((waypoint as Waypoint)?.ident ?? waypoint)).join(" → ")}</p>
   }
 
   return (
-    <Card>
-      <CardContent className="p-4">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Identifiant</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Latitude</TableHead>
-              <TableHead>Longitude</TableHead>
-              <TableHead>Altitude</TableHead>
-              <TableHead>Nom</TableHead>
+    <div className="max-h-72 overflow-auto rounded-lg border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Point</TableHead>
+            <TableHead>Type</TableHead>
+            <TableHead className="text-right">Latitude</TableHead>
+            <TableHead className="text-right">Longitude</TableHead>
+            <TableHead className="text-right">Altitude</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {parsedWaypoints.map((waypoint, index) => (
+            <TableRow key={index}>
+              <TableCell>
+                <span className="font-medium">{waypoint.ident}</span>
+                {waypoint.name && waypoint.name !== waypoint.ident && (
+                  <span className="block text-xs text-muted-foreground">{waypoint.name}</span>
+                )}
+              </TableCell>
+              <TableCell>{waypoint.type || "—"}</TableCell>
+              <TableCell className="text-right tabular-nums">{waypoint.lat.toFixed(4)}°</TableCell>
+              <TableCell className="text-right tabular-nums">{waypoint.lon.toFixed(4)}°</TableCell>
+              <TableCell className="text-right tabular-nums">{waypoint.alt ? `${waypoint.alt} ft` : "Sol"}</TableCell>
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {parsedWaypoints.map((waypoint, index) => (
-              <TableRow key={index}>
-                <TableCell className="font-medium">{waypoint.ident}</TableCell>
-                <TableCell>{waypoint.type}</TableCell>
-                <TableCell>{formatCoordinate(waypoint.lat)}</TableCell>
-                <TableCell>{formatCoordinate(waypoint.lon)}</TableCell>
-                <TableCell>{formatAltitude(waypoint.alt)}</TableCell>
-                <TableCell>{waypoint.name || "-"}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   )
 }

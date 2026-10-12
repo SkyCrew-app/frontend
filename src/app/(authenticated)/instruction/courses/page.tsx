@@ -1,187 +1,195 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useMemo, useState } from "react"
 import { useQuery } from "@apollo/client"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { CalendarDays, CalendarX, List, Plus, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, Plus, Calendar, List } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { AlertTriangle } from "lucide-react"
-import { useToast } from "@/components/hooks/use-toast"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { PageHeader } from "@/components/layout/PageHeader"
+import { EmptyState } from "@/components/layout/EmptyState"
+import { ErrorState } from "@/components/layout/ErrorState"
 import CourseList from "@/components/courses/CourseList"
 import CourseCalendar from "@/components/courses/CourseCalendar"
-import NewCourseModal from "@/components/courses/NewCourseModal"
+import CourseFormDialog from "@/components/courses/CourseFormDialog"
+import { ListPagination, paginate } from "@/components/courses/ListPagination"
+import {
+  COURSE_STATUS_OPTIONS,
+  courseCounterpart,
+  personName,
+  type InstructionCourse,
+} from "@/components/courses/course-helpers"
 import { GET_COURSE_BY_USER_ID } from "@/graphql/course"
 import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
 import { isAdministrator, isInstructor as hasInstructorRole } from "@/lib/roles"
 
+const PAGE_SIZE = 10
+
 export default function InstructionDashboard() {
   const [viewMode, setViewMode] = useState<"list" | "calendar">("list")
-  const [filter, setFilter] = useState("all")
+  const [statusFilter, setStatusFilter] = useState("all")
   const [searchTerm, setSearchTerm] = useState("")
-  const [isNewCourseModalOpen, setIsNewCourseModalOpen] = useState(false)
-  const { toast } = useToast()
+  const [page, setPage] = useState(1)
+  const [isNewCourseOpen, setIsNewCourseOpen] = useState(false)
 
   const userEmail = useCurrentUser()
   const userData = useUserData(userEmail)
-  const [userId, setUserId] = useState<number | null>(null)
-
-  useEffect(() => {
-    if (userData) {
-      setUserId(Number(userData.id))
-    }
-  }, [userData])
+  const userId: number | null = userData ? Number(userData.id) : null
 
   const isInstructor = hasInstructorRole(userData)
+  const isAdmin = isAdministrator(userData)
   // Only an instructor or an administrator can plan a course.
-  const canCreateCourse = isInstructor || isAdministrator(userData)
+  const canCreateCourse = isInstructor || isAdmin
 
-  const { loading, error, data, refetch } = useQuery(GET_COURSE_BY_USER_ID, {
-    variables: { userId },
-    skip: !userId,
-  })
+  const { loading, error, data, refetch } = useQuery<{ getCoursesByUserId: InstructionCourse[] }>(
+    GET_COURSE_BY_USER_ID,
+    {
+      variables: { userId },
+      skip: userId === null,
+    },
+  )
 
-  const handleRefresh = () => {
-    refetch()
-    toast({
-      title: "Actualisation",
-      description: "Les données ont été actualisées.",
-    })
-  }
+  const courses = data?.getCoursesByUserId
+  const filteredCourses = useMemo(() => {
+    const search = searchTerm.trim().toLowerCase()
+    return (courses ?? [])
+      .filter((course) => {
+        const matchesSearch =
+          !search ||
+          personName(course.instructor).toLowerCase().includes(search) ||
+          personName(course.student).toLowerCase().includes(search)
+        const matchesStatus = statusFilter === "all" || course.status === statusFilter
+        return matchesSearch && matchesStatus
+      })
+      // The most recent and the coming courses first.
+      .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())
+  }, [courses, searchTerm, statusFilter])
 
-  const filteredCourses =
-    data?.getCoursesByUserId?.filter((course: any) => {
-      const matchesSearch =
-        course.instructor.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        course.student.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (course.description && course.description.toLowerCase().includes(searchTerm.toLowerCase()))
+  const isFiltered = searchTerm.trim() !== "" || statusFilter !== "all"
+  const { rows, pageCount, page: currentPage } = paginate(filteredCourses, page, PAGE_SIZE)
+  // Hint for the search field: the people the user has courses with.
+  const searchExample = courses?.[0] ? personName(courseCounterpart(courses[0], userId).person) : "Martin"
 
-      let matchesFilter = true
-      if (filter === "upcoming") {
-        matchesFilter = course.status === "SCHEDULED"
-      } else if (filter === "inProgress") {
-        matchesFilter = course.status === "IN_PROGRESS"
-      } else if (filter === "completed") {
-        matchesFilter = course.status === "COMPLETED"
-      }
+  const description = isInstructor
+    ? "Les cours que vous donnez à vos élèves, et ceux que vous suivez."
+    : isAdmin
+      ? "Les cours auxquels vous participez. Vous pouvez en planifier pour un instructeur."
+      : "Vos cours avec vos instructeurs : dates, compétences travaillées et notes."
 
-      return matchesSearch && matchesFilter
-    }) || []
-
-  if (loading) {
-    return (
-      <div className="space-y-6 p-6">
-        <div className="flex justify-between items-center">
-          <Skeleton className="h-10 w-64" />
-          <Skeleton className="h-10 w-32" />
-        </div>
-        <div className="flex justify-between items-center">
-          <Skeleton className="h-10 w-64" />
-          <Skeleton className="h-10 w-32" />
-        </div>
-        <Skeleton className="h-[500px] w-full" />
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="p-6">
-        <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Erreur</AlertTitle>
-          <AlertDescription>
-            Une erreur est survenue lors du chargement des cours. Veuillez réessayer plus tard.
-            <br />
-            {error.message}
-          </AlertDescription>
-        </Alert>
-      </div>
-    )
-  }
+  const planButton = canCreateCourse ? (
+    <Button onClick={() => setIsNewCourseOpen(true)}>
+      <Plus className="h-4 w-4" />
+      Planifier un cours
+    </Button>
+  ) : null
 
   return (
-    <div className="space-y-6 p-6 bg-background text-foreground">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold tracking-tight">Mes cours</h1>
-        {canCreateCourse && (
-          <Button onClick={() => setIsNewCourseModalOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" /> Nouveau cours
-          </Button>
-        )}
-      </div>
+    <div className="space-y-6">
+      <PageHeader className="mb-0" title="Mes cours" description={description} actions={planButton} />
 
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
-        <div className="relative w-full sm:w-64">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative w-full sm:max-w-xs">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Rechercher un cours"
-            className="pl-8"
+            type="search"
+            aria-label="Rechercher un cours par personne"
+            placeholder={`Rechercher une personne, ex. ${searchExample}`}
+            className="pl-9"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(event) => {
+              setSearchTerm(event.target.value)
+              setPage(1)
+            }}
           />
         </div>
-        <div className="flex space-x-2">
-          <Select value={filter} onValueChange={setFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filtrer les cours" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tous les cours</SelectItem>
-              <SelectItem value="upcoming">À venir</SelectItem>
-              <SelectItem value="inProgress">En cours</SelectItem>
-              <SelectItem value="completed">Terminés</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button variant={viewMode === "list" ? "default" : "outline"} size="icon" onClick={() => setViewMode("list")}>
-            <List className="h-4 w-4" />
-          </Button>
-          <Button
-            variant={viewMode === "calendar" ? "default" : "outline"}
-            size="icon"
-            onClick={() => setViewMode("calendar")}
-          >
-            <Calendar className="h-4 w-4" />
-          </Button>
-        </div>
+        <Select
+          value={statusFilter}
+          onValueChange={(value) => {
+            setStatusFilter(value)
+            setPage(1)
+          }}
+        >
+          <SelectTrigger className="w-full sm:w-44" aria-label="Filtrer par statut">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tous les statuts</SelectItem>
+            {COURSE_STATUS_OPTIONS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Tabs
+          value={viewMode}
+          onValueChange={(value) => setViewMode(value as "list" | "calendar")}
+          className="sm:ml-auto"
+        >
+          <TabsList aria-label="Affichage des cours">
+            <TabsTrigger value="list" className="gap-2">
+              <List className="h-4 w-4" />
+              Liste
+            </TabsTrigger>
+            <TabsTrigger value="calendar" className="gap-2">
+              <CalendarDays className="h-4 w-4" />
+              Calendrier
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Cours ({isInstructor ? "Instructeur" : "Élève"})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {viewMode === "list" ? (
-            <CourseList
-              courses={filteredCourses}
-              userRole={isInstructor ? "instructor" : "student"}
-              userId={userId ?? undefined}
-              onRefresh={handleRefresh}
-            />
-          ) : (
-            <CourseCalendar
-              courses={filteredCourses}
-              userId={userId!}
-              userRole={isInstructor ? "instructor" : "student"}
-            />
-          )}
-        </CardContent>
-      </Card>
+      {userId === null || (loading && !data) ? (
+        <div className="space-y-2 rounded-xl border bg-card p-4">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <Skeleton key={index} className="h-12 w-full" />
+          ))}
+        </div>
+      ) : error && !data ? (
+        <ErrorState onRetry={() => refetch()} />
+      ) : filteredCourses.length === 0 ? (
+        <EmptyState
+          icon={CalendarX}
+          title={isFiltered ? "Aucun cours ne correspond" : "Aucun cours pour le moment"}
+          description={
+            isFiltered
+              ? "Modifiez la recherche ou le filtre de statut."
+              : canCreateCourse
+                ? "Planifiez un premier cours avec un élève."
+                : "Vos cours apparaîtront ici dès qu'un instructeur en aura planifié un avec vous."
+          }
+          action={
+            isFiltered ? (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSearchTerm("")
+                  setStatusFilter("all")
+                }}
+              >
+                Effacer les filtres
+              </Button>
+            ) : (
+              planButton
+            )
+          }
+        />
+      ) : viewMode === "list" ? (
+        <>
+          <CourseList courses={rows} userId={userId} isAdministrator={isAdmin} onChanged={() => refetch()} />
+          <ListPagination page={currentPage} pageCount={pageCount} onPageChange={setPage} />
+        </>
+      ) : (
+        <CourseCalendar courses={filteredCourses} userId={userId} />
+      )}
 
-      <NewCourseModal
-        isOpen={isNewCourseModalOpen}
-        onClose={() => setIsNewCourseModalOpen(false)}
+      <CourseFormDialog
+        open={isNewCourseOpen}
+        onClose={() => setIsNewCourseOpen(false)}
         instructorId={isInstructor ? userId : null}
-        onSuccess={() => {
-          refetch()
-          toast({
-            title: "Cours créé",
-            description: "Le nouveau cours a été créé avec succès.",
-          })
-        }}
+        onSaved={() => refetch()}
       />
     </div>
   )

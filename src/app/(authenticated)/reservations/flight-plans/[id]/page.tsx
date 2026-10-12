@@ -4,50 +4,37 @@ import { useState, useEffect, useMemo } from "react"
 import { useParams } from "next/navigation"
 import { useQuery } from "@apollo/client"
 import dynamic from "next/dynamic"
-import { motion, AnimatePresence } from "framer-motion"
-import { Card, CardContent } from "@/components/ui/card"
+import Link from "next/link"
+import { ArrowLeft, FileSearch, Info, MapPinOff } from "lucide-react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { useToast } from "@/components/hooks/use-toast"
+import { PageHeader } from "@/components/layout/PageHeader"
+import { EmptyState } from "@/components/layout/EmptyState"
+import { ErrorState } from "@/components/layout/ErrorState"
 import { FlightSummary } from "@/components/flight/FlightSummary"
 import { AirportInfo } from "@/components/flight/AirportInfo"
 import { WaypointInfo } from "@/components/flight/WaypointInfo"
-import { FuelBriefing } from "@/components/flight/FuelBriefing"
+import { FuelBriefing, hasFuelBriefing } from "@/components/flight/FuelBriefing"
 import { NavLog } from "@/components/flight/NavLog"
 import { VerticalProfile } from "@/components/flight/VerticalProfile"
 import { OFPExport } from "@/components/flight/OFPExport"
 import { FlightPlanActions } from "@/components/flight/flight-action-plans"
+import { flightTypeLabel } from "@/components/flight/flight-type"
+import { flightPlanState } from "@/components/flight-plan/flight-plan-state"
 import { GET_FLIGHT_PLAN_BY_ID } from "@/graphql/flights"
 import { getWeather } from "@/lib/weather"
-import {
-  AlertTriangle,
-  Plane,
-  MapPin,
-  Clock,
-  Route,
-  Users,
-  Fuel,
-  Gauge,
-  Navigation,
-  FileText,
-  Radio,
-  Compass,
-} from "lucide-react"
+import { formatDate, formatDateTime, formatDecimal, formatFlightDuration, formatTime } from "@/lib/format"
 import type { Weather } from "@/interfaces/weather"
 
 import "@/styles/print.css"
 
 const MapboxMap = dynamic(() => import("@/components/flight/MapboxMap"), {
   ssr: false,
-  loading: () => (
-    <div className="h-full w-full flex items-center justify-center bg-muted/50 rounded-xl">
-      <div className="flex flex-col items-center gap-3">
-        <Compass className="h-8 w-8 text-muted-foreground animate-spin" />
-        <span className="text-sm text-muted-foreground">Chargement de la carte…</span>
-      </div>
-    </div>
-  ),
+  loading: () => <Skeleton className="h-full w-full rounded-none" />,
 })
 
 /* ------------------------------------------------------------------ */
@@ -64,194 +51,44 @@ function safeJsonParse<T>(raw: string | null | undefined): T | null {
   }
 }
 
-/* ------------------------------------------------------------------ */
-/*  Animated Aviation Loader                                           */
-/* ------------------------------------------------------------------ */
+const isCoordinate = (value: unknown) => Number.isFinite(typeof value === "string" ? Number.parseFloat(value) : value)
 
-const LOADING_STEPS = [
-  { label: "Chargement du plan de vol…", icon: FileText },
-  { label: "Calcul de la route…", icon: Route },
-  { label: "Récupération des données météo…", icon: Compass },
-  { label: "Préparation de la carte…", icon: MapPin },
-]
+// Plans created by hand only store waypoint identifiers: keep the points that can be drawn and listed.
+const detailedWaypoints = (raw: string | null | undefined): any[] =>
+  (safeJsonParse<any[]>(raw) ?? []).filter(
+    (wp) => wp && typeof wp === "object" && typeof wp.lat === "number" && typeof wp.lon === "number",
+  )
 
-function FlightPlanLoader() {
-  const [step, setStep] = useState(0)
+const toWeather = (raw: any): Weather | null =>
+  raw
+    ? {
+        temperature: Number.parseFloat(raw.main.temp),
+        conditions: raw.weather[0].description,
+        icon: raw.weather[0].icon,
+        wind: { speed: raw.wind.speed, direction: raw.wind.deg },
+        humidity: raw.main.humidity,
+        pressure: raw.main.pressure,
+        visibility: raw.visibility,
+      }
+    : null
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setStep((s) => (s < LOADING_STEPS.length - 1 ? s + 1 : s))
-    }, 800)
-    return () => clearInterval(interval)
-  }, [])
-
+function Fact({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="min-h-[80vh] flex items-center justify-center">
-      <div className="w-full max-w-lg mx-auto px-6">
-        {/* Animated plane on route line */}
-        <div className="relative h-20 mb-10">
-          {/* Route dashed line */}
-          <div className="absolute top-1/2 left-8 right-8 -translate-y-1/2">
-            <div className="h-[2px] bg-border rounded-full" />
-            <motion.div
-              className="h-[2px] bg-primary rounded-full absolute top-0 left-0"
-              initial={{ width: "0%" }}
-              animate={{ width: `${((step + 1) / LOADING_STEPS.length) * 100}%` }}
-              transition={{ duration: 0.6, ease: "easeInOut" }}
-            />
-          </div>
-
-          {/* Departure dot */}
-          <div className="absolute top-1/2 left-8 -translate-y-1/2 -translate-x-1/2">
-            <div className="w-3 h-3 rounded-full bg-success ring-4 ring-success/20" />
-          </div>
-
-          {/* Arrival dot */}
-          <div className="absolute top-1/2 right-8 -translate-y-1/2 translate-x-1/2">
-            <div className="w-3 h-3 rounded-full bg-primary ring-4 ring-primary/20" />
-          </div>
-
-          {/* Animated plane */}
-          <motion.div
-            className="absolute top-1/2 -translate-y-1/2"
-            initial={{ left: "32px" }}
-            animate={{ left: `calc(32px + ${((step + 1) / LOADING_STEPS.length) * (100 - 16)}% - 12px)` }}
-            transition={{ duration: 0.6, ease: "easeInOut" }}
-          >
-            <div className="relative">
-              <motion.div
-                animate={{ y: [0, -4, 0] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              >
-                <Plane className="h-6 w-6 text-primary rotate-0" />
-              </motion.div>
-              {/* Trail */}
-              <motion.div
-                className="absolute top-1/2 right-full -translate-y-1/2 h-[2px] bg-gradient-to-l from-primary/40 to-transparent"
-                initial={{ width: 0 }}
-                animate={{ width: 40 }}
-                transition={{ duration: 0.3 }}
-              />
-            </div>
-          </motion.div>
-        </div>
-
-        {/* Step indicators */}
-        <div className="space-y-3">
-          {LOADING_STEPS.map((s, i) => {
-            const Icon = s.icon
-            const isActive = i === step
-            const isDone = i < step
-            return (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{
-                  opacity: isDone ? 0.5 : isActive ? 1 : 0.3,
-                  x: 0,
-                }}
-                transition={{ delay: i * 0.15, duration: 0.3 }}
-                className="flex items-center gap-3"
-              >
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
-                    isDone
-                      ? "bg-success/20 text-success"
-                      : isActive
-                        ? "bg-primary/20 text-primary"
-                        : "bg-muted text-muted-foreground"
-                  }`}
-                >
-                  {isDone ? (
-                    <motion.svg
-                      initial={{ pathLength: 0 }}
-                      animate={{ pathLength: 1 }}
-                      className="w-4 h-4"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                    >
-                      <motion.path d="M5 13l4 4L19 7" />
-                    </motion.svg>
-                  ) : isActive ? (
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                    >
-                      <Icon className="w-4 h-4" />
-                    </motion.div>
-                  ) : (
-                    <Icon className="w-4 h-4" />
-                  )}
-                </div>
-                <span
-                  className={`text-sm font-medium transition-colors ${
-                    isActive ? "text-foreground" : "text-muted-foreground"
-                  }`}
-                >
-                  {s.label}
-                </span>
-              </motion.div>
-            )
-          })}
-        </div>
-
-        {/* Progress bar */}
-        <div className="mt-8 h-1 bg-muted rounded-full overflow-hidden">
-          <motion.div
-            className="h-full bg-primary rounded-full"
-            initial={{ width: "0%" }}
-            animate={{ width: `${((step + 1) / LOADING_STEPS.length) * 100}%` }}
-            transition={{ duration: 0.6, ease: "easeInOut" }}
-          />
-        </div>
-      </div>
+    <div className="min-w-0">
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd className="text-sm font-medium tabular-nums">{value}</dd>
     </div>
   )
 }
 
-/* ------------------------------------------------------------------ */
-/*  Section wrapper with stagger animation                             */
-/* ------------------------------------------------------------------ */
-
-function Section({
-  children,
-  delay = 0,
-  className = "",
-}: {
-  children: React.ReactNode
-  delay?: number
-  className?: string
-}) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 24 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay, ease: "easeOut" }}
-      className={className}
-    >
-      {children}
-    </motion.div>
-  )
-}
-
-/* ------------------------------------------------------------------ */
-/*  Stat card for hero section                                         */
-/* ------------------------------------------------------------------ */
-
-function StatChip({ icon: Icon, label, value }: { icon: any; label: string; value: string }) {
-  return (
-    <div className="flex items-center gap-2 bg-background/60 backdrop-blur-sm border border-border/50 rounded-lg px-3 py-2">
-      <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
-      <div className="min-w-0">
-        <p className="text-[10px] uppercase tracking-wider text-muted-foreground leading-none">{label}</p>
-        <p className="text-sm font-semibold truncate">{value}</p>
-      </div>
-    </div>
-  )
-}
+const BackButton = () => (
+  <Button variant="outline" asChild>
+    <Link href="/reservations/flight-plans">
+      <ArrowLeft className="h-4 w-4" />
+      Mes plans de vol
+    </Link>
+  </Button>
+)
 
 /* ------------------------------------------------------------------ */
 /*  Page                                                               */
@@ -259,121 +96,66 @@ function StatChip({ icon: Icon, label, value }: { icon: any; label: string; valu
 
 export default function FlightPlanDetails() {
   const { id } = useParams()
-  const [activeTab, setActiveTab] = useState("overview")
-  const [showMap, setShowMap] = useState(false)
+  const flightId = Array.isArray(id) ? id[0] : (id as string)
+  const [section, setSection] = useState("route")
+  const [routePanel, setRoutePanel] = useState("overview")
   const [mapFocus, setMapFocus] = useState<{ center: [number, number]; zoom: number } | undefined>(undefined)
-  const { toast } = useToast()
-  const [weatherData, setWeatherData] = useState<{
-    departure: Weather | null
-    arrival: Weather | null
-  }>({
+  const [weatherData, setWeatherData] = useState<{ departure: Weather | null; arrival: Weather | null }>({
     departure: null,
     arrival: null,
   })
 
-  const { loading, error, data } = useQuery(GET_FLIGHT_PLAN_BY_ID, {
-    variables: { id: Number.parseInt(id as string) },
+  const { loading, error, data, refetch } = useQuery(GET_FLIGHT_PLAN_BY_ID, {
+    variables: { id: Number.parseInt(flightId) },
   })
 
-  useEffect(() => {
-    if (data && data.getFlightById) {
-      const timer = setTimeout(() => setShowMap(true), 300)
-      return () => clearTimeout(timer)
-    }
-  }, [data])
+  const fp = data?.getFlightById
 
+  // Current weather at both ends, when their coordinates are known.
   useEffect(() => {
-    if (error) {
-      toast({
-        title: "Erreur",
-        description: "Une erreur s'est produite lors du chargement du plan de vol. Veuillez réessayer plus tard.",
-        variant: "destructive",
+    if (!fp) return
+    const depInfo = safeJsonParse<any>(fp.departure_airport_info)
+    const arrInfo = safeJsonParse<any>(fp.arrival_airport_info)
+    if (!depInfo || !arrInfo) return
+
+    let cancelled = false
+    Promise.all([getWeather(depInfo.lat, depInfo.lon), getWeather(arrInfo.lat, arrInfo.lon)])
+      .then(([departureWeather, arrivalWeather]) => {
+        if (!cancelled) setWeatherData({ departure: toWeather(departureWeather), arrival: toWeather(arrivalWeather) })
       })
-    }
-  }, [error, toast])
-
-  useEffect(() => {
-    if (data && data.getFlightById) {
-      toast({
-        title: "Avertissement",
-        description:
-          "Vérifiez les NOTAMs et les conditions météorologiques avant le départ. Assurez-vous d'avoir tous les documents nécessaires pour votre vol.",
-        duration: 10000,
+      .catch(() => {
+        // The weather is a bonus: the page stays usable without it.
+        if (!cancelled) setWeatherData({ departure: null, arrival: null })
       })
-
-      const fetchWeather = async () => {
-        const flight = data.getFlightById
-        try {
-          const depInfo = safeJsonParse<any>(flight.departure_airport_info)
-          const arrInfo = safeJsonParse<any>(flight.arrival_airport_info)
-          if (!depInfo || !arrInfo) return
-
-          const [departureWeather, arrivalWeather] = await Promise.all([
-            getWeather(depInfo.lat, depInfo.lon),
-            getWeather(arrInfo.lat, arrInfo.lon),
-          ])
-
-          setWeatherData({
-            departure: departureWeather
-              ? {
-                  temperature: Number.parseFloat(departureWeather.main.temp),
-                  conditions: departureWeather.weather[0].description,
-                  icon: departureWeather.weather[0].icon,
-                  wind: { speed: departureWeather.wind.speed, direction: departureWeather.wind.deg },
-                  humidity: departureWeather.main.humidity,
-                  pressure: departureWeather.main.pressure,
-                  visibility: departureWeather.visibility,
-                }
-              : null,
-            arrival: arrivalWeather
-              ? {
-                  temperature: Number.parseFloat(arrivalWeather.main.temp),
-                  conditions: arrivalWeather.weather[0].description,
-                  icon: arrivalWeather.weather[0].icon,
-                  wind: { speed: arrivalWeather.wind.speed, direction: arrivalWeather.wind.deg },
-                  humidity: arrivalWeather.main.humidity,
-                  pressure: arrivalWeather.main.pressure,
-                  visibility: arrivalWeather.visibility,
-                }
-              : null,
-          })
-        } catch (err) {
-          console.error("Error fetching weather data:", err)
-          setWeatherData({ departure: null, arrival: null })
-        }
-      }
-
-      fetchWeather()
+    return () => {
+      cancelled = true
     }
-  }, [data, toast])
+  }, [fp])
 
   /* ---- Parse enriched OFP data ---- */
-  const fuelPolicy = useMemo(() => safeJsonParse<any>(data?.getFlightById?.fuel_policy), [data])
-  const windSummary = useMemo(() => safeJsonParse<any>(data?.getFlightById?.wind_summary), [data])
+  const fuelPolicy = useMemo(() => safeJsonParse<any>(fp?.fuel_policy), [fp])
+  const windSummary = useMemo(() => safeJsonParse<any>(fp?.wind_summary), [fp])
+  const waypoints = useMemo(() => detailedWaypoints(fp?.waypoints), [fp])
+  const parsedDeparture = useMemo(() => safeJsonParse<any>(fp?.departure_airport_info), [fp])
+  const parsedArrival = useMemo(() => safeJsonParse<any>(fp?.arrival_airport_info), [fp])
 
-  const updateActiveTab = (tab: string) => {
-    setActiveTab(tab)
-    if (!data?.getFlightById) return
+  const handleRoutePanelChange = (panel: string) => {
+    setRoutePanel(panel)
 
-    const flight = data.getFlightById
-    const depInfo = safeJsonParse<any>(flight.departure_airport_info)
-    const arrInfo = safeJsonParse<any>(flight.arrival_airport_info)
-    const wps = safeJsonParse<any[]>(flight.waypoints)
-
-    switch (tab) {
+    switch (panel) {
       case "overview":
         setMapFocus(undefined)
         break
       case "departure":
-        if (depInfo) setMapFocus({ center: [depInfo.lon, depInfo.lat], zoom: 10 })
+        if (parsedDeparture) setMapFocus({ center: [parsedDeparture.lon, parsedDeparture.lat], zoom: 10 })
         break
       case "arrival":
-        if (arrInfo) setMapFocus({ center: [arrInfo.lon, arrInfo.lat], zoom: 10 })
+        if (parsedArrival) setMapFocus({ center: [parsedArrival.lon, parsedArrival.lat], zoom: 10 })
         break
       case "waypoints":
-        if (Array.isArray(wps) && wps.length > 0) {
-          const lats = wps.map((wp: any) => wp.lat)
-          const lons = wps.map((wp: any) => wp.lon)
+        if (waypoints.length > 0) {
+          const lats = waypoints.map((wp) => wp.lat)
+          const lons = waypoints.map((wp) => wp.lon)
           setMapFocus({
             center: [
               lons.reduce((a: number, b: number) => a + b, 0) / lons.length,
@@ -387,46 +169,59 @@ export default function FlightPlanDetails() {
   }
 
   const handleFocusWaypoint = (index: number) => {
-    if (!data?.getFlightById) return
-    const wps = safeJsonParse<any[]>(data.getFlightById.waypoints)
-    if (wps?.[index]) {
-      setMapFocus({ center: [wps[index].lon, wps[index].lat], zoom: 12 })
-    }
+    const waypoint = waypoints[index]
+    if (waypoint) setMapFocus({ center: [waypoint.lon, waypoint.lat], zoom: 12 })
   }
 
   /* ================================================================== */
-  /*  Loading                                                            */
+  /*  Loading, error, not found                                          */
   /* ================================================================== */
   if (loading) {
-    return <FlightPlanLoader />
+    return (
+      <div className="space-y-6">
+        <PageHeader className="mb-0" title="Plan de vol" actions={<BackButton />} />
+        <Skeleton className="h-44 w-full rounded-xl" />
+        <Skeleton className="h-10 w-full max-w-md" />
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
+          <Skeleton className="h-[420px] rounded-xl lg:col-span-2" />
+          <Skeleton className="h-[420px] rounded-xl lg:col-span-3" />
+        </div>
+      </div>
+    )
   }
 
-  /* ================================================================== */
-  /*  Error                                                              */
-  /* ================================================================== */
-  if (error || !data?.getFlightById) {
+  if (error) {
     return (
-      <div className="mx-auto max-w-xl">
-        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
-          <Alert variant="destructive" className="shadow-lg">
-            <AlertTriangle className="h-5 w-5" />
-            <AlertTitle className="text-lg">Plan de vol introuvable</AlertTitle>
-            <AlertDescription className="mt-2">
-              Une erreur s&apos;est produite lors du chargement du plan de vol. Vérifiez l&apos;identifiant ou réessayez plus tard.
-            </AlertDescription>
-          </Alert>
-        </motion.div>
+      <div className="space-y-6">
+        <PageHeader className="mb-0" title="Plan de vol" actions={<BackButton />} />
+        <ErrorState
+          description="Le plan de vol n'a pas pu être chargé. Vérifiez votre connexion puis réessayez."
+          onRetry={() => refetch()}
+        />
+      </div>
+    )
+  }
+
+  if (!fp) {
+    return (
+      <div className="space-y-6">
+        <PageHeader className="mb-0" title="Plan de vol" />
+        <EmptyState
+          icon={FileSearch}
+          title="Plan de vol introuvable"
+          description="Ce plan de vol n'existe pas ou vous n'y avez pas accès."
+          action={<BackButton />}
+        />
       </div>
     )
   }
 
   /* ================================================================== */
-  /*  Parse all data                                                     */
+  /*  Derived data                                                       */
   /* ================================================================== */
-  const fp = data.getFlightById
-  const departureInfo = safeJsonParse<any>(fp.departure_airport_info) || { ICAO: fp.origin_icao, name: fp.origin_icao, city: '', lat: 0, lon: 0 }
-  const arrivalInfo = safeJsonParse<any>(fp.arrival_airport_info) || { ICAO: fp.destination_icao, name: fp.destination_icao, city: '', lat: 0, lon: 0 }
-  const waypoints = safeJsonParse<any[]>(fp.waypoints) || []
+  const departureInfo = parsedDeparture || { ICAO: fp.origin_icao, name: fp.origin_icao, city: "" }
+  const arrivalInfo = parsedArrival || { ICAO: fp.destination_icao, name: fp.destination_icao, city: "" }
+  const hasMapData = [departureInfo.lat, departureInfo.lon, arrivalInfo.lat, arrivalInfo.lon].every(isCoordinate)
 
   const aircraft = fp.reservation?.aircraft
     ? {
@@ -440,364 +235,283 @@ export default function FlightPlanDetails() {
       }
     : null
 
-  const pilotName = fp.user ? `${fp.user.first_name} ${fp.user.last_name}` : undefined
+  const pilotName = fp.user ? [fp.user.first_name, fp.user.last_name].filter(Boolean).join(" ") : undefined
   const pilotEmail = fp.user?.email
-  const flightNumber = fp.reservation?.id ? `RES-${fp.reservation.id}` : "N/A"
+  const flightNumber = fp.reservation?.id ? `RES-${fp.reservation.id}` : "—"
 
-  const departureTimeStr = fp.departure_time
-    ? new Date(fp.departure_time).toLocaleTimeString()
-    : fp.reservation?.start_time
-      ? new Date(fp.reservation.start_time).toLocaleTimeString()
-      : "N/A"
+  const departureAt = fp.departure_time ?? fp.reservation?.start_time
+  const arrivalAt = fp.arrival_time ?? fp.reservation?.end_time
+  const departureTimeStr = formatTime(departureAt)
+  const arrivalTimeStr = formatTime(arrivalAt)
+  const dateStr = formatDate(departureAt)
+  const duration = fp.estimated_flight_time ? formatFlightDuration(fp.estimated_flight_time) : undefined
+  const typeLabel = flightTypeLabel(fp.flight_type)
+  const state = flightPlanState(fp)
+  const showFuelTab = hasFuelBriefing(fuelPolicy, windSummary)
+  const hasNavigation = waypoints.length >= 2
 
-  const arrivalTimeStr = fp.arrival_time
-    ? new Date(fp.arrival_time).toLocaleTimeString()
-    : fp.reservation?.end_time
-      ? new Date(fp.reservation.end_time).toLocaleTimeString()
-      : "N/A"
-
-  const dateStr = fp.departure_time
-    ? new Date(fp.departure_time).toLocaleDateString()
-    : fp.reservation?.start_time
-      ? new Date(fp.reservation.start_time).toLocaleDateString()
-      : "N/A"
-
-  const durationMin = fp.estimated_flight_time ? (fp.estimated_flight_time * 60).toFixed(0) : null
+  const summaryFacts = [
+    { label: "Date", value: dateStr },
+    { label: "Avion", value: aircraft ? `${aircraft.registration_number}${aircraft.model ? ` · ${aircraft.model}` : ""}` : "—" },
+    {
+      label: "Passagers",
+      value: fp.number_of_passengers != null ? fp.number_of_passengers : "—",
+    },
+    fp.estimated_fuel_liters
+      ? { label: "Carburant estimé", value: `${formatDecimal(fp.estimated_fuel_liters, 0)} L` }
+      : { label: "Type de vol", value: typeLabel },
+  ]
 
   /* ================================================================== */
   /*  Render                                                             */
   /* ================================================================== */
   return (
-    <div className="min-h-screen" data-print-date={new Date().toLocaleString()}>
-      {/* ============================================================ */}
-      {/*  HERO HEADER                                                  */}
-      {/* ============================================================ */}
-      <Section delay={0}>
-        <div className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-primary/5 border-b border-border/40">
-          {/* Subtle grid pattern */}
-          <div
-            className="absolute inset-0 opacity-[0.03]"
-            style={{
-              backgroundImage: `radial-gradient(circle, currentColor 1px, transparent 1px)`,
-              backgroundSize: "24px 24px",
-            }}
-          />
+    <div className="space-y-6" data-print-date={formatDateTime(new Date())}>
+      <PageHeader
+        className="mb-0"
+        title={
+          <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            {departureInfo.ICAO} → {arrivalInfo.ICAO}
+            <Badge variant={state.variant}>{state.label}</Badge>
+          </span>
+        }
+        description={[`Plan de vol ${typeLabel}`, fp.reservation?.id ? `réservation n° ${fp.reservation.id}` : null]
+          .filter(Boolean)
+          .join(" · ")}
+        actions={
+          <>
+            <BackButton />
+            <FlightPlanActions
+              flightPlanId={flightId}
+              flightDetails={{ departure: departureInfo.ICAO, arrival: arrivalInfo.ICAO, date: dateStr }}
+            />
+            <OFPExport
+              departureInfo={departureInfo}
+              arrivalInfo={arrivalInfo}
+              waypoints={waypoints}
+              aircraft={aircraft}
+              pilotName={pilotName}
+              pilotEmail={pilotEmail}
+              flightType={fp.flight_type}
+              flightNumber={flightNumber}
+              departureTime={departureTimeStr}
+              arrivalTime={arrivalTimeStr}
+              totalDistanceKm={fp.distance_km}
+              totalTimeHours={fp.estimated_flight_time}
+              fuelPolicy={fuelPolicy}
+              windSummary={windSummary}
+              performanceProfile={fp.performance_profile}
+              weatherConditions={fp.weather_conditions}
+              passengers={fp.number_of_passengers}
+            />
+            {!fp.closed_at && (
+              <Button asChild>
+                <Link href={`/close_flight/${fp.id}`}>Clôturer le vol</Link>
+              </Button>
+            )}
+          </>
+        }
+      />
 
-          <div className="relative">
-            {/* Top row: badge + OFP button */}
-            <div className="flex items-center justify-between mb-6">
-              <Badge variant="outline" className="text-xs font-mono tracking-wider">
-                {fp.flight_type} • {flightNumber}
-              </Badge>
-              <OFPExport
-                departureInfo={departureInfo}
-                arrivalInfo={arrivalInfo}
-                waypoints={waypoints}
-                aircraft={aircraft}
-                pilotName={pilotName}
-                pilotEmail={pilotEmail}
-                flightType={fp.flight_type}
-                flightNumber={flightNumber}
-                departureTime={departureTimeStr}
-                arrivalTime={arrivalTimeStr}
-                totalDistanceKm={fp.distance_km}
-                totalTimeHours={fp.estimated_flight_time}
-                fuelPolicy={fuelPolicy}
-                windSummary={windSummary}
-                performanceProfile={fp.performance_profile}
-                weatherConditions={fp.weather_conditions}
-                passengers={fp.number_of_passengers}
-              />
-            </div>
+      <FlightSummary
+        departure={{
+          icao: departureInfo.ICAO,
+          name: departureInfo.name || departureInfo.city,
+          time: departureTimeStr,
+          weather: weatherData.departure ?? undefined,
+        }}
+        arrival={{
+          icao: arrivalInfo.ICAO,
+          name: arrivalInfo.name || arrivalInfo.city,
+          time: arrivalTimeStr,
+          weather: weatherData.arrival ?? undefined,
+        }}
+        duration={duration}
+        distanceKm={fp.distance_km}
+        facts={summaryFacts}
+      />
 
-            {/* Route display */}
-            <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8 mb-8">
-              {/* Departure */}
-              <div className="text-center md:text-right">
-                <p className="text-4xl md:text-5xl font-black tracking-tight">{departureInfo.ICAO}</p>
-                <p className="text-sm text-muted-foreground mt-1 max-w-[200px] truncate">
-                  {departureInfo.name || departureInfo.city}
-                </p>
-              </div>
+      {!fp.closed_at && (
+        <Alert className="no-print">
+          <Info className="h-4 w-4" />
+          <AlertTitle>Avant le départ</AlertTitle>
+          <AlertDescription>
+            Vérifiez les NOTAM et la météo, et assurez-vous d&apos;avoir à bord tous les documents nécessaires au vol.
+          </AlertDescription>
+        </Alert>
+      )}
 
-              {/* Route line */}
-              <div className="flex items-center gap-3 px-4">
-                <div className="w-2.5 h-2.5 rounded-full bg-success ring-4 ring-success/20 shrink-0" />
-                <div className="relative w-24 md:w-40">
-                  <div className="h-[2px] bg-border w-full" />
-                  <motion.div
-                    initial={{ x: -10, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    transition={{ delay: 0.3 }}
-                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
-                  >
-                    <Plane className="h-5 w-5 text-primary" />
-                  </motion.div>
-                </div>
-                <div className="w-2.5 h-2.5 rounded-full bg-primary ring-4 ring-primary/20 shrink-0" />
-              </div>
+      {/* Panels stay mounted so the map is not rebuilt and printing shows every section. */}
+      <Tabs value={section} onValueChange={setSection} className="space-y-6">
+        <TabsList className="tabs-list">
+          <TabsTrigger value="route">Route et aérodromes</TabsTrigger>
+          <TabsTrigger value="navigation">Navigation</TabsTrigger>
+          {showFuelTab && <TabsTrigger value="fuel">Carburant et vent</TabsTrigger>}
+        </TabsList>
 
-              {/* Arrival */}
-              <div className="text-center md:text-left">
-                <p className="text-4xl md:text-5xl font-black tracking-tight">{arrivalInfo.ICAO}</p>
-                <p className="text-sm text-muted-foreground mt-1 max-w-[200px] truncate">
-                  {arrivalInfo.name || arrivalInfo.city}
-                </p>
-              </div>
-            </div>
-
-            {/* Stat chips */}
-            <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3">
-              <StatChip icon={Clock} label="Départ" value={departureTimeStr} />
-              <StatChip icon={Clock} label="Arrivée" value={arrivalTimeStr} />
-              {durationMin && <StatChip icon={Gauge} label="Durée" value={`${durationMin} min`} />}
-              {fp.distance_km != null && <StatChip icon={Route} label="Distance" value={`${fp.distance_km.toFixed(0)} km`} />}
-              {fp.number_of_passengers != null && (
-                <StatChip icon={Users} label="PAX" value={`${fp.number_of_passengers}`} />
-              )}
-              {aircraft && <StatChip icon={Plane} label="Avion" value={aircraft.registration_number} />}
-              {fp.estimated_fuel_liters && (
-                <StatChip icon={Fuel} label="Carburant" value={`${fp.estimated_fuel_liters.toFixed(0)} L`} />
-              )}
-            </div>
-          </div>
-        </div>
-      </Section>
-
-      {/* ============================================================ */}
-      {/*  MAIN CONTENT                                                 */}
-      {/* ============================================================ */}
-      <div className="space-y-10">
-        {/* ---- Flight Summary ---- */}
-        <Section delay={0.1}>
-          <FlightSummary
-            departure={departureInfo.ICAO}
-            arrival={arrivalInfo.ICAO}
-            date={dateStr}
-            departureTime={departureTimeStr}
-            arrivalTime={arrivalTimeStr}
-            duration={durationMin ? `${durationMin} min` : "N/A"}
-            flightNumber={flightNumber}
-            flightType={fp.flight_type}
-            distance={fp.distance_km}
-            passengers={fp.number_of_passengers}
-            departureWeather={weatherData.departure ?? undefined}
-            arrivalWeather={weatherData.arrival ?? undefined}
-          />
-        </Section>
-
-        {/* ---- Map + Tabs ---- */}
-        <Section delay={0.2}>
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-            {/* Tabs panel — 2 cols */}
-            <div className="lg:col-span-2 space-y-4">
-              <Tabs value={activeTab} onValueChange={updateActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-4 h-11">
-                  <TabsTrigger value="overview" className="text-xs sm:text-sm">Aperçu</TabsTrigger>
-                  <TabsTrigger value="departure" className="text-xs sm:text-sm">Départ</TabsTrigger>
-                  <TabsTrigger value="arrival" className="text-xs sm:text-sm">Arrivée</TabsTrigger>
-                  <TabsTrigger value="waypoints" className="text-xs sm:text-sm">Points</TabsTrigger>
+        <TabsContent value="route" forceMount className="mt-0 data-[state=inactive]:hidden">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
+            <div className="lg:col-span-2">
+              <Tabs value={routePanel} onValueChange={handleRoutePanelChange}>
+                <TabsList className="tabs-list w-full">
+                  <TabsTrigger value="overview" className="flex-1">
+                    Vol
+                  </TabsTrigger>
+                  <TabsTrigger value="departure" className="flex-1">
+                    Départ
+                  </TabsTrigger>
+                  <TabsTrigger value="arrival" className="flex-1">
+                    Arrivée
+                  </TabsTrigger>
+                  <TabsTrigger value="waypoints" className="flex-1">
+                    Points
+                  </TabsTrigger>
                 </TabsList>
 
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={activeTab}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <TabsContent value="overview" className="mt-4">
-                      <Card className="border-border/50">
-                        <CardContent className="p-5 space-y-5">
-                          {/* Flight details */}
-                          <div>
-                            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
-                              <Navigation className="h-4 w-4" /> Détails du vol
-                            </h3>
-                            <div className="grid grid-cols-2 gap-3">
-                              {[
-                                { label: "Type", value: fp.flight_type },
-                                { label: "Distance", value: fp.distance_km ? `${fp.distance_km.toFixed(1)} km` : "N/A" },
-                                { label: "Durée", value: durationMin ? `${durationMin} min` : "N/A" },
-                                { label: "Passagers", value: fp.number_of_passengers?.toString() || "N/A" },
-                                ...(fp.performance_profile
-                                  ? [{ label: "Profil perf", value: fp.performance_profile }]
-                                  : []),
-                                ...(fp.estimated_fuel_liters
-                                  ? [{ label: "Carburant", value: `${fp.estimated_fuel_liters.toFixed(1)} L` }]
-                                  : []),
-                              ].map((item) => (
-                                <div key={item.label} className="bg-muted/50 rounded-lg p-2.5">
-                                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{item.label}</p>
-                                  <p className="text-sm font-semibold font-mono">{item.value}</p>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
+                <TabsContent value="overview" className="mt-4 space-y-4">
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base">Détails du vol</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <dl className="grid grid-cols-2 gap-4">
+                        <Fact label="Type de vol" value={typeLabel} />
+                        <Fact label="Passagers" value={fp.number_of_passengers ?? "—"} />
+                        <Fact
+                          label="Distance"
+                          value={fp.distance_km ? `${formatDecimal(fp.distance_km)} km` : "—"}
+                        />
+                        <Fact label="Durée estimée" value={duration ?? "—"} />
+                        {fp.performance_profile && (
+                          <Fact label="Profil de performance" value={fp.performance_profile} />
+                        )}
+                        {fp.estimated_fuel_liters && (
+                          <Fact label="Carburant estimé" value={`${formatDecimal(fp.estimated_fuel_liters)} L`} />
+                        )}
+                      </dl>
+                    </CardContent>
+                  </Card>
 
-                          {/* Aircraft + Pilot */}
-                          <div>
-                            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
-                              <Plane className="h-4 w-4" /> Avion & Pilote
-                            </h3>
-                            {aircraft ? (
-                              <div className="space-y-2">
-                                <div className="flex items-center gap-3 bg-muted/50 rounded-lg p-3">
-                                  <div className="bg-primary/10 rounded-full p-2">
-                                    <Plane className="h-5 w-5 text-primary" />
-                                  </div>
-                                  <div>
-                                    <p className="font-bold font-mono text-base">{aircraft.registration_number}</p>
-                                    <p className="text-xs text-muted-foreground">{aircraft.model}</p>
-                                  </div>
-                                </div>
-                                <div className="grid grid-cols-3 gap-2">
-                                  {aircraft.cruiseSpeed && (
-                                    <div className="bg-muted/50 rounded-lg p-2 text-center">
-                                      <p className="text-[10px] text-muted-foreground uppercase">Vcrz</p>
-                                      <p className="text-xs font-semibold font-mono">{aircraft.cruiseSpeed} km/h</p>
-                                    </div>
-                                  )}
-                                  {aircraft.consumption && (
-                                    <div className="bg-muted/50 rounded-lg p-2 text-center">
-                                      <p className="text-[10px] text-muted-foreground uppercase">Conso</p>
-                                      <p className="text-xs font-semibold font-mono">{aircraft.consumption} L/h</p>
-                                    </div>
-                                  )}
-                                  {aircraft.maxAltitude && (
-                                    <div className="bg-muted/50 rounded-lg p-2 text-center">
-                                      <p className="text-[10px] text-muted-foreground uppercase">Plafond</p>
-                                      <p className="text-xs font-semibold font-mono">{aircraft.maxAltitude} ft</p>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            ) : (
-                              <p className="text-sm text-muted-foreground italic">Aucun avion assigné</p>
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base">Avion et pilote</CardTitle>
+                      {!aircraft && <CardDescription>Aucun avion n&apos;est associé à ce plan de vol.</CardDescription>}
+                    </CardHeader>
+                    <CardContent>
+                      <dl className="grid grid-cols-2 gap-4">
+                        {aircraft && (
+                          <>
+                            <Fact label="Immatriculation" value={aircraft.registration_number} />
+                            <Fact label="Modèle" value={aircraft.model || "—"} />
+                            {aircraft.cruiseSpeed && (
+                              <Fact label="Vitesse de croisière" value={`${aircraft.cruiseSpeed} km/h`} />
                             )}
-                            {pilotName && (
-                              <div className="mt-3 flex items-center gap-2 text-sm">
-                                <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
-                                  {pilotName.charAt(0)}
-                                </div>
-                                <div>
-                                  <p className="font-medium leading-tight">{pilotName}</p>
-                                  <p className="text-xs text-muted-foreground">PIC</p>
-                                </div>
-                              </div>
+                            {aircraft.consumption && (
+                              <Fact label="Consommation" value={`${aircraft.consumption} L/h`} />
                             )}
-                          </div>
+                            {aircraft.maxAltitude && <Fact label="Plafond" value={`${aircraft.maxAltitude} ft`} />}
+                          </>
+                        )}
+                        <Fact label="Commandant de bord" value={pilotName || "—"} />
+                      </dl>
+                    </CardContent>
+                  </Card>
 
-                          {/* METAR */}
-                          {fp.weather_conditions && (
-                            <div>
-                              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-2">
-                                <Radio className="h-4 w-4" /> METAR
-                              </h3>
-                              <div className="bg-muted/50 rounded-lg p-3">
-                                <p className="font-mono text-xs leading-relaxed break-all">{fp.weather_conditions}</p>
-                              </div>
-                            </div>
-                          )}
-                        </CardContent>
-                      </Card>
-                    </TabsContent>
+                  {fp.weather_conditions && (
+                    <Card>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base">Météo relevée (METAR)</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="break-words rounded-md bg-muted p-3 font-mono text-xs leading-relaxed">
+                          {fp.weather_conditions}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  )}
+                </TabsContent>
 
-                    <TabsContent value="departure" className="mt-4">
-                      <AirportInfo airportInfo={departureInfo} type="departure" weather={weatherData.departure || undefined} />
-                    </TabsContent>
+                <TabsContent value="departure" className="mt-4">
+                  <AirportInfo airportInfo={departureInfo} type="departure" weather={weatherData.departure ?? undefined} />
+                </TabsContent>
 
-                    <TabsContent value="arrival" className="mt-4">
-                      <AirportInfo airportInfo={arrivalInfo} type="arrival" weather={weatherData.arrival ?? undefined} />
-                    </TabsContent>
+                <TabsContent value="arrival" className="mt-4">
+                  <AirportInfo airportInfo={arrivalInfo} type="arrival" weather={weatherData.arrival ?? undefined} />
+                </TabsContent>
 
-                    <TabsContent value="waypoints" className="mt-4">
-                      <WaypointInfo waypoints={waypoints} onFocusWaypoint={handleFocusWaypoint} />
-                    </TabsContent>
-                  </motion.div>
-                </AnimatePresence>
+                <TabsContent value="waypoints" className="mt-4">
+                  <WaypointInfo waypoints={waypoints} onFocusWaypoint={handleFocusWaypoint} />
+                </TabsContent>
               </Tabs>
             </div>
 
-            {/* Map — 3 cols */}
             <div className="lg:col-span-3">
-              <div className="relative h-[500px] lg:h-full lg:min-h-[600px] rounded-xl overflow-hidden shadow-lg border border-border/30 bg-muted/30">
-                <AnimatePresence>
-                  {showMap && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.97 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.97 }}
-                      transition={{ duration: 0.5, ease: "easeOut" }}
-                      className="absolute inset-0"
-                    >
-                      <MapboxMap
-                        waypoints={waypoints}
-                        departure={{
-                          icao: departureInfo.ICAO,
-                          name: departureInfo.name,
-                          lat: Number.parseFloat(departureInfo.lat),
-                          lon: Number.parseFloat(departureInfo.lon),
-                        }}
-                        arrival={{
-                          icao: arrivalInfo.ICAO,
-                          name: arrivalInfo.name,
-                          lat: Number.parseFloat(arrivalInfo.lat),
-                          lon: Number.parseFloat(arrivalInfo.lon),
-                        }}
-                        focusPoint={mapFocus}
-                      />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+              <div className="map-container relative h-[420px] overflow-hidden rounded-xl border bg-muted lg:h-[600px]">
+                {hasMapData ? (
+                  <MapboxMap
+                    waypoints={waypoints}
+                    departure={{
+                      icao: departureInfo.ICAO,
+                      name: departureInfo.name,
+                      lat: Number.parseFloat(departureInfo.lat),
+                      lon: Number.parseFloat(departureInfo.lon),
+                    }}
+                    arrival={{
+                      icao: arrivalInfo.ICAO,
+                      name: arrivalInfo.name,
+                      lat: Number.parseFloat(arrivalInfo.lat),
+                      lon: Number.parseFloat(arrivalInfo.lon),
+                    }}
+                    focusPoint={mapFocus}
+                  />
+                ) : (
+                  <EmptyState
+                    className="h-full rounded-none border-0"
+                    icon={MapPinOff}
+                    title="Carte indisponible"
+                    description="Les coordonnées des aérodromes ne sont pas enregistrées pour ce plan de vol."
+                  />
+                )}
               </div>
             </div>
           </div>
-        </Section>
+        </TabsContent>
 
-        {/* ---- Vertical Profile ---- */}
-        <Section delay={0.3}>
-          <VerticalProfile waypoints={waypoints} maxAltitude={aircraft?.maxAltitude} />
-        </Section>
+        <TabsContent value="navigation" forceMount className="mt-0 space-y-6 data-[state=inactive]:hidden">
+          {hasNavigation ? (
+            <>
+              <VerticalProfile waypoints={waypoints} maxAltitude={aircraft?.maxAltitude} />
+              <NavLog
+                waypoints={waypoints}
+                aircraft={aircraft}
+                pilotName={pilotName}
+                flightType={fp.flight_type}
+                totalDistanceKm={fp.distance_km}
+                totalTimeHours={fp.estimated_flight_time}
+                departureIcao={departureInfo.ICAO}
+                arrivalIcao={arrivalInfo.ICAO}
+              />
+            </>
+          ) : (
+            <EmptyState
+              icon={FileSearch}
+              title="Pas de journal de navigation"
+              description="Le profil vertical et le journal de navigation sont calculés pour les plans de vol générés automatiquement à partir d'une réservation."
+            />
+          )}
+        </TabsContent>
 
-        {/* ---- Navigation Log ---- */}
-        <Section delay={0.35}>
-          <NavLog
-            waypoints={waypoints}
-            aircraft={aircraft}
-            pilotName={pilotName}
-            flightType={fp.flight_type}
-            totalDistanceKm={fp.distance_km}
-            totalTimeHours={fp.estimated_flight_time}
-            departureIcao={departureInfo.ICAO}
-            arrivalIcao={arrivalInfo.ICAO}
-          />
-        </Section>
-
-        {/* ---- Fuel Briefing ---- */}
-        <Section delay={0.4}>
-          <FuelBriefing
-            fuelPolicy={fuelPolicy}
-            windSummary={windSummary}
-            performanceProfile={fp.performance_profile}
-            estimatedFuelLiters={fp.estimated_fuel_liters}
-            flightType={fp.flight_type}
-          />
-        </Section>
-
-        {/* ---- Actions ---- */}
-        <Section delay={0.45} className="pb-12">
-          <FlightPlanActions
-            flightPlanId={typeof id === "string" ? id : Array.isArray(id) ? id[0] : 0}
-            flightDetails={{
-              departure: departureInfo.ICAO,
-              arrival: arrivalInfo.ICAO,
-              date: dateStr,
-            }}
-          />
-        </Section>
-      </div>
+        {showFuelTab && (
+          <TabsContent value="fuel" forceMount className="mt-0 data-[state=inactive]:hidden">
+            <FuelBriefing
+              fuelPolicy={fuelPolicy}
+              windSummary={windSummary}
+              performanceProfile={fp.performance_profile}
+              flightType={fp.flight_type}
+            />
+          </TabsContent>
+        )}
+      </Tabs>
     </div>
   )
 }

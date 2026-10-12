@@ -61,8 +61,8 @@ export function validateMaintenanceAttachments({ images = [], documents = [] }: 
   return null
 }
 
-// On update the API replaces the stored images (or documents) as soon as it
-// receives some, so an upload variable is only set when files were picked.
+// On update the API adds the files it receives to the stored ones; an upload
+// variable is only set when files were picked.
 const toMaintenanceUploads = ({ images, documents }: MaintenanceAttachments) => ({
   ...(images && images.length > 0 && { images }),
   ...(documents && documents.length > 0 && { files: documents }),
@@ -100,3 +100,43 @@ export const maintenanceFileUrl = (baseUrl: string, path: string) =>
     .split("/")
     .map((segment) => encodeURIComponent(segment))
     .join("/")}`
+
+type StatusVariant = "success" | "warning" | "info" | "danger" | "neutral"
+
+// One wording per maintenance type, wherever it is shown.
+const MAINTENANCE_TYPES: Record<string, string> = {
+  INSPECTION: "Inspection",
+  REPAIR: "Réparation",
+  OVERHAUL: "Révision",
+  SOFTWARE_UPDATE: "Mise à jour logicielle",
+  CLEANING: "Nettoyage",
+  OTHER: "Autre",
+}
+
+export const MAINTENANCE_TYPE_VALUES = Object.keys(MAINTENANCE_TYPES)
+
+export const maintenanceTypeLabel = (type: string | null | undefined) =>
+  MAINTENANCE_TYPES[(type ?? "").toUpperCase()] ?? (type ? MAINTENANCE_TYPES.OTHER : "—")
+
+// One wording and one colour per maintenance status, wherever it is shown.
+const MAINTENANCE_STATUSES: Record<string, { label: string; variant: StatusVariant }> = {
+  PLANNED: { label: "Planifiée", variant: "info" },
+  IN_PROGRESS: { label: "En cours", variant: "warning" },
+  COMPLETED: { label: "Terminée", variant: "success" },
+  CANCELLED: { label: "Annulée", variant: "danger" },
+}
+
+export const MAINTENANCE_STATUS_VALUES = Object.keys(MAINTENANCE_STATUSES)
+
+export const maintenanceStatus = (status: string | null | undefined) =>
+  MAINTENANCE_STATUSES[(status ?? "").toUpperCase()] ?? { label: status || "—", variant: "neutral" as StatusVariant }
+
+// "John Doe · john@example.com"
+export const maintenanceTechnicianLabel = (technician: {
+  first_name?: string | null
+  last_name?: string | null
+  email?: string | null
+}) =>
+  [[technician.first_name, technician.last_name].filter(Boolean).join(" "), technician.email]
+    .filter(Boolean)
+    .join(" · ") || "—"

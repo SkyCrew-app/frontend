@@ -1,182 +1,88 @@
 "use client"
 
-import type React from "react"
-
+import { Pencil, Plane, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { CardFooter } from "@/components/ui/card"
-import { CardContent } from "@/components/ui/card"
-import { CardHeader } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
-import Image from "next/image"
-import { Plane, Clock, Gauge, Fuel, DollarSign, MapPin, Info, Edit, Trash2 } from "lucide-react"
-import { formatCurrency } from "@/lib/utils"
-import { motion } from "framer-motion"
-
-enum AvailabilityStatus {
-  AVAILABLE = "AVAILABLE",
-  UNAVAILABLE = "UNAVAILABLE",
-  RESERVED = "RESERVATED",
-}
+import { StatusBadge } from "@/components/fleet/status-badge"
+import type { Aircraft } from "@/interfaces/aircraft"
+import { aircraftFileUrl, aircraftMaintenanceState } from "@/lib/aircraft"
+import { formatFlightDuration, formatMoney } from "@/lib/format"
+import { getBackendBaseUrl } from "@/lib/runtime-config"
 
 interface AircraftCardProps {
-  aircraft: any
-  onEdit: (aircraft: any) => void
-  onDelete: (id: number) => void
-  onViewDetails: (aircraft: any) => void
+  aircraft: Aircraft
+  onEdit: (aircraft: Aircraft) => void
+  onDelete: (aircraft: Aircraft) => void
+  onViewDetails: (aircraft: Aircraft) => void
 }
 
 export function AircraftCard({ aircraft, onEdit, onDelete, onViewDetails }: AircraftCardProps) {
-  const getStatusColor = (status: AvailabilityStatus) => {
-    switch (status) {
-      case AvailabilityStatus.AVAILABLE:
-        return "bg-success/15 text-success"
-      case AvailabilityStatus.UNAVAILABLE:
-        return "bg-destructive/15 text-destructive"
-      case AvailabilityStatus.RESERVED:
-        return "bg-warning/15 text-warning"
-      default:
-        return "bg-muted text-foreground"
-    }
-  }
-
-  const getMaintenanceStatusColor = (status: string) => {
-    if (status === "OK") return "bg-success/15 text-success"
-    return "bg-destructive/15 text-destructive"
-  }
+  // "Opérationnel" goes without saying: the maintenance state is only shown when it needs attention.
+  const needsAttention = aircraftMaintenanceState(aircraft.maintenance_status).variant !== "success"
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="w-full"
-    >
-      <Card className="h-full w-full overflow-hidden transition-all hover:shadow-md">
-        <div className="relative h-32 w-full overflow-hidden bg-muted sm:h-40">
+    <Card data-aircraft-card className="flex h-full flex-col">
+      <div className="flex items-start gap-3 p-4">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted text-muted-foreground">
           {aircraft.image_url ? (
-            <Image
-              src={aircraft.image_url || "/placeholder.svg"}
-              alt={aircraft.model}
-              fill
-              className="object-cover"
-              sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
+            // Aircraft files need the session: a plain image request carries it.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={aircraftFileUrl(getBackendBaseUrl(), aircraft.image_url)}
+              alt=""
+              className="h-full w-full object-cover"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center">
-              <Plane className="h-12 w-12 text-muted-foreground sm:h-16 sm:w-16" />
-            </div>
+            <Plane className="h-5 w-5" aria-hidden="true" />
           )}
-          <div className="absolute left-2 top-2 flex flex-wrap gap-1 max-w-[calc(100%-16px)]">
-            <Badge
-              variant="outline"
-              className={`${getStatusColor(aircraft.availability_status as AvailabilityStatus)} text-xs whitespace-nowrap`}
-            >
-              {aircraft.availability_status === AvailabilityStatus.AVAILABLE
-                ? "Disponible"
-                : aircraft.availability_status === AvailabilityStatus.UNAVAILABLE
-                  ? "Indisponible"
-                  : "Réservé"}
-            </Badge>
-            <Badge
-              variant="outline"
-              className={`${getMaintenanceStatusColor(aircraft.maintenance_status)} text-xs whitespace-nowrap`}
-            >
-              {aircraft.maintenance_status}
-            </Badge>
-          </div>
         </div>
+        <div className="min-w-0 flex-1">
+          <h3 className="truncate text-base font-semibold">{aircraft.registration_number}</h3>
+          <p className="truncate text-sm text-muted-foreground">{aircraft.model}</p>
+        </div>
+        <StatusBadge status={aircraft.availability_status} type="availability" className="shrink-0" />
+      </div>
 
-        <CardHeader className="p-3 pb-0">
-          <div className="flex flex-col space-y-1 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-            <h3 className="text-base font-bold truncate sm:text-lg">{aircraft.registration_number}</h3>
-            <span className="text-xs text-muted-foreground truncate sm:text-sm">{aircraft.model}</span>
-          </div>
-        </CardHeader>
+      <dl className="grid grid-cols-3 gap-3 px-4 text-sm">
+        <div>
+          <dt className="text-xs text-muted-foreground">Année</dt>
+          <dd className="font-medium tabular-nums">{aircraft.year_of_manufacture ?? "—"}</dd>
+        </div>
+        <div>
+          <dt className="text-xs text-muted-foreground">Heures de vol</dt>
+          <dd className="font-medium tabular-nums">{formatFlightDuration(aircraft.total_flight_hours ?? 0)}</dd>
+        </div>
+        <div>
+          <dt className="text-xs text-muted-foreground">Coût horaire</dt>
+          <dd className="font-medium tabular-nums">{formatMoney(aircraft.hourly_cost)}</dd>
+        </div>
+      </dl>
 
-        <CardContent className="grid grid-cols-2 gap-1 p-3 text-xs sm:gap-1.5 sm:text-sm">
-          <div className="flex items-center gap-1">
-            <Calendar className="h-3 w-3 text-primary flex-shrink-0 sm:h-3.5 sm:w-3.5" />
-            <span className="truncate">{aircraft.year_of_manufacture}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Clock className="h-3 w-3 text-primary flex-shrink-0 sm:h-3.5 sm:w-3.5" />
-            <span className="truncate">{aircraft.total_flight_hours}h</span>
-          </div>
-          {aircraft.cruiseSpeed && (
-            <div className="flex items-center gap-1">
-              <Gauge className="h-3 w-3 text-primary flex-shrink-0 sm:h-3.5 sm:w-3.5" />
-              <span className="truncate">{aircraft.cruiseSpeed} kt</span>
-            </div>
-          )}
-          {aircraft.consumption && (
-            <div className="flex items-center gap-1">
-              <Fuel className="h-3 w-3 text-primary flex-shrink-0 sm:h-3.5 sm:w-3.5" />
-              <span className="truncate">{aircraft.consumption} L/h</span>
-            </div>
-          )}
-          <div className="flex items-center gap-1">
-            <DollarSign className="h-3 w-3 text-primary flex-shrink-0 sm:h-3.5 sm:w-3.5" />
-            <span className="truncate">{formatCurrency(aircraft.hourly_cost)}/h</span>
-          </div>
-          {aircraft.current_location && (
-            <div className="flex items-center gap-1">
-              <MapPin className="h-3 w-3 text-primary flex-shrink-0 sm:h-3.5 sm:w-3.5" />
-              <span className="truncate">{aircraft.current_location}</span>
-            </div>
-          )}
-        </CardContent>
+      {needsAttention && (
+        <div className="px-4 pt-3">
+          <StatusBadge status={aircraft.maintenance_status} type="maintenance" />
+        </div>
+      )}
 
-        <CardFooter className="flex justify-between p-3 pt-0">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7 text-xs px-2 sm:h-8 sm:px-2.5"
-            onClick={() => onViewDetails(aircraft)}
-          >
-            <Info className="mr-1 h-3 w-3 sm:h-3.5 sm:w-3.5" />
-            <span>Détails</span>
-          </Button>
-          <div className="flex gap-1">
-            <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8" onClick={() => onEdit(aircraft)}>
-              <Edit className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-              <span className="sr-only">Modifier</span>
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 sm:h-8 sm:w-8 text-destructive hover:text-destructive"
-              onClick={() => onDelete(aircraft.id)}
-            >
-              <Trash2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-              <span className="sr-only">Supprimer</span>
-            </Button>
-          </div>
-        </CardFooter>
-      </Card>
-    </motion.div>
-  )
-}
-
-// Calendar icon component (since it's not in lucide-react by default)
-function Calendar(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
-      <line x1="16" x2="16" y1="2" y2="6" />
-      <line x1="8" x2="8" y1="2" y2="6" />
-      <line x1="3" x2="21" y1="10" y2="10" />
-    </svg>
+      <div className="mt-auto flex flex-wrap items-center justify-end gap-2 p-4">
+        <Button variant="ghost" size="sm" onClick={() => onViewDetails(aircraft)}>
+          Détails
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => onEdit(aircraft)}>
+          <Pencil className="h-4 w-4" aria-hidden="true" />
+          Modifier
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9 text-destructive hover:text-destructive"
+          onClick={() => onDelete(aircraft)}
+          aria-label={`Supprimer ${aircraft.registration_number}`}
+          title="Supprimer"
+        >
+          <Trash2 className="h-4 w-4" aria-hidden="true" />
+        </Button>
+      </div>
+    </Card>
   )
 }

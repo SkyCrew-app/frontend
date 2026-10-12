@@ -1,247 +1,238 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useMutation } from "@apollo/client"
-import { motion } from "framer-motion"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
+import { format } from "date-fns"
+import { fr } from "date-fns/locale"
+import { AlertCircle, CalendarIcon, Loader2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { CREATE_EXPENSE } from "@/graphql/finance"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import {
-  CheckCircle2,
-  AlertCircle,
-  Loader2,
-  PlusCircle,
-  Receipt,
-  Banknote,
-  Tag,
-  FileText,
-  CalendarIcon,
-} from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { format } from "date-fns"
-import { fr } from "date-fns/locale"
-import { cn } from "@/lib/utils"
+import { toast } from "@/components/hooks/use-toast"
+import { CREATE_EXPENSE } from "@/graphql/finance"
+import { formatDate, formatMoney } from "@/lib/format"
+import { EXPENSE_CATEGORIES } from "./finance-shared"
 
-// Animation variants
-const fadeIn = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+interface ExpenseFormProps {
+  /** Called once the expense is saved. */
+  onSuccess?: () => void
+  onCancel?: () => void
 }
 
-export default function ExpenseForm() {
+interface FieldErrors {
+  amount?: string
+  category?: string
+}
+
+const RequiredMark = () => (
+  <span className="text-destructive" aria-hidden="true">
+    {" "}
+    *
+  </span>
+)
+
+export default function ExpenseForm({ onSuccess, onCancel }: ExpenseFormProps) {
   const [amount, setAmount] = useState("")
   const [category, setCategory] = useState("")
   const [description, setDescription] = useState("")
-  const [date, setDate] = useState<Date>(new Date())
-  const [success, setSuccess] = useState(false)
+  const [date, setDate] = useState<Date>(() => new Date())
   const [isCalendarOpen, setIsCalendarOpen] = useState(false)
+  const [errors, setErrors] = useState<FieldErrors>({})
 
-  const [createExpense, { loading, error }] = useMutation(CREATE_EXPENSE)
+  const [createExpense, { loading, error }] = useMutation(CREATE_EXPENSE, {
+    // Saved expenses are listed per period: drop those lists so they are fetched again.
+    update: (cache) => {
+      cache.evict({ id: "ROOT_QUERY", fieldName: "expenseByPeriod" })
+      cache.gc()
+    },
+  })
+
+  const validate = (): FieldErrors => {
+    const next: FieldErrors = {}
+    const value = Number.parseFloat(amount.replace(",", "."))
+    if (!amount.trim()) next.amount = "Indiquez le montant de la dépense."
+    else if (Number.isNaN(value) || value <= 0) next.amount = "Le montant doit être supérieur à 0 €."
+    if (!category) next.category = "Choisissez une catégorie."
+    return next
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setSuccess(false)
+    if (loading) return
+
+    const nextErrors = validate()
+    setErrors(nextErrors)
+    if (Object.keys(nextErrors).length > 0) return
+
+    const value = Number.parseFloat(amount.replace(",", "."))
 
     try {
       await createExpense({
         variables: {
           input: {
-            expense_date: date.toISOString().split("T")[0],
-            amount: Number.parseFloat(amount),
+            // The day picked in the calendar, in local time (toISOString would shift it to the day before).
+            expense_date: format(date, "yyyy-MM-dd"),
+            amount: value,
             category,
             description,
           },
         },
       })
 
-      // Reset form
+      toast({
+        title: "Dépense enregistrée",
+        description: `${formatMoney(value)} le ${formatDate(date)}.`,
+      })
+
       setAmount("")
       setCategory("")
       setDescription("")
       setDate(new Date())
-      setSuccess(true)
-
-      // Clear success message after 3 seconds
-      setTimeout(() => setSuccess(false), 3000)
-    } catch (err) {
-      console.error("Error creating expense:", err)
+      onSuccess?.()
+    } catch {
+      // The failure is shown by the alert below, from the mutation error.
     }
   }
 
-  const categories = [
-    { value: "maintenance", label: "Maintenance", icon: <Receipt className="h-4 w-4 text-info" /> },
-    { value: "carburant", label: "Carburant", icon: <Receipt className="h-4 w-4 text-brand" /> },
-    { value: "assurance", label: "Assurance", icon: <Receipt className="h-4 w-4 text-success" /> },
-    { value: "salaires", label: "Salaires", icon: <Receipt className="h-4 w-4 text-primary" /> },
-    { value: "autres", label: "Autres", icon: <Receipt className="h-4 w-4 text-muted-foreground" /> },
-  ]
-
   return (
-    <motion.div initial="hidden" animate="visible" variants={fadeIn}>
-      <Card className="max-w-2xl mx-auto">
-        <CardHeader className="bg-info/10 rounded-t-lg">
-          <CardTitle className="flex items-center text-xl">
-            <PlusCircle className="mr-2 h-5 w-5 text-info" />
-            Ajouter une Dépense
-          </CardTitle>
-          <CardDescription>Enregistrez une nouvelle dépense pour le suivi financier de l'aéroclub</CardDescription>
-        </CardHeader>
-        <CardContent className="pt-6">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="amount" className="flex items-center text-sm font-medium">
-                  <Banknote className="mr-2 h-4 w-4 text-muted-foreground" />
-                  Montant
-                </Label>
-                <div className="relative">
-                  <Input
-                    id="amount"
-                    type="number"
-                    placeholder="0.00"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    required
-                    className="pl-8"
-                    step="0.01"
-                    min="0"
-                  />
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">€</span>
-                </div>
-              </div>
+    <form onSubmit={handleSubmit} noValidate className="space-y-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="expense-amount">
+            Montant
+            <RequiredMark />
+          </Label>
+          <div className="relative">
+            <Input
+              id="expense-amount"
+              type="number"
+              inputMode="decimal"
+              min="0.01"
+              step="0.01"
+              placeholder="120,50"
+              value={amount}
+              onChange={(e) => {
+                setAmount(e.target.value)
+                if (errors.amount) setErrors((current) => ({ ...current, amount: undefined }))
+              }}
+              required
+              aria-invalid={Boolean(errors.amount)}
+              aria-describedby={errors.amount ? "expense-amount-error" : undefined}
+              className="pr-8 tabular-nums"
+            />
+            <span
+              className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground"
+              aria-hidden="true"
+            >
+              €
+            </span>
+          </div>
+          {errors.amount && (
+            <p id="expense-amount-error" className="text-sm text-destructive">
+              {errors.amount}
+            </p>
+          )}
+        </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="date" className="flex items-center text-sm font-medium">
-                  <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
-                  Date de la dépense
-                </Label>
-                <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-                  <PopoverTrigger asChild>
-                    <div
-                      className={cn(
-                        "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm",
-                        "ring-offset-background placeholder:text-muted-foreground focus:outline-none",
-                        "focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-                        "cursor-pointer",
-                      )}
-                      onClick={() => setIsCalendarOpen(true)}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {date ? format(date, "PPP", { locale: fr }) : <span>Sélectionner une date</span>}
-                    </div>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={date}
-                      onSelect={(date) => {
-                        if (date) {
-                          setDate(date)
-                          setIsCalendarOpen(false)
-                        }
-                      }}
-                      initialFocus
-                      locale={fr}
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="category" className="flex items-center text-sm font-medium">
-                <Tag className="mr-2 h-4 w-4 text-muted-foreground" />
-                Catégorie de dépense
-              </Label>
-              <Select value={category} onValueChange={setCategory} required>
-                <SelectTrigger id="category">
-                  <SelectValue placeholder="Sélectionner une catégorie" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat.value} value={cat.value} className="flex items-center">
-                      <div className="flex items-center">
-                        {cat.icon}
-                        <span className="ml-2">{cat.label}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description" className="flex items-center text-sm font-medium">
-                <FileText className="mr-2 h-4 w-4 text-muted-foreground" />
-                Description
-              </Label>
-              <Textarea
-                id="description"
-                placeholder="Détails de la dépense..."
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={3}
+        <div className="space-y-2">
+          <Label htmlFor="expense-date">
+            Date
+            <RequiredMark />
+          </Label>
+          <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+            <PopoverTrigger asChild>
+              <Button id="expense-date" type="button" variant="outline" className="w-full justify-start font-normal">
+                <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                {formatDate(date)}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={date}
+                onSelect={(selected) => {
+                  if (selected) {
+                    setDate(selected)
+                    setIsCalendarOpen(false)
+                  }
+                }}
+                initialFocus
+                locale={fr}
               />
-            </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+      </div>
 
-            {error && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Erreur</AlertTitle>
-                <AlertDescription>{error.message}</AlertDescription>
-              </Alert>
-            )}
+      <div className="space-y-2">
+        <Label htmlFor="expense-category">
+          Catégorie
+          <RequiredMark />
+        </Label>
+        <Select
+          value={category}
+          onValueChange={(value) => {
+            setCategory(value)
+            if (errors.category) setErrors((current) => ({ ...current, category: undefined }))
+          }}
+        >
+          <SelectTrigger
+            id="expense-category"
+            aria-invalid={Boolean(errors.category)}
+            aria-describedby={errors.category ? "expense-category-error" : undefined}
+          >
+            <SelectValue placeholder="Choisir une catégorie" />
+          </SelectTrigger>
+          <SelectContent>
+            {EXPENSE_CATEGORIES.map((item) => (
+              <SelectItem key={item.value} value={item.value}>
+                {item.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {errors.category && (
+          <p id="expense-category-error" className="text-sm text-destructive">
+            {errors.category}
+          </p>
+        )}
+      </div>
 
-            {success && (
-              <Alert className="bg-success/10 border-success/30 text-success">
-                <CheckCircle2 className="h-4 w-4 text-success" />
-                <AlertTitle>Succès</AlertTitle>
-                <AlertDescription>La dépense a été ajoutée avec succès!</AlertDescription>
-              </Alert>
-            )}
-          </form>
-        </CardContent>
-        <CardFooter className="bg-muted/30 flex justify-end gap-2 pt-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              setAmount("")
-              setCategory("")
-              setDescription("")
-              setDate(new Date())
-            }}
-          >
-            Réinitialiser
+      <div className="space-y-2">
+        <Label htmlFor="expense-description">Description</Label>
+        <Textarea
+          id="expense-description"
+          placeholder="Ex. : visite des 50 heures du F-GABC"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          rows={3}
+        />
+      </div>
+
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>La dépense n'a pas pu être enregistrée. Réessayez dans un instant.</AlertDescription>
+        </Alert>
+      )}
+
+      <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
+        {onCancel && (
+          <Button type="button" variant="outline" onClick={onCancel} disabled={loading}>
+            Annuler
           </Button>
-          <Button
-            type="submit"
-            onClick={handleSubmit}
-            disabled={loading || !amount || !category}
-            className="bg-info hover:bg-info/90 text-info-foreground"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Ajout en cours...
-              </>
-            ) : (
-              <>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Ajouter la Dépense
-              </>
-            )}
-          </Button>
-        </CardFooter>
-      </Card>
-    </motion.div>
+        )}
+        <Button type="submit" disabled={loading}>
+          {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+          {loading ? "Enregistrement…" : "Enregistrer la dépense"}
+        </Button>
+      </div>
+    </form>
   )
 }

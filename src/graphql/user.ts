@@ -15,6 +15,7 @@ export const CREATE_USER = gql`
 export const GET_USER_PROFILE = gql`
   query GetUserProfile($email: String!) {
     userByEmail(email: $email) {
+      id
       first_name
       last_name
       profile_picture

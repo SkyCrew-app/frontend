@@ -1,634 +1,447 @@
 "use client"
 
-import { useState } from "react"
-import { motion } from "framer-motion"
+import type { ReactNode } from "react"
+import Link from "next/link"
 import { useQuery } from "@apollo/client"
-import {
-  Users,
-  Plane,
-  Calendar,
-  AlertTriangle,
-  Clock,
-  Shield,
-  Award,
-  BarChart3,
-  FileText,
-  Settings,
-  CreditCard,
-  ChevronRight,
-} from "lucide-react"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { AlertTriangle, Calendar, CalendarClock, ChevronRight, Clock, Plane, Users, Wrench } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { PageHeader } from "@/components/layout/PageHeader"
+import { StatCard } from "@/components/layout/StatCard"
+import { EmptyState } from "@/components/layout/EmptyState"
+import { ErrorState } from "@/components/layout/ErrorState"
 import {
   GET_ADMIN_DASHBOARD_STATS,
   GET_RECENT_RESERVATIONS,
   GET_RECENT_FLIGHTS,
   GET_RECENT_INCIDENTS,
 } from "@/graphql/admin"
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
-import { ReservationStatus, FlightCategory } from "@/interfaces/enums"
-import Link from "next/link"
+import { formatDate, formatDateTime, formatFlightDuration, formatTime } from "@/lib/format"
+import { reservationStatus } from "@/lib/reservation-status"
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
+const FLIGHT_CATEGORIES: Record<string, string> = {
+  local: "Local",
+  cross_country: "Voyage",
+  instruction: "Instruction",
+  tourism: "Tourisme",
+  training: "Entraînement",
+  maintenance: "Maintenance",
+  private: "Privé",
+  corporate: "Entreprise",
 }
 
-const itemVariants = {
-  hidden: { y: 20, opacity: 0 },
-  visible: {
-    y: 0,
-    opacity: 1,
-    transition: { duration: 0.4 },
-  },
+const flightCategoryLabel = (category: string | null | undefined) =>
+  FLIGHT_CATEGORIES[(category ?? "").toLowerCase()] ?? "Autre"
+
+type BadgeVariant = "success" | "warning" | "danger" | "neutral"
+
+const SEVERITIES: Record<string, { label: string; variant: BadgeVariant }> = {
+  low: { label: "Gravité faible", variant: "neutral" },
+  medium: { label: "Gravité moyenne", variant: "warning" },
+  high: { label: "Gravité élevée", variant: "danger" },
 }
 
-const COLORS = ["hsl(var(--chart-2))", "hsl(var(--chart-4))", "hsl(var(--chart-5))", "hsl(var(--chart-6))", "hsl(var(--chart-3))"]
+const incidentSeverity = (level: string | null | undefined) => SEVERITIES[(level ?? "").toLowerCase()] ?? null
+
+// "12 oct. 2026, 14:30 – 16:00" when both ends are on the same day.
+const formatSlot = (start: string, end: string) => {
+  const sameDay = new Date(start).toDateString() === new Date(end).toDateString()
+  return sameDay
+    ? `${formatDate(start)}, ${formatTime(start)} – ${formatTime(end)}`
+    : `${formatDateTime(start)} – ${formatDateTime(end)}`
+}
+
+interface Distribution {
+  name: string
+  value: number
+}
+
+// A share-of-total list: readable without a legend and without a chart library.
+function DistributionList({ items, unit }: { items: Distribution[]; unit: string }) {
+  const total = items.reduce((sum, item) => sum + item.value, 0)
+  return (
+    <ul className="space-y-3">
+      {items.map((item) => {
+        const share = total > 0 ? Math.round((item.value / total) * 100) : 0
+        return (
+          <li key={item.name} className="space-y-1">
+            <div className="flex items-baseline justify-between gap-3 text-sm">
+              <span className="truncate">{item.name}</span>
+              <span className="shrink-0 tabular-nums text-muted-foreground">
+                {item.value} {unit} · {share} %
+              </span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-muted" aria-hidden="true">
+              <div className="h-full rounded-full bg-primary" style={{ width: `${share}%` }} />
+            </div>
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
+
+function ListSkeleton({ rows = 3 }: { rows?: number }) {
+  return (
+    <div className="space-y-3">
+      {Array.from({ length: rows }, (_, i) => (
+        <Skeleton key={i} className="h-14 w-full" />
+      ))}
+    </div>
+  )
+}
+
+interface SectionProps {
+  title: string
+  description?: string
+  /** Where the full list lives, when the app has one. */
+  href?: string
+  linkLabel?: string
+  loading: boolean
+  failed: boolean
+  onRetry: () => void
+  children: ReactNode
+  className?: string
+}
+
+function Section({ title, description, href, linkLabel, loading, failed, onRetry, children, className }: SectionProps) {
+  return (
+    <Card className={className}>
+      <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
+        <div className="space-y-1.5">
+          <CardTitle className="text-base">{title}</CardTitle>
+          {description && <CardDescription>{description}</CardDescription>}
+        </div>
+        {href && (
+          <Button variant="ghost" size="sm" className="shrink-0" asChild>
+            <Link href={href}>
+              {linkLabel ?? "Tout voir"}
+              <ChevronRight className="h-4 w-4" />
+            </Link>
+          </Button>
+        )}
+      </CardHeader>
+      <CardContent>{failed ? <ErrorState onRetry={onRetry} /> : loading ? <ListSkeleton /> : children}</CardContent>
+    </Card>
+  )
+}
+
+interface AttentionItem {
+  key: string
+  icon: LucideIcon
+  tone: string
+  title: string
+  description: string
+  href?: string
+}
 
 export default function AdminHomePage() {
-  const [activeTab, setActiveTab] = useState("overview")
+  const statsQuery = useQuery(GET_ADMIN_DASHBOARD_STATS)
+  const reservationsQuery = useQuery(GET_RECENT_RESERVATIONS, { variables: { limit: 5 } })
+  const flightsQuery = useQuery(GET_RECENT_FLIGHTS, { variables: { limit: 5 } })
+  const incidentsQuery = useQuery(GET_RECENT_INCIDENTS, { variables: { limit: 5 } })
 
-  const { loading: statsLoading, error: statsError, data: statsData } = useQuery(GET_ADMIN_DASHBOARD_STATS)
+  const stats = statsQuery.data?.adminDashboardStats
+  const statsLoading = statsQuery.loading && !stats
+  const statsFailed = Boolean(statsQuery.error) && !stats
 
-  const {
-    loading: reservationsLoading,
-    error: reservationsError,
-    data: reservationsData,
-  } = useQuery(GET_RECENT_RESERVATIONS, {
-    variables: { limit: 5 },
-  })
+  const recentReservations: any[] = reservationsQuery.data?.recentReservations ?? []
+  const recentFlights: any[] = flightsQuery.data?.recentFlights ?? []
+  const recentIncidents: any[] = incidentsQuery.data?.recentIncidents ?? []
 
-  const {
-    loading: flightsLoading,
-    error: flightsError,
-    data: flightsData,
-  } = useQuery(GET_RECENT_FLIGHTS, {
-    variables: { limit: 5 },
-  })
+  const usersByRole: Distribution[] = (stats?.usersByRole ?? []).map((item: any) => ({
+    name: item.role_name || "Sans rôle",
+    value: item.count,
+  }))
 
-  const {
-    loading: incidentsLoading,
-    error: incidentsError,
-    data: incidentsData,
-  } = useQuery(GET_RECENT_INCIDENTS, {
-    variables: { limit: 5 },
-  })
+  const reservationsByCategory: Distribution[] = (stats?.reservationsByCategory ?? []).map((item: any) => ({
+    name: flightCategoryLabel(item.flight_category),
+    value: item.count,
+  }))
 
-  const loading = statsLoading || reservationsLoading || flightsLoading || incidentsLoading
-  const error = statsError || reservationsError || flightsError || incidentsError
+  const pendingReservations: number = stats?.pendingReservations ?? 0
+  const unavailableAircrafts = Math.max(0, (stats?.totalAircrafts ?? 0) - (stats?.availableAircrafts ?? 0))
+  const severeIncidents = recentIncidents.filter((incident) => (incident.severity_level ?? "").toLowerCase() === "high")
 
-  const stats = statsData?.adminDashboardStats || {
-    totalUsers: 0,
-    totalAircrafts: 0,
-    totalReservations: 0,
-    totalFlights: 0,
-    totalIncidents: 0,
-    availableAircrafts: 0,
-    pendingReservations: 0,
-    flightHoursThisMonth: 0,
-    usersByRole: [],
-    reservationsByCategory: [],
+  const attention: AttentionItem[] = []
+  if (pendingReservations > 0) {
+    attention.push({
+      key: "reservations",
+      icon: CalendarClock,
+      tone: "bg-warning/15 text-warning",
+      title:
+        pendingReservations > 1
+          ? `${pendingReservations} réservations en attente`
+          : "1 réservation en attente",
+      description: "À confirmer ou à refuser dans le planning.",
+      href: "/reservations",
+    })
   }
-
-  const recentReservations = reservationsData?.recentReservations || []
-  const recentFlights = flightsData?.recentFlights || []
-  const recentIncidents = incidentsData?.recentIncidents || []
-
-  const roleDistributionData =
-    stats.usersByRole?.map((item: any) => ({
-      name: item.role_name || "Sans rôle",
-      value: item.count,
-    })) || []
-
-  const reservationCategoryData =
-    stats.reservationsByCategory?.map((item: any) => ({
-      name: formatFlightCategory(item.flight_category),
-      value: item.count,
-    })) || []
-
-  function formatFlightCategory(category: FlightCategory) {
-    const categoryMap = {
-      [FlightCategory.LOCAL]: "Local",
-      [FlightCategory.CROSS_COUNTRY]: "Voyage",
-      [FlightCategory.INSTRUCTION]: "Instruction",
-      [FlightCategory.TOURISM]: "Tourisme",
-      [FlightCategory.TRAINING]: "Entraînement",
-      [FlightCategory.MAINTENANCE]: "Maintenance",
-      [FlightCategory.PRIVATE]: "Privé",
-      [FlightCategory.CORPORATE]: "Entreprise",
-    }
-    return categoryMap[category] || category
+  if (unavailableAircrafts > 0) {
+    attention.push({
+      key: "aircrafts",
+      icon: Wrench,
+      tone: "bg-info/15 text-info",
+      title: unavailableAircrafts > 1 ? `${unavailableAircrafts} avions indisponibles` : "1 avion indisponible",
+      description: "En maintenance ou retirés du planning.",
+      href: "/administration/planes",
+    })
   }
-
-  function getStatusBadge(status: ReservationStatus) {
-    switch (status) {
-      case ReservationStatus.CONFIRMED:
-        return <Badge variant="success">Confirmée</Badge>
-      case ReservationStatus.PENDING:
-        return (
-          <Badge variant="warning">En attente</Badge>
-        )
-      case ReservationStatus.CANCELLED:
-        return <Badge variant="danger">Annulée</Badge>
-      default:
-        return <Badge variant="outline">Inconnue</Badge>
-    }
-  }
-
-  function formatDate(dateString: string) {
-    const date = new Date(dateString)
-    const day = date.getDate().toString().padStart(2, "0")
-    const month = (date.getMonth() + 1).toString().padStart(2, "0")
-    const year = date.getFullYear()
-    const hours = date.getHours().toString().padStart(2, "0")
-    const minutes = date.getMinutes().toString().padStart(2, "0")
-
-    return `${day}/${month}/${year} ${hours}h${minutes}`
-  }
-
-  function formatHours(hours: number) {
-    const wholeHours = Math.floor(hours)
-    const minutes = Math.round((hours - wholeHours) * 60)
-    return `${wholeHours}h${minutes.toString().padStart(2, "0")}`
-  }
-
-  if (error) {
-    return (
-      <div className="w-full">
-        <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>Erreur</AlertTitle>
-          <AlertDescription>
-            Une erreur est survenue lors du chargement du tableau de bord: {error.message}
-          </AlertDescription>
-        </Alert>
-        <Button className="mt-4" onClick={() => window.location.reload()}>
-          Réessayer
-        </Button>
-      </div>
-    )
+  if (severeIncidents.length > 0) {
+    attention.push({
+      key: "incidents",
+      icon: AlertTriangle,
+      tone: "bg-destructive/15 text-destructive",
+      title:
+        severeIncidents.length > 1
+          ? `${severeIncidents.length} incidents récents de gravité élevée`
+          : "1 incident récent de gravité élevée",
+      description: severeIncidents.map((incident) => incident.aircraft?.registration_number).filter(Boolean).join(", "),
+    })
   }
 
   return (
-    <motion.div initial="hidden" animate="visible" variants={containerVariants} className="w-full">
-      <motion.div variants={itemVariants} className="mb-8">
-        <h1 className="text-2xl font-semibold tracking-tight">Tableau de bord d'administration</h1>
-        <p className="text-muted-foreground mt-1">
-          Bienvenue dans le centre d'administration de SkyCrew. Gérez votre aéroclub en un coup d'œil.
-        </p>
-      </motion.div>
+    <div className="space-y-6">
+      <PageHeader title="Administration" description="L'activité du club en un coup d'œil." className="mb-0" />
 
-      <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full md:w-auto grid-cols-2 md:grid-cols-3 gap-2">
-          <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
-          <TabsTrigger value="reservations">Réservations</TabsTrigger>
-          <TabsTrigger value="activity">Activité récente</TabsTrigger>
-        </TabsList>
+      {statsFailed ? (
+        <ErrorState onRetry={() => statsQuery.refetch()} />
+      ) : statsLoading ? (
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          {Array.from({ length: 4 }, (_, i) => (
+            <Skeleton key={i} className="h-24 w-full rounded-xl" />
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <StatCard label="Membres" value={stats?.totalUsers ?? 0} icon={Users} tone="primary" />
+          <StatCard
+            label="Avions"
+            value={stats?.totalAircrafts ?? 0}
+            hint={`${stats?.availableAircrafts ?? 0} disponible${(stats?.availableAircrafts ?? 0) > 1 ? "s" : ""}`}
+            icon={Plane}
+            tone="success"
+          />
+          <StatCard
+            label="Réservations"
+            value={stats?.totalReservations ?? 0}
+            hint={`${pendingReservations} en attente`}
+            icon={Calendar}
+            tone="warning"
+          />
+          <StatCard
+            label="Heures de vol ce mois-ci"
+            value={formatFlightDuration(stats?.flightHoursThisMonth ?? 0)}
+            icon={Clock}
+            tone="info"
+          />
+        </div>
+      )}
 
-        <TabsContent value="overview" className="space-y-6">
-          {/* Stats Cards */}
-          <motion.div variants={containerVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <motion.div variants={itemVariants}>
-              <Card className="border-t-4 border-t-primary overflow-hidden">
-                <CardHeader className="pb-2">
-                  <CardTitle className="flex items-center text-lg font-medium">
-                    <Users className="mr-2 h-5 w-5 text-info" />
-                    Utilisateurs
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {loading ? (
-                    <Skeleton className="h-10 w-full" />
-                  ) : (
-                    <div className="text-3xl font-bold">{stats.totalUsers}</div>
-                  )}
-                  <p className="text-sm text-muted-foreground mt-1">Membres de l'aéroclub</p>
-                </CardContent>
-                <CardFooter className="pt-0">
-                  <Button variant="ghost" size="sm" className="text-info hover:text-info p-0" asChild>
-                    <Link href="/administration">Voir tous les utilisateurs →</Link>
-                  </Button>
-                </CardFooter>
-              </Card>
-            </motion.div>
-
-            <motion.div variants={itemVariants}>
-              <Card className="border-t-4 border-t-success overflow-hidden">
-                <CardHeader className="pb-2">
-                  <CardTitle className="flex items-center text-lg font-medium">
-                    <Plane className="mr-2 h-5 w-5 text-success" />
-                    Avions
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {loading ? (
-                    <Skeleton className="h-10 w-full" />
-                  ) : (
-                    <div className="text-3xl font-bold">{stats.totalAircrafts}</div>
-                  )}
-                  <p className="text-sm text-muted-foreground mt-1">{stats.availableAircrafts} avions disponibles</p>
-                </CardContent>
-                <CardFooter className="pt-0">
-                  <Button variant="ghost" size="sm" className="text-success hover:text-success p-0" asChild>
-                    <Link href="/settings?tab=aircraft">Gérer la flotte →</Link>
-                  </Button>
-                </CardFooter>
-              </Card>
-            </motion.div>
-
-            <motion.div variants={itemVariants}>
-              <Card className="border-t-4 border-t-warning overflow-hidden">
-                <CardHeader className="pb-2">
-                  <CardTitle className="flex items-center text-lg font-medium">
-                    <Calendar className="mr-2 h-5 w-5 text-warning" />
-                    Réservations
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {loading ? (
-                    <Skeleton className="h-10 w-full" />
-                  ) : (
-                    <div className="text-3xl font-bold">{stats.totalReservations}</div>
-                  )}
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {stats.pendingReservations} réservations en attente
-                  </p>
-                </CardContent>
-                <CardFooter className="pt-0">
-                  <Button variant="ghost" size="sm" className="text-warning hover:text-warning p-0" asChild>
-                    <Link href="/reservations">Voir les réservations →</Link>
-                  </Button>
-                </CardFooter>
-              </Card>
-            </motion.div>
-
-            <motion.div variants={itemVariants}>
-              <Card className="border-t-4 border-t-info overflow-hidden">
-                <CardHeader className="pb-2">
-                  <CardTitle className="flex items-center text-lg font-medium">
-                    <Clock className="mr-2 h-5 w-5 text-info" />
-                    Heures de vol
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold">
-                    {loading ? <Skeleton className="h-10 w-full" /> : formatHours(stats.flightHoursThisMonth)}
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-1">Heures de vol ce mois-ci</p>
-                </CardContent>
-                <CardFooter className="pt-0">
-                  <Button variant="ghost" size="sm" className="text-info hover:text-info p-0" asChild>
-                    <Link href="/flights">Voir les vols →</Link>
-                  </Button>
-                </CardFooter>
-              </Card>
-            </motion.div>
-          </motion.div>
-
-          {/* Quick Actions */}
-          <motion.div variants={itemVariants}>
-            <Card>
-              <CardHeader>
-                <CardTitle>Actions rapides</CardTitle>
-                <CardDescription>Accédez rapidement aux fonctionnalités principales</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                  <Button
-                    variant="outline"
-                    className="h-auto flex flex-col items-center justify-center p-4 gap-2 hover:bg-muted/50"
-                    asChild
-                  >
-                    <Link href="/administration">
-                      <Users className="h-6 w-6 mb-1 text-info" />
-                      <span className="text-sm text-center">Utilisateurs</span>
-                    </Link>
-                  </Button>
-
-                  <Button
-                    variant="outline"
-                    className="h-auto flex flex-col items-center justify-center p-4 gap-2 hover:bg-muted/50"
-                    asChild
-                  >
-                    <Link href="/settings?tab=aircraft">
-                      <Plane className="h-6 w-6 mb-1 text-success" />
-                      <span className="text-sm text-center">Avions</span>
-                    </Link>
-                  </Button>
-
-                  <Button
-                    variant="outline"
-                    className="h-auto flex flex-col items-center justify-center p-4 gap-2 hover:bg-muted/50"
-                    asChild
-                  >
-                    <Link href="/admin-e-learning">
-                      <Award className="h-6 w-6 mb-1 text-warning" />
-                      <span className="text-sm text-center">Formation</span>
-                    </Link>
-                  </Button>
-
-                  <Button
-                    variant="outline"
-                    className="h-auto flex flex-col items-center justify-center p-4 gap-2 hover:bg-muted/50"
-                    asChild
-                  >
-                    <Link href="/finance">
-                      <CreditCard className="h-6 w-6 mb-1 text-info" />
-                      <span className="text-sm text-center">Finances</span>
-                    </Link>
-                  </Button>
-
-                  <Button
-                    variant="outline"
-                    className="h-auto flex flex-col items-center justify-center p-4 gap-2 hover:bg-muted/50"
-                    asChild
-                  >
-                    <Link href="/articles-admin">
-                      <FileText className="h-6 w-6 mb-1 text-primary" />
-                      <span className="text-sm text-center">Articles</span>
-                    </Link>
-                  </Button>
-
-                  <Button
-                    variant="outline"
-                    className="h-auto flex flex-col items-center justify-center p-4 gap-2 hover:bg-muted/50"
-                    asChild
-                  >
-                    <Link href="/settings">
-                      <Settings className="h-6 w-6 mb-1 text-muted-foreground" />
-                      <span className="text-sm text-center">Paramètres</span>
-                    </Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          {/* Charts */}
-          <motion.div variants={containerVariants} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <motion.div variants={itemVariants}>
-              <Card className="h-full">
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Shield className="mr-2 h-5 w-5 text-info" />
-                    Répartition des rôles
-                  </CardTitle>
-                  <CardDescription>Distribution des utilisateurs par rôle</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-[300px]">
-                    {loading ? (
-                      <div className="flex items-center justify-center h-full">
-                        <Skeleton className="h-full w-full rounded-md" />
+      {!statsFailed && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">À traiter</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {statsLoading || incidentsQuery.loading ? (
+              <ListSkeleton rows={2} />
+            ) : attention.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Rien à signaler pour le moment.</p>
+            ) : (
+              <ul className="divide-y">
+                {attention.map((item) => {
+                  const content = (
+                    <>
+                      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${item.tone}`}>
+                        <item.icon className="h-5 w-5" aria-hidden="true" />
                       </div>
-                    ) : (
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={roleDistributionData}
-                            cx="50%"
-                            cy="50%"
-                            labelLine={false}
-                            outerRadius={100}
-                            fill="hsl(var(--chart-6))"
-                            dataKey="value"
-                            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                          >
-                            {roleDistributionData.map((entry: any, index: any) => (
-                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                            ))}
-                          </Pie>
-                          <Tooltip formatter={(value) => [`${value} utilisateurs`, "Nombre"]} />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            <motion.div variants={itemVariants}>
-              <Card className="h-full">
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <BarChart3 className="mr-2 h-5 w-5 text-warning" />
-                    Types de réservations
-                  </CardTitle>
-                  <CardDescription>Répartition des réservations par catégorie</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-[300px] mb-8">
-                    {loading ? (
-                      <div className="flex items-center justify-center h-full">
-                        <Skeleton className="h-full w-full rounded-md" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium">{item.title}</p>
+                        {item.description && (
+                          <p className="truncate text-sm text-muted-foreground">{item.description}</p>
+                        )}
                       </div>
-                    ) : (
-                      <ChartContainer
-                        config={reservationCategoryData.reduce((acc: any, item: any, index: any) => {
-                          acc[item.name] = {
-                            label: item.name,
-                            color: COLORS[index % COLORS.length],
-                          }
-                          return acc
-                        }, {})}
-                      >
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={reservationCategoryData}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="name" angle={-45} textAnchor="end" height={60} />
-                            <YAxis />
-                            <ChartTooltip content={<ChartTooltipContent />} />
-                            <Bar dataKey="value" name="Nombre" fill="var(--color-Local)" />
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </ChartContainer>
+                      {item.href && <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />}
+                    </>
+                  )
+                  return (
+                    <li key={item.key}>
+                      {item.href ? (
+                        <Link
+                          href={item.href}
+                          className="-mx-2 flex items-center gap-3 rounded-md px-2 py-3 transition-colors hover:bg-muted/50"
+                        >
+                          {content}
+                        </Link>
+                      ) : (
+                        <div className="flex items-center gap-3 py-3">{content}</div>
+                      )}
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      <h2 className="text-lg font-semibold">Activité récente</h2>
+
+      <Section
+        title="Dernières réservations"
+        href="/reservations"
+        linkLabel="Planning"
+        loading={reservationsQuery.loading && recentReservations.length === 0}
+        failed={Boolean(reservationsQuery.error) && recentReservations.length === 0}
+        onRetry={() => reservationsQuery.refetch()}
+      >
+        {recentReservations.length === 0 ? (
+          <EmptyState icon={Calendar} title="Aucune réservation récente" />
+        ) : (
+          <ul className="divide-y">
+            {recentReservations.map((reservation) => {
+              const status = reservationStatus(reservation.status)
+              return (
+                <li
+                  key={reservation.id}
+                  className="flex flex-col gap-2 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">
+                      {reservation.user?.first_name} {reservation.user?.last_name}
+                      <span className="font-normal text-muted-foreground">
+                        {" · "}
+                        {reservation.aircraft?.registration_number}
+                      </span>
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {formatSlot(reservation.start_time, reservation.end_time)}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    {reservation.flight_category && (
+                      <Badge variant="outline">{flightCategoryLabel(reservation.flight_category)}</Badge>
                     )}
+                    <Badge variant={status.variant}>{status.label}</Badge>
                   </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </motion.div>
-        </TabsContent>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </Section>
 
-        <TabsContent value="reservations" className="space-y-6">
-          <motion.div variants={itemVariants}>
-            <Card>
-              <CardHeader>
-                <CardTitle>Réservations récentes</CardTitle>
-                <CardDescription>Les dernières réservations effectuées</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <div className="space-y-4">
-                    {Array(5)
-                      .fill(0)
-                      .map((_, i) => (
-                        <Skeleton key={i} className="h-20 w-full" />
-                      ))}
-                  </div>
-                ) : recentReservations.length > 0 ? (
-                  <div className="space-y-4">
-                    {recentReservations.map((reservation: any) => (
-                      <Link key={reservation.id} href={`/reservations/${reservation.id}`} className="block">
-                        <div className="flex flex-col md:flex-row md:items-center justify-between p-4 border rounded-lg transition-colors hover:bg-muted/50 group relative">
-                          <div className="flex items-start space-x-4">
-                            <div className="bg-warning/15 p-2 rounded-full">
-                              <Calendar className="h-5 w-5 text-warning" />
-                            </div>
-                            <div>
-                              <div className="font-medium">
-                                {reservation.user.first_name} {reservation.user.last_name}
-                              </div>
-                              <div className="text-sm text-muted-foreground">
-                                {reservation.aircraft.registration_number} - {reservation.aircraft.model}
-                              </div>
-                              <div className="text-sm">
-                                {formatDate(reservation.start_time)} - {formatDate(reservation.end_time)}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="mt-2 md:mt-0 flex items-center space-x-2">
-                            {getStatusBadge(reservation.status)}
-                            <Badge variant="outline" className="bg-info/10 text-info border-info/30">
-                              {formatFlightCategory(reservation.flight_category)}
-                            </Badge>
-                            <ChevronRight className="h-5 w-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity ml-2" />
-                          </div>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">Aucune réservation récente trouvée</div>
-                )}
-              </CardContent>
-              <CardFooter>
-                <Button variant="outline" className="w-full" asChild>
-                  <Link href="/reservations">Voir toutes les réservations</Link>
-                </Button>
-              </CardFooter>
-            </Card>
-          </motion.div>
-        </TabsContent>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Section
+          title="Derniers vols"
+          loading={flightsQuery.loading && recentFlights.length === 0}
+          failed={Boolean(flightsQuery.error) && recentFlights.length === 0}
+          onRetry={() => flightsQuery.refetch()}
+        >
+          {recentFlights.length === 0 ? (
+            <EmptyState icon={Plane} title="Aucun vol récent" />
+          ) : (
+            <ul className="divide-y">
+              {recentFlights.map((flight) => (
+                <li key={flight.id} className="first:[&>a]:pt-0 last:[&>a]:pb-0">
+                  <Link
+                    href={`/reservations/flight-plans/${flight.id}`}
+                    className="flex items-center justify-between gap-3 py-3 transition-colors hover:text-primary"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">
+                        {flight.origin_icao} → {flight.destination_icao}
+                      </p>
+                      <p className="truncate text-sm text-muted-foreground">
+                        {flight.user?.first_name} {flight.user?.last_name}
+                        {flight.flight_type ? ` · ${flight.flight_type}` : ""}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <span className="text-sm tabular-nums text-muted-foreground">
+                        {formatFlightDuration(flight.flight_hours)}
+                      </span>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Section>
 
-        <TabsContent value="activity" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <motion.div variants={itemVariants}>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Clock className="mr-2 h-5 w-5 text-info" />
-                    Vols récents
-                  </CardTitle>
-                  <CardDescription>Les derniers vols enregistrés</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {loading ? (
-                    <div className="space-y-4">
-                      {Array(3)
-                        .fill(0)
-                        .map((_, i) => (
-                          <Skeleton key={i} className="h-20 w-full" />
-                        ))}
+        <Section
+          title="Derniers incidents"
+          loading={incidentsQuery.loading && recentIncidents.length === 0}
+          failed={Boolean(incidentsQuery.error) && recentIncidents.length === 0}
+          onRetry={() => incidentsQuery.refetch()}
+        >
+          {recentIncidents.length === 0 ? (
+            <EmptyState icon={AlertTriangle} title="Aucun incident récent" />
+          ) : (
+            <ul className="divide-y">
+              {recentIncidents.map((incident) => {
+                const severity = incidentSeverity(incident.severity_level)
+                return (
+                  <li key={incident.id} className="space-y-1 py-3 first:pt-0 last:pb-0">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="truncate text-sm font-medium">
+                        {incident.aircraft?.registration_number}
+                        <span className="font-normal text-muted-foreground">
+                          {" · "}
+                          {formatDate(incident.incident_date)}
+                        </span>
+                      </p>
+                      {severity && (
+                        <Badge variant={severity.variant} className="shrink-0">
+                          {severity.label}
+                        </Badge>
+                      )}
                     </div>
-                  ) : recentFlights.length > 0 ? (
-                    <div className="space-y-4">
-                      {recentFlights.map((flight: any) => (
-                        <Link key={flight.id} href={`/reservations/flight-plans/${flight.id}`} className="block">
-                          <div className="flex items-start space-x-4 p-4 border rounded-lg transition-colors hover:bg-muted/50 group relative">
-                            <div className="bg-info/15 p-2 rounded-full">
-                              <Plane className="h-5 w-5 text-info" />
-                            </div>
-                            <div className="flex-grow">
-                              <div className="font-medium">
-                                {flight.user.first_name} {flight.user.last_name}
-                              </div>
-                              <div className="text-sm">
-                                {flight.origin_icao} → {flight.destination_icao}
-                              </div>
-                              <div className="text-sm text-muted-foreground">
-                                {formatHours(flight.flight_hours)} • {flight.flight_type}
-                              </div>
-                            </div>
-                            <ChevronRight className="h-5 w-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity self-center" />
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">Aucun vol récent trouvé</div>
-                  )}
-                </CardContent>
-                <CardFooter>
-                  <Button variant="outline" className="w-full" asChild>
-                    <Link href="/flights">Voir tous les vols</Link>
-                  </Button>
-                </CardFooter>
-              </Card>
-            </motion.div>
+                    <p className="line-clamp-2 text-sm text-muted-foreground">{incident.description}</p>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </Section>
+      </div>
 
-            <motion.div variants={itemVariants}>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <AlertTriangle className="mr-2 h-5 w-5 text-destructive" />
-                    Incidents récents
-                  </CardTitle>
-                  <CardDescription>Les derniers incidents signalés</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {loading ? (
-                    <div className="space-y-4">
-                      {Array(3)
-                        .fill(0)
-                        .map((_, i) => (
-                          <Skeleton key={i} className="h-20 w-full" />
-                        ))}
-                    </div>
-                  ) : recentIncidents.length > 0 ? (
-                    <div className="space-y-4">
-                      {recentIncidents.map((incident: any) => (
-                        <Link key={incident.id} href={`/incidents/${incident.id}`} className="block">
-                          <div className="flex items-start space-x-4 p-4 border rounded-lg transition-colors hover:bg-muted/50 group relative">
-                            <div className="bg-destructive/15 p-2 rounded-full">
-                              <AlertTriangle className="h-5 w-5 text-destructive" />
-                            </div>
-                            <div className="flex-grow">
-                              <div className="font-medium">
-                                {incident.aircraft.registration_number} - {incident.severity_level}
-                              </div>
-                              <div className="text-sm">{formatDate(incident.incident_date)}</div>
-                              <div className="text-sm text-muted-foreground line-clamp-2">{incident.description}</div>
-                            </div>
-                            <ChevronRight className="h-5 w-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity self-center" />
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">Aucun incident récent trouvé</div>
-                  )}
-                </CardContent>
-                <CardFooter>
-                  <Button variant="outline" className="w-full" asChild>
-                    <Link href="/incidents">Voir tous les incidents</Link>
-                  </Button>
-                </CardFooter>
-              </Card>
-            </motion.div>
-          </div>
-        </TabsContent>
-      </Tabs>
-    </motion.div>
+      {!statsFailed && (
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <Section
+            title="Membres par rôle"
+            href="/administration/users"
+            linkLabel="Membres"
+            loading={statsLoading}
+            failed={false}
+            onRetry={() => statsQuery.refetch()}
+          >
+            {usersByRole.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Aucun membre pour le moment.</p>
+            ) : (
+              <DistributionList items={usersByRole} unit="" />
+            )}
+          </Section>
+
+          <Section
+            title="Réservations par type de vol"
+            loading={statsLoading}
+            failed={false}
+            onRetry={() => statsQuery.refetch()}
+          >
+            {reservationsByCategory.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Aucune réservation pour le moment.</p>
+            ) : (
+              <DistributionList items={reservationsByCategory} unit="" />
+            )}
+          </Section>
+        </div>
+      )}
+    </div>
   )
 }

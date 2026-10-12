@@ -1,120 +1,133 @@
 "use client"
 
-import { reservationStatus } from "@/lib/reservation-status"
+import { useState } from "react"
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
+import { Loader2, Pencil, Trash2 } from "lucide-react"
+import { reservationStatus } from "@/lib/reservation-status"
+import { formatDate, formatFlightDuration, formatTime } from "@/lib/format"
 import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import type { Reservation } from "@/interfaces/reservation"
-import { Clock, User, Plane, FileText, Tag, CalendarClock } from "lucide-react"
+import { flightCategoryLabel } from "@/components/reservation/flight-category"
+import { reservationDurationHours, reservationPilotName } from "@/components/reservation/reservation-cell"
 
 interface ReservationDetailProps {
   reservation: Reservation
   onEdit: () => void
-  onDelete: () => void
+  onDelete: () => Promise<void> | void
   canEdit: boolean
 }
 
 export function ReservationDetail({ reservation, onEdit, onDelete, canEdit }: ReservationDetailProps) {
-  const flightCategoryMapping = {
-    LOCAL: "Local",
-    CROSS_COUNTRY: "Vol longue distance",
-    INSTRUCTION: "Instruction",
-    TOURISM: "Tourisme",
-    TRAINING: "Entraînement",
-    MAINTENANCE: "Maintenance",
-    PRIVATE: "Privé",
-    CORPORATE: "Affaires",
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  const status = reservationStatus(reservation.status)
+  const pilot = reservationPilotName(reservation)
+  const timeRange = `${formatTime(reservation.start_time)} – ${formatTime(reservation.end_time)}`
+
+  const handleConfirmDelete = async () => {
+    setIsDeleting(true)
+    try {
+      await onDelete()
+    } finally {
+      setIsDeleting(false)
+      setConfirmOpen(false)
+    }
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">{reservation.purpose || "Réservation"}</h3>
-        <Badge variant={reservationStatus(reservation.status).variant}>{reservationStatus(reservation.status).label}</Badge>
+      <div className="flex items-start justify-between gap-3">
+        <h3 className="text-lg font-semibold leading-tight">{reservation.purpose || "Réservation"}</h3>
+        <Badge variant={status.variant} className="shrink-0">
+          {status.label}
+        </Badge>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="flex items-start gap-3">
-          <Plane className="h-5 w-5 mt-0.5 text-muted-foreground" />
-          <div>
-            <p className="text-sm font-medium">Avion</p>
-            <p>{reservation.aircraft.registration_number}</p>
-          </div>
+      <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+        <div>
+          <dt className="text-xs text-muted-foreground">Avion</dt>
+          <dd className="font-medium">{reservation.aircraft.registration_number}</dd>
         </div>
-
-        <div className="flex items-start gap-3">
-          <User className="h-5 w-5 mt-0.5 text-muted-foreground" />
-          <div>
-            <p className="text-sm font-medium">Pilote</p>
-            <p>
-              {reservation.user?.first_name} {reservation.user?.last_name}
-            </p>
-            <p className="text-sm text-muted-foreground">{reservation.user?.email}</p>
-          </div>
+        <div>
+          <dt className="text-xs text-muted-foreground">Pilote</dt>
+          <dd className="font-medium">{pilot || "—"}</dd>
+          {reservation.user?.email && <dd className="text-xs text-muted-foreground">{reservation.user.email}</dd>}
         </div>
-      </div>
-
-      <Separator />
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="flex items-start gap-3">
-          <Clock className="h-5 w-5 mt-0.5 text-muted-foreground" />
-          <div>
-            <p className="text-sm font-medium">Horaires</p>
-            <p>Début: {format(new Date(reservation.start_time), "HH:mm", { locale: fr })}</p>
-            <p>Fin: {format(new Date(reservation.end_time), "HH:mm", { locale: fr })}</p>
-            <p className="text-sm text-muted-foreground">
-              {format(new Date(reservation.start_time), "EEEE d MMMM yyyy", { locale: fr })}
-            </p>
-          </div>
+        <div>
+          <dt className="text-xs text-muted-foreground">Date</dt>
+          <dd className="font-medium">{format(new Date(reservation.start_time), "EEEE d MMMM yyyy", { locale: fr })}</dd>
         </div>
-
-        <div className="flex items-start gap-3">
-          <CalendarClock className="h-5 w-5 mt-0.5 text-muted-foreground" />
-          <div>
-            <p className="text-sm font-medium">Durée estimée</p>
-            <p>{reservation.estimated_flight_hours} heure(s)</p>
-          </div>
+        <div>
+          <dt className="text-xs text-muted-foreground">Horaire</dt>
+          <dd className="font-medium tabular-nums">{timeRange}</dd>
+          <dd className="text-xs text-muted-foreground">{formatFlightDuration(reservationDurationHours(reservation))}</dd>
         </div>
-      </div>
-
-      {(reservation.flight_category || reservation.notes) && <Separator />}
-
-      {reservation.flight_category && (
-        <div className="flex items-start gap-3">
-          <Tag className="h-5 w-5 mt-0.5 text-muted-foreground" />
+        {reservation.flight_category && (
           <div>
-            <p className="text-sm font-medium">Catégorie de vol</p>
-            <p>
-              {flightCategoryMapping[reservation.flight_category as keyof typeof flightCategoryMapping] ||
-                reservation.flight_category}
-            </p>
+            <dt className="text-xs text-muted-foreground">Catégorie de vol</dt>
+            <dd className="font-medium">{flightCategoryLabel(reservation.flight_category)}</dd>
           </div>
-        </div>
-      )}
-
-      {reservation.notes && (
-        <div className="flex items-start gap-3">
-          <FileText className="h-5 w-5 mt-0.5 text-muted-foreground" />
-          <div>
-            <p className="text-sm font-medium">Notes</p>
-            <p className="whitespace-pre-wrap">{reservation.notes}</p>
+        )}
+        {reservation.notes && (
+          <div className="col-span-2">
+            <dt className="text-xs text-muted-foreground">Notes</dt>
+            <dd className="whitespace-pre-wrap">{reservation.notes}</dd>
           </div>
-        </div>
-      )}
+        )}
+      </dl>
 
       {canEdit && (
-        <div className="flex justify-end gap-2 pt-4">
-          <Button variant="outline" onClick={onEdit}>
-            Modifier
-          </Button>
-          <Button variant="destructive" onClick={onDelete}>
+        <div className="flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:justify-end">
+          <Button variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setConfirmOpen(true)}>
+            <Trash2 className="h-4 w-4" />
             Supprimer
+          </Button>
+          <Button variant="outline" onClick={onEdit}>
+            <Pencil className="h-4 w-4" />
+            Modifier
           </Button>
         </div>
       )}
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer cette réservation ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              La réservation de {reservation.aircraft.registration_number} du {formatDate(reservation.start_time)}, de{" "}
+              {formatTime(reservation.start_time)} à {formatTime(reservation.end_time)}, sera définitivement supprimée
+              et le créneau redeviendra libre.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={isDeleting}
+              onClick={(event) => {
+                event.preventDefault()
+                void handleConfirmDelete()
+              }}
+            >
+              {isDeleting && <Loader2 className="h-4 w-4 animate-spin" />}
+              Supprimer la réservation
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

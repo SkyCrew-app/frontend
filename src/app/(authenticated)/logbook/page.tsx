@@ -1,23 +1,26 @@
 "use client"
 
 import { useQuery } from "@apollo/client"
-import { useState, useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { GET_LOGBOOK_ENTRIES, GET_LOGBOOK_STATS } from "@/graphql/logbook"
 import { GET_AIRCRAFTS } from "@/graphql/planes"
-import type { LogbookFilter } from "@/interfaces/logbook"
+import type { LogbookFilter, HoursEntry } from "@/interfaces/logbook"
 import type { Flight } from "@/interfaces/flight"
+import { PageHeader } from "@/components/layout/PageHeader"
+import { ErrorState } from "@/components/layout/ErrorState"
 import LogbookStats from "@/components/logbook/LogbookStats"
 import LogbookFilters from "@/components/logbook/LogbookFilters"
 import LogbookTable from "@/components/logbook/LogbookTable"
 import ExportPDFButton from "@/components/logbook/ExportPDFButton"
-import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight, BookOpen } from "lucide-react"
+import { FLIGHT_RULE_OPTIONS } from "@/components/flight/flight-type"
 
-const PAGE_SIZE = 20
+// Placeholder the API uses for flights without a type.
+const UNKNOWN_TYPE = "Inconnu"
 
 export default function LogbookPage() {
   const [filter, setFilter] = useState<LogbookFilter>({})
-  const [currentPage, setCurrentPage] = useState(1)
+  // Types met in the logbook so far, kept when a filter narrows the statistics.
+  const [knownTypes, setKnownTypes] = useState<string[]>(FLIGHT_RULE_OPTIONS.map((option) => option.value))
 
   const graphqlFilter = useMemo(() => {
     const f: Record<string, unknown> = {}
@@ -28,12 +31,24 @@ export default function LogbookPage() {
     return Object.keys(f).length > 0 ? f : undefined
   }, [filter])
 
-  const { data: entriesData, loading: loadingEntries } = useQuery(GET_LOGBOOK_ENTRIES, {
+  const hasFilters = graphqlFilter !== undefined
+
+  const {
+    data: entriesData,
+    loading: loadingEntries,
+    error: entriesError,
+    refetch: refetchEntries,
+  } = useQuery(GET_LOGBOOK_ENTRIES, {
     variables: { filter: graphqlFilter },
     fetchPolicy: "cache-and-network",
   })
 
-  const { data: statsData, loading: loadingStats } = useQuery(GET_LOGBOOK_STATS, {
+  const {
+    data: statsData,
+    loading: loadingStats,
+    error: statsError,
+    refetch: refetchStats,
+  } = useQuery(GET_LOGBOOK_STATS, {
     variables: { filter: graphqlFilter },
     fetchPolicy: "cache-and-network",
   })
@@ -41,17 +56,16 @@ export default function LogbookPage() {
   const { data: aircraftData } = useQuery(GET_AIRCRAFTS)
 
   const flights: Flight[] = entriesData?.logbookEntries ?? []
-  const totalPages = Math.max(1, Math.ceil(flights.length / PAGE_SIZE))
 
-  const paginatedFlights = useMemo(() => {
-    const start = (currentPage - 1) * PAGE_SIZE
-    return flights.slice(start, start + PAGE_SIZE)
-  }, [flights, currentPage])
-
-  const handleFilterChange = (newFilter: LogbookFilter) => {
-    setFilter(newFilter)
-    setCurrentPage(1)
-  }
+  useEffect(() => {
+    const labels: string[] = (statsData?.logbookStats?.hoursByCategory ?? [])
+      .map((entry: HoursEntry) => entry.label)
+      .filter((label: string) => label && label !== UNKNOWN_TYPE)
+    setKnownTypes((previous) => {
+      const merged = Array.from(new Set([...previous, ...labels]))
+      return merged.length === previous.length ? previous : merged
+    })
+  }, [statsData])
 
   const aircraftList = useMemo(() => {
     return (
@@ -63,53 +77,46 @@ export default function LogbookPage() {
     )
   }, [aircraftData])
 
+  const failed = Boolean(entriesError || statsError) && flights.length === 0
+
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <BookOpen className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-semibold tracking-tight">Carnet de vol</h1>
-        </div>
-        <ExportPDFButton filter={filter} />
-      </div>
+      <PageHeader
+        className="mb-0"
+        title="Carnet de vol"
+        description="Vos vols clôturés, vos heures et leur répartition."
+        actions={<ExportPDFButton filter={filter} disabled={flights.length === 0} />}
+      />
 
-      {/* Stats */}
-      <LogbookStats stats={statsData?.logbookStats} loading={loadingStats} />
+      {failed ? (
+        <ErrorState
+          onRetry={() => {
+            void refetchEntries()
+            void refetchStats()
+          }}
+        />
+      ) : (
+        <>
+          <LogbookStats stats={statsData?.logbookStats} loading={loadingStats} />
 
-      {/* Filters */}
-      <LogbookFilters filter={filter} onFilterChange={handleFilterChange} aircraftList={aircraftList} />
-
-      {/* Table */}
-      <LogbookTable flights={paginatedFlights} loading={loadingEntries} />
-
-      {/* Pagination */}
-      {flights.length > PAGE_SIZE && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            Page {currentPage} sur {totalPages} ({flights.length} vol{flights.length > 1 ? "s" : ""})
-          </p>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-            >
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              Précédent
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-            >
-              Suivant
-              <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
-          </div>
-        </div>
+          <section className="space-y-4">
+            <h2 className="text-lg font-semibold">Vols</h2>
+            <LogbookFilters
+              filter={filter}
+              onFilterChange={setFilter}
+              aircraftList={aircraftList}
+              flightTypes={knownTypes}
+            />
+            {/* Remounted on each filter change so the table goes back to its first page. */}
+            <LogbookTable
+              key={JSON.stringify(graphqlFilter ?? {})}
+              flights={flights}
+              loading={loadingEntries}
+              filtered={hasFilters}
+              onResetFilters={() => setFilter({})}
+            />
+          </section>
+        </>
       )}
     </div>
   )

@@ -2,33 +2,45 @@
 
 import type React from "react"
 
-import { useState, useEffect } from "react"
-import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
+import { useState, useEffect, useRef } from "react"
+import { useMutation } from "@apollo/client"
+import { startOfDay } from "date-fns"
+import { FileText, ImageIcon, Loader2, Paperclip, X } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Calendar } from "@/components/ui/calendar"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { format } from "date-fns"
-import { fr } from "date-fns/locale"
-import { CalendarIcon, ImageIcon, Loader2, Upload, FileTextIcon } from "lucide-react"
+import { DatePicker } from "@/components/ui/date-picker"
 import type { Maintenance } from "@/interfaces/maintenance"
 import { useToast } from "@/components/hooks/use-toast"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { maintenanceFileName, validateMaintenanceAttachments } from "@/lib/maintenance"
-import { useMutation } from "@apollo/client"
+import {
+  MAINTENANCE_STATUS_VALUES,
+  MAINTENANCE_TYPE_VALUES,
+  maintenanceFileName,
+  maintenanceStatus,
+  maintenanceTypeLabel,
+  validateMaintenanceAttachments,
+} from "@/lib/maintenance"
 import { REMOVE_MAINTENANCE_ATTACHMENT } from "@/graphql/maintenance"
+import { cn } from "@/lib/utils"
 
 interface Aircraft {
-  id: string
+  id: string | number
   registration_number: string
   model: string
 }
 
 interface Technician {
-  id: string
+  id: string | number
   email: string
   first_name?: string
   last_name?: string
@@ -42,8 +54,6 @@ interface MaintenanceFormDialogProps {
   isOpen: boolean
   onOpenChange: (open: boolean) => void
   maintenance?: Maintenance | null
-  maintenanceTypes: Record<string, string>
-  maintenanceStatuses: Record<string, string>
   aircrafts: Aircraft[]
   technicians: Technician[]
   onSubmit: (formData: MaintenanceFormData) => Promise<void>
@@ -63,12 +73,42 @@ interface MaintenanceFormData {
   documents?: File[]
 }
 
+// Value of the "nobody" entry of the technician list (a select item cannot be empty).
+const UNASSIGNED = "unassigned"
+
+const emptyForm = (): MaintenanceFormData => ({
+  aircraft_id: "",
+  maintenance_type: "INSPECTION",
+  status: "PLANNED",
+  start_date: new Date(),
+  end_date: new Date(new Date().setDate(new Date().getDate() + 7)),
+  description: "",
+  maintenance_cost: "",
+  technician_id: "",
+  images: [],
+  documents: [],
+})
+
+const technicianName = (technician: Technician) =>
+  [technician.first_name, technician.last_name].filter(Boolean).join(" ") || technician.email
+
+function Required() {
+  return (
+    <span className="text-destructive" aria-hidden="true">
+      {" "}
+      *
+    </span>
+  )
+}
+
+function FieldError({ message }: { message?: string }) {
+  return message ? <p className="text-sm text-destructive">{message}</p> : null
+}
+
 export function MaintenanceFormDialog({
   isOpen,
   onOpenChange,
   maintenance,
-  maintenanceTypes,
-  maintenanceStatuses,
   aircrafts,
   technicians,
   onSubmit,
@@ -79,21 +119,12 @@ export function MaintenanceFormDialog({
   const [removedUrls, setRemovedUrls] = useState<string[]>([])
   const [removingUrl, setRemovingUrl] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [formData, setFormData] = useState<MaintenanceFormData>({
-    aircraft_id: "",
-    maintenance_type: "INSPECTION",
-    status: "PLANNED",
-    start_date: new Date(),
-    end_date: new Date(new Date().setDate(new Date().getDate() + 7)),
-    description: "",
-    maintenance_cost: "",
-    technician_id: "",
-    images: [],
-    documents: [],
-  })
+  const [formData, setFormData] = useState<MaintenanceFormData>(emptyForm)
   const [imageFiles, setImageFiles] = useState<File[]>([])
   const [documentFiles, setDocumentFiles] = useState<File[]>([])
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const imageInputRef = useRef<HTMLInputElement>(null)
+  const documentInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     setRemovedUrls([])
@@ -112,18 +143,7 @@ export function MaintenanceFormDialog({
         documents: [],
       })
     } else {
-      setFormData({
-        aircraft_id: "",
-        maintenance_type: "INSPECTION",
-        status: "PLANNED",
-        start_date: new Date(),
-        end_date: new Date(new Date().setDate(new Date().getDate() + 7)),
-        description: "",
-        maintenance_cost: "",
-        technician_id: "",
-        images: [],
-        documents: [],
-      })
+      setFormData(emptyForm())
     }
     setImageFiles([])
     setDocumentFiles([])
@@ -134,17 +154,31 @@ export function MaintenanceFormDialog({
   const existingImages = (maintenance?.images_url || []).filter((url) => !removedUrls.includes(url))
   const existingDocuments = (maintenance?.documents_url || []).filter((url) => !removedUrls.includes(url))
 
+  // The technician of the maintenance stays selectable even when he is no longer in the list.
+  const currentTechnician = maintenance?.technician
+  const technicianOptions = [
+    ...technicians.map((technician) => ({ value: String(technician.id), label: technicianName(technician) })),
+    ...(currentTechnician && !technicians.some((technician) => String(technician.id) === String(currentTechnician.id))
+      ? [
+          {
+            value: String(currentTechnician.id),
+            label: currentTechnician.first_name || currentTechnician.email,
+          },
+        ]
+      : []),
+  ]
+
   const handleRemoveExisting = async (url: string) => {
     if (!maintenance) return
     setRemovingUrl(url)
     try {
       await removeAttachment({ variables: { maintenanceId: Number(maintenance.id), url } })
       setRemovedUrls((previous) => [...previous, url])
-    } catch (error) {
+    } catch {
       toast({
         variant: "destructive",
         title: "Retrait impossible",
-        description: error instanceof Error && error.message ? error.message : "Le fichier n'a pas pu être retiré.",
+        description: `Le fichier « ${maintenanceFileName(url)} » n'a pas pu être retiré. Réessayez.`,
       })
     } finally {
       setRemovingUrl(null)
@@ -155,32 +189,32 @@ export function MaintenanceFormDialog({
     const newErrors: Record<string, string> = {}
 
     if (!formData.aircraft_id) {
-      newErrors.aircraft_id = "Veuillez sélectionner un aéronef"
+      newErrors.aircraft_id = "Sélectionnez un aéronef."
     }
     if (!formData.maintenance_type) {
-      newErrors.maintenance_type = "Veuillez sélectionner un type de maintenance"
+      newErrors.maintenance_type = "Sélectionnez un type de maintenance."
     }
     if (!formData.status) {
-      newErrors.status = "Veuillez sélectionner un statut"
+      newErrors.status = "Sélectionnez un statut."
     }
     if (!formData.start_date) {
-      newErrors.start_date = "Veuillez sélectionner une date de début"
+      newErrors.start_date = "Sélectionnez une date de début."
     }
     if (!formData.end_date) {
-      newErrors.end_date = "Veuillez sélectionner une date de fin"
+      newErrors.end_date = "Sélectionnez une date de fin."
     }
     if (formData.start_date && formData.end_date && formData.start_date > formData.end_date) {
-      newErrors.end_date = "La date de fin doit être postérieure à la date de début"
+      newErrors.end_date = "La date de fin doit être postérieure à la date de début."
     }
-    if (formData.maintenance_cost && isNaN(Number(formData.maintenance_cost))) {
-      newErrors.maintenance_cost = "Le coût doit être un nombre valide"
+    if (formData.maintenance_cost && !(Number(formData.maintenance_cost) >= 0)) {
+      newErrors.maintenance_cost = "Le coût doit être un nombre positif, par exemple 450 ou 450.50."
     }
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
-  const handleChange = (field: keyof MaintenanceFormData, value: any) => {
+  const handleChange = <K extends keyof MaintenanceFormData>(field: K, value: MaintenanceFormData[K]) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
     if (errors[field]) {
       setErrors((prev) => {
@@ -188,6 +222,15 @@ export function MaintenanceFormDialog({
         delete newErrors[field]
         return newErrors
       })
+    }
+  }
+
+  // A start date after the end date moves the end date along.
+  const handleStartDateChange = (date: Date | undefined) => {
+    if (!date) return
+    handleChange("start_date", date)
+    if (formData.end_date && date > formData.end_date) {
+      handleChange("end_date", date)
     }
   }
 
@@ -210,10 +253,6 @@ export function MaintenanceFormDialog({
     setImageFiles(images)
     setDocumentFiles(documents)
   }
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => addFiles(e, "images")
-
-  const handleDocumentChange = (e: React.ChangeEvent<HTMLInputElement>) => addFiles(e, "documents")
 
   const removeImage = (index: number) => {
     setImageFiles((prev) => prev.filter((_, i) => i !== index))
@@ -238,363 +277,322 @@ export function MaintenanceFormDialog({
       toast({
         title: isEditing ? "Maintenance mise à jour" : "Maintenance créée",
         description: isEditing
-          ? "La maintenance a été mise à jour avec succès."
-          : "La nouvelle maintenance a été créée avec succès.",
+          ? "Les modifications ont été enregistrées."
+          : "La nouvelle maintenance a été ajoutée à la liste.",
       })
-    } catch (error) {
-      console.error("Erreur lors de la soumission:", error)
+    } catch {
       toast({
         variant: "destructive",
-        title: "Erreur",
-        description:
-          (error as Error)?.message || "Une erreur est survenue lors de l'enregistrement de la maintenance.",
+        title: "Enregistrement impossible",
+        description: "La maintenance n'a pas pu être enregistrée. Vérifiez les informations puis réessayez.",
       })
     } finally {
       setIsSubmitting(false)
     }
   }
 
+  const renderFiles = (
+    kind: "image" | "document",
+    existing: string[],
+    picked: File[],
+    onRemovePicked: (index: number) => void,
+  ) => {
+    const Icon = kind === "image" ? ImageIcon : FileText
+    const article = kind === "image" ? "l'image" : "le document"
+    if (existing.length === 0 && picked.length === 0) return null
+
+    return (
+      <ul className="space-y-2">
+        {existing.map((url) => (
+          <li key={url} className="flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm">
+            <Icon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+            <span className="min-w-0 flex-1 break-all">{maintenanceFileName(url)}</span>
+            <span className="shrink-0 text-xs text-muted-foreground">Enregistré</span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 shrink-0"
+              disabled={removingUrl === url}
+              onClick={() => handleRemoveExisting(url)}
+              aria-label={`Retirer ${article} ${maintenanceFileName(url)}`}
+              title="Retirer ce fichier de la maintenance"
+            >
+              {removingUrl === url ? (
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+              ) : (
+                <X className="h-4 w-4" aria-hidden="true" />
+              )}
+            </Button>
+          </li>
+        ))}
+        {picked.map((file, index) => (
+          <li key={`${file.name}-${index}`} className="flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm">
+            {/* No preview: a picked file is only named until it is uploaded. */}
+            <Icon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+            <span className="min-w-0 flex-1 break-all">{file.name}</span>
+            <span className="shrink-0 text-xs text-muted-foreground">À envoyer</span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 shrink-0"
+              onClick={() => onRemovePicked(index)}
+              aria-label={`Supprimer ${article} ${file.name}`}
+              title="Ne pas envoyer ce fichier"
+            >
+              <X className="h-4 w-4" aria-hidden="true" />
+            </Button>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogTitle>{isEditing ? "Modifier la maintenance" : "Nouvelle maintenance"}</DialogTitle>
-        <DialogDescription>
-          {isEditing
-            ? "Modifiez les informations de maintenance pour cet aéronef."
-            : "Remplissez le formulaire pour créer une nouvelle maintenance."}
-        </DialogDescription>
+    <Dialog open={isOpen} onOpenChange={(open) => !isSubmitting && onOpenChange(open)}>
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{isEditing ? "Modifier la maintenance" : "Nouvelle maintenance"}</DialogTitle>
+          <DialogDescription>
+            {isEditing
+              ? `Intervention sur ${maintenance.aircraft.registration_number} (${maintenance.aircraft.model}).`
+              : "Planifiez une intervention sur un aéronef de la flotte."}
+          </DialogDescription>
+        </DialogHeader>
 
-        <div className="grid gap-6 py-4">
-          <Tabs defaultValue="general" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="general">Général</TabsTrigger>
-              <TabsTrigger value="details">Détails</TabsTrigger>
-              <TabsTrigger value="attachments">Pièces jointes</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="general" className="space-y-4 mt-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="aircraft_id" className={errors.aircraft_id ? "text-destructive" : ""}>
-                    Aéronef <span className="text-destructive">*</span>
-                  </Label>
-                  <Select value={formData.aircraft_id} onValueChange={(value) => handleChange("aircraft_id", value)}>
-                    <SelectTrigger id="aircraft_id" className={errors.aircraft_id ? "border-destructive" : ""}>
-                      <SelectValue placeholder="Sélectionner un aéronef" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {aircrafts.map((aircraft) => (
-                        <SelectItem key={aircraft.id} value={String(aircraft.id)}>
-                          {aircraft.registration_number} ({aircraft.model})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.aircraft_id && <p className="text-sm text-destructive">{errors.aircraft_id}</p>}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="maintenance_type" className={errors.maintenance_type ? "text-destructive" : ""}>
-                    Type de maintenance <span className="text-destructive">*</span>
-                  </Label>
-                  <Select
-                    value={formData.maintenance_type}
-                    onValueChange={(value) => handleChange("maintenance_type", value)}
-                  >
-                    <SelectTrigger
-                      id="maintenance_type"
-                      className={errors.maintenance_type ? "border-destructive" : ""}
-                    >
-                      <SelectValue placeholder="Sélectionner un type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(maintenanceTypes).map(([key, value]) => (
-                        <SelectItem key={key} value={key}>
-                          {value}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.maintenance_type && <p className="text-sm text-destructive">{errors.maintenance_type}</p>}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="status" className={errors.status ? "text-destructive" : ""}>
-                    Statut <span className="text-destructive">*</span>
-                  </Label>
-                  <Select value={formData.status} onValueChange={(value) => handleChange("status", value)}>
-                    <SelectTrigger id="status" className={errors.status ? "border-destructive" : ""}>
-                      <SelectValue placeholder="Sélectionner un statut" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(maintenanceStatuses).map(([key, value]) => (
-                        <SelectItem key={key} value={key}>
-                          {value}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.status && <p className="text-sm text-destructive">{errors.status}</p>}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="technician_id">Technicien</Label>
-                  <Select
-                    value={formData.technician_id}
-                    onValueChange={(value) => handleChange("technician_id", value)}
-                  >
-                    <SelectTrigger id="technician_id">
-                      <SelectValue placeholder="Sélectionner un technicien" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="unassigned">Non assigné</SelectItem>
-                      {technicians.map((technician) => (
-                        <SelectItem key={technician.id} value={technician.id}>
-                          {technician.first_name && technician.last_name
-                            ? `${technician.first_name} ${technician.last_name} (${technician.email})`
-                            : technician.email}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="start_date" className={errors.start_date ? "text-destructive" : ""}>
-                    Date de début <span className="text-destructive">*</span>
-                  </Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={`w-full justify-start text-left font-normal ${errors.start_date ? "border-destructive" : ""}`}
-                        id="start_date"
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {formData.start_date ? (
-                          format(formData.start_date, "dd MMMM yyyy", { locale: fr })
-                        ) : (
-                          <span>Sélectionner une date</span>
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={formData.start_date}
-                        onSelect={(date) => handleChange("start_date", date)}
-                        initialFocus
-                        locale={fr}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  {errors.start_date && <p className="text-sm text-destructive">{errors.start_date}</p>}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="end_date" className={errors.end_date ? "text-destructive" : ""}>
-                    Date de fin <span className="text-destructive">*</span>
-                  </Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={`w-full justify-start text-left font-normal ${errors.end_date ? "border-destructive" : ""}`}
-                        id="end_date"
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {formData.end_date ? (
-                          format(formData.end_date, "dd MMMM yyyy", { locale: fr })
-                        ) : (
-                          <span>Sélectionner une date</span>
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={formData.end_date}
-                        onSelect={(date) => handleChange("end_date", date)}
-                        initialFocus
-                        locale={fr}
-                        disabled={(date) => date < formData.start_date}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  {errors.end_date && <p className="text-sm text-destructive">{errors.end_date}</p>}
-                </div>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="details" className="space-y-4 mt-4">
+        <div className="space-y-6">
+          <section className="space-y-4">
+            <h3 className="text-sm font-semibold">Intervention</h3>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Décrivez la maintenance à effectuer..."
-                  rows={5}
-                  value={formData.description}
-                  onChange={(e) => handleChange("description", e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="maintenance_cost" className={errors.maintenance_cost ? "text-destructive" : ""}>
-                  Coût (€)
+                <Label htmlFor="aircraft_id">
+                  Aéronef
+                  <Required />
                 </Label>
+                <Select value={formData.aircraft_id} onValueChange={(value) => handleChange("aircraft_id", value)}>
+                  <SelectTrigger
+                    id="aircraft_id"
+                    aria-required="true"
+                    aria-invalid={!!errors.aircraft_id}
+                    className={cn(errors.aircraft_id && "border-destructive")}
+                  >
+                    <SelectValue placeholder="Sélectionner un aéronef" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {aircrafts.map((aircraft) => (
+                      <SelectItem key={aircraft.id} value={String(aircraft.id)}>
+                        {aircraft.registration_number} · {aircraft.model}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FieldError message={errors.aircraft_id} />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="maintenance_type">
+                  Type
+                  <Required />
+                </Label>
+                <Select
+                  value={formData.maintenance_type}
+                  onValueChange={(value) => handleChange("maintenance_type", value)}
+                >
+                  <SelectTrigger
+                    id="maintenance_type"
+                    aria-required="true"
+                    className={cn(errors.maintenance_type && "border-destructive")}
+                  >
+                    <SelectValue placeholder="Sélectionner un type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MAINTENANCE_TYPE_VALUES.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {maintenanceTypeLabel(type)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FieldError message={errors.maintenance_type} />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="status">
+                  Statut
+                  <Required />
+                </Label>
+                <Select value={formData.status} onValueChange={(value) => handleChange("status", value)}>
+                  <SelectTrigger
+                    id="status"
+                    aria-required="true"
+                    className={cn(errors.status && "border-destructive")}
+                  >
+                    <SelectValue placeholder="Sélectionner un statut" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MAINTENANCE_STATUS_VALUES.map((status) => (
+                      <SelectItem key={status} value={status}>
+                        {maintenanceStatus(status).label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FieldError message={errors.status} />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="technician_id">Technicien</Label>
+                <Select
+                  value={formData.technician_id || UNASSIGNED}
+                  onValueChange={(value) => handleChange("technician_id", value === UNASSIGNED ? "" : value)}
+                >
+                  <SelectTrigger id="technician_id">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={UNASSIGNED}>Non assigné</SelectItem>
+                    {technicianOptions.map((technician) => (
+                      <SelectItem key={technician.value} value={technician.value}>
+                        {technician.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </section>
+
+          <section className="space-y-4">
+            <h3 className="text-sm font-semibold">Planification</h3>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-2" role="group" aria-labelledby="start_date_label">
+                <Label id="start_date_label">
+                  Date de début
+                  <Required />
+                </Label>
+                <DatePicker
+                  date={formData.start_date}
+                  onSelect={handleStartDateChange}
+                  className={cn(errors.start_date && "border-destructive")}
+                />
+                <FieldError message={errors.start_date} />
+              </div>
+
+              <div className="space-y-2" role="group" aria-labelledby="end_date_label">
+                <Label id="end_date_label">
+                  Date de fin
+                  <Required />
+                </Label>
+                <DatePicker
+                  date={formData.end_date}
+                  onSelect={(date) => date && handleChange("end_date", date)}
+                  fromDate={formData.start_date ? startOfDay(formData.start_date) : undefined}
+                  className={cn(errors.end_date && "border-destructive")}
+                />
+                <FieldError message={errors.end_date} />
+              </div>
+            </div>
+          </section>
+
+          <section className="space-y-4">
+            <h3 className="text-sm font-semibold">Détails</h3>
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                placeholder="Ex. : visite des 50 heures, remplacement des bougies"
+                rows={4}
+                value={formData.description}
+                onChange={(e) => handleChange("description", e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2 sm:max-w-[calc(50%-0.5rem)]">
+              <Label htmlFor="maintenance_cost">Coût</Label>
+              <div className="relative">
                 <Input
                   id="maintenance_cost"
-                  type="text"
-                  placeholder="0.00"
+                  type="number"
+                  inputMode="decimal"
+                  min="0"
+                  step="0.01"
+                  placeholder="450"
                   value={formData.maintenance_cost}
                   onChange={(e) => handleChange("maintenance_cost", e.target.value)}
-                  className={errors.maintenance_cost ? "border-destructive" : ""}
+                  aria-invalid={!!errors.maintenance_cost}
+                  aria-describedby="maintenance_cost_hint"
+                  className={cn("pr-8 tabular-nums", errors.maintenance_cost && "border-destructive")}
                 />
-                {errors.maintenance_cost && <p className="text-sm text-destructive">{errors.maintenance_cost}</p>}
+                <span
+                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground"
+                  aria-hidden="true"
+                >
+                  €
+                </span>
               </div>
-            </TabsContent>
+              {errors.maintenance_cost ? (
+                <FieldError message={errors.maintenance_cost} />
+              ) : (
+                <p id="maintenance_cost_hint" className="text-xs text-muted-foreground">
+                  En euros. Laissez vide si le coût n&apos;est pas encore connu.
+                </p>
+              )}
+            </div>
+          </section>
 
-            <TabsContent value="attachments" className="space-y-6 mt-4">
-              <div className="space-y-4">
-                <Label>Images</Label>
-                {existingImages.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">
-                      Déjà enregistré{existingImages.length > 1 ? "s" : ""} ({existingImages.length}). Les fichiers ajoutés
-                      ci-dessous s&apos;y ajouteront.
-                    </p>
-                    <ul className="space-y-1">
-                      {existingImages.map((url) => (
-                        <li key={url} className="flex items-center justify-between p-2 border rounded-md">
-                          <span className="text-sm break-all">{maintenanceFileName(url)}</span>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            disabled={removingUrl === url}
-                            onClick={() => handleRemoveExisting(url)}
-                            aria-label={`Retirer l'image ${maintenanceFileName(url)}`}
-                          >
-                            &times;
-                          </Button>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {imageFiles.map((file, index) => (
-                    <div key={index} className="flex items-center justify-between p-2 border rounded-md">
-                      <div className="flex items-center">
-                        {/* No preview: a picked file is only named until it is uploaded. */}
-                        <ImageIcon className="w-5 h-5 mr-2 text-muted-foreground" aria-hidden="true" />
-                        <span className="text-sm truncate max-w-[150px]">{file.name}</span>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeImage(index)}
-                        aria-label={`Supprimer l'image ${file.name}`}
-                      >
-                        &times;
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-                <div className="flex items-center justify-center w-full">
-                  <label
-                    htmlFor="image-upload"
-                    className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted"
-                  >
-                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                      <Upload className="w-8 h-8 mb-2 text-muted-foreground" />
-                      <p className="mb-2 text-sm text-muted-foreground">
-                        <span className="font-semibold">Cliquez pour ajouter</span> ou glissez-déposez
-                      </p>
-                      <p className="text-xs text-muted-foreground">PNG, JPG ou JPEG (max. 1 Mo par fichier)</p>
-                    </div>
-                    <input
-                      id="image-upload"
-                      type="file"
-                      className="hidden"
-                      accept="image/png, image/jpeg, image/jpg"
-                      multiple
-                      onChange={handleImageChange}
-                    />
-                  </label>
-                </div>
-              </div>
+          <section className="space-y-4">
+            <div>
+              <h3 className="text-sm font-semibold">Pièces jointes</h3>
+              <p className="mt-1 text-xs text-muted-foreground">
+                1 Mo maximum par fichier, 10 fichiers par envoi (images et documents confondus).
+              </p>
+            </div>
 
-              <div className="space-y-4">
-                <Label>Documents</Label>
-                {existingDocuments.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">
-                      Déjà enregistré{existingDocuments.length > 1 ? "s" : ""} ({existingDocuments.length}). Les fichiers ajoutés
-                      ci-dessous s&apos;y ajouteront.
-                    </p>
-                    <ul className="space-y-1">
-                      {existingDocuments.map((url) => (
-                        <li key={url} className="flex items-center justify-between p-2 border rounded-md">
-                          <span className="text-sm break-all">{maintenanceFileName(url)}</span>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            disabled={removingUrl === url}
-                            onClick={() => handleRemoveExisting(url)}
-                            aria-label={`Retirer le document ${maintenanceFileName(url)}`}
-                          >
-                            &times;
-                          </Button>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {documentFiles.map((file, index) => (
-                    <div key={index} className="flex items-center justify-between p-2 border rounded-md">
-                      <div className="flex items-center">
-                        <FileTextIcon className="w-8 h-8 mr-2 text-info" />
-                        <span className="text-sm truncate max-w-[150px]">{file.name}</span>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeDocument(index)}
-                        aria-label={`Supprimer le document ${file.name}`}
-                      >
-                        &times;
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-                <div className="flex items-center justify-center w-full">
-                  <label
-                    htmlFor="document-upload"
-                    className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted"
-                  >
-                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                      <Upload className="w-8 h-8 mb-2 text-muted-foreground" />
-                      <p className="mb-2 text-sm text-muted-foreground">
-                        <span className="font-semibold">Cliquez pour ajouter</span> ou glissez-déposez
-                      </p>
-                      <p className="text-xs text-muted-foreground">PDF, DOC, DOCX, XLS, XLSX (max. 1 Mo par fichier)</p>
-                    </div>
-                    <input
-                      id="document-upload"
-                      type="file"
-                      className="hidden"
-                      accept=".pdf,.doc,.docx,.xls,.xlsx"
-                      multiple
-                      onChange={handleDocumentChange}
-                    />
-                  </label>
-                </div>
+            <div className="space-y-2">
+              <Label htmlFor="image-upload">Images</Label>
+              {renderFiles("image", existingImages, imageFiles, removeImage)}
+              <div className="flex flex-wrap items-center gap-3">
+                <Button type="button" variant="outline" size="sm" onClick={() => imageInputRef.current?.click()}>
+                  <ImageIcon className="h-4 w-4" aria-hidden="true" />
+                  Ajouter des images
+                </Button>
+                <span className="text-xs text-muted-foreground">PNG ou JPG</span>
               </div>
-            </TabsContent>
-          </Tabs>
+              <input
+                ref={imageInputRef}
+                id="image-upload"
+                type="file"
+                className="sr-only"
+                tabIndex={-1}
+                accept="image/png, image/jpeg, image/jpg"
+                multiple
+                onChange={(e) => addFiles(e, "images")}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="document-upload">Documents</Label>
+              {renderFiles("document", existingDocuments, documentFiles, removeDocument)}
+              <div className="flex flex-wrap items-center gap-3">
+                <Button type="button" variant="outline" size="sm" onClick={() => documentInputRef.current?.click()}>
+                  <Paperclip className="h-4 w-4" aria-hidden="true" />
+                  Ajouter des documents
+                </Button>
+                <span className="text-xs text-muted-foreground">PDF, DOC, DOCX, XLS ou XLSX</span>
+              </div>
+              <input
+                ref={documentInputRef}
+                id="document-upload"
+                type="file"
+                className="sr-only"
+                tabIndex={-1}
+                accept=".pdf,.doc,.docx,.xls,.xlsx"
+                multiple
+                onChange={(e) => addFiles(e, "documents")}
+              />
+            </div>
+          </section>
         </div>
 
         <DialogFooter>
@@ -602,8 +600,8 @@ export function MaintenanceFormDialog({
             Annuler
           </Button>
           <Button onClick={handleSubmit} disabled={isSubmitting}>
-            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isEditing ? "Mettre à jour" : "Créer"}
+            {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+            {isEditing ? "Enregistrer" : "Créer la maintenance"}
           </Button>
         </DialogFooter>
       </DialogContent>

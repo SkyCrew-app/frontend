@@ -48,19 +48,26 @@ export function AttachmentsInput({ value, onChange, className }: AttachmentsInpu
   }
 
   return (
-    <div className={`space-y-3 ${className}`}>
+    <div className={`space-y-3 ${className ?? ""}`}>
       <div className="flex gap-2">
         <div className="relative flex-1">
           <Paperclip className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="URL de la pièce jointe"
+            placeholder="https://exemple.com/document.pdf"
             value={newAttachment}
             onChange={(e) => setNewAttachment(e.target.value)}
             onKeyDown={handleKeyDown}
             className="pl-8"
           />
         </div>
-        <Button type="button" variant="outline" size="icon" onClick={addAttachment} disabled={!newAttachment}>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          aria-label="Ajouter la pièce jointe"
+          onClick={addAttachment}
+          disabled={!newAttachment}
+        >
           <Plus className="h-4 w-4" />
         </Button>
       </div>

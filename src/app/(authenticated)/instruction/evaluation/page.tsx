@@ -1,265 +1,285 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useMemo, useState } from "react"
+import Link from "next/link"
 import { useQuery } from "@apollo/client"
-import { format } from "date-fns"
-import { fr } from "date-fns/locale"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Award, CheckCircle2, ClipboardCheck, ClipboardList, History, Search } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Calendar, CheckCircle, XCircle, Book, Search, ChevronLeft, ChevronRight, Filter } from "lucide-react"
-import { Progress } from "@/components/ui/progress"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
-import { GET_USER_EVALUATION_RESULTS } from "@/graphql/evaluation"
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { PageHeader } from "@/components/layout/PageHeader"
+import { StatCard } from "@/components/layout/StatCard"
+import { EmptyState } from "@/components/layout/EmptyState"
+import { ErrorState } from "@/components/layout/ErrorState"
+import { ListPagination, paginate } from "@/components/courses/ListPagination"
 import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
-import { useMediaQuery } from "@/hooks/use-media-query"
+import { GET_EVALUATIONS, GET_USER_EVALUATION_RESULTS } from "@/graphql/evaluation"
+import { formatDate } from "@/lib/format"
+import { learningRoutes } from "@/lib/learning-navigation"
+import { averageScore, evaluationsToTake, latestEvaluationAttempts } from "@/lib/learning-progress"
 
-interface Module {
-  id: number
-  title: string
-  description: string | null
-}
-
-interface Evaluation {
+interface EvaluationSummary {
   id: number
   pass_score: number
-  module: Module
+  module: { id: number; title: string; description?: string | null } | null
 }
 
-interface UserProgress {
+interface AttemptResult {
   id: number
   score: number | null
   passed: boolean
   completed_at: string | null
-  evaluation: Evaluation
+  evaluation: EvaluationSummary | null
 }
+
+const PAGE_SIZE = 10
+
+const attemptTime = (attempt: AttemptResult) => (attempt.completed_at ? new Date(attempt.completed_at).getTime() || 0 : 0)
+const formatScore = (score: number | null | undefined) => (score == null ? "—" : `${Math.round(score)} %`)
 
 export default function EvaluationsPage() {
   const [searchTerm, setSearchTerm] = useState("")
-  const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage, setItemsPerPage] = useState(5)
-  const [filterStatus, setFilterStatus] = useState("all")
-  const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [resultFilter, setResultFilter] = useState("all")
+  const [page, setPage] = useState(1)
   const userEmail = useCurrentUser()
   const userData = useUserData(userEmail)
-  const [userId, setUserId] = useState<string | null>(null)
-  const isMobile = useMediaQuery("(max-width: 768px)")
+  const userId: number | null = userData ? Number(userData.id) : null
+  const skip = userId === null
 
-  useEffect(() => {
-    if (userData) {
-      setUserId(userData.id)
-    }
-  }, [userData])
-
-  const { data, loading, error } = useQuery(GET_USER_EVALUATION_RESULTS, {
+  const evaluationsQuery = useQuery<{ getEvaluations: EvaluationSummary[] }>(GET_EVALUATIONS, {
+    skip,
+    fetchPolicy: "cache-and-network",
+  })
+  const attemptsQuery = useQuery<{ getUserEvaluationResults: AttemptResult[] }>(GET_USER_EVALUATION_RESULTS, {
     variables: { userId },
-    skip: !userId,
+    skip,
+    fetchPolicy: "cache-and-network",
   })
 
-  const userProgressResults: UserProgress[] = data?.getUserEvaluationResults || []
+  const attempts = attemptsQuery.data?.getUserEvaluationResults
+  const latestAttempts = useMemo(() => latestEvaluationAttempts(attempts), [attempts])
+  const toTake = useMemo(
+    () => evaluationsToTake(evaluationsQuery.data?.getEvaluations, latestAttempts),
+    [evaluationsQuery.data, latestAttempts],
+  )
 
-  const filteredResults = userProgressResults.filter((progress) => {
+  const results = useMemo(() => {
     const search = searchTerm.trim().toLowerCase()
-    const { title, description } = progress.evaluation.module
-    const matchesSearch =
-      title.toLowerCase().includes(search) || (description ?? "").toLowerCase().includes(search)
+    return (attempts ?? [])
+      .filter((attempt) => {
+        const title = attempt.evaluation?.module?.title ?? ""
+        const matchesSearch = !search || title.toLowerCase().includes(search)
+        const matchesResult =
+          resultFilter === "all" || (resultFilter === "passed" ? attempt.passed : !attempt.passed)
+        return matchesSearch && matchesResult
+      })
+      .sort((a, b) => attemptTime(b) - attemptTime(a))
+  }, [attempts, searchTerm, resultFilter])
 
-    const matchesStatus =
-      filterStatus === "all" ||
-      (filterStatus === "passed" && progress.passed) ||
-      (filterStatus === "failed" && !progress.passed)
+  const { rows, pageCount, page: currentPage } = paginate(results, page, PAGE_SIZE)
+  const isFiltered = searchTerm.trim() !== "" || resultFilter !== "all"
+  const passedCount = [...latestAttempts.values()].filter((attempt) => attempt.passed).length
+  const average = averageScore(latestAttempts.values())
+  const lastAttempt = (attempts ?? []).reduce<AttemptResult | null>(
+    (latest, attempt) => (!latest || attemptTime(attempt) > attemptTime(latest) ? attempt : latest),
+    null,
+  )
 
-    return matchesSearch && matchesStatus
-  })
-
-  const totalPages = Math.ceil(filteredResults.length / itemsPerPage)
-  const paginatedResults = filteredResults.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-
-  const handlePageChange = (newPage: number) => {
-    setCurrentPage(newPage)
-    if (isMobile) {
-      window.scrollTo({ top: 0, behavior: "smooth" })
-    }
-  }
+  const loading =
+    skip || (evaluationsQuery.loading && !evaluationsQuery.data) || (attemptsQuery.loading && !attemptsQuery.data)
+  const failed = (evaluationsQuery.error && !evaluationsQuery.data) || (attemptsQuery.error && !attemptsQuery.data)
 
   return (
-    <div className="w-full">
-      <h1 className="mb-6 text-2xl font-semibold tracking-tight">Mes évaluations</h1>
-
-      {/* Mobile filter toggle */}
-      {isMobile && (
-        <Button
-          variant="outline"
-          className="w-full mb-4 flex items-center justify-center"
-          onClick={() => setIsFilterOpen(!isFilterOpen)}
-        >
-          <Filter className="h-4 w-4 mr-2" />
-          Filtres {filterStatus !== "all" && "(1)"}
-        </Button>
-      )}
-
-      {/* Filters - responsive */}
-      <div className={`flex flex-col gap-3 mb-4 ${isMobile && !isFilterOpen ? "hidden" : "block"}`}>
-        <div className="relative flex-grow">
-          <Input
-            type="text"
-            placeholder="Rechercher un module..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10"
-          />
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
-        </div>
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Filtrer par statut" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tous</SelectItem>
-            <SelectItem value="passed">Réussis</SelectItem>
-            <SelectItem value="failed">Échoués</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        className="mb-0"
+        title="Mes évaluations"
+        description="Les évaluations à passer et les résultats de celles que vous avez déjà passées."
+      />
 
       {loading ? (
-        <div className="space-y-3">
-          {[...Array(3)].map((_, i) => (
-            <Skeleton key={i} className="h-32 sm:h-40 w-full rounded-lg" />
-          ))}
-        </div>
-      ) : error ? (
-        <Card className="bg-destructive/10 border-destructive/30">
-          <CardContent className="pt-4 sm:pt-6">
-            <p className="text-destructive text-sm sm:text-base">
-              Erreur lors du chargement des évaluations: {error.message}
-            </p>
-          </CardContent>
-        </Card>
-      ) : paginatedResults.length > 0 ? (
         <>
-          <div className="space-y-4">
-            {paginatedResults.map((progress) => (
-              <Card key={progress.id} className="overflow-hidden transition-shadow hover:shadow-md">
-                <CardHeader className="pb-2 bg-gradient-to-r from-primary/10 to-primary/5 p-3 sm:p-6">
-                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
-                    <div>
-                      <CardTitle className="text-lg sm:text-2xl mb-1 line-clamp-1">
-                        {progress.evaluation.module.title}
-                      </CardTitle>
-                      <CardDescription className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
-                        {progress.evaluation.module.description}
-                      </CardDescription>
-                    </div>
-                    <Badge
-                      variant={progress.passed ? "default" : "destructive"}
-                      className="text-xs sm:text-sm px-2 py-1 w-fit"
-                    >
-                      {progress.passed ? "Réussi" : "Échoué"}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-3 p-3 sm:p-6 sm:pt-4">
-                  <div className="flex flex-col space-y-3 sm:space-y-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs sm:text-sm gap-2">
-                      <div className="flex items-center space-x-2">
-                        <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-primary flex-shrink-0" />
-                        <span className="truncate">
-                          {progress.completed_at
-                            ? format(new Date(progress.completed_at), isMobile ? "dd/MM/yy" : "dd MMMM yyyy", {
-                                locale: fr,
-                              })
-                            : "Date non disponible"}
-                        </span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Book className="h-3 w-3 sm:h-4 sm:w-4 text-primary flex-shrink-0" />
-                        <span className="truncate">Module : {progress.evaluation.module.title}</span>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex justify-between mb-1">
-                        <span className="text-xs sm:text-sm font-medium">Score</span>
-                        <span className="text-xs sm:text-sm font-medium">
-                          {progress.score !== null ? `${progress.score}% / ${progress.evaluation.pass_score}%` : "N/A"}
-                        </span>
-                      </div>
-                      <Progress value={progress.score !== null ? progress.score : 0} className="h-2" />
-                    </div>
-                    <div className="flex items-center justify-center">
-                      {progress.passed ? (
-                        <div className="flex items-center space-x-1 sm:space-x-2 text-success">
-                          <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5" />
-                          <p className="text-xs sm:text-sm font-medium">Évaluation réussie</p>
-                        </div>
-                      ) : (
-                        <div className="flex items-center space-x-1 sm:space-x-2 text-destructive">
-                          <XCircle className="h-4 w-4 sm:h-5 sm:w-5" />
-                          <p className="text-xs sm:text-sm font-medium">Évaluation non réussie</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <Skeleton key={index} className="h-[104px] rounded-xl" />
             ))}
           </div>
-
-          {/* Pagination - responsive */}
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mt-4 sm:mt-6">
-            <div className="flex items-center space-x-2 order-2 sm:order-1">
-              <span className="text-xs sm:text-sm text-muted-foreground">Résultats par page:</span>
-              <Select
-                value={itemsPerPage.toString()}
-                onValueChange={(value) => {
-                  setItemsPerPage(Number(value))
-                  setCurrentPage(1)
-                }}
-              >
-                <SelectTrigger className="w-[60px] h-8 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="5">5</SelectItem>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="20">20</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex items-center justify-center space-x-2 order-1 sm:order-2">
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <span className="text-xs sm:text-sm text-muted-foreground min-w-[80px] text-center">
-                Page {currentPage} sur {totalPages || 1}
-              </span>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages || totalPages === 0}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <Skeleton key={index} className="h-40 rounded-xl" />
+            ))}
           </div>
+          <Skeleton className="h-64 rounded-xl" />
         </>
+      ) : failed ? (
+        <ErrorState
+          onRetry={() => {
+            evaluationsQuery.refetch()
+            attemptsQuery.refetch()
+          }}
+        />
       ) : (
-        <Card className="bg-muted/50 border-border">
-          <CardContent className="pt-4 sm:pt-6">
-            <p className="text-center text-muted-foreground text-sm sm:text-base">Aucune évaluation trouvée.</p>
-          </CardContent>
-        </Card>
+        <>
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <StatCard label="À passer" value={toTake.length} icon={ClipboardList} tone="warning" />
+            <StatCard label="Réussies" value={passedCount} icon={CheckCircle2} tone="success" />
+            <StatCard label="Score moyen" value={average === null ? "—" : `${average} %`} icon={Award} tone="primary" />
+            <StatCard
+              label="Dernière tentative"
+              value={lastAttempt?.completed_at ? formatDate(lastAttempt.completed_at) : "—"}
+              hint={lastAttempt?.evaluation?.module?.title}
+              icon={History}
+              tone="neutral"
+            />
+          </div>
+
+          <section className="space-y-3">
+            <h2 className="text-lg font-semibold">À passer</h2>
+            {toTake.length === 0 ? (
+              <EmptyState
+                icon={ClipboardCheck}
+                title="Aucune évaluation à passer"
+                description="Toutes les évaluations disponibles sont réussies. Les nouvelles apparaîtront ici."
+              />
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {toTake.map((evaluation) => {
+                  const lastTry = latestAttempts.get(Number(evaluation.id))
+                  return (
+                    <Card key={evaluation.id} className="flex flex-col">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <CardTitle className="text-base leading-snug">
+                            {evaluation.module?.title ?? "Évaluation"}
+                          </CardTitle>
+                          <Badge variant={lastTry ? "warning" : "neutral"} className="shrink-0">
+                            {lastTry ? "À repasser" : "À passer"}
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="flex-1 space-y-1 pb-4 text-sm text-muted-foreground">
+                        <p>Score requis : {formatScore(evaluation.pass_score)}</p>
+                        {lastTry && (
+                          <p>
+                            Dernier score : {formatScore(lastTry.score)}
+                            {lastTry.completed_at && `, le ${formatDate(lastTry.completed_at)}`}
+                          </p>
+                        )}
+                      </CardContent>
+                      <CardFooter className="justify-end">
+                        <Button size="sm" asChild>
+                          <Link href={learningRoutes.evaluation(evaluation.id)}>
+                            {lastTry ? "Repasser l'évaluation" : "Passer l'évaluation"}
+                          </Link>
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  )
+                })}
+              </div>
+            )}
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-lg font-semibold">Mes résultats</h2>
+
+            {(attempts ?? []).length === 0 ? (
+              <EmptyState
+                icon={History}
+                title="Aucun résultat pour le moment"
+                description="Vos scores apparaîtront ici après votre première évaluation."
+              />
+            ) : (
+              <>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <div className="relative w-full sm:max-w-xs">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      type="search"
+                      aria-label="Rechercher un résultat par module"
+                      placeholder="Rechercher un module, ex. navigation"
+                      className="pl-9"
+                      value={searchTerm}
+                      onChange={(event) => {
+                        setSearchTerm(event.target.value)
+                        setPage(1)
+                      }}
+                    />
+                  </div>
+                  <Select
+                    value={resultFilter}
+                    onValueChange={(value) => {
+                      setResultFilter(value)
+                      setPage(1)
+                    }}
+                  >
+                    <SelectTrigger className="w-full sm:w-48" aria-label="Filtrer par résultat">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tous les résultats</SelectItem>
+                      <SelectItem value="passed">Réussies</SelectItem>
+                      <SelectItem value="failed">Non réussies</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="overflow-x-auto rounded-xl border bg-card">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Module</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead className="text-right">Score</TableHead>
+                        <TableHead className="text-right">Score requis</TableHead>
+                        <TableHead>Résultat</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {rows.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={5} className="p-4">
+                            <EmptyState
+                              icon={Search}
+                              title="Aucun résultat ne correspond"
+                              description={
+                                isFiltered ? "Modifiez la recherche ou le filtre." : "Aucune tentative enregistrée."
+                              }
+                              className="border-0"
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        rows.map((attempt) => (
+                          <TableRow key={attempt.id}>
+                            <TableCell className="min-w-[10rem] font-medium">
+                              {attempt.evaluation?.module?.title ?? "—"}
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap">{formatDate(attempt.completed_at)}</TableCell>
+                            <TableCell className="text-right tabular-nums">{formatScore(attempt.score)}</TableCell>
+                            <TableCell className="text-right tabular-nums">
+                              {formatScore(attempt.evaluation?.pass_score)}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={attempt.passed ? "success" : "danger"}>
+                                {attempt.passed ? "Réussie" : "Non réussie"}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+                <ListPagination page={currentPage} pageCount={pageCount} onPageChange={setPage} />
+              </>
+            )}
+          </section>
+        </>
       )}
     </div>
   )

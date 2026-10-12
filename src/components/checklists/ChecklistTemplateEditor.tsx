@@ -2,16 +2,35 @@
 
 import { useState } from "react"
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { GripVertical, Loader2, Pencil, Plus, Trash2 } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { ClipboardList, GripVertical, Loader2, Pencil, Plus, Trash2 } from "lucide-react"
+import { EmptyState } from "@/components/layout/EmptyState"
+import { cn } from "@/lib/utils"
 import { ChecklistItem, ChecklistTemplate, CATEGORY_LABELS, CATEGORY_ORDER } from "@/interfaces/checklist"
 import {
   emptyChecklistItemDraft,
@@ -43,7 +62,7 @@ export function ChecklistTemplateEditor({
   const [editingItem, setEditingItem] = useState<ChecklistItem | null>(null)
   const [draft, setDraft] = useState<ChecklistItemDraft>(emptyChecklistItemDraft)
   const [saving, setSaving] = useState(false)
-  const [deleteConfirmId, setDeleteConfirmId] = useState<number | string | null>(null)
+  const [itemToDelete, setItemToDelete] = useState<ChecklistItem | null>(null)
 
   const groupedItems = groupItemsByCategory(items)
 
@@ -79,29 +98,52 @@ export function ChecklistTemplateEditor({
   }
 
   const handleConfirmDelete = () => {
-    if (deleteConfirmId !== null) {
-      onDeleteItem(deleteConfirmId)
-      setDeleteConfirmId(null)
+    if (itemToDelete !== null) {
+      onDeleteItem(itemToDelete.id)
+      setItemToDelete(null)
     }
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Items de la checklist ({items.length})</h3>
-        <Button onClick={openAddForm} size="sm" className="gap-1">
-          <Plus className="h-4 w-4" />
-          Ajouter un item
-        </Button>
+    <div className="space-y-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-lg font-semibold">Points de contrôle ({items.length})</h2>
+          {items.length > 1 && (
+            <p className="text-sm text-muted-foreground">
+              Faites glisser un point par sa poignée pour changer l&apos;ordre dans sa catégorie.
+            </p>
+          )}
+        </div>
+        {items.length > 0 && (
+          <Button onClick={openAddForm} className="shrink-0">
+            <Plus className="h-4 w-4" />
+            Ajouter un point
+          </Button>
+        )}
       </div>
+
+      {items.length === 0 && (
+        <EmptyState
+          icon={ClipboardList}
+          title="Aucun point de contrôle"
+          description="Ajoutez les vérifications que le pilote devra cocher avant le vol."
+          action={
+            <Button onClick={openAddForm}>
+              <Plus className="h-4 w-4" />
+              Ajouter le premier point
+            </Button>
+          }
+        />
+      )}
 
       <DragDropContext onDragEnd={handleDragEnd}>
         {groupedItems.map(({ category, items: catItems }) => (
           <Card key={category}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
-                {CATEGORY_LABELS[category] || category}
-                <Badge variant="secondary">{catItems.length}</Badge>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                {CATEGORY_LABELS[category] || "Autres points"}
+                <span className="text-sm font-normal tabular-nums text-muted-foreground">{catItems.length}</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -114,41 +156,45 @@ export function ChecklistTemplateEditor({
                           <div
                             ref={provided.innerRef}
                             {...provided.draggableProps}
-                            className={`flex items-center gap-2 rounded-lg border p-3 bg-background ${
-                              snapshot.isDragging ? "shadow-lg" : ""
-                            }`}
+                            className={cn(
+                              "flex items-center gap-2 rounded-lg border bg-background p-2 pl-1",
+                              snapshot.isDragging && "shadow-lg",
+                            )}
                           >
                             <div
                               {...provided.dragHandleProps}
-                              className="cursor-grab text-muted-foreground"
-                              aria-label={`Déplacer l'item ${item.item_name}`}
+                              className="flex h-9 w-8 shrink-0 cursor-grab items-center justify-center rounded-md text-muted-foreground hover:bg-muted"
+                              aria-label={`Déplacer le point ${item.item_name}`}
+                              title="Déplacer"
                             >
                               <GripVertical className="h-4 w-4" />
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium">
-                                {item.item_name}
-                                {item.is_required && <span className="text-destructive ml-1">*</span>}
-                              </p>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium">{item.item_name}</p>
                               {item.description && (
-                                <p className="text-xs text-muted-foreground truncate">{item.description}</p>
+                                <p className="truncate text-xs text-muted-foreground">{item.description}</p>
                               )}
                             </div>
+                            <Badge variant={item.is_required ? "outline" : "neutral"} className="hidden shrink-0 sm:inline-flex">
+                              {item.is_required ? "Obligatoire" : "Facultatif"}
+                            </Badge>
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8"
+                              className="h-9 w-9 shrink-0"
                               onClick={() => openEditForm(item)}
-                              aria-label={`Modifier l'item ${item.item_name}`}
+                              aria-label={`Modifier le point ${item.item_name}`}
+                              title="Modifier"
                             >
                               <Pencil className="h-4 w-4" />
                             </Button>
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                              onClick={() => setDeleteConfirmId(item.id)}
-                              aria-label={`Supprimer l'item ${item.item_name}`}
+                              className="h-9 w-9 shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                              onClick={() => setItemToDelete(item)}
+                              aria-label={`Supprimer le point ${item.item_name}`}
+                              title="Supprimer"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -165,40 +211,48 @@ export function ChecklistTemplateEditor({
         ))}
       </DragDropContext>
 
-      {items.length === 0 && (
-        <div className="text-center py-8 text-muted-foreground">
-          <p>Aucun item dans cette checklist.</p>
-          <p className="text-sm mt-1">Ajoutez des items pour construire votre checklist.</p>
-        </div>
-      )}
-
       {/* Add / edit item dialog */}
       <Dialog open={showItemForm} onOpenChange={(open) => !saving && setShowItemForm(open)}>
-        <DialogContent className="sm:max-w-md">
-          <DialogTitle>{editingItem ? "Modifier l'item" : "Ajouter un item"}</DialogTitle>
-          <DialogDescription>
-            {editingItem
-              ? "Modifiez le nom, la description, la catégorie ou le caractère obligatoire de l'item."
-              : "Renseignez le nouvel item à ajouter à la checklist."}
-          </DialogDescription>
-          <div className="space-y-4">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{editingItem ? "Modifier le point" : "Ajouter un point"}</DialogTitle>
+            <DialogDescription>
+              {editingItem
+                ? "Les checklists déjà commencées afficheront la nouvelle version."
+                : "Une vérification que le pilote cochera avant le vol."}
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            className="space-y-4"
+            onSubmit={(e) => {
+              e.preventDefault()
+              void handleSubmitItem()
+            }}
+          >
             <div className="space-y-2">
-              <Label htmlFor="item-name">Nom de l&apos;item</Label>
+              <Label htmlFor="item-name">
+                Intitulé
+                <span className="text-destructive" aria-hidden="true">
+                  {" *"}
+                </span>
+              </Label>
               <Input
                 id="item-name"
                 value={draft.item_name}
                 onChange={(e) => setDraft({ ...draft, item_name: e.target.value })}
-                placeholder="Ex: Vérifier le niveau d'huile"
+                placeholder="Vérifier le niveau d'huile"
+                required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="item-desc">Description (optionnel)</Label>
+              <Label htmlFor="item-desc">Précisions</Label>
               <Textarea
                 id="item-desc"
                 value={draft.description}
                 onChange={(e) => setDraft({ ...draft, description: e.target.value })}
-                placeholder="Instructions supplémentaires..."
+                placeholder="Entre 6 et 8 quarts sur la jauge"
               />
+              <p className="text-xs text-muted-foreground">Facultatif. Affiché sous l&apos;intitulé pendant la visite prévol.</p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="item-category">Catégorie</Label>
@@ -215,46 +269,51 @@ export function ChecklistTemplateEditor({
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-start gap-3 rounded-lg border p-3">
               <Checkbox
                 id="item-required"
                 checked={draft.is_required}
                 onCheckedChange={(val) => setDraft({ ...draft, is_required: val === true })}
+                className="mt-0.5"
               />
-              <Label htmlFor="item-required" className="cursor-pointer">
-                Obligatoire
-              </Label>
+              <div className="space-y-0.5">
+                <Label htmlFor="item-required" className="cursor-pointer">
+                  Obligatoire
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  La checklist ne peut pas être terminée tant que ce point n&apos;est pas coché.
+                </p>
+              </div>
             </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowItemForm(false)} disabled={saving}>
-              Annuler
-            </Button>
-            <Button onClick={handleSubmitItem} disabled={saving || !draft.item_name.trim()}>
-              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {editingItem ? "Enregistrer" : "Ajouter"}
-            </Button>
-          </DialogFooter>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button type="button" variant="outline" onClick={() => setShowItemForm(false)} disabled={saving}>
+                Annuler
+              </Button>
+              <Button type="submit" disabled={saving || !draft.item_name.trim()}>
+                {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+                {editingItem ? "Enregistrer" : "Ajouter"}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
 
-      {/* Delete confirmation dialog */}
-      <Dialog open={deleteConfirmId !== null} onOpenChange={() => setDeleteConfirmId(null)}>
-        <DialogContent className="sm:max-w-sm">
-          <DialogTitle>Confirmer la suppression</DialogTitle>
-          <p className="text-sm text-muted-foreground">
-            Êtes-vous sûr de vouloir supprimer cet item ? Cette action est irréversible.
-          </p>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteConfirmId(null)}>
-              Annuler
-            </Button>
-            <Button variant="destructive" onClick={handleConfirmDelete}>
+      <AlertDialog open={itemToDelete !== null} onOpenChange={(open) => !open && setItemToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer ce point ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              « {itemToDelete?.item_name} » sera retiré du modèle. Cette action est définitive.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction className={buttonVariants({ variant: "destructive" })} onClick={handleConfirmDelete}>
               Supprimer
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
