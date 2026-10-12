@@ -41,7 +41,7 @@ async function isInMaintenanceMode(req: NextRequest) {
   }
 }
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const response = NextResponse.next();
   const pathname = stripBasePath(req.nextUrl.pathname);
   const isStaticFile = pathname.startsWith('/_next') || pathname.includes('/static');
