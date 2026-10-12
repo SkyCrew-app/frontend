@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.8.0](https://github.com/SkyCrew-app/frontend/compare/2.7.0...2.8.0) (2026-10-12)
+
+
+### Features
+
+* **ui:** :sparkles: rework every page for consistency and ease of use ([#136](https://github.com/SkyCrew-app/frontend/issues/136)) ([d5359e6](https://github.com/SkyCrew-app/frontend/commit/d5359e6f26035b1b060189fb4145c23af19fb9fb))
+
+
+### Bug Fixes
+
+* **articles:** :lock: drop the local image preview and parse content safely ([#138](https://github.com/SkyCrew-app/frontend/issues/138)) ([7b0978a](https://github.com/SkyCrew-app/frontend/commit/7b0978a2abde38cde770800b9af4eabf10224f6d))
+
 ## [2.7.0](https://github.com/SkyCrew-app/frontend/compare/2.6.0...2.7.0) (2026-10-12)
 
 
