@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.9.0](https://github.com/SkyCrew-app/frontend/compare/2.8.0...2.9.0) (2026-10-12)
+
+
+### Features
+
+* **ui:** :sparkles: side panels with steps instead of dialogs, roomier icon spacing ([#142](https://github.com/SkyCrew-app/frontend/issues/142)) ([1a1c637](https://github.com/SkyCrew-app/frontend/commit/1a1c6374b57b41e4023bab26631344d812a029e3))
+
 ## [2.8.0](https://github.com/SkyCrew-app/frontend/compare/2.7.0...2.8.0) (2026-10-12)
 
 
