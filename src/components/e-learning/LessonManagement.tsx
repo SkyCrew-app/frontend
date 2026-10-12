@@ -1,9 +1,8 @@
 "use client"
 
-import type React from "react"
 import { useEffect, useState } from "react"
 import { gql, useMutation, useQuery } from "@apollo/client"
-import { FileText, Loader2, Plus, Search } from "lucide-react"
+import { FileText, Plus, Search } from "lucide-react"
 import {
   CREATE_LESSON,
   DELETE_LESSON,
@@ -13,14 +12,6 @@ import {
 } from "@/graphql/learningAdmin"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -30,6 +21,7 @@ import { AttachmentsInput } from "@/components/ui/attachments-input"
 import { WysiwygEditor } from "@/components/ui/wysiwyg-editor"
 import { EmptyState } from "@/components/layout/EmptyState"
 import { ErrorState } from "@/components/layout/ErrorState"
+import { SidePanel } from "@/components/layout/SidePanel"
 import { toast } from "@/components/hooks/use-toast"
 import { optionalIdField } from "@/lib/graphql-inputs"
 import { ConfirmDeleteDialog } from "./ConfirmDeleteDialog"
@@ -98,7 +90,8 @@ export function LessonManagement() {
   const [searchTerm, setSearchTerm] = useState("")
   const [form, setForm] = useState<LessonForm>(emptyForm(""))
   const [isFormOpen, setIsFormOpen] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
+  // The steps whose errors are shown: each one once the user tried to leave it.
+  const [checked, setChecked] = useState({ presentation: false, content: false })
   const [lessonToDelete, setLessonToDelete] = useState<LessonRow | null>(null)
 
   const coursesQuery = useQuery<{ getCourses: Option[] }>(GET_COURSES, { fetchPolicy: "cache-and-network" })
@@ -139,7 +132,7 @@ export function LessonManagement() {
 
   const openCreate = () => {
     setForm(emptyForm(selectedModuleId))
-    setSubmitted(false)
+    setChecked({ presentation: false, content: false })
     setIsFormOpen(true)
   }
 
@@ -154,7 +147,7 @@ export function LessonManagement() {
       videoUrl: lesson.video_url ?? "",
       attachments: lesson.attachments ?? [],
     })
-    setSubmitted(false)
+    setChecked({ presentation: false, content: false })
     setIsFormOpen(true)
   }
 
@@ -169,9 +162,18 @@ export function LessonManagement() {
   }
   const hasErrors = Object.values(errors).some(Boolean)
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault()
-    setSubmitted(true)
+  const validatePresentation = () => {
+    setChecked((previous) => ({ ...previous, presentation: true }))
+    return !errors.moduleId && !errors.title && !errors.videoUrl
+  }
+
+  const validateContent = () => {
+    setChecked((previous) => ({ ...previous, content: true }))
+    return !errors.content
+  }
+
+  const handleSubmit = async () => {
+    setChecked({ presentation: true, content: true })
     if (hasErrors) return
 
     try {
@@ -383,102 +385,126 @@ export function LessonManagement() {
         </div>
       )}
 
-      <Dialog open={isFormOpen} onOpenChange={(open) => !saving && setIsFormOpen(open)}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>{isEdit ? "Modifier la leçon" : "Créer une leçon"}</DialogTitle>
-            <DialogDescription>
-              Le texte est obligatoire ; la vidéo et les pièces jointes sont facultatives.
-            </DialogDescription>
-          </DialogHeader>
+      <SidePanel
+        open={isFormOpen}
+        onOpenChange={(open) => !saving && setIsFormOpen(open)}
+        title={isEdit ? "Modifier la leçon" : "Créer une leçon"}
+        description="Le texte est obligatoire ; la vidéo et les pièces jointes sont facultatives."
+        onSubmit={handleSubmit}
+        submitLabel={isEdit ? "Enregistrer" : "Créer la leçon"}
+        submitting={saving}
+        size="xl"
+        steps={[
+          {
+            title: "Présentation",
+            validate: validatePresentation,
+            content: (
+              <>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {!isEdit && (
+                    <FormField
+                      label="Module"
+                      htmlFor="lesson-module"
+                      required
+                      error={checked.presentation ? errors.moduleId : null}
+                    >
+                      <Select value={form.moduleId} onValueChange={(value) => setForm({ ...form, moduleId: value })}>
+                        <SelectTrigger id="lesson-module">
+                          <SelectValue placeholder="Choisir un module" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(modules ?? []).map((module) => (
+                            <SelectItem key={module.id} value={String(module.id)}>
+                              {module.title}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormField>
+                  )}
+                  <div className={isEdit ? "sm:col-span-2" : undefined}>
+                    <FormField
+                      label="Titre"
+                      htmlFor="lesson-title"
+                      required
+                      error={checked.presentation ? errors.title : null}
+                    >
+                      <Input
+                        id="lesson-title"
+                        placeholder="Ex. Lire un METAR"
+                        value={form.title}
+                        onChange={(event) => setForm({ ...form, title: event.target.value })}
+                        aria-invalid={checked.presentation && !!errors.title}
+                      />
+                    </FormField>
+                  </div>
+                </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {!isEdit && (
-                <FormField label="Module" htmlFor="lesson-module" required error={submitted ? errors.moduleId : null}>
-                  <Select value={form.moduleId} onValueChange={(value) => setForm({ ...form, moduleId: value })}>
-                    <SelectTrigger id="lesson-module">
-                      <SelectValue placeholder="Choisir un module" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(modules ?? []).map((module) => (
-                        <SelectItem key={module.id} value={String(module.id)}>
-                          {module.title}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </FormField>
-              )}
-              <div className={isEdit ? "sm:col-span-2" : undefined}>
-                <FormField label="Titre" htmlFor="lesson-title" required error={submitted ? errors.title : null}>
-                  <Input
-                    id="lesson-title"
-                    placeholder="Ex. Lire un METAR"
-                    value={form.title}
-                    onChange={(event) => setForm({ ...form, title: event.target.value })}
-                    aria-invalid={submitted && !!errors.title}
+                <FormField
+                  label="Description"
+                  htmlFor="lesson-description"
+                  hint="Une phrase affichée sous le titre de la leçon."
+                >
+                  <Textarea
+                    id="lesson-description"
+                    placeholder="Ex. Décoder un message d'observation, groupe par groupe."
+                    value={form.description}
+                    onChange={(event) => setForm({ ...form, description: event.target.value })}
+                    rows={2}
                   />
                 </FormField>
-              </div>
-            </div>
 
-            <FormField label="Description" htmlFor="lesson-description" hint="Une phrase affichée sous le titre de la leçon.">
-              <Textarea
-                id="lesson-description"
-                placeholder="Ex. Décoder un message d'observation, groupe par groupe."
-                value={form.description}
-                onChange={(event) => setForm({ ...form, description: event.target.value })}
-                rows={2}
-              />
-            </FormField>
-
-            <FormField label="Contenu" required error={submitted ? errors.content : null}>
-              <WysiwygEditor
-                value={form.content}
-                onChange={(content) => setForm((previous) => ({ ...previous, content }))}
-                placeholder="Rédigez le texte de la leçon…"
-                className=""
-              />
-            </FormField>
-
-            <FormField
-              label="Vidéo"
-              htmlFor="lesson-video"
-              error={submitted ? errors.videoUrl : null}
-              hint="Facultatif. Collez le lien d'une vidéo YouTube."
-            >
-              <Input
-                id="lesson-video"
-                type="url"
-                inputMode="url"
-                placeholder="https://www.youtube.com/watch?v=…"
-                value={form.videoUrl}
-                onChange={(event) => setForm({ ...form, videoUrl: event.target.value })}
-                aria-invalid={submitted && !!errors.videoUrl}
-              />
-            </FormField>
-
-            <FormField label="Pièces jointes" hint="Facultatif. Des liens vers des documents à consulter ou à télécharger.">
-              <AttachmentsInput
-                className=""
-                value={form.attachments}
-                onChange={(attachments) => setForm((previous) => ({ ...previous, attachments }))}
-              />
-            </FormField>
-
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsFormOpen(false)} disabled={saving}>
-                Annuler
-              </Button>
-              <Button type="submit" disabled={saving}>
-                {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                {isEdit ? "Enregistrer" : "Créer la leçon"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+                <FormField
+                  label="Vidéo"
+                  htmlFor="lesson-video"
+                  error={checked.presentation ? errors.videoUrl : null}
+                  hint="Facultatif. Collez le lien d'une vidéo YouTube."
+                >
+                  <Input
+                    id="lesson-video"
+                    type="url"
+                    inputMode="url"
+                    placeholder="https://www.youtube.com/watch?v=…"
+                    value={form.videoUrl}
+                    onChange={(event) => setForm({ ...form, videoUrl: event.target.value })}
+                    aria-invalid={checked.presentation && !!errors.videoUrl}
+                  />
+                </FormField>
+              </>
+            ),
+          },
+          {
+            title: "Contenu",
+            validate: validateContent,
+            content: (
+              <FormField label="Contenu" required error={checked.content ? errors.content : null}>
+                {/* A long text scrolls inside the editor, so the panel itself does not. */}
+                <WysiwygEditor
+                  value={form.content}
+                  onChange={(content) => setForm((previous) => ({ ...previous, content }))}
+                  placeholder="Rédigez le texte de la leçon…"
+                  className="flex max-h-[26rem] flex-col [&>.prose]:overflow-y-auto"
+                />
+              </FormField>
+            ),
+          },
+          {
+            title: "Ressources",
+            content: (
+              <FormField
+                label="Pièces jointes"
+                hint="Facultatif. Des liens vers des documents à consulter ou à télécharger."
+              >
+                <AttachmentsInput
+                  className=""
+                  value={form.attachments}
+                  onChange={(attachments) => setForm((previous) => ({ ...previous, attachments }))}
+                />
+              </FormField>
+            ),
+          },
+        ]}
+      />
 
       <ConfirmDeleteDialog
         open={lessonToDelete !== null}

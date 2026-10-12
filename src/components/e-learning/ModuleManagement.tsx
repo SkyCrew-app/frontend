@@ -1,9 +1,8 @@
 "use client"
 
-import type React from "react"
 import { useEffect, useState } from "react"
 import { useMutation, useQuery } from "@apollo/client"
-import { Layers, Loader2, Plus, Search } from "lucide-react"
+import { Layers, Plus, Search } from "lucide-react"
 import {
   CREATE_MODULE,
   DELETE_MODULE,
@@ -12,14 +11,6 @@ import {
   UPDATE_MODULE,
 } from "@/graphql/learningAdmin"
 import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -27,6 +18,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { EmptyState } from "@/components/layout/EmptyState"
 import { ErrorState } from "@/components/layout/ErrorState"
+import { SidePanel } from "@/components/layout/SidePanel"
 import { toast } from "@/components/hooks/use-toast"
 import { optionalIdField } from "@/lib/graphql-inputs"
 import { ConfirmDeleteDialog } from "./ConfirmDeleteDialog"
@@ -108,8 +100,7 @@ export function ModuleManagement() {
     title: form.title.trim() ? null : "Donnez un titre au module.",
   }
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault()
+  const handleSubmit = async () => {
     setSubmitted(true)
     if (errors.courseId || errors.title) return
 
@@ -283,63 +274,54 @@ export function ModuleManagement() {
         </div>
       )}
 
-      <Dialog open={isFormOpen} onOpenChange={(open) => !saving && setIsFormOpen(open)}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{isEdit ? "Modifier le module" : "Créer un module"}</DialogTitle>
-            <DialogDescription>Un module est un chapitre du cours : il regroupe des leçons.</DialogDescription>
-          </DialogHeader>
-
-          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-            {!isEdit && (
-              <FormField label="Cours" htmlFor="module-course" required error={submitted ? errors.courseId : null}>
-                <Select value={form.courseId} onValueChange={(value) => setForm({ ...form, courseId: value })}>
-                  <SelectTrigger id="module-course">
-                    <SelectValue placeholder="Choisir un cours" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(courses ?? []).map((course) => (
-                      <SelectItem key={course.id} value={String(course.id)}>
-                        {course.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </FormField>
-            )}
-
-            <FormField label="Titre" htmlFor="module-title" required error={submitted ? errors.title : null}>
-              <Input
-                id="module-title"
-                placeholder="Ex. Les masses d'air et les fronts"
-                value={form.title}
-                onChange={(event) => setForm({ ...form, title: event.target.value })}
-                aria-invalid={submitted && !!errors.title}
-              />
+      <SidePanel
+        open={isFormOpen}
+        onOpenChange={(open) => !saving && setIsFormOpen(open)}
+        title={isEdit ? "Modifier le module" : "Créer un module"}
+        description={"Un module est un chapitre du cours : il regroupe des leçons."}
+        onSubmit={handleSubmit}
+        submitLabel={isEdit ? "Enregistrer" : "Créer le module"}
+        submitting={saving}
+      >
+        <div className="space-y-4">
+          {!isEdit && (
+            <FormField label="Cours" htmlFor="module-course" required error={submitted ? errors.courseId : null}>
+              <Select value={form.courseId} onValueChange={(value) => setForm({ ...form, courseId: value })}>
+                <SelectTrigger id="module-course">
+                  <SelectValue placeholder="Choisir un cours" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(courses ?? []).map((course) => (
+                    <SelectItem key={course.id} value={String(course.id)}>
+                      {course.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </FormField>
+          )}
 
-            <FormField label="Description" htmlFor="module-description" hint="Une phrase sur ce que couvre le module.">
-              <Textarea
-                id="module-description"
-                placeholder="Ex. Reconnaître les fronts et anticiper leurs effets sur le vol."
-                value={form.description}
-                onChange={(event) => setForm({ ...form, description: event.target.value })}
-                rows={3}
-              />
-            </FormField>
+          <FormField label="Titre" htmlFor="module-title" required error={submitted ? errors.title : null}>
+            <Input
+              id="module-title"
+              placeholder="Ex. Les masses d'air et les fronts"
+              value={form.title}
+              onChange={(event) => setForm({ ...form, title: event.target.value })}
+              aria-invalid={submitted && !!errors.title}
+            />
+          </FormField>
 
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsFormOpen(false)} disabled={saving}>
-                Annuler
-              </Button>
-              <Button type="submit" disabled={saving}>
-                {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                {isEdit ? "Enregistrer" : "Créer le module"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+          <FormField label="Description" htmlFor="module-description" hint="Une phrase sur ce que couvre le module.">
+            <Textarea
+              id="module-description"
+              placeholder="Ex. Reconnaître les fronts et anticiper leurs effets sur le vol."
+              value={form.description}
+              onChange={(event) => setForm({ ...form, description: event.target.value })}
+              rows={3}
+            />
+          </FormField>
+        </div>
+      </SidePanel>
 
       <ConfirmDeleteDialog
         open={moduleToDelete !== null}

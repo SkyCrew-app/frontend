@@ -107,13 +107,13 @@ export function AirportSearch({ id, invalid = false, value, onChange, label, pla
           <CommandList>
             <CommandEmpty>
               {loading ? (
-                <div className="flex items-center justify-center p-4">
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <div className="flex items-center justify-center gap-2 p-4">
+                  <Loader2 className="h-4 w-4 animate-spin" />
                   Recherche en cours…
                 </div>
               ) : error ? (
-                <div className="flex items-center justify-center p-4 text-warning">
-                  <AlertTriangle className="mr-2 h-4 w-4" />
+                <div className="flex items-center justify-center gap-2 p-4 text-warning">
+                  <AlertTriangle className="h-4 w-4" />
                   {error}
                 </div>
               ) : (

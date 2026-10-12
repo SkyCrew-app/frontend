@@ -1,29 +1,21 @@
 "use client"
 
 import { useState } from "react"
-import type { FormEvent } from "react"
 import { useQuery, useMutation } from "@apollo/client"
 import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ClipboardCheck, Loader2, Pencil, Plus } from "lucide-react"
+import { ClipboardCheck, Pencil, Plus } from "lucide-react"
 import { useToast } from "@/components/hooks/use-toast"
 import { PageHeader } from "@/components/layout/PageHeader"
+import { SidePanel } from "@/components/layout/SidePanel"
 import { EmptyState } from "@/components/layout/EmptyState"
 import { ErrorState } from "@/components/layout/ErrorState"
 import {
@@ -60,8 +52,7 @@ export default function AdminChecklistsPage() {
   const templates: ChecklistTemplate[] = data?.checklistTemplates || []
   const canCreate = newTemplate.name.trim() !== "" && newTemplate.aircraft_model.trim() !== ""
 
-  const handleCreate = async (event: FormEvent) => {
-    event.preventDefault()
+  const handleCreate = async () => {
     if (!canCreate) return
     try {
       const result = await createTemplate({
@@ -225,61 +216,56 @@ export default function AdminChecklistsPage() {
         </Card>
       )}
 
-      <Dialog open={isCreateOpen} onOpenChange={(open) => !creating && setIsCreateOpen(open)}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Créer un modèle de checklist</DialogTitle>
-            <DialogDescription>Vous ajouterez les points de contrôle à l&apos;étape suivante.</DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleCreate} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="template-name">
-                Nom du modèle
-                <Required />
-              </Label>
-              <Input
-                id="template-name"
-                value={newTemplate.name}
-                onChange={(e) => setNewTemplate({ ...newTemplate, name: e.target.value })}
-                placeholder="Prévol DR400"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="template-model">
-                Modèle d&apos;avion
-                <Required />
-              </Label>
-              <Input
-                id="template-model"
-                value={newTemplate.aircraft_model}
-                onChange={(e) => setNewTemplate({ ...newTemplate, aircraft_model: e.target.value })}
-                placeholder="Robin DR400"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="template-desc">Description</Label>
-              <Textarea
-                id="template-desc"
-                value={newTemplate.description}
-                onChange={(e) => setNewTemplate({ ...newTemplate, description: e.target.value })}
-                placeholder="Visite prévol complète, à faire avant chaque premier vol de la journée"
-              />
-              <p className="text-xs text-muted-foreground">Facultatif. Affichée au pilote en tête de la checklist.</p>
-            </div>
-            <DialogFooter className="gap-2 sm:gap-0">
-              <Button type="button" variant="outline" onClick={() => setIsCreateOpen(false)} disabled={creating}>
-                Annuler
-              </Button>
-              <Button type="submit" disabled={!canCreate || creating}>
-                {creating && <Loader2 className="h-4 w-4 animate-spin" />}
-                Créer le modèle
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <SidePanel
+        open={isCreateOpen}
+        onOpenChange={(open) => !creating && setIsCreateOpen(open)}
+        title="Créer un modèle de checklist"
+        description="Vous ajouterez les points de contrôle juste après."
+        onSubmit={handleCreate}
+        submitLabel="Créer le modèle"
+        submitting={creating}
+        submitDisabled={!canCreate}
+        size="md"
+      >
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="template-name">
+              Nom du modèle
+              <Required />
+            </Label>
+            <Input
+              id="template-name"
+              value={newTemplate.name}
+              onChange={(e) => setNewTemplate({ ...newTemplate, name: e.target.value })}
+              placeholder="Prévol DR400"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="template-model">
+              Modèle d&apos;avion
+              <Required />
+            </Label>
+            <Input
+              id="template-model"
+              value={newTemplate.aircraft_model}
+              onChange={(e) => setNewTemplate({ ...newTemplate, aircraft_model: e.target.value })}
+              placeholder="Robin DR400"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="template-desc">Description</Label>
+            <Textarea
+              id="template-desc"
+              value={newTemplate.description}
+              onChange={(e) => setNewTemplate({ ...newTemplate, description: e.target.value })}
+              placeholder="Visite prévol complète, à faire avant chaque premier vol de la journée"
+            />
+            <p className="text-xs text-muted-foreground">Facultatif. Affichée au pilote en tête de la checklist.</p>
+          </div>
+        </div>
+      </SidePanel>
     </div>
   )
 }

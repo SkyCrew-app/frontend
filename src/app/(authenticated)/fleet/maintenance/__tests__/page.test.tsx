@@ -183,18 +183,20 @@ describe('MaintenanceTablePage', () => {
     expect(dialog.getByText('Planifiez une intervention sur un aéronef de la flotte.')).toBeInTheDocument();
     expect(dialog.getByText('Sélectionner un aéronef')).toBeInTheDocument();
 
-    // Toutes les sections sont visibles d'un coup : plus d'onglets qui cachent des champs.
+    // Le formulaire avance par étapes, sans onglet ; on commence par l'intervention.
     expect(dialog.queryByRole('tab')).not.toBeInTheDocument();
-    ['Intervention', 'Planification', 'Détails', 'Pièces jointes'].forEach((section) =>
-      expect(dialog.getByRole('heading', { name: section })).toBeInTheDocument(),
-    );
+    const steps = within(dialog.getByRole('list', { name: 'Étapes' }));
+    expect(steps.getAllByRole('listitem')).toHaveLength(3);
+    expect(steps.getByRole('button', { name: /Intervention/ })).toHaveAttribute('aria-current', 'step');
     expect(dialog.getByLabelText('Coût')).toHaveAttribute('type', 'number');
     expect(dialog.getByLabelText('Coût')).toHaveAttribute('min', '0');
     expect(dialog.getByRole('combobox', { name: /Technicien/ })).toHaveTextContent('Non assigné');
 
     // Sans aéronef, le formulaire reste ouvert et dit quoi corriger sous le champ.
-    await user.click(dialog.getByRole('button', { name: 'Créer la maintenance' }));
+    expect(dialog.queryByRole('button', { name: 'Créer la maintenance' })).not.toBeInTheDocument();
+    await user.click(dialog.getByRole('button', { name: 'Suivant' }));
     expect(dialog.getByText('Sélectionnez un aéronef.')).toBeInTheDocument();
+    expect(steps.getByRole('button', { name: /Intervention/ })).toHaveAttribute('aria-current', 'step');
 
     await user.click(dialog.getByRole('button', { name: 'Annuler' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
@@ -318,11 +320,15 @@ describe('MaintenanceTablePage', () => {
 
     const form = within(await screen.findByRole('dialog', { name: 'Modifier la maintenance' }));
     expect(form.getByText('Intervention sur F-ABCD (Airbus A320).')).toBeInTheDocument();
-    expect(form.getByLabelText('Description')).toHaveValue('Changement des pneus');
-    expect(form.getByLabelText('Coût')).toHaveValue(500);
     // Le technicien déjà affecté reste sélectionné même s'il n'est pas dans la liste des techniciens.
     expect(form.getByRole('combobox', { name: /Technicien/ })).toHaveTextContent('John');
-    expect(form.getByText('rapport-pneus.pdf')).toBeInTheDocument();
+
+    await user.click(form.getByRole('button', { name: 'Suivant' }));
+    expect(form.getByRole('textbox', { name: 'Description' })).toHaveValue('Changement des pneus');
+    expect(form.getByRole('spinbutton', { name: 'Coût' })).toHaveValue(500);
+
+    await user.click(form.getByRole('button', { name: 'Suivant' }));
+    expect(form.getByText('rapport-pneus.pdf')).toBeVisible();
     expect(form.getByRole('button', { name: 'Enregistrer' })).toBeInTheDocument();
   });
 

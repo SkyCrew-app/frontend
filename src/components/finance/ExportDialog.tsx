@@ -2,16 +2,8 @@
 
 import { useState } from "react"
 import { fr } from "date-fns/locale"
-import { CalendarIcon, Download, Loader2 } from "lucide-react"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+import { CalendarIcon, Download } from "lucide-react"
+import { SidePanel } from "@/components/layout/SidePanel"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Label } from "@/components/ui/label"
@@ -23,7 +15,7 @@ import { cn } from "@/lib/utils"
 type ExportFormat = "pdf" | "excel"
 
 interface ExportDialogProps {
-  /** Resolves to true when the report was generated; the dialog then closes. */
+  /** Resolves to true when the report was generated; the panel then closes. */
   onExport: (format: ExportFormat, startDate: Date, endDate: Date) => Promise<boolean> | boolean | void
   isLoading: boolean
 }
@@ -94,19 +86,22 @@ export function ExportDialog({ onExport, isLoading }: ExportDialogProps) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={(next) => !isLoading && setOpen(next)}>
-      <DialogTrigger asChild>
-        <Button variant="outline">
-          <Download className="h-4 w-4" />
-          Exporter
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Exporter le rapport financier</DialogTitle>
-          <DialogDescription>Choisissez le format et la période à inclure dans le rapport.</DialogDescription>
-        </DialogHeader>
-
+    <>
+      <Button variant="outline" onClick={() => setOpen(true)}>
+        <Download className="h-4 w-4" />
+        Exporter
+      </Button>
+      <SidePanel
+        open={open}
+        onOpenChange={(next) => (next || !isLoading) && setOpen(next)}
+        title="Exporter le rapport financier"
+        description="Choisissez le format et la période à inclure dans le rapport."
+        onSubmit={handleExport}
+        submitLabel={isLoading ? "Export en cours…" : "Exporter"}
+        submitting={isLoading}
+        submitDisabled={!startDate || !endDate || invalidRange}
+        size="md"
+      >
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="export-format">Format</Label>
@@ -141,17 +136,7 @@ export function ExportDialog({ onExport, isLoading }: ExportDialogProps) {
             <p className="text-sm text-destructive">La date de fin doit être postérieure à la date de début.</p>
           )}
         </div>
-
-        <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isLoading}>
-            Annuler
-          </Button>
-          <Button type="button" onClick={handleExport} disabled={isLoading || !startDate || !endDate || invalidRange}>
-            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-            {isLoading ? "Export en cours…" : "Exporter"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      </SidePanel>
+    </>
   )
 }

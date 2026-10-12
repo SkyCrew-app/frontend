@@ -1,22 +1,13 @@
 "use client"
 
-import type React from "react"
 import { useEffect, useState } from "react"
 import { useMutation, useQuery } from "@apollo/client"
 import { format, parseISO } from "date-fns"
 import { Loader2 } from "lucide-react"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { SidePanel } from "@/components/layout/SidePanel"
 import { useToast } from "@/components/hooks/use-toast"
 import { CREATE_COURSE, GET_MEMBERS_DIRECTORY, UPDATE_COURSE } from "@/graphql/course"
 import { datetimeLocalToISOString } from "@/lib/datetime"
@@ -106,8 +97,7 @@ export default function CourseFormDialog({ open, onClose, onSaved, course = null
   const fieldError = (name: keyof typeof errors) =>
     submitted && errors[name] ? <p className="text-sm text-destructive">{errors[name]}</p> : null
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault()
+  const handleSubmit = async () => {
     setSubmitted(true)
     if (hasErrors) return
 
@@ -167,106 +157,95 @@ export default function CourseFormDialog({ open, onClose, onSaved, course = null
     )
 
   return (
-    <Dialog open={open} onOpenChange={(next) => !next && !saving && onClose()}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>{isEdit ? "Modifier le cours" : "Planifier un cours"}</DialogTitle>
-          <DialogDescription>
-            {isEdit
-              ? "Changez l'élève, l'horaire ou le statut du cours."
-              : "Choisissez l'élève et l'horaire du cours."}
-          </DialogDescription>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-          {askInstructor && (
-            <div className="space-y-2">
-              <Label htmlFor="course-instructor">
-                Instructeur
-                <RequiredMark />
-              </Label>
-              <Select value={form.instructorId} onValueChange={(value) => setField("instructorId", value)}>
-                <SelectTrigger id="course-instructor">
-                  <SelectValue placeholder="Choisir un instructeur" />
-                </SelectTrigger>
-                <SelectContent>{memberOptions(instructors, "Aucun instructeur dans le club")}</SelectContent>
-              </Select>
-              {fieldError("instructorId")}
-            </div>
-          )}
-
+    <SidePanel
+      open={open}
+      onOpenChange={(next) => !next && !saving && onClose()}
+      title={isEdit ? "Modifier le cours" : "Planifier un cours"}
+      description={
+        isEdit ? "Changez l'élève, l'horaire ou le statut du cours." : "Choisissez l'élève et l'horaire du cours."
+      }
+      onSubmit={handleSubmit}
+      submitLabel={isEdit ? "Enregistrer" : "Planifier le cours"}
+      submitting={saving}
+    >
+      <div className="space-y-4">
+        {askInstructor && (
           <div className="space-y-2">
-            <Label htmlFor="course-student">
-              Élève
+            <Label htmlFor="course-instructor">
+              Instructeur
               <RequiredMark />
             </Label>
-            <Select value={form.studentId} onValueChange={(value) => setField("studentId", value)}>
-              <SelectTrigger id="course-student">
-                <SelectValue placeholder="Choisir un élève" />
+            <Select value={form.instructorId} onValueChange={(value) => setField("instructorId", value)}>
+              <SelectTrigger id="course-instructor">
+                <SelectValue placeholder="Choisir un instructeur" />
               </SelectTrigger>
-              <SelectContent>{memberOptions(students, "Aucun membre disponible")}</SelectContent>
+              <SelectContent>{memberOptions(instructors, "Aucun instructeur dans le club")}</SelectContent>
             </Select>
-            {fieldError("studentId")}
+            {fieldError("instructorId")}
           </div>
+        )}
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="course-start">
-                Début
-                <RequiredMark />
-              </Label>
-              <Input
-                id="course-start"
-                type="datetime-local"
-                value={form.startTime}
-                onChange={(event) => setField("startTime", event.target.value)}
-                aria-invalid={submitted && !!errors.startTime}
-              />
-              {fieldError("startTime")}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="course-end">Fin</Label>
-              <Input
-                id="course-end"
-                type="datetime-local"
-                value={form.endTime}
-                min={form.startTime || undefined}
-                onChange={(event) => setField("endTime", event.target.value)}
-                aria-invalid={submitted && !!errors.endTime}
-              />
-              {fieldError("endTime") ?? <p className="text-xs text-muted-foreground">Facultatif.</p>}
-            </div>
+        <div className="space-y-2">
+          <Label htmlFor="course-student">
+            Élève
+            <RequiredMark />
+          </Label>
+          <Select value={form.studentId} onValueChange={(value) => setField("studentId", value)}>
+            <SelectTrigger id="course-student">
+              <SelectValue placeholder="Choisir un élève" />
+            </SelectTrigger>
+            <SelectContent>{memberOptions(students, "Aucun membre disponible")}</SelectContent>
+          </Select>
+          {fieldError("studentId")}
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="course-start">
+              Début
+              <RequiredMark />
+            </Label>
+            <Input
+              id="course-start"
+              type="datetime-local"
+              value={form.startTime}
+              onChange={(event) => setField("startTime", event.target.value)}
+              aria-invalid={submitted && !!errors.startTime}
+            />
+            {fieldError("startTime")}
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="course-end">Fin</Label>
+            <Input
+              id="course-end"
+              type="datetime-local"
+              value={form.endTime}
+              min={form.startTime || undefined}
+              onChange={(event) => setField("endTime", event.target.value)}
+              aria-invalid={submitted && !!errors.endTime}
+            />
+            {fieldError("endTime") ?? <p className="text-xs text-muted-foreground">Facultatif.</p>}
+          </div>
+        </div>
 
-          {isEdit && (
-            <div className="space-y-2">
-              <Label htmlFor="course-status">Statut</Label>
-              <Select value={form.status} onValueChange={(value) => setField("status", value)}>
-                <SelectTrigger id="course-status">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {COURSE_STATUS_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose} disabled={saving}>
-              Annuler
-            </Button>
-            <Button type="submit" disabled={saving}>
-              {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              {isEdit ? "Enregistrer" : "Planifier le cours"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+        {isEdit && (
+          <div className="space-y-2">
+            <Label htmlFor="course-status">Statut</Label>
+            <Select value={form.status} onValueChange={(value) => setField("status", value)}>
+              <SelectTrigger id="course-status">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {COURSE_STATUS_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+      </div>
+    </SidePanel>
   )
 }

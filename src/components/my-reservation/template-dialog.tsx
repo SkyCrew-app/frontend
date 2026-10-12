@@ -1,21 +1,12 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { ReservationTemplate } from "@/interfaces/reservation-template"
-import { Loader2 } from "lucide-react"
+import { SidePanel } from "@/components/layout/SidePanel"
 import { FLIGHT_CATEGORY_OPTIONS } from "@/components/reservation/flight-category"
 
 interface Aircraft {
@@ -53,10 +44,13 @@ export function TemplateDialog({ open, onOpenChange, template, aircraftList, onS
   const [purpose, setPurpose] = useState("")
   const [notes, setNotes] = useState("")
   const [estimatedHours, setEstimatedHours] = useState("")
-  const [submitted, setSubmitted] = useState(false)
+  // Errors only show once the step they belong to has been checked.
+  const [nameChecked, setNameChecked] = useState(false)
+  const [timeChecked, setTimeChecked] = useState(false)
 
   useEffect(() => {
-    setSubmitted(false)
+    setNameChecked(false)
+    setTimeChecked(false)
     if (template) {
       setName(template.name)
       setAircraftId(template.aircraft?.id?.toString() ?? "none")
@@ -80,16 +74,24 @@ export function TemplateDialog({ open, onOpenChange, template, aircraftList, onS
     }
   }, [template, open])
 
-  const nameError = submitted && !name.trim() ? "Donnez un nom au modèle." : undefined
-  const timeError =
-    submitted && startTime && endTime && endTime <= startTime
-      ? "L'heure de fin doit être après l'heure de début."
-      : undefined
+  const nameMissing = !name.trim()
+  const timeInvalid = !!startTime && !!endTime && endTime <= startTime
+  const nameError = nameChecked && nameMissing ? "Donnez un nom au modèle." : undefined
+  const timeError = timeChecked && timeInvalid ? "L'heure de fin doit être après l'heure de début." : undefined
 
-  const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault()
-    setSubmitted(true)
-    if (!name.trim() || (startTime && endTime && endTime <= startTime)) return
+  const validateIdentity = () => {
+    setNameChecked(true)
+    return !nameMissing
+  }
+
+  const validateSlot = () => {
+    setTimeChecked(true)
+    return !timeInvalid
+  }
+
+  const handleSubmit = () => {
+    // Both steps were checked on the way here; this is the last guard before saving.
+    if (!validateIdentity() || !validateSlot()) return
 
     const data: any = {
       name: name.trim(),
@@ -107,157 +109,161 @@ export function TemplateDialog({ open, onOpenChange, template, aircraftList, onS
     onSave(data)
   }
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>{template ? "Modifier le modèle" : "Nouveau modèle"}</DialogTitle>
-          <DialogDescription>
-            Un modèle préremplit le formulaire de réservation pour vos vols habituels.
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+  const identityFields = (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="template-name">
+          Nom du modèle{" "}
+          <span className="text-destructive" aria-hidden="true">
+            *
+          </span>
+        </Label>
+        <Input
+          id="template-name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Ex. : vol du samedi matin"
+          aria-invalid={!!nameError}
+          aria-required="true"
+        />
+        {nameError && <p className="text-sm text-destructive">{nameError}</p>}
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="template-aircraft">Avion</Label>
+          <Select value={aircraftId} onValueChange={setAircraftId}>
+            <SelectTrigger id="template-aircraft">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Au choix</SelectItem>
+              {aircraftList.map((a) => (
+                <SelectItem key={a.id} value={a.id.toString()}>
+                  {a.registration_number} — {a.model}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="template-category">Catégorie de vol</Label>
+          <Select value={flightCategory} onValueChange={setFlightCategory}>
+            <SelectTrigger id="template-category">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {FLIGHT_CATEGORY_OPTIONS.map((c) => (
+                <SelectItem key={c.value} value={c.value}>
+                  {c.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="template-purpose">But du vol</Label>
+        <Input
+          id="template-purpose"
+          value={purpose}
+          onChange={(e) => setPurpose(e.target.value)}
+          placeholder="Ex. : tours de piste"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="template-notes">Notes</Label>
+        <Textarea
+          id="template-notes"
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          rows={3}
+          placeholder="Passagers, plein à prévoir, consignes particulières…"
+        />
+      </div>
+    </div>
+  )
+
+  const slotFields = (
+    <div className="space-y-4">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="template-day">Jour habituel</Label>
+          <Select value={dayOfWeek} onValueChange={setDayOfWeek}>
+            <SelectTrigger id="template-day">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Aucun</SelectItem>
+              {DAYS.map((d) => (
+                <SelectItem key={d.value} value={d.value}>
+                  {d.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="template-hours">Durée de vol (h)</Label>
+          <Input
+            id="template-hours"
+            type="number"
+            step="0.5"
+            min="0"
+            max="24"
+            inputMode="decimal"
+            value={estimatedHours}
+            onChange={(e) => setEstimatedHours(e.target.value)}
+            placeholder="1,5"
+          />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="template-name">
-              Nom du modèle{" "}
-              <span className="text-destructive" aria-hidden="true">
-                *
-              </span>
-            </Label>
+            <Label htmlFor="template-start">Heure de début</Label>
+            <Input id="template-start" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="template-end">Heure de fin</Label>
             <Input
-              id="template-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Ex. : vol du samedi matin"
-              aria-invalid={!!nameError}
-              aria-required="true"
-            />
-            {nameError && <p className="text-sm text-destructive">{nameError}</p>}
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="template-aircraft">Avion</Label>
-              <Select value={aircraftId} onValueChange={setAircraftId}>
-                <SelectTrigger id="template-aircraft">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Au choix</SelectItem>
-                  {aircraftList.map((a) => (
-                    <SelectItem key={a.id} value={a.id.toString()}>
-                      {a.registration_number} — {a.model}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="template-category">Catégorie de vol</Label>
-              <Select value={flightCategory} onValueChange={setFlightCategory}>
-                <SelectTrigger id="template-category">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {FLIGHT_CATEGORY_OPTIONS.map((c) => (
-                    <SelectItem key={c.value} value={c.value}>
-                      {c.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-              <div className="col-span-2 space-y-2 sm:col-span-1">
-                <Label htmlFor="template-day">Jour habituel</Label>
-                <Select value={dayOfWeek} onValueChange={setDayOfWeek}>
-                  <SelectTrigger id="template-day">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Aucun</SelectItem>
-                    {DAYS.map((d) => (
-                      <SelectItem key={d.value} value={d.value}>
-                        {d.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="template-start">Heure de début</Label>
-                <Input
-                  id="template-start"
-                  type="time"
-                  value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="template-end">Heure de fin</Label>
-                <Input
-                  id="template-end"
-                  type="time"
-                  value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
-                  aria-invalid={!!timeError}
-                />
-              </div>
-            </div>
-            {timeError && <p className="text-sm text-destructive">{timeError}</p>}
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="template-purpose">But du vol</Label>
-              <Input
-                id="template-purpose"
-                value={purpose}
-                onChange={(e) => setPurpose(e.target.value)}
-                placeholder="Ex. : tours de piste"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="template-hours">Durée de vol (h)</Label>
-              <Input
-                id="template-hours"
-                type="number"
-                step="0.5"
-                min="0"
-                max="24"
-                inputMode="decimal"
-                value={estimatedHours}
-                onChange={(e) => setEstimatedHours(e.target.value)}
-                placeholder="1,5"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="template-notes">Notes</Label>
-            <Textarea
-              id="template-notes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={2}
-              placeholder="Passagers, plein à prévoir, consignes particulières…"
+              id="template-end"
+              type="time"
+              value={endTime}
+              onChange={(e) => setEndTime(e.target.value)}
+              aria-invalid={!!timeError}
             />
           </div>
+        </div>
+        {timeError && <p className="text-sm text-destructive">{timeError}</p>}
+      </div>
+    </div>
+  )
 
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
-              Annuler
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-              {template ? "Enregistrer" : "Créer le modèle"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+  return (
+    <SidePanel
+      open={open}
+      onOpenChange={(next) => {
+        if (!next && loading) return
+        onOpenChange(next)
+      }}
+      title={template ? "Modifier le modèle" : "Nouveau modèle"}
+      description="Un modèle préremplit le formulaire de réservation pour vos vols habituels."
+      onSubmit={handleSubmit}
+      submitLabel={template ? "Enregistrer" : "Créer le modèle"}
+      submitting={loading}
+      steps={[
+        { title: "Vol", content: identityFields, validate: validateIdentity },
+        {
+          title: "Créneau habituel",
+          description: "Facultatif : le jour et l'horaire proposés quand vous utilisez le modèle.",
+          content: slotFields,
+          validate: validateSlot,
+        },
+      ]}
+    />
   )
 }

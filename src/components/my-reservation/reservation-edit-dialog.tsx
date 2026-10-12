@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react"
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import type { Reservation } from "@/interfaces/reservation"
 import { ReservationForm } from "@/components/reservation/reservation-form"
 
@@ -14,7 +13,7 @@ interface ReservationEditDialogProps {
   onSave: (purpose: string, notes: string, flightCategory: string) => Promise<void>
 }
 
-/** Same form as the calendar's edit dialog: purpose, category and notes of a reservation. */
+/** Same panel as the calendar's edit form: purpose, category and notes of a reservation. */
 export function ReservationEditDialog({ isOpen, onOpenChange, reservation, onSave }: ReservationEditDialogProps) {
   const [purpose, setPurpose] = useState("")
   const [notes, setNotes] = useState("")
@@ -43,31 +42,26 @@ export function ReservationEditDialog({ isOpen, onOpenChange, reservation, onSav
   if (!reservation) return null
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Modifier la réservation</DialogTitle>
-          <DialogDescription>L&apos;avion et l&apos;horaire ne sont pas modifiables.</DialogDescription>
-        </DialogHeader>
-        <ReservationForm
-          isEdit
-          summary={{
-            aircraft: reservation.aircraft.registration_number,
-            date: format(new Date(reservation.start_time), "EEEE d MMMM yyyy", { locale: fr }),
-            start: format(new Date(reservation.start_time), "HH:mm"),
-            end: format(new Date(reservation.end_time), "HH:mm"),
-          }}
-          purpose={purpose}
-          setPurpose={setPurpose}
-          notes={notes}
-          setNotes={setNotes}
-          flightCategory={flightCategory}
-          setFlightCategory={setFlightCategory}
-          onSubmit={handleSave}
-          onCancel={() => onOpenChange(false)}
-          isSubmitting={isSubmitting}
-        />
-      </DialogContent>
-    </Dialog>
+    <ReservationForm
+      open={isOpen}
+      onOpenChange={onOpenChange}
+      title="Modifier la réservation"
+      description="L'avion et l'horaire ne sont pas modifiables."
+      isEdit
+      summary={{
+        aircraft: reservation.aircraft.registration_number,
+        date: format(new Date(reservation.start_time), "EEEE d MMMM yyyy", { locale: fr }),
+        start: format(new Date(reservation.start_time), "HH:mm"),
+        end: format(new Date(reservation.end_time), "HH:mm"),
+      }}
+      purpose={purpose}
+      setPurpose={setPurpose}
+      notes={notes}
+      setNotes={setNotes}
+      flightCategory={flightCategory}
+      setFlightCategory={setFlightCategory}
+      onSubmit={handleSave}
+      isSubmitting={isSubmitting}
+    />
   )
 }

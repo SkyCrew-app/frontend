@@ -1,6 +1,5 @@
 "use client"
 
-import type React from "react"
 import { useState } from "react"
 import { useMutation, useQuery } from "@apollo/client"
 import { ClipboardList, HelpCircle, Loader2, MoreHorizontal, Pencil, Plus, Search, Trash2 } from "lucide-react"
@@ -14,14 +13,6 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -34,6 +25,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { EmptyState } from "@/components/layout/EmptyState"
 import { ErrorState } from "@/components/layout/ErrorState"
+import { SidePanel } from "@/components/layout/SidePanel"
 import { toast } from "@/components/hooks/use-toast"
 import { ConfirmDeleteDialog } from "@/components/e-learning/ConfirmDeleteDialog"
 import { FormField } from "@/components/e-learning/FormField"
@@ -104,8 +96,7 @@ export function EvaluationManagement() {
         : "Indiquez un score entre 1 et 100.",
   }
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault()
+  const handleSubmit = async () => {
     setSubmitted(true)
     if (errors.moduleId || errors.passScore) return
 
@@ -288,82 +279,74 @@ export function EvaluationManagement() {
         </div>
       )}
 
-      <Dialog open={isFormOpen} onOpenChange={(open) => !saving && setIsFormOpen(open)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>{isEdit ? "Modifier l'évaluation" : "Créer une évaluation"}</DialogTitle>
-            <DialogDescription>
-              {isEdit
-                ? `Évaluation du module « ${form.moduleTitle} ».`
-                : "Choisissez le module évalué ; les questions s'ajoutent juste après."}
-            </DialogDescription>
-          </DialogHeader>
-
-          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-            {!isEdit && (
-              <FormField label="Module" htmlFor="evaluation-module" required error={submitted ? errors.moduleId : null}>
-                <Select value={form.moduleId} onValueChange={(value) => setForm({ ...form, moduleId: value })}>
-                  <SelectTrigger id="evaluation-module">
-                    <SelectValue placeholder="Choisir un module" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {modulesQuery.loading && modules.length === 0 ? (
-                      <div className="flex items-center justify-center gap-2 p-3 text-sm text-muted-foreground">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Chargement des modules
-                      </div>
-                    ) : modules.length === 0 ? (
-                      <div className="p-3 text-center text-sm text-muted-foreground">
-                        Aucun module : créez-en un dans l'onglet Modules.
-                      </div>
-                    ) : (
-                      modules.map((module) => (
-                        <SelectItem key={module.id} value={String(module.id)}>
-                          {module.title}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-              </FormField>
-            )}
-
-            <FormField
-              label="Score de réussite"
-              htmlFor="evaluation-pass-score"
-              required
-              error={submitted ? errors.passScore : null}
-              hint="Part de bonnes réponses à atteindre pour réussir."
-            >
-              <div className="flex items-center gap-2">
-                <Input
-                  id="evaluation-pass-score"
-                  type="number"
-                  inputMode="numeric"
-                  min={1}
-                  max={100}
-                  step={1}
-                  className="w-28 text-right tabular-nums"
-                  value={form.passScore}
-                  onChange={(event) => setForm({ ...form, passScore: event.target.value })}
-                  aria-invalid={submitted && !!errors.passScore}
-                />
-                <span className="text-sm text-muted-foreground">%</span>
-              </div>
+      <SidePanel
+        open={isFormOpen}
+        onOpenChange={(open) => !saving && setIsFormOpen(open)}
+        title={isEdit ? "Modifier l'évaluation" : "Créer une évaluation"}
+        description={
+          isEdit
+            ? `Évaluation du module « ${form.moduleTitle} ».`
+            : "Choisissez le module évalué ; les questions s'ajoutent juste après."
+        }
+        onSubmit={handleSubmit}
+        submitLabel={isEdit ? "Enregistrer" : "Créer l'évaluation"}
+        submitting={saving}
+        size="md"
+      >
+        <div className="space-y-4">
+          {!isEdit && (
+            <FormField label="Module" htmlFor="evaluation-module" required error={submitted ? errors.moduleId : null}>
+              <Select value={form.moduleId} onValueChange={(value) => setForm({ ...form, moduleId: value })}>
+                <SelectTrigger id="evaluation-module">
+                  <SelectValue placeholder="Choisir un module" />
+                </SelectTrigger>
+                <SelectContent>
+                  {modulesQuery.loading && modules.length === 0 ? (
+                    <div className="flex items-center justify-center gap-2 p-3 text-sm text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Chargement des modules
+                    </div>
+                  ) : modules.length === 0 ? (
+                    <div className="p-3 text-center text-sm text-muted-foreground">
+                      Aucun module : créez-en un dans l'onglet Modules.
+                    </div>
+                  ) : (
+                    modules.map((module) => (
+                      <SelectItem key={module.id} value={String(module.id)}>
+                        {module.title}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
             </FormField>
+          )}
 
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsFormOpen(false)} disabled={saving}>
-                Annuler
-              </Button>
-              <Button type="submit" disabled={saving}>
-                {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                {isEdit ? "Enregistrer" : "Créer l'évaluation"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+          <FormField
+            label="Score de réussite"
+            htmlFor="evaluation-pass-score"
+            required
+            error={submitted ? errors.passScore : null}
+            hint="Part de bonnes réponses à atteindre pour réussir."
+          >
+            <div className="flex items-center gap-2">
+              <Input
+                id="evaluation-pass-score"
+                type="number"
+                inputMode="numeric"
+                min={1}
+                max={100}
+                step={1}
+                className="w-28 text-right tabular-nums"
+                value={form.passScore}
+                onChange={(event) => setForm({ ...form, passScore: event.target.value })}
+                aria-invalid={submitted && !!errors.passScore}
+              />
+              <span className="text-sm text-muted-foreground">%</span>
+            </div>
+          </FormField>
+        </div>
+      </SidePanel>
 
       <QuestionsDialog evaluation={openedEvaluation} onClose={() => setQuestionsOf(null)} onChanged={() => refetch()} />
 

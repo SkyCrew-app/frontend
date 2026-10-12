@@ -62,17 +62,17 @@ export function FlightPlanActions({ flightPlanId, flightDetails }: FlightPlanAct
       <DropdownMenuContent align="end">
         {/* Wait for the menu to close so it is not part of the printed page. */}
         <DropdownMenuItem onSelect={() => setTimeout(() => window.print(), 150)}>
-          <Printer className="mr-2 h-4 w-4" />
+          <Printer className="h-4 w-4" />
           Imprimer la page
         </DropdownMenuItem>
         {canShare && (
           <DropdownMenuItem onSelect={() => void share()}>
-            <Share2 className="mr-2 h-4 w-4" />
+            <Share2 className="h-4 w-4" />
             Partager
           </DropdownMenuItem>
         )}
         <DropdownMenuItem onSelect={() => void copyLink()}>
-          <Link2 className="mr-2 h-4 w-4" />
+          <Link2 className="h-4 w-4" />
           Copier le lien
         </DropdownMenuItem>
       </DropdownMenuContent>

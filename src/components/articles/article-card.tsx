@@ -49,7 +49,7 @@ export function ArticleCard({ article, viewMode }: ArticleCardProps) {
         />
 
         <div className="flex min-w-0 flex-1 flex-col gap-2 p-5">
-          <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <p className="flex items-center gap-2 text-xs text-muted-foreground">
             {article.eventDate ? (
               <>
                 <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
@@ -77,7 +77,7 @@ export function ArticleCard({ article, viewMode }: ArticleCardProps) {
               ))}
               {tags.length > MAX_TAGS && <Badge variant="outline">+{tags.length - MAX_TAGS}</Badge>}
             </div>
-            <span className="ml-auto inline-flex items-center gap-1 text-sm font-medium text-primary group-hover:underline">
+            <span className="ml-auto inline-flex items-center gap-2 text-sm font-medium text-primary group-hover:underline">
               Lire l'article
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </span>

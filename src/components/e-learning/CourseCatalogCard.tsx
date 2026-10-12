@@ -82,7 +82,7 @@ export function CourseCatalogCard({ course, progress }: CourseCatalogCardProps) 
           )}
         </CardContent>
         <CardFooter className="justify-end">
-          <span className="inline-flex items-center gap-1 text-sm font-medium text-primary">
+          <span className="inline-flex items-center gap-2 text-sm font-medium text-primary">
             {status?.action ?? "Ouvrir le cours"}
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
           </span>

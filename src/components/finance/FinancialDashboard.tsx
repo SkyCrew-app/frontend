@@ -5,7 +5,6 @@ import { useMutation } from "@apollo/client"
 import { Plus } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { toast } from "@/components/hooks/use-toast"
@@ -155,18 +154,11 @@ export default function FinancialDashboard() {
         </TabsContent>
       </Tabs>
 
-      <Dialog open={isExpenseDialogOpen} onOpenChange={setIsExpenseDialogOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Ajouter une dépense</DialogTitle>
-            <DialogDescription>Elle sera comptée dans les dépenses de la période correspondante.</DialogDescription>
-          </DialogHeader>
-          <ExpenseForm
-            onSuccess={() => setIsExpenseDialogOpen(false)}
-            onCancel={() => setIsExpenseDialogOpen(false)}
-          />
-        </DialogContent>
-      </Dialog>
+      <ExpenseForm
+        open={isExpenseDialogOpen}
+        onSuccess={() => setIsExpenseDialogOpen(false)}
+        onCancel={() => setIsExpenseDialogOpen(false)}
+      />
     </div>
   )
 }

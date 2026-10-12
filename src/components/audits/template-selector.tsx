@@ -8,17 +8,9 @@ import { auditFrequencyLabel } from "@/lib/audit"
 import { cn } from "@/lib/utils"
 import { EmptyState } from "@/components/layout/EmptyState"
 import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import { SidePanel } from "@/components/layout/SidePanel"
 
 interface TemplateSelectorProps {
   isOpen: boolean
@@ -74,17 +66,20 @@ export function TemplateSelector({ isOpen, onClose, onSelectTemplate, aircraftTy
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Choisir un modèle d'audit</DialogTitle>
-          <DialogDescription>
-            {aircraftType
-              ? `Les modèles prévus pour le ${aircraftType} apparaissent en premier.`
-              : "Le modèle ajoute à l'audit la liste des éléments à vérifier."}
-          </DialogDescription>
-        </DialogHeader>
-
+    <SidePanel
+      open={isOpen}
+      onOpenChange={(open) => !open && onClose()}
+      title="Choisir un modèle d'audit"
+      description={
+        aircraftType
+          ? `Les modèles prévus pour le ${aircraftType} apparaissent en premier.`
+          : "Le modèle ajoute à l'audit la liste des éléments à vérifier."
+      }
+      onSubmit={handleConfirmSelection}
+      submitLabel="Utiliser ce modèle"
+      submitDisabled={selectedTemplateId === null}
+    >
+      <div className="space-y-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -159,15 +154,7 @@ export function TemplateSelector({ isOpen, onClose, onSelectTemplate, aircraftTy
           />
         )}
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Annuler
-          </Button>
-          <Button onClick={handleConfirmSelection} disabled={selectedTemplateId === null}>
-            Utiliser ce modèle
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </SidePanel>
   )
 }

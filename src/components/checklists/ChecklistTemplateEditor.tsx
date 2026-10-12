@@ -11,14 +11,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog"
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -28,8 +20,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { ClipboardList, GripVertical, Loader2, Pencil, Plus, Trash2 } from "lucide-react"
+import { ClipboardList, GripVertical, Pencil, Plus, Trash2 } from "lucide-react"
 import { EmptyState } from "@/components/layout/EmptyState"
+import { SidePanel } from "@/components/layout/SidePanel"
 import { cn } from "@/lib/utils"
 import { ChecklistItem, ChecklistTemplate, CATEGORY_LABELS, CATEGORY_ORDER } from "@/interfaces/checklist"
 import {
@@ -211,92 +204,81 @@ export function ChecklistTemplateEditor({
         ))}
       </DragDropContext>
 
-      {/* Add / edit item dialog */}
-      <Dialog open={showItemForm} onOpenChange={(open) => !saving && setShowItemForm(open)}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{editingItem ? "Modifier le point" : "Ajouter un point"}</DialogTitle>
-            <DialogDescription>
-              {editingItem
-                ? "Les checklists déjà commencées afficheront la nouvelle version."
-                : "Une vérification que le pilote cochera avant le vol."}
-            </DialogDescription>
-          </DialogHeader>
-          <form
-            className="space-y-4"
-            onSubmit={(e) => {
-              e.preventDefault()
-              void handleSubmitItem()
-            }}
-          >
-            <div className="space-y-2">
-              <Label htmlFor="item-name">
-                Intitulé
-                <span className="text-destructive" aria-hidden="true">
-                  {" *"}
-                </span>
+      {/* Add / edit item panel */}
+      <SidePanel
+        open={showItemForm}
+        onOpenChange={(open) => !saving && setShowItemForm(open)}
+        title={editingItem ? "Modifier le point" : "Ajouter un point"}
+        description={
+          editingItem
+            ? "Les checklists déjà commencées afficheront la nouvelle version."
+            : "Une vérification que le pilote cochera avant le vol."
+        }
+        onSubmit={handleSubmitItem}
+        submitLabel={editingItem ? "Enregistrer" : "Ajouter"}
+        submitting={saving}
+        submitDisabled={!draft.item_name.trim()}
+        size="md"
+      >
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="item-name">
+              Intitulé
+              <span className="text-destructive" aria-hidden="true">
+                {" *"}
+              </span>
+            </Label>
+            <Input
+              id="item-name"
+              value={draft.item_name}
+              onChange={(e) => setDraft({ ...draft, item_name: e.target.value })}
+              placeholder="Vérifier le niveau d'huile"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="item-desc">Précisions</Label>
+            <Textarea
+              id="item-desc"
+              value={draft.description}
+              onChange={(e) => setDraft({ ...draft, description: e.target.value })}
+              placeholder="Entre 6 et 8 quarts sur la jauge"
+            />
+            <p className="text-xs text-muted-foreground">Facultatif. Affiché sous l&apos;intitulé pendant la visite prévol.</p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="item-category">Catégorie</Label>
+            <Select value={draft.category} onValueChange={(val) => setDraft({ ...draft, category: val })}>
+              <SelectTrigger id="item-category">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {CATEGORY_ORDER.map((cat) => (
+                  <SelectItem key={cat} value={cat}>
+                    {CATEGORY_LABELS[cat]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-start gap-3 rounded-lg border p-3">
+            <Checkbox
+              id="item-required"
+              checked={draft.is_required}
+              onCheckedChange={(val) => setDraft({ ...draft, is_required: val === true })}
+              className="mt-0.5"
+            />
+            <div className="space-y-0.5">
+              <Label htmlFor="item-required" className="cursor-pointer">
+                Obligatoire
               </Label>
-              <Input
-                id="item-name"
-                value={draft.item_name}
-                onChange={(e) => setDraft({ ...draft, item_name: e.target.value })}
-                placeholder="Vérifier le niveau d'huile"
-                required
-              />
+              <p className="text-xs text-muted-foreground">
+                La checklist ne peut pas être terminée tant que ce point n&apos;est pas coché.
+              </p>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="item-desc">Précisions</Label>
-              <Textarea
-                id="item-desc"
-                value={draft.description}
-                onChange={(e) => setDraft({ ...draft, description: e.target.value })}
-                placeholder="Entre 6 et 8 quarts sur la jauge"
-              />
-              <p className="text-xs text-muted-foreground">Facultatif. Affiché sous l&apos;intitulé pendant la visite prévol.</p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="item-category">Catégorie</Label>
-              <Select value={draft.category} onValueChange={(val) => setDraft({ ...draft, category: val })}>
-                <SelectTrigger id="item-category">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {CATEGORY_ORDER.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {CATEGORY_LABELS[cat]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-start gap-3 rounded-lg border p-3">
-              <Checkbox
-                id="item-required"
-                checked={draft.is_required}
-                onCheckedChange={(val) => setDraft({ ...draft, is_required: val === true })}
-                className="mt-0.5"
-              />
-              <div className="space-y-0.5">
-                <Label htmlFor="item-required" className="cursor-pointer">
-                  Obligatoire
-                </Label>
-                <p className="text-xs text-muted-foreground">
-                  La checklist ne peut pas être terminée tant que ce point n&apos;est pas coché.
-                </p>
-              </div>
-            </div>
-            <DialogFooter className="gap-2 sm:gap-0">
-              <Button type="button" variant="outline" onClick={() => setShowItemForm(false)} disabled={saving}>
-                Annuler
-              </Button>
-              <Button type="submit" disabled={saving || !draft.item_name.trim()}>
-                {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                {editingItem ? "Enregistrer" : "Ajouter"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+          </div>
+        </div>
+      </SidePanel>
 
       <AlertDialog open={itemToDelete !== null} onOpenChange={(open) => !open && setItemToDelete(null)}>
         <AlertDialogContent>
