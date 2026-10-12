@@ -128,7 +128,7 @@ export function ChecklistTemplateEditor({
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-medium">
                                 {item.item_name}
-                                {item.is_required && <span className="text-red-500 ml-1">*</span>}
+                                {item.is_required && <span className="text-destructive ml-1">*</span>}
                               </p>
                               {item.description && (
                                 <p className="text-xs text-muted-foreground truncate">{item.description}</p>
@@ -146,7 +146,7 @@ export function ChecklistTemplateEditor({
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+                              className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
                               onClick={() => setDeleteConfirmId(item.id)}
                               aria-label={`Supprimer l'item ${item.item_name}`}
                             >

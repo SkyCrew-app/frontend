@@ -58,11 +58,11 @@ export default function ArticlePage() {
 
   if (loading) {
     return (
-      <div className="container max-w-4xl mx-auto p-6">
+      <div className="max-w-4xl mx-auto">
         <div className="mb-4 flex items-center">
           <Skeleton className="h-10 w-24" />
         </div>
-        <Card className="overflow-hidden shadow-lg">
+        <Card className="overflow-hidden">
           <Skeleton className="h-72 w-full" />
           <div className="p-6">
             <Skeleton className="h-10 w-3/4 mb-4" />
@@ -86,7 +86,7 @@ export default function ArticlePage() {
 
   if (error || !data?.article) {
     return (
-      <div className="container max-w-4xl mx-auto p-6">
+      <div className="max-w-4xl mx-auto">
         <Button variant="ghost" className="mb-6 flex items-center" onClick={() => router.back()}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Retour
@@ -194,14 +194,14 @@ END:VCALENDAR`
   }
 
   return (
-    <div className="container max-w-4xl mx-auto p-6 print:p-0">
+    <div className="max-w-4xl mx-auto print:p-0">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
         <Button variant="ghost" className="mb-6 flex items-center print:hidden" onClick={() => router.back()}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Retour aux articles
         </Button>
 
-        <Card className="overflow-hidden shadow-lg print:shadow-none">
+        <Card className="overflow-hidden print:shadow-none">
           <CardHeader className="p-0 relative">
             <div className="relative w-full h-[400px] bg-muted/30">
               {!imageLoaded && (
@@ -341,7 +341,7 @@ END:VCALENDAR`
             <h2 className="text-2xl font-bold mb-6">Articles similaires</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {article.relatedArticles.map((relatedArticle: any) => (
-                <Card key={relatedArticle.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                <Card key={relatedArticle.id} className="overflow-hidden hover:shadow-md transition-shadow">
                   <div className="h-40 overflow-hidden">
                     <img
                       src={

@@ -100,7 +100,7 @@ export function AirportSearch({ value, onChange, label, placeholder }: AirportSe
                   Recherche en cours...
                 </div>
               ) : error ? (
-                <div className="flex items-center justify-center p-4 text-amber-500">
+                <div className="flex items-center justify-center p-4 text-warning">
                   <AlertTriangle className="mr-2 h-4 w-4" />
                   {error}
                 </div>

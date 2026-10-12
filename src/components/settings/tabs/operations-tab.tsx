@@ -16,7 +16,7 @@ export function OperationsTab() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-      <Card className="border-t-4 border-t-primary shadow-md">
+      <Card className="border-t-4 border-t-primary">
         <CardHeader className="pb-2">
           <CardTitle className="text-xl">Opérations</CardTitle>
           <CardDescription>Configurez les paramètres opérationnels de l'aéroclub.</CardDescription>
@@ -24,7 +24,7 @@ export function OperationsTab() {
         <CardContent className="space-y-6">
           <div>
             <h3 className="text-lg font-semibold flex items-center gap-2 mb-4">
-              <Calendar className="h-5 w-5 text-blue-500" />
+              <Calendar className="h-5 w-5 text-info" />
               Jours de fermeture
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -49,7 +49,7 @@ export function OperationsTab() {
           <Separator />
           <div className="space-y-4">
             <h3 className="text-lg font-semibold flex items-center gap-2 mb-4">
-              <Clock className="h-5 w-5 text-blue-500" />
+              <Clock className="h-5 w-5 text-info" />
               Horaires de réservation
             </h3>
             <div className="space-y-2">
@@ -83,7 +83,7 @@ export function OperationsTab() {
           <Separator />
           <div className="space-y-4">
             <h3 className="text-lg font-semibold flex items-center gap-2 mb-4">
-              <Tool className="h-5 w-5 text-blue-500" />
+              <Tool className="h-5 w-5 text-info" />
               Maintenance hebdomadaire
             </h3>
             <div className="space-y-2">
@@ -115,7 +115,7 @@ export function OperationsTab() {
                 step="1"
               />
               {formState.errors.maintenanceDuration && (
-                <p className="text-sm text-red-500">{formState.errors.maintenanceDuration.message as string}</p>
+                <p className="text-sm text-destructive">{formState.errors.maintenanceDuration.message as string}</p>
               )}
             </div>
           </div>

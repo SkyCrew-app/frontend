@@ -179,7 +179,7 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
 
   const saveProfileChanges = async () => {
     if (!validateForm()) {
-      const firstErrorElement = document.querySelector(".border-red-500")
+      const firstErrorElement = document.querySelector(".border-destructive")
       if (firstErrorElement) {
         firstErrorElement.scrollIntoView({ behavior: "smooth", block: "center" })
       }
@@ -218,7 +218,7 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
         await refetch()
 
         setTimeout(() => {
-          const successMessage = document.querySelector(".bg-green-50")
+          const successMessage = document.querySelector("[data-save-success]")
           if (successMessage) {
             successMessage.scrollIntoView({ behavior: "smooth", block: "center" })
           }
@@ -244,7 +244,7 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <Card className="w-full shadow-md">
+      <Card className="w-full">
         <CardHeader className="pb-4">
           <CardTitle className="text-xl font-semibold">Informations personnelles</CardTitle>
         </CardHeader>
@@ -281,7 +281,7 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
                 className="hidden"
               />
             </div>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-muted-foreground">
               Cliquez sur l'icône pour changer votre photo de profil
             </p>
           </div>
@@ -297,9 +297,9 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
                 name="first_name"
                 value={formData.first_name}
                 onChange={handleChange}
-                className={cn(errors.first_name ? "border-red-500" : "", "mt-1")}
+                className={cn(errors.first_name ? "border-destructive" : "", "mt-1")}
               />
-              {errors.first_name && <p className="text-red-500 text-sm mt-1">{errors.first_name}</p>}
+              {errors.first_name && <p className="text-destructive text-sm mt-1">{errors.first_name}</p>}
             </div>
 
             <div>
@@ -312,9 +312,9 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
                 name="last_name"
                 value={formData.last_name}
                 onChange={handleChange}
-                className={cn(errors.last_name ? "border-red-500" : "", "mt-1")}
+                className={cn(errors.last_name ? "border-destructive" : "", "mt-1")}
               />
-              {errors.last_name && <p className="text-red-500 text-sm mt-1">{errors.last_name}</p>}
+              {errors.last_name && <p className="text-destructive text-sm mt-1">{errors.last_name}</p>}
             </div>
 
             <div>
@@ -327,9 +327,9 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className={cn(errors.email ? "border-red-500" : "", "mt-1")}
+                className={cn(errors.email ? "border-destructive" : "", "mt-1")}
               />
-              {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+              {errors.email && <p className="text-destructive text-sm mt-1">{errors.email}</p>}
             </div>
 
             <div>
@@ -342,9 +342,9 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
                 name="phone_number"
                 value={formData.phone_number}
                 onChange={handleChange}
-                className={cn(errors.phone_number ? "border-red-500" : "", "mt-1")}
+                className={cn(errors.phone_number ? "border-destructive" : "", "mt-1")}
               />
-              {errors.phone_number && <p className="text-red-500 text-sm mt-1">{errors.phone_number}</p>}
+              {errors.phone_number && <p className="text-destructive text-sm mt-1">{errors.phone_number}</p>}
             </div>
 
             <div>
@@ -357,11 +357,11 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
                 name="address"
                 value={formData.address}
                 onChange={handleChange}
-                className={cn(errors.address ? "border-red-500" : "", "mt-1")}
+                className={cn(errors.address ? "border-destructive" : "", "mt-1")}
               />
-              {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
+              {errors.address && <p className="text-destructive text-sm mt-1">{errors.address}</p>}
               {addressSuggestions.length > 0 && (
-                <ul className="border border-gray-300 mt-2 rounded-lg max-h-40 overflow-auto shadow-md z-10 relative bg-background">
+                <ul className="border border-border mt-2 rounded-lg max-h-40 overflow-auto shadow-md z-10 relative bg-background">
                   {addressSuggestions.map((suggestion, index) => (
                     <li
                       key={index}
@@ -386,9 +386,9 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
                 type="date"
                 value={formData.date_of_birth ? new Date(formData.date_of_birth).toISOString().split("T")[0] : ""}
                 onChange={handleChange}
-                className={cn(errors.date_of_birth ? "border-red-500" : "", "mt-1")}
+                className={cn(errors.date_of_birth ? "border-destructive" : "", "mt-1")}
               />
-              {errors.date_of_birth && <p className="text-red-500 text-sm mt-1">{errors.date_of_birth}</p>}
+              {errors.date_of_birth && <p className="text-destructive text-sm mt-1">{errors.date_of_birth}</p>}
             </div>
           </div>
 
@@ -396,7 +396,8 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-green-50 text-green-700 p-3 rounded-md text-sm border border-green-200"
+              data-save-success
+              className="bg-success/10 text-success p-3 rounded-md text-sm border border-success/30"
             >
               Vos informations ont été enregistrées avec succès.
             </motion.div>

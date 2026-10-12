@@ -36,13 +36,13 @@ function getStatusBadge(payment_status: string) {
   switch (payment_status) {
     case "completed":
       return (
-        <Badge variant="default" className="bg-green-100 text-green-800 hover:bg-green-200">
+        <Badge variant="default" className="bg-success/15 text-success hover:bg-success/20">
           Payé
         </Badge>
       )
     case "pending":
       return (
-        <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200">
+        <Badge variant="secondary" className="bg-warning/15 text-warning hover:bg-warning/20">
           En attente
         </Badge>
       )
@@ -55,9 +55,9 @@ function getStatusBadge(payment_status: string) {
 
 function getTransactionIcon(payment_method: string) {
   return ["stripe", "paypal"].includes(payment_method.toLowerCase()) ? (
-    <PlusCircle className="inline-block mr-2 text-green-500" size={16} />
+    <PlusCircle className="inline-block mr-2 text-success" size={16} />
   ) : (
-    <MinusCircle className="inline-block mr-2 text-red-500" size={16} />
+    <MinusCircle className="inline-block mr-2 text-destructive" size={16} />
   )
 }
 
@@ -99,7 +99,7 @@ export default function TransactionHistory() {
 
   if (loading) {
     return (
-      <Card className="w-full shadow-md">
+      <Card className="w-full">
         <CardHeader>
           <Skeleton className="h-8 w-64 mb-2" />
           <Skeleton className="h-4 w-96" />
@@ -176,7 +176,7 @@ export default function TransactionHistory() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: 0.1 }}
     >
-      <Card className="w-full shadow-md">
+      <Card className="w-full">
         <CardHeader className="pb-2">
           <CardTitle className="text-xl font-semibold flex items-center">
             <FileText className="mr-2 h-5 w-5 text-primary" />
@@ -273,8 +273,8 @@ export default function TransactionHistory() {
                         <span
                           className={
                             transaction.payment_method.toLowerCase() === "account_balance"
-                              ? "text-red-500 font-medium"
-                              : "text-green-500 font-medium"
+                              ? "text-destructive font-medium"
+                              : "text-success font-medium"
                           }
                         >
                           €{transaction.amount.toFixed(2)}

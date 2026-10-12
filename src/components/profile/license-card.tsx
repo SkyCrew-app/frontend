@@ -29,11 +29,11 @@ export function LicenseCard({ license }: LicenseCardProps) {
       whileHover={{ scale: 1.02 }}
       transition={{ duration: 0.2 }}
     >
-      <Card className="flex flex-col shadow-md hover:shadow-lg transition-shadow duration-300 h-full">
+      <Card className="flex flex-col hover:shadow-md transition-shadow duration-300 h-full">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center text-xl">
-              <Award className="mr-3 text-blue-500" size={24} />
+              <Award className="mr-3 text-info" size={24} />
               {license.license_type}
             </CardTitle>
             <Badge variant={license.is_valid ? "default" : "destructive"} className="text-sm px-3 py-1">
@@ -43,32 +43,32 @@ export function LicenseCard({ license }: LicenseCardProps) {
         </CardHeader>
         <CardContent className="flex-grow space-y-4 pt-2">
           <div className="grid grid-cols-1 gap-3">
-            <div className="flex items-center text-base text-gray-600 dark:text-gray-300">
-              <Hash className="mr-3 text-gray-400 flex-shrink-0" size={18} />
+            <div className="flex items-center text-base text-muted-foreground">
+              <Hash className="mr-3 text-muted-foreground flex-shrink-0" size={18} />
               <div className="flex-grow">
                 <span className="font-medium">Numéro:</span>
                 <span className="ml-1 break-all">{license.license_number}</span>
               </div>
             </div>
 
-            <div className="flex items-center text-base text-gray-600 dark:text-gray-300">
-              <Building className="mr-3 text-gray-400 flex-shrink-0" size={18} />
+            <div className="flex items-center text-base text-muted-foreground">
+              <Building className="mr-3 text-muted-foreground flex-shrink-0" size={18} />
               <div className="flex-grow">
                 <span className="font-medium">Autorité:</span>
                 <span className="ml-1 break-all">{license.certification_authority}</span>
               </div>
             </div>
 
-            <div className="flex items-center text-base text-gray-600 dark:text-gray-300">
-              <Calendar className="mr-3 text-green-500 flex-shrink-0" size={18} />
+            <div className="flex items-center text-base text-muted-foreground">
+              <Calendar className="mr-3 text-success flex-shrink-0" size={18} />
               <div className="flex-grow">
                 <span className="font-medium">Délivrée le:</span>
                 <span className="ml-1">{formatDate(license.issue_date)}</span>
               </div>
             </div>
 
-            <div className="flex items-center text-base text-gray-600 dark:text-gray-300">
-              <Calendar className="mr-3 text-red-500 flex-shrink-0" size={18} />
+            <div className="flex items-center text-base text-muted-foreground">
+              <Calendar className="mr-3 text-destructive flex-shrink-0" size={18} />
               <div className="flex-grow">
                 <span className="font-medium">Expire le:</span>
                 <span className="ml-1">{formatDate(license.expiration_date)}</span>
@@ -76,11 +76,11 @@ export function LicenseCard({ license }: LicenseCardProps) {
             </div>
           </div>
 
-          <div className="flex items-center text-base mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex items-center text-base mt-2 pt-2 border-t border-border">
             {license.is_valid ? (
-              <CheckCircle className="mr-3 text-green-500 flex-shrink-0" size={18} />
+              <CheckCircle className="mr-3 text-success flex-shrink-0" size={18} />
             ) : (
-              <AlertCircle className="mr-3 text-red-500 flex-shrink-0" size={18} />
+              <AlertCircle className="mr-3 text-destructive flex-shrink-0" size={18} />
             )}
             <span className="font-medium">{license.is_valid ? "Valide" : "Non valide"}</span>
           </div>

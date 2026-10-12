@@ -103,7 +103,7 @@ function FlightPlanLoader() {
 
           {/* Departure dot */}
           <div className="absolute top-1/2 left-8 -translate-y-1/2 -translate-x-1/2">
-            <div className="w-3 h-3 rounded-full bg-green-500 ring-4 ring-green-500/20" />
+            <div className="w-3 h-3 rounded-full bg-success ring-4 ring-success/20" />
           </div>
 
           {/* Arrival dot */}
@@ -156,7 +156,7 @@ function FlightPlanLoader() {
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
                     isDone
-                      ? "bg-green-500/20 text-green-500"
+                      ? "bg-success/20 text-success"
                       : isActive
                         ? "bg-primary/20 text-primary"
                         : "bg-muted text-muted-foreground"
@@ -406,7 +406,7 @@ export default function FlightPlanDetails() {
   /* ================================================================== */
   if (error || !data?.getFlightById) {
     return (
-      <div className="container mx-auto px-4 py-16 max-w-xl">
+      <div className="mx-auto max-w-xl">
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
           <Alert variant="destructive" className="shadow-lg">
             <AlertTriangle className="h-5 w-5" />
@@ -483,7 +483,7 @@ export default function FlightPlanDetails() {
             }}
           />
 
-          <div className="container mx-auto px-4 py-8 md:py-12 relative">
+          <div className="relative">
             {/* Top row: badge + OFP button */}
             <div className="flex items-center justify-between mb-6">
               <Badge variant="outline" className="text-xs font-mono tracking-wider">
@@ -522,7 +522,7 @@ export default function FlightPlanDetails() {
 
               {/* Route line */}
               <div className="flex items-center gap-3 px-4">
-                <div className="w-2.5 h-2.5 rounded-full bg-green-500 ring-4 ring-green-500/20 shrink-0" />
+                <div className="w-2.5 h-2.5 rounded-full bg-success ring-4 ring-success/20 shrink-0" />
                 <div className="relative w-24 md:w-40">
                   <div className="h-[2px] bg-border w-full" />
                   <motion.div
@@ -567,7 +567,7 @@ export default function FlightPlanDetails() {
       {/* ============================================================ */}
       {/*  MAIN CONTENT                                                 */}
       {/* ============================================================ */}
-      <div className="container mx-auto px-4 py-8 space-y-10">
+      <div className="space-y-10">
         {/* ---- Flight Summary ---- */}
         <Section delay={0.1}>
           <FlightSummary

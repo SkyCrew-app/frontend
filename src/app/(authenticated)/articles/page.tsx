@@ -90,8 +90,8 @@ export default function ArticlesPage() {
 
   if (error)
     return (
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="rounded-lg bg-red-50 p-6 text-red-800 dark:bg-red-950 dark:text-red-200">
+      <div className="w-full">
+        <div className="rounded-lg bg-destructive/10 p-6 text-destructive">
           <h3 className="text-lg font-medium">Erreur de chargement</h3>
           <p className="mt-2">{error.message}</p>
         </div>
@@ -100,10 +100,10 @@ export default function ArticlesPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-background/80 pb-12">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="w-full">
         <div className="mb-8">
           <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-            <h1 className="flex items-center gap-2 text-3xl font-bold sm:text-4xl">
+            <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
               <Newspaper className="h-8 w-8 text-primary" />
               Actualités
             </h1>

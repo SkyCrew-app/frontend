@@ -90,8 +90,8 @@ export default function SecurityAuditsPage() {
   const statusCounts = getAuditStatusCounts()
 
   return (
-    <div className="min-h-screen bg-gradient-to-b">
-      <div className="container mx-auto px-4 py-4 sm:py-8">
+    <div className="w-full">
+      <div className="w-full">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -100,9 +100,9 @@ export default function SecurityAuditsPage() {
         >
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 mb-4 sm:mb-6">
             <div>
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold flex items-center gap-2">
+              <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
                 <Shield className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
-                Audits de Sécurité
+                Audits de sécurité
               </h1>
               <p className="text-sm sm:text-base text-muted-foreground mt-1">
                 Gérez les audits de sécurité de votre flotte d'aéronefs
@@ -115,7 +115,7 @@ export default function SecurityAuditsPage() {
                 className="flex items-center gap-1.5 text-sm sm:text-base"
               >
                 <Plus className="h-4 w-4" />
-                <span className="hidden xs:inline">Nouvel Audit</span>
+                <span className="hidden xs:inline">Nouvel audit</span>
                 <span className="xs:hidden">Ajouter</span>
               </Button>
             </div>
@@ -133,56 +133,56 @@ export default function SecurityAuditsPage() {
 
             <TabsContent value="audits" className="space-y-6">
               <div className="grid gap-4 md:grid-cols-4 mb-6">
-                <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 border-blue-200 dark:border-blue-800">
+                <Card className="bg-info/10 border-info/30">
                   <CardContent className="p-4 flex justify-between items-center">
                     <div>
-                      <p className="text-sm font-medium text-blue-600 dark:text-blue-300">Total des audits</p>
+                      <p className="text-sm font-medium text-info">Total des audits</p>
                       <div className="text-2xl font-bold">
                         {loading ? <Skeleton className="h-8 w-16" /> : statusCounts.total}
                       </div>
                     </div>
-                    <Shield className="h-8 w-8 text-blue-500" />
+                    <Shield className="h-8 w-8 text-info" />
                   </CardContent>
                 </Card>
 
-                <Card className="bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-950 dark:to-amber-900 border-amber-200 dark:border-amber-800">
+                <Card className="bg-warning/10 border-warning/30">
                   <CardContent className="p-4 flex justify-between items-center">
                     <div>
-                      <p className="text-sm font-medium text-amber-600 dark:text-amber-300">Audits en cours</p>
+                      <p className="text-sm font-medium text-warning">Audits en cours</p>
                       <div className="text-2xl font-bold">
                         {loading ? <Skeleton className="h-8 w-16" /> : statusCounts.open}
                       </div>
                     </div>
-                    <Clock className="h-8 w-8 text-amber-500" />
+                    <Clock className="h-8 w-8 text-warning" />
                   </CardContent>
                 </Card>
 
-                <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border-green-200 dark:border-green-800">
+                <Card className="bg-success/10 border-success/30">
                   <CardContent className="p-4 flex justify-between items-center">
                     <div>
-                      <p className="text-sm font-medium text-green-600 dark:text-green-300">Audits clôturés</p>
+                      <p className="text-sm font-medium text-success">Audits clôturés</p>
                       <div className="text-2xl font-bold">
                         {loading ? <Skeleton className="h-8 w-16" /> : statusCounts.closed}
                       </div>
                     </div>
-                    <CheckCircle className="h-8 w-8 text-green-500" />
+                    <CheckCircle className="h-8 w-8 text-success" />
                   </CardContent>
                 </Card>
 
-                <Card className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-950 dark:to-red-900 border-red-200 dark:border-red-800">
+                <Card className="bg-destructive/10 border-destructive/30">
                   <CardContent className="p-4 flex justify-between items-center">
                     <div>
-                      <p className="text-sm font-medium text-red-600 dark:text-red-300">Audits en retard</p>
+                      <p className="text-sm font-medium text-destructive">Audits en retard</p>
                       <div className="text-2xl font-bold">
                         {loading ? <Skeleton className="h-8 w-16" /> : statusCounts.overdue}
                       </div>
                     </div>
-                    <AlertTriangle className="h-8 w-8 text-red-500" />
+                    <AlertTriangle className="h-8 w-8 text-destructive" />
                   </CardContent>
                 </Card>
               </div>
 
-              <Card className="border-t-4 border-t-primary shadow-md">
+              <Card className="border-t-4 border-t-primary">
                 <CardHeader className="pb-2 px-3 sm:px-6">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
                     <div>
@@ -254,7 +254,7 @@ export default function SecurityAuditsPage() {
             </TabsContent>
 
             <TabsContent value="templates">
-              <Card className="border-t-4 border-t-primary shadow-md">
+              <Card className="border-t-4 border-t-primary">
                 <CardHeader className="pb-2 px-3 sm:px-6">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
                     <div>

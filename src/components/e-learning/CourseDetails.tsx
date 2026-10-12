@@ -62,7 +62,7 @@ export function CourseDetails({
   const sortedModules = [...course.modules].sort((a, b) => Number.parseInt(a.id) - Number.parseInt(b.id))
 
   return (
-    <Card className="border border-gray-200 dark:border-gray-700 shadow-sm" suppressHydrationWarning>
+    <Card className="border border-border" suppressHydrationWarning>
       <CardHeader className="pb-4">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
           <div>
@@ -77,7 +77,7 @@ export function CourseDetails({
       <CardContent>
         <div className="mb-8">
           <div className="flex justify-between items-center mb-2">
-            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Progression du cours</h3>
+            <h3 className="text-sm font-medium text-foreground">Progression du cours</h3>
             {!progressLoading && !progressError && (
               <span className="text-sm font-medium">{Math.round(courseProgress)}%</span>
             )}
@@ -86,7 +86,7 @@ export function CourseDetails({
           {progressLoading ? (
             <Skeleton className="h-2 w-full" />
           ) : progressError ? (
-            <div className="flex items-center text-red-500 dark:text-red-400 text-sm mt-1">
+            <div className="flex items-center text-destructive text-sm mt-1">
               <AlertCircle className="h-4 w-4 mr-1" />
               Erreur lors du chargement de la progression
             </div>
@@ -121,9 +121,9 @@ export function CourseDetails({
             <AccordionItem
               key={module.id}
               value={module.id}
-              className="border border-gray-200 dark:border-gray-700 rounded-md mb-3 overflow-hidden"
+              className="border border-border rounded-md mb-3 overflow-hidden"
             >
-              <AccordionTrigger className="px-3 sm:px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 text-left">
+              <AccordionTrigger className="px-3 sm:px-4 py-3 hover:bg-muted/50 text-left">
                 <div className="flex items-center">
                   <div className="p-1.5 sm:p-2 rounded-full bg-primary/10 mr-2 sm:mr-3">
                     <BookOpen className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
@@ -172,7 +172,7 @@ function ModuleContent({ module, completedLessonIds, setSelectedLesson, isExpand
   if (error)
     return (
       <div
-        className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg p-3 mt-2 text-sm flex items-center"
+        className="bg-destructive/10 text-destructive rounded-lg p-3 mt-2 text-sm flex items-center"
         suppressHydrationWarning
       >
         <AlertCircle className="h-4 w-4 mr-2 flex-shrink-0" />
@@ -185,7 +185,7 @@ function ModuleContent({ module, completedLessonIds, setSelectedLesson, isExpand
 
   return (
     <div className="space-y-2 pl-2 sm:pl-10">
-      <h4 className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Leçons</h4>
+      <h4 className="text-xs sm:text-sm font-medium text-muted-foreground mb-2">Leçons</h4>
 
       {sortedLessons.map((lesson) => (
         <Button
@@ -195,7 +195,7 @@ function ModuleContent({ module, completedLessonIds, setSelectedLesson, isExpand
           onClick={() => setSelectedLesson(lesson)}
         >
           {completedLessonIds.has(Number(lesson.id)) ? (
-            <CheckCircle className="mr-1.5 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-green-500 flex-shrink-0" />
+            <CheckCircle className="mr-1.5 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-success flex-shrink-0" />
           ) : (
             <Circle className="mr-1.5 sm:mr-2 h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
           )}
@@ -205,7 +205,7 @@ function ModuleContent({ module, completedLessonIds, setSelectedLesson, isExpand
 
       {evaluations.length > 0 && (
         <>
-          <h4 className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mt-4 mb-2">Évaluations</h4>
+          <h4 className="text-xs sm:text-sm font-medium text-muted-foreground mt-4 mb-2">Évaluations</h4>
 
           {evaluations.map((evaluation: Evaluation) => (
             <Link key={evaluation.id} href={learningRoutes.evaluation(evaluation.id)} passHref className="block w-full">

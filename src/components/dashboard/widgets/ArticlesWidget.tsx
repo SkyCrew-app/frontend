@@ -50,11 +50,11 @@ export default function ArticlesWidget() {
     return (
       <Card className="bg-muted/30 dark:bg-muted/20 border-dashed">
         <CardContent className="flex flex-col items-center justify-center py-10">
-          <Info className="h-10 w-10 text-gray-400 mb-2" />
-          <p className="text-center text-lg text-gray-600 dark:text-gray-400 font-medium">
+          <Info className="h-10 w-10 text-muted-foreground mb-2" />
+          <p className="text-center text-lg text-muted-foreground font-medium">
             Aucun article pour le moment
           </p>
-          <p className="text-center text-sm text-gray-500 dark:text-gray-500 mt-1">
+          <p className="text-center text-sm text-muted-foreground mt-1">
             Les actualités de l&apos;aéroclub seront affichées ici
           </p>
         </CardContent>
@@ -66,12 +66,12 @@ export default function ArticlesWidget() {
     <div>
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-base font-semibold flex items-center gap-2">
-          <Info className="h-4 w-4 text-blue-500" />
+          <Info className="h-4 w-4 text-info" />
           Actualités
         </h3>
         <Link
           href="/articles"
-          className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium flex items-center"
+          className="text-info hover:text-info text-sm font-medium flex items-center"
         >
           Voir tout
           <ArrowRight className="ml-1 h-4 w-4" />
@@ -112,7 +112,7 @@ export default function ArticlesWidget() {
                   <CardContent className="p-4 h-44 flex flex-col">
                     <Badge
                       variant="outline"
-                      className="mb-2 text-xs flex w-fit items-center gap-1 text-gray-600 dark:text-gray-400"
+                      className="mb-2 text-xs flex w-fit items-center gap-1 text-muted-foreground"
                     >
                       <Calendar className="w-3 h-3" />
                       {new Date(article.createdAt).toLocaleDateString("fr-FR", {
@@ -122,12 +122,12 @@ export default function ArticlesWidget() {
                       })}
                     </Badge>
                     <h3 className="font-bold text-lg mb-2 line-clamp-2">{article.title}</h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 mb-4 flex-1">
+                    <p className="text-sm text-muted-foreground line-clamp-3 mb-4 flex-1">
                       {article.description}
                     </p>
                     <Link
                       href={`/articles/${article.id}`}
-                      className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium flex items-center"
+                      className="text-info hover:text-info text-sm font-medium flex items-center"
                     >
                       Lire l&apos;article complet
                       <ArrowRight className="ml-1 h-4 w-4" />
@@ -138,10 +138,10 @@ export default function ArticlesWidget() {
             ))}
           </CarouselContent>
           <div className="absolute -left-1 top-1/2 -translate-y-1/2">
-            <CarouselPrevious className="bg-white/80 backdrop-blur-sm hover:bg-white dark:bg-gray-800/80 dark:hover:bg-gray-800" />
+            <CarouselPrevious className="bg-card/80 backdrop-blur-sm hover:bg-card" />
           </div>
           <div className="absolute -right-1 top-1/2 -translate-y-1/2">
-            <CarouselNext className="bg-white/80 backdrop-blur-sm hover:bg-white dark:bg-gray-800/80 dark:hover:bg-gray-800" />
+            <CarouselNext className="bg-card/80 backdrop-blur-sm hover:bg-card" />
           </div>
         </Carousel>
       </div>

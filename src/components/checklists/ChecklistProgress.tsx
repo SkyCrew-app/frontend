@@ -13,9 +13,9 @@ export function ChecklistProgress({ checked, total, required, checkedRequired }:
   const percentage = total > 0 ? Math.round((checked / total) * 100) : 0
 
   const getColor = () => {
-    if (percentage === 100) return "bg-green-500"
-    if (percentage >= 50) return "bg-orange-500"
-    return "bg-red-500"
+    if (percentage === 100) return "bg-success"
+    if (percentage >= 50) return "bg-brand"
+    return "bg-destructive"
   }
 
   return (
@@ -27,7 +27,7 @@ export function ChecklistProgress({ checked, total, required, checkedRequired }:
         <span
           className={cn(
             "font-semibold",
-            percentage === 100 ? "text-green-600" : percentage >= 50 ? "text-orange-600" : "text-red-600",
+            percentage === 100 ? "text-success" : percentage >= 50 ? "text-brand" : "text-destructive",
           )}
         >
           {percentage}%

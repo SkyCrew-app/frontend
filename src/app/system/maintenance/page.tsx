@@ -38,7 +38,7 @@ const CountdownTimer = ({ endTime }: { endTime: Date }) => {
   }, [endTime])
 
   return (
-    <div className="flex items-center justify-center space-x-4 text-2xl font-bold text-blue-600">
+    <div className="flex items-center justify-center space-x-4 text-2xl font-bold text-info">
       <div className="flex flex-col items-center">
         <motion.span
           key={timeLeft.hours}
@@ -49,7 +49,7 @@ const CountdownTimer = ({ endTime }: { endTime: Date }) => {
         >
           {String(timeLeft.hours).padStart(2, '0')}
         </motion.span>
-        <span className="text-xs text-gray-500">Heures</span>
+        <span className="text-xs text-muted-foreground">Heures</span>
       </div>
       <span>:</span>
       <div className="flex flex-col items-center">
@@ -62,7 +62,7 @@ const CountdownTimer = ({ endTime }: { endTime: Date }) => {
         >
           {String(timeLeft.minutes).padStart(2, '0')}
         </motion.span>
-        <span className="text-xs text-gray-500">Minutes</span>
+        <span className="text-xs text-muted-foreground">Minutes</span>
       </div>
       <span>:</span>
       <div className="flex flex-col items-center">
@@ -75,7 +75,7 @@ const CountdownTimer = ({ endTime }: { endTime: Date }) => {
         >
           {String(timeLeft.seconds).padStart(2, '0')}
         </motion.span>
-        <span className="text-xs text-gray-500">Secondes</span>
+        <span className="text-xs text-muted-foreground">Secondes</span>
       </div>
     </div>
   )
@@ -99,15 +99,15 @@ export default function MaintenancePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+      <div className="min-h-screen bg-card flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-info" />
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center text-red-500">
+      <div className="min-h-screen bg-card flex items-center justify-center text-destructive">
         Une erreur est survenue lors du chargement des informations de maintenance.
       </div>
     )
@@ -118,7 +118,7 @@ export default function MaintenancePage() {
     : new Date()
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4 overflow-hidden">
+    <div className="min-h-screen bg-card flex flex-col items-center justify-center p-4 overflow-hidden">
       <motion.div 
         className="max-w-md w-full space-y-8 text-center relative z-10"
         initial={{ y: 20, opacity: 0 }}
@@ -126,21 +126,21 @@ export default function MaintenancePage() {
         transition={{ duration: 0.8, delay: 0.5 }}
       >
         <motion.div 
-          className="flex justify-center bg-white"
+          className="flex justify-center bg-card"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
-          <div className="w-96 h-64 relative bg-white">
+          <div className="w-96 h-64 relative bg-card">
             <img
               src="https://cdn.dribbble.com/users/49067/screenshots/3710403/media/b14fa0bc9d533524a1bfadb3c588a843.gif"
               alt="Maintenance en cours"
-              className="w-full h-full object-contain bg-white"
+              className="w-full h-full object-contain bg-card"
             />
           </div>
         </motion.div>
 
         <motion.h1
-          className="text-4xl font-bold text-gray-900"
+          className="text-4xl font-bold text-foreground"
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.8, delay: 0.7 }}
@@ -149,7 +149,7 @@ export default function MaintenancePage() {
         </motion.h1>
 
         <motion.p
-          className="text-xl text-gray-600"
+          className="text-xl text-muted-foreground"
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.8, delay: 0.9 }}
@@ -159,7 +159,7 @@ export default function MaintenancePage() {
         </motion.p>
 
         <motion.div
-          className="flex flex-col items-center justify-center space-y-4 text-blue-500"
+          className="flex flex-col items-center justify-center space-y-4 text-info"
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.8, delay: 1.1 }}
@@ -177,7 +177,7 @@ export default function MaintenancePage() {
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.8, delay: 1.3 }}
         >
-          <p className="text-sm text-gray-500 mb-4">
+          <p className="text-sm text-muted-foreground mb-4">
             Suivez-nous pour rester informé :
           </p>
           <div className="flex justify-center space-x-4">

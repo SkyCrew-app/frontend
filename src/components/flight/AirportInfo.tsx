@@ -14,10 +14,10 @@ interface AirportInfoProps {
 }
 
 export function AirportInfo({ airportInfo, type, weather }: AirportInfoProps) {
-  const bgColor = type === "departure" ? "bg-green-50 dark:bg-green-900/30" : "bg-red-50 dark:bg-red-900/30"
-  const textColor = type === "departure" ? "text-green-700 dark:text-green-300" : "text-red-700 dark:text-red-300"
+  const bgColor = type === "departure" ? "bg-success/10" : "bg-destructive/10"
+  const textColor = type === "departure" ? "text-success" : "text-destructive"
   const borderColor =
-    type === "departure" ? "border-green-200 dark:border-green-800" : "border-red-200 dark:border-red-800"
+    type === "departure" ? "border-success/30" : "border-destructive/30"
 
   const formatTime = (timeString: string | undefined) => {
     if (!timeString) return "N/A"
@@ -31,15 +31,15 @@ export function AirportInfo({ airportInfo, type, weather }: AirportInfoProps) {
   const fltcatColor = (cat: string | null | undefined) => {
     switch (cat) {
       case "VFR":
-        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+        return "bg-success/15 text-success"
       case "MVFR":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+        return "bg-info/15 text-info"
       case "IFR":
-        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+        return "bg-destructive/15 text-destructive"
       case "LIFR":
-        return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
+        return "bg-primary/15 text-primary"
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-muted text-foreground"
     }
   }
 
@@ -48,7 +48,7 @@ export function AirportInfo({ airportInfo, type, weather }: AirportInfoProps) {
       <CardHeader className={`${bgColor}`}>
         <CardTitle className="flex items-center space-x-2">
           <MapPin className={`h-6 w-6 ${textColor}`} />
-          <span>{type === "departure" ? "Aéroport de Départ" : "Aéroport d'Arrivée"}</span>
+          <span>{type === "departure" ? "Aéroport de départ" : "Aéroport d'arrivée"}</span>
           <Badge variant="outline" className={`ml-auto ${textColor} border-current`}>
             {airportInfo.ICAO}
           </Badge>
@@ -81,13 +81,13 @@ export function AirportInfo({ airportInfo, type, weather }: AirportInfoProps) {
             <ScrollArea className="h-48 w-full rounded-md border p-4">
               <div className="space-y-4">
                 <div className="flex items-center space-x-2">
-                  <ArrowUp className="h-5 w-5 text-blue-500" />
+                  <ArrowUp className="h-5 w-5 text-info" />
                   <p>
                     <strong>Élévation:</strong> {airportInfo.elevation ?? "N/A"} ft
                   </p>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Plane className="h-5 w-5 text-blue-500" />
+                  <Plane className="h-5 w-5 text-info" />
                   <p>
                     <strong>Type:</strong>{" "}
                     {airportInfo.type === "large_airport"
@@ -98,25 +98,25 @@ export function AirportInfo({ airportInfo, type, weather }: AirportInfoProps) {
                   </p>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Sun className="h-5 w-5 text-blue-500" />
+                  <Sun className="h-5 w-5 text-info" />
                   <p>
                     <strong>Fuseau horaire:</strong> {airportInfo.timezone?.name || "N/A"}
                   </p>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Sunrise className="h-5 w-5 text-blue-500" />
+                  <Sunrise className="h-5 w-5 text-info" />
                   <p>
                     <strong>Lever du soleil:</strong> {formatTime(airportInfo.times?.sunrise)}
                   </p>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Sunset className="h-5 w-5 text-blue-500" />
+                  <Sunset className="h-5 w-5 text-info" />
                   <p>
                     <strong>Coucher du soleil:</strong> {formatTime(airportInfo.times?.sunset)}
                   </p>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Compass className="h-5 w-5 text-blue-500" />
+                  <Compass className="h-5 w-5 text-info" />
                   <p>
                     <strong>Coordonnées:</strong> {airportInfo.lat?.toFixed(4) || "N/A"}° N,{" "}
                     {airportInfo.lon?.toFixed(4) || "N/A"}° E
@@ -139,7 +139,7 @@ export function AirportInfo({ airportInfo, type, weather }: AirportInfoProps) {
                         <div className="flex gap-2">
                           <Badge variant="secondary">{runway.surface || "N/A"}</Badge>
                           {runway.lighted && (
-                            <Badge variant="default" className="bg-yellow-500 text-white text-xs">
+                            <Badge variant="default" className="bg-warning text-warning-foreground text-xs">
                               Éclairée
                             </Badge>
                           )}
@@ -170,7 +170,7 @@ export function AirportInfo({ airportInfo, type, weather }: AirportInfoProps) {
                 <ul className="space-y-2">
                   {airportInfo.frequencies.map((freq: any, index: number) => (
                     <li key={index} className="flex items-center space-x-2 p-2 hover:bg-muted rounded-md">
-                      <Radio className="h-4 w-4 text-blue-500" />
+                      <Radio className="h-4 w-4 text-info" />
                       <div className="flex justify-between w-full">
                         <p className="font-medium">{freq.name || "Fréquence"}</p>
                         <p className="text-sm font-mono text-muted-foreground">
@@ -203,14 +203,14 @@ export function AirportInfo({ airportInfo, type, weather }: AirportInfoProps) {
                 {airportInfo.weather?.METAR ? (
                   <div className="bg-muted p-4 rounded-md space-y-3">
                     <div className="flex items-center space-x-2 mb-2">
-                      <Cloud className="h-5 w-5 text-blue-500" />
+                      <Cloud className="h-5 w-5 text-info" />
                       <p className="font-semibold">Données METAR</p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
                       {airportInfo.weather.temp != null && (
                         <div className="flex items-center space-x-2">
-                          <Sun className="h-4 w-4 text-amber-500" />
+                          <Sun className="h-4 w-4 text-warning" />
                           <p>
                             <strong>Temp:</strong> {airportInfo.weather.temp}°C
                           </p>
@@ -218,7 +218,7 @@ export function AirportInfo({ airportInfo, type, weather }: AirportInfoProps) {
                       )}
                       {airportInfo.weather.dewp != null && (
                         <div className="flex items-center space-x-2">
-                          <Cloud className="h-4 w-4 text-blue-400" />
+                          <Cloud className="h-4 w-4 text-info" />
                           <p>
                             <strong>Rosée:</strong> {airportInfo.weather.dewp}°C
                           </p>
@@ -226,7 +226,7 @@ export function AirportInfo({ airportInfo, type, weather }: AirportInfoProps) {
                       )}
                       {airportInfo.weather.wspd != null && (
                         <div className="flex items-center space-x-2">
-                          <Wind className="h-4 w-4 text-blue-500" />
+                          <Wind className="h-4 w-4 text-info" />
                           <p>
                             <strong>Vent:</strong> {airportInfo.weather.wspd} kt
                             {airportInfo.weather.wgst ? ` (raf ${airportInfo.weather.wgst} kt)` : ""}
@@ -235,7 +235,7 @@ export function AirportInfo({ airportInfo, type, weather }: AirportInfoProps) {
                       )}
                       {airportInfo.weather.wdir != null && (
                         <div className="flex items-center space-x-2">
-                          <Compass className="h-4 w-4 text-blue-500" />
+                          <Compass className="h-4 w-4 text-info" />
                           <p>
                             <strong>Direction:</strong>{" "}
                             {typeof airportInfo.weather.wdir === "number"
@@ -246,7 +246,7 @@ export function AirportInfo({ airportInfo, type, weather }: AirportInfoProps) {
                       )}
                       {airportInfo.weather.visib != null && (
                         <div className="flex items-center space-x-2">
-                          <Eye className="h-4 w-4 text-blue-500" />
+                          <Eye className="h-4 w-4 text-info" />
                           <p>
                             <strong>Visibilité:</strong> {airportInfo.weather.visib} SM
                           </p>
@@ -254,7 +254,7 @@ export function AirportInfo({ airportInfo, type, weather }: AirportInfoProps) {
                       )}
                       {airportInfo.weather.altim != null && (
                         <div className="flex items-center space-x-2">
-                          <Gauge className="h-4 w-4 text-blue-500" />
+                          <Gauge className="h-4 w-4 text-info" />
                           <p>
                             <strong>QNH:</strong> {airportInfo.weather.altim} hPa
                           </p>
@@ -278,18 +278,18 @@ export function AirportInfo({ airportInfo, type, weather }: AirportInfoProps) {
                 ) : weather ? (
                   <div className="bg-muted p-4 rounded-md">
                     <div className="flex items-center space-x-2 mb-3">
-                      <Cloud className="h-5 w-5 text-blue-500" />
+                      <Cloud className="h-5 w-5 text-info" />
                       <p className="font-semibold">Conditions actuelles</p>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="flex items-center space-x-2">
-                        <Sun className="h-4 w-4 text-amber-500" />
+                        <Sun className="h-4 w-4 text-warning" />
                         <p>
                           <strong>Température:</strong> {weather.temperature.toFixed(1)}°C
                         </p>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <Cloud className="h-4 w-4 text-blue-500" />
+                        <Cloud className="h-4 w-4 text-info" />
                         <p>
                           <strong>Conditions:</strong> {weather.conditions}
                         </p>
@@ -297,13 +297,13 @@ export function AirportInfo({ airportInfo, type, weather }: AirportInfoProps) {
                       {weather.wind && (
                         <>
                           <div className="flex items-center space-x-2">
-                            <Wind className="h-4 w-4 text-blue-500" />
+                            <Wind className="h-4 w-4 text-info" />
                             <p>
                               <strong>Vent:</strong> {weather.wind.speed} kt
                             </p>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <Compass className="h-4 w-4 text-blue-500" />
+                            <Compass className="h-4 w-4 text-info" />
                             <p>
                               <strong>Direction:</strong> {weather.wind.direction}°
                             </p>

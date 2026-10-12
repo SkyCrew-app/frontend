@@ -22,7 +22,7 @@ export function AircraftTab() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-      <Card className="border-t-4 border-t-primary shadow-md">
+      <Card className="border-t-4 border-t-primary">
         <CardHeader className="pb-2">
           <CardTitle className="text-xl">Gestion des avions</CardTitle>
           <CardDescription>Configurez les types d'avions et les tarifs.</CardDescription>
@@ -30,7 +30,7 @@ export function AircraftTab() {
         <CardContent className="space-y-6">
           <div className="space-y-4">
             <h3 className="text-lg font-semibold flex items-center gap-2">
-              <Plane className="h-5 w-5 text-blue-500" />
+              <Plane className="h-5 w-5 text-info" />
               Types d'avions et tarifs horaires
             </h3>
             {aircraftTypes.length === 0 ? (
@@ -55,7 +55,7 @@ export function AircraftTab() {
                     />
                     <Label
                       htmlFor={`aircraft-${aircraft.type}`}
-                      className={`flex-grow ${aircraft.isAvailable ? "" : "text-gray-400"}`}
+                      className={`flex-grow ${aircraft.isAvailable ? "" : "text-muted-foreground"}`}
                     >
                       {aircraft.type}
                     </Label>
@@ -64,11 +64,11 @@ export function AircraftTab() {
                     <Input
                       type="number"
                       {...register(`aircraftTypes.${index}.hourlyRate`, { valueAsNumber: true })}
-                      className={`w-24 ${aircraft.isAvailable ? "" : "bg-gray-100 text-gray-400"}`}
+                      className={`w-24 ${aircraft.isAvailable ? "" : "bg-muted text-muted-foreground"}`}
                       placeholder="Tarif/h"
                       disabled={!aircraft.isAvailable}
                     />
-                    <span className={aircraft.isAvailable ? "font-medium" : "text-gray-400"}>€/h</span>
+                    <span className={aircraft.isAvailable ? "font-medium" : "text-muted-foreground"}>€/h</span>
                   </div>
                 </div>
               ))
@@ -77,7 +77,7 @@ export function AircraftTab() {
           <Separator />
           <div className="space-y-4">
             <h3 className="text-lg font-semibold flex items-center gap-2">
-              <Fuel className="h-5 w-5 text-blue-500" />
+              <Fuel className="h-5 w-5 text-info" />
               Gestion du carburant
             </h3>
             <RadioGroup
@@ -101,7 +101,7 @@ export function AircraftTab() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="fuel-price" className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4 text-blue-500" />
+              <DollarSign className="h-4 w-4 text-info" />
               Prix du carburant (€/L)
             </Label>
             <Input
@@ -111,7 +111,7 @@ export function AircraftTab() {
               min="0"
               step="0.01"
             />
-            {errors.fuelPrice && <p className="text-sm text-red-500">{errors.fuelPrice.message as string}</p>}
+            {errors.fuelPrice && <p className="text-sm text-destructive">{errors.fuelPrice.message as string}</p>}
           </div>
         </CardContent>
       </Card>

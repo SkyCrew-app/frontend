@@ -1,5 +1,6 @@
 "use client"
 
+import { reservationStatus } from "@/lib/reservation-status"
 import { format } from "date-fns"
 import { fr } from "date-fns/locale"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -13,30 +14,16 @@ interface FlightPlanCardProps {
   flight: Flight
   onEdit: (flight: Flight) => void
   flightTypeTranslations: Record<string, string>
-  reservationStatusTranslations: Record<string, string>
+  reservationStatusTranslations?: Record<string, string>
 }
 
 export function FlightPlanCard({
   flight,
   onEdit,
   flightTypeTranslations,
-  reservationStatusTranslations,
 }: FlightPlanCardProps) {
-  const getStatusVariant = (status: string) => {
-    switch (status) {
-      case "PENDING":
-        return "secondary"
-      case "CONFIRMED":
-        return "default"
-      case "CANCELLED":
-        return "destructive"
-      default:
-        return "default"
-    }
-  }
-
   return (
-    <Card className="h-full flex flex-col shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden">
+    <Card className="h-full flex flex-col hover:shadow-md transition-shadow duration-300 overflow-hidden">
       <CardHeader className="pb-2 flex flex-row justify-between items-center">
         <CardTitle className="text-lg flex items-center">
           <Plane className="h-5 w-5 mr-2 text-primary" />
@@ -44,10 +31,8 @@ export function FlightPlanCard({
             {flight.origin_icao} → {flight.destination_icao}
           </span>
         </CardTitle>
-        <Badge variant={flight.reservation ? getStatusVariant(flight.reservation.status) : "secondary"}>
-          {flight.reservation
-            ? reservationStatusTranslations[flight.reservation.status as keyof typeof reservationStatusTranslations]
-            : "Sans réservation"}
+        <Badge variant={flight.reservation ? reservationStatus(flight.reservation.status).variant : "neutral"}>
+          {flight.reservation ? reservationStatus(flight.reservation.status).label : "Sans réservation"}
         </Badge>
       </CardHeader>
       <CardContent className="flex-grow space-y-3">

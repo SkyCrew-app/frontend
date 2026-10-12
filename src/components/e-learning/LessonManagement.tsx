@@ -374,7 +374,7 @@ export function LessonManagement() {
         </div>
 
         {!selectedCourseId ? (
-          <Card className="bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-300">
+          <Card className="bg-info/10 border-info/30 text-info">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg flex items-center">
                 <Info className="h-5 w-5 mr-2" />
@@ -386,7 +386,7 @@ export function LessonManagement() {
             </CardContent>
           </Card>
         ) : !selectedModuleId ? (
-          <Card className="bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-300">
+          <Card className="bg-info/10 border-info/30 text-info">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg flex items-center">
                 <Info className="h-5 w-5 mr-2" />
@@ -415,7 +415,7 @@ export function LessonManagement() {
             ))}
           </div>
         ) : error ? (
-          <Card className="bg-red-50 border-red-200 text-red-800">
+          <Card className="bg-destructive/10 border-destructive/30 text-destructive">
             <CardHeader>
               <CardTitle>Erreur de chargement</CardTitle>
             </CardHeader>
@@ -456,7 +456,7 @@ export function LessonManagement() {
                             <AccordionTrigger className="px-4 py-2 hover:bg-muted/50">
                               <div className="flex items-center justify-between w-full pr-4">
                                 <div className="flex items-center">
-                                  <Badge className="mr-3 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                                  <Badge className="mr-3 bg-info/15 text-info">
                                     {index + 1}
                                   </Badge>
                                   <span className="font-medium">{lesson.title}</span>
@@ -489,7 +489,7 @@ export function LessonManagement() {
                                 {lesson.video_url && (
                                   <div>
                                     <h4 className="text-sm font-medium mb-1">URL de la vidéo</h4>
-                                    <p className="text-sm text-blue-600 break-all">
+                                    <p className="text-sm text-info break-all">
                                       <a
                                         href={lesson.video_url}
                                         target="_blank"
@@ -514,7 +514,7 @@ export function LessonManagement() {
                                               href={url}
                                               target="_blank"
                                               rel="noopener noreferrer"
-                                              className="text-blue-600 hover:underline flex items-center gap-1"
+                                              className="text-info hover:underline flex items-center gap-1"
                                             >
                                               <FileText className="h-3 w-3" />
                                               {fileName}
@@ -541,7 +541,7 @@ export function LessonManagement() {
                                       <Button
                                         variant="outline"
                                         size="sm"
-                                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
                                         disabled={deleteLoading}
                                       >
                                         <Trash2 className="w-4 h-4 mr-2" />
@@ -560,7 +560,7 @@ export function LessonManagement() {
                                         <AlertDialogCancel>Annuler</AlertDialogCancel>
                                         <AlertDialogAction
                                           onClick={() => handleDeleteLesson(lesson.id)}
-                                          className="bg-red-500 hover:bg-red-600"
+                                          className="bg-destructive hover:bg-destructive/90"
                                         >
                                           {deleteLoading ? (
                                             <>
@@ -609,10 +609,10 @@ export function LessonManagement() {
       </TabsContent>
 
       <TabsContent value="create">
-        <Card className="border-t-4 border-t-primary shadow-md">
+        <Card className="border-t-4 border-t-primary">
           <CardHeader>
             <CardTitle className="flex items-center">
-              <PlusCircle className="w-5 h-5 mr-2 text-blue-500" />
+              <PlusCircle className="w-5 h-5 mr-2 text-info" />
               Créer une nouvelle leçon
             </CardTitle>
             <CardDescription>Remplissez les détails de la leçon ci-dessous</CardDescription>
@@ -622,7 +622,7 @@ export function LessonManagement() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="course-select">
-                    Cours parent <span className="text-red-500">*</span>
+                    Cours parent <span className="text-destructive">*</span>
                   </Label>
                   <Select
                     value={selectedCourseId}
@@ -674,7 +674,7 @@ export function LessonManagement() {
 
                 <div className="space-y-2">
                   <Label htmlFor="module-select">
-                    Module parent <span className="text-red-500">*</span>
+                    Module parent <span className="text-destructive">*</span>
                   </Label>
                   <Select
                     value={selectedModuleId}
@@ -727,7 +727,7 @@ export function LessonManagement() {
 
               <div className="space-y-2">
                 <Label htmlFor="lesson-title">
-                  Titre de la leçon <span className="text-red-500">*</span>
+                  Titre de la leçon <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="lesson-title"
@@ -751,7 +751,7 @@ export function LessonManagement() {
 
               <div className="space-y-2">
                 <Label htmlFor="lesson-content">
-                  Contenu de la leçon <span className="text-red-500">*</span>
+                  Contenu de la leçon <span className="text-destructive">*</span>
                 </Label>
                 <WysiwygEditor
                   value={content}
@@ -831,7 +831,7 @@ export function LessonManagement() {
             <form onSubmit={handleUpdateLesson} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-title">
-                  Titre de la leçon <span className="text-red-500">*</span>
+                  Titre de la leçon <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="edit-title"
@@ -853,7 +853,7 @@ export function LessonManagement() {
 
               <div className="space-y-2">
                 <Label htmlFor="edit-content">
-                  Contenu de la leçon <span className="text-red-500">*</span>
+                  Contenu de la leçon <span className="text-destructive">*</span>
                 </Label>
                 <WysiwygEditor
                   value={editingLesson.content || ""}

@@ -50,7 +50,7 @@ const slideUp = {
 }
 
 const CourseDetailSkeleton = () => (
-  <div className="container mx-auto p-4 space-y-8">
+  <div className="space-y-8">
     <div className="space-y-4">
       <Skeleton className="h-10 w-3/4" />
       <Skeleton className="h-4 w-full" />
@@ -154,14 +154,14 @@ export default function CourseDetailPage() {
   if (loading && !course) return <CourseDetailSkeleton />
   if (error)
     return (
-      <div className="container mx-auto p-4">
-        <Card className="border-red-300 bg-red-50 dark:bg-red-950/30">
+      <div className="w-full">
+        <Card className="border-destructive/30 bg-destructive/10">
           <CardContent className="p-6">
-            <div className="flex items-center gap-2 text-red-600 mb-2">
+            <div className="flex items-center gap-2 text-destructive mb-2">
               <Info className="h-5 w-5" />
               <h2 className="text-lg font-semibold">Erreur</h2>
             </div>
-            <p className="text-red-600">{error.message}</p>
+            <p className="text-destructive">{error.message}</p>
             <Button variant="outline" className="mt-4" onClick={() => router.push("/instruction/e-learning")}>
               <ChevronLeft className="mr-2 h-4 w-4" />
               Retour aux cours
@@ -183,7 +183,7 @@ export default function CourseDetailPage() {
   const currentModuleProgress = currentModule ? moduleProgress(currentModule.lessons, completedLessonIds) : 0
 
   return (
-    <motion.div initial="hidden" animate="visible" variants={fadeIn} className="container mx-auto p-4 space-y-6">
+    <motion.div initial="hidden" animate="visible" variants={fadeIn} className="space-y-6">
       {/* Header avec navigation et progression */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-2">
         <Button variant="ghost" asChild className="p-0 h-auto font-medium text-muted-foreground hover:text-foreground">
@@ -215,13 +215,13 @@ export default function CourseDetailPage() {
         />
         <div className="relative bg-black/30 p-6 md:p-8 text-white">
           <div className="max-w-3xl">
-            <h1 className="text-2xl md:text-4xl font-bold mb-2">{course.title}</h1>
+            <h1 className="mb-6 text-2xl font-semibold tracking-tight">{course.title}</h1>
             <p className="mb-4 text-white/80">{course.description}</p>
 
             <div className="flex flex-wrap gap-3 mb-4">
-              <Badge className="bg-blue-600 hover:bg-blue-700 text-white">{course.category}</Badge>
+              <Badge className="bg-info hover:bg-info/90 text-info-foreground">{course.category}</Badge>
               {course.required_license && (
-                <Badge className="bg-purple-600 hover:bg-purple-700 text-white">
+                <Badge className="bg-primary hover:bg-primary/90 text-primary-foreground">
                   Licence requise: {course.required_license}
                 </Badge>
               )}
@@ -233,7 +233,7 @@ export default function CourseDetailPage() {
 
             <div className="flex items-center gap-2">
               <Button
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-info hover:bg-info/90"
                 disabled={resumeLessonId === null}
                 onClick={() => router.push(`/instruction/e-learning/${course.id}/${resumeLessonId}`)}
               >
@@ -249,10 +249,10 @@ export default function CourseDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Colonne de gauche - Modules et informations */}
         <div className="space-y-6">
-          <Card className="shadow-sm">
+          <Card >
             <CardHeader className="pb-2">
               <h2 className="text-xl font-semibold flex items-center">
-                <ListChecks className="mr-2 h-5 w-5 text-blue-500" />
+                <ListChecks className="mr-2 h-5 w-5 text-info" />
                 Contenu du cours
               </h2>
             </CardHeader>
@@ -284,13 +284,13 @@ export default function CourseDetailPage() {
                         >
                           <div className="flex items-center justify-between w-full pr-4">
                             <div className="flex items-center">
-                              <div className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 w-6 h-6 rounded-full flex items-center justify-center mr-2 text-xs font-medium">
+                              <div className="bg-info/15 text-info w-6 h-6 rounded-full flex items-center justify-center mr-2 text-xs font-medium">
                                 {index + 1}
                               </div>
                               <span className="text-left">{module.title}</span>
                             </div>
                             {moduleProgress(module.lessons, completedLessonIds) === 100 && (
-                              <CheckCircle className="h-4 w-4 text-green-500 ml-2 shrink-0" />
+                              <CheckCircle className="h-4 w-4 text-success ml-2 shrink-0" />
                             )}
                           </div>
                         </AccordionTrigger>
@@ -302,7 +302,7 @@ export default function CourseDetailPage() {
                                 variant="ghost"
                                 className={`w-full justify-start text-sm h-auto py-2 ${
                                   isLessonCompleted(lesson)
-                                    ? "text-green-600 dark:text-green-400 font-medium"
+                                    ? "text-success font-medium"
                                     : "text-muted-foreground"
                                 }`}
                                 onClick={() =>
@@ -310,9 +310,9 @@ export default function CourseDetailPage() {
                                 }
                               >
                                 {isLessonCompleted(lesson) ? (
-                                  <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
+                                  <CheckCircle className="mr-2 h-4 w-4 text-success" />
                                 ) : (
-                                  <PlayCircle className="mr-2 h-4 w-4 text-blue-500" />
+                                  <PlayCircle className="mr-2 h-4 w-4 text-info" />
                                 )}
                                 <span className="truncate">{lesson.title}</span>
                               </Button>
@@ -329,12 +329,12 @@ export default function CourseDetailPage() {
                                     variant="ghost"
                                     className={`w-full justify-start text-sm h-auto py-2 ${
                                       attempts.has(evaluation.id)
-                                        ? "text-amber-600 dark:text-amber-400 font-medium"
+                                        ? "text-warning font-medium"
                                         : "text-muted-foreground"
                                     }`}
                                     onClick={() => router.push(`/instruction/evaluation/${evaluation.id}`)}
                                   >
-                                    <ClipboardCheck className="mr-2 h-4 w-4 text-amber-500" />
+                                    <ClipboardCheck className="mr-2 h-4 w-4 text-warning" />
                                     <span className="truncate">Évaluation de module {evalIndex + 1}</span>
                                   </Button>
                                 ))}
@@ -400,14 +400,14 @@ export default function CourseDetailPage() {
 
         {/* Colonne de droite - Contenu du module */}
         <motion.div variants={slideUp} className="lg:col-span-2 space-y-6">
-          <Card className="shadow-sm">
+          <Card >
             <CardHeader className="pb-2 border-b">
               <div className="flex justify-between items-start">
                 <div>
                   <h2 className="text-xl font-semibold">{currentModule.title}</h2>
                   <p className="text-muted-foreground text-sm">{currentModule.description}</p>
                 </div>
-                <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">
+                <Badge className="bg-info/15 text-info">
                   {currentModule.lessons.length} leçons
                 </Badge>
               </div>
@@ -427,8 +427,8 @@ export default function CourseDetailPage() {
                         key={lesson.id}
                         className={`p-4 rounded-lg border ${
                           isLessonCompleted(lesson)
-                            ? "bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800/30"
-                            : "bg-white dark:bg-card hover:bg-muted/50 dark:hover:bg-muted/10"
+                            ? "bg-success/10 border-success/30"
+                            : "bg-card dark:bg-card hover:bg-muted/50 dark:hover:bg-muted/10"
                         } transition-colors`}
                       >
                         <div className="flex items-start gap-4">
@@ -436,8 +436,8 @@ export default function CourseDetailPage() {
                             <div
                               className={`w-10 h-10 rounded-full flex items-center justify-center ${
                                 isLessonCompleted(lesson)
-                                  ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
-                                  : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                                  ? "bg-success/15 text-success"
+                                  : "bg-info/15 text-info"
                               }`}
                             >
                               {isLessonCompleted(lesson) ? <CheckCircle className="h-5 w-5" /> : <span>{index + 1}</span>}
@@ -453,7 +453,7 @@ export default function CourseDetailPage() {
                               variant={isLessonCompleted(lesson) ? "outline" : "default"}
                               className={
                                 isLessonCompleted(lesson)
-                                  ? "border-green-200 text-green-700 hover:bg-green-50 dark:border-green-800 dark:text-green-400 dark:hover:bg-green-950/30"
+                                  ? "border-success/30 text-success hover:bg-success/10"
                                   : ""
                               }
                               onClick={() => router.push(`/instruction/e-learning/${course.id}/${lesson.id}`)}
@@ -480,7 +480,7 @@ export default function CourseDetailPage() {
                       <>
                         <Separator className="my-2" />
                         <h3 className="text-lg font-medium flex items-center">
-                          <ClipboardCheck className="mr-2 h-5 w-5 text-amber-500" />
+                          <ClipboardCheck className="mr-2 h-5 w-5 text-warning" />
                           Évaluations du module
                         </h3>
 
@@ -493,8 +493,8 @@ export default function CourseDetailPage() {
                             key={evaluation.id}
                             className={`p-4 rounded-lg border ${
                               attempt
-                                ? "bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-800/30"
-                                : "bg-white dark:bg-card hover:bg-muted/50 dark:hover:bg-muted/10 border-amber-100"
+                                ? "bg-warning/10 border-warning/30"
+                                : "bg-card dark:bg-card hover:bg-muted/50 dark:hover:bg-muted/10 border-warning/30"
                             } transition-colors`}
                           >
                             <div className="flex items-start gap-4">
@@ -502,8 +502,8 @@ export default function CourseDetailPage() {
                                 <div
                                   className={`w-10 h-10 rounded-full flex items-center justify-center ${
                                     attempt
-                                      ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
-                                      : "bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300"
+                                      ? "bg-warning/15 text-warning"
+                                      : "bg-warning/10 text-warning"
                                   }`}
                                 >
                                   <ClipboardCheck className="h-5 w-5" />
@@ -518,7 +518,7 @@ export default function CourseDetailPage() {
                                   <div className="flex items-center mt-2 text-xs font-medium">
                                     <span
                                       className={
-                                        passed ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                                        passed ? "text-success" : "text-destructive"
                                       }
                                     >
                                       {attempt.score !== null
@@ -536,8 +536,8 @@ export default function CourseDetailPage() {
                                   variant={passed ? "outline" : "default"}
                                   className={
                                     passed
-                                      ? "border-amber-200 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-400 dark:hover:bg-amber-950/30"
-                                      : "bg-amber-600 hover:bg-amber-700 text-white"
+                                      ? "border-warning/30 text-warning hover:bg-warning/10"
+                                      : "bg-warning hover:bg-warning/90 text-warning-foreground"
                                   }
                                   onClick={() =>
                                     router.push(

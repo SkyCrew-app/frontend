@@ -165,7 +165,7 @@ export function TemplateManagement() {
 
   if (error) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
+      <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
         Erreur lors du chargement des modèles d'audit: {error.message}
       </div>
     )
@@ -217,7 +217,7 @@ export function TemplateManagement() {
                       size="icon"
                       onClick={() => handleDeleteTemplate(template)}
                       title="Supprimer"
-                      className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
                     >
                       <Trash2 className="h-4 w-4" />
                       <span className="sr-only">Supprimer</span>
@@ -245,14 +245,14 @@ export function TemplateManagement() {
                       {template.is_active ? (
                         <Badge
                           variant="outline"
-                          className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
+                          className="bg-success/15 text-success"
                         >
                           Actif
                         </Badge>
                       ) : (
                         <Badge
                           variant="outline"
-                          className="bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
+                          className="bg-muted text-foreground"
                         >
                           Inactif
                         </Badge>
@@ -293,12 +293,12 @@ export function TemplateManagement() {
                               variant="outline"
                               className={
                                 item.criticality === CriticalityLevel.CRITIQUE
-                                  ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
+                                  ? "bg-destructive/15 text-destructive"
                                   : item.criticality === CriticalityLevel.MAJEUR
-                                    ? "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300"
+                                    ? "bg-warning/15 text-warning"
                                     : item.criticality === CriticalityLevel.MINEUR
-                                      ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
-                                      : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
+                                      ? "bg-info/15 text-info"
+                                      : "bg-muted text-foreground"
                               }
                             >
                               {getCriticalityLabel(item.criticality)}
@@ -387,7 +387,7 @@ export function TemplateManagement() {
             <AlertDialogAction
               onClick={confirmDeleteTemplate}
               disabled={deleteLoading}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-destructive hover:bg-destructive/90"
             >
               {deleteLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Supprimer
@@ -651,21 +651,21 @@ function TemplateFormDialog({
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="template-name">
-                Nom du modèle <span className="text-red-500">*</span>
+                Nom du modèle <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="template-name"
                 value={formData.name}
                 onChange={(e) => handleInputChange("name", e.target.value)}
                 placeholder="Nom du modèle d'audit"
-                className={validationErrors.name ? "border-red-500" : ""}
+                className={validationErrors.name ? "border-destructive" : ""}
               />
-              {validationErrors.name && <p className="text-xs text-red-500">{validationErrors.name}</p>}
+              {validationErrors.name && <p className="text-xs text-destructive">{validationErrors.name}</p>}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="template-frequency">
-                Fréquence recommandée <span className="text-red-500">*</span>
+                Fréquence recommandée <span className="text-destructive">*</span>
               </Label>
               <Select
                 value={formData.recommended_frequency}
@@ -748,7 +748,7 @@ function TemplateFormDialog({
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <Label>
-                Éléments d'audit <span className="text-red-500">*</span>
+                Éléments d'audit <span className="text-destructive">*</span>
               </Label>
               <Button type="button" onClick={() => openItemForm()} className="flex items-center gap-1.5" size="sm">
                 <Plus className="h-4 w-4" />
@@ -757,7 +757,7 @@ function TemplateFormDialog({
             </div>
 
             {validationErrors.items && (
-              <div className="flex items-center gap-2 text-sm text-red-500">
+              <div className="flex items-center gap-2 text-sm text-destructive">
                 <AlertTriangle className="h-4 w-4" />
                 {validationErrors.items}
               </div>
@@ -809,12 +809,12 @@ function TemplateFormDialog({
                                             variant="outline"
                                             className={
                                               item.criticality === CriticalityLevel.CRITIQUE
-                                                ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
+                                                ? "bg-destructive/15 text-destructive"
                                                 : item.criticality === CriticalityLevel.MAJEUR
-                                                  ? "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300"
+                                                  ? "bg-warning/15 text-warning"
                                                   : item.criticality === CriticalityLevel.MINEUR
-                                                    ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
-                                                    : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
+                                                    ? "bg-info/15 text-info"
+                                                    : "bg-muted text-foreground"
                                             }
                                           >
                                             {getCriticalityLabel(item.criticality)}
@@ -834,7 +834,7 @@ function TemplateFormDialog({
                                             variant="ghost"
                                             size="icon"
                                             onClick={() => removeItem(index)}
-                                            className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
+                                            className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
                                           >
                                             <Trash2 className="h-3.5 w-3.5" />
                                             <span className="sr-only">Supprimer</span>
@@ -894,16 +894,16 @@ function TemplateFormDialog({
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="item-title">
-                Titre <span className="text-red-500">*</span>
+                Titre <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="item-title"
                 value={itemFormData.title}
                 onChange={(e) => handleItemInputChange("title", e.target.value)}
                 placeholder="Titre de l'élément"
-                className={validationErrors.itemTitle ? "border-red-500" : ""}
+                className={validationErrors.itemTitle ? "border-destructive" : ""}
               />
-              {validationErrors.itemTitle && <p className="text-xs text-red-500">{validationErrors.itemTitle}</p>}
+              {validationErrors.itemTitle && <p className="text-xs text-destructive">{validationErrors.itemTitle}</p>}
             </div>
 
             <div className="space-y-2">

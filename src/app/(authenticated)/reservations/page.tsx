@@ -373,7 +373,7 @@ export default function ReservationCalendar() {
               ) ||
                 isAfter(hour, new Date(`${formattedDate}T${settingsData.getAllAdministrations[0].reservationEndTime}`)))
             ) {
-              return <TableCell key={index} className="bg-gray-200 dark:bg-gray-800 cursor-not-allowed p-0 h-12" />
+              return <TableCell key={index} className="bg-muted cursor-not-allowed p-0 h-12" />
             }
 
             const reservationForAircraft = reservationData.filteredReservations.find(
@@ -430,7 +430,7 @@ export default function ReservationCalendar() {
 
   if (loadingReservations || loadingAircrafts || loadingSettings) {
     return (
-      <div className="container mx-auto py-6 space-y-6">
+      <div className="space-y-6">
         <Skeleton className="h-12 w-64" />
         <Skeleton className="h-8 w-full" />
         <Skeleton className="h-[500px] w-full" />
@@ -440,8 +440,8 @@ export default function ReservationCalendar() {
 
   if (errorReservations) {
     return (
-      <Card className="border-red-200 bg-red-50 dark:bg-red-950 dark:border-red-800">
-        <CardContent className="p-6 text-red-800 dark:text-red-300 flex items-center">
+      <Card className="border-destructive/30 bg-destructive/10">
+        <CardContent className="p-6 text-destructive flex items-center">
           <AlertTriangle className="h-6 w-6 mr-3" />
           <div>
             <h3 className="font-semibold">Erreur de chargement</h3>
@@ -453,7 +453,7 @@ export default function ReservationCalendar() {
   }
 
   return (
-    <div className="container mx-auto py-6 space-y-6">
+    <div className="space-y-6">
       <ReservationHeader
         currentDate={currentDate}
         setCurrentDate={setCurrentDate}

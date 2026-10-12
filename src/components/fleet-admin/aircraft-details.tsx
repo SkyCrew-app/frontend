@@ -47,19 +47,19 @@ export function AircraftDetails({ aircraft, isOpen, onClose, onEdit }: AircraftD
   const getStatusColor = (status: AvailabilityStatus) => {
     switch (status) {
       case AvailabilityStatus.AVAILABLE:
-        return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
+        return "bg-success/15 text-success"
       case AvailabilityStatus.UNAVAILABLE:
-        return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
+        return "bg-destructive/15 text-destructive"
       case AvailabilityStatus.RESERVED:
-        return "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300"
+        return "bg-warning/15 text-warning"
       default:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
+        return "bg-muted text-foreground"
     }
   }
 
   const getMaintenanceStatusColor = (status: string) => {
-    if (status === "OK") return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
-    return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
+    if (status === "OK") return "bg-success/15 text-success"
+    return "bg-destructive/15 text-destructive"
   }
 
   return (
@@ -94,7 +94,7 @@ export function AircraftDetails({ aircraft, isOpen, onClose, onEdit }: AircraftD
           </TabsList>
 
           <TabsContent value="details" className="space-y-4 pt-4">
-            <div className="relative h-40 w-full overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800 sm:h-56 md:h-64">
+            <div className="relative h-40 w-full overflow-hidden rounded-lg bg-muted sm:h-56 md:h-64">
               {aircraft.image_url ? (
                 <Image
                   src={aircraft.image_url || "/placeholder.svg"}
@@ -105,7 +105,7 @@ export function AircraftDetails({ aircraft, isOpen, onClose, onEdit }: AircraftD
                 />
               ) : (
                 <div className="flex h-full w-full items-center justify-center">
-                  <Plane className="h-16 w-16 text-gray-400 sm:h-20 sm:w-20 md:h-24 md:w-24" />
+                  <Plane className="h-16 w-16 text-muted-foreground sm:h-20 sm:w-20 md:h-24 md:w-24" />
                 </div>
               )}
             </div>

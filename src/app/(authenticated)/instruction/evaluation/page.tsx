@@ -85,8 +85,8 @@ export default function EvaluationsPage() {
   }
 
   return (
-    <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
-      <h1 className="text-2xl sm:text-4xl font-bold mb-4 sm:mb-8">Mes Évaluations</h1>
+    <div className="w-full">
+      <h1 className="mb-6 text-2xl font-semibold tracking-tight">Mes évaluations</h1>
 
       {/* Mobile filter toggle */}
       {isMobile && (
@@ -110,7 +110,7 @@ export default function EvaluationsPage() {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10"
           />
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
         </div>
         <Select value={filterStatus} onValueChange={setFilterStatus}>
           <SelectTrigger className="w-full">
@@ -131,9 +131,9 @@ export default function EvaluationsPage() {
           ))}
         </div>
       ) : error ? (
-        <Card className="bg-red-50 border-red-200">
+        <Card className="bg-destructive/10 border-destructive/30">
           <CardContent className="pt-4 sm:pt-6">
-            <p className="text-red-500 text-sm sm:text-base">
+            <p className="text-destructive text-sm sm:text-base">
               Erreur lors du chargement des évaluations: {error.message}
             </p>
           </CardContent>
@@ -190,12 +190,12 @@ export default function EvaluationsPage() {
                     </div>
                     <div className="flex items-center justify-center">
                       {progress.passed ? (
-                        <div className="flex items-center space-x-1 sm:space-x-2 text-green-500">
+                        <div className="flex items-center space-x-1 sm:space-x-2 text-success">
                           <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5" />
                           <p className="text-xs sm:text-sm font-medium">Évaluation réussie</p>
                         </div>
                       ) : (
-                        <div className="flex items-center space-x-1 sm:space-x-2 text-red-500">
+                        <div className="flex items-center space-x-1 sm:space-x-2 text-destructive">
                           <XCircle className="h-4 w-4 sm:h-5 sm:w-5" />
                           <p className="text-xs sm:text-sm font-medium">Évaluation non réussie</p>
                         </div>
@@ -210,7 +210,7 @@ export default function EvaluationsPage() {
           {/* Pagination - responsive */}
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mt-4 sm:mt-6">
             <div className="flex items-center space-x-2 order-2 sm:order-1">
-              <span className="text-xs sm:text-sm text-gray-600">Résultats par page:</span>
+              <span className="text-xs sm:text-sm text-muted-foreground">Résultats par page:</span>
               <Select
                 value={itemsPerPage.toString()}
                 onValueChange={(value) => {
@@ -239,7 +239,7 @@ export default function EvaluationsPage() {
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <span className="text-xs sm:text-sm text-gray-600 min-w-[80px] text-center">
+              <span className="text-xs sm:text-sm text-muted-foreground min-w-[80px] text-center">
                 Page {currentPage} sur {totalPages || 1}
               </span>
               <Button
@@ -255,9 +255,9 @@ export default function EvaluationsPage() {
           </div>
         </>
       ) : (
-        <Card className="bg-gray-50 border-gray-200">
+        <Card className="bg-muted/50 border-border">
           <CardContent className="pt-4 sm:pt-6">
-            <p className="text-center text-gray-500 text-sm sm:text-base">Aucune évaluation trouvée.</p>
+            <p className="text-center text-muted-foreground text-sm sm:text-base">Aucune évaluation trouvée.</p>
           </CardContent>
         </Card>
       )}

@@ -48,10 +48,10 @@ export function TaxonomyManager() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-      <Card className="border-t-4 border-t-primary shadow-md">
+      <Card className="border-t-4 border-t-primary">
         <CardHeader className="pb-2">
           <CardTitle className="text-xl flex items-center gap-2">
-            <Tags className="h-5 w-5 text-blue-500" />
+            <Tags className="h-5 w-5 text-info" />
             Gestion des taxonomies
           </CardTitle>
           <CardDescription>Configurez les différentes catégories et types utilisés dans l'aéroclub.</CardDescription>

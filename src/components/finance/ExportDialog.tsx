@@ -33,15 +33,15 @@ export function ExportDialog({ onExport, isLoading }: ExportDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="default" className="bg-blue-600 hover:bg-blue-700 text-white">
+        <Button variant="default" className="bg-info hover:bg-info/90 text-info-foreground">
           <Download className="mr-2 h-4 w-4" />
-          Exporter Rapport
+          Exporter rapport
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold flex items-center">
-            <FileText className="mr-2 h-5 w-5 text-blue-500" />
+            <FileText className="mr-2 h-5 w-5 text-info" />
             Exporter le rapport financier
           </DialogTitle>
         </DialogHeader>
@@ -57,13 +57,13 @@ export function ExportDialog({ onExport, isLoading }: ExportDialogProps) {
               <SelectContent>
                 <SelectItem value="pdf" className="flex items-center">
                   <div className="flex items-center">
-                    <div className="w-4 h-4 mr-2 rounded-full bg-red-500"></div>
+                    <div className="w-4 h-4 mr-2 rounded-full bg-destructive"></div>
                     PDF
                   </div>
                 </SelectItem>
                 <SelectItem value="excel" className="flex items-center">
                   <div className="flex items-center">
-                    <div className="w-4 h-4 mr-2 rounded-full bg-green-500"></div>
+                    <div className="w-4 h-4 mr-2 rounded-full bg-success"></div>
                     Excel
                   </div>
                 </SelectItem>
@@ -127,7 +127,7 @@ export function ExportDialog({ onExport, isLoading }: ExportDialogProps) {
               </PopoverContent>
             </Popover>
             {startDate && endDate && startDate > endDate && (
-              <p className="text-sm text-red-500 mt-1">La date de fin doit être postérieure à la date de début</p>
+              <p className="text-sm text-destructive mt-1">La date de fin doit être postérieure à la date de début</p>
             )}
           </div>
         </div>
@@ -138,7 +138,7 @@ export function ExportDialog({ onExport, isLoading }: ExportDialogProps) {
           <Button
             onClick={handleExport}
             disabled={isLoading || !startDate || !endDate || startDate > endDate}
-            className="bg-blue-600 hover:bg-blue-700"
+            className="bg-info hover:bg-info/90"
           >
             {isLoading ? (
               <>

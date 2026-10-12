@@ -97,7 +97,7 @@ export function PreferencesForm({ userData, userId, refetch }: PreferencesFormPr
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <Card className="w-full shadow-md">
+      <Card className="w-full">
         <CardHeader className="pb-4">
           <CardTitle className="text-xl font-semibold">Préférences utilisateur</CardTitle>
         </CardHeader>
@@ -219,7 +219,7 @@ export function PreferencesForm({ userData, userId, refetch }: PreferencesFormPr
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-green-50 text-green-700 p-3 rounded-md text-sm border border-green-200"
+              className="bg-success/10 text-success p-3 rounded-md text-sm border border-success/30"
             >
               Vos préférences ont été enregistrées avec succès.
             </motion.div>

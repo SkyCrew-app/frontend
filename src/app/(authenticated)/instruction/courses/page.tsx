@@ -106,10 +106,10 @@ export default function InstructionDashboard() {
   return (
     <div className="space-y-6 p-6 bg-background text-foreground">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Mes Cours</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Mes cours</h1>
         {canCreateCourse && (
           <Button onClick={() => setIsNewCourseModalOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" /> Nouveau Cours
+            <Plus className="mr-2 h-4 w-4" /> Nouveau cours
           </Button>
         )}
       </div>

@@ -101,9 +101,9 @@ describe('MaintenanceTablePage', () => {
 
     const loader = screen.getByLabelText('Chargement des données de maintenance');
     expect(loader).toHaveAttribute('aria-busy', 'true');
-    expect(screen.queryByRole('heading', { name: 'Gestion des Maintenances' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Gestion des maintenances' })).not.toBeInTheDocument();
 
-    expect(await screen.findByRole('heading', { name: 'Gestion des Maintenances' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Gestion des maintenances' })).toBeInTheDocument();
     expect(screen.queryByLabelText('Chargement des données de maintenance')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Actualiser les données' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Créer une nouvelle maintenance' })).toBeInTheDocument();
@@ -141,7 +141,7 @@ describe('MaintenanceTablePage', () => {
     expect(screen.getByText('Affichage de 1 à 3 sur 3 maintenances')).toBeInTheDocument();
   });
 
-  it('doit ouvrir le formulaire de création depuis le bouton "Nouvelle Maintenance"', async () => {
+  it('doit ouvrir le formulaire de création depuis le bouton "Nouvelle maintenance"', async () => {
     const user = userEvent.setup();
     renderPage();
     await screen.findByText('F-ABCD');
@@ -215,7 +215,7 @@ describe('MaintenanceTablePage', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Voir les détails de la maintenance pour F-ABCD' }));
 
-    const dialog = await screen.findByRole('dialog', { name: 'Détails de la Maintenance' });
+    const dialog = await screen.findByRole('dialog', { name: 'Détails de la maintenance' });
     const details = within(dialog);
     expect(
       details.getByText("Informations complètes sur la maintenance de l'aéronef F-ABCD"),
@@ -302,7 +302,7 @@ describe('MaintenanceTablePage', () => {
     await screen.findByText('F-ABCD');
 
     await user.click(screen.getByRole('button', { name: 'Voir les détails de la maintenance pour F-ABCD' }));
-    const dialog = await screen.findByRole('dialog', { name: 'Détails de la Maintenance' });
+    const dialog = await screen.findByRole('dialog', { name: 'Détails de la maintenance' });
     await user.click(within(dialog).getByRole('button', { name: /Supprimer/ }));
 
     const confirmation = await screen.findByRole('alertdialog');

@@ -60,7 +60,7 @@ export default function FinancialReportComponent() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-12 w-12 animate-spin text-blue-500" />
+          <Loader2 className="h-12 w-12 animate-spin text-info" />
           <p className="text-muted-foreground animate-pulse">Chargement des données financières...</p>
         </div>
       </div>
@@ -90,11 +90,11 @@ export default function FinancialReportComponent() {
 
   if (reports.length === 0) {
     return (
-      <Alert className="mx-auto max-w-2xl bg-amber-50 border-amber-200 text-amber-800">
-        <AlertTriangle className="h-5 w-5 text-amber-500" />
+      <Alert className="mx-auto max-w-2xl bg-warning/10 border-warning/30 text-warning">
+        <AlertTriangle className="h-5 w-5 text-warning" />
         <div>
           <AlertTitle className="text-lg font-semibold">Aucune donnée disponible</AlertTitle>
-          <AlertDescription className="text-amber-700">
+          <AlertDescription className="text-warning">
             Aucun rapport financier valide n'a été trouvé. Veuillez vérifier les données ou contacter l'administrateur.
           </AlertDescription>
         </div>
@@ -129,12 +129,12 @@ export default function FinancialReportComponent() {
       {/* Cartes de statistiques */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <motion.div variants={fadeIn}>
-          <Card className="shadow-md hover:shadow-lg transition-shadow border-t-4 border-t-primary">
+          <Card className="hover:shadow-md transition-shadow border-t-4 border-t-primary">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg flex items-center justify-between">
-                <span>Revenus Totaux</span>
+                <span>Revenus totaux</span>
                 <Badge
-                  className={`${revenueTrend >= 0 ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"} flex items-center`}
+                  className={`${revenueTrend >= 0 ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"} flex items-center`}
                 >
                   {revenueTrend >= 0 ? (
                     <TrendingUp className="mr-1 h-3 w-3" />
@@ -146,19 +146,19 @@ export default function FinancialReportComponent() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-blue-600">{totalRevenue.toLocaleString()} €</div>
+              <div className="text-3xl font-bold text-info">{totalRevenue.toLocaleString()} €</div>
               <p className="text-sm text-muted-foreground mt-1">{reports.length} période(s) analysée(s)</p>
             </CardContent>
           </Card>
         </motion.div>
 
         <motion.div variants={fadeIn}>
-          <Card className="shadow-md hover:shadow-lg transition-shadow border-t-4 border-t-red-500">
+          <Card className="hover:shadow-md transition-shadow border-t-4 border-t-destructive">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg flex items-center justify-between">
-                <span>Dépenses Totales</span>
+                <span>Dépenses totales</span>
                 <Badge
-                  className={`${expenseTrend <= 0 ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"} flex items-center`}
+                  className={`${expenseTrend <= 0 ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"} flex items-center`}
                 >
                   {expenseTrend >= 0 ? (
                     <TrendingUp className="mr-1 h-3 w-3" />
@@ -170,19 +170,19 @@ export default function FinancialReportComponent() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-red-600">{totalExpense.toLocaleString()} €</div>
+              <div className="text-3xl font-bold text-destructive">{totalExpense.toLocaleString()} €</div>
               <p className="text-sm text-muted-foreground mt-1">{reports.length} période(s) analysée(s)</p>
             </CardContent>
           </Card>
         </motion.div>
 
         <motion.div variants={fadeIn}>
-          <Card className="shadow-md hover:shadow-lg transition-shadow border-t-4 border-t-green-500">
+          <Card className="hover:shadow-md transition-shadow border-t-4 border-t-success">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg flex items-center justify-between">
-                <span>Profit Net</span>
+                <span>Profit net</span>
                 <Badge
-                  className={`${profitTrend >= 0 ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"} flex items-center`}
+                  className={`${profitTrend >= 0 ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"} flex items-center`}
                 >
                   {profitTrend >= 0 ? (
                     <TrendingUp className="mr-1 h-3 w-3" />
@@ -194,7 +194,7 @@ export default function FinancialReportComponent() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-green-600">{totalProfit.toLocaleString()} €</div>
+              <div className="text-3xl font-bold text-success">{totalProfit.toLocaleString()} €</div>
               <p className="text-sm text-muted-foreground mt-1">{reports.length} période(s) analysée(s)</p>
             </CardContent>
           </Card>
@@ -202,59 +202,59 @@ export default function FinancialReportComponent() {
       </div>
 
       <motion.div variants={fadeIn}>
-        <Card className="shadow-md">
+        <Card >
           <CardHeader>
-            <CardTitle>Évolution Financière</CardTitle>
+            <CardTitle>Évolution financière</CardTitle>
             <CardDescription>Vue d'ensemble des performances financières sur la période</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-[400px]">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 10 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="date" tick={{ fill: "#6b7280", fontSize: 12 }} tickLine={{ stroke: "#e5e7eb" }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="date" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} tickLine={{ stroke: "hsl(var(--border))" }} />
                   <YAxis
-                    tick={{ fill: "#6b7280", fontSize: 12 }}
-                    tickLine={{ stroke: "#e5e7eb" }}
+                    tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                    tickLine={{ stroke: "hsl(var(--border))" }}
                     tickFormatter={(value) => `${(value / 1000).toFixed(0)}k€`}
                   />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: "white",
+                      backgroundColor: "hsl(var(--popover))",
                       borderRadius: "8px",
-                      boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-                      border: "1px solid #e5e7eb",
+                      boxShadow: "0 4px 8px -2px hsl(var(--shadow-color) / 0.12)",
+                      border: "1px solid hsl(var(--border))",
                     }}
                     formatter={(value: number) => [`${value.toLocaleString()} €`, undefined]}
                   />
                   <Legend verticalAlign="top" height={36} wrapperStyle={{ paddingTop: "10px" }} />
-                  <ReferenceLine y={0} stroke="#cbd5e1" strokeWidth={1} />
+                  <ReferenceLine y={0} stroke="hsl(var(--border))" strokeWidth={1} />
                   <Line
                     type="monotone"
                     dataKey="revenue"
                     name="Revenus"
-                    stroke="#3b82f6"
+                    stroke="hsl(var(--chart-2))"
                     strokeWidth={3}
-                    dot={{ r: 4, fill: "#3b82f6", strokeWidth: 2, stroke: "white" }}
-                    activeDot={{ r: 6, fill: "#3b82f6", stroke: "white", strokeWidth: 2 }}
+                    dot={{ r: 4, fill: "hsl(var(--chart-2))", strokeWidth: 2, stroke: "hsl(var(--card))" }}
+                    activeDot={{ r: 6, fill: "hsl(var(--chart-2))", stroke: "hsl(var(--card))", strokeWidth: 2 }}
                   />
                   <Line
                     type="monotone"
                     dataKey="expense"
                     name="Dépenses"
-                    stroke="#ef4444"
+                    stroke="hsl(var(--destructive))"
                     strokeWidth={3}
-                    dot={{ r: 4, fill: "#ef4444", strokeWidth: 2, stroke: "white" }}
-                    activeDot={{ r: 6, fill: "#ef4444", stroke: "white", strokeWidth: 2 }}
+                    dot={{ r: 4, fill: "hsl(var(--destructive))", strokeWidth: 2, stroke: "hsl(var(--card))" }}
+                    activeDot={{ r: 6, fill: "hsl(var(--destructive))", stroke: "hsl(var(--card))", strokeWidth: 2 }}
                   />
                   <Line
                     type="monotone"
                     dataKey="profit"
-                    name="Profit Net"
-                    stroke="#10b981"
+                    name="Profit net"
+                    stroke="hsl(var(--chart-4))"
                     strokeWidth={3}
-                    dot={{ r: 4, fill: "#10b981", strokeWidth: 2, stroke: "white" }}
-                    activeDot={{ r: 6, fill: "#10b981", stroke: "white", strokeWidth: 2 }}
+                    dot={{ r: 4, fill: "hsl(var(--chart-4))", strokeWidth: 2, stroke: "hsl(var(--card))" }}
+                    activeDot={{ r: 6, fill: "hsl(var(--chart-4))", stroke: "hsl(var(--card))", strokeWidth: 2 }}
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -264,9 +264,9 @@ export default function FinancialReportComponent() {
       </motion.div>
 
       <motion.div variants={fadeIn}>
-        <Card className="shadow-md">
+        <Card >
           <CardHeader>
-            <CardTitle>Détails des Rapports Financiers</CardTitle>
+            <CardTitle>Détails des rapports financiers</CardTitle>
             <CardDescription>Historique complet des rapports financiers</CardDescription>
           </CardHeader>
           <CardContent>
@@ -275,10 +275,10 @@ export default function FinancialReportComponent() {
                 <TableHeader>
                   <TableRow className="bg-muted/50">
                     <TableHead>Date</TableHead>
-                    <TableHead>Revenus Totaux</TableHead>
-                    <TableHead>Dépenses Totales</TableHead>
-                    <TableHead>Profit Net</TableHead>
-                    <TableHead>Revenu Moyen par Membre</TableHead>
+                    <TableHead>Revenus totaux</TableHead>
+                    <TableHead>Dépenses totales</TableHead>
+                    <TableHead>Profit net</TableHead>
+                    <TableHead>Revenu moyen par membre</TableHead>
                     <TableHead>Tendance</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -295,7 +295,7 @@ export default function FinancialReportComponent() {
                         <TableCell>{report.total_revenue.toLocaleString()} €</TableCell>
                         <TableCell>{report.total_expense.toLocaleString()} €</TableCell>
                         <TableCell
-                          className={report.net_profit >= 0 ? "text-green-600 font-medium" : "text-red-600 font-medium"}
+                          className={report.net_profit >= 0 ? "text-success font-medium" : "text-destructive font-medium"}
                         >
                           {report.net_profit.toLocaleString()} €
                         </TableCell>
@@ -303,7 +303,7 @@ export default function FinancialReportComponent() {
                         <TableCell>
                           {prevReport && (
                             <Badge
-                              className={`${profitTrend >= 0 ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"} flex items-center`}
+                              className={`${profitTrend >= 0 ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"} flex items-center`}
                             >
                               {profitTrend >= 0 ? (
                                 <TrendingUp className="mr-1 h-3 w-3" />
@@ -326,15 +326,15 @@ export default function FinancialReportComponent() {
 
       {reports.length > 0 && reports[reports.length - 1].recommendations && (
         <motion.div variants={fadeIn}>
-          <Card className="shadow-md border-l-4 border-l-amber-500">
+          <Card className="border-l-4 border-l-warning">
             <CardHeader>
               <CardTitle className="flex items-center">
-                <Lightbulb className="mr-2 h-5 w-5 text-amber-500" />
+                <Lightbulb className="mr-2 h-5 w-5 text-warning" />
                 Recommandations
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="bg-amber-50 p-4 rounded-lg border border-amber-200 text-amber-800">
+              <div className="bg-warning/10 p-4 rounded-lg border border-warning/30 text-warning">
                 <p className="italic">{reports[reports.length - 1].recommendations}</p>
               </div>
             </CardContent>

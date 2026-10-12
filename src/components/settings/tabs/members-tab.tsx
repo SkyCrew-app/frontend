@@ -23,7 +23,7 @@ export function MembersTab() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-      <Card className="border-t-4 border-t-primary shadow-md">
+      <Card className="border-t-4 border-t-primary">
         <CardHeader className="pb-2">
           <CardTitle className="text-xl">Gestion des membres</CardTitle>
           <CardDescription>Configurez les paramètres liés aux membres de l'aéroclub.</CardDescription>
@@ -31,7 +31,7 @@ export function MembersTab() {
         <CardContent className="space-y-6">
           <div className="space-y-4">
             <h3 className="text-lg font-semibold flex items-center gap-2">
-              <BadgeCheck className="h-5 w-5 text-blue-500" />
+              <BadgeCheck className="h-5 w-5 text-info" />
               Licences de pilote acceptées
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -62,7 +62,7 @@ export function MembersTab() {
           <Separator />
           <div className="space-y-4">
             <h3 className="text-lg font-semibold flex items-center gap-2">
-              <DollarSign className="h-5 w-5 text-blue-500" />
+              <DollarSign className="h-5 w-5 text-info" />
               Tarifs et cotisations
             </h3>
             <div className="space-y-2">
@@ -74,7 +74,7 @@ export function MembersTab() {
                 min="0"
                 step="0.01"
               />
-              {errors.membershipFee && <p className="text-sm text-red-500">{errors.membershipFee.message as string}</p>}
+              {errors.membershipFee && <p className="text-sm text-destructive">{errors.membershipFee.message as string}</p>}
             </div>
 
             <div className="flex items-center space-x-2 mb-4">
@@ -89,7 +89,7 @@ export function MembersTab() {
             </div>
 
             {allowGuestPilots && (
-              <div className="space-y-2 pl-6 border-l-2 border-blue-200">
+              <div className="space-y-2 pl-6 border-l-2 border-info/30">
                 <Label htmlFor="guest-pilot-fee">Frais pour pilotes invités (€)</Label>
                 <Input
                   id="guest-pilot-fee"
@@ -99,7 +99,7 @@ export function MembersTab() {
                   step="0.01"
                 />
                 {errors.guestPilotFee && (
-                  <p className="text-sm text-red-500">{errors.guestPilotFee.message as string}</p>
+                  <p className="text-sm text-destructive">{errors.guestPilotFee.message as string}</p>
                 )}
               </div>
             )}
@@ -107,7 +107,7 @@ export function MembersTab() {
           <Separator />
           <div className="space-y-2">
             <h3 className="text-lg font-semibold flex items-center gap-2">
-              <FileText className="h-5 w-5 text-blue-500" />
+              <FileText className="h-5 w-5 text-info" />
               Règlement intérieur
             </h3>
             <Textarea

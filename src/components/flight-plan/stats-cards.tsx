@@ -1,6 +1,6 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { StatCard, type StatTone } from "@/components/layout/StatCard"
 import { Plane, MapPin, Route, Clock } from "lucide-react"
 import type { Flight } from "@/interfaces/flight"
 
@@ -31,56 +31,36 @@ export function StatsCards({ flights }: StatsCardsProps) {
       value: totalFlights,
       unit: "",
       icon: Plane,
-      color: "text-blue-500",
-      bgColor: "bg-blue-100 dark:bg-blue-950",
+      tone: "info" as StatTone,
     },
     {
       title: "Heures de vol",
       value: totalHours.toFixed(1),
       unit: "h",
       icon: Clock,
-      color: "text-green-500",
-      bgColor: "bg-green-100 dark:bg-green-950",
+      tone: "success" as StatTone,
     },
     {
       title: "Distance totale",
       value: Math.round(totalDistance),
       unit: "km",
       icon: Route,
-      color: "text-amber-500",
-      bgColor: "bg-amber-100 dark:bg-amber-950",
+      tone: "warning" as StatTone,
     },
     {
       title: "Aéroports visités",
       value: uniqueAirports.size,
       unit: "",
       icon: MapPin,
-      color: "text-purple-500",
-      bgColor: "bg-purple-100 dark:bg-purple-950",
+      tone: "primary" as StatTone,
     },
   ]
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-      {stats.map((stat) => {
-        const Icon = stat.icon
-        return (
-          <Card key={stat.title} className="border-none shadow-sm">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">{stat.title}</CardTitle>
-            </CardHeader>
-            <CardContent className="flex items-center justify-between">
-              <span className="text-2xl font-bold">
-                {stat.value}
-                {stat.unit}
-              </span>
-              <div className={`p-2 rounded-full ${stat.bgColor}`}>
-                <Icon className={`h-5 w-5 ${stat.color}`} />
-              </div>
-            </CardContent>
-          </Card>
-        )
-      })}
+      {stats.map((stat) => (
+        <StatCard key={stat.title} label={stat.title} value={`${stat.value}${stat.unit}`} icon={stat.icon} tone={stat.tone} />
+      ))}
     </div>
   )
 }

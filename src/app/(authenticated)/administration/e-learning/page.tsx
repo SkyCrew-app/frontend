@@ -23,8 +23,8 @@ export default function AdminELearningPage() {
   if (!mounted) return null
 
   return (
-    <div className="min-h-screen bg-gradient-to-b">
-      <div className="container mx-auto px-4 py-8">
+    <div className="w-full">
+      <div className="w-full">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -33,7 +33,7 @@ export default function AdminELearningPage() {
         >
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
             <div>
-              <h1 className="text-3xl md:text-4xl font-bold flex items-center gap-2">
+              <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
                 Administration E-Learning
               </h1>
               <p className="text-muted-foreground mt-1">
@@ -42,7 +42,7 @@ export default function AdminELearningPage() {
             </div>
           </div>
 
-          <Card className="border-t-4 border-t-primary shadow-md">
+          <Card className="border-t-4 border-t-primary">
             <CardHeader className="pb-2">
               <CardTitle className="text-xl">Tableau de bord</CardTitle>
               <CardDescription>Gérez tous les aspects de votre plateforme e-learning</CardDescription>

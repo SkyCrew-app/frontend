@@ -51,7 +51,7 @@ export default function OperatingCosts({ period, date }: OperatingCostsProps) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-12 w-12 animate-spin text-blue-500" />
+          <Loader2 className="h-12 w-12 animate-spin text-info" />
           <p className="text-muted-foreground animate-pulse">Calcul des coûts d'exploitation...</p>
         </div>
       </div>
@@ -128,10 +128,10 @@ export default function OperatingCosts({ period, date }: OperatingCostsProps) {
   return (
     <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="space-y-8">
       <motion.div variants={fadeIn}>
-        <Card className="shadow-md border-t-4 border-t-primary">
-          <CardHeader className="bg-gradient-to-r from-primary/5 to-blue-50 dark:from-primary/10 dark:to-blue-950/30">
+        <Card className="border-t-4 border-t-primary">
+          <CardHeader className="bg-gradient-to-r from-primary/5 to-info/10 dark:from-primary/10">
             <CardTitle className="text-xl font-bold text-primary">
-              Coûts d'Exploitation {period === "monthly" ? "Mensuels" : "Annuels"}
+              Coûts d'exploitation {period === "monthly" ? "Mensuels" : "Annuels"}
             </CardTitle>
             <CardDescription>
               Détail des coûts et revenus par avion pour la période du {format(startDate, "PPP", { locale: fr })} au{" "}
@@ -142,27 +142,27 @@ export default function OperatingCosts({ period, date }: OperatingCostsProps) {
             <div className="h-[400px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 10 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="name" tick={{ fill: "#6b7280", fontSize: 12 }} tickLine={{ stroke: "#e5e7eb" }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} tickLine={{ stroke: "hsl(var(--border))" }} />
                   <YAxis
-                    tick={{ fill: "#6b7280", fontSize: 12 }}
-                    tickLine={{ stroke: "#e5e7eb" }}
+                    tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                    tickLine={{ stroke: "hsl(var(--border))" }}
                     tickFormatter={(value) => `${(value / 1000).toFixed(0)}k€`}
                   />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: "white",
+                      backgroundColor: "hsl(var(--popover))",
                       borderRadius: "8px",
-                      boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
-                      border: "1px solid #e5e7eb",
+                      boxShadow: "0 4px 8px -2px hsl(var(--shadow-color) / 0.12)",
+                      border: "1px solid hsl(var(--border))",
                     }}
                     formatter={(value: number) => [`${value.toLocaleString()} €`, undefined]}
                   />
                   <Legend verticalAlign="top" height={36} wrapperStyle={{ paddingTop: "10px" }} />
-                  <Bar dataKey="fuelCost" name="Coût Carburant" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="maintenanceCost" name="Coût Maintenance" fill="#ef4444" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="revenue" name="Revenus" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="profit" name="Profit" fill="#10b981" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="fuelCost" name="Coût carburant" fill="hsl(var(--chart-5))" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="maintenanceCost" name="Coût maintenance" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="revenue" name="Revenus" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="profit" name="Profit" fill="hsl(var(--chart-4))" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -171,11 +171,11 @@ export default function OperatingCosts({ period, date }: OperatingCostsProps) {
       </motion.div>
 
       <motion.div variants={fadeIn}>
-        <Card className="shadow-md">
+        <Card >
           <CardHeader>
             <CardTitle className="flex items-center">
-              <Plane className="mr-2 h-5 w-5 text-blue-500" />
-              Résumé des Coûts d'Exploitation par Avion
+              <Plane className="mr-2 h-5 w-5 text-info" />
+              Résumé des Coûts d'exploitation par Avion
             </CardTitle>
             <CardDescription>Vue détaillée des coûts et revenus par avion</CardDescription>
           </CardHeader>
@@ -187,28 +187,28 @@ export default function OperatingCosts({ period, date }: OperatingCostsProps) {
                     <TableHead>Avion</TableHead>
                     <TableHead>
                       <div className="flex items-center">
-                        <Fuel className="mr-2 h-4 w-4 text-amber-500" />
-                        Coût Carburant
+                        <Fuel className="mr-2 h-4 w-4 text-warning" />
+                        Coût carburant
                       </div>
                     </TableHead>
                     <TableHead>
                       <div className="flex items-center">
-                        <Wrench className="mr-2 h-4 w-4 text-red-500" />
-                        Coût Maintenance
+                        <Wrench className="mr-2 h-4 w-4 text-destructive" />
+                        Coût maintenance
                       </div>
                     </TableHead>
                     <TableHead>
                       <div className="flex items-center">
-                        <DollarSign className="mr-2 h-4 w-4 text-blue-500" />
+                        <DollarSign className="mr-2 h-4 w-4 text-info" />
                         Revenus
                       </div>
                     </TableHead>
                     <TableHead>
                       <div className="flex items-center">
                         {totals.profit >= 0 ? (
-                          <TrendingUp className="mr-2 h-4 w-4 text-green-500" />
+                          <TrendingUp className="mr-2 h-4 w-4 text-success" />
                         ) : (
-                          <TrendingDown className="mr-2 h-4 w-4 text-red-500" />
+                          <TrendingDown className="mr-2 h-4 w-4 text-destructive" />
                         )}
                         Profit
                       </div>
@@ -219,15 +219,15 @@ export default function OperatingCosts({ period, date }: OperatingCostsProps) {
                   {data.map((item: any, index: any) => (
                     <TableRow key={index} className="hover:bg-muted/30 transition-colors">
                       <TableCell className="font-medium">
-                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                        <Badge variant="outline" className="bg-info/10 text-info border-info/30">
                           {item.name}
                         </Badge>
                       </TableCell>
                       <TableCell>{item.fuelCost.toLocaleString()} €</TableCell>
                       <TableCell>{item.maintenanceCost.toLocaleString()} €</TableCell>
-                      <TableCell className="font-medium text-blue-600">{item.revenue.toLocaleString()} €</TableCell>
+                      <TableCell className="font-medium text-info">{item.revenue.toLocaleString()} €</TableCell>
                       <TableCell
-                        className={item.profit >= 0 ? "font-medium text-green-600" : "font-medium text-red-600"}
+                        className={item.profit >= 0 ? "font-medium text-success" : "font-medium text-destructive"}
                       >
                         {item.profit.toLocaleString()} €
                       </TableCell>
@@ -237,8 +237,8 @@ export default function OperatingCosts({ period, date }: OperatingCostsProps) {
                     <TableCell>TOTAL</TableCell>
                     <TableCell>{totals.fuelCost.toLocaleString()} €</TableCell>
                     <TableCell>{totals.maintenanceCost.toLocaleString()} €</TableCell>
-                    <TableCell className="text-blue-600">{totals.revenue.toLocaleString()} €</TableCell>
-                    <TableCell className={totals.profit >= 0 ? "text-green-600" : "text-red-600"}>
+                    <TableCell className="text-info">{totals.revenue.toLocaleString()} €</TableCell>
+                    <TableCell className={totals.profit >= 0 ? "text-success" : "text-destructive"}>
                       {totals.profit.toLocaleString()} €
                     </TableCell>
                   </TableRow>
@@ -248,8 +248,8 @@ export default function OperatingCosts({ period, date }: OperatingCostsProps) {
           </CardContent>
           <CardFooter className="bg-muted/30 pt-4">
             {totals.profit < 0 ? (
-              <Alert className="w-full bg-red-50 border-red-200 text-red-800">
-                <AlertTriangle className="h-5 w-5 text-red-500" />
+              <Alert className="w-full bg-destructive/10 border-destructive/30 text-destructive">
+                <AlertTriangle className="h-5 w-5 text-destructive" />
                 <div>
                   <AlertTitle className="font-semibold">Alerte de rentabilité</AlertTitle>
                   <AlertDescription>
@@ -259,8 +259,8 @@ export default function OperatingCosts({ period, date }: OperatingCostsProps) {
                 </div>
               </Alert>
             ) : (
-              <Alert className="w-full bg-green-50 border-green-200 text-green-800">
-                <TrendingUp className="h-5 w-5 text-green-500" />
+              <Alert className="w-full bg-success/10 border-success/30 text-success">
+                <TrendingUp className="h-5 w-5 text-success" />
                 <div>
                   <AlertTitle className="font-semibold">Bonne rentabilité</AlertTitle>
                   <AlertDescription>

@@ -92,14 +92,14 @@ function getPhaseLabel(type: string): string {
 
 function getPhaseColor(type: string): string {
   switch (type?.toUpperCase()) {
-    case "TOC": return "text-green-500"
-    case "TOD": return "text-amber-500"
-    case "SID": return "text-purple-400"
-    case "STAR": return "text-purple-400"
-    case "APP": return "text-orange-400"
-    case "VOR": return "text-sky-400"
-    case "NDB": return "text-red-400"
-    case "FIX": return "text-emerald-400"
+    case "TOC": return "text-success"
+    case "TOD": return "text-warning"
+    case "SID": return "text-primary"
+    case "STAR": return "text-primary"
+    case "APP": return "text-brand"
+    case "VOR": return "text-info"
+    case "NDB": return "text-destructive"
+    case "FIX": return "text-success"
     default: return "text-muted-foreground"
   }
 }
@@ -169,7 +169,7 @@ export function NavLog({
   const totalDistNm = cumDist
 
   return (
-    <Card className="shadow-lg border-border/50">
+    <Card className="border-border/50">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2">
@@ -237,9 +237,9 @@ export function NavLog({
                 const isClimb = leg.toType === "TOC" || leg.toType === "SID"
                 const isDescent = leg.toType === "TOD" || leg.toType === "STAR" || leg.toType === "APP"
                 const rowBg = isClimb
-                  ? "bg-green-500/5"
+                  ? "bg-success/5"
                   : isDescent
-                    ? "bg-amber-500/5"
+                    ? "bg-warning/5"
                     : i % 2 === 0
                       ? "bg-transparent"
                       : "bg-muted/30"
@@ -251,28 +251,28 @@ export function NavLog({
                     <td className={`px-3 py-2 text-center ${getPhaseColor(leg.toType)}`}>
                       {getPhaseLabel(leg.toType)}
                     </td>
-                    <td className="px-3 py-2 text-right text-purple-400">
+                    <td className="px-3 py-2 text-right text-primary">
                       {Math.round(leg.track).toString().padStart(3, "0")}°
                     </td>
-                    <td className="px-3 py-2 text-right text-yellow-400">
+                    <td className="px-3 py-2 text-right text-warning">
                       {leg.wca !== 0 ? `${leg.wca > 0 ? "+" : ""}${leg.wca.toFixed(1)}°` : "-"}
                     </td>
-                    <td className="px-3 py-2 text-right font-semibold text-purple-300">
+                    <td className="px-3 py-2 text-right font-semibold text-primary">
                       {Math.round(hdg).toString().padStart(3, "0")}°
                     </td>
                     <td className="px-3 py-2 text-right">{leg.distNm.toFixed(1)} NM</td>
                     <td className="px-3 py-2 text-right text-muted-foreground">{leg.cumDist.toFixed(1)}</td>
                     <td className="px-3 py-2 text-right">
-                      <span className={isClimb ? "text-green-400" : isDescent ? "text-amber-400" : ""}>
+                      <span className={isClimb ? "text-success" : isDescent ? "text-warning" : ""}>
                         {formatAlt(leg.alt)}
                       </span>
                     </td>
-                    <td className="px-3 py-2 text-right text-sky-400">{leg.gs}kt</td>
+                    <td className="px-3 py-2 text-right text-info">{leg.gs}kt</td>
                     <td className="px-3 py-2 text-right">{leg.ete}</td>
                     <td className="px-3 py-2 text-right font-semibold">{leg.eta}</td>
                     <td className="px-3 py-2 text-right">
                       {leg.fuelRem !== null ? (
-                        <span className={leg.fuelRem < 10 ? "text-red-400 font-bold" : "text-emerald-400"}>
+                        <span className={leg.fuelRem < 10 ? "text-destructive font-bold" : "text-success"}>
                           {leg.fuelRem.toFixed(1)}L
                         </span>
                       ) : (

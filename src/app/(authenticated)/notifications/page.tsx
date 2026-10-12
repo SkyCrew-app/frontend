@@ -176,39 +176,39 @@ export default function NotificationsPage() {
   const priorityIcon = (priority: string) => {
     switch (priority) {
       case "high":
-        return <AlertTriangle className="h-5 w-5 text-red-500" />
+        return <AlertTriangle className="h-5 w-5 text-destructive" />
       case "medium":
-        return <Info className="h-5 w-5 text-yellow-500" />
+        return <Info className="h-5 w-5 text-warning" />
       case "low":
-        return <CheckCircle className="h-5 w-5 text-green-500" />
+        return <CheckCircle className="h-5 w-5 text-success" />
       default:
-        return <Bell className="h-5 w-5 text-blue-500" />
+        return <Bell className="h-5 w-5 text-info" />
     }
   }
 
   const priorityColor = (priority: string) => {
     switch (priority) {
       case "high":
-        return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200"
+        return "bg-destructive/15 text-destructive"
       case "medium":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200"
+        return "bg-warning/15 text-warning"
       case "low":
-        return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200"
+        return "bg-success/15 text-success"
       default:
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200"
+        return "bg-info/15 text-info"
     }
   }
 
   const priorityBorder = (priority: string) => {
     switch (priority) {
       case "high":
-        return "border-l-4 border-red-500"
+        return "border-l-4 border-destructive"
       case "medium":
-        return "border-l-4 border-yellow-500"
+        return "border-l-4 border-warning"
       case "low":
-        return "border-l-4 border-green-500"
+        return "border-l-4 border-success"
       default:
-        return "border-l-4 border-blue-500"
+        return "border-l-4 border-info"
     }
   }
 
@@ -246,7 +246,7 @@ export default function NotificationsPage() {
   const renderContent = () => {
     if (loading) {
       return (
-        <div className="container mx-auto p-4 max-w-4xl">
+        <div className="mx-auto max-w-4xl">
           <Skeleton className="h-12 w-64 mb-6" />
           <div className="flex justify-between items-center mb-6">
             <Skeleton className="h-10 w-32" />
@@ -263,12 +263,12 @@ export default function NotificationsPage() {
     }
 
     return (
-      <div className="w-full p-4 max-w-full overflow-hidden">
+      <div className="w-full overflow-hidden">
         <header className="mb-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-2">Notifications</h1>
-              <p className="text-gray-500 dark:text-gray-400">
+              <h1 className="text-2xl font-semibold tracking-tight">Notifications</h1>
+              <p className="mt-1 text-sm text-muted-foreground">
                 Gérez vos alertes et restez informé des mises à jour importantes
               </p>
             </div>
@@ -277,7 +277,7 @@ export default function NotificationsPage() {
               {filteredNotifications.some((n) => !n.is_read) && (
                 <Button
                   variant="outline"
-                  className="bg-white dark:bg-gray-800 text-primary border-primary/30 hover:bg-primary/10 transition-all duration-300"
+                  className="bg-card text-primary border-primary/30 hover:bg-primary/10 transition-all duration-300"
                   onClick={handleMarkAllAsRead}
                   disabled={isMarkingAllAsRead}
                 >
@@ -295,13 +295,13 @@ export default function NotificationsPage() {
                   <AlertDialogTrigger asChild>
                     <Button
                       variant="outline"
-                      className="bg-white dark:bg-gray-800 text-red-500 border-red-500/30 hover:bg-red-500/10 transition-all duration-300"
+                      className="bg-card text-destructive border-destructive/30 hover:bg-destructive/10 transition-all duration-300"
                     >
                       <Trash2 className="mr-2 h-4 w-4" />
                       Tout supprimer
                     </Button>
                   </AlertDialogTrigger>
-                  <AlertDialogContent className="bg-white dark:bg-gray-800">
+                  <AlertDialogContent className="bg-card">
                     <AlertDialogHeader>
                       <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
                       <AlertDialogDescription>
@@ -310,12 +310,12 @@ export default function NotificationsPage() {
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel className="bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white transition-all duration-300">
+                      <AlertDialogCancel className="bg-muted hover:bg-muted transition-all duration-300">
                         Annuler
                       </AlertDialogCancel>
                       <AlertDialogAction
                         onClick={handleRemoveAllNotifications}
-                        className="bg-red-500 hover:bg-red-600 text-white transition-all duration-300"
+                        className="bg-destructive hover:bg-destructive/90 text-destructive-foreground transition-all duration-300"
                       >
                         Supprimer
                       </AlertDialogAction>
@@ -327,7 +327,7 @@ export default function NotificationsPage() {
           </div>
         </header>
 
-        <Card className="mb-4 border border-gray-200 dark:border-gray-700 shadow-sm transition-all duration-300">
+        <Card className="mb-4 border border-border transition-all duration-300">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2">
               <Bell className="h-5 w-5 text-primary" />
@@ -335,16 +335,16 @@ export default function NotificationsPage() {
             </CardTitle>
             <CardDescription>
               Vous avez {notifications.length} notifications, dont{" "}
-              <span className="font-medium text-blue-500">{notifications.filter((n) => !n.is_read).length}</span> non
+              <span className="font-medium text-info">{notifications.filter((n) => !n.is_read).length}</span> non
               lues.
             </CardDescription>
           </CardHeader>
           <CardContent className="pb-1 space-y-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Rechercher dans vos notifications..."
-                className="pl-10 bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700"
+                className="pl-10 bg-muted/50 border-border"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -352,7 +352,7 @@ export default function NotificationsPage() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 text-gray-400 hover:text-gray-600"
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 text-muted-foreground hover:text-muted-foreground"
                   onClick={() => setSearchQuery("")}
                 >
                   <X className="h-4 w-4" />
@@ -361,39 +361,39 @@ export default function NotificationsPage() {
             </div>
 
             <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
-              <TabsList className="grid grid-cols-3 mb-4 bg-gray-100 dark:bg-gray-800 p-1">
+              <TabsList className="grid grid-cols-3 mb-4 bg-muted p-1">
                 <TabsTrigger
                   value="all"
-                  className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 transition-all duration-300"
+                  className="data-[state=active]:bg-card transition-all duration-300"
                 >
                   Toutes
                   <Badge
                     variant="secondary"
-                    className="ml-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200"
+                    className="ml-2 bg-muted text-foreground"
                   >
                     {notifications.length}
                   </Badge>
                 </TabsTrigger>
                 <TabsTrigger
                   value="unread"
-                  className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 transition-all duration-300"
+                  className="data-[state=active]:bg-card transition-all duration-300"
                 >
                   Non lues
                   <Badge
                     variant="secondary"
-                    className="ml-2 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-200"
+                    className="ml-2 bg-info/15 text-info"
                   >
                     {notifications.filter((n) => !n.is_read).length}
                   </Badge>
                 </TabsTrigger>
                 <TabsTrigger
                   value="high"
-                  className="data-[state=active]:bg-white dark:data-[state=active]:bg-gray-700 transition-all duration-300"
+                  className="data-[state=active]:bg-card transition-all duration-300"
                 >
                   Prioritaires
                   <Badge
                     variant="secondary"
-                    className="ml-2 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-200"
+                    className="ml-2 bg-destructive/15 text-destructive"
                   >
                     {notifications.filter((n) => n.priority === "high").length}
                   </Badge>
@@ -406,14 +406,14 @@ export default function NotificationsPage() {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
-                  className="bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300"
+                  className="bg-card text-foreground border-border hover:bg-muted transition-all duration-300"
                 >
                   <Filter className="mr-2 h-4 w-4" />
                   Filtrer par priorité
                   {filter !== "all" && <Badge className="ml-2 bg-primary/10 text-primary">{filter}</Badge>}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg">
+              <DropdownMenuContent className="bg-card border border-border shadow-lg">
                 <DropdownMenuItem
                   className={`${filter === "all" ? "bg-primary/10 text-primary" : ""} cursor-pointer transition-colors duration-200`}
                   onClick={() => setFilter("all")}
@@ -431,27 +431,27 @@ export default function NotificationsPage() {
                   className={`${filter === "high" ? "bg-primary/10 text-primary" : ""} cursor-pointer transition-colors duration-200`}
                   onClick={() => setFilter("high")}
                 >
-                  <AlertTriangle className="mr-2 h-4 w-4 text-red-500" />
+                  <AlertTriangle className="mr-2 h-4 w-4 text-destructive" />
                   Priorité haute
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className={`${filter === "medium" ? "bg-primary/10 text-primary" : ""} cursor-pointer transition-colors duration-200`}
                   onClick={() => setFilter("medium")}
                 >
-                  <Info className="mr-2 h-4 w-4 text-yellow-500" />
+                  <Info className="mr-2 h-4 w-4 text-warning" />
                   Priorité moyenne
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className={`${filter === "low" ? "bg-primary/10 text-primary" : ""} cursor-pointer transition-colors duration-200`}
                   onClick={() => setFilter("low")}
                 >
-                  <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
+                  <CheckCircle className="mr-2 h-4 w-4 text-success" />
                   Priorité basse
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <Badge variant="secondary" className="bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200">
+            <Badge variant="secondary" className="bg-muted text-foreground">
               {filteredNotifications.length} notification{filteredNotifications.length !== 1 ? "s" : ""}
             </Badge>
           </CardFooter>
@@ -461,13 +461,13 @@ export default function NotificationsPage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center py-16 bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700"
+            className="text-center py-16 bg-card rounded-lg shadow-md border border-border"
           >
-            <div className="inline-flex h-20 w-20 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 mb-4">
-              <Bell className="h-10 w-10 text-gray-400" />
+            <div className="inline-flex h-20 w-20 items-center justify-center rounded-full bg-muted mb-4">
+              <Bell className="h-10 w-10 text-muted-foreground" />
             </div>
-            <h3 className="text-xl font-medium text-gray-900 dark:text-gray-100 mb-2">Aucune notification</h3>
-            <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto">
+            <h3 className="text-xl font-medium text-foreground mb-2">Aucune notification</h3>
+            <p className="text-muted-foreground max-w-md mx-auto">
               {searchQuery
                 ? "Aucun résultat ne correspond à votre recherche. Essayez avec d'autres termes."
                 : "Vous n'avez aucune notification correspondant à vos critères de filtrage."}
@@ -490,10 +490,10 @@ export default function NotificationsPage() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
                     transition={{ duration: 0.3 }}
-                    className={`bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md overflow-hidden transition-all duration-300 ${
+                    className={`bg-card rounded-lg shadow-sm hover:shadow-md overflow-hidden transition-all duration-300 ${
                       !notification.is_read
                         ? priorityBorder(notification.priority)
-                        : "border border-gray-200 dark:border-gray-700"
+                        : "border border-border"
                     }`}
                   >
                     <div className="p-4 md:p-5 flex flex-col md:flex-row md:items-start gap-4">
@@ -504,11 +504,11 @@ export default function NotificationsPage() {
                       </div>
                       <div className="flex-grow">
                         <div className="flex flex-wrap items-center gap-2 mb-2">
-                          <h3 className="font-semibold text-lg text-gray-800 dark:text-white">
+                          <h3 className="font-semibold text-lg text-foreground">
                             {getNotificationTypeInFrench(notification.notification_type)}
                           </h3>
                           {!notification.is_read && (
-                            <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200">
+                            <Badge className="bg-info/15 text-info">
                               Nouveau
                             </Badge>
                           )}
@@ -518,8 +518,8 @@ export default function NotificationsPage() {
                             {notification.priority === "low" && "Priorité basse"}
                           </Badge>
                         </div>
-                        <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">{notification.message}</p>
-                        <div className="flex items-center text-xs text-gray-400">
+                        <p className="text-sm text-muted-foreground mb-3">{notification.message}</p>
+                        <div className="flex items-center text-xs text-muted-foreground">
                           <Clock className="h-3 w-3 mr-1" />
                           {getTimeAgo(notification.notification_date)}
                         </div>
@@ -530,7 +530,7 @@ export default function NotificationsPage() {
                             onClick={() => handleNotificationAction(notification.id)}
                             size="sm"
                             variant="outline"
-                            className="text-blue-500 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-800 dark:hover:bg-blue-900/30 dark:text-blue-400 dark:hover:text-blue-300 transition-all duration-300"
+                            className="text-info border-info/30 hover:bg-info/10 hover:text-info transition-all duration-300"
                           >
                             <Check className="h-4 w-4 mr-1" />
                             <span className="hidden sm:inline">Marquer comme lu</span>
@@ -542,7 +542,7 @@ export default function NotificationsPage() {
                             onClick={() => handleNotificationAction(notification.id, notification.action_url)}
                             size="sm"
                             variant="default"
-                            className="bg-primary hover:bg-primary/90 text-white transition-all duration-300"
+                            className="bg-primary hover:bg-primary/90 text-primary-foreground transition-all duration-300"
                           >
                             Voir
                           </Button>
@@ -551,7 +551,7 @@ export default function NotificationsPage() {
                           onClick={() => handleRemoveNotification(notification.id)}
                           size="sm"
                           variant="ghost"
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900/20 transition-all duration-300"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10 transition-all duration-300"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -565,14 +565,14 @@ export default function NotificationsPage() {
             {/* Pagination */}
             {totalPages > 1 && (
               <div className="flex justify-center mt-8">
-                <nav className="flex items-center gap-1 bg-white dark:bg-gray-800 p-1 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                <nav className="flex items-center gap-1 bg-card p-1 rounded-lg shadow-sm border border-border">
                   <Button
                     onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                     disabled={currentPage === 1}
                     variant="ghost"
                     size="icon"
                     className={`h-9 w-9 rounded-md transition-all duration-200 ${
-                      currentPage === 1 ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-100 dark:hover:bg-gray-700"
+                      currentPage === 1 ? "opacity-50 cursor-not-allowed" : "hover:bg-muted"
                     }`}
                     aria-label="Page précédente"
                   >
@@ -593,7 +593,7 @@ export default function NotificationsPage() {
                         return (
                           <div
                             key={`ellipsis-left-${page}`}
-                            className="flex flex-col justify-center h-9 px-1 text-gray-400"
+                            className="flex flex-col justify-center h-9 px-1 text-muted-foreground"
                           >
                             ...
                           </div>
@@ -604,7 +604,7 @@ export default function NotificationsPage() {
                         return (
                           <div
                             key={`ellipsis-right-${page}`}
-                            className="flex flex-col justify-center h-9 px-1 text-gray-400"
+                            className="flex flex-col justify-center h-9 px-1 text-muted-foreground"
                           >
                             ...
                           </div>
@@ -618,7 +618,7 @@ export default function NotificationsPage() {
                           variant={currentPage === page ? "default" : "ghost"}
                           size="icon"
                           className={`relative h-9 w-9 rounded-md transition-all duration-200 ${
-                            currentPage === page ? "bg-primary text-white" : "hover:bg-gray-100 dark:hover:bg-gray-700"
+                            currentPage === page ? "bg-primary text-primary-foreground" : "hover:bg-muted"
                           }`}
                           aria-label={`Page ${page}`}
                           aria-current={currentPage === page ? "page" : undefined}
@@ -643,7 +643,7 @@ export default function NotificationsPage() {
                     className={`h-9 w-9 rounded-md transition-all duration-200 ${
                       currentPage === totalPages
                         ? "opacity-50 cursor-not-allowed"
-                        : "hover:bg-gray-100 dark:hover:bg-gray-700"
+                        : "hover:bg-muted"
                     }`}
                     aria-label="Page suivante"
                   >

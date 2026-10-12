@@ -17,16 +17,16 @@ export function CoursesTab({ data }: CoursesTabProps) {
   const router = useRouter()
 
   return (
-    <Card className="shadow-md hover:shadow-lg transition-shadow">
-      <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 rounded-t-lg">
-        <CardTitle>Mes Cours</CardTitle>
+    <Card className="hover:shadow-md transition-shadow">
+      <CardHeader className="bg-info/10 rounded-t-lg">
+        <CardTitle>Mes cours</CardTitle>
         <CardDescription>Tous vos cours planifiés et passés</CardDescription>
       </CardHeader>
       <CardContent className="pt-6">
         <div className="space-y-6">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-medium flex items-center">
-              <Sparkles className="mr-2 h-5 w-5 text-blue-500" />
+              <Sparkles className="mr-2 h-5 w-5 text-info" />
               Cours à venir
             </h3>
             <Button variant="outline" size="sm" onClick={() => router.push("/instruction/courses")}>
@@ -58,7 +58,7 @@ export function CoursesTab({ data }: CoursesTabProps) {
         <div className="space-y-6">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-medium flex items-center">
-              <Clock className="mr-2 h-5 w-5 text-green-500" />
+              <Clock className="mr-2 h-5 w-5 text-success" />
               Historique des cours
             </h3>
             <Button variant="outline" size="sm" onClick={() => router.push("/instruction/courses?filter=completed")}>

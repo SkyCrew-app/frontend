@@ -111,13 +111,13 @@ export function AuditList({ loading, error, audits, searchTerm, onRefetch }: Aud
   const getAuditResultIcon = (result: AuditResultType) => {
     switch (result) {
       case AuditResultType.CONFORME:
-        return <CheckCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-green-500" />
+        return <CheckCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-success" />
       case AuditResultType.NON_CONFORME:
-        return <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-red-500" />
+        return <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-destructive" />
       case AuditResultType.CONFORME_AVEC_REMARQUES:
-        return <AlertCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-500" />
+        return <AlertCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-warning" />
       case AuditResultType.NON_APPLICABLE:
-        return <XCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-500" />
+        return <XCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
       default:
         return null
     }
@@ -156,13 +156,13 @@ export function AuditList({ loading, error, audits, searchTerm, onRefetch }: Aud
   const getAuditResultBadgeVariant = (result: AuditResultType) => {
     switch (result) {
       case AuditResultType.CONFORME:
-        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
+        return "bg-success/15 text-success"
       case AuditResultType.NON_CONFORME:
-        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
+        return "bg-destructive/15 text-destructive"
       case AuditResultType.CONFORME_AVEC_REMARQUES:
-        return "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300"
+        return "bg-warning/15 text-warning"
       case AuditResultType.NON_APPLICABLE:
-        return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
+        return "bg-muted text-foreground"
       default:
         return ""
     }
@@ -234,7 +234,7 @@ export function AuditList({ loading, error, audits, searchTerm, onRefetch }: Aud
 
   if (error)
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-2xs sm:text-xs text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
+      <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-2xs sm:text-xs text-destructive">
         Erreur lors du chargement des audits: {error.message}
       </div>
     )
@@ -268,7 +268,7 @@ export function AuditList({ loading, error, audits, searchTerm, onRefetch }: Aud
           {sortedAudits.map((audit) => (
             <Card
               key={audit.id}
-              className={`overflow-hidden ${isOverdue(audit) ? "border-red-300 dark:border-red-800 bg-red-50/30 dark:bg-red-950/10" : ""}`}
+              className={`overflow-hidden ${isOverdue(audit) ? "border-destructive/30 bg-destructive/5" : ""}`}
               onClick={() => handleViewDetails(audit)}
             >
               <CardContent className="p-3">
@@ -294,7 +294,7 @@ export function AuditList({ loading, error, audits, searchTerm, onRefetch }: Aud
                     {isOverdue(audit) && (
                       <Badge
                         variant="outline"
-                        className="h-5 px-1.5 text-2xs bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
+                        className="h-5 px-1.5 text-2xs bg-destructive/15 text-destructive"
                       >
                         En retard
                       </Badge>
@@ -325,7 +325,7 @@ export function AuditList({ loading, error, audits, searchTerm, onRefetch }: Aud
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-6 w-6 text-red-500"
+                      className="h-6 w-6 text-destructive"
                       onClick={(e) => {
                         e.stopPropagation()
                         handleDelete(audit.id)
@@ -413,7 +413,7 @@ export function AuditList({ loading, error, audits, searchTerm, onRefetch }: Aud
                 {sortedAudits.map((audit) => (
                   <TableRow
                     key={audit.id}
-                    className={`text-xs sm:text-sm ${isOverdue(audit) ? "bg-red-50/50 dark:bg-red-950/10" : ""}`}
+                    className={`text-xs sm:text-sm ${isOverdue(audit) ? "bg-destructive/5" : ""}`}
                     onClick={() => handleViewDetails(audit)}
                     style={{ cursor: "pointer" }}
                   >
@@ -453,8 +453,8 @@ export function AuditList({ loading, error, audits, searchTerm, onRefetch }: Aud
                     <TableCell className="hidden md:table-cell py-2 px-3 sm:py-3 sm:px-4">
                       {audit.next_audit_date ? (
                         <div className="flex items-center gap-1">
-                          <Clock className={`h-3.5 w-3.5 ${isOverdue(audit) ? "text-red-500" : "text-primary"}`} />
-                          <span className={isOverdue(audit) ? "text-red-600 dark:text-red-400" : ""}>
+                          <Clock className={`h-3.5 w-3.5 ${isOverdue(audit) ? "text-destructive" : "text-primary"}`} />
+                          <span className={isOverdue(audit) ? "text-destructive" : ""}>
                             {formatDate(audit.next_audit_date)}
                           </span>
                         </div>
@@ -476,7 +476,7 @@ export function AuditList({ loading, error, audits, searchTerm, onRefetch }: Aud
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-6 w-6 sm:h-7 sm:w-7 text-red-500/80 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
+                          className="h-6 w-6 sm:h-7 sm:w-7 text-destructive/80 hover:text-destructive hover:bg-destructive/10"
                           onClick={() => handleDelete(audit.id)}
                           aria-label="Supprimer l'audit"
                         >
@@ -539,7 +539,7 @@ export function AuditList({ loading, error, audits, searchTerm, onRefetch }: Aud
             <AlertDialogAction
               onClick={confirmDelete}
               disabled={deleteLoading}
-              className="bg-red-600 hover:bg-red-700 text-2xs sm:text-xs h-7 sm:h-8"
+              className="bg-destructive hover:bg-destructive/90 text-2xs sm:text-xs h-7 sm:h-8"
             >
               {deleteLoading ? <Loader2 className="mr-1.5 h-3 w-3 animate-spin" /> : null}
               Supprimer

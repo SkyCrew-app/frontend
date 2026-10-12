@@ -125,7 +125,7 @@ describe('ProfilePage Component', () => {
   test('affiche le chargement puis les données utilisateur dans les cartes', async () => {
     const { container } = renderPage([meMock, userMock(() => ({ ...baseUser, licenses }), 30)]);
 
-    expect(screen.getByRole('heading', { name: 'Mon Profil' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Mon profil' })).toBeInTheDocument();
 
     // Squelettes pendant le chargement de l'utilisateur (1 titre + 6 cartes).
     await waitFor(() => {
@@ -160,7 +160,7 @@ describe('ProfilePage Component', () => {
       });
     });
 
-    expect(screen.getByRole('heading', { name: 'Mon Profil' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Mon profil' })).toBeInTheDocument();
     expect(screen.getByText('Informations personnelles')).toBeInTheDocument();
     expect(screen.getByText('Paramètres de notifications')).toBeInTheDocument();
     expect(screen.getByText('Aucune licence')).toBeInTheDocument();
@@ -216,8 +216,8 @@ describe('ProfilePage Component', () => {
     expect(screen.getByText('Le nom doit contenir au moins 2 caractères.')).toBeInTheDocument();
     expect(screen.getByText("L'email n'est pas valide")).toBeInTheDocument();
     expect(screen.getByText(/Le numéro de téléphone n'est pas valide\./)).toBeInTheDocument();
-    expect(screen.getByLabelText('Prénom')).toHaveClass('border-red-500');
-    expect(screen.getByLabelText('Adresse')).not.toHaveClass('border-red-500');
+    expect(screen.getByLabelText('Prénom')).toHaveClass('border-destructive');
+    expect(screen.getByLabelText('Adresse')).not.toHaveClass('border-destructive');
 
     // La saisie efface l'erreur du champ concerné.
     fireEvent.change(screen.getByLabelText('Prénom'), { target: { value: 'Jane' } });
