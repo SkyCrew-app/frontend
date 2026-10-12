@@ -290,7 +290,7 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
         noValidate
         onSubmit={(e) => {
           e.preventDefault()
-          saveProfileChanges()
+          void saveProfileChanges()
         }}
       >
         <CardHeader>

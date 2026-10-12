@@ -205,8 +205,8 @@ export default function NotificationsPage() {
   }
 
   const confirmDelete = () => {
-    if (deleteTarget.kind === "one") handleRemoveNotification(deleteTarget.notification)
-    else handleRemoveAllNotifications()
+    if (deleteTarget.kind === "one") void handleRemoveNotification(deleteTarget.notification)
+    else void handleRemoveAllNotifications()
   }
 
   const isLoading = !userId || loading

@@ -346,7 +346,7 @@ export default function MaintenanceTablePage() {
               // Stays open until the deletion is done.
               onClick={(event) => {
                 event.preventDefault()
-                handleConfirmDelete()
+                void handleConfirmDelete()
               }}
               disabled={deleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"

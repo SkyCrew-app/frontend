@@ -40,7 +40,7 @@ export default function FlightHoursStatsWidget({ userId }: FlightHoursStatsWidge
       }
     })
 
-    const last6 = Object.keys(monthMap).sort().slice(-6)
+    const last6 = Object.keys(monthMap).sort((a, b) => a.localeCompare(b)).slice(-6)
 
     const chart = last6.map((key) => ({
       month: format(parseISO(`${key}-01`), "MMM yy", { locale: fr }),

@@ -996,7 +996,7 @@ export default function ArticlesAdminPage() {
               onClick={(e) => {
                 // Keep the dialog open until the server has answered.
                 e.preventDefault()
-                handleDelete()
+                void handleDelete()
               }}
             >
               {isDeleting && <Loader2 className="h-4 w-4 animate-spin" />}

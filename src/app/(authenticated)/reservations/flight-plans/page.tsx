@@ -62,7 +62,7 @@ export default function MyFlightPlans() {
   const allFlightPlans: Flight[] = useMemo(() => data?.getFlightsByUser ?? [], [data])
 
   const flightTypes = useMemo(
-    () => Array.from(new Set(allFlightPlans.map((flight) => flight.flight_type).filter(Boolean))).sort(),
+    () => Array.from(new Set(allFlightPlans.map((flight) => flight.flight_type).filter(Boolean))).sort((a, b) => a.localeCompare(b)),
     [allFlightPlans],
   )
 

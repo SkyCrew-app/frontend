@@ -125,7 +125,7 @@ export default function AdministrationPage() {
   const handleViewDetails = (userId: string) => {
     setSelectedUserDetails(null)
     setIsDetailsDialogOpen(true)
-    loadUserDetails(userId)
+    void loadUserDetails(userId)
   }
 
   const handleSubmitLicense = async (values: LicenseFormValues) => {

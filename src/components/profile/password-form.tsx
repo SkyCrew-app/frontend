@@ -154,7 +154,7 @@ export function PasswordForm() {
         noValidate
         onSubmit={(e) => {
           e.preventDefault()
-          handleSubmit()
+          void handleSubmit()
         }}
       >
         <CardHeader>
