@@ -1,6 +1,7 @@
 "use client"
 
-import { useEditor, EditorContent, BubbleMenu } from "@tiptap/react"
+import { useEditor, EditorContent } from "@tiptap/react"
+import { BubbleMenu } from "@tiptap/react/menus"
 import StarterKit from "@tiptap/starter-kit"
 import Placeholder from "@tiptap/extension-placeholder"
 import Link from "@tiptap/extension-link"
@@ -44,8 +45,13 @@ export function WysiwygEditor({
   const [imageUrl, setImageUrl] = useState("")
 
   const editor = useEditor({
+    // Rendered in the browser only: the page is also rendered on the server.
+    immediatelyRender: false,
+    // The toolbar shows what is active at the cursor.
+    shouldRerenderOnTransaction: true,
     extensions: [
-      StarterKit,
+      // The starter kit brings its own link: the one configured below is used.
+      StarterKit.configure({ link: false }),
       Placeholder.configure({
         placeholder,
       }),
@@ -238,7 +244,7 @@ export function WysiwygEditor({
       <EditorContent editor={editor} className="p-4 min-h-[200px] prose prose-sm max-w-none" />
 
       {editor && (
-        <BubbleMenu editor={editor} tippyOptions={{ duration: 100 }}>
+        <BubbleMenu editor={editor}>
           <div className="flex bg-white dark:bg-gray-800 p-1 rounded-md shadow-lg border">
             <Toggle
               size="sm"
