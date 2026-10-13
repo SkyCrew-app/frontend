@@ -9,6 +9,13 @@
 # testing
 /coverage
 
+# browser journeys (playwright)
+/e2e/.auth/
+/e2e/.results/
+/e2e/.report/
+/playwright-report/
+/test-results/
+
 # next.js
 /.next/
 /out/

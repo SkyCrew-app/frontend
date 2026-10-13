@@ -10,6 +10,7 @@ export const AERODROME_BY_ICAO = gql`
       name
       latitude
       longitude
+      timezone
     }
   }
 `;
@@ -22,6 +23,7 @@ export const AERODROME_BY_IATA = gql`
       name
       latitude
       longitude
+      timezone
     }
   }
 `;
@@ -43,7 +45,7 @@ export const WEATHER_AT = gql`
       feelsLike
       humidity
       cloudCover
-      windSpeed
+      windSpeedKmh
       windDegrees
       sunrise
       sunset

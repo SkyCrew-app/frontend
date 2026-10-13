@@ -161,7 +161,7 @@
       "previewAlt": "Aperçu de la photo",
       "choose": "Choisir une photo",
       "replace": "Remplacer",
-      "hint": "PNG ou JPG."
+      "hint": "JPG, PNG ou WebP."
     },
     "document": {
       "label": "Document",
@@ -169,8 +169,8 @@
       "chooseAnother": "Choisir un autre document",
       "removeLabel": "Retirer le document {{name}}",
       "doNotSend": "Ne pas envoyer ce document",
-      "hint": "Manuel de vol, certificat… PDF, DOC ou DOCX.",
-      "hintReplace": "Manuel de vol, certificat… PDF, DOC ou DOCX. Le nouveau document remplacera ceux déjà enregistrés."
+      "hint": "Manuel de vol, certificat… PDF, JPG, PNG ou WebP.",
+      "hintReplace": "Manuel de vol, certificat… PDF, JPG, PNG ou WebP. Le nouveau document remplacera ceux déjà enregistrés."
     },
     "toast": {
       "created": {
@@ -273,10 +273,10 @@
         "limits": "1 Mo maximum par fichier, 10 fichiers par envoi (images et documents confondus).",
         "images": "Images",
         "addImages": "Ajouter des images",
-        "imageFormats": "PNG ou JPG",
+        "imageFormats": "JPG, PNG ou WebP",
         "documents": "Documents",
         "addDocuments": "Ajouter des documents",
-        "documentFormats": "PDF, DOC, DOCX, XLS ou XLSX",
+        "documentFormats": "PDF, JPG, PNG ou WebP",
         "stored": "Enregistré",
         "toSend": "À envoyer",
         "removeImage": "Retirer l'image {{name}}",

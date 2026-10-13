@@ -1,6 +1,7 @@
 import { format, parseISO } from "date-fns"
 import * as z from "zod"
 import i18n from "@/lib/i18n"
+import { isValidPhone, normalisePhone } from "@/lib/phone"
 
 export type Taxonomies = {
   aircraftCategories: string[]
@@ -91,7 +92,7 @@ export const buildSettingsFormSchema = () =>
     .object({
       clubName: z.string().min(2, { message: message("clubName") }),
       contactEmail: z.string().email({ message: message("contactEmail") }),
-      contactPhone: z.string().regex(/^\+?[0-9]{10,14}$/, { message: message("contactPhone") }),
+      contactPhone: z.string().refine(isValidPhone, { message: message("contactPhone") }),
       address: z.string().min(5, { message: message("address") }),
       closureDays: z.array(z.string()),
       timeSlotDuration: z
@@ -209,7 +210,7 @@ export function administrationInputFromValues(id: number, values: SettingsFormVa
     id,
     clubName: values.clubName,
     contactEmail: values.contactEmail,
-    contactPhone: values.contactPhone,
+    contactPhone: normalisePhone(values.contactPhone),
     address: values.address,
     closureDays: values.closureDays,
     timeSlotDuration: values.timeSlotDuration,

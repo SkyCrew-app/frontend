@@ -565,7 +565,7 @@ export function MaintenanceFormDialog({
           type="file"
           className="sr-only"
           tabIndex={-1}
-          accept="image/png, image/jpeg, image/jpg"
+          accept="image/jpeg,image/png,image/webp"
           multiple
           onChange={(e) => addFiles(e, "images")}
         />
@@ -587,7 +587,7 @@ export function MaintenanceFormDialog({
           type="file"
           className="sr-only"
           tabIndex={-1}
-          accept=".pdf,.doc,.docx,.xls,.xlsx"
+          accept=".pdf,.jpg,.jpeg,.png,.webp"
           multiple
           onChange={(e) => addFiles(e, "documents")}
         />

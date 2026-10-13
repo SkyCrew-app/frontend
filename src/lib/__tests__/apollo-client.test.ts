@@ -1,4 +1,4 @@
-import { gql } from "@apollo/client"
+import { ApolloLink, execute, gql, Observable } from "@apollo/client"
 
 const mockPurge = jest.fn().mockResolvedValue(undefined)
 const mockPause = jest.fn()
@@ -21,7 +21,8 @@ jest.mock("apollo-upload-client", () => ({
   },
 }))
 
-import client, { clearSessionCache } from "../apollo-client"
+import client, { clearSessionCache, languageLink } from "../apollo-client"
+import i18n from "../i18n"
 
 const ME = gql`
   query Me {
@@ -44,5 +45,32 @@ describe("clearSessionCache", () => {
     // Persistence is suspended while clearing, then restarted for the next session.
     expect(mockPause.mock.invocationCallOrder[0]).toBeLessThan(mockPurge.mock.invocationCallOrder[0])
     expect(mockResume).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe("languageLink", () => {
+  const headersSent = (contextHeaders?: Record<string, string>) =>
+    new Promise<Record<string, string>>((resolve) => {
+      const terminating = new ApolloLink((operation) => {
+        resolve(operation.getContext().headers)
+        return Observable.of({ data: {} })
+      })
+      execute(languageLink.concat(terminating), { query: ME, context: { headers: contextHeaders } }).subscribe({})
+    })
+
+  afterEach(async () => {
+    await i18n.changeLanguage("fr")
+  })
+
+  it("tells the API which language the interface is shown in", async () => {
+    await expect(headersSent()).resolves.toEqual({ "Accept-Language": "fr" })
+
+    await i18n.changeLanguage("en")
+
+    await expect(headersSent()).resolves.toEqual({ "Accept-Language": "en" })
+  })
+
+  it("keeps the headers a request already carries", async () => {
+    await expect(headersSent({ "X-Test": "1" })).resolves.toEqual({ "X-Test": "1", "Accept-Language": "fr" })
   })
 })

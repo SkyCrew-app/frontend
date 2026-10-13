@@ -1,8 +1,20 @@
 import { gql } from '@apollo/client';
 
 export const CREATE_USER = gql`
-  mutation CreateUser($first_name: String!, $last_name: String!, $email: String!, $date_of_birth: DateTime!) {
-    createUser(first_name: $first_name, last_name: $last_name, email: $email, date_of_birth: $date_of_birth) {
+  mutation CreateUser(
+    $first_name: String!
+    $last_name: String!
+    $email: String!
+    $date_of_birth: DateTime!
+    $roleId: Int
+  ) {
+    createUser(
+      first_name: $first_name
+      last_name: $last_name
+      email: $email
+      date_of_birth: $date_of_birth
+      roleId: $roleId
+    ) {
       id
       first_name
       last_name
@@ -233,6 +245,25 @@ export const GET_ME = gql`
     me {
       id
       email
+    }
+  }
+`;
+
+// Language the server writes to the signed-in member in (e-mails, notifications).
+export const GET_MY_LANGUAGE = gql`
+  query MyLanguage {
+    me {
+      id
+      language
+    }
+  }
+`;
+
+export const UPDATE_MY_LANGUAGE = gql`
+  mutation UpdateMyLanguage($language: String!) {
+    updateMyLanguage(language: $language) {
+      id
+      language
     }
   }
 `;

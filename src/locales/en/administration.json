@@ -113,6 +113,7 @@
         "lastName": "Enter the last name.",
         "email": "Enter the email address.",
         "emailInvalid": "This email address is not valid.",
+        "phone": "This phone number is not valid.",
         "dateOfBirth": "Enter the date of birth.",
         "dateOfBirthFuture": "The date of birth cannot be in the future."
       }
@@ -128,7 +129,8 @@
     "edit": {
       "title": "Edit member",
       "emailHint": "The email address identifies the account and cannot be changed here.",
-      "phonePlaceholder": "07700 900123",
+      "phonePlaceholder": "+44 7700 900123",
+      "phoneHint": "International number starting with + (e.g. +44 7700 900123) or a French 10-digit number.",
       "chooseRole": "Choose a role",
       "roleHint": "The role determines what the member can see and change."
     },
@@ -158,7 +160,7 @@
       "expirationDate": "Expiry date",
       "noExpiration": "No expiry",
       "documents": "Supporting documents",
-      "documentsHint": "Optional. Scan or photo of the licence; several files allowed.",
+      "documentsHint": "Optional. Scan or photo of the licence (PDF, JPG, PNG or WebP); several files allowed.",
       "errors": {
         "member": "Choose the member concerned.",
         "type": "Choose the licence type.",
@@ -810,7 +812,8 @@
         "email": "Contact email",
         "emailPlaceholder": "contact@flyingclub.org",
         "phone": "Contact phone",
-        "phoneHint": "10 to 14 digits, no spaces. The international dialling code (+44…) is accepted.",
+        "phoneHint": "International number starting with + (8 to 15 digits) or a French 10-digit number. Spaces are accepted.",
+        "phonePlaceholder": "+44 20 7946 0958",
         "address": "Address",
         "addressPlaceholder": "Tours-Sorigny Aerodrome\n37250 Sorigny"
       },
@@ -1002,7 +1005,7 @@
       "amountNegative": "The amount cannot be negative",
       "clubName": "The club name must be at least 2 characters long",
       "contactEmail": "Enter a valid email address",
-      "contactPhone": "Enter 10 to 14 digits, no spaces (e.g. 0478123456)",
+      "contactPhone": "Enter an international number starting with + (e.g. +44 20 7946 0958) or a French 10-digit number",
       "address": "The address must be at least 5 characters long",
       "timeSlotRequired": "Choose a slot length",
       "timeSlotMin": "A slot lasts at least 30 minutes",

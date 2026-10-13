@@ -22,7 +22,8 @@ interface WeatherData {
   feelsLike?: number | null
   humidity?: number | null
   cloudCover?: number | null
-  windSpeed?: number | null
+  /** Kilometres per hour: the API converts the provider's m/s. */
+  windSpeedKmh?: number | null
   windDegrees?: number | null
   sunrise?: number | null
   sunset?: number | null
@@ -37,10 +38,23 @@ interface WeatherWidgetProps {
 const figure = (value: number | null | undefined, unit: string) =>
   value === undefined || value === null ? "—" : `${Math.round(value)}${unit}`
 
-const sunTime = (timestamp: number | null | undefined) =>
+// The zone the browser can format with, or null: an unknown name makes
+// `toLocaleTimeString` throw.
+const usableTimeZone = (timeZone: string | null | undefined) => {
+  if (!timeZone) return null
+  try {
+    new Intl.DateTimeFormat(undefined, { timeZone })
+    return timeZone
+  } catch {
+    return null
+  }
+}
+
+// In the aerodrome's own zone when it is known, otherwise the browser's.
+const sunTime = (timestamp: number | null | undefined, timeZone: string | null) =>
   timestamp
     ? new Date(timestamp * 1000).toLocaleTimeString(currentLocale(), {
-        timeZone: "Europe/Paris",
+        ...(timeZone ? { timeZone } : {}),
         hour: "2-digit",
         minute: "2-digit",
       })
@@ -68,6 +82,7 @@ function Tile({ label, icon: Icon, value, hint }: { label: string; icon: LucideI
 
 export default function WeatherWidget({ preferredAerodrome, wide = false }: WeatherWidgetProps) {
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null)
+  const [timeZone, setTimeZone] = useState<string | null>(null)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [failed, setFailed] = useState(false)
   const { toast } = useToast()
@@ -94,6 +109,7 @@ export default function WeatherWidget({ preferredAerodrome, wide = false }: Weat
         })
         if (!data?.weatherAt) throw new Error("Météo indisponible")
         setWeatherData(data.weatherAt)
+        setTimeZone(usableTimeZone(airport.timezone))
         setFailed(false)
         if (manual) {
           toast({
@@ -171,14 +187,14 @@ export default function WeatherWidget({ preferredAerodrome, wide = false }: Weat
         <Tile
           label={t("weather.wind")}
           icon={Wind}
-          value={figure(weatherData.windSpeed, " km/h")}
+          value={figure(weatherData.windSpeedKmh, " km/h")}
           hint={t("weather.windDirection", { value: figure(weatherData.windDegrees, "°") })}
         />
         <Tile
           label={t("weather.sun")}
           icon={Sunrise}
-          value={`${sunTime(weatherData.sunrise)} – ${sunTime(weatherData.sunset)}`}
-          hint={t("weather.sunHint")}
+          value={`${sunTime(weatherData.sunrise, timeZone)} – ${sunTime(weatherData.sunset, timeZone)}`}
+          hint={t(timeZone ? "weather.sunHintAerodrome" : "weather.sunHintBrowser")}
         />
       </div>
     )

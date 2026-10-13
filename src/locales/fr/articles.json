@@ -146,11 +146,11 @@
       "size": "{{size}} Mo",
       "removeFile": "Retirer ce fichier",
       "currentImage": "Image actuelle. Choisissez un fichier pour la remplacer.",
-      "imageHint": "JPG ou PNG, 2 Mo maximum conseillé.",
+      "imageHint": "JPG, PNG ou WebP, 1 Mo maximum.",
       "document": "Document joint",
       "existingDocuments_one": "{{count}} document déjà joint. Choisissez un fichier pour le remplacer.",
       "existingDocuments_other": "{{count}} documents déjà joints. Choisissez un fichier pour les remplacer.",
-      "documentHint": "PDF, Word, Excel ou PowerPoint."
+      "documentHint": "PDF, JPG, PNG ou WebP, 1 Mo maximum par fichier."
     },
     "deleteDialog": {
       "title": "Supprimer cet article ?",

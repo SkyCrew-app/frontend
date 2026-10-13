@@ -23,6 +23,7 @@ import { useToast } from "@/components/hooks/use-toast"
 import {
   GET_USER_RESERVATIONS,
   UPDATE_RESERVATION,
+  DELETE_RESERVATION,
   GET_MY_TEMPLATES,
   CREATE_RESERVATION_TEMPLATE,
   UPDATE_RESERVATION_TEMPLATE,
@@ -42,6 +43,7 @@ import { TemplateCard } from "@/components/my-reservation/template-card"
 import { TemplateDialog } from "@/components/my-reservation/template-dialog"
 import { ListPager } from "@/components/reservation/list-pager"
 import type { Reservation } from "@/interfaces/reservation"
+import { formatDate, formatTime } from "@/lib/format"
 import type { ReservationTemplate } from "@/interfaces/reservation-template"
 
 const ITEMS_PER_PAGE = 6
@@ -57,6 +59,7 @@ export default function MyReservations() {
   const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false)
   const [editingTemplate, setEditingTemplate] = useState<ReservationTemplate | null>(null)
   const [templateToDelete, setTemplateToDelete] = useState<ReservationTemplate | null>(null)
+  const [reservationToCancel, setReservationToCancel] = useState<Reservation | null>(null)
   const { toast } = useToast()
 
   const [searchTerm, setSearchTerm] = useState("")
@@ -71,6 +74,8 @@ export default function MyReservations() {
   })
 
   const [updateReservation] = useMutation(UPDATE_RESERVATION)
+  // Same mutation as the calendar: the API checks that the booking is the caller's.
+  const [deleteReservation, { loading: cancellingReservation }] = useMutation(DELETE_RESERVATION)
 
   const { data: templatesData } = useQuery(GET_MY_TEMPLATES)
   const { data: aircraftData } = useQuery(GET_AIRCRAFTS)
@@ -150,6 +155,34 @@ export default function MyReservations() {
         title: t("toast.updateFailed.title"),
         description: t("toast.updateFailed.description"),
       })
+    }
+  }
+
+  const handleAskCancel = (reservation: Reservation) => {
+    setIsEditDialogOpen(false)
+    setReservationToCancel(reservation)
+  }
+
+  const handleCancelReservation = async () => {
+    if (!reservationToCancel) return
+    try {
+      await deleteReservation({
+        variables: { id: Number(reservationToCancel.id) },
+        refetchQueries: [{ query: GET_USER_RESERVATIONS, variables: { userId } }],
+        awaitRefetchQueries: true,
+      })
+      toast({
+        title: t("toast.cancelled.title"),
+        description: t("toast.cancelled.description", { aircraft: reservationToCancel.aircraft.registration_number }),
+      })
+    } catch {
+      toast({
+        variant: "destructive",
+        title: t("toast.cancelFailed.title"),
+        description: t("toast.cancelFailed.description"),
+      })
+    } finally {
+      setReservationToCancel(null)
     }
   }
 
@@ -263,7 +296,12 @@ export default function MyReservations() {
           <>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
               {paginatedReservations.map((reservation) => (
-                <ReservationCard key={reservation.id} reservation={reservation} onEdit={handleEdit} />
+                <ReservationCard
+                  key={reservation.id}
+                  reservation={reservation}
+                  onEdit={handleEdit}
+                  onCancel={handleAskCancel}
+                />
               ))}
             </div>
             <ListPager
@@ -356,7 +394,42 @@ export default function MyReservations() {
         onOpenChange={setIsEditDialogOpen}
         reservation={selectedReservation}
         onSave={handleSaveEdit}
+        onCancelReservation={handleAskCancel}
       />
+
+      <AlertDialog
+        open={reservationToCancel !== null}
+        onOpenChange={(open) => !open && !cancellingReservation && setReservationToCancel(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("my.cancelConfirm.title")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {reservationToCancel &&
+                t("my.cancelConfirm.description", {
+                  aircraft: reservationToCancel.aircraft.registration_number,
+                  date: formatDate(reservationToCancel.start_time),
+                  start: formatTime(reservationToCancel.start_time),
+                  end: formatTime(reservationToCancel.end_time),
+                })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={cancellingReservation}>{t("my.cancelConfirm.keep")}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={cancellingReservation}
+              onClick={(event) => {
+                event.preventDefault()
+                void handleCancelReservation()
+              }}
+            >
+              {cancellingReservation && <Loader2 className="h-4 w-4 animate-spin" />}
+              {t("my.cancelConfirm.action")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <TemplateDialog
         open={isTemplateDialogOpen}

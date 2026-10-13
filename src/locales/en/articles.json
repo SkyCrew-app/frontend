@@ -146,11 +146,11 @@
       "size": "{{size}} MB",
       "removeFile": "Remove this file",
       "currentImage": "Current picture. Choose a file to replace it.",
-      "imageHint": "JPG or PNG, 2 MB maximum recommended.",
+      "imageHint": "JPG, PNG or WebP, 1 MB maximum.",
       "document": "Attached document",
       "existingDocuments_one": "{{count}} document already attached. Choose a file to replace it.",
       "existingDocuments_other": "{{count}} documents already attached. Choose a file to replace them.",
-      "documentHint": "PDF, Word, Excel or PowerPoint."
+      "documentHint": "PDF, JPG, PNG or WebP, 1 MB maximum per file."
     },
     "deleteDialog": {
       "title": "Delete this article?",

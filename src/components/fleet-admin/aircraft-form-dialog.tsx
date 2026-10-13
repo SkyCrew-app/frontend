@@ -458,7 +458,7 @@ export function AircraftFormDialog({ aircraft, isOpen, onClose, onSuccess }: Air
           ref={imageInputRef}
           id="image"
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png,image/webp"
           className="sr-only"
           tabIndex={-1}
           onChange={handleImageChange}
@@ -507,7 +507,7 @@ export function AircraftFormDialog({ aircraft, isOpen, onClose, onSuccess }: Air
           ref={documentInputRef}
           id="document"
           type="file"
-          accept=".pdf,.doc,.docx"
+          accept=".pdf,.jpg,.jpeg,.png,.webp"
           className="sr-only"
           tabIndex={-1}
           onChange={handleDocumentChange}

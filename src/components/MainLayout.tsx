@@ -12,6 +12,7 @@ import OfflineIndicator from "@/components/ui/OfflineIndicator"
 import DemoBanner from "@/components/ui/DemoBanner"
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts"
 import { useMounted } from "@/components/hooks/useMounted"
+import StoredLanguageSync from "@/components/providers/StoredLanguageSync"
 
 interface MainLayoutProps {
   children: ReactNode
@@ -46,6 +47,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
   return (
     <SidebarProvider>
+      <StoredLanguageSync />
       <CommandPalette open={isCommandPaletteOpen} onOpenChange={setCommandPaletteOpen} />
       <div className="flex h-screen w-full overflow-hidden">
         <Sidebar isMobileOpen={isMobileOpen} onCloseMobileMenu={handleCloseMobileMenu} />

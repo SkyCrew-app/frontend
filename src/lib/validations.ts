@@ -1,5 +1,6 @@
 import { z } from "zod"
 import i18n from "@/lib/i18n"
+import { isValidPhone } from "@/lib/phone"
 
 // The schemas are built once at module load, before the language is known:
 // every message is therefore resolved when a value is validated.
@@ -102,7 +103,7 @@ export const profileSchema = z.object({
     .string()
     .optional()
     .refine(
-      (val) => !val || /^(\+33|0)[1-9](\d{2}){4}$/.test(val.replace(/\s/g, "")),
+      (val) => !val || isValidPhone(val),
       () => text("phoneInvalid")
     ),
 })
