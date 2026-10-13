@@ -27,7 +27,7 @@ export function pagesUnder(dir: string, segments: string[] = []): string[] {
     const segment = entry.name.replace(/^\[.+\]$/, "0")
     found.push(...pagesUnder(path.join(dir, entry.name), isGroup ? segments : [...segments, segment]))
   }
-  return found.sort()
+  return found.sort((a, b) => a.localeCompare(b))
 }
 
 const durations: [string, number][] = []
@@ -106,7 +106,7 @@ export default async function warmUp(config: FullConfig) {
   await ask(signedIn, baseURL, needSession, true)
   await signedIn.dispose()
 
-  const [slowest, slowestDuration] = durations.reduce((a, b) => (b[1] > a[1] ? b : a))
+  const [slowest, slowestDuration] = durations.reduce((a, b) => (b[1] > a[1] ? b : a), durations[0])
   console.log(
     `Warm-up: ${durations.length} pages answered in ${((Date.now() - started) / 1000).toFixed(1)} s ` +
       `(slowest: ${slowest}, ${(slowestDuration / 1000).toFixed(1)} s)`,

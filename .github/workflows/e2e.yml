@@ -115,7 +115,7 @@ jobs:
       - name: Install the browser
         if: steps.backend.outputs.available == 'true'
         working-directory: frontend
-        run: npx playwright install --with-deps chromium
+        run: ./node_modules/.bin/playwright install --with-deps chromium
 
       # Database, cache and mail sink in Docker, the API with a fresh demo
       # data set and writes enabled, the frontend as a production build.
@@ -134,7 +134,7 @@ jobs:
           CI: "true"
         run: |
           eval "$(sh e2e/support/stack.sh env)"
-          npx playwright test
+          npm run e2e
 
       - name: Show the logs of the stack
         if: failure() && steps.backend.outputs.available == 'true'
