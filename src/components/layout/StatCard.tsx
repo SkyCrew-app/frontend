@@ -30,8 +30,8 @@ export function StatCard({ label, value, hint, icon: Icon, tone = "primary", cla
     <Card className={cn("flex items-center justify-between gap-3 p-4 sm:p-5", className)}>
       <div className="min-w-0">
         <p className="text-sm text-muted-foreground">{label}</p>
-        <p className="mt-1 text-xl font-semibold tracking-tight tabular-nums sm:text-2xl">{value}</p>
-        {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
+        <div className="mt-1 text-xl font-semibold tracking-tight tabular-nums sm:text-2xl">{value}</div>
+        {hint && <div className="mt-1 text-xs text-muted-foreground">{hint}</div>}
       </div>
       {Icon && (
         <div className={cn("hidden h-10 w-10 shrink-0 items-center justify-center rounded-lg min-[480px]:flex", TONES[tone])}>
