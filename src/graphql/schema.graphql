@@ -324,6 +324,13 @@ type ChecklistTemplate {
   updated_at: DateTime!
 }
 
+type ChecklistTemplateRemoval {
+  deactivated: Boolean!
+  deleted: Boolean!
+  message: String!
+  submissions_count: Int!
+}
+
 type Course {
   category: String
   description: String
@@ -820,6 +827,9 @@ type Incident {
   id: Int!
   incident_date: DateTime!
   priority: String!
+  resolution_note: String
+  resolved_at: DateTime
+  resolved_by: User
   severity_level: String!
   status: String!
   user: User!
@@ -1021,11 +1031,13 @@ type Mutation {
   createUser(date_of_birth: DateTime!, email: String!, first_name: String!, last_name: String!): User!
   deleteAdministration(id: Int!): Boolean!
   deleteAircraft(aircraftId: Int!): Boolean!
+  deleteAllNotifications: Int!
   deleteAnswer(id: Float!): Boolean!
   deleteAudit(id: Int!): Boolean!
   deleteAuditItem(id: Int!): Boolean!
   deleteAuditTemplate(id: Int!): Boolean!
   deleteChecklistItem(id: Int!): Boolean!
+  deleteChecklistTemplate(id: Int!): ChecklistTemplateRemoval!
   deleteCourse(id: Float!): Boolean!
   deleteCourseInstruction(id: Int!): Boolean!
   deleteEvaluation(id: Float!): Boolean!
@@ -1038,6 +1050,7 @@ type Mutation {
   deleteReservation(id: Int!): Boolean!
   deleteReservationTemplate(id: Int!): Boolean!
   deleteRole(id: Int!): Boolean!
+  disable2FA(password: String!): Boolean!
   exportFlightRecapPDF(flightId: Int!): String!
   exportLogbookPDF(filter: LogbookFilterInput): String!
   generate2FASecret(email: String): String!
@@ -1046,6 +1059,7 @@ type Mutation {
   generatePdfFinancialReport(endDate: DateTime!, startDate: DateTime!): String!
   login(loginInput: LoginInput!): LoginResponse!
   logout: Boolean!
+  markAllNotificationsRead: Int!
   markLessonCompleted(lessonId: Float!, userId: Float!): Boolean!
   markLessonStarted(lessonId: Float!, userId: Float!): Boolean!
   processPayment(createPaymentInput: CreatePaymentInput!): PaymentResult!
@@ -1083,6 +1097,7 @@ type Mutation {
   updateFinancialReport(updateFinancialReportInput: UpdateFinancialReportInput!): FinancialReport!
   updateFlight(updateFlightInput: UpdateFlightInput!): Flight!
   updateIncident(id: Float!, incident: UpdateIncidentInput!): Incident!
+  updateIncidentStatus(id: Int!, resolution_note: String, status: String!): Incident!
   updateInvoice(updateInvoiceInput: UpdateInvoiceInput!): Invoice!
   updateLesson(id: Float!, updateLessonInput: UpdateLessonDTO!): Lesson!
   updateLicense(documents: [Upload!], updateLicenseInput: UpdateLicenseInput!): License!
@@ -1236,6 +1251,7 @@ type Query {
     """ICAO code, IATA code or part of the name"""
     query: String!
   ): [Aerodrome!]!
+  twoFactorEnabled: Boolean!
   upcomingAudits(daysAhead: Int! = 30): [Audit!]!
   userByEmail(email: String!): User!
   userReservations(userId: Int!): [Reservation!]!

@@ -10,7 +10,7 @@ import type { CarouselApi } from "@/components/ui/carousel"
 import { StatusBadge } from "./status-badge"
 import { MaintenanceTypeIcon } from "./maintenance-type-icon"
 import type { Maintenance } from "@/interfaces/maintenance"
-import { maintenanceFileName, maintenanceFileUrl } from "@/lib/maintenance"
+import { maintenanceFileName, maintenanceFileUrl, maintenanceTechnicianName } from "@/lib/maintenance"
 import { formatDate, formatMoney } from "@/lib/format"
 
 interface MaintenanceDetailDialogProps {
@@ -100,8 +100,8 @@ export function MaintenanceDetailDialog({
           <Fact label="Technicien">
             {maintenance.technician ? (
               <>
-                {maintenance.technician.first_name || maintenance.technician.email}
-                {maintenance.technician.first_name && (
+                {maintenanceTechnicianName(maintenance.technician)}
+                {(maintenance.technician.first_name || maintenance.technician.last_name) && (
                   <span className="block break-all text-xs font-normal text-muted-foreground">
                     {maintenance.technician.email}
                   </span>

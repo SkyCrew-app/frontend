@@ -2,7 +2,13 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { MockedProvider, MockedResponse } from '@apollo/client/testing';
 import NotificationsPage from '../page';
-import { GET_NOTIFICATIONS, REMOVE_NOTIFICATION, SEEN_NOTIFICATION } from '@/graphql/notifications';
+import {
+  DELETE_ALL_NOTIFICATIONS,
+  GET_NOTIFICATIONS,
+  MARK_ALL_NOTIFICATIONS_READ,
+  REMOVE_NOTIFICATION,
+  SEEN_NOTIFICATION,
+} from '@/graphql/notifications';
 import { groupNotificationsByDay, notificationDayLabel } from '@/interfaces/notification';
 
 const push = jest.fn();
@@ -119,26 +125,98 @@ describe('NotificationsPage', () => {
     expect(await screen.findByText('1 non lue sur 3')).toBeInTheDocument();
   });
 
-  it('demande confirmation avant de tout supprimer', async () => {
-    const removed = jest.fn(() => ({ data: { removeNotification: true } }));
+  it('demande confirmation avant de tout supprimer, puis supprime tout en une seule requête', async () => {
+    const removedOne = jest.fn(() => ({ data: { removeNotification: true } }));
+    const removedAll = jest.fn(() => ({ data: { deleteAllNotifications: 3 } }));
     renderPage([
       listMock(initial),
       ...[3, 1, 2].map((id) => ({
         request: { query: REMOVE_NOTIFICATION, variables: { id } },
-        result: removed,
+        result: removedOne,
       })),
+      { request: { query: DELETE_ALL_NOTIFICATIONS }, result: removedAll },
       listMock([]),
     ]);
     await screen.findByText('Message 1');
 
     fireEvent.click(screen.getByRole('button', { name: /Tout supprimer/i }));
-    expect(removed).not.toHaveBeenCalled();
+    expect(removedAll).not.toHaveBeenCalled();
 
     const dialog = await screen.findByRole('alertdialog');
     expect(within(dialog).getByText('Supprimer 3 notifications ?')).toBeInTheDocument();
+    expect(within(dialog).getByText(/Toutes vos notifications seront supprimées/)).toBeInTheDocument();
     fireEvent.click(within(dialog).getByRole('button', { name: 'Supprimer' }));
 
-    await waitFor(() => expect(removed).toHaveBeenCalledTimes(3));
     expect(await screen.findByText('Aucune notification')).toBeInTheDocument();
+    expect(removedAll).toHaveBeenCalledTimes(1);
+    // Plus une requête par notification.
+    expect(removedOne).not.toHaveBeenCalled();
+    expect(toast).toHaveBeenCalledWith({ title: '3 notifications supprimées' });
+  });
+
+  it('marque tout comme lu en une seule requête', async () => {
+    const seenOne = jest.fn(() => ({ data: { seenNotification: true } }));
+    const seenAll = jest.fn(() => ({ data: { markAllNotificationsRead: 2 } }));
+    renderPage([
+      listMock(initial),
+      ...[1, 3].map((id) => ({ request: { query: SEEN_NOTIFICATION, variables: { id } }, result: seenOne })),
+      { request: { query: MARK_ALL_NOTIFICATIONS_READ }, result: seenAll },
+      listMock(initial.map((item) => ({ ...item, is_read: true }))),
+    ]);
+    await screen.findByText('Message 1');
+
+    fireEvent.click(screen.getByRole('button', { name: /Tout marquer comme lu/i }));
+
+    expect(await screen.findByText('Tout est lu.')).toBeInTheDocument();
+    expect(seenAll).toHaveBeenCalledTimes(1);
+    expect(seenOne).not.toHaveBeenCalled();
+    expect(toast).toHaveBeenCalledWith({ title: '2 notifications marquées comme lues' });
+  });
+
+  it('ne supprime que la liste filtrée quand une recherche est active', async () => {
+    const removedOne = jest.fn(() => ({ data: { removeNotification: true } }));
+    const removedAll = jest.fn(() => ({ data: { deleteAllNotifications: 3 } }));
+    renderPage([
+      listMock(initial),
+      { request: { query: REMOVE_NOTIFICATION, variables: { id: 3 } }, result: removedOne },
+      { request: { query: DELETE_ALL_NOTIFICATIONS }, result: removedAll },
+      listMock([initial[0], initial[1]]),
+    ]);
+    await screen.findByText('Message 1');
+
+    fireEvent.change(screen.getByRole('searchbox', { name: /Rechercher/i }), { target: { value: 'licence' } });
+    fireEvent.click(screen.getByRole('button', { name: /Tout supprimer/i }));
+
+    const dialog = await screen.findByRole('alertdialog');
+    expect(within(dialog).getByText('Supprimer 1 notification ?')).toBeInTheDocument();
+    expect(within(dialog).getByText(/Seules les notifications de la liste filtrée/)).toBeInTheDocument();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Supprimer' }));
+
+    await waitFor(() => expect(removedOne).toHaveBeenCalledTimes(1));
+    expect(removedAll).not.toHaveBeenCalled();
+  });
+
+  it('signale un échec de la suppression groupée sans rien retirer de la liste', async () => {
+    // The page logs the failure it reports.
+    const logged = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    renderPage([
+      listMock(initial),
+      { request: { query: DELETE_ALL_NOTIFICATIONS }, error: new Error('Erreur réseau') },
+      listMock(initial),
+    ]);
+    await screen.findByText('Message 1');
+
+    fireEvent.click(screen.getByRole('button', { name: /Tout supprimer/i }));
+    fireEvent.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Supprimer' }));
+
+    await waitFor(() =>
+      expect(toast).toHaveBeenCalledWith({
+        variant: 'destructive',
+        title: 'Suppression interrompue',
+        description: "Toutes les notifications n'ont pas pu être supprimées.",
+      }),
+    );
+    expect(screen.getByText('Message 1')).toBeInTheDocument();
+    logged.mockRestore();
   });
 });

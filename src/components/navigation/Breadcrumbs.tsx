@@ -23,6 +23,7 @@ const ROUTE_LABELS: Record<string, string> = {
   users: "Membres",
   finance: "Finance",
   audits: "Sécurité",
+  incidents: "Incidents",
   articles: "Articles",
   settings: "Paramètres",
   checklists: "Checklists",

@@ -63,6 +63,19 @@ export const CONFIRM_2FA_MUTATION = gql`
   }
 `;
 
+// Two-factor state of the signed-in user (the API never returns the secret).
+export const GET_TWO_FACTOR_STATUS = gql`
+  query GetTwoFactorStatus {
+    twoFactorEnabled
+  }
+`;
+
+export const DISABLE_2FA_MUTATION = gql`
+  mutation Disable2FA($password: String!) {
+    disable2FA(password: $password)
+  }
+`;
+
 export const GET_USER_BY_EMAIL = gql`
   query GetUserByEmail($email: String!) {
     userByEmail(email: $email) {

@@ -27,6 +27,7 @@ query GetArticles {
     photo_url
     createdAt
     eventDate
+    documents_url
   }
 }
 `

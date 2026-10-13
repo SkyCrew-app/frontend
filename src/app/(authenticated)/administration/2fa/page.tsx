@@ -2,15 +2,22 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useMutation } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client';
 import { Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { CONFIRM_2FA_MUTATION, GENERATE_2FA_SECRET_MUTATION } from '@/graphql/user';
+import { ErrorState } from '@/components/layout/ErrorState';
+import { DisableTwoFactorDialog } from '@/components/profile/disable-two-factor-dialog';
+import {
+  CONFIRM_2FA_MUTATION,
+  GENERATE_2FA_SECRET_MUTATION,
+  GET_TWO_FACTOR_STATUS,
+} from '@/graphql/user';
 import { useToast } from "@/components/hooks/use-toast";
 
 const CODE_LENGTH = 6;
@@ -18,9 +25,18 @@ const CODE_LENGTH = 6;
 export default function Setup2FA() {
   const { toast } = useToast();
   const [code, setCode] = useState('');
-  const [isActivated, setIsActivated] = useState(false);
-  const [generate2FASecret, { data: qrCodeData, loading: generating }] = useMutation(GENERATE_2FA_SECRET_MUTATION);
-  const [confirm2FA, { loading: confirming }] = useMutation(CONFIRM_2FA_MUTATION);
+  const [showDisable, setShowDisable] = useState(false);
+  // Whether two-factor is already on comes from the API, never from this screen's own state.
+  const statusQuery = useQuery(GET_TWO_FACTOR_STATUS, { fetchPolicy: 'cache-and-network' });
+  const [generate2FASecret, { data: qrCodeData, loading: generating, reset: resetQrCode }] =
+    useMutation(GENERATE_2FA_SECRET_MUTATION);
+  const [confirm2FA, { loading: confirming }] = useMutation(CONFIRM_2FA_MUTATION, {
+    refetchQueries: [{ query: GET_TWO_FACTOR_STATUS }],
+    awaitRefetchQueries: true,
+  });
+
+  const isActivated: boolean | undefined = statusQuery.data?.twoFactorEnabled;
+  const statusKnown = typeof isActivated === 'boolean';
 
   // Generating a secret only prepares the setup: two-factor is activated
   // once a first code proves the authenticator app holds the secret.
@@ -45,7 +61,6 @@ export default function Setup2FA() {
     event.preventDefault();
     try {
       await confirm2FA({ variables: { token: code } });
-      setIsActivated(true);
       toast({
         title: "Double authentification activée",
         description: "Un code vous sera demandé à chaque connexion.",
@@ -74,7 +89,16 @@ export default function Setup2FA() {
         }
       />
 
-      {isActivated ? (
+      {!statusKnown ? (
+        statusQuery.loading ? (
+          <Skeleton className="h-40 w-full rounded-xl" />
+        ) : (
+          <ErrorState
+            description="L'état de la double authentification n'a pas pu être vérifié. Vérifiez votre connexion puis réessayez."
+            onRetry={() => statusQuery.refetch()}
+          />
+        )
+      ) : isActivated ? (
         <Card>
           <CardHeader>
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -88,6 +112,11 @@ export default function Setup2FA() {
               vous sera demandé à chaque connexion.
             </p>
           </CardContent>
+          <CardFooter className="justify-end">
+            <Button variant="outline" className="text-destructive" onClick={() => setShowDisable(true)}>
+              Désactiver la double authentification
+            </Button>
+          </CardFooter>
         </Card>
       ) : (
         <>
@@ -153,6 +182,16 @@ export default function Setup2FA() {
           )}
         </>
       )}
+
+      <DisableTwoFactorDialog
+        open={showDisable}
+        onOpenChange={setShowDisable}
+        onDisabled={() => {
+          // A new setup starts from scratch: the previous QR code is no longer valid.
+          resetQrCode();
+          setCode('');
+        }}
+      />
     </div>
   );
 }

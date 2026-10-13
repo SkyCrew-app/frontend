@@ -3,7 +3,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MockedProvider, type MockedResponse } from '@apollo/client/testing';
 import MaintenanceTablePage from '../page';
-import { DELETE_MAINTENANCE, GET_ALL_MAINTENANCES } from '@/graphql/maintenance';
+import { DELETE_MAINTENANCE, GET_ALL_MAINTENANCES, UPDATE_MAINTENANCE } from '@/graphql/maintenance';
 import { GET_USERS } from '@/graphql/user';
 import { GET_AIRCRAFTS } from '@/graphql/planes';
 import { formatDate, formatMoney } from '@/lib/format';
@@ -330,6 +330,93 @@ describe('MaintenanceTablePage', () => {
     await user.click(form.getByRole('button', { name: 'Suivant' }));
     expect(form.getByText('rapport-pneus.pdf')).toBeVisible();
     expect(form.getByRole('button', { name: 'Enregistrer' })).toBeInTheDocument();
+  });
+
+  it('doit afficher le prénom et le nom du technicien, et proposer les membres au rôle Technicien', async () => {
+    const user = userEvent.setup();
+    const withFullName = [
+      { ...mockMaintenances[0], technician: { id: 7, first_name: 'John', last_name: 'Doe', email: 'john@example.com' } },
+    ];
+    const technician = (id: number, first_name: string, last_name: string, role_name: string) => ({
+      id,
+      first_name,
+      last_name,
+      email: `${first_name.toLowerCase()}@example.com`,
+      phone_number: null,
+      date_of_birth: '1990-01-01',
+      is2FAEnabled: false,
+      isEmailConfirmed: true,
+      role: { id: 1, role_name },
+    });
+    renderPage([
+      maintenancesMock(withFullName),
+      {
+        request: { query: GET_USERS },
+        result: {
+          data: {
+            getUsers: [
+              technician(7, 'John', 'Doe', 'Technicien'),
+              technician(9, 'Luc', 'Martin', 'Technicien'),
+              technician(10, 'Paul', 'Pilote', 'Pilote'),
+            ],
+          },
+        },
+      },
+      aircraftsMock,
+    ]);
+
+    const row = within(await screen.findByText('F-ABCD').then(() => getRowFor('F-ABCD')));
+    expect(row.getByText('John Doe')).toBeInTheDocument();
+    expect(row.getByText('john@example.com')).toBeInTheDocument();
+
+    const menu = await openRowMenu(user, 'F-ABCD');
+    await user.click(menu.getByRole('menuitem', { name: 'Modifier' }));
+    const form = within(await screen.findByRole('dialog', { name: 'Modifier la maintenance' }));
+    expect(form.getByRole('combobox', { name: /Technicien/ })).toHaveTextContent('John Doe');
+
+    await user.click(form.getByRole('combobox', { name: /Technicien/ }));
+    const options = (await screen.findAllByRole('option')).map((option) => option.textContent);
+    expect(options).toEqual(['Non assigné', 'John Doe', 'Luc Martin']);
+  });
+
+  it('doit retirer le technicien quand on choisit « Non assigné » sur une maintenance déjà affectée', async () => {
+    const user = userEvent.setup();
+    const sent = jest.fn();
+    const unassigned = [{ ...mockMaintenances[0], technician: null }];
+    renderPage([
+      maintenancesMock([mockMaintenances[0]]),
+      usersMock,
+      aircraftsMock,
+      {
+        request: { query: UPDATE_MAINTENANCE },
+        variableMatcher: (variables) => {
+          sent(variables);
+          return true;
+        },
+        result: { data: { updateMaintenance: unassigned[0] } },
+      },
+      maintenancesMock(unassigned),
+    ]);
+    await screen.findByText('F-ABCD');
+
+    const menu = await openRowMenu(user, 'F-ABCD');
+    await user.click(menu.getByRole('menuitem', { name: 'Modifier' }));
+    const form = within(await screen.findByRole('dialog', { name: 'Modifier la maintenance' }));
+
+    await user.click(form.getByRole('combobox', { name: /Technicien/ }));
+    await user.click(await screen.findByRole('option', { name: 'Non assigné' }));
+    expect(form.getByText(/John ne sera plus affecté à cette maintenance/)).toBeInTheDocument();
+
+    await user.click(form.getByRole('button', { name: 'Suivant' }));
+    await user.click(form.getByRole('button', { name: 'Suivant' }));
+    await user.click(form.getByRole('button', { name: 'Enregistrer' }));
+
+    await waitFor(() => expect(sent).toHaveBeenCalledTimes(1));
+    // null, et non une valeur absente : c'est ce qui retire le technicien côté API.
+    expect(sent.mock.calls[0][0].updateMaintenanceInput).toMatchObject({ id: 1, technician_id: null });
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(await within(getRowFor('F-ABCD')).findByText('Non assigné')).toBeInTheDocument();
   });
 
   it('doit paginer le tableau par pages de 10 maintenances', async () => {
