@@ -24,7 +24,11 @@ export async function openCalendarAhead(page: Page, knownDay?: string) {
   for (let month = 0; month < MONTHS_AHEAD; month++) await next.click()
 
   if (knownDay) {
-    await picker.getByRole("gridcell", { name: knownDay, exact: true }).click()
+    // The grid also shows the last days of the previous month and the first of the next.
+    await picker
+      .locator("[role=gridcell]:not(.day-outside)")
+      .filter({ hasText: new RegExp(`^${knownDay}$`) })
+      .click()
   } else {
     const open = picker.locator("[role=gridcell]:not([disabled]):not(.day-outside)").filter({ hasText: /^(1[5-9]|2[0-8])$/ })
     await expect(open.first()).toBeVisible()
