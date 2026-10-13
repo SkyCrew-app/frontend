@@ -1028,7 +1028,7 @@ type Mutation {
   createReservation(createReservationInput: CreateReservationInput!): Reservation!
   createReservationTemplate(input: CreateReservationTemplateInput!): ReservationTemplate!
   createRole(createRoleInput: CreateRoleInput!): Role!
-  createUser(date_of_birth: DateTime!, email: String!, first_name: String!, last_name: String!): User!
+  createUser(date_of_birth: DateTime!, email: String!, first_name: String!, language: String, last_name: String!): User!
   deleteAdministration(id: Int!): Boolean!
   deleteAircraft(aircraftId: Int!): Boolean!
   deleteAllNotifications: Int!
@@ -1103,6 +1103,7 @@ type Mutation {
   updateLicense(documents: [Upload!], updateLicenseInput: UpdateLicenseInput!): License!
   updateMaintenance(files: [Upload!], images: [Upload!], updateMaintenanceInput: UpdateMaintenanceInput!): Maintenance!
   updateModule(id: Float!, updateModuleInput: UpdateModuleDTO!): Module!
+  updateMyLanguage(language: String!): User!
   updateNotification(updateNotificationInput: UpdateNotificationInput!): Notification!
   updateNotificationSettings(email_notifications_enabled: Boolean!, newsletter_subscribed: Boolean!, sms_notifications_enabled: Boolean!): User!
   updatePassword(currentPassword: String!, newPassword: String!): User!

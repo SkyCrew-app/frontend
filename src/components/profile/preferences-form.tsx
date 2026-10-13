@@ -1,5 +1,7 @@
 "use client"
 
+import { chooseLanguage, currentLanguage, LANGUAGES, type Language } from "@/lib/i18n"
+import { saveLanguage } from "@/lib/stored-language"
 import React, { useState, useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { useMutation } from "@apollo/client"
@@ -12,11 +14,17 @@ import { TimezoneCombobox } from "@/components/ui/timezoneCombobox"
 import Flag from "react-world-flags"
 import { Loader2 } from "lucide-react"
 
-const LANGUAGES = [
-  { value: "fr", label: "Français", flag: "FR" },
-  { value: "en", label: "English", flag: "GB" },
-  { value: "es", label: "Español", flag: "ES" },
-]
+// The languages the interface exists in, with the flag shown next to each.
+const LANGUAGE_FLAGS: Record<Language, string> = { fr: "FR", en: "GB" }
+const LANGUAGE_OPTIONS = LANGUAGES.map(({ code, label }) => ({ value: code, label, flag: LANGUAGE_FLAGS[code] }))
+
+// Same effect as the switcher of the top bar: applied at once, for the whole interface.
+const switchLanguage = (value: string) => {
+  const language = LANGUAGES.find(({ code }) => code === value)?.code
+  if (!language || language === currentLanguage()) return
+  void saveLanguage(language)
+  void chooseLanguage(language)
+}
 
 interface ChoiceGroupProps {
   id: string
@@ -116,7 +124,7 @@ export function PreferencesForm({ userData, userId, refetch }: PreferencesFormPr
         variables: {
           userId: userId,
           preference: {
-            language: preferences.language,
+            language: currentLanguage(),
             speed_unit: preferences.speed_unit,
             distance_unit: preferences.distance_unit,
             timezone: preferences.timezone,
@@ -189,9 +197,9 @@ export function PreferencesForm({ userData, userId, refetch }: PreferencesFormPr
           <ChoiceGroup
             id="language_label"
             label={t("common:language.label")}
-            value={preferences.language}
-            options={LANGUAGES}
-            onChange={(value) => handlePreferenceChange("language", value)}
+            value={currentLanguage()}
+            options={LANGUAGE_OPTIONS}
+            onChange={switchLanguage}
           />
           <ChoiceGroup
             id="speed_unit_label"
