@@ -112,6 +112,23 @@ describe('formulaire des paramètres', () => {
     });
   });
 
+  it.each(['04 78 12 34 56', '+33 4 78 12 34 56', '+44 20 7946 0958', '+1 415-555-2671'])(
+    'accepte le téléphone de contact « %s » et l’enregistre sans séparateurs',
+    (contactPhone) => {
+      const values = { ...settingsFormValuesFromRecord(record), contactPhone };
+
+      expect(settingsFormSchema.safeParse(values).success).toBe(true);
+      expect(administrationInputFromValues(7, values).contactPhone).toBe(contactPhone.replace(/[\s-]/g, ''));
+    },
+  );
+
+  it.each(['', '1234', '478123456', '+33 4 78 AB'])('refuse le téléphone de contact « %s »', (contactPhone) => {
+    const result = settingsFormSchema.safeParse({ ...settingsFormValuesFromRecord(record), contactPhone });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0].path).toEqual(['contactPhone']);
+  });
+
   it("indique les onglets qui contiennent un champ invalide, dans l'ordre d'affichage", () => {
     expect(tabsWithErrors(['membershipFee', 'clubName'])).toEqual(['general', 'members']);
     expect(tabsWithErrors([])).toEqual([]);

@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { SidePanel } from "@/components/layout/SidePanel"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { roleLabel } from "@/lib/settings"
+import { isValidPhone, normalisePhone } from "@/lib/phone"
 import type { User, Role } from "@/interfaces/user"
 
 interface EditUserFormProps {
@@ -84,6 +85,10 @@ export function EditUserForm({
     const nextErrors: Errors = {}
     if (!values.first_name.trim()) nextErrors.first_name = t("users.form.errors.firstName")
     if (!values.last_name.trim()) nextErrors.last_name = t("users.form.errors.lastName")
+    // Optional, but a number that is given must be one.
+    if (values.phone_number.trim() && !isValidPhone(values.phone_number)) {
+      nextErrors.phone_number = t("users.form.errors.phone")
+    }
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length > 0) return
 
@@ -92,7 +97,7 @@ export function EditUserForm({
       last_name: values.last_name,
       email: user.email,
       date_of_birth: values.date_of_birth,
-      phone_number: values.phone_number,
+      phone_number: normalisePhone(values.phone_number),
     })
   }
 
@@ -165,7 +170,13 @@ export function EditUserForm({
               value={values.phone_number}
               onChange={(e) => setField("phone_number", e.target.value)}
               placeholder={t("users.edit.phonePlaceholder")}
+              aria-invalid={errors.phone_number ? true : undefined}
+              aria-describedby="edit_phone_hint"
             />
+            <p id="edit_phone_hint" className="text-xs text-muted-foreground">
+              {t("users.edit.phoneHint")}
+            </p>
+            <FieldError message={errors.phone_number} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="edit_date_of_birth">{t("users.fields.dateOfBirth")}</Label>

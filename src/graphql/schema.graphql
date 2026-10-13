@@ -44,6 +44,9 @@ type Aerodrome {
   latitude: Float
   longitude: Float
   name: String!
+
+  """IANA time zone, e.g. Europe/Paris"""
+  timezone: String
 }
 
 type AerodromeWeather {
@@ -67,7 +70,12 @@ type AerodromeWeather {
 
   """Degrees"""
   windDegrees: Float
-  windSpeed: Float
+
+  """Metres per second, as the provider gives it"""
+  windSpeed: Float @deprecated(reason: "Use windSpeedKmh")
+
+  """Kilometres per hour"""
+  windSpeedKmh: Float
 }
 
 type Aircraft {

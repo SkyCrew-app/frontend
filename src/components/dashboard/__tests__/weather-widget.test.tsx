@@ -10,10 +10,17 @@ jest.mock('@/components/hooks/use-toast', () => ({
   useToast: () => ({ toast: mockToast }),
 }));
 
+const aerodromeIn = (timezone: string | null): MockedResponse => ({
+  request: { query: AERODROME_BY_ICAO, variables: { icao: 'LFPG' } },
+  result: {
+    data: { aerodromeByIcao: { icao: 'LFPG', iata: 'CDG', name: 'Charles de Gaulle', latitude: 49.01, longitude: 2.55, timezone } },
+  },
+});
+
 const aerodrome: MockedResponse = {
   request: { query: AERODROME_BY_ICAO, variables: { icao: 'LFPG' } },
   result: {
-    data: { aerodromeByIcao: { icao: 'LFPG', iata: 'CDG', name: 'Charles de Gaulle', latitude: 49.01, longitude: 2.55 } },
+    data: { aerodromeByIcao: { icao: 'LFPG', iata: 'CDG', name: 'Charles de Gaulle', latitude: 49.01, longitude: 2.55, timezone: 'Europe/Paris' } },
   },
 };
 
@@ -27,7 +34,7 @@ const CONDITIONS = {
   feelsLike: 10,
   humidity: 71,
   cloudCover: 40,
-  windSpeed: 5.4,
+  windSpeedKmh: 19.4,
   windDegrees: 250,
   sunrise: 1791871200,
   sunset: 1791910800,
@@ -61,10 +68,35 @@ describe('WeatherWidget', () => {
     expect(screen.getByText('Ressenti 10 °C')).toBeInTheDocument();
     expect(screen.getByText('Éclaircies')).toBeInTheDocument();
     expect(screen.getByText('Nuages 40 % · Humidité 71 %')).toBeInTheDocument();
-    expect(screen.getByText('5 km/h')).toBeInTheDocument();
+    expect(screen.getByText('19 km/h')).toBeInTheDocument();
     expect(screen.getByText('Direction 250°')).toBeInTheDocument();
     expect(mockToast).not.toHaveBeenCalled();
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  // 1791871200 = 2026-10-13 06:00 UTC, 1791910800 = 17:00 UTC.
+  it('donne le lever et le coucher du soleil à l’heure de l’aérodrome', async () => {
+    renderWidget([aerodromeIn('America/New_York'), weather(CONDITIONS)]);
+
+    expect(await screen.findByText('02:00 – 13:00')).toBeInTheDocument();
+    expect(screen.getByText("Lever – coucher (heure locale de l'aérodrome)")).toBeInTheDocument();
+  });
+
+  it('suit le fuseau de chaque aérodrome, pas celui de Paris', async () => {
+    renderWidget([aerodromeIn('Asia/Tokyo'), weather(CONDITIONS)]);
+
+    expect(await screen.findByText('15:00 – 02:00')).toBeInTheDocument();
+  });
+
+  it.each([null, 'Mars/Olympus'])('se rabat sur l’heure du navigateur quand le fuseau est %p', async (timezone) => {
+    renderWidget([aerodromeIn(timezone), weather(CONDITIONS)]);
+    const local = (timestamp: number) =>
+      new Date(timestamp * 1000).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+
+    expect(
+      await screen.findByText(`${local(CONDITIONS.sunrise)} – ${local(CONDITIONS.sunset)}`),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Lever – coucher (votre heure locale)')).toBeInTheDocument();
   });
 
   it('annonce l’actualisation demandée par le membre', async () => {

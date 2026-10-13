@@ -63,7 +63,7 @@ export function GeneralTab() {
               id="contact-phone"
               type="tel"
               autoComplete="tel"
-              placeholder="0478123456"
+              placeholder={t("settings.general.contact.phonePlaceholder")}
               aria-invalid={errors.contactPhone ? true : undefined}
               aria-describedby="contact-phone-hint"
               {...register("contactPhone")}

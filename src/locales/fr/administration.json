@@ -113,6 +113,7 @@
         "lastName": "Indiquez le nom.",
         "email": "Indiquez l'adresse e-mail.",
         "emailInvalid": "Cette adresse e-mail n'est pas valide.",
+        "phone": "Ce numéro de téléphone n'est pas valide.",
         "dateOfBirth": "Indiquez la date de naissance.",
         "dateOfBirthFuture": "La date de naissance ne peut pas être dans le futur."
       }
@@ -129,6 +130,7 @@
       "title": "Modifier le membre",
       "emailHint": "L'adresse e-mail identifie le compte et ne peut pas être modifiée ici.",
       "phonePlaceholder": "06 12 34 56 78",
+      "phoneHint": "Numéro français à 10 chiffres ou international commençant par + (ex. +33 6 12 34 56 78).",
       "chooseRole": "Choisir un rôle",
       "roleHint": "Le rôle détermine ce que le membre peut voir et modifier."
     },
@@ -158,7 +160,7 @@
       "expirationDate": "Date d'expiration",
       "noExpiration": "Sans expiration",
       "documents": "Justificatifs",
-      "documentsHint": "Facultatif. Scan ou photo de la licence, plusieurs fichiers possibles.",
+      "documentsHint": "Facultatif. Scan ou photo de la licence (PDF, JPG, PNG ou WebP), plusieurs fichiers possibles.",
       "errors": {
         "member": "Choisissez le membre concerné.",
         "type": "Choisissez le type de licence.",
@@ -810,7 +812,8 @@
         "email": "E-mail de contact",
         "emailPlaceholder": "contact@aeroclub.fr",
         "phone": "Téléphone de contact",
-        "phoneHint": "10 à 14 chiffres, sans espaces. L'indicatif international (+33…) est accepté.",
+        "phoneHint": "Numéro français à 10 chiffres ou international commençant par + (8 à 15 chiffres). Les espaces sont acceptés.",
+        "phonePlaceholder": "04 78 12 34 56",
         "address": "Adresse",
         "addressPlaceholder": "Aérodrome de Tours-Sorigny\n37250 Sorigny"
       },
@@ -1002,7 +1005,7 @@
       "amountNegative": "Le montant ne peut pas être négatif",
       "clubName": "Le nom de l'aéroclub doit contenir au moins 2 caractères",
       "contactEmail": "Indiquez une adresse e-mail valide",
-      "contactPhone": "Indiquez 10 à 14 chiffres, sans espaces (ex. 0478123456)",
+      "contactPhone": "Indiquez un numéro français à 10 chiffres ou international commençant par + (ex. 04 78 12 34 56 ou +33 4 78 12 34 56)",
       "address": "L'adresse doit contenir au moins 5 caractères",
       "timeSlotRequired": "Choisissez une durée de créneau",
       "timeSlotMin": "Le créneau dure au moins 30 minutes",

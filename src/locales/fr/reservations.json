@@ -53,7 +53,12 @@
       "heading": "Réservations du {{date}}",
       "aircraftFree": "Cet avion est libre toute la journée",
       "noReservation": "Aucune réservation ce jour",
-      "emptyDescription": "Utilisez « Nouvelle réservation » pour réserver un créneau."
+      "emptyDescription": "Utilisez « Nouvelle réservation » pour réserver un créneau.",
+      "freeHeading": "Créneaux libres",
+      "freeFor": "Créneaux libres de {{aircraft}}",
+      "freeHint": "Touchez un créneau pour le réserver ; vous pourrez ajuster l'horaire.",
+      "noFreeRange": "Aucun créneau libre",
+      "bookRange": "Réserver {{aircraft}} de {{start}} à {{end}}"
     }
   },
   "form": {
@@ -122,6 +127,14 @@
       "title": "Suppression impossible",
       "description": "La réservation n'a pas pu être supprimée. Réessayez dans un instant."
     },
+    "cancelled": {
+      "title": "Réservation annulée",
+      "description": "La réservation de {{aircraft}} a été annulée."
+    },
+    "cancelFailed": {
+      "title": "Annulation impossible",
+      "description": "La réservation n'a pas pu être annulée. Réessayez dans un instant."
+    },
     "templateCreated": {
       "title": "Modèle créé"
     },
@@ -179,7 +192,14 @@
     "card": {
       "noPurpose": "But non précisé",
       "viewFlightPlan": "Voir le plan de vol",
-      "createFlightPlan": "Créer un plan de vol"
+      "createFlightPlan": "Créer un plan de vol",
+      "cancel": "Annuler la réservation"
+    },
+    "cancelConfirm": {
+      "title": "Annuler cette réservation ?",
+      "description": "La réservation de {{aircraft}} du {{date}}, de {{start}} à {{end}}, sera annulée : elle disparaîtra de vos réservations et le créneau redeviendra libre.",
+      "keep": "Conserver la réservation",
+      "action": "Annuler la réservation"
     }
   },
   "template": {

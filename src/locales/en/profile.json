@@ -27,7 +27,7 @@
       "alt": "Profile photo",
       "change": "Change photo",
       "pendingHint": "The new photo will be saved with the form.",
-      "formatHint": "A square image in JPG or PNG format."
+      "formatHint": "A square image in JPG, PNG or WebP format."
     },
     "fields": {
       "firstName": "First name",
@@ -41,7 +41,7 @@
       "firstName": "Camille",
       "lastName": "Martin",
       "email": "camille.martin@example.com",
-      "phone": "06 12 34 56 78",
+      "phone": "+44 20 7946 0958",
       "address": "12 rue de l'Aérodrome, 31000 Toulouse"
     },
     "errors": {
@@ -52,7 +52,7 @@
       "emailRequired": "Email is required",
       "emailInvalid": "Email is not valid",
       "phoneRequired": "Phone number is required.",
-      "phoneInvalid": "Phone number is not valid. Expected format: 0X XX XX XX XX or +33 X XX XX XX XX",
+      "phoneInvalid": "Phone number is not valid. Expected format: an international number starting with + (e.g. +44 20 7946 0958) or a French 10-digit number",
       "addressRequired": "Address is required.",
       "addressIncomplete": "Enter the full address.",
       "birthDateRequired": "Date of birth is required.",

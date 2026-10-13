@@ -594,4 +594,33 @@ describe('ReservationCalendar', () => {
     expect(within(dialog).getByText('En attente')).toBeInTheDocument();
     expect(within(dialog).getByText('09:00 – 11:00')).toBeInTheDocument();
   });
+  it('doit montrer sur petit écran quand chaque avion est libre et préremplir la réservation', async () => {
+    window.matchMedia = jest.fn().mockImplementation((query: string) => ({
+      matches: query === '(max-width: 768px)',
+      media: query,
+      onchange: null,
+      addListener: jest.fn(),
+      removeListener: jest.fn(),
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      dispatchEvent: jest.fn(),
+    }));
+    const user = userEvent.setup();
+    renderPage();
+
+    expect(await screen.findByRole('heading', { name: 'Créneaux libres' })).toBeInTheDocument();
+
+    // Ouverture 08:00–12:00, il est 10:00 : F-ABCD est pris de 09:00 à 11:00, F-EFGH est libre.
+    const booked = screen.getByRole('group', { name: 'Créneaux libres de F-ABCD' });
+    expect(within(booked).getAllByRole('button').map((button) => button.textContent)).toEqual(['11:00 – 12:00']);
+    const free = screen.getByRole('group', { name: 'Créneaux libres de F-EFGH' });
+    expect(within(free).getAllByRole('button').map((button) => button.textContent)).toEqual(['10:00 – 12:00']);
+
+    await user.click(within(free).getByRole('button', { name: '10:00 – 12:00' }));
+
+    const dialog = await screen.findByRole('dialog', { name: 'Nouvelle réservation' });
+    expect(within(dialog).getByRole('combobox', { name: /Avion/ })).toHaveTextContent('F-EFGH');
+    expect(within(dialog).getByLabelText(/Début/)).toHaveValue('10:00');
+    expect(within(dialog).getByLabelText(/Fin/)).toHaveValue('11:00');
+  });
 });

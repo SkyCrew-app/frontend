@@ -34,6 +34,8 @@ interface ReservationFormProps {
   setFlightCategory: (value: string) => void
   onSubmit: () => void | Promise<void>
   isSubmitting: boolean
+  /** Optional action shown at the start of the footer (e.g. cancelling the booking). */
+  footerStart?: ReactNode
 }
 
 /** Side panel with the purpose, category and notes of a reservation whose slot is already chosen. */
@@ -52,6 +54,7 @@ export function ReservationForm({
   setFlightCategory,
   onSubmit,
   isSubmitting,
+  footerStart,
 }: ReservationFormProps) {
   const { t } = useTranslation("reservations")
   const [categoryError, setCategoryError] = useState(false)
@@ -82,6 +85,7 @@ export function ReservationForm({
       onSubmit={handleSubmit}
       submitLabel={isEdit ? t("common:actions.save") : t("form.submitCreate")}
       submitting={isSubmitting}
+      footerStart={footerStart}
     >
       <div className="space-y-4">
         {summary && (

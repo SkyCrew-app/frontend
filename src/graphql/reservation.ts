@@ -80,6 +80,7 @@ export const GET_USER_RESERVATIONS = gql`
       }
       flights {
         id
+        closed_at
       }
     }
   }

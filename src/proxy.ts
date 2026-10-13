@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtDecode } from "jwt-decode";
 import { getServerGraphqlUrl, stripBasePath, withBasePath } from '@/lib/runtime-config';
+import { isNextAsset, sessionCookieMaxAge } from '@/lib/proxy-rules';
 
 interface CustomJwtPayload {
   exp: number;
@@ -44,9 +45,7 @@ async function isInMaintenanceMode(req: NextRequest) {
 export async function proxy(req: NextRequest) {
   const response = NextResponse.next();
   const pathname = stripBasePath(req.nextUrl.pathname);
-  const isStaticFile = pathname.startsWith('/_next') || pathname.includes('/static');
-
-  if (isStaticFile) return response;
+  if (isNextAsset(pathname)) return response;
 
   const maintenance = await isInMaintenanceMode(req);
   if (maintenance.status === 307) {
@@ -70,7 +69,10 @@ export async function proxy(req: NextRequest) {
   try {
     const decodedToken = jwtDecode<CustomJwtPayload>(token);
 
-    if ((decodedToken.exp * 1000) < Date.now()) {
+    // What is left of the token: a token without expiry counts as expired.
+    const maxAge = sessionCookieMaxAge(decodedToken.exp);
+
+    if (maxAge <= 0) {
       response.cookies.delete('token');
       return NextResponse.redirect(new URL(withBasePath('/system/notconnected'), req.url));
     }
@@ -91,7 +93,7 @@ export async function proxy(req: NextRequest) {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       path: '/',
-      maxAge: 3600
+      maxAge,
     });
 
   } catch {

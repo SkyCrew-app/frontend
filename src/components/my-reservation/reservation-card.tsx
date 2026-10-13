@@ -2,8 +2,8 @@
 
 import Link from "next/link"
 import { useTranslation } from "react-i18next"
-import { CalendarClock, FileText, Pencil } from "lucide-react"
-import { reservationStatus } from "@/lib/reservation-status"
+import { CalendarClock, CalendarX, FileText, Pencil } from "lucide-react"
+import { canCancelReservation, reservationStatus } from "@/lib/reservation-status"
 import { formatDate, formatFlightDuration, formatTime } from "@/lib/format"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -14,9 +14,11 @@ import { flightCategoryLabel } from "@/components/reservation/flight-category"
 interface ReservationCardProps {
   reservation: Reservation
   onEdit: (reservation: Reservation) => void
+  /** Asks to cancel the booking; the page confirms before anything is sent. */
+  onCancel: (reservation: Reservation) => void
 }
 
-export function ReservationCard({ reservation, onEdit }: ReservationCardProps) {
+export function ReservationCard({ reservation, onEdit, onCancel }: ReservationCardProps) {
   const { t } = useTranslation("reservations")
   const startDate = new Date(reservation.start_time)
   const endDate = new Date(reservation.end_time)
@@ -54,6 +56,17 @@ export function ReservationCard({ reservation, onEdit }: ReservationCardProps) {
         </p>
       </CardContent>
       <CardFooter className="flex flex-wrap justify-end gap-2 border-t pt-4">
+        {canCancelReservation(reservation) && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="mr-auto text-destructive hover:text-destructive"
+            onClick={() => onCancel(reservation)}
+          >
+            <CalendarX className="h-4 w-4" />
+            {t("my.card.cancel")}
+          </Button>
+        )}
         <Button size="sm" variant="outline" onClick={() => onEdit(reservation)}>
           <Pencil className="h-4 w-4" />
           {t("common:actions.edit")}
