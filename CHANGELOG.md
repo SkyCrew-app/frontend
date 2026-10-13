@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.9.1](https://github.com/SkyCrew-app/frontend/compare/2.9.0...2.9.1) (2026-10-13)
+
+
+### Bug Fixes
+
+* **ui:** :lock: verified write flows, panel focus and safer rendering of rich text ([#146](https://github.com/SkyCrew-app/frontend/issues/146)) ([5433e21](https://github.com/SkyCrew-app/frontend/commit/5433e215bd5f2a104d5e23549a92197996cc16f9))
+
 ## [2.9.0](https://github.com/SkyCrew-app/frontend/compare/2.8.0...2.9.0) (2026-10-12)
 
 
