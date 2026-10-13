@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslation } from "react-i18next"
 import Link from "next/link"
 import { Eye } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -13,19 +14,20 @@ import { EvaluationManagement } from "@/components/evaluation/EvaluationManageme
 import { learningRoutes } from "@/lib/learning-navigation"
 
 export default function AdminELearningPage() {
+  const { t } = useTranslation("instruction")
   const [activeTab, setActiveTab] = useState("courses")
 
   return (
     <div className="space-y-6">
       <PageHeader
         className="mb-0"
-        title="Gestion de l'e-learning"
-        description="Un cours se compose de modules, un module de leçons et d'évaluations."
+        title={t("admin.title")}
+        description={t("admin.description")}
         actions={
           <Button variant="outline" asChild>
             <Link href={learningRoutes.eLearning}>
               <Eye className="h-4 w-4" />
-              Voir le catalogue
+              {t("admin.viewCatalogue")}
             </Link>
           </Button>
         }
@@ -33,10 +35,10 @@ export default function AdminELearningPage() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
-          <TabsTrigger value="courses">Cours</TabsTrigger>
-          <TabsTrigger value="modules">Modules</TabsTrigger>
-          <TabsTrigger value="lessons">Leçons</TabsTrigger>
-          <TabsTrigger value="evaluations">Évaluations</TabsTrigger>
+          <TabsTrigger value="courses">{t("admin.tabs.courses")}</TabsTrigger>
+          <TabsTrigger value="modules">{t("admin.tabs.modules")}</TabsTrigger>
+          <TabsTrigger value="lessons">{t("admin.tabs.lessons")}</TabsTrigger>
+          <TabsTrigger value="evaluations">{t("admin.tabs.evaluations")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="courses">

@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { useTranslation } from "react-i18next"
 import { CalendarClock, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { EmptyState as SharedEmptyState } from "@/components/layout/EmptyState"
@@ -12,16 +13,17 @@ interface EmptyStateProps {
 
 /** Empty list of "Mes réservations": nothing booked yet, or nothing matching the filters. */
 export function EmptyState({ hasFilters, onResetFilters }: EmptyStateProps) {
+  const { t } = useTranslation("reservations")
   if (hasFilters) {
     return (
       <SharedEmptyState
         icon={CalendarClock}
-        title="Aucune réservation ne correspond"
-        description="Modifiez la recherche ou les filtres pour retrouver vos réservations."
+        title={t("my.empty.filteredTitle")}
+        description={t("my.empty.filteredDescription")}
         action={
           onResetFilters && (
             <Button variant="outline" onClick={onResetFilters}>
-              Réinitialiser les filtres
+              {t("my.empty.resetFilters")}
             </Button>
           )
         }
@@ -32,13 +34,13 @@ export function EmptyState({ hasFilters, onResetFilters }: EmptyStateProps) {
   return (
     <SharedEmptyState
       icon={CalendarClock}
-      title="Aucune réservation pour le moment"
-      description="Réservez un avion depuis le calendrier : vos réservations apparaîtront ici."
+      title={t("my.empty.title")}
+      description={t("my.empty.description")}
       action={
         <Button asChild>
           <Link href="/reservations">
             <Plus className="h-4 w-4" />
-            Réserver un avion
+            {t("my.empty.action")}
           </Link>
         </Button>
       }

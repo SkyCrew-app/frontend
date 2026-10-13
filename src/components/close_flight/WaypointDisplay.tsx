@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
 type Waypoint = {
@@ -23,6 +24,8 @@ const isDetailed = (waypoint: unknown): waypoint is Waypoint =>
 
 /** Read-only route of the flight plan, shown on the closing page. */
 export default function WaypointsDisplay({ waypoints, compact = false }: WaypointsDisplayProps) {
+  const { t } = useTranslation("flights")
+
   if (!waypoints) return null
 
   let parsedWaypoints: unknown[] = []
@@ -30,11 +33,11 @@ export default function WaypointsDisplay({ waypoints, compact = false }: Waypoin
     const parsed = typeof waypoints === "string" ? JSON.parse(waypoints) : waypoints
     parsedWaypoints = Array.isArray(parsed) ? parsed : []
   } catch {
-    return <p className="text-sm text-muted-foreground">Les points de route de ce plan ne sont pas lisibles.</p>
+    return <p className="text-sm text-muted-foreground">{t("closeFlight.waypoints.unreadable")}</p>
   }
 
   if (parsedWaypoints.length === 0) {
-    return <p className="text-sm text-muted-foreground">Vol direct, sans point de route.</p>
+    return <p className="text-sm text-muted-foreground">{t("closeFlight.waypoints.direct")}</p>
   }
 
   // Plans prepared by hand only keep the identifiers of their points.
@@ -51,11 +54,11 @@ export default function WaypointsDisplay({ waypoints, compact = false }: Waypoin
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Point</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead className="text-right">Latitude</TableHead>
-            <TableHead className="text-right">Longitude</TableHead>
-            <TableHead className="text-right">Altitude</TableHead>
+            <TableHead>{t("closeFlight.waypoints.point")}</TableHead>
+            <TableHead>{t("common:labels.type")}</TableHead>
+            <TableHead className="text-right">{t("closeFlight.waypoints.latitude")}</TableHead>
+            <TableHead className="text-right">{t("closeFlight.waypoints.longitude")}</TableHead>
+            <TableHead className="text-right">{t("closeFlight.waypoints.altitude")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -70,7 +73,9 @@ export default function WaypointsDisplay({ waypoints, compact = false }: Waypoin
               <TableCell>{waypoint.type || "—"}</TableCell>
               <TableCell className="text-right tabular-nums">{waypoint.lat.toFixed(4)}°</TableCell>
               <TableCell className="text-right tabular-nums">{waypoint.lon.toFixed(4)}°</TableCell>
-              <TableCell className="text-right tabular-nums">{waypoint.alt ? `${waypoint.alt} ft` : "Sol"}</TableCell>
+              <TableCell className="text-right tabular-nums">
+                {waypoint.alt ? `${waypoint.alt} ft` : t("closeFlight.waypoints.ground")}
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>

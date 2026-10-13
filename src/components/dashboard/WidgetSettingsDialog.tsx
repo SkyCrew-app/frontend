@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { ArrowDown, ArrowUp } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { SidePanel } from "@/components/layout/SidePanel"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
@@ -29,6 +30,7 @@ export default function WidgetSettingsDialog({
   // Kept in display order; the `order` field is rewritten on save.
   const [localWidgets, setLocalWidgets] = useState<DashboardWidgetConfig[]>(() => normalizeWidgets(widgets))
   const { toast } = useToast()
+  const { t } = useTranslation("dashboard")
 
   const [updateDashboardWidgets, { loading: saving }] = useMutation(UPDATE_DASHBOARD_WIDGETS)
 
@@ -64,14 +66,14 @@ export default function WidgetSettingsDialog({
       onWidgetsChange(ordered)
       onOpenChange(false)
       toast({
-        title: "Tableau de bord enregistré",
-        description: "Votre sélection de widgets a été mise à jour.",
+        title: t("settings.toast.saved.title"),
+        description: t("settings.toast.saved.description"),
       })
     } catch (error) {
       console.error("Erreur lors de la sauvegarde:", error)
       toast({
-        title: "Enregistrement impossible",
-        description: "Votre tableau de bord n'a pas pu être enregistré. Réessayez dans un instant.",
+        title: t("settings.toast.failed.title"),
+        description: t("settings.toast.failed.description"),
         variant: "destructive",
       })
     }
@@ -81,10 +83,10 @@ export default function WidgetSettingsDialog({
     <SidePanel
       open={open}
       onOpenChange={(next) => (next || !saving) && onOpenChange(next)}
-      title="Personnaliser le tableau de bord"
-      description="Choisissez les widgets affichés et leur ordre."
+      title={t("settings.title")}
+      description={t("settings.description")}
       onSubmit={handleSave}
-      submitLabel="Enregistrer"
+      submitLabel={t("common:actions.save")}
       submitting={saving}
       submitDisabled={!userId}
       footerStart={
@@ -94,7 +96,7 @@ export default function WidgetSettingsDialog({
           onClick={() => setLocalWidgets(normalizeWidgets(DEFAULT_WIDGETS))}
           disabled={saving}
         >
-          Rétablir la disposition par défaut
+          {t("settings.reset")}
         </Button>
       }
     >
@@ -113,8 +115,8 @@ export default function WidgetSettingsDialog({
                   className="h-7 w-9"
                   onClick={() => handleMove(index, -1)}
                   disabled={index === 0}
-                  aria-label={`Monter « ${meta.label} »`}
-                  title="Monter"
+                  aria-label={t("settings.moveUpNamed", { name: meta.label })}
+                  title={t("settings.moveUp")}
                 >
                   <ArrowUp className="h-4 w-4" />
                 </Button>
@@ -125,8 +127,8 @@ export default function WidgetSettingsDialog({
                   className="h-7 w-9"
                   onClick={() => handleMove(index, 1)}
                   disabled={index === localWidgets.length - 1}
-                  aria-label={`Descendre « ${meta.label} »`}
-                  title="Descendre"
+                  aria-label={t("settings.moveDownNamed", { name: meta.label })}
+                  title={t("settings.moveDown")}
                 >
                   <ArrowDown className="h-4 w-4" />
                 </Button>

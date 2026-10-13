@@ -1,13 +1,14 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useTranslation } from "react-i18next"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { ReservationTemplate } from "@/interfaces/reservation-template"
 import { SidePanel } from "@/components/layout/SidePanel"
-import { FLIGHT_CATEGORY_OPTIONS } from "@/components/reservation/flight-category"
+import { flightCategoryOptions } from "@/components/reservation/flight-category"
 
 interface Aircraft {
   id: number
@@ -15,15 +16,8 @@ interface Aircraft {
   model: string
 }
 
-const DAYS = [
-  { value: "1", label: "Lundi" },
-  { value: "2", label: "Mardi" },
-  { value: "3", label: "Mercredi" },
-  { value: "4", label: "Jeudi" },
-  { value: "5", label: "Vendredi" },
-  { value: "6", label: "Samedi" },
-  { value: "0", label: "Dimanche" },
-]
+// Day numbers as the API stores them (0 = Sunday), listed from Monday.
+const DAYS = ["1", "2", "3", "4", "5", "6", "0"]
 
 interface TemplateDialogProps {
   open: boolean
@@ -35,6 +29,7 @@ interface TemplateDialogProps {
 }
 
 export function TemplateDialog({ open, onOpenChange, template, aircraftList, onSave, loading }: TemplateDialogProps) {
+  const { t } = useTranslation("reservations")
   const [name, setName] = useState("")
   const [aircraftId, setAircraftId] = useState<string>("none")
   const [dayOfWeek, setDayOfWeek] = useState<string>("none")
@@ -76,8 +71,8 @@ export function TemplateDialog({ open, onOpenChange, template, aircraftList, onS
 
   const nameMissing = !name.trim()
   const timeInvalid = !!startTime && !!endTime && endTime <= startTime
-  const nameError = nameChecked && nameMissing ? "Donnez un nom au modèle." : undefined
-  const timeError = timeChecked && timeInvalid ? "L'heure de fin doit être après l'heure de début." : undefined
+  const nameError = nameChecked && nameMissing ? t("template.form.nameRequired") : undefined
+  const timeError = timeChecked && timeInvalid ? t("form.errors.timeOrder") : undefined
 
   const validateIdentity = () => {
     setNameChecked(true)
@@ -113,7 +108,7 @@ export function TemplateDialog({ open, onOpenChange, template, aircraftList, onS
     <div className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="template-name">
-          Nom du modèle{" "}
+          {t("template.form.name")}{" "}
           <span className="text-destructive" aria-hidden="true">
             *
           </span>
@@ -122,7 +117,7 @@ export function TemplateDialog({ open, onOpenChange, template, aircraftList, onS
           id="template-name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Ex. : vol du samedi matin"
+          placeholder={t("template.form.namePlaceholder")}
           aria-invalid={!!nameError}
           aria-required="true"
         />
@@ -131,13 +126,13 @@ export function TemplateDialog({ open, onOpenChange, template, aircraftList, onS
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="template-aircraft">Avion</Label>
+          <Label htmlFor="template-aircraft">{t("common:labels.aircraft")}</Label>
           <Select value={aircraftId} onValueChange={setAircraftId}>
             <SelectTrigger id="template-aircraft">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">Au choix</SelectItem>
+              <SelectItem value="none">{t("template.form.anyAircraft")}</SelectItem>
               {aircraftList.map((a) => (
                 <SelectItem key={a.id} value={a.id.toString()}>
                   {a.registration_number} — {a.model}
@@ -147,13 +142,13 @@ export function TemplateDialog({ open, onOpenChange, template, aircraftList, onS
           </Select>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="template-category">Catégorie de vol</Label>
+          <Label htmlFor="template-category">{t("shared.flightCategory")}</Label>
           <Select value={flightCategory} onValueChange={setFlightCategory}>
             <SelectTrigger id="template-category">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {FLIGHT_CATEGORY_OPTIONS.map((c) => (
+              {flightCategoryOptions().map((c) => (
                 <SelectItem key={c.value} value={c.value}>
                   {c.label}
                 </SelectItem>
@@ -164,23 +159,23 @@ export function TemplateDialog({ open, onOpenChange, template, aircraftList, onS
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="template-purpose">But du vol</Label>
+        <Label htmlFor="template-purpose">{t("template.form.purpose")}</Label>
         <Input
           id="template-purpose"
           value={purpose}
           onChange={(e) => setPurpose(e.target.value)}
-          placeholder="Ex. : tours de piste"
+          placeholder={t("template.form.purposePlaceholder")}
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="template-notes">Notes</Label>
+        <Label htmlFor="template-notes">{t("common:labels.notes")}</Label>
         <Textarea
           id="template-notes"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={3}
-          placeholder="Passagers, plein à prévoir, consignes particulières…"
+          placeholder={t("form.notesPlaceholder")}
         />
       </div>
     </div>
@@ -190,23 +185,23 @@ export function TemplateDialog({ open, onOpenChange, template, aircraftList, onS
     <div className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="template-day">Jour habituel</Label>
+          <Label htmlFor="template-day">{t("template.form.usualDay")}</Label>
           <Select value={dayOfWeek} onValueChange={setDayOfWeek}>
             <SelectTrigger id="template-day">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">Aucun</SelectItem>
-              {DAYS.map((d) => (
-                <SelectItem key={d.value} value={d.value}>
-                  {d.label}
+              <SelectItem value="none">{t("common:labels.none")}</SelectItem>
+              {DAYS.map((day) => (
+                <SelectItem key={day} value={day}>
+                  {t(`weekday.${day}`)}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="template-hours">Durée de vol (h)</Label>
+          <Label htmlFor="template-hours">{t("template.form.flightHours")}</Label>
           <Input
             id="template-hours"
             type="number"
@@ -216,7 +211,7 @@ export function TemplateDialog({ open, onOpenChange, template, aircraftList, onS
             inputMode="decimal"
             value={estimatedHours}
             onChange={(e) => setEstimatedHours(e.target.value)}
-            placeholder="1,5"
+            placeholder={t("template.form.flightHoursPlaceholder")}
           />
         </div>
       </div>
@@ -224,11 +219,11 @@ export function TemplateDialog({ open, onOpenChange, template, aircraftList, onS
       <div className="space-y-2">
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="template-start">Heure de début</Label>
+            <Label htmlFor="template-start">{t("template.form.startTime")}</Label>
             <Input id="template-start" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="template-end">Heure de fin</Label>
+            <Label htmlFor="template-end">{t("template.form.endTime")}</Label>
             <Input
               id="template-end"
               type="time"
@@ -250,16 +245,16 @@ export function TemplateDialog({ open, onOpenChange, template, aircraftList, onS
         if (!next && loading) return
         onOpenChange(next)
       }}
-      title={template ? "Modifier le modèle" : "Nouveau modèle"}
-      description="Un modèle préremplit le formulaire de réservation pour vos vols habituels."
+      title={template ? t("template.form.editTitle") : t("template.new")}
+      description={t("template.intro")}
       onSubmit={handleSubmit}
-      submitLabel={template ? "Enregistrer" : "Créer le modèle"}
+      submitLabel={template ? t("common:actions.save") : t("template.form.submitCreate")}
       submitting={loading}
       steps={[
-        { title: "Vol", content: identityFields, validate: validateIdentity },
+        { title: t("template.form.stepFlight"), content: identityFields, validate: validateIdentity },
         {
-          title: "Créneau habituel",
-          description: "Facultatif : le jour et l'horaire proposés quand vous utilisez le modèle.",
+          title: t("template.form.stepSlot"),
+          description: t("template.form.stepSlotDescription"),
           content: slotFields,
           validate: validateSlot,
         },

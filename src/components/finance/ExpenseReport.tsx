@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useQuery } from "@apollo/client"
+import { useTranslation } from "react-i18next"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts"
 import { Calculator, Hash, Receipt, Tag } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -18,6 +19,7 @@ import {
   StatGrid,
   chartTooltipStyle,
   expenseCategoryLabel,
+  formatPercent,
   formatShare,
 } from "./finance-shared"
 
@@ -37,6 +39,7 @@ interface CategoryTotal {
 const PAGE_SIZE = 20
 
 export default function ExpensesReport({ period, date }: { period: string; date: Date | undefined }) {
+  const { t } = useTranslation("administration")
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
 
   const safeDate = date ?? new Date()
@@ -61,14 +64,15 @@ export default function ExpensesReport({ period, date }: { period: string; date:
   const expenses: ExpenseRow[] = [...(data?.expenseByPeriod ?? [])].sort(
     (a: ExpenseRow, b: ExpenseRow) => new Date(b.expense_date).getTime() - new Date(a.expense_date).getTime(),
   )
-  const periodLabel = `Du ${formatDate(startDate)} au ${formatDate(endDate)}`
+  const range = { from: formatDate(startDate), to: formatDate(endDate) }
+  const periodLabel = t("finance.period.range", range)
 
   if (expenses.length === 0) {
     return (
       <EmptyState
         icon={Receipt}
-        title="Aucune dépense sur cette période"
-        description={`${periodLabel}. Changez de période ou ajoutez une dépense.`}
+        title={t("finance.expenses.empty.title")}
+        description={t("finance.expenses.empty.description", range)}
       />
     )
   }
@@ -90,16 +94,21 @@ export default function ExpensesReport({ period, date }: { period: string; date:
   return (
     <div className="space-y-6">
       <StatGrid>
-        <StatCard label="Total des dépenses" value={formatMoney(totalExpenses)} icon={Receipt} tone="warning" />
-        <StatCard label="Nombre de dépenses" value={expenses.length} icon={Hash} tone="neutral" />
         <StatCard
-          label="Dépense moyenne"
+          label={t("finance.expenses.total")}
+          value={formatMoney(totalExpenses)}
+          icon={Receipt}
+          tone="warning"
+        />
+        <StatCard label={t("finance.expenses.count")} value={expenses.length} icon={Hash} tone="neutral" />
+        <StatCard
+          label={t("finance.expenses.average")}
           value={formatMoney(totalExpenses / expenses.length)}
           icon={Calculator}
           tone="info"
         />
         <StatCard
-          label="Premier poste"
+          label={t("finance.expenses.topCategory")}
           value={topCategory.name}
           hint={`${formatMoney(topCategory.value)} · ${formatShare(topCategory.value, totalExpenses)}`}
           icon={Tag}
@@ -109,7 +118,7 @@ export default function ExpensesReport({ period, date }: { period: string; date:
 
       <Card>
         <CardHeader>
-          <CardTitle>Répartition par catégorie</CardTitle>
+          <CardTitle>{t("finance.expenses.byCategory")}</CardTitle>
           <CardDescription>{periodLabel}</CardDescription>
         </CardHeader>
         <CardContent>
@@ -142,16 +151,16 @@ export default function ExpensesReport({ period, date }: { period: string; date:
               </ResponsiveContainer>
               <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
                 <span className="text-lg font-semibold tabular-nums">{formatMoney(totalExpenses)}</span>
-                <span className="text-xs text-muted-foreground">Total</span>
+                <span className="text-xs text-muted-foreground">{t("common:labels.total")}</span>
               </div>
             </div>
 
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Catégorie</TableHead>
-                  <TableHead className="text-right">Montant</TableHead>
-                  <TableHead className="text-right">Part</TableHead>
+                  <TableHead>{t("common:labels.category")}</TableHead>
+                  <TableHead className="text-right">{t("finance.labels.amount")}</TableHead>
+                  <TableHead className="text-right">{t("finance.expenses.share")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -178,11 +187,11 @@ export default function ExpensesReport({ period, date }: { period: string; date:
               </TableBody>
               <TableFooter>
                 <TableRow>
-                  <TableCell>Total</TableCell>
+                  <TableCell>{t("common:labels.total")}</TableCell>
                   <TableCell className="whitespace-nowrap text-right tabular-nums">
                     {formatMoney(totalExpenses)}
                   </TableCell>
-                  <TableCell className="text-right tabular-nums">100 %</TableCell>
+                  <TableCell className="text-right tabular-nums">{formatPercent(100)}</TableCell>
                 </TableRow>
               </TableFooter>
             </Table>
@@ -192,17 +201,17 @@ export default function ExpensesReport({ period, date }: { period: string; date:
 
       <Card>
         <CardHeader>
-          <CardTitle>Détail des dépenses</CardTitle>
-          <CardDescription>Les plus récentes en premier.</CardDescription>
+          <CardTitle>{t("finance.expenses.detail.title")}</CardTitle>
+          <CardDescription>{t("finance.expenses.detail.description")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Catégorie</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead className="text-right">Montant</TableHead>
+                <TableHead>{t("common:labels.date")}</TableHead>
+                <TableHead>{t("common:labels.category")}</TableHead>
+                <TableHead>{t("common:labels.description")}</TableHead>
+                <TableHead className="text-right">{t("finance.labels.amount")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -221,10 +230,10 @@ export default function ExpensesReport({ period, date }: { period: string; date:
           {expenses.length > visibleCount && (
             <div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-between">
               <p className="text-xs text-muted-foreground">
-                {visibleCount} dépenses affichées sur {expenses.length}
+                {t("finance.expenses.detail.shown", { shown: visibleCount, total: expenses.length })}
               </p>
               <Button variant="outline" size="sm" onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}>
-                Afficher les suivantes
+                {t("finance.expenses.detail.showMore")}
               </Button>
             </div>
           )}

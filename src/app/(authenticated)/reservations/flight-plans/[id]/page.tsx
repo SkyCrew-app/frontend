@@ -5,6 +5,7 @@ import { useParams } from "next/navigation"
 import { useQuery } from "@apollo/client"
 import dynamic from "next/dynamic"
 import Link from "next/link"
+import { useTranslation } from "react-i18next"
 import { ArrowLeft, FileSearch, Info, MapPinOff } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -81,20 +82,24 @@ function Fact({ label, value }: { label: string; value: React.ReactNode }) {
   )
 }
 
-const BackButton = () => (
-  <Button variant="outline" asChild>
-    <Link href="/reservations/flight-plans">
-      <ArrowLeft className="h-4 w-4" />
-      Mes plans de vol
-    </Link>
-  </Button>
-)
+const BackButton = () => {
+  const { t } = useTranslation("flights")
+  return (
+    <Button variant="outline" asChild>
+      <Link href="/reservations/flight-plans">
+        <ArrowLeft className="h-4 w-4" />
+        {t("plans.title")}
+      </Link>
+    </Button>
+  )
+}
 
 /* ------------------------------------------------------------------ */
 /*  Page                                                               */
 /* ------------------------------------------------------------------ */
 
 export default function FlightPlanDetails() {
+  const { t } = useTranslation("flights")
   const { id } = useParams()
   const flightId = Array.isArray(id) ? id[0] : (id as string)
   const [section, setSection] = useState("route")
@@ -179,7 +184,7 @@ export default function FlightPlanDetails() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <PageHeader className="mb-0" title="Plan de vol" actions={<BackButton />} />
+        <PageHeader className="mb-0" title={t("planDetail.title")} actions={<BackButton />} />
         <Skeleton className="h-44 w-full rounded-xl" />
         <Skeleton className="h-10 w-full max-w-md" />
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
@@ -193,9 +198,9 @@ export default function FlightPlanDetails() {
   if (error) {
     return (
       <div className="space-y-6">
-        <PageHeader className="mb-0" title="Plan de vol" actions={<BackButton />} />
+        <PageHeader className="mb-0" title={t("planDetail.title")} actions={<BackButton />} />
         <ErrorState
-          description="Le plan de vol n'a pas pu être chargé. Vérifiez votre connexion puis réessayez."
+          description={t("planDetail.loadError")}
           onRetry={() => refetch()}
         />
       </div>
@@ -205,11 +210,11 @@ export default function FlightPlanDetails() {
   if (!fp) {
     return (
       <div className="space-y-6">
-        <PageHeader className="mb-0" title="Plan de vol" />
+        <PageHeader className="mb-0" title={t("planDetail.title")} />
         <EmptyState
           icon={FileSearch}
-          title="Plan de vol introuvable"
-          description="Ce plan de vol n'existe pas ou vous n'y avez pas accès."
+          title={t("planDetail.notFound.title")}
+          description={t("planDetail.notFound.description")}
           action={<BackButton />}
         />
       </div>
@@ -251,15 +256,15 @@ export default function FlightPlanDetails() {
   const hasNavigation = waypoints.length >= 2
 
   const summaryFacts = [
-    { label: "Date", value: dateStr },
-    { label: "Avion", value: aircraft ? `${aircraft.registration_number}${aircraft.model ? ` · ${aircraft.model}` : ""}` : "—" },
+    { label: t("common:labels.date"), value: dateStr },
+    { label: t("common:labels.aircraft"), value: aircraft ? `${aircraft.registration_number}${aircraft.model ? ` · ${aircraft.model}` : ""}` : "—" },
     {
-      label: "Passagers",
+      label: t("plans.labels.passengers"),
       value: fp.number_of_passengers != null ? fp.number_of_passengers : "—",
     },
     fp.estimated_fuel_liters
-      ? { label: "Carburant estimé", value: `${formatDecimal(fp.estimated_fuel_liters, 0)} L` }
-      : { label: "Type de vol", value: typeLabel },
+      ? { label: t("plans.labels.estimatedFuel"), value: `${formatDecimal(fp.estimated_fuel_liters, 0)} L` }
+      : { label: t("plans.labels.flightType"), value: typeLabel },
   ]
 
   /* ================================================================== */
@@ -275,9 +280,11 @@ export default function FlightPlanDetails() {
             <Badge variant={state.variant}>{state.label}</Badge>
           </span>
         }
-        description={[`Plan de vol ${typeLabel}`, fp.reservation?.id ? `réservation n° ${fp.reservation.id}` : null]
-          .filter(Boolean)
-          .join(" · ")}
+        description={
+          fp.reservation?.id
+            ? t("planDetail.descriptionWithReservation", { type: typeLabel, id: fp.reservation.id })
+            : t("planDetail.description", { type: typeLabel })
+        }
         actions={
           <>
             <BackButton />
@@ -306,7 +313,7 @@ export default function FlightPlanDetails() {
             />
             {!fp.closed_at && (
               <Button asChild>
-                <Link href={`/close_flight/${fp.id}`}>Clôturer le vol</Link>
+                <Link href={`/close_flight/${fp.id}`}>{t("plans.actions.closeFlight")}</Link>
               </Button>
             )}
           </>
@@ -334,19 +341,17 @@ export default function FlightPlanDetails() {
       {!fp.closed_at && (
         <Alert className="no-print">
           <Info className="h-4 w-4" />
-          <AlertTitle>Avant le départ</AlertTitle>
-          <AlertDescription>
-            Vérifiez les NOTAM et la météo, et assurez-vous d&apos;avoir à bord tous les documents nécessaires au vol.
-          </AlertDescription>
+          <AlertTitle>{t("planDetail.beforeDeparture.title")}</AlertTitle>
+          <AlertDescription>{t("planDetail.beforeDeparture.description")}</AlertDescription>
         </Alert>
       )}
 
       {/* Panels stay mounted so the map is not rebuilt and printing shows every section. */}
       <Tabs value={section} onValueChange={setSection} className="space-y-6">
         <TabsList className="tabs-list">
-          <TabsTrigger value="route">Route et aérodromes</TabsTrigger>
-          <TabsTrigger value="navigation">Navigation</TabsTrigger>
-          {showFuelTab && <TabsTrigger value="fuel">Carburant et vent</TabsTrigger>}
+          <TabsTrigger value="route">{t("planDetail.tabs.route")}</TabsTrigger>
+          <TabsTrigger value="navigation">{t("planDetail.tabs.navigation")}</TabsTrigger>
+          {showFuelTab && <TabsTrigger value="fuel">{t("planDetail.tabs.fuel")}</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="route" forceMount className="mt-0 data-[state=inactive]:hidden">
@@ -355,38 +360,38 @@ export default function FlightPlanDetails() {
               <Tabs value={routePanel} onValueChange={handleRoutePanelChange}>
                 <TabsList className="tabs-list w-full">
                   <TabsTrigger value="overview" className="flex-1">
-                    Vol
+                    {t("planDetail.routeTabs.overview")}
                   </TabsTrigger>
                   <TabsTrigger value="departure" className="flex-1">
-                    Départ
+                    {t("plans.labels.departure")}
                   </TabsTrigger>
                   <TabsTrigger value="arrival" className="flex-1">
-                    Arrivée
+                    {t("plans.labels.arrival")}
                   </TabsTrigger>
                   <TabsTrigger value="waypoints" className="flex-1">
-                    Points
+                    {t("planDetail.routeTabs.waypoints")}
                   </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="overview" className="mt-4 space-y-4">
                   <Card>
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-base">Détails du vol</CardTitle>
+                      <CardTitle className="text-base">{t("planDetail.flightDetails.title")}</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <dl className="grid grid-cols-2 gap-4">
-                        <Fact label="Type de vol" value={typeLabel} />
-                        <Fact label="Passagers" value={fp.number_of_passengers ?? "—"} />
+                        <Fact label={t("plans.labels.flightType")} value={typeLabel} />
+                        <Fact label={t("plans.labels.passengers")} value={fp.number_of_passengers ?? "—"} />
                         <Fact
-                          label="Distance"
+                          label={t("common:labels.distance")}
                           value={fp.distance_km ? `${formatDecimal(fp.distance_km)} km` : "—"}
                         />
-                        <Fact label="Durée estimée" value={duration ?? "—"} />
+                        <Fact label={t("planDetail.flightDetails.estimatedDuration")} value={duration ?? "—"} />
                         {fp.performance_profile && (
-                          <Fact label="Profil de performance" value={fp.performance_profile} />
+                          <Fact label={t("planDetail.flightDetails.performanceProfile")} value={fp.performance_profile} />
                         )}
                         {fp.estimated_fuel_liters && (
-                          <Fact label="Carburant estimé" value={`${formatDecimal(fp.estimated_fuel_liters)} L`} />
+                          <Fact label={t("plans.labels.estimatedFuel")} value={`${formatDecimal(fp.estimated_fuel_liters)} L`} />
                         )}
                       </dl>
                     </CardContent>
@@ -394,25 +399,25 @@ export default function FlightPlanDetails() {
 
                   <Card>
                     <CardHeader className="pb-3">
-                      <CardTitle className="text-base">Avion et pilote</CardTitle>
-                      {!aircraft && <CardDescription>Aucun avion n&apos;est associé à ce plan de vol.</CardDescription>}
+                      <CardTitle className="text-base">{t("planDetail.aircraftAndPilot.title")}</CardTitle>
+                      {!aircraft && <CardDescription>{t("planDetail.aircraftAndPilot.noAircraft")}</CardDescription>}
                     </CardHeader>
                     <CardContent>
                       <dl className="grid grid-cols-2 gap-4">
                         {aircraft && (
                           <>
-                            <Fact label="Immatriculation" value={aircraft.registration_number} />
-                            <Fact label="Modèle" value={aircraft.model || "—"} />
+                            <Fact label={t("planDetail.aircraftAndPilot.registration")} value={aircraft.registration_number} />
+                            <Fact label={t("planDetail.aircraftAndPilot.model")} value={aircraft.model || "—"} />
                             {aircraft.cruiseSpeed && (
-                              <Fact label="Vitesse de croisière" value={`${aircraft.cruiseSpeed} km/h`} />
+                              <Fact label={t("plans.labels.cruiseSpeed")} value={`${aircraft.cruiseSpeed} km/h`} />
                             )}
                             {aircraft.consumption && (
-                              <Fact label="Consommation" value={`${aircraft.consumption} L/h`} />
+                              <Fact label={t("planDetail.aircraftAndPilot.consumption")} value={`${aircraft.consumption} L/h`} />
                             )}
-                            {aircraft.maxAltitude && <Fact label="Plafond" value={`${aircraft.maxAltitude} ft`} />}
+                            {aircraft.maxAltitude && <Fact label={t("planDetail.aircraftAndPilot.ceiling")} value={`${aircraft.maxAltitude} ft`} />}
                           </>
                         )}
-                        <Fact label="Commandant de bord" value={pilotName || "—"} />
+                        <Fact label={t("planDetail.aircraftAndPilot.pilotInCommand")} value={pilotName || "—"} />
                       </dl>
                     </CardContent>
                   </Card>
@@ -420,7 +425,7 @@ export default function FlightPlanDetails() {
                   {fp.weather_conditions && (
                     <Card>
                       <CardHeader className="pb-3">
-                        <CardTitle className="text-base">Météo relevée (METAR)</CardTitle>
+                        <CardTitle className="text-base">{t("planDetail.weather.title")}</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <p className="break-words rounded-md bg-muted p-3 font-mono text-xs leading-relaxed">
@@ -468,8 +473,8 @@ export default function FlightPlanDetails() {
                   <EmptyState
                     className="h-full rounded-none border-0"
                     icon={MapPinOff}
-                    title="Carte indisponible"
-                    description="Les coordonnées des aérodromes ne sont pas enregistrées pour ce plan de vol."
+                    title={t("planDetail.map.unavailableTitle")}
+                    description={t("planDetail.map.unavailableDescription")}
                   />
                 )}
               </div>
@@ -495,8 +500,8 @@ export default function FlightPlanDetails() {
           ) : (
             <EmptyState
               icon={FileSearch}
-              title="Pas de journal de navigation"
-              description="Le profil vertical et le journal de navigation sont calculés pour les plans de vol générés automatiquement à partir d'une réservation."
+              title={t("planDetail.navigation.emptyTitle")}
+              description={t("planDetail.navigation.emptyDescription")}
             />
           )}
         </TabsContent>

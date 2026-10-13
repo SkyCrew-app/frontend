@@ -3,6 +3,7 @@ import { useQuery } from '@apollo/client';
 import { toast } from '@/components/hooks/use-toast';
 import { GET_USER_BY_EMAIL } from '@/graphql/user';
 import { GET_ME } from '@/graphql/user';
+import i18n from '@/lib/i18n';
 
 export function useCurrentUser() {
   const { data, error } = useQuery(GET_ME);
@@ -11,8 +12,8 @@ export function useCurrentUser() {
     if (error) {
       toast({
         variant: 'destructive',
-        title: 'Erreur lors de la récupération des données',
-        description: "Une erreur est survenue lors de la récupération des informations de l'utilisateur.",
+        title: i18n.t('auth:session.loadFailed.title'),
+        description: i18n.t('auth:session.loadFailed.description'),
       });
     }
   }, [error]);
@@ -30,8 +31,8 @@ export function useUserData(email: string | null) {
     if (error) {
       toast({
         variant: 'destructive',
-        title: 'Erreur lors de la récupération des données',
-        description: "Une erreur est survenue lors de la récupération des informations de l'utilisateur.",
+        title: i18n.t('auth:session.loadFailed.title'),
+        description: i18n.t('auth:session.loadFailed.description'),
       });
     }
   }, [error]);

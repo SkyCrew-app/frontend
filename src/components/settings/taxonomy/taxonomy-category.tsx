@@ -1,6 +1,7 @@
 "use client"
 
 import { Plus } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { ItemList } from "../item-list"
 import { SettingsSection } from "../settings-field"
@@ -18,13 +19,14 @@ interface TaxonomyCategoryProps {
 
 /** One choice list: its values, and the buttons to add, rename and delete them. */
 export function TaxonomyCategory({ title, addLabel, emptyText, items, onAdd, onEdit, onDelete }: TaxonomyCategoryProps) {
+  const { t } = useTranslation("administration")
   return (
     <SettingsSection
       title={title}
       action={
         <Button type="button" variant="outline" size="sm" onClick={onAdd} aria-label={addLabel}>
           <Plus className="h-4 w-4" />
-          Ajouter
+          {t("common:actions.add")}
         </Button>
       }
     >

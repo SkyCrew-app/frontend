@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslation } from "react-i18next"
 import { Link2, MoreHorizontal, Printer, Share2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -21,6 +22,7 @@ interface FlightPlanActionsProps {
 
 /** Secondary actions of a flight plan page: print the page, share or copy its link. */
 export function FlightPlanActions({ flightPlanId, flightDetails }: FlightPlanActionsProps) {
+  const { t } = useTranslation("flights")
   const { toast } = useToast()
 
   const canShare = typeof navigator !== "undefined" && typeof navigator.share === "function"
@@ -28,23 +30,30 @@ export function FlightPlanActions({ flightPlanId, flightDetails }: FlightPlanAct
   const copyLink = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href)
-      toast({ title: "Lien copié", description: "Le lien du plan de vol est dans le presse-papiers." })
+      toast({
+        title: t("actionPlans.toast.copied.title"),
+        description: t("actionPlans.toast.copied.description"),
+      })
     } catch {
       toast({
         variant: "destructive",
-        title: "Copie impossible",
-        description: "Le lien n'a pas pu être copié. Copiez l'adresse de la page depuis votre navigateur.",
+        title: t("actionPlans.toast.copyFailed.title"),
+        description: t("actionPlans.toast.copyFailed.description"),
       })
     }
   }
 
   const share = async () => {
     const text = flightDetails
-      ? `Plan de vol ${flightDetails.departure} → ${flightDetails.arrival} (${flightDetails.date})`
-      : `Plan de vol n° ${flightPlanId}`
+      ? t("actionPlans.shareText", {
+          departure: flightDetails.departure,
+          arrival: flightDetails.arrival,
+          date: flightDetails.date,
+        })
+      : t("actionPlans.shareTextFallback", { id: flightPlanId })
 
     try {
-      await navigator.share({ title: "Plan de vol Skycrew", text, url: window.location.href })
+      await navigator.share({ title: t("actionPlans.shareTitle"), text, url: window.location.href })
     } catch (error) {
       // Closing the share sheet is not an error; anything else falls back to the clipboard.
       if (error instanceof DOMException && error.name === "AbortError") return
@@ -55,7 +64,7 @@ export function FlightPlanActions({ flightPlanId, flightDetails }: FlightPlanAct
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon" aria-label="Autres actions" title="Autres actions">
+        <Button variant="outline" size="icon" aria-label={t("actionPlans.more")} title={t("actionPlans.more")}>
           <MoreHorizontal className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
@@ -63,17 +72,17 @@ export function FlightPlanActions({ flightPlanId, flightDetails }: FlightPlanAct
         {/* Wait for the menu to close so it is not part of the printed page. */}
         <DropdownMenuItem onSelect={() => setTimeout(() => window.print(), 150)}>
           <Printer className="h-4 w-4" />
-          Imprimer la page
+          {t("actionPlans.printPage")}
         </DropdownMenuItem>
         {canShare && (
           <DropdownMenuItem onSelect={() => void share()}>
             <Share2 className="h-4 w-4" />
-            Partager
+            {t("actionPlans.share")}
           </DropdownMenuItem>
         )}
         <DropdownMenuItem onSelect={() => void copyLink()}>
           <Link2 className="h-4 w-4" />
-          Copier le lien
+          {t("actionPlans.copyLink")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

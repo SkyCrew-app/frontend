@@ -4,6 +4,7 @@ import { ApolloError, useMutation, useQuery } from "@apollo/client"
 import { useState, useEffect, useMemo, useRef } from "react"
 import { format, addHours, eachHourOfInterval, isSameDay } from "date-fns"
 import { fr } from "date-fns/locale"
+import { useTranslation } from "react-i18next"
 import { CalendarOff, Clock, Plane, Plus } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -38,6 +39,7 @@ import {
 import { LEGEND_STATUSES, reservationDotClass } from "@/components/reservation/status-style"
 import { reservationStatus } from "@/lib/reservation-status"
 import { formatDate, formatTime } from "@/lib/format"
+import i18n, { dateFnsLocale } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 import { useMediaQuery } from "@/hooks/use-media-query"
 
@@ -66,12 +68,12 @@ const normalizeDayName = (day: string) =>
     .replace(/[̀-ͯ]/g, "")
     .toLowerCase()
 
-const longDate = (date: Date) => format(date, "EEEE d MMMM yyyy", { locale: fr })
+const longDate = (date: Date) => format(date, "EEEE d MMMM yyyy", { locale: dateFnsLocale() })
 
 // Business refusals of the API (aircraft already booked, licence, balance) are written for the pilot.
 const creationErrorMessage = (error: unknown) => {
   const apiMessage = error instanceof ApolloError ? error.graphQLErrors[0]?.message : undefined
-  return apiMessage || "La réservation n'a pas pu être créée. Vérifiez votre connexion puis réessayez."
+  return apiMessage || i18n.t("reservations:toast.refused.description")
 }
 
 // A reservation template sends its values in the query string ("Utiliser" in "Mes réservations").
@@ -90,6 +92,7 @@ const readPrefillFromUrl = (): NewReservationPrefill | null => {
 }
 
 export default function ReservationCalendar() {
+  const { t } = useTranslation("reservations")
   const [currentDate, setCurrentDate] = useState<Date>(new Date())
   const [drag, setDrag] = useState<DragSelection | null>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -170,6 +173,7 @@ export default function ReservationCalendar() {
   const aircrafts: Aircraft[] = aircraftData?.getAircrafts ?? []
   const dayReservations: Reservation[] = reservationData?.filteredReservations ?? []
 
+  // Closure days come from the API as French day names: compared in French whatever the language.
   const isClosedDay = (date: Date) =>
     disabledDays.map(normalizeDayName).includes(normalizeDayName(format(date, "EEEE", { locale: fr })))
   const dayClosed = isClosedDay(currentDate)
@@ -230,8 +234,8 @@ export default function ReservationCalendar() {
       setDrag(null)
       toast({
         variant: "destructive",
-        title: "Créneau indisponible",
-        description: "La sélection chevauche une réservation existante. Choisissez uniquement des créneaux libres.",
+        title: t("toast.slotUnavailable.title"),
+        description: t("toast.slotUnavailable.description"),
       })
       return
     }
@@ -281,8 +285,8 @@ export default function ReservationCalendar() {
     if (!userId) {
       toast({
         variant: "destructive",
-        title: "Réservation impossible",
-        description: "Votre compte n'est pas encore chargé. Réessayez dans un instant.",
+        title: t("toast.accountNotLoaded.title"),
+        description: t("toast.accountNotLoaded.description"),
       })
       return false
     }
@@ -290,8 +294,8 @@ export default function ReservationCalendar() {
     if (!values.flightCategory) {
       toast({
         variant: "destructive",
-        title: "Catégorie de vol manquante",
-        description: "Veuillez sélectionner une catégorie de vol.",
+        title: t("toast.categoryMissing.title"),
+        description: t("toast.categoryMissing.description"),
       })
       return false
     }
@@ -319,14 +323,19 @@ export default function ReservationCalendar() {
 
       const registration = aircrafts.find((a) => String(a.id) === String(values.aircraftId))?.registration_number
       toast({
-        title: "Réservation créée",
-        description: `${registration ?? "Avion"} · ${formatDate(values.startTime)} de ${formatTime(values.startTime)} à ${formatTime(values.endTime)}`,
+        title: t("toast.created.title"),
+        description: t("toast.created.description", {
+          aircraft: registration ?? t("common:labels.aircraft"),
+          date: formatDate(values.startTime),
+          start: formatTime(values.startTime),
+          end: formatTime(values.endTime),
+        }),
       })
       return true
     } catch (error) {
       toast({
         variant: "destructive",
-        title: "Réservation refusée",
+        title: t("toast.refused.title"),
         description: creationErrorMessage(error),
       })
       return false
@@ -380,14 +389,14 @@ export default function ReservationCalendar() {
 
       setIsEditDialogOpen(false)
       toast({
-        title: "Réservation mise à jour",
-        description: `La réservation de ${selectedReservation.aircraft.registration_number} a été modifiée.`,
+        title: t("toast.updated.title"),
+        description: t("toast.updated.description", { aircraft: selectedReservation.aircraft.registration_number }),
       })
     } catch {
       toast({
         variant: "destructive",
-        title: "Modification impossible",
-        description: "La réservation n'a pas pu être modifiée. Réessayez dans un instant.",
+        title: t("toast.updateFailed.title"),
+        description: t("toast.updateFailed.description"),
       })
     } finally {
       setIsUpdating(false)
@@ -407,14 +416,14 @@ export default function ReservationCalendar() {
 
       setIsReservationDialogOpen(false)
       toast({
-        title: "Réservation supprimée",
-        description: `La réservation de ${selectedReservation.aircraft.registration_number} a été supprimée.`,
+        title: t("toast.deleted.title"),
+        description: t("toast.deleted.description", { aircraft: selectedReservation.aircraft.registration_number }),
       })
     } catch {
       toast({
         variant: "destructive",
-        title: "Suppression impossible",
-        description: "La réservation n'a pas pu être supprimée. Réessayez dans un instant.",
+        title: t("toast.deleteFailed.title"),
+        description: t("toast.deleteFailed.description"),
       })
     }
   }
@@ -456,7 +465,7 @@ export default function ReservationCalendar() {
       cells.push(
         <FreeCell
           key={slotIndex}
-          label={`Réserver ${aircraft.registration_number} à ${format(slot, "HH:mm")}`}
+          label={t("calendar.freeSlot", { aircraft: aircraft.registration_number, time: format(slot, "HH:mm") })}
           isSelected={isSelected}
           isCurrentHour={slotIndex === currentSlotIndex}
           onMouseDown={() => handleMouseDown(aircraft.id, slotIndex)}
@@ -474,7 +483,7 @@ export default function ReservationCalendar() {
           {aircraft.model && <span className="block text-xs text-muted-foreground">{aircraft.model}</span>}
           {aircraft.availability_status === "UNAVAILABLE" && (
             <Badge variant="neutral" className="mt-1">
-              Indisponible
+              {t("calendar.aircraftUnavailable")}
             </Badge>
           )}
         </TableCell>
@@ -498,7 +507,7 @@ export default function ReservationCalendar() {
     if (errorReservations) {
       return (
         <ErrorState
-          description="Les réservations de cette journée n'ont pas pu être chargées. Vérifiez votre connexion puis réessayez."
+          description={t("calendar.loadError")}
           onRetry={() => refetchReservations()}
         />
       )
@@ -508,9 +517,9 @@ export default function ReservationCalendar() {
       return (
         <Alert className="border-warning/30 bg-warning/10 text-warning [&>svg]:text-warning">
           <CalendarOff className="h-4 w-4" />
-          <AlertTitle>Aéroclub fermé</AlertTitle>
+          <AlertTitle>{t("calendar.closed.title")}</AlertTitle>
           <AlertDescription>
-            Votre aéroclub est fermé ce jour ({format(currentDate, "EEEE", { locale: fr })})
+            {t("calendar.closed.description", { day: format(currentDate, "EEEE", { locale: dateFnsLocale() }) })}
           </AlertDescription>
         </Alert>
       )
@@ -520,8 +529,8 @@ export default function ReservationCalendar() {
       return (
         <EmptyState
           icon={Plane}
-          title="Aucun avion à réserver"
-          description="Les avions du club apparaîtront ici dès qu'ils seront ajoutés à la flotte."
+          title={t("calendar.noAircraft.title")}
+          description={t("calendar.noAircraft.description")}
         />
       )
     }
@@ -544,8 +553,8 @@ export default function ReservationCalendar() {
       return (
         <EmptyState
           icon={Clock}
-          title="Horaires de réservation non définis"
-          description="Un administrateur doit renseigner les heures d'ouverture du club dans les paramètres."
+          title={t("calendar.noHours.title")}
+          description={t("calendar.noHours.description")}
         />
       )
     }
@@ -565,7 +574,7 @@ export default function ReservationCalendar() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="sticky left-0 z-20 min-w-[120px] border-r bg-muted">Avion</TableHead>
+                <TableHead className="sticky left-0 z-20 min-w-[120px] border-r bg-muted">{t("common:labels.aircraft")}</TableHead>
                 {slots.map((slot, index) => (
                   <TableHead
                     key={index}
@@ -586,7 +595,7 @@ export default function ReservationCalendar() {
         </div>
 
         <div className="flex flex-col gap-2 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <ul className="flex flex-wrap items-center gap-x-4 gap-y-1" aria-label="Légende">
+          <ul className="flex flex-wrap items-center gap-x-4 gap-y-1" aria-label={t("calendar.legend.label")}>
             {LEGEND_STATUSES.map((status) => (
               <li key={status} className="flex items-center gap-2">
                 <span className={cn("h-2.5 w-2.5 rounded-sm", reservationDotClass(status))} aria-hidden="true" />
@@ -596,11 +605,11 @@ export default function ReservationCalendar() {
             {currentSlotIndex >= 0 && (
               <li className="flex items-center gap-2">
                 <span className="h-2.5 w-2.5 rounded-sm bg-primary/30" aria-hidden="true" />
-                Heure en cours
+                {t("calendar.legend.currentHour")}
               </li>
             )}
           </ul>
-          <p>Cliquez sur un créneau libre, ou glissez sur plusieurs, pour réserver.</p>
+          <p>{t("calendar.hint")}</p>
         </div>
       </div>
     )
@@ -614,8 +623,8 @@ export default function ReservationCalendar() {
     <div className="space-y-6">
       <PageHeader
         className="mb-0"
-        title="Calendrier des réservations"
-        description="Disponibilité des avions du club, jour par jour."
+        title={t("calendar.title")}
+        description={t("calendar.description")}
         actions={
           <Button
             onClick={() => {
@@ -625,7 +634,7 @@ export default function ReservationCalendar() {
             disabled={aircrafts.length === 0}
           >
             <Plus className="h-4 w-4" />
-            Nouvelle réservation
+            {t("shared.newReservation")}
           </Button>
         }
       />
@@ -641,8 +650,8 @@ export default function ReservationCalendar() {
           setIsCreateDialogOpen(open)
           if (!open) resetSlotForm()
         }}
-        title="Créer une réservation"
-        description="Vérifiez le créneau choisi, puis précisez votre vol."
+        title={t("form.createTitle")}
+        description={t("form.createDescription")}
         summary={
           slotSelection
             ? {
@@ -696,8 +705,8 @@ export default function ReservationCalendar() {
         <ReservationForm
           open={isEditDialogOpen}
           onOpenChange={setIsEditDialogOpen}
-          title="Modifier la réservation"
-          description="L'avion et l'horaire ne sont pas modifiables."
+          title={t("form.editTitle")}
+          description={t("form.editDescription")}
           isEdit
           summary={{
             aircraft: selectedReservation.aircraft.registration_number,

@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo } from "react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 /* ------------------------------------------------------------------ */
@@ -83,6 +84,7 @@ const pal = {
 /* ------------------------------------------------------------------ */
 
 export function VerticalProfile({ waypoints, maxAltitude, className = "" }: VerticalProfileProps) {
+  const { t } = useTranslation("flights")
   const profileData = useMemo(() => {
     if (!waypoints || waypoints.length < 2) return null
 
@@ -184,9 +186,12 @@ export function VerticalProfile({ waypoints, maxAltitude, className = "" }: Vert
   return (
     <Card className={className}>
       <CardHeader className="pb-3">
-        <CardTitle className="text-base">Profil vertical</CardTitle>
+        <CardTitle className="text-base">{t("verticalProfile.title")}</CardTitle>
         <CardDescription>
-          {maxDist.toFixed(0)} NM · altitude maximale {formatAlt(Math.max(...points.map((p) => p.alt)))}
+          {t("verticalProfile.description", {
+            distance: maxDist.toFixed(0),
+            altitude: formatAlt(Math.max(...points.map((p) => p.alt))),
+          })}
         </CardDescription>
       </CardHeader>
 
@@ -257,7 +262,7 @@ export function VerticalProfile({ waypoints, maxAltitude, className = "" }: Vert
               fontSize="9"
               fontFamily="monospace"
             >
-              Altitude (ft)
+              {t("verticalProfile.axis.altitude")}
             </text>
             <text
               x={padding.left + chartW / 2}
@@ -267,7 +272,7 @@ export function VerticalProfile({ waypoints, maxAltitude, className = "" }: Vert
               fontSize="9"
               fontFamily="monospace"
             >
-              Distance (NM)
+              {t("verticalProfile.axis.distance")}
             </text>
 
             {/* Fill under curve */}
@@ -374,13 +379,13 @@ export function VerticalProfile({ waypoints, maxAltitude, className = "" }: Vert
         {/* Phase legend */}
         <div className="mt-3 flex flex-wrap items-center justify-center gap-x-6 gap-y-1 text-xs text-muted-foreground">
           <span className="flex items-center gap-2">
-            <span className="w-4 h-1 rounded bg-success inline-block"></span> Montée
+            <span className="w-4 h-1 rounded bg-success inline-block"></span> {t("verticalProfile.legend.climb")}
           </span>
           <span className="flex items-center gap-2">
-            <span className="w-4 h-1 rounded bg-primary inline-block"></span> Croisière
+            <span className="w-4 h-1 rounded bg-primary inline-block"></span> {t("verticalProfile.legend.cruise")}
           </span>
           <span className="flex items-center gap-2">
-            <span className="w-4 h-1 rounded bg-warning inline-block"></span> Descente
+            <span className="w-4 h-1 rounded bg-warning inline-block"></span> {t("verticalProfile.legend.descent")}
           </span>
         </div>
       </CardContent>

@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo } from "react"
+import { useTranslation } from "react-i18next"
 import Link from "next/link"
 import { useParams } from "next/navigation"
 import { useQuery } from "@apollo/client"
@@ -42,6 +43,7 @@ function CourseSkeleton() {
 }
 
 export default function CourseDetailPage() {
+  const { t } = useTranslation("instruction")
   const params = useParams()
   const courseId = params.courseId as string
   const numericCourseId = Number.parseFloat(courseId)
@@ -91,7 +93,11 @@ export default function CourseDetailPage() {
   const completionPending = userId === null || completionLoading
   const resumeLessonId = nextLessonId(course, completedLessonIds)
   const resumeLabel =
-    completedCount === 0 ? "Commencer le cours" : completedCount >= totalLessons ? "Revoir le cours" : "Continuer"
+    completedCount === 0
+      ? t("eLearning.course.resumeStart")
+      : completedCount >= totalLessons
+        ? t("eLearning.course.resumeReview")
+        : t("common:actions.continue")
   const evaluationCount = (course?.modules ?? []).reduce((count, module) => count + (module.evaluations?.length ?? 0), 0)
 
   const resumeButton =
@@ -114,12 +120,12 @@ export default function CourseDetailPage() {
         <Button variant="ghost" size="sm" asChild className="-ml-3 mb-2 text-muted-foreground">
           <Link href={learningRoutes.eLearning}>
             <ArrowLeft className="h-4 w-4" />
-            E-learning
+            {t("eLearning.title")}
           </Link>
         </Button>
         <PageHeader
           className="mb-0"
-          title={course?.title ?? "Cours en ligne"}
+          title={course?.title ?? t("eLearning.course.titleFallback")}
           description={course?.description || undefined}
           actions={resumeButton}
         />
@@ -129,11 +135,11 @@ export default function CourseDetailPage() {
         <CourseSkeleton />
       ) : !course ? (
         <ErrorState
-          title="Cours introuvable"
+          title={t("eLearning.course.notFound.title")}
           description={
             error
-              ? "Ce cours n'a pas pu être chargé. Vérifiez votre connexion puis réessayez."
-              : "Ce cours n'existe pas ou n'est plus publié."
+              ? t("eLearning.course.notFound.error")
+              : t("eLearning.course.notFound.missing")
           }
           onRetry={() => refetch()}
         />
@@ -141,11 +147,15 @@ export default function CourseDetailPage() {
         <>
           <div className="flex flex-wrap items-center gap-2">
             {course.category && <Badge variant="neutral">{course.category}</Badge>}
-            {course.required_license && <Badge variant="outline">Licence requise : {course.required_license}</Badge>}
+            {course.required_license && <Badge variant="outline">
+                {t("eLearning.course.requiredLicence", { licence: course.required_license })}
+              </Badge>}
             <span className="text-sm text-muted-foreground">
-              {course.modules.length} module{course.modules.length > 1 ? "s" : ""} · {totalLessons} leçon
-              {totalLessons > 1 ? "s" : ""}
-              {evaluationCount > 0 && ` · ${evaluationCount} évaluation${evaluationCount > 1 ? "s" : ""}`}
+              {[
+                t("eLearning.course.modulesCount", { count: course.modules.length }),
+                t("eLearning.course.lessonsCount", { count: totalLessons }),
+                ...(evaluationCount > 0 ? [t("eLearning.course.evaluationsCount", { count: evaluationCount })] : []),
+              ].join(" · ")}
             </span>
           </div>
 
@@ -153,34 +163,37 @@ export default function CourseDetailPage() {
             <Card>
               <CardContent className="space-y-3 p-5">
                 <div className="flex items-baseline justify-between gap-3">
-                  <p className="text-sm font-medium">Votre progression</p>
+                  <p className="text-sm font-medium">{t("eLearning.course.progressTitle")}</p>
                   {completionPending ? (
                     <Skeleton className="h-4 w-32" />
                   ) : !progressKnown ? (
-                    <p className="text-sm text-muted-foreground">Indisponible pour le moment</p>
+                    <p className="text-sm text-muted-foreground">{t("eLearning.course.progressUnavailable")}</p>
                   ) : (
                     <p className="text-sm tabular-nums text-muted-foreground">
-                      {!completionUnavailable && `${completedCount} sur ${totalLessons} leçons terminées · `}
-                      <span className="font-medium text-foreground">{progressPercent} %</span>
+                      {!completionUnavailable &&
+                        `${t("eLearning.course.lessonsDone", { done: completedCount, total: totalLessons })} · `}
+                      <span className="font-medium text-foreground">
+                        {t("shared.percent", { value: progressPercent })}
+                      </span>
                     </p>
                   )}
                 </div>
                 <Progress
                   value={completionPending || !progressKnown ? 0 : progressPercent}
                   className="h-2"
-                  aria-label="Progression du cours"
+                  aria-label={t("eLearning.course.progressAria")}
                 />
               </CardContent>
             </Card>
           )}
 
           <section className="space-y-3">
-            <h2 className="text-lg font-semibold">Programme</h2>
+            <h2 className="text-lg font-semibold">{t("eLearning.course.outlineTitle")}</h2>
             {course.modules.length === 0 ? (
               <EmptyState
                 icon={BookOpen}
-                title="Ce cours n'a pas encore de contenu"
-                description="Les modules et les leçons apparaîtront ici dès leur publication."
+                title={t("eLearning.course.emptyTitle")}
+                description={t("eLearning.course.emptyDescription")}
               />
             ) : (
               <CourseOutline

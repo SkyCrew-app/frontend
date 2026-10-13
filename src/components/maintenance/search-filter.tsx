@@ -1,6 +1,7 @@
 "use client"
 
 import type { DateRange } from "react-day-picker"
+import { useTranslation } from "react-i18next"
 import { Search, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -50,6 +51,7 @@ export function SearchFilter({
   hasFilters,
   onReset,
 }: SearchFilterProps) {
+  const { t } = useTranslation("fleet")
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
       <div className="relative w-full sm:max-w-xs">
@@ -58,20 +60,20 @@ export function SearchFilter({
           aria-hidden="true"
         />
         <Input
-          placeholder="Aéronef ou description"
+          placeholder={t("maintenance.filters.searchPlaceholder")}
           value={searchTerm}
           onChange={(event) => onSearchChange(event.target.value)}
           className="pl-8"
-          aria-label="Rechercher des maintenances"
+          aria-label={t("maintenance.filters.searchLabel")}
         />
       </div>
 
       <Select value={filterStatus} onValueChange={onFilterStatusChange}>
-        <SelectTrigger className="w-full sm:w-[170px]" aria-label="Filtrer par statut">
+        <SelectTrigger className="w-full sm:w-[170px]" aria-label={t("maintenance.filters.byStatus")}>
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">Tous les statuts</SelectItem>
+          <SelectItem value="all">{t("maintenance.filters.allStatuses")}</SelectItem>
           {MAINTENANCE_STATUS_VALUES.map((status) => (
             <SelectItem key={status} value={status}>
               {maintenanceStatus(status).label}
@@ -81,11 +83,11 @@ export function SearchFilter({
       </Select>
 
       <Select value={filterType} onValueChange={onFilterTypeChange}>
-        <SelectTrigger className="w-full sm:w-[200px]" aria-label="Filtrer par type">
+        <SelectTrigger className="w-full sm:w-[200px]" aria-label={t("maintenance.filters.byType")}>
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">Tous les types</SelectItem>
+          <SelectItem value="all">{t("maintenance.filters.allTypes")}</SelectItem>
           {MAINTENANCE_TYPE_VALUES.map((type) => (
             <SelectItem key={type} value={type}>
               {maintenanceTypeLabel(type)}
@@ -96,11 +98,11 @@ export function SearchFilter({
 
       {technicians.length > 0 && (
         <Select value={filterTechnician} onValueChange={onFilterTechnicianChange}>
-          <SelectTrigger className="w-full sm:w-[200px]" aria-label="Filtrer par technicien">
+          <SelectTrigger className="w-full sm:w-[200px]" aria-label={t("maintenance.filters.byTechnician")}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Tous les techniciens</SelectItem>
+            <SelectItem value="all">{t("maintenance.filters.allTechnicians")}</SelectItem>
             {technicians.map((technician) => (
               <SelectItem key={technician.value} value={technician.value}>
                 {technician.label}
@@ -113,14 +115,14 @@ export function SearchFilter({
       <DateRangePicker
         dateRange={dateRange}
         onSelect={onDateRangeChange}
-        placeholder="Toutes les dates"
+        placeholder={t("shared.allDates")}
         className="sm:w-[250px]"
       />
 
       {hasFilters && (
         <Button variant="ghost" onClick={onReset}>
           <X className="h-4 w-4" aria-hidden="true" />
-          Réinitialiser
+          {t("common:actions.reset")}
         </Button>
       )}
     </div>

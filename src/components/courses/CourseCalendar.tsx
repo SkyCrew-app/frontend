@@ -3,15 +3,17 @@
 import { useMemo, useState } from "react"
 import Link from "next/link"
 import { format, isSameDay, parseISO } from "date-fns"
-import { fr } from "date-fns/locale"
 import { CalendarX, ChevronRight } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { Calendar } from "@/components/ui/calendar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/layout/EmptyState"
+import { dateFnsLocale } from "@/lib/i18n"
 import { learningRoutes } from "@/lib/learning-navigation"
 import {
+  counterpartRoleLabel,
   courseCounterpart,
   courseHours,
   courseStatus,
@@ -25,6 +27,7 @@ type CourseCalendarProps = {
 }
 
 export default function CourseCalendar({ courses, userId }: CourseCalendarProps) {
+  const { t } = useTranslation("instruction")
   const [selectedDay, setSelectedDay] = useState<Date>(new Date())
   const [month, setMonth] = useState<Date>(new Date())
 
@@ -53,14 +56,14 @@ export default function CourseCalendar({ courses, userId }: CourseCalendarProps)
             onSelect={(day) => day && setSelectedDay(day)}
             month={month}
             onMonthChange={setMonth}
-            locale={fr}
+            locale={dateFnsLocale()}
             modifiers={{ hasCourse: courseDays }}
             modifiersClassNames={{ hasCourse: "font-semibold underline decoration-2 underline-offset-4" }}
           />
           <div className="flex items-center justify-between gap-3 border-t px-3 pt-3">
-            <p className="text-xs text-muted-foreground">Les jours soulignés ont un cours.</p>
+            <p className="text-xs text-muted-foreground">{t("courses.calendar.hint")}</p>
             <Button variant="outline" size="sm" onClick={goToToday}>
-              Aujourd'hui
+              {t("common:labels.today")}
             </Button>
           </div>
         </CardContent>
@@ -69,15 +72,15 @@ export default function CourseCalendar({ courses, userId }: CourseCalendarProps)
       <Card>
         <CardHeader>
           <CardTitle className="text-lg first-letter:uppercase">
-            {format(selectedDay, "EEEE d MMMM yyyy", { locale: fr })}
+            {format(selectedDay, "EEEE d MMMM yyyy", { locale: dateFnsLocale() })}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {coursesOfDay.length === 0 ? (
             <EmptyState
               icon={CalendarX}
-              title="Aucun cours ce jour-là"
-              description="Choisissez un jour souligné dans le calendrier."
+              title={t("courses.calendar.emptyTitle")}
+              description={t("courses.calendar.emptyDescription")}
             />
           ) : (
             <ul className="divide-y">
@@ -95,9 +98,13 @@ export default function CourseCalendar({ courses, userId }: CourseCalendarProps)
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium">{personName(person)}</p>
                         <p className="text-xs text-muted-foreground">
-                          {role}
-                          {course.competencies.length > 0 &&
-                            ` · ${validated} / ${course.competencies.length} compétences validées`}
+                          {course.competencies.length > 0
+                            ? t("courses.calendar.roleWithCompetencies", {
+                                role: counterpartRoleLabel(role),
+                                validated,
+                                total: course.competencies.length,
+                              })
+                            : counterpartRoleLabel(role)}
                         </p>
                       </div>
                       <Badge variant={status.variant}>{status.label}</Badge>

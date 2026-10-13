@@ -3,6 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react"
 import Link from "next/link"
 import { useMutation } from "@apollo/client"
+import { useTranslation } from "react-i18next"
 import { CheckCircle, ExternalLink, Loader2, RotateCcw, Wrench } from "lucide-react"
 import {
   AlertDialog,
@@ -43,19 +44,6 @@ interface IncidentDetailPanelProps {
 
 type Action = "take" | "resolve" | "reopen" | "note"
 
-const SUCCESS: Record<Action, { title: string; description: string }> = {
-  take: { title: "Incident pris en charge", description: "Son statut est maintenant « En cours »." },
-  resolve: { title: "Incident résolu", description: "L'incident est clôturé." },
-  reopen: { title: "Incident rouvert", description: "Son statut est de nouveau « Ouvert »." },
-  note: { title: "Note enregistrée", description: "La note de résolution a été mise à jour." },
-}
-
-const FAILURE: Record<Action, string> = {
-  take: "L'incident n'a pas pu être pris en charge. Réessayez.",
-  resolve: "L'incident n'a pas pu être marqué comme résolu. Réessayez.",
-  reopen: "L'incident n'a pas pu être rouvert. Réessayez.",
-  note: "La note de résolution n'a pas pu être enregistrée. Réessayez.",
-}
 
 function Fact({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -80,6 +68,7 @@ function TextSection({ title, text }: { title: string; text: string | null | und
 }
 
 export function IncidentDetailPanel({ incident, onClose, canFollowUp }: IncidentDetailPanelProps) {
+  const { t } = useTranslation("administration")
   const { toast } = useToast()
   const [updateIncidentStatus] = useMutation(UPDATE_INCIDENT_STATUS)
   const [note, setNote] = useState("")
@@ -103,7 +92,7 @@ export function IncidentDetailPanel({ incident, onClose, canFollowUp }: Incident
   const isResolved = status.key === "resolved"
   const noteChanged = note.trim() !== storedNote.trim()
   const busy = saving !== null
-  const naming = `du ${formatDate(incident.incident_date)} sur ${registration}`
+  const naming = { date: formatDate(incident.incident_date), registration }
 
   const run = async (action: Action, target: IncidentStatusKey) => {
     setSaving(action)
@@ -118,10 +107,17 @@ export function IncidentDetailPanel({ incident, onClose, canFollowUp }: Incident
         refetchQueries: [{ query: GET_ALL_INCIDENTS }],
         awaitRefetchQueries: true,
       })
-      toast({ title: SUCCESS[action].title, description: SUCCESS[action].description })
+      toast({
+        title: t(`incidents.toast.${action}.title`),
+        description: t(`incidents.toast.${action}.description`),
+      })
       setConfirm(null)
     } catch {
-      toast({ variant: "destructive", title: "Action impossible", description: FAILURE[action] })
+      toast({
+        variant: "destructive",
+        title: t("incidents.toast.failed"),
+        description: t(`incidents.toast.${action}.failure`),
+      })
     } finally {
       setSaving(null)
     }
@@ -133,24 +129,24 @@ export function IncidentDetailPanel({ incident, onClose, canFollowUp }: Incident
   const footer = canFollowUp ? (
     <>
       <Button variant="outline" onClick={onClose} disabled={busy}>
-        Fermer
+        {t("common:actions.close")}
       </Button>
       {isResolved ? (
         <Button variant="outline" onClick={() => setConfirm("reopen")} disabled={busy}>
           {spinner("reopen") ?? <RotateCcw className="h-4 w-4" aria-hidden="true" />}
-          Rouvrir
+          {t("incidents.actions.reopen")}
         </Button>
       ) : (
         <>
           {status.key !== "in_progress" && (
             <Button variant="outline" onClick={() => run("take", "in_progress")} disabled={busy}>
               {spinner("take") ?? <Wrench className="h-4 w-4" aria-hidden="true" />}
-              Prendre en charge
+              {t("incidents.actions.take")}
             </Button>
           )}
           <Button onClick={() => setConfirm("resolve")} disabled={busy}>
             {spinner("resolve") ?? <CheckCircle className="h-4 w-4" aria-hidden="true" />}
-            Marquer comme résolu
+            {t("incidents.actions.resolve")}
           </Button>
         </>
       )}
@@ -162,22 +158,22 @@ export function IncidentDetailPanel({ incident, onClose, canFollowUp }: Incident
       <SidePanel
         open
         onOpenChange={(next) => !next && !busy && !confirm && onClose()}
-        title={`Incident ${naming}`}
+        title={t("incidents.detail.title", naming)}
         description={incident.aircraft.model || undefined}
         footer={footer}
       >
         <div className="space-y-5">
           <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-            <Fact label="Date et heure">{formatDateTime(incident.incident_date)}</Fact>
-            <Fact label="Catégorie">{incidentCategoryLabel(incident.category)}</Fact>
-            <Fact label="Statut">
+            <Fact label={t("incidents.detail.dateTime")}>{formatDateTime(incident.incident_date)}</Fact>
+            <Fact label={t("common:labels.category")}>{incidentCategoryLabel(incident.category)}</Fact>
+            <Fact label={t("common:labels.status")}>
               <Badge variant={status.variant}>{status.label}</Badge>
             </Fact>
-            <Fact label="Gravité">
+            <Fact label={t("incidents.fields.severity")}>
               <Badge variant={severity.variant}>{severity.label}</Badge>
             </Fact>
-            <Fact label="Priorité">{incidentPriorityLabel(incident.priority)}</Fact>
-            <Fact label="Aéronef">
+            <Fact label={t("incidents.fields.priority")}>{incidentPriorityLabel(incident.priority)}</Fact>
+            <Fact label={t("incidents.fields.aircraft")}>
               {registration}
               {incident.aircraft.model && (
                 <span className="block text-xs font-normal text-muted-foreground">{incident.aircraft.model}</span>
@@ -185,16 +181,16 @@ export function IncidentDetailPanel({ incident, onClose, canFollowUp }: Incident
             </Fact>
           </dl>
 
-          <TextSection title="Description" text={incident.description} />
+          <TextSection title={t("common:labels.description")} text={incident.description} />
           <div className="grid gap-4 sm:grid-cols-2">
-            <TextSection title="Dommages constatés" text={incident.damage_report} />
-            <TextSection title="Actions correctives du pilote" text={incident.corrective_actions} />
+            <TextSection title={t("incidents.detail.damage")} text={incident.damage_report} />
+            <TextSection title={t("incidents.detail.correctiveActions")} text={incident.corrective_actions} />
           </div>
 
           <section className="space-y-2 border-t pt-4">
-            <h3 className="text-sm font-semibold">Pilote et vol</h3>
+            <h3 className="text-sm font-semibold">{t("incidents.detail.pilotAndFlight")}</h3>
             <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-              <Fact label="Déclaré par">
+              <Fact label={t("incidents.detail.reportedBy")}>
                 {incidentPersonName(incident.user)}
                 {incident.user?.email && (
                   <a
@@ -207,11 +203,11 @@ export function IncidentDetailPanel({ incident, onClose, canFollowUp }: Incident
               </Fact>
               {flight ? (
                 <>
-                  <Fact label="Vol">
+                  <Fact label={t("incidents.detail.flight")}>
                     {flight.origin_icao || "—"} → {flight.destination_icao || "—"}
                     <span className="block text-xs font-normal text-muted-foreground">{formatDate(flightDate)}</span>
                   </Fact>
-                  <Fact label="Temps de vol">
+                  <Fact label={t("incidents.detail.flightTime")}>
                     <span className="tabular-nums">{formatFlightDuration(flight.flight_hours)}</span>
                     <span className="block text-xs font-normal text-muted-foreground">
                       {flightTypeLabel(flight.flight_type)}
@@ -219,8 +215,8 @@ export function IncidentDetailPanel({ incident, onClose, canFollowUp }: Incident
                   </Fact>
                 </>
               ) : (
-                <Fact label="Vol">
-                  <span className="font-normal text-muted-foreground">Aucun vol associé</span>
+                <Fact label={t("incidents.detail.flight")}>
+                  <span className="font-normal text-muted-foreground">{t("incidents.detail.noFlight")}</span>
                 </Fact>
               )}
             </dl>
@@ -229,28 +225,28 @@ export function IncidentDetailPanel({ incident, onClose, canFollowUp }: Incident
                 href={`/reservations/flight-plans/${flight.id}`}
                 className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
               >
-                Voir le plan de vol
+                {t("incidents.detail.viewFlightPlan")}
                 <ExternalLink className="h-4 w-4" aria-hidden="true" />
               </Link>
             )}
           </section>
 
           <section className="space-y-3 border-t pt-4">
-            <h3 className="text-sm font-semibold">Suivi</h3>
+            <h3 className="text-sm font-semibold">{t("incidents.detail.followUp")}</h3>
             {isResolved && (
               <dl className="grid grid-cols-2 gap-4">
-                <Fact label="Résolu le">{formatDateTime(incident.resolved_at)}</Fact>
-                <Fact label="Résolu par">{incidentPersonName(incident.resolved_by)}</Fact>
+                <Fact label={t("incidents.detail.resolvedAt")}>{formatDateTime(incident.resolved_at)}</Fact>
+                <Fact label={t("incidents.detail.resolvedBy")}>{incidentPersonName(incident.resolved_by)}</Fact>
               </dl>
             )}
             {canFollowUp ? (
               <div className="space-y-2">
-                <Label htmlFor="incident-resolution-note">Note de résolution</Label>
+                <Label htmlFor="incident-resolution-note">{t("incidents.detail.resolutionNote")}</Label>
                 <Textarea
                   id="incident-resolution-note"
                   value={note}
                   onChange={(event) => setNote(event.target.value)}
-                  placeholder="Ex. : pneu remplacé le 14 octobre, essai au sol concluant."
+                  placeholder={t("incidents.detail.notePlaceholder")}
                   rows={3}
                   disabled={busy}
                 />
@@ -262,12 +258,12 @@ export function IncidentDetailPanel({ incident, onClose, canFollowUp }: Incident
                     disabled={busy || !noteChanged}
                   >
                     {spinner("note")}
-                    Enregistrer la note
+                    {t("incidents.actions.saveNote")}
                   </Button>
                 </div>
               </div>
             ) : (
-              <TextSection title="Note de résolution" text={incident.resolution_note} />
+              <TextSection title={t("incidents.detail.resolutionNote")} text={incident.resolution_note} />
             )}
           </section>
         </div>
@@ -277,29 +273,29 @@ export function IncidentDetailPanel({ incident, onClose, canFollowUp }: Incident
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {confirm === "reopen" ? "Rouvrir cet incident ?" : "Marquer cet incident comme résolu ?"}
+              {confirm === "reopen" ? t("incidents.confirm.reopenTitle") : t("incidents.confirm.resolveTitle")}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {confirm === "reopen"
-                ? `L'incident ${naming} repassera au statut « Ouvert ». La note de résolution est conservée.`
-                : `L'incident ${naming} sera clôturé. Il pourra être rouvert si nécessaire.`}
+                ? t("incidents.confirm.reopenDescription", naming)
+                : t("incidents.confirm.resolveDescription", naming)}
             </AlertDialogDescription>
           </AlertDialogHeader>
           {confirm === "resolve" && (
             <div className="space-y-2">
-              <Label htmlFor="incident-resolution-note-confirm">Note de résolution</Label>
+              <Label htmlFor="incident-resolution-note-confirm">{t("incidents.detail.resolutionNote")}</Label>
               <Textarea
                 id="incident-resolution-note-confirm"
                 value={note}
                 onChange={(event) => setNote(event.target.value)}
-                placeholder="Ce qui a été fait pour résoudre l'incident."
+                placeholder={t("incidents.confirm.notePlaceholder")}
                 rows={3}
                 disabled={busy}
               />
             </div>
           )}
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={busy}>Annuler</AlertDialogCancel>
+            <AlertDialogCancel disabled={busy}>{t("common:actions.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               // Stays open until the change is saved.
               onClick={(event) => {
@@ -309,7 +305,7 @@ export function IncidentDetailPanel({ incident, onClose, canFollowUp }: Incident
               disabled={busy}
             >
               {busy && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-              {confirm === "reopen" ? "Rouvrir" : "Marquer comme résolu"}
+              {confirm === "reopen" ? t("incidents.actions.reopen") : t("incidents.actions.resolve")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

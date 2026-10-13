@@ -1,8 +1,10 @@
 "use client"
+import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Search, X } from "lucide-react"
+import { roleLabel } from "@/lib/settings"
 import type { Role } from "@/interfaces/user"
 
 interface UserFiltersProps {
@@ -35,6 +37,7 @@ export function UserFilters({
   resetFilters,
   roles,
 }: UserFiltersProps) {
+  const { t } = useTranslation("administration")
   const hasFilters = searchTerm !== "" || filterRole !== null || filterConfirmed !== null || filter2FA !== null
 
   return (
@@ -43,8 +46,8 @@ export function UserFilters({
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           type="search"
-          aria-label="Rechercher un membre"
-          placeholder="Nom ou adresse e-mail"
+          aria-label={t("users.searchMember")}
+          placeholder={t("users.filters.searchPlaceholder")}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="pl-9"
@@ -52,45 +55,45 @@ export function UserFilters({
       </div>
 
       <Select value={filterRole ?? ALL} onValueChange={(value) => setFilterRole(value === ALL ? null : value)}>
-        <SelectTrigger className="w-full sm:w-44" aria-label="Filtrer par rôle">
+        <SelectTrigger className="w-full sm:w-44" aria-label={t("users.filters.byRole")}>
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value={ALL}>Tous les rôles</SelectItem>
+          <SelectItem value={ALL}>{t("users.filters.allRoles")}</SelectItem>
           {roles.map((role) => (
             <SelectItem key={role.id} value={role.id.toString()}>
-              {role.role_name}
+              {roleLabel(role.role_name)}
             </SelectItem>
           ))}
         </SelectContent>
       </Select>
 
       <Select value={fromBoolean(filterConfirmed)} onValueChange={(value) => setFilterConfirmed(toBoolean(value))}>
-        <SelectTrigger className="w-full sm:w-48" aria-label="Filtrer par état du compte">
+        <SelectTrigger className="w-full sm:w-48" aria-label={t("users.filters.byAccount")}>
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value={ALL}>Tous les comptes</SelectItem>
-          <SelectItem value="true">Compte activé</SelectItem>
-          <SelectItem value="false">Invitation en attente</SelectItem>
+          <SelectItem value={ALL}>{t("users.filters.allAccounts")}</SelectItem>
+          <SelectItem value="true">{t("users.filters.accountActive")}</SelectItem>
+          <SelectItem value="false">{t("users.account.pending")}</SelectItem>
         </SelectContent>
       </Select>
 
       <Select value={fromBoolean(filter2FA)} onValueChange={(value) => setFilter2FA(toBoolean(value))}>
-        <SelectTrigger className="w-full sm:w-44" aria-label="Filtrer par double authentification">
+        <SelectTrigger className="w-full sm:w-44" aria-label={t("users.filters.byTwoFactor")}>
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value={ALL}>2FA : tous</SelectItem>
-          <SelectItem value="true">2FA activée</SelectItem>
-          <SelectItem value="false">2FA désactivée</SelectItem>
+          <SelectItem value={ALL}>{t("users.filters.twoFactorAll")}</SelectItem>
+          <SelectItem value="true">{t("users.filters.twoFactorEnabled")}</SelectItem>
+          <SelectItem value="false">{t("users.filters.twoFactorDisabled")}</SelectItem>
         </SelectContent>
       </Select>
 
       {hasFilters && (
         <Button variant="ghost" size="sm" onClick={resetFilters}>
           <X className="h-4 w-4" />
-          Réinitialiser
+          {t("common:actions.reset")}
         </Button>
       )}
     </div>

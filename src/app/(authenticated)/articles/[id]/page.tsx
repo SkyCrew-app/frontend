@@ -4,6 +4,7 @@ import { useMemo } from "react"
 import Link from "next/link"
 import { useParams } from "next/navigation"
 import { useQuery } from "@apollo/client"
+import { useTranslation } from "react-i18next"
 import { endOfDay } from "date-fns"
 import { ArrowLeft, Calendar, CalendarPlus, Clock, FileSearch, FileText, Link2, Printer, Share2 } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -14,6 +15,7 @@ import { Separator } from "@/components/ui/separator"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { EmptyState } from "@/components/layout/EmptyState"
 import { ErrorState } from "@/components/layout/ErrorState"
+import { articleTagLabel } from "@/components/articles/article-card"
 import { ArticleImage, articleFileName, articleFileUrl } from "@/components/articles/article-image"
 import { useToast } from "@/components/hooks/use-toast"
 import { RichText } from "@/components/ui/rich-text"
@@ -41,16 +43,20 @@ const formatEventDate = (date: Date) => (hasTime(date) ? formatDateTime(date) : 
 
 const toCalendarStamp = (date: Date) => date.toISOString().replace(/-|:|\.\d\d\d/g, "")
 
-const BackLink = () => (
-  <Button asChild variant="ghost" size="sm" className="-ml-3 print:hidden">
-    <Link href="/articles">
-      <ArrowLeft className="h-4 w-4" />
-      Toutes les actualités
-    </Link>
-  </Button>
-)
+const BackLink = () => {
+  const { t } = useTranslation("articles")
+  return (
+    <Button asChild variant="ghost" size="sm" className="-ml-3 print:hidden">
+      <Link href="/articles">
+        <ArrowLeft className="h-4 w-4" />
+        {t("reader.backToList")}
+      </Link>
+    </Button>
+  )
+}
 
 export default function ArticlePage() {
+  const { t } = useTranslation("articles")
   const { id } = useParams()
   const { toast } = useToast()
 
@@ -74,7 +80,7 @@ export default function ArticlePage() {
 
   if (loading && !data) {
     return (
-      <div className="mx-auto max-w-3xl space-y-6" role="status" aria-label="Chargement de l'article">
+      <div className="mx-auto max-w-3xl space-y-6" role="status" aria-label={t("reader.loading")}>
         <BackLink />
         <div className="space-y-3">
           <Skeleton className="h-8 w-3/4" />
@@ -106,11 +112,11 @@ export default function ArticlePage() {
         <BackLink />
         <EmptyState
           icon={FileSearch}
-          title="Article introuvable"
-          description="Cet article a peut-être été supprimé ou déplacé."
+          title={t("reader.notFound.title")}
+          description={t("reader.notFound.description")}
           action={
             <Button asChild variant="outline">
-              <Link href="/articles">Voir toutes les actualités</Link>
+              <Link href="/articles">{t("reader.notFound.action")}</Link>
             </Button>
           }
         />
@@ -129,13 +135,13 @@ export default function ArticlePage() {
     try {
       await navigator.clipboard.writeText(window.location.href)
       toast({
-        title: "Lien copié",
-        description: "Le lien de l'article est dans le presse-papiers.",
+        title: t("reader.toast.linkCopied.title"),
+        description: t("reader.toast.linkCopied.description"),
       })
     } catch {
       toast({
-        title: "Copie impossible",
-        description: "Le lien n'a pas pu être copié. Copiez l'adresse depuis la barre du navigateur.",
+        title: t("reader.toast.copyFailed.title"),
+        description: t("reader.toast.copyFailed.description"),
         variant: "destructive",
       })
     }
@@ -200,12 +206,12 @@ END:VCALENDAR`
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
           <span className="inline-flex items-center gap-2">
             <Calendar className="h-4 w-4" aria-hidden="true" />
-            Publié le {formatDate(article.createdAt)}
+            {t("shared.publishedOn", { date: formatDate(article.createdAt) })}
           </span>
           {readingTime > 0 && (
             <span className="inline-flex items-center gap-2">
               <Clock className="h-4 w-4" aria-hidden="true" />
-              {readingTime} min de lecture
+              {t("reader.readingTime", { minutes: readingTime })}
             </span>
           )}
         </div>
@@ -213,7 +219,7 @@ END:VCALENDAR`
           <div className="flex flex-wrap gap-1.5">
             {tags.map((tag) => (
               <Badge key={tag} variant="secondary">
-                {tag}
+                {articleTagLabel(tag)}
               </Badge>
             ))}
           </div>
@@ -222,7 +228,7 @@ END:VCALENDAR`
 
       <ArticleImage
         src={article.photo_url}
-        alt={`Illustration de l'article « ${article.title} »`}
+        alt={t("reader.imageAlt", { title: article.title })}
         className="aspect-[2/1] w-full rounded-xl"
         iconClassName="h-10 w-10"
       />
@@ -231,8 +237,10 @@ END:VCALENDAR`
         <div className="flex flex-col gap-3 rounded-xl border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <p className="text-sm font-medium">Événement</p>
-              <Badge variant={isUpcoming ? "info" : "neutral"}>{isUpcoming ? "À venir" : "Passé"}</Badge>
+              <p className="text-sm font-medium">{t("shared.event")}</p>
+              <Badge variant={isUpcoming ? "info" : "neutral"}>
+                {isUpcoming ? t("reader.event.upcoming") : t("reader.event.past")}
+              </Badge>
             </div>
             <p className="mt-1 text-sm text-muted-foreground">{formatEventDate(eventDate)}</p>
           </div>
@@ -240,13 +248,15 @@ END:VCALENDAR`
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="print:hidden">
                 <CalendarPlus className="h-4 w-4" />
-                Ajouter à mon agenda
+                {t("reader.event.addToCalendar")}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => addToCalendar("google")}>Google Agenda</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => addToCalendar("google")}>
+                {t("reader.event.googleCalendar")}
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => addToCalendar("ics")}>
-                Apple, Outlook ou autre (fichier .ics)
+                {t("reader.event.icsFile")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -262,7 +272,7 @@ END:VCALENDAR`
 
       {documents.length > 0 && (
         <section className="space-y-3">
-          <h2 className="text-lg font-semibold">Documents joints</h2>
+          <h2 className="text-lg font-semibold">{t("reader.documents")}</h2>
           <ul className="space-y-2">
             {documents.map((path) => (
               <li key={path}>
@@ -286,15 +296,15 @@ END:VCALENDAR`
       <div className="flex flex-wrap gap-2 print:hidden">
         <Button variant="outline" onClick={handleShare}>
           <Share2 className="h-4 w-4" />
-          Partager
+          {t("reader.share")}
         </Button>
         <Button variant="outline" onClick={copyToClipboard}>
           <Link2 className="h-4 w-4" />
-          Copier le lien
+          {t("reader.copyLink")}
         </Button>
         <Button variant="outline" onClick={handlePrint}>
           <Printer className="h-4 w-4" />
-          Imprimer
+          {t("common:actions.print")}
         </Button>
       </div>
     </article>

@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useState } from "react"
 import { useQuery } from "@apollo/client"
+import { useTranslation } from "react-i18next"
 import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -46,6 +47,7 @@ const TOOLTIP_STYLE = {
 const AXIS_TICK = { fontSize: 12, fill: "hsl(var(--muted-foreground))" }
 
 export default function FleetDashboard() {
+  const { t } = useTranslation("fleet")
   const { data, loading, error, refetch } = useQuery<AircraftData>(GET_AIRCRAFTS, {
     notifyOnNetworkStatusChange: true,
   })
@@ -65,7 +67,9 @@ export default function FleetDashboard() {
   const reservedCount = countByStatus(AvailabilityStatus.RESERVED)
   const unavailableCount = countByStatus(AvailabilityStatus.UNAVAILABLE)
   const shareOfFleet = (count: number) =>
-    totalAircrafts ? `${Math.round((count / totalAircrafts) * 100)} % de la flotte` : undefined
+    totalAircrafts
+      ? t("overview.stats.shareOfFleet", { percent: Math.round((count / totalAircrafts) * 100) })
+      : undefined
 
   const availabilityChartData = AIRCRAFT_AVAILABILITY_VALUES.map((status) => ({
     status,
@@ -100,12 +104,12 @@ export default function FleetDashboard() {
   const handleRefresh = async () => {
     try {
       await refetch()
-      toast({ title: "Données actualisées" })
+      toast({ title: t("shared.refreshed") })
     } catch {
       toast({
         variant: "destructive",
-        title: "Actualisation impossible",
-        description: "Les données de la flotte n'ont pas pu être rechargées.",
+        title: t("shared.refreshFailed"),
+        description: t("overview.refreshFailedDescription"),
       })
     }
   }
@@ -130,12 +134,12 @@ export default function FleetDashboard() {
     <div className="space-y-6">
       <PageHeader
         className="mb-0"
-        title="Flotte"
-        description="Disponibilité et état des aéronefs du club."
+        title={t("overview.title")}
+        description={t("overview.description")}
         actions={
           <Button variant="outline" onClick={handleRefresh} disabled={loading}>
             <RefreshCw className="h-4 w-4" aria-hidden="true" />
-            Actualiser
+            {t("common:actions.refresh")}
           </Button>
         }
       />
@@ -152,23 +156,23 @@ export default function FleetDashboard() {
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-              <StatCard label="Aéronefs" value={totalAircrafts} icon={Plane} tone="primary" />
+              <StatCard label={t("shared.aircraftPlural")} value={totalAircrafts} icon={Plane} tone="primary" />
               <StatCard
-                label="Disponibles"
+                label={t("overview.stats.available")}
                 value={availableCount}
                 hint={shareOfFleet(availableCount)}
                 icon={CheckCircle}
                 tone="success"
               />
               <StatCard
-                label="Réservés"
+                label={t("overview.stats.reserved")}
                 value={reservedCount}
                 hint={shareOfFleet(reservedCount)}
                 icon={CalendarClock}
                 tone="info"
               />
               <StatCard
-                label="Indisponibles"
+                label={t("overview.stats.unavailable")}
                 value={unavailableCount}
                 hint={shareOfFleet(unavailableCount)}
                 icon={Wrench}
@@ -180,15 +184,15 @@ export default function FleetDashboard() {
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle>Disponibilité</CardTitle>
-                <CardDescription>Répartition actuelle de la flotte.</CardDescription>
+                <CardTitle>{t("shared.availability")}</CardTitle>
+                <CardDescription>{t("overview.availabilityChart.description")}</CardDescription>
               </CardHeader>
               <CardContent>
                 {loading && !data ? (
                   <Skeleton className="h-56 w-full" />
                 ) : totalAircrafts === 0 ? (
                   <p className="flex h-56 items-center justify-center text-sm text-muted-foreground">
-                    Aucun aéronef dans la flotte.
+                    {t("overview.availabilityChart.empty")}
                   </p>
                 ) : (
                   <div className="flex flex-col items-center gap-4 sm:flex-row sm:gap-8">
@@ -234,15 +238,15 @@ export default function FleetDashboard() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Maintenances par type</CardTitle>
-                <CardDescription>Nombre de maintenances enregistrées pour la flotte.</CardDescription>
+                <CardTitle>{t("overview.maintenanceChart.title")}</CardTitle>
+                <CardDescription>{t("overview.maintenanceChart.description")}</CardDescription>
               </CardHeader>
               <CardContent>
                 {loading && !data ? (
                   <Skeleton className="h-56 w-full" />
                 ) : !hasMaintenances ? (
                   <p className="flex h-56 items-center justify-center text-sm text-muted-foreground">
-                    Aucune maintenance enregistrée.
+                    {t("overview.maintenanceChart.empty")}
                   </p>
                 ) : (
                   <div className="h-56 w-full">
@@ -263,7 +267,12 @@ export default function FleetDashboard() {
                           contentStyle={TOOLTIP_STYLE}
                           itemStyle={{ color: "hsl(var(--foreground))" }}
                         />
-                        <Bar dataKey="value" name="Maintenances" fill="hsl(var(--chart-1))" radius={[0, 4, 4, 0]} />
+                        <Bar
+                          dataKey="value"
+                          name={t("overview.maintenanceChart.series")}
+                          fill="hsl(var(--chart-1))"
+                          radius={[0, 4, 4, 0]}
+                        />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -274,7 +283,7 @@ export default function FleetDashboard() {
 
           <section className="space-y-4" aria-labelledby="fleet-list-title">
             <h2 id="fleet-list-title" className="text-lg font-semibold">
-              Aéronefs
+              {t("shared.aircraftPlural")}
             </h2>
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -284,19 +293,19 @@ export default function FleetDashboard() {
                   aria-hidden="true"
                 />
                 <Input
-                  placeholder="Immatriculation ou modèle"
-                  aria-label="Rechercher un aéronef"
+                  placeholder={t("shared.searchPlaceholder")}
+                  aria-label={t("shared.searchLabel")}
                   value={searchTerm}
                   onChange={handleSearchChange}
                   className="pl-8"
                 />
               </div>
               <Select value={filterStatus} onValueChange={handleStatusFilterChange}>
-                <SelectTrigger className="w-full sm:w-[200px]" aria-label="Filtrer par disponibilité">
+                <SelectTrigger className="w-full sm:w-[200px]" aria-label={t("shared.filterByAvailability")}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Toutes les disponibilités</SelectItem>
+                  <SelectItem value="all">{t("shared.allAvailabilities")}</SelectItem>
                   {AIRCRAFT_AVAILABILITY_VALUES.map((status) => (
                     <SelectItem key={status} value={status}>
                       {aircraftAvailability(status).label}
@@ -310,14 +319,14 @@ export default function FleetDashboard() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Immatriculation</TableHead>
-                    <TableHead>Modèle</TableHead>
-                    <TableHead>Disponibilité</TableHead>
-                    <TableHead>Maintenance</TableHead>
-                    <TableHead className="text-right">Heures de vol</TableHead>
-                    <TableHead className="text-right">Coût horaire</TableHead>
+                    <TableHead>{t("shared.registration")}</TableHead>
+                    <TableHead>{t("shared.model")}</TableHead>
+                    <TableHead>{t("shared.availability")}</TableHead>
+                    <TableHead>{t("overview.table.maintenance")}</TableHead>
+                    <TableHead className="text-right">{t("shared.flightHours")}</TableHead>
+                    <TableHead className="text-right">{t("shared.hourlyCost")}</TableHead>
                     <TableHead className="w-12">
-                      <span className="sr-only">Détails</span>
+                      <span className="sr-only">{t("common:actions.details")}</span>
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -358,8 +367,10 @@ export default function FleetDashboard() {
                               event.stopPropagation()
                               handleAircraftClick(aircraft)
                             }}
-                            aria-label={`Voir les détails de ${aircraft.registration_number}`}
-                            title="Voir les détails"
+                            aria-label={t("overview.table.viewDetailsOf", {
+                              registration: aircraft.registration_number,
+                            })}
+                            title={t("overview.table.viewDetails")}
                           >
                             <ChevronRight className="h-4 w-4" aria-hidden="true" />
                           </Button>
@@ -372,11 +383,11 @@ export default function FleetDashboard() {
                         {hasFilters ? (
                           <EmptyState
                             icon={Search}
-                            title="Aucun aéronef ne correspond"
-                            description="Modifiez la recherche ou le filtre de disponibilité."
+                            title={t("shared.noMatchTitle")}
+                            description={t("shared.noMatchDescription")}
                             action={
                               <Button variant="outline" onClick={resetFilters}>
-                                Réinitialiser les filtres
+                                {t("shared.resetFilters")}
                               </Button>
                             }
                             className="border-0"
@@ -384,8 +395,8 @@ export default function FleetDashboard() {
                         ) : (
                           <EmptyState
                             icon={Plane}
-                            title="Aucun aéronef"
-                            description="La flotte du club ne contient encore aucun aéronef."
+                            title={t("shared.noAircraft")}
+                            description={t("overview.emptyDescription")}
                             className="border-0"
                           />
                         )}
@@ -401,7 +412,7 @@ export default function FleetDashboard() {
               pageSize={ITEMS_PER_PAGE}
               totalItems={filteredAircrafts.length}
               onPageChange={setCurrentPage}
-              itemsLabel={filteredAircrafts.length > 1 ? "aéronefs" : "aéronef"}
+              itemsLabel={t("pagination.items.aircraft", { count: filteredAircrafts.length })}
             />
           </section>
         </>

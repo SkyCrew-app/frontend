@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import type { ReactNode } from "react"
+import { useTranslation } from "react-i18next"
 import Navbar from "./navigation/Navbar"
 import Sidebar from "./navigation/Sidebar"
 import Breadcrumbs from "./navigation/Breadcrumbs"
@@ -17,9 +18,10 @@ interface MainLayoutProps {
 }
 
 export default function MainLayout({ children }: MainLayoutProps) {
+  const { t } = useTranslation("nav")
   const [isMobileOpen, setIsMobileOpen] = useState(false)
-  // Les pages lisent des données gardées dans le navigateur : on attend d'y être
-  // pour les afficher, sinon le rendu du serveur et celui du navigateur diffèrent.
+  // Pages read data kept in the browser: wait to be there before showing them,
+  // otherwise the server render and the browser render differ.
   const mounted = useMounted()
   const { isCommandPaletteOpen, setCommandPaletteOpen } = useKeyboardShortcuts()
 
@@ -51,7 +53,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
           <DemoBanner />
           <Navbar onToggleMobileMenu={handleToggleMobileMenu} />
           <OfflineIndicator />
-          <main id="main-content" role="main" aria-label="Contenu principal" className="flex-1 overflow-y-auto overflow-x-hidden" tabIndex={-1}>
+          <main id="main-content" role="main" aria-label={t("layout.mainContent")} className="flex-1 overflow-y-auto overflow-x-hidden" tabIndex={-1}>
             <div className="mx-auto w-full max-w-[1440px] p-4 md:p-6 lg:p-8">
               <Breadcrumbs />
               {mounted ? children : null}

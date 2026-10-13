@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslation } from "react-i18next"
 import { useMutation, useQuery } from "@apollo/client"
 import { Loader2, Plane, Plus, Search } from "lucide-react"
 import { DELETE_AIRCRAFT, GET_AIRCRAFTS } from "@/graphql/planes"
@@ -33,6 +34,7 @@ interface AircraftListProps {
 }
 
 export function AircraftList({ onCreate }: AircraftListProps) {
+  const { t } = useTranslation("fleet")
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [selectedAircraft, setSelectedAircraft] = useState<Aircraft | null>(null)
@@ -47,18 +49,17 @@ export function AircraftList({ onCreate }: AircraftListProps) {
     awaitRefetchQueries: true,
     onCompleted: () => {
       toast({
-        title: "Aéronef supprimé",
+        title: t("admin.toast.deleted.title"),
         description: aircraftToDelete
-          ? `${aircraftToDelete.registration_number} a été retiré de la flotte.`
+          ? t("admin.toast.deleted.description", { registration: aircraftToDelete.registration_number })
           : undefined,
       })
       setAircraftToDelete(null)
     },
     onError: () => {
       toast({
-        title: "Suppression impossible",
-        description:
-          "L'aéronef n'a pas pu être supprimé. Il est peut-être encore lié à des réservations ou à des maintenances.",
+        title: t("shared.deleteFailed"),
+        description: t("admin.toast.deleteFailed.description"),
         variant: "destructive",
       })
     },
@@ -104,7 +105,7 @@ export function AircraftList({ onCreate }: AircraftListProps) {
 
   if (loading && !data) {
     return (
-      <div className="space-y-6" aria-busy="true" aria-label="Chargement des aéronefs">
+      <div className="space-y-6" aria-busy="true" aria-label={t("admin.loading")}>
         <Skeleton className="h-10 w-full sm:max-w-md" />
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 6 }).map((_, index) => (
@@ -128,19 +129,19 @@ export function AircraftList({ onCreate }: AircraftListProps) {
             aria-hidden="true"
           />
           <Input
-            placeholder="Immatriculation ou modèle"
-            aria-label="Rechercher un aéronef"
+            placeholder={t("shared.searchPlaceholder")}
+            aria-label={t("shared.searchLabel")}
             className="pl-8"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-[220px]" aria-label="Filtrer par disponibilité">
+          <SelectTrigger className="w-full sm:w-[220px]" aria-label={t("shared.filterByAvailability")}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Toutes les disponibilités</SelectItem>
+            <SelectItem value="all">{t("shared.allAvailabilities")}</SelectItem>
             {AIRCRAFT_AVAILABILITY_VALUES.map((status) => (
               <SelectItem key={status} value={status}>
                 {aircraftAvailability(status).label}
@@ -165,23 +166,23 @@ export function AircraftList({ onCreate }: AircraftListProps) {
       ) : hasFilters ? (
         <EmptyState
           icon={Search}
-          title="Aucun aéronef ne correspond"
-          description="Modifiez la recherche ou le filtre de disponibilité."
+          title={t("shared.noMatchTitle")}
+          description={t("shared.noMatchDescription")}
           action={
             <Button variant="outline" onClick={resetFilters}>
-              Réinitialiser les filtres
+              {t("shared.resetFilters")}
             </Button>
           }
         />
       ) : (
         <EmptyState
           icon={Plane}
-          title="Aucun aéronef"
-          description="Ajoutez le premier aéronef de la flotte pour pouvoir le réserver et suivre sa maintenance."
+          title={t("shared.noAircraft")}
+          description={t("admin.emptyDescription")}
           action={
             <Button onClick={onCreate}>
               <Plus className="h-4 w-4" aria-hidden="true" />
-              Ajouter un aéronef
+              {t("shared.addAircraft")}
             </Button>
           }
         />
@@ -207,14 +208,18 @@ export function AircraftList({ onCreate }: AircraftListProps) {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer {aircraftToDelete?.registration_number} ?</AlertDialogTitle>
+            <AlertDialogTitle>
+              {t("admin.deleteDialog.title", { registration: aircraftToDelete?.registration_number ?? "" })}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              L&apos;aéronef {aircraftToDelete?.registration_number} ({aircraftToDelete?.model}) sera définitivement
-              retiré de la flotte, avec sa photo et ses documents. Cette action est irréversible.
+              {t("admin.deleteDialog.description", {
+                registration: aircraftToDelete?.registration_number ?? "",
+                model: aircraftToDelete?.model ?? "",
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteLoading}>Annuler</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteLoading}>{t("common:actions.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               // Stays open until the deletion is done.
               onClick={(event) => {
@@ -225,7 +230,7 @@ export function AircraftList({ onCreate }: AircraftListProps) {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {deleteLoading && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-              Supprimer
+              {t("common:actions.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

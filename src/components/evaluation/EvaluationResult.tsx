@@ -1,6 +1,7 @@
 "use client"
 
 import { CheckCircle2, RotateCcw, XCircle } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
@@ -16,6 +17,7 @@ interface EvaluationResultProps {
 
 // What the member sees once the answers are sent: passed or not, the score, what to do next.
 export function EvaluationResult({ score, passed, passScore, onRetry, onContinue }: EvaluationResultProps) {
+  const { t } = useTranslation("instruction")
   const rounded = Math.round(score)
   const Icon = passed ? CheckCircle2 : XCircle
 
@@ -32,31 +34,37 @@ export function EvaluationResult({ score, passed, passScore, onRetry, onContinue
         </div>
 
         <div className="space-y-1">
-          <h2 className="text-lg font-semibold">{passed ? "Évaluation réussie" : "Évaluation non réussie"}</h2>
+          <h2 className="text-lg font-semibold">{passed ? t("evaluations.result.passedTitle") : t("evaluations.result.failedTitle")}</h2>
           <p className="max-w-md text-sm text-muted-foreground">
             {passed
-              ? "Bravo, vous avez atteint le score demandé. Le résultat est enregistré dans vos évaluations."
-              : "Vous n'avez pas atteint le score demandé. Revoyez les leçons du module, puis réessayez quand vous voulez."}
+              ? t("evaluations.result.passedDescription")
+              : t("evaluations.result.failedDescription")}
           </p>
         </div>
 
         <div className="w-full max-w-xs space-y-2">
-          <p className="text-3xl font-semibold tabular-nums">{rounded} %</p>
-          <Progress value={Math.min(100, Math.max(0, rounded))} className="h-2" aria-label={`Votre score : ${rounded} %`} />
-          <p className="text-xs tabular-nums text-muted-foreground">Score requis : {Math.round(passScore)} %</p>
+          <p className="text-3xl font-semibold tabular-nums">{t("shared.percent", { value: rounded })}</p>
+          <Progress
+            value={Math.min(100, Math.max(0, rounded))}
+            className="h-2"
+            aria-label={t("evaluations.result.scoreAria", { score: rounded })}
+          />
+          <p className="text-xs tabular-nums text-muted-foreground">
+            {t("shared.requiredScore", { score: t("shared.percent", { value: Math.round(passScore) }) })}
+          </p>
         </div>
 
         <div className="flex w-full flex-col-reverse justify-center gap-2 sm:w-auto sm:flex-row">
           {passed ? (
-            <Button onClick={onContinue}>Voir mes évaluations</Button>
+            <Button onClick={onContinue}>{t("evaluations.result.viewAll")}</Button>
           ) : (
             <>
               <Button variant="outline" onClick={onContinue}>
-                Voir mes évaluations
+                {t("evaluations.result.viewAll")}
               </Button>
               <Button onClick={onRetry}>
                 <RotateCcw className="h-4 w-4" />
-                Réessayer
+                {t("common:actions.retry")}
               </Button>
             </>
           )}

@@ -1,3 +1,5 @@
+import i18n from '@/lib/i18n';
+
 export type WidgetSize = 'sm' | 'md' | 'lg';
 
 export interface DashboardWidgetConfig {
@@ -7,14 +9,25 @@ export interface DashboardWidgetConfig {
   size: WidgetSize;
 }
 
+// Label and description are read when shown, so they follow the language.
+const widget = (id: string, defaultSize: WidgetSize) => ({
+  get label() {
+    return i18n.t(`dashboard:widgets.${id}.label`);
+  },
+  get description() {
+    return i18n.t(`dashboard:widgets.${id}.description`);
+  },
+  defaultSize,
+});
+
 export const WIDGET_REGISTRY: Record<string, { label: string; description: string; defaultSize: WidgetSize }> = {
-  'weather': { label: 'Météo', description: 'Conditions météo de votre aérodrome', defaultSize: 'lg' },
-  'quick-actions': { label: 'Actions rapides', description: 'Raccourcis vers les actions fréquentes', defaultSize: 'sm' },
-  'upcoming-reservations': { label: 'Prochaines réservations', description: 'Vos réservations à venir', defaultSize: 'md' },
-  'recent-flights': { label: 'Vols récents', description: 'Historique de vos derniers vols', defaultSize: 'md' },
-  'flight-hours-stats': { label: 'Heures de vol', description: 'Statistiques de vos heures de vol', defaultSize: 'md' },
-  'fleet-availability': { label: 'Disponibilité flotte', description: 'État de la flotte aérienne', defaultSize: 'md' },
-  'articles': { label: 'Articles', description: 'Dernières actualités de l\'aéroclub', defaultSize: 'lg' },
+  'weather': widget('weather', 'lg'),
+  'quick-actions': widget('quick-actions', 'sm'),
+  'upcoming-reservations': widget('upcoming-reservations', 'md'),
+  'recent-flights': widget('recent-flights', 'md'),
+  'flight-hours-stats': widget('flight-hours-stats', 'md'),
+  'fleet-availability': widget('fleet-availability', 'md'),
+  'articles': widget('articles', 'lg'),
 };
 
 export const DEFAULT_WIDGETS: DashboardWidgetConfig[] = [

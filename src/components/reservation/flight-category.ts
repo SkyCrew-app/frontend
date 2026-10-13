@@ -1,21 +1,26 @@
-// One French label per flight category (the API enum `FlightCategory`), wherever it is shown.
-export const FLIGHT_CATEGORY_LABELS: Record<string, string> = {
-  LOCAL: "Local",
-  CROSS_COUNTRY: "Navigation",
-  INSTRUCTION: "Instruction",
-  TOURISM: "Tourisme",
-  TRAINING: "Entraînement",
-  MAINTENANCE: "Maintenance",
-  PRIVATE: "Privé",
-  CORPORATE: "Affaires",
-}
+import i18n from "@/lib/i18n"
 
-export const FLIGHT_CATEGORY_OPTIONS = Object.entries(FLIGHT_CATEGORY_LABELS).map(([value, label]) => ({
-  value,
-  label,
-}))
+// The API enum `FlightCategory`. One label per category, wherever it is shown.
+export const FLIGHT_CATEGORIES = [
+  "LOCAL",
+  "CROSS_COUNTRY",
+  "INSTRUCTION",
+  "TOURISM",
+  "TRAINING",
+  "MAINTENANCE",
+  "PRIVATE",
+  "CORPORATE",
+]
+
+export const isFlightCategory = (category: string | null | undefined): boolean =>
+  !!category && FLIGHT_CATEGORIES.includes(category)
 
 export const flightCategoryLabel = (category: string | null | undefined): string => {
   if (!category) return "—"
-  return FLIGHT_CATEGORY_LABELS[category.toUpperCase()] ?? category
+  const key = category.toUpperCase()
+  return FLIGHT_CATEGORIES.includes(key) ? i18n.t(`reservations:flightCategory.${key}`) : category
 }
+
+// Built at use time: the labels follow the language.
+export const flightCategoryOptions = () =>
+  FLIGHT_CATEGORIES.map((value) => ({ value, label: flightCategoryLabel(value) }))

@@ -1,9 +1,13 @@
+"use client"
+
 import Link from "next/link"
+import { useTranslation } from "react-i18next"
 import { CalendarClock, ChevronRight } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { EmptyState } from "@/components/layout/EmptyState"
 import { ErrorState } from "@/components/layout/ErrorState"
 import {
+  counterpartRoleLabel,
   courseCounterpart,
   courseSlot,
   courseStatus,
@@ -21,17 +25,22 @@ interface UpcomingCoursesCardProps {
 }
 
 export function UpcomingCoursesCard({ courses, userId, error = false, onRetry }: UpcomingCoursesCardProps) {
+  const { t } = useTranslation("instruction")
   return (
     <SectionCard
-      title="Prochains cours"
-      description="Vos cours planifiés avec un instructeur ou un élève."
+      title={t("home.upcoming.title")}
+      description={t("home.upcoming.description")}
       href={learningRoutes.courses}
-      linkLabel="Tous mes cours"
+      linkLabel={t("home.upcoming.link")}
     >
       {error ? (
         <ErrorState onRetry={onRetry} />
       ) : courses.length === 0 ? (
-        <EmptyState icon={CalendarClock} title="Aucun cours à venir" description="Vos prochains cours apparaîtront ici." />
+        <EmptyState
+          icon={CalendarClock}
+          title={t("home.upcoming.emptyTitle")}
+          description={t("home.upcoming.emptyDescription")}
+        />
       ) : (
         <ul className="divide-y">
           {courses.map((course) => {
@@ -46,7 +55,7 @@ export function UpcomingCoursesCard({ courses, userId, error = false, onRetry }:
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{courseSlot(course)}</p>
                     <p className="truncate text-sm text-muted-foreground">
-                      {role} : {personName(person)}
+                      {t("shared.roleWithName", { role: counterpartRoleLabel(role), name: personName(person) })}
                     </p>
                   </div>
                   <Badge variant={status.variant}>{status.label}</Badge>

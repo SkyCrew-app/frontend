@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { useQuery } from "@apollo/client"
 import { ArrowRight, Map, Plane } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { formatDate, formatFlightDuration } from "@/lib/format"
 import { GET_USER_FLIGHT_PLANS } from "@/graphql/flights"
 import { WIDGET_REGISTRY } from "@/interfaces/dashboard"
@@ -18,6 +19,7 @@ interface RecentFlightsWidgetProps {
 const startTime = (flight: any) => (flight.reservation?.start_time ? new Date(flight.reservation.start_time).getTime() : 0)
 
 export default function RecentFlightsWidget({ userId }: RecentFlightsWidgetProps) {
+  const { t } = useTranslation("dashboard")
   const { data, loading, error, refetch } = useQuery(GET_USER_FLIGHT_PLANS, {
     variables: { userId: userId ? Number(userId) : 0 },
     skip: !userId,
@@ -33,12 +35,12 @@ export default function RecentFlightsWidget({ userId }: RecentFlightsWidgetProps
       return (
         <WidgetEmpty
           icon={Plane}
-          title="Aucun vol récent"
+          title={t("recentFlights.empty")}
           action={
             <Button asChild variant="outline" size="sm">
               <Link href="/reservations/flight-plans">
                 <Map className="h-4 w-4" />
-                Créer un plan de vol
+                {t("recentFlights.create")}
               </Link>
             </Button>
           }
@@ -56,7 +58,7 @@ export default function RecentFlightsWidget({ userId }: RecentFlightsWidgetProps
             title={
               <span className="inline-flex items-center gap-2">
                 {flight.origin_icao || "—"}
-                <ArrowRight className="h-3 w-3 text-muted-foreground" aria-label="vers" />
+                <ArrowRight className="h-3 w-3 text-muted-foreground" aria-label={t("recentFlights.to")} />
                 {flight.destination_icao || "—"}
               </span>
             }
@@ -75,7 +77,7 @@ export default function RecentFlightsWidget({ userId }: RecentFlightsWidgetProps
   return (
     <WidgetContainer
       title={WIDGET_REGISTRY["recent-flights"].label}
-      action={<WidgetLink href="/reservations/flight-plans">Tout voir</WidgetLink>}
+      action={<WidgetLink href="/reservations/flight-plans">{t("common:actions.seeAll")}</WidgetLink>}
     >
       {renderContent()}
     </WidgetContainer>

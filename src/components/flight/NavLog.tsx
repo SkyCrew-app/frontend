@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { flightTypeLabel } from "@/components/flight/flight-type"
 
@@ -103,6 +104,8 @@ export function NavLog({
   departureIcao,
   arrivalIcao,
 }: NavLogProps) {
+  const { t } = useTranslation("flights")
+
   if (!waypoints || waypoints.length < 2) return null
 
   // Compute per-leg data
@@ -156,7 +159,7 @@ export function NavLog({
   const subtitle = [
     `${departureIcao} → ${arrivalIcao}`,
     aircraft ? `${aircraft.registration_number} (${aircraft.model})` : null,
-    pilotName ? `commandant de bord : ${pilotName}` : null,
+    pilotName ? t("navLog.pilotInCommand", { name: pilotName }) : null,
     flightType ? flightTypeLabel(flightType) : null,
   ]
     .filter(Boolean)
@@ -165,7 +168,7 @@ export function NavLog({
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-base">Journal de navigation</CardTitle>
+        <CardTitle className="text-base">{t("navLog.title")}</CardTitle>
         <CardDescription>{subtitle}</CardDescription>
       </CardHeader>
 
@@ -175,17 +178,17 @@ export function NavLog({
           <div className="flex flex-wrap gap-x-6 gap-y-1 border-y bg-muted/50 px-6 py-2 text-xs text-muted-foreground">
             {aircraft.cruiseSpeed && (
               <span>
-                Vitesse de croisière : <strong className="text-foreground">{aircraft.cruiseSpeed} km/h</strong>
+                {t("navLog.performance.cruiseSpeed")} <strong className="text-foreground">{aircraft.cruiseSpeed} km/h</strong>
               </span>
             )}
             {aircraft.consumption && (
               <span>
-                Consommation : <strong className="text-foreground">{aircraft.consumption} L/h</strong>
+                {t("navLog.performance.consumption")} <strong className="text-foreground">{aircraft.consumption} L/h</strong>
               </span>
             )}
             {aircraft.maxAltitude && (
               <span>
-                Plafond : <strong className="text-foreground">{aircraft.maxAltitude} ft</strong>
+                {t("navLog.performance.ceiling")} <strong className="text-foreground">{aircraft.maxAltitude} ft</strong>
               </span>
             )}
           </div>
@@ -196,19 +199,19 @@ export function NavLog({
           <table className="w-full whitespace-nowrap font-mono text-xs tabular-nums">
             <thead>
               <tr className="border-b bg-muted/40 text-muted-foreground">
-                <th className="px-3 py-2 text-left font-medium">De</th>
-                <th className="px-3 py-2 text-left font-medium">Vers</th>
-                <th className="px-3 py-2 text-center font-medium">Type</th>
-                <th className="px-3 py-2 text-right font-medium" title="Route (track)">TRK</th>
-                <th className="px-3 py-2 text-right font-medium" title="Correction de dérive">WCA</th>
-                <th className="px-3 py-2 text-right font-medium" title="Cap à suivre">HDG</th>
-                <th className="px-3 py-2 text-right font-medium" title="Distance du tronçon">Dist.</th>
-                <th className="px-3 py-2 text-right font-medium" title="Distance cumulée (NM)">Cumul</th>
-                <th className="px-3 py-2 text-right font-medium" title="Altitude (ft) ou niveau de vol">Alt.</th>
-                <th className="px-3 py-2 text-right font-medium" title="Vitesse sol">GS</th>
-                <th className="px-3 py-2 text-right font-medium" title="Temps de vol du tronçon">ETE</th>
-                <th className="px-3 py-2 text-right font-medium" title="Temps écoulé depuis le départ">Cumul t.</th>
-                <th className="px-3 py-2 text-right font-medium" title="Carburant restant">Carb.</th>
+                <th className="px-3 py-2 text-left font-medium">{t("navLog.columns.from")}</th>
+                <th className="px-3 py-2 text-left font-medium">{t("navLog.columns.to")}</th>
+                <th className="px-3 py-2 text-center font-medium">{t("common:labels.type")}</th>
+                <th className="px-3 py-2 text-right font-medium" title={t("navLog.columns.trackHint")}>TRK</th>
+                <th className="px-3 py-2 text-right font-medium" title={t("navLog.columns.wcaHint")}>WCA</th>
+                <th className="px-3 py-2 text-right font-medium" title={t("navLog.columns.headingHint")}>HDG</th>
+                <th className="px-3 py-2 text-right font-medium" title={t("navLog.columns.distanceHint")}>{t("navLog.columns.distance")}</th>
+                <th className="px-3 py-2 text-right font-medium" title={t("navLog.columns.cumulativeDistanceHint")}>{t("navLog.columns.cumulativeDistance")}</th>
+                <th className="px-3 py-2 text-right font-medium" title={t("navLog.columns.altitudeHint")}>{t("navLog.columns.altitude")}</th>
+                <th className="px-3 py-2 text-right font-medium" title={t("navLog.columns.groundSpeedHint")}>GS</th>
+                <th className="px-3 py-2 text-right font-medium" title={t("navLog.columns.eteHint")}>ETE</th>
+                <th className="px-3 py-2 text-right font-medium" title={t("navLog.columns.elapsedHint")}>{t("navLog.columns.elapsed")}</th>
+                <th className="px-3 py-2 text-right font-medium" title={t("navLog.columns.fuelHint")}>{t("navLog.columns.fuel")}</th>
               </tr>
             </thead>
             <tbody>
@@ -265,7 +268,7 @@ export function NavLog({
             </tbody>
             <tfoot>
               <tr className="border-t-2 bg-muted/40 font-semibold">
-                <td className="px-3 py-2" colSpan={6}>Total</td>
+                <td className="px-3 py-2" colSpan={6}>{t("common:labels.total")}</td>
                 <td className="px-3 py-2 text-right">{totalDistNm.toFixed(1)} NM</td>
                 <td className="px-3 py-2 text-right text-muted-foreground">
                   {totalDistanceKm ? `${totalDistanceKm.toFixed(0)} km` : ""}

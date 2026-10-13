@@ -2,7 +2,8 @@
 
 import { useState } from "react"
 import { useFormContext } from "react-hook-form"
-import { TAXONOMY_LISTS, type SettingsFormValues, type Taxonomies } from "@/lib/settings"
+import { useTranslation } from "react-i18next"
+import { taxonomyLists, type SettingsFormValues, type Taxonomies } from "@/lib/settings"
 import { DeleteItemDialog, NameDialog } from "../item-list"
 import { TaxonomyCategory } from "./taxonomy-category"
 
@@ -14,6 +15,7 @@ type PendingAction =
   | { type: "delete"; list: ListKey; item: string }
 
 export function TaxonomyManager() {
+  const { t } = useTranslation("administration")
   const { watch, setValue } = useFormContext<SettingsFormValues>()
   const taxonomies = watch("taxonomies")
   const [action, setAction] = useState<PendingAction | null>(null)
@@ -31,7 +33,8 @@ export function TaxonomyManager() {
     setValue(`taxonomies.${list}`, items, { shouldDirty: true, shouldValidate: true })
 
   const shown = action ?? lastAction
-  const list = TAXONOMY_LISTS.find((entry) => entry.key === shown?.list) ?? TAXONOMY_LISTS[0]
+  const lists = taxonomyLists()
+  const list = lists.find((entry) => entry.key === shown?.list) ?? lists[0]
   const shownItem = shown && shown.type !== "add" ? shown.item : ""
 
   const handleName = (name: string) => {
@@ -58,11 +61,10 @@ export function TaxonomyManager() {
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
-        Les valeurs proposées dans les listes de choix du club. Vos changements sont pris en compte quand vous
-        enregistrez les paramètres.
+        {t("settings.lists.intro")}
       </p>
       <div className="grid gap-4 lg:grid-cols-2">
-        {TAXONOMY_LISTS.map((entry) => (
+        {lists.map((entry) => (
           <TaxonomyCategory
             key={entry.key}
             title={entry.title}
@@ -79,14 +81,14 @@ export function TaxonomyManager() {
       <NameDialog
         open={action?.type === "add" || action?.type === "edit"}
         onOpenChange={(next) => !next && close()}
-        title={shown?.type === "edit" ? `Modifier « ${shownItem} »` : list.addTitle}
-        description={`Liste « ${list.title} ».`}
-        label="Nom"
-        placeholder={`Ex. ${list.example}`}
+        title={shown?.type === "edit" ? t("settings.lists.editTitle", { name: shownItem }) : list.addTitle}
+        description={t("settings.lists.listName", { list: list.title })}
+        label={t("common:labels.name")}
+        placeholder={t("settings.lists.examplePlaceholder", { example: list.example })}
         initialValue={shown?.type === "edit" ? shownItem : ""}
-        submitLabel={shown?.type === "edit" ? "Modifier" : "Ajouter"}
+        submitLabel={shown?.type === "edit" ? t("common:actions.edit") : t("common:actions.add")}
         existingNames={itemsOf(list.key)}
-        duplicateMessage="Cette valeur est déjà dans la liste."
+        duplicateMessage={t("settings.lists.duplicate")}
         onSubmit={handleName}
       />
 
@@ -94,7 +96,7 @@ export function TaxonomyManager() {
         open={action?.type === "delete"}
         onOpenChange={(next) => !next && close()}
         title={list.deleteTitle}
-        description={`« ${shownItem} » sera retiré de la liste « ${list.title} » au prochain enregistrement des paramètres.`}
+        description={t("settings.lists.deleteDescription", { name: shownItem, list: list.title })}
         onConfirm={handleDelete}
       />
     </div>

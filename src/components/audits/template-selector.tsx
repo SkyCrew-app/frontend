@@ -2,9 +2,11 @@
 
 import { useMemo, useState } from "react"
 import { useQuery } from "@apollo/client"
+import { useTranslation } from "react-i18next"
 import { Check, FileText, Search } from "lucide-react"
 import { GET_AUDIT_TEMPLATE, GET_TEMPLATES_FOR_AIRCRAFT_TYPE } from "@/graphql/audit"
 import { auditFrequencyLabel } from "@/lib/audit"
+import { currentLocale } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 import { EmptyState } from "@/components/layout/EmptyState"
 import { Input } from "@/components/ui/input"
@@ -20,6 +22,7 @@ interface TemplateSelectorProps {
 }
 
 export function TemplateSelector({ isOpen, onClose, onSelectTemplate, aircraftType }: TemplateSelectorProps) {
+  const { t } = useTranslation("administration")
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null)
 
@@ -35,7 +38,9 @@ export function TemplateSelector({ isOpen, onClose, onSelectTemplate, aircraftTy
   // Inactive templates are kept out; the ones made for this aircraft type come first.
   const templates = useMemo(() => {
     const recommendedIds = new Set<number>(
-      aircraftType ? (aircraftTemplatesData?.auditTemplatesForAircraftType ?? []).map((t: any) => t.id) : [],
+      aircraftType
+        ? (aircraftTemplatesData?.auditTemplatesForAircraftType ?? []).map((template: any) => template.id)
+        : [],
     )
     return (allTemplatesData?.auditTemplates ?? [])
       .filter((template: any) => template.is_active !== false)
@@ -54,11 +59,11 @@ export function TemplateSelector({ isOpen, onClose, onSelectTemplate, aircraftTy
   const sortedTemplates = [...filteredTemplates].sort((a: any, b: any) => {
     if (a.isRecommended && !b.isRecommended) return -1
     if (!a.isRecommended && b.isRecommended) return 1
-    return a.name.localeCompare(b.name, "fr")
+    return a.name.localeCompare(b.name, currentLocale())
   })
 
   const handleConfirmSelection = () => {
-    const selectedTemplate = templates.find((t: any) => t.id === selectedTemplateId)
+    const selectedTemplate = templates.find((template: any) => template.id === selectedTemplateId)
     if (selectedTemplate) {
       onSelectTemplate(selectedTemplate)
     }
@@ -69,14 +74,14 @@ export function TemplateSelector({ isOpen, onClose, onSelectTemplate, aircraftTy
     <SidePanel
       open={isOpen}
       onOpenChange={(open) => !open && onClose()}
-      title="Choisir un modèle d'audit"
+      title={t("audits.templateSelector.title")}
       description={
         aircraftType
-          ? `Les modèles prévus pour le ${aircraftType} apparaissent en premier.`
-          : "Le modèle ajoute à l'audit la liste des éléments à vérifier."
+          ? t("audits.templateSelector.descriptionForType", { type: aircraftType })
+          : t("audits.templateSelector.description")
       }
       onSubmit={handleConfirmSelection}
-      submitLabel="Utiliser ce modèle"
+      submitLabel={t("audits.templateSelector.submit")}
       submitDisabled={selectedTemplateId === null}
     >
       <div className="space-y-4">
@@ -84,11 +89,11 @@ export function TemplateSelector({ isOpen, onClose, onSelectTemplate, aircraftTy
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Nom du modèle ou type d'aéronef…"
+            placeholder={t("audits.templateSelector.searchPlaceholder")}
             className="pl-9"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            aria-label="Rechercher un modèle"
+            aria-label={t("audits.templateSelector.search")}
           />
         </div>
 
@@ -117,7 +122,9 @@ export function TemplateSelector({ isOpen, onClose, onSelectTemplate, aircraftTy
                     <div className="min-w-0 space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="text-sm font-medium">{template.name}</span>
-                        {template.isRecommended && <Badge variant="success">Recommandé</Badge>}
+                        {template.isRecommended && (
+                          <Badge variant="success">{t("audits.templateSelector.recommended")}</Badge>
+                        )}
                       </div>
                       {template.description && (
                         <p className="line-clamp-2 text-sm text-muted-foreground">{template.description}</p>
@@ -125,10 +132,10 @@ export function TemplateSelector({ isOpen, onClose, onSelectTemplate, aircraftTy
                       <p className="text-xs text-muted-foreground">
                         {[
                           auditFrequencyLabel(template.recommended_frequency),
-                          `${itemCount} élément${itemCount !== 1 ? "s" : ""}`,
+                          t("audits.templateSelector.itemCount", { count: itemCount }),
                           template.applicable_aircraft_types?.length > 0
                             ? template.applicable_aircraft_types.join(", ")
-                            : "Tous les aéronefs",
+                            : t("audits.allAircraft"),
                         ].join(" · ")}
                       </p>
                     </div>
@@ -145,11 +152,9 @@ export function TemplateSelector({ isOpen, onClose, onSelectTemplate, aircraftTy
         ) : (
           <EmptyState
             icon={FileText}
-            title="Aucun modèle trouvé"
+            title={t("audits.templateSelector.empty.title")}
             description={
-              searchLower
-                ? "Modifiez votre recherche."
-                : "Aucun modèle actif n'est disponible. Créez-en un dans l'onglet « Modèles d'audit »."
+              searchLower ? t("audits.templateSelector.empty.search") : t("audits.templateSelector.empty.none")
             }
           />
         )}

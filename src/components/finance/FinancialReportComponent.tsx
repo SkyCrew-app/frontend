@@ -1,6 +1,7 @@
 "use client"
 
 import { useQuery } from "@apollo/client"
+import { useTranslation } from "react-i18next"
 import {
   LineChart,
   Line,
@@ -21,6 +22,7 @@ import { StatCard } from "@/components/layout/StatCard"
 import { EmptyState } from "@/components/layout/EmptyState"
 import { ErrorState } from "@/components/layout/ErrorState"
 import { formatDate, formatMoney } from "@/lib/format"
+import i18n from "@/lib/i18n"
 import {
   CHART_GRID,
   CHART_MARGIN,
@@ -45,9 +47,12 @@ interface FinancialReport {
 }
 
 const trendHint = (change: number | null) =>
-  change === null ? "Pas de rapport précédent" : `Dernier rapport : ${formatPercentChange(change)}`
+  change === null
+    ? i18n.t("administration:finance.summary.noPreviousReport")
+    : i18n.t("administration:finance.summary.lastReport", { change: formatPercentChange(change) })
 
 export default function FinancialReportComponent() {
+  const { t } = useTranslation("administration")
   const { loading, error, data, refetch } = useQuery(GET_FINANCIAL_REPORTS)
 
   if (loading && !data) return <FinanceTabSkeleton />
@@ -65,8 +70,8 @@ export default function FinancialReportComponent() {
     return (
       <EmptyState
         icon={FileBarChart}
-        title="Aucun rapport financier"
-        description="La synthèse s'affichera ici dès qu'un premier rapport aura été généré."
+        title={t("finance.summary.empty.title")}
+        description={t("finance.summary.empty.description")}
       />
     )
   }
@@ -97,30 +102,30 @@ export default function FinancialReportComponent() {
     <div className="space-y-6">
       <StatGrid>
         <StatCard
-          label="Revenus"
+          label={t("finance.labels.revenue")}
           value={formatMoney(totalRevenue)}
           hint={trendHint(percentChange(previous?.total_revenue, last.total_revenue))}
           icon={TrendingUp}
           tone="primary"
         />
         <StatCard
-          label="Dépenses"
+          label={t("finance.labels.expenses")}
           value={formatMoney(totalExpense)}
           hint={trendHint(percentChange(previous?.total_expense, last.total_expense))}
           icon={Receipt}
           tone="warning"
         />
         <StatCard
-          label="Résultat net"
+          label={t("finance.labels.netResult")}
           value={formatMoney(totalProfit)}
           hint={trendHint(percentChange(previous?.net_profit, last.net_profit))}
           icon={PiggyBank}
           tone={totalProfit >= 0 ? "success" : "danger"}
         />
         <StatCard
-          label="Revenu moyen par membre"
+          label={t("finance.labels.averageRevenuePerMember")}
           value={formatMoney(last.average_revenue_per_member)}
-          hint={`Rapport du ${formatDate(last.report_date)}`}
+          hint={t("finance.summary.reportOf", { date: formatDate(last.report_date) })}
           icon={Users}
           tone="info"
         />
@@ -128,11 +133,8 @@ export default function FinancialReportComponent() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Évolution</CardTitle>
-          <CardDescription>
-            Revenus, dépenses et résultat net des {reports.length > 1 ? `${reports.length} rapports` : "rapports"}{" "}
-            enregistrés.
-          </CardDescription>
+          <CardTitle>{t("finance.summary.trend.title")}</CardTitle>
+          <CardDescription>{t("finance.summary.trend.description", { count: reports.length })}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-72 sm:h-80">
@@ -147,7 +149,7 @@ export default function FinancialReportComponent() {
                 <Line
                   type="monotone"
                   dataKey="revenue"
-                  name="Revenus"
+                  name={t("finance.labels.revenue")}
                   stroke={FINANCE_COLORS.revenue}
                   strokeWidth={2}
                   dot={{ r: 3 }}
@@ -155,7 +157,7 @@ export default function FinancialReportComponent() {
                 <Line
                   type="monotone"
                   dataKey="expense"
-                  name="Dépenses"
+                  name={t("finance.labels.expenses")}
                   stroke={FINANCE_COLORS.expense}
                   strokeWidth={2}
                   dot={{ r: 3 }}
@@ -163,7 +165,7 @@ export default function FinancialReportComponent() {
                 <Line
                   type="monotone"
                   dataKey="profit"
-                  name="Résultat net"
+                  name={t("finance.labels.netResult")}
                   stroke={FINANCE_COLORS.result}
                   strokeWidth={2}
                   dot={{ r: 3 }}
@@ -176,19 +178,19 @@ export default function FinancialReportComponent() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Rapports</CardTitle>
-          <CardDescription>Du plus récent au plus ancien.</CardDescription>
+          <CardTitle>{t("finance.summary.reports.title")}</CardTitle>
+          <CardDescription>{t("finance.summary.reports.description")}</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead className="text-right">Revenus</TableHead>
-                <TableHead className="text-right">Dépenses</TableHead>
-                <TableHead className="text-right">Résultat net</TableHead>
-                <TableHead className="text-right">Revenu moyen par membre</TableHead>
-                <TableHead className="text-right">Évolution du résultat</TableHead>
+                <TableHead>{t("common:labels.date")}</TableHead>
+                <TableHead className="text-right">{t("finance.labels.revenue")}</TableHead>
+                <TableHead className="text-right">{t("finance.labels.expenses")}</TableHead>
+                <TableHead className="text-right">{t("finance.labels.netResult")}</TableHead>
+                <TableHead className="text-right">{t("finance.labels.averageRevenuePerMember")}</TableHead>
+                <TableHead className="text-right">{t("finance.summary.reports.resultChange")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -230,8 +232,10 @@ export default function FinancialReportComponent() {
       {last.recommendations && (
         <Card>
           <CardHeader>
-            <CardTitle>Recommandations</CardTitle>
-            <CardDescription>Issues du rapport du {formatDate(last.report_date)}.</CardDescription>
+            <CardTitle>{t("finance.summary.recommendations.title")}</CardTitle>
+            <CardDescription>
+              {t("finance.summary.recommendations.description", { date: formatDate(last.report_date) })}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="whitespace-pre-line text-sm">{last.recommendations}</p>

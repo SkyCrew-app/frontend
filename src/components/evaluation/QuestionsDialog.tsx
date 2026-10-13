@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useTranslation } from "react-i18next"
 import { useMutation } from "@apollo/client"
 import { Check, HelpCircle, Loader2, Plus, Trash2 } from "lucide-react"
 import { CREATE_QUESTION, DELETE_QUESTION, UPDATE_QUESTION } from "@/graphql/learningAdmin"
@@ -52,6 +53,7 @@ interface QuestionsDialogProps {
 
 // The questions of an evaluation: the list, and the form of one question in the same panel.
 export function QuestionsDialog({ evaluation, onClose, onChanged }: QuestionsDialogProps) {
+  const { t } = useTranslation("instruction")
   // null shows the list; a form shows the question being written.
   const [form, setForm] = useState<QuestionForm | null>(null)
   const [submitted, setSubmitted] = useState(false)
@@ -103,13 +105,13 @@ export function QuestionsDialog({ evaluation, onClose, onChanged }: QuestionsDia
   const trimmedOptions = form ? form.options.map((option) => option.trim()) : []
   const errors = form
     ? {
-        text: form.text.trim() ? null : "Écrivez la question.",
+        text: form.text.trim() ? null : t("admin.questions.form.questionError"),
         options: trimmedOptions.some((option) => option === "")
-          ? "Remplissez chaque réponse, ou supprimez celles qui sont vides."
+          ? t("admin.questions.form.errorEmptyOption")
           : new Set(trimmedOptions).size !== trimmedOptions.length
-            ? "Deux réponses sont identiques : chaque réponse doit être différente."
+            ? t("admin.questions.form.errorDuplicateOption")
             : form.correctIndex < 0
-              ? "Cochez la bonne réponse."
+              ? t("admin.questions.form.errorNoCorrect")
               : null,
       }
     : { text: null, options: null }
@@ -128,17 +130,23 @@ export function QuestionsDialog({ evaluation, onClose, onChanged }: QuestionsDia
     try {
       if (form.id !== null) {
         await updateQuestion({ variables: { id: Number(form.id), updateQuestionInput: input } })
-        toast({ title: "Question modifiée", description: "Les changements ont été enregistrés." })
+        toast({ title: t("admin.questions.toast.updated.title"), description: t("shared.changesSaved") })
       } else {
         await createQuestion({ variables: { evaluationId: Number(evaluationId), createQuestionInput: input } })
-        toast({ title: "Question ajoutée", description: "Elle fait maintenant partie de l'évaluation." })
+        toast({
+          title: t("admin.questions.toast.created.title"),
+          description: t("admin.questions.toast.created.description"),
+        })
       }
       onChanged()
       setForm(null)
     } catch {
       toast({
-        title: form.id !== null ? "Question non modifiée" : "Question non ajoutée",
-        description: "L'enregistrement a échoué. Vérifiez la question puis réessayez.",
+        title:
+          form.id !== null
+            ? t("admin.questions.toast.updateFailed.title")
+            : t("admin.questions.toast.createFailed.title"),
+        description: t("admin.questions.toast.saveFailed"),
         variant: "destructive",
       })
     }
@@ -150,28 +158,41 @@ export function QuestionsDialog({ evaluation, onClose, onChanged }: QuestionsDia
       await deleteQuestion({ variables: { id: Number(questionToDelete.id) } })
       setQuestionToDelete(null)
       onChanged()
-      toast({ title: "Question supprimée", description: "Elle a été retirée de l'évaluation." })
+      toast({
+        title: t("admin.questions.toast.deleted.title"),
+        description: t("admin.questions.toast.deleted.description"),
+      })
     } catch {
       toast({
-        title: "Question non supprimée",
-        description: "La suppression a échoué. Réessayez dans un instant.",
+        title: t("admin.questions.toast.deleteFailed.title"),
+        description: t("shared.deleteFailed"),
         variant: "destructive",
       })
     }
   }
 
-  const moduleTitle = evaluation?.module?.title ?? "Évaluation"
+  const moduleTitle = evaluation?.module?.title ?? t("shared.evaluationFallback")
 
   return (
     <>
       <SidePanel
         open={evaluation !== null}
         onOpenChange={(open) => !open && !saving && onClose()}
-        title={form === null ? "Questions de l'évaluation" : form.id !== null ? "Modifier la question" : "Ajouter une question"}
+        title={
+          form === null
+            ? t("admin.questions.title")
+            : form.id !== null
+              ? t("admin.questions.editTitle")
+              : t("admin.questions.add")
+        }
         description={
           form === null
-            ? `${moduleTitle} · score de réussite : ${Math.round(evaluation?.pass_score ?? 0)} % · ${questions.length} question${questions.length > 1 ? "s" : ""}`
-            : `${moduleTitle} · une seule bonne réponse par question.`
+            ? t("admin.questions.listDescription", {
+                module: moduleTitle,
+                score: Math.round(evaluation?.pass_score ?? 0),
+                count: questions.length,
+              })
+            : t("admin.questions.formDescription", { module: moduleTitle })
         }
         // The question form is a view of the same panel: its cancel button goes back to the list.
         onSubmit={form === null ? undefined : handleSubmit}
@@ -179,21 +200,21 @@ export function QuestionsDialog({ evaluation, onClose, onChanged }: QuestionsDia
           form === null ? (
             <>
               <Button type="button" variant="outline" onClick={onClose}>
-                Fermer
+                {t("common:actions.close")}
               </Button>
               <Button type="button" onClick={openCreate}>
                 <Plus className="h-4 w-4" />
-                Ajouter une question
+                {t("admin.questions.add")}
               </Button>
             </>
           ) : (
             <>
               <Button type="button" variant="outline" onClick={() => setForm(null)} disabled={saving}>
-                Annuler
+                {t("common:actions.cancel")}
               </Button>
               <Button type="submit" disabled={saving}>
                 {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                {form.id !== null ? "Enregistrer" : "Ajouter la question"}
+                {form.id !== null ? t("common:actions.save") : t("admin.questions.submitCreate")}
               </Button>
             </>
           )
@@ -203,8 +224,8 @@ export function QuestionsDialog({ evaluation, onClose, onChanged }: QuestionsDia
           questions.length === 0 ? (
             <EmptyState
               icon={HelpCircle}
-              title="Aucune question"
-              description="Tant qu'elle n'a pas de question, l'évaluation ne peut pas être passée."
+              title={t("admin.questions.emptyTitle")}
+              description={t("admin.questions.emptyDescription")}
             />
           ) : (
             <ol className="space-y-3">
@@ -216,7 +237,7 @@ export function QuestionsDialog({ evaluation, onClose, onChanged }: QuestionsDia
                       {question.content?.text}
                     </p>
                     <RowActions
-                      name={`la question ${index + 1}`}
+                      name={t("admin.questions.rowName", { number: index + 1 })}
                       onEdit={() => openEdit(question)}
                       onDelete={() => setQuestionToDelete(question)}
                     />
@@ -233,7 +254,7 @@ export function QuestionsDialog({ evaluation, onClose, onChanged }: QuestionsDia
                           )}
                         >
                           {isCorrect ? (
-                            <Check className="h-4 w-4 shrink-0" aria-label="Bonne réponse" />
+                            <Check className="h-4 w-4 shrink-0" aria-label={t("admin.questions.correctAnswer")} />
                           ) : (
                             <span className="w-4 shrink-0" aria-hidden="true" />
                           )}
@@ -248,24 +269,29 @@ export function QuestionsDialog({ evaluation, onClose, onChanged }: QuestionsDia
           )
         ) : (
           <div className="space-y-4">
-            <FormField label="Question" htmlFor="question-text" required error={submitted ? errors.text : null}>
+            <FormField
+              label={t("admin.questions.form.question")}
+              htmlFor="question-text"
+              required
+              error={submitted ? errors.text : null}
+            >
               <Textarea
                 id="question-text"
                 value={form.text}
                 onChange={(event) => setForm({ ...form, text: event.target.value })}
-                placeholder="Ex. Que signifie le groupe « CAVOK » dans un METAR ?"
+                placeholder={t("admin.questions.form.questionPlaceholder")}
                 rows={3}
                 aria-invalid={submitted && !!errors.text}
               />
             </FormField>
 
             <FormField
-              label="Réponses proposées"
+              label={t("admin.questions.form.options")}
               required
               error={submitted ? errors.options : null}
-              hint="Cochez le rond de la bonne réponse. Deux réponses au minimum."
+              hint={t("admin.questions.form.optionsHint")}
             >
-              <div className="space-y-2" role="radiogroup" aria-label="Bonne réponse">
+              <div className="space-y-2" role="radiogroup" aria-label={t("admin.questions.correctAnswer")}>
                 {form.options.map((option, index) => (
                   <div key={index} className="flex items-center gap-2">
                     <input
@@ -274,13 +300,13 @@ export function QuestionsDialog({ evaluation, onClose, onChanged }: QuestionsDia
                       className="h-4 w-4 shrink-0 accent-primary"
                       checked={form.correctIndex === index}
                       onChange={() => setForm({ ...form, correctIndex: index })}
-                      aria-label={`La réponse ${index + 1} est la bonne`}
+                      aria-label={t("admin.questions.form.optionIsCorrectAria", { number: index + 1 })}
                     />
                     <Input
                       value={option}
                       onChange={(event) => setOption(index, event.target.value)}
-                      placeholder={`Réponse ${index + 1}`}
-                      aria-label={`Réponse ${index + 1}`}
+                      placeholder={t("admin.questions.form.option", { number: index + 1 })}
+                      aria-label={t("admin.questions.form.option", { number: index + 1 })}
                     />
                     <Button
                       type="button"
@@ -289,8 +315,12 @@ export function QuestionsDialog({ evaluation, onClose, onChanged }: QuestionsDia
                       className="h-9 w-9 shrink-0 text-destructive hover:text-destructive"
                       onClick={() => removeOption(index)}
                       disabled={form.options.length <= 2}
-                      aria-label={`Supprimer la réponse ${index + 1}`}
-                      title={form.options.length <= 2 ? "Deux réponses au minimum" : "Supprimer la réponse"}
+                      aria-label={t("admin.questions.form.removeOptionAria", { number: index + 1 })}
+                      title={
+                        form.options.length <= 2
+                          ? t("admin.questions.form.minOptions")
+                          : t("admin.questions.form.removeOption")
+                      }
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -304,7 +334,7 @@ export function QuestionsDialog({ evaluation, onClose, onChanged }: QuestionsDia
                 onClick={() => setForm({ ...form, options: [...form.options, ""] })}
               >
                 <Plus className="h-4 w-4" />
-                Ajouter une réponse
+                {t("admin.questions.form.addOption")}
               </Button>
             </FormField>
           </div>
@@ -314,8 +344,10 @@ export function QuestionsDialog({ evaluation, onClose, onChanged }: QuestionsDia
       <ConfirmDeleteDialog
         open={questionToDelete !== null}
         onOpenChange={(open) => !open && setQuestionToDelete(null)}
-        title="Supprimer cette question ?"
-        description={`La question « ${questionToDelete?.content?.text ?? ""} » sera définitivement supprimée de l'évaluation.`}
+        title={t("admin.questions.deleteConfirm.title")}
+        description={t("admin.questions.deleteConfirm.description", {
+          question: questionToDelete?.content?.text ?? "",
+        })}
         onConfirm={handleDelete}
         loading={deleting}
       />

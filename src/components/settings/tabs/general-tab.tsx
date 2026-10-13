@@ -1,6 +1,7 @@
 "use client"
 
 import { useFormContext } from "react-hook-form"
+import { useTranslation } from "react-i18next"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
@@ -9,6 +10,7 @@ import type { SettingsFormValues } from "@/lib/settings"
 import { SettingsField, SettingsSection, errorMessage } from "../settings-field"
 
 export function GeneralTab() {
+  const { t } = useTranslation("administration")
   const {
     register,
     setValue,
@@ -19,37 +21,42 @@ export function GeneralTab() {
 
   return (
     <div className="space-y-6">
-      <SettingsSection title="Coordonnées du club" description="Le nom et les moyens de contact de l'aéroclub.">
+      <SettingsSection title={t("settings.general.contact.title")} description={t("settings.general.contact.description")}>
         <div className="grid gap-4 md:grid-cols-2">
           <SettingsField
             id="club-name"
-            label="Nom de l'aéroclub"
+            label={t("settings.general.contact.clubName")}
             required
             error={errorMessage(errors.clubName)}
             className="md:col-span-2"
           >
             <Input
               id="club-name"
-              placeholder="Ex. Aéroclub du Val de Loire"
+              placeholder={t("settings.general.contact.clubNamePlaceholder")}
               aria-invalid={errors.clubName ? true : undefined}
               {...register("clubName")}
             />
           </SettingsField>
-          <SettingsField id="contact-email" label="E-mail de contact" required error={errorMessage(errors.contactEmail)}>
+          <SettingsField
+            id="contact-email"
+            label={t("settings.general.contact.email")}
+            required
+            error={errorMessage(errors.contactEmail)}
+          >
             <Input
               id="contact-email"
               type="email"
               autoComplete="email"
-              placeholder="contact@aeroclub.fr"
+              placeholder={t("settings.general.contact.emailPlaceholder")}
               aria-invalid={errors.contactEmail ? true : undefined}
               {...register("contactEmail")}
             />
           </SettingsField>
           <SettingsField
             id="contact-phone"
-            label="Téléphone de contact"
+            label={t("settings.general.contact.phone")}
             required
-            hint="10 à 14 chiffres, sans espaces. L'indicatif international (+33…) est accepté."
+            hint={t("settings.general.contact.phoneHint")}
             error={errorMessage(errors.contactPhone)}
           >
             <Input
@@ -64,7 +71,7 @@ export function GeneralTab() {
           </SettingsField>
           <SettingsField
             id="address"
-            label="Adresse"
+            label={t("settings.general.contact.address")}
             required
             error={errorMessage(errors.address)}
             className="md:col-span-2"
@@ -72,7 +79,7 @@ export function GeneralTab() {
             <Textarea
               id="address"
               rows={3}
-              placeholder={"Aérodrome de Tours-Sorigny\n37250 Sorigny"}
+              placeholder={t("settings.general.contact.addressPlaceholder")}
               aria-invalid={errors.address ? true : undefined}
               {...register("address")}
             />
@@ -81,15 +88,15 @@ export function GeneralTab() {
       </SettingsSection>
 
       <SettingsSection
-        title="Mode maintenance du site"
-        description="Tant qu'il est actif, les visiteurs sont redirigés vers une page de maintenance."
+        title={t("settings.general.maintenance.title")}
+        description={t("settings.general.maintenance.description")}
       >
         <div className="space-y-4">
           <div className="flex items-start justify-between gap-4 rounded-md border p-3">
             <div className="space-y-1">
-              <Label htmlFor="is-maintenance-active">Activer le mode maintenance</Label>
+              <Label htmlFor="is-maintenance-active">{t("settings.general.maintenance.enable")}</Label>
               <p id="is-maintenance-active-hint" className="text-xs text-muted-foreground">
-                Prend effet à l'enregistrement des paramètres.
+                {t("settings.general.maintenance.enableHint")}
               </p>
             </div>
             <Switch
@@ -102,22 +109,22 @@ export function GeneralTab() {
           <div className="grid gap-4 md:grid-cols-2">
             <SettingsField
               id="maintenance-message"
-              label="Message affiché"
-              hint="Laissez vide pour afficher le message par défaut."
+              label={t("settings.general.maintenance.message")}
+              hint={t("settings.general.maintenance.messageHint")}
               className="md:col-span-2"
             >
               <Textarea
                 id="maintenance-message"
                 rows={3}
-                placeholder="Ex. Le site est en cours de mise à jour, il sera de nouveau disponible dans la soirée."
+                placeholder={t("settings.general.maintenance.messagePlaceholder")}
                 aria-describedby="maintenance-message-hint"
                 {...register("maintenanceMessage")}
               />
             </SettingsField>
             <SettingsField
               id="maintenance-time"
-              label="Fin prévue de la maintenance"
-              hint="Sert au compte à rebours de la page de maintenance."
+              label={t("settings.general.maintenance.end")}
+              hint={t("settings.general.maintenance.endHint")}
             >
               <Input
                 id="maintenance-time"

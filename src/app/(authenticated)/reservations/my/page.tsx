@@ -4,6 +4,7 @@ import { useMutation, useQuery } from "@apollo/client"
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useTranslation } from "react-i18next"
 import { BookmarkPlus, Loader2, Plus } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
@@ -46,6 +47,7 @@ import type { ReservationTemplate } from "@/interfaces/reservation-template"
 const ITEMS_PER_PAGE = 6
 
 export default function MyReservations() {
+  const { t } = useTranslation("reservations")
   const userEmail = useCurrentUser()
   const userData = useUserData(userEmail)
   const router = useRouter()
@@ -139,14 +141,14 @@ export default function MyReservations() {
 
       setIsEditDialogOpen(false)
       toast({
-        title: "Réservation mise à jour",
-        description: `La réservation de ${selectedReservation.aircraft.registration_number} a été modifiée.`,
+        title: t("toast.updated.title"),
+        description: t("toast.updated.description", { aircraft: selectedReservation.aircraft.registration_number }),
       })
     } catch {
       toast({
         variant: "destructive",
-        title: "Modification impossible",
-        description: "La réservation n'a pas pu être modifiée. Réessayez dans un instant.",
+        title: t("toast.updateFailed.title"),
+        description: t("toast.updateFailed.description"),
       })
     }
   }
@@ -171,20 +173,20 @@ export default function MyReservations() {
           variables: { input: data },
           refetchQueries: [{ query: GET_MY_TEMPLATES }],
         })
-        toast({ title: "Modèle mis à jour" })
+        toast({ title: t("toast.templateUpdated.title") })
       } else {
         await createTemplate({
           variables: { input: data },
           refetchQueries: [{ query: GET_MY_TEMPLATES }],
         })
-        toast({ title: "Modèle créé" })
+        toast({ title: t("toast.templateCreated.title") })
       }
       setIsTemplateDialogOpen(false)
     } catch {
       toast({
         variant: "destructive",
-        title: "Enregistrement impossible",
-        description: "Le modèle n'a pas pu être enregistré. Réessayez dans un instant.",
+        title: t("toast.templateSaveFailed.title"),
+        description: t("toast.templateSaveFailed.description"),
       })
     }
   }
@@ -196,12 +198,12 @@ export default function MyReservations() {
         variables: { id: templateToDelete.id },
         refetchQueries: [{ query: GET_MY_TEMPLATES }],
       })
-      toast({ title: "Modèle supprimé" })
+      toast({ title: t("toast.templateDeleted.title") })
     } catch {
       toast({
         variant: "destructive",
-        title: "Suppression impossible",
-        description: "Le modèle n'a pas pu être supprimé. Réessayez dans un instant.",
+        title: t("toast.templateDeleteFailed.title"),
+        description: t("toast.templateDeleteFailed.description"),
       })
     } finally {
       setTemplateToDelete(null)
@@ -269,7 +271,7 @@ export default function MyReservations() {
               pageCount={totalPages}
               onPageChange={setCurrentPage}
               total={filteredReservations.length}
-              noun={["réservation", "réservations"]}
+              noun={[t("my.pager.singular"), t("my.pager.plural")]}
             />
           </>
         ) : (
@@ -283,13 +285,13 @@ export default function MyReservations() {
     <div className="space-y-6">
       <PageHeader
         className="mb-0"
-        title="Mes réservations"
-        description="Vos réservations d'avion et les modèles qui vous font gagner du temps."
+        title={t("my.title")}
+        description={t("my.description")}
         actions={
           <Button asChild>
             <Link href="/reservations">
               <Plus className="h-4 w-4" />
-              Nouvelle réservation
+              {t("shared.newReservation")}
             </Link>
           </Button>
         }
@@ -299,9 +301,9 @@ export default function MyReservations() {
 
       <Tabs defaultValue="reservations" className="space-y-6">
         <TabsList>
-          <TabsTrigger value="reservations">Réservations</TabsTrigger>
+          <TabsTrigger value="reservations">{t("my.tabs.reservations")}</TabsTrigger>
           <TabsTrigger value="templates">
-            Modèles{templates.length > 0 ? ` (${templates.length})` : ""}
+            {templates.length > 0 ? t("my.tabs.templatesWithTotal", { total: templates.length }) : t("my.tabs.templates")}
           </TabsTrigger>
         </TabsList>
 
@@ -314,11 +316,11 @@ export default function MyReservations() {
             <>
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-sm text-muted-foreground">
-                  Un modèle préremplit le formulaire de réservation pour vos vols habituels.
+                  {t("template.intro")}
                 </p>
                 <Button variant="outline" onClick={handleCreateTemplate} className="self-start sm:self-auto">
                   <BookmarkPlus className="h-4 w-4" />
-                  Nouveau modèle
+                  {t("template.new")}
                 </Button>
               </div>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -336,12 +338,12 @@ export default function MyReservations() {
           ) : (
             <SharedEmptyState
               icon={BookmarkPlus}
-              title="Aucun modèle de réservation"
-              description="Enregistrez vos vols habituels (avion, horaire, catégorie) pour réserver en deux clics."
+              title={t("template.empty.title")}
+              description={t("template.empty.description")}
               action={
                 <Button onClick={handleCreateTemplate}>
                   <Plus className="h-4 w-4" />
-                  Créer un modèle
+                  {t("template.empty.action")}
                 </Button>
               }
             />
@@ -368,14 +370,13 @@ export default function MyReservations() {
       <AlertDialog open={templateToDelete !== null} onOpenChange={(open) => !open && setTemplateToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer ce modèle ?</AlertDialogTitle>
+            <AlertDialogTitle>{t("template.deleteConfirm.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Le modèle « {templateToDelete?.name} » sera définitivement supprimé. Vos réservations existantes ne sont
-              pas modifiées.
+              {t("template.deleteConfirm.description", { name: templateToDelete?.name ?? "" })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deletingTemplate}>Annuler</AlertDialogCancel>
+            <AlertDialogCancel disabled={deletingTemplate}>{t("common:actions.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={deletingTemplate}
@@ -385,7 +386,7 @@ export default function MyReservations() {
               }}
             >
               {deletingTemplate && <Loader2 className="h-4 w-4 animate-spin" />}
-              Supprimer le modèle
+              {t("template.deleteConfirm.action")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useQuery, useMutation } from "@apollo/client"
+import { useTranslation } from "react-i18next"
 import { UPDATE_AUDIT, UPDATE_AUDIT_ITEM, GET_AUDIT_ENUMS } from "@/graphql/audit"
 import { AuditResultType, AuditFrequencyType } from "@/interfaces/audit"
 import { calculateNextAuditDate } from "@/lib/utils"
@@ -23,6 +24,7 @@ interface EditAuditDialogProps {
 }
 
 export function EditAuditDialog({ isOpen, onClose, audit, onSuccess }: EditAuditDialogProps) {
+  const { t } = useTranslation("administration")
   const { toast } = useToast()
   const [formData, setFormData] = useState({
     auditDate: new Date(),
@@ -121,8 +123,8 @@ export function EditAuditDialog({ isOpen, onClose, audit, onSuccess }: EditAudit
       } catch {
         toast({
           variant: "destructive",
-          title: "Enregistrement impossible",
-          description: "L'audit n'a pas pu être mis à jour. Réessayez dans un instant.",
+          title: t("audits.edit.toast.failed.title"),
+          description: t("audits.edit.toast.failed.description"),
         })
         return
       }
@@ -137,16 +139,16 @@ export function EditAuditDialog({ isOpen, onClose, audit, onSuccess }: EditAudit
       if (failures.length > 0) {
         toast({
           variant: "destructive",
-          title: "Enregistrement incomplet",
-          description:
-            failures.length === 1
-              ? `L'audit est mis à jour, mais 1 élément sur ${itemUpdates.length} n'a pas pu être enregistré. Réessayez.`
-              : `L'audit est mis à jour, mais ${failures.length} éléments sur ${itemUpdates.length} n'ont pas pu être enregistrés. Réessayez.`,
+          title: t("audits.edit.toast.partial.title"),
+          description: t("audits.edit.toast.partial.description", {
+            count: failures.length,
+            total: itemUpdates.length,
+          }),
         })
         return
       }
 
-      toast({ title: "Audit mis à jour" })
+      toast({ title: t("audits.edit.toast.updated") })
       onSuccess()
     } finally {
       setUpdateLoading(false)
@@ -158,23 +160,23 @@ export function EditAuditDialog({ isOpen, onClose, audit, onSuccess }: EditAudit
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2" role="group" aria-labelledby="edit-audit-date-label">
           <Label id="edit-audit-date-label">
-            Date de l'audit <span className="text-destructive">*</span>
+            {t("audits.fields.auditDate")} <span className="text-destructive">*</span>
           </Label>
           <DatePicker
             date={formData.auditDate}
             onSelect={(date) => date && handleInputChange("auditDate", date)}
-            placeholder="Sélectionner une date"
+            placeholder={t("audits.form.selectDate")}
             clearable={false}
           />
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="edit-audit-result">
-            Résultat <span className="text-destructive">*</span>
+            {t("audits.fields.result")} <span className="text-destructive">*</span>
           </Label>
           <Select value={formData.auditResult} onValueChange={(value) => handleInputChange("auditResult", value)}>
             <SelectTrigger id="edit-audit-result">
-              <SelectValue placeholder="Sélectionner un résultat" />
+              <SelectValue placeholder={t("audits.form.selectResult")} />
             </SelectTrigger>
             <SelectContent>
               {enumsData?.auditResultTypes?.map((result: string) => (
@@ -188,11 +190,11 @@ export function EditAuditDialog({ isOpen, onClose, audit, onSuccess }: EditAudit
 
         <div className="space-y-2">
           <Label htmlFor="edit-audit-frequency">
-            Fréquence <span className="text-destructive">*</span>
+            {t("audits.fields.frequency")} <span className="text-destructive">*</span>
           </Label>
           <Select value={formData.auditFrequency} onValueChange={(value) => handleInputChange("auditFrequency", value)}>
             <SelectTrigger id="edit-audit-frequency">
-              <SelectValue placeholder="Sélectionner une fréquence" />
+              <SelectValue placeholder={t("audits.form.selectFrequency")} />
             </SelectTrigger>
             <SelectContent>
               {enumsData?.auditFrequencyTypes?.map((frequency: string) => (
@@ -205,17 +207,17 @@ export function EditAuditDialog({ isOpen, onClose, audit, onSuccess }: EditAudit
         </div>
 
         <div className="space-y-2" role="group" aria-labelledby="edit-next-audit-date-label">
-          <Label id="edit-next-audit-date-label">Prochain audit</Label>
+          <Label id="edit-next-audit-date-label">{t("audits.fields.nextAudit")}</Label>
           <DatePicker
             date={formData.nextAuditDate || undefined}
             onSelect={(date) => handleInputChange("nextAuditDate", date)}
-            placeholder="Non planifié"
+            placeholder={t("audits.form.notPlanned")}
             clearable
           />
         </div>
       </div>
       <p className="text-xs text-muted-foreground">
-        Le prochain audit est calculé à partir de la date et de la fréquence ; vous pouvez le modifier.
+        {t("audits.form.nextAuditHint")}
       </p>
     </>
   )
@@ -223,10 +225,10 @@ export function EditAuditDialog({ isOpen, onClose, audit, onSuccess }: EditAudit
   const findingsStep = (
     <>
       <div className="space-y-2">
-        <Label htmlFor="edit-audit-notes">Notes</Label>
+        <Label htmlFor="edit-audit-notes">{t("common:labels.notes")}</Label>
         <Textarea
           id="edit-audit-notes"
-          placeholder="Ex. : légère corrosion sur le capot moteur, à surveiller"
+          placeholder={t("audits.edit.notesPlaceholder")}
           value={formData.auditNotes}
           onChange={(e) => handleInputChange("auditNotes", e.target.value)}
           rows={5}
@@ -234,10 +236,10 @@ export function EditAuditDialog({ isOpen, onClose, audit, onSuccess }: EditAudit
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="edit-corrective-actions">Actions correctives</Label>
+        <Label htmlFor="edit-corrective-actions">{t("audits.fields.correctiveActions")}</Label>
         <Textarea
           id="edit-corrective-actions"
-          placeholder="Ex. : remplacer la durite carburant avant le prochain vol"
+          placeholder={t("audits.edit.correctiveActionsPlaceholder")}
           value={formData.correctiveActions}
           onChange={(e) => handleInputChange("correctiveActions", e.target.value)}
           rows={5}
@@ -251,10 +253,10 @@ export function EditAuditDialog({ isOpen, onClose, audit, onSuccess }: EditAudit
       <legend className="px-1 text-sm font-semibold">{item.description}</legend>
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor={`item-${index}-category`}>Catégorie</Label>
+          <Label htmlFor={`item-${index}-category`}>{t("common:labels.category")}</Label>
           <Select value={item.category} onValueChange={(value) => handleAuditItemChange(index, "category", value)}>
             <SelectTrigger id={`item-${index}-category`}>
-              <SelectValue placeholder="Sélectionner une catégorie" />
+              <SelectValue placeholder={t("audits.form.selectCategory")} />
             </SelectTrigger>
             <SelectContent>
               {enumsData?.auditCategoryTypes?.map((category: string) => (
@@ -267,10 +269,10 @@ export function EditAuditDialog({ isOpen, onClose, audit, onSuccess }: EditAudit
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor={`item-${index}-result`}>Résultat</Label>
+          <Label htmlFor={`item-${index}-result`}>{t("audits.fields.result")}</Label>
           <Select value={item.result} onValueChange={(value) => handleAuditItemChange(index, "result", value)}>
             <SelectTrigger id={`item-${index}-result`}>
-              <SelectValue placeholder="Sélectionner un résultat" />
+              <SelectValue placeholder={t("audits.form.selectResult")} />
             </SelectTrigger>
             <SelectContent>
               {enumsData?.auditResultTypes?.map((result: string) => (
@@ -284,10 +286,10 @@ export function EditAuditDialog({ isOpen, onClose, audit, onSuccess }: EditAudit
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor={`item-${index}-notes`}>Notes</Label>
+        <Label htmlFor={`item-${index}-notes`}>{t("common:labels.notes")}</Label>
         <Textarea
           id={`item-${index}-notes`}
-          placeholder="Ex. : niveau d'huile complété, 0,5 L"
+          placeholder={t("audits.edit.itemNotesPlaceholder")}
           value={item.notes || ""}
           onChange={(e) => handleAuditItemChange(index, "notes", e.target.value)}
           rows={2}
@@ -301,7 +303,7 @@ export function EditAuditDialog({ isOpen, onClose, audit, onSuccess }: EditAudit
           onCheckedChange={(checked) => handleAuditItemChange(index, "requires_action", checked === true)}
         />
         <Label htmlFor={`item-${index}-requires-action`} className="font-normal">
-          Nécessite une action corrective
+          {t("audits.edit.requiresAction")}
         </Label>
       </div>
     </fieldset>
@@ -309,14 +311,14 @@ export function EditAuditDialog({ isOpen, onClose, audit, onSuccess }: EditAudit
 
   const itemCount = formData.auditItems.length
   const steps: SidePanelStep[] = [
-    { title: "Audit", content: auditStep },
-    { title: "Constats", content: findingsStep },
+    { title: t("audits.form.steps.audit"), content: auditStep },
+    { title: t("audits.edit.steps.findings"), content: findingsStep },
   ]
   // An audit created without a template has no item: the step would be empty.
   if (itemCount > 0) {
     steps.push({
-      title: "Éléments vérifiés",
-      description: itemCount === 1 ? "1 élément à renseigner." : `${itemCount} éléments à renseigner.`,
+      title: t("audits.fields.checkedItems"),
+      description: t("audits.edit.itemsToFill", { count: itemCount }),
       content: itemsStep,
     })
   }
@@ -325,15 +327,15 @@ export function EditAuditDialog({ isOpen, onClose, audit, onSuccess }: EditAudit
     <SidePanel
       open={isOpen}
       onOpenChange={(open) => !open && !updateLoading && onClose()}
-      title="Modifier l'audit"
+      title={t("audits.edit.title")}
       description={
         <>
-          Audit du {formatDate(audit?.audit_date)}
+          {t("audits.auditOf", { date: formatDate(audit?.audit_date) })}
           {audit?.aircraft?.registration_number ? ` · ${audit.aircraft.registration_number}` : ""}
         </>
       }
       onSubmit={handleSubmit}
-      submitLabel="Enregistrer"
+      submitLabel={t("common:actions.save")}
       submitting={updateLoading}
       steps={steps}
     />

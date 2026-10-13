@@ -1,5 +1,6 @@
 import { format, parseISO } from "date-fns"
 import * as z from "zod"
+import i18n from "@/lib/i18n"
 
 export type Taxonomies = {
   aircraftCategories: string[]
@@ -28,125 +29,120 @@ export function taxonomiesFromRecord(record: { taxonomies?: LoadedTaxonomies } |
 // Day names are stored in French by the API (closure days, maintenance day).
 export const WEEKDAYS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"] as const
 
-export const TIME_SLOT_OPTIONS = [
-  { value: 30, label: "30 minutes" },
-  { value: 60, label: "1 heure" },
-  { value: 90, label: "1 heure 30" },
-  { value: 120, label: "2 heures" },
-] as const
+// The stored value stays French; this is what the user reads.
+export const weekdayLabel = (day: string): string =>
+  (WEEKDAYS as readonly string[]).includes(day) ? i18n.t(`administration:weekday.${day}`) : day
+
+// Role names are stored in French by the API; custom roles are shown as typed.
+const TRANSLATED_ROLES = ["Administrateur", "Pilote", "Instructeur", "Technicien"]
+
+export const roleLabel = <T extends string | null | undefined>(name: T): T | string =>
+  name && TRANSLATED_ROLES.includes(name) ? i18n.t(`administration:roleName.${name}`) : name
+
+const TIME_SLOT_VALUES = [30, 60, 90, 120] as const
+
+export const timeSlotOptions = () =>
+  TIME_SLOT_VALUES.map((value) => ({ value, label: i18n.t(`administration:settings.timeSlot.${value}`) }))
 
 export const PILOT_LICENSES = ["PPL", "LAPL", "CPL", "ATPL"] as const
 
 export const FUEL_MANAGEMENT_VALUES = ["self-service", "staff-only", "external"] as const
 export type FuelManagement = (typeof FUEL_MANAGEMENT_VALUES)[number]
 
-export const FUEL_MANAGEMENT_OPTIONS: { value: FuelManagement; label: string; hint: string }[] = [
-  { value: "self-service", label: "Libre-service", hint: "Les pilotes font le plein eux-mêmes." },
-  { value: "staff-only", label: "Personnel uniquement", hint: "Le plein est fait par le personnel du club." },
-  { value: "external", label: "Fournisseur externe", hint: "Le plein est assuré par un prestataire." },
-]
+export const fuelManagementOptions = (): { value: FuelManagement; label: string; hint: string }[] =>
+  FUEL_MANAGEMENT_VALUES.map((value) => ({
+    value,
+    label: i18n.t(`administration:settings.fuelManagement.${value}.label`),
+    hint: i18n.t(`administration:settings.fuelManagement.${value}.hint`),
+  }))
 
-export const TAXONOMY_LISTS: {
+const TAXONOMY_KEYS: (keyof Taxonomies)[] = ["aircraftCategories", "flightTypes", "licenseTypes", "maintenanceTypes"]
+
+export const taxonomyLists = (): {
   key: keyof Taxonomies
   title: string
   addTitle: string
   deleteTitle: string
   emptyText: string
   example: string
-}[] = [
-  {
-    key: "aircraftCategories",
-    title: "Catégories d'aéronefs",
-    addTitle: "Ajouter une catégorie d'aéronef",
-    deleteTitle: "Supprimer cette catégorie d'aéronef ?",
-    emptyText: "Aucune catégorie d'aéronef pour le moment.",
-    example: "Monomoteur",
-  },
-  {
-    key: "flightTypes",
-    title: "Types de vols",
-    addTitle: "Ajouter un type de vol",
-    deleteTitle: "Supprimer ce type de vol ?",
-    emptyText: "Aucun type de vol pour le moment.",
-    example: "Vol local",
-  },
-  {
-    key: "licenseTypes",
-    title: "Types de licences",
-    addTitle: "Ajouter un type de licence",
-    deleteTitle: "Supprimer ce type de licence ?",
-    emptyText: "Aucun type de licence pour le moment.",
-    example: "PPL",
-  },
-  {
-    key: "maintenanceTypes",
-    title: "Types de maintenance",
-    addTitle: "Ajouter un type de maintenance",
-    deleteTitle: "Supprimer ce type de maintenance ?",
-    emptyText: "Aucun type de maintenance pour le moment.",
-    example: "Visite 50 heures",
-  },
-]
+}[] =>
+  TAXONOMY_KEYS.map((key) => ({
+    key,
+    title: i18n.t(`administration:settings.lists.${key}.title`),
+    addTitle: i18n.t(`administration:settings.lists.${key}.addTitle`),
+    deleteTitle: i18n.t(`administration:settings.lists.${key}.deleteTitle`),
+    emptyText: i18n.t(`administration:settings.lists.${key}.emptyText`),
+    example: i18n.t(`administration:settings.lists.${key}.example`),
+  }))
+
+// Validation messages of the settings form.
+const message = (key: string) => i18n.t(`administration:settings.validation.${key}`)
 
 const amount = () =>
   z
-    .number({ invalid_type_error: "Indiquez un montant", required_error: "Indiquez un montant" })
-    .min(0, { message: "Le montant ne peut pas être négatif" })
+    .number({ invalid_type_error: message("amount"), required_error: message("amount") })
+    .min(0, { message: message("amountNegative") })
 
 const itemList = z.array(z.string())
 
-export const settingsFormSchema = z
-  .object({
-    clubName: z.string().min(2, { message: "Le nom de l'aéroclub doit contenir au moins 2 caractères" }),
-    contactEmail: z.string().email({ message: "Indiquez une adresse e-mail valide" }),
-    contactPhone: z
-      .string()
-      .regex(/^\+?[0-9]{10,14}$/, { message: "Indiquez 10 à 14 chiffres, sans espaces (ex. 0478123456)" }),
-    address: z.string().min(5, { message: "L'adresse doit contenir au moins 5 caractères" }),
-    closureDays: z.array(z.string()),
-    timeSlotDuration: z
-      .number({ invalid_type_error: "Choisissez une durée de créneau", required_error: "Choisissez une durée de créneau" })
-      .min(30, { message: "Le créneau dure au moins 30 minutes" })
-      .max(120, { message: "Le créneau dure au plus 2 heures" }),
-    reservationStartTime: z.string(),
-    reservationEndTime: z.string(),
-    maintenanceDay: z.string(),
-    maintenanceDuration: z
-      .number({ invalid_type_error: "Indiquez une durée en heures", required_error: "Indiquez une durée en heures" })
-      .int({ message: "La durée de la maintenance doit être un nombre entier d'heures" })
-      .min(1, { message: "La maintenance dure au moins 1 heure" })
-      .max(24, { message: "La maintenance dure au plus 24 heures" }),
-    pilotLicenses: z.array(z.string()),
-    membershipFee: amount(),
-    // Not editable on this page: sent back as loaded.
-    flightHourRate: z.number().nullable(),
-    clubRules: z.string(),
-    allowGuestPilots: z.boolean(),
-    guestPilotFee: amount(),
-    fuelManagement: z.enum(FUEL_MANAGEMENT_VALUES),
-    fuelPrice: z
-      .number({ invalid_type_error: "Indiquez un prix", required_error: "Indiquez un prix" })
-      .min(0, { message: "Le prix du carburant ne peut pas être négatif" }),
-    taxonomies: z.object({
-      aircraftCategories: itemList,
-      flightTypes: itemList,
-      licenseTypes: itemList,
-      maintenanceTypes: itemList,
-    }),
-    isMaintenanceActive: z.boolean(),
-    maintenanceMessage: z.string(),
-    // Value of a datetime-local input, empty when no end is planned.
-    maintenanceTime: z.string(),
-  })
-  .refine(
-    (values) =>
-      !values.reservationStartTime ||
-      !values.reservationEndTime ||
-      values.reservationEndTime > values.reservationStartTime,
-    { path: ["reservationEndTime"], message: "L'heure de fin doit être après l'heure de début" },
-  )
+// Built when it is used, so that the messages follow the language.
+export const buildSettingsFormSchema = () =>
+  z
+    .object({
+      clubName: z.string().min(2, { message: message("clubName") }),
+      contactEmail: z.string().email({ message: message("contactEmail") }),
+      contactPhone: z.string().regex(/^\+?[0-9]{10,14}$/, { message: message("contactPhone") }),
+      address: z.string().min(5, { message: message("address") }),
+      closureDays: z.array(z.string()),
+      timeSlotDuration: z
+        .number({ invalid_type_error: message("timeSlotRequired"), required_error: message("timeSlotRequired") })
+        .min(30, { message: message("timeSlotMin") })
+        .max(120, { message: message("timeSlotMax") }),
+      reservationStartTime: z.string(),
+      reservationEndTime: z.string(),
+      maintenanceDay: z.string(),
+      maintenanceDuration: z
+        .number({
+          invalid_type_error: message("maintenanceDurationRequired"),
+          required_error: message("maintenanceDurationRequired"),
+        })
+        .int({ message: message("maintenanceDurationInteger") })
+        .min(1, { message: message("maintenanceDurationMin") })
+        .max(24, { message: message("maintenanceDurationMax") }),
+      pilotLicenses: z.array(z.string()),
+      membershipFee: amount(),
+      // Not editable on this page: sent back as loaded.
+      flightHourRate: z.number().nullable(),
+      clubRules: z.string(),
+      allowGuestPilots: z.boolean(),
+      guestPilotFee: amount(),
+      fuelManagement: z.enum(FUEL_MANAGEMENT_VALUES),
+      fuelPrice: z
+        .number({ invalid_type_error: message("fuelPrice"), required_error: message("fuelPrice") })
+        .min(0, { message: message("fuelPriceNegative") }),
+      taxonomies: z.object({
+        aircraftCategories: itemList,
+        flightTypes: itemList,
+        licenseTypes: itemList,
+        maintenanceTypes: itemList,
+      }),
+      isMaintenanceActive: z.boolean(),
+      maintenanceMessage: z.string(),
+      // Value of a datetime-local input, empty when no end is planned.
+      maintenanceTime: z.string(),
+    })
+    .refine(
+      (values) =>
+        !values.reservationStartTime ||
+        !values.reservationEndTime ||
+        values.reservationEndTime > values.reservationStartTime,
+      { path: ["reservationEndTime"], message: message("endAfterStart") },
+    )
 
-export type SettingsFormValues = z.infer<typeof settingsFormSchema>
+// Same schema under its former name: built at each validation.
+export const settingsFormSchema = z.lazy(buildSettingsFormSchema)
+
+export type SettingsFormValues = z.infer<ReturnType<typeof buildSettingsFormSchema>>
 
 /** The administration record as `GET_ADMINISTRATION` returns it. */
 export type AdministrationRecord = {

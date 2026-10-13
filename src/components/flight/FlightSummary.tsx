@@ -1,6 +1,7 @@
 "use client"
 
 import type { ReactNode } from "react"
+import { useTranslation } from "react-i18next"
 import { Plane } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { formatDecimal } from "@/lib/format"
@@ -46,6 +47,7 @@ function Airport({ label, airport, align }: { label: string; airport: SummaryAir
 
 /** Route and key facts of a flight plan, shown once at the top of its page. */
 export function FlightSummary({ departure, arrival, duration, distanceKm, facts }: FlightSummaryProps) {
+  const { t } = useTranslation("flights")
   const routeFacts = [
     duration,
     distanceKm ? `${formatDecimal(distanceKm, 0)} km (${formatDecimal(distanceKm / KM_PER_NM, 0)} NM)` : null,
@@ -55,7 +57,7 @@ export function FlightSummary({ departure, arrival, duration, distanceKm, facts 
     <Card>
       <CardContent className="space-y-5 p-5">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1fr)] md:items-center">
-          <Airport label="Départ" airport={departure} align="left" />
+          <Airport label={t("summary.departure")} airport={departure} align="left" />
 
           <div className="flex flex-col items-center gap-2">
             <div className="flex w-full items-center gap-2" aria-hidden="true">
@@ -70,7 +72,7 @@ export function FlightSummary({ departure, arrival, duration, distanceKm, facts 
             )}
           </div>
 
-          <Airport label="Arrivée" airport={arrival} align="right" />
+          <Airport label={t("summary.arrival")} airport={arrival} align="right" />
         </div>
 
         {facts.length > 0 && (

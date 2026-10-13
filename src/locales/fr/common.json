@@ -1,0 +1,176 @@
+{
+  "actions": {
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "close": "Fermer",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "create": "Créer",
+    "add": "Ajouter",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "retry": "Réessayer",
+    "reset": "Réinitialiser",
+    "search": "Rechercher",
+    "back": "Retour",
+    "confirm": "Confirmer",
+    "view": "Voir",
+    "open": "Ouvrir",
+    "download": "Télécharger",
+    "export": "Exporter",
+    "refresh": "Actualiser",
+    "details": "Détails",
+    "seeAll": "Tout voir",
+    "remove": "Retirer",
+    "continue": "Continuer",
+    "send": "Envoyer",
+    "print": "Imprimer",
+    "copy": "Copier",
+    "choose": "Choisir",
+    "apply": "Appliquer",
+    "more": "Plus d'actions",
+    "clearFilters": "Effacer les filtres"
+  },
+  "states": {
+    "loading": "Chargement…",
+    "saving": "Enregistrement…",
+    "noResults": "Aucun résultat",
+    "noData": "Aucune donnée",
+    "errorTitle": "Chargement impossible",
+    "errorDescription": "Les données n'ont pas pu être chargées. Vérifiez votre connexion puis réessayez.",
+    "genericError": "Une erreur est survenue. Réessayez dans un instant.",
+    "notFound": "Introuvable",
+    "offline": "Vous êtes hors ligne",
+    "demoMode": "Mode démonstration — les modifications ne sont pas enregistrées",
+    "offlineBanner": "Mode hors-ligne — les données affichées peuvent ne pas être à jour"
+  },
+  "labels": {
+    "yes": "Oui",
+    "no": "Non",
+    "all": "Tous",
+    "none": "Aucun",
+    "required": "Obligatoire",
+    "optional": "Facultatif",
+    "date": "Date",
+    "time": "Heure",
+    "start": "Début",
+    "end": "Fin",
+    "status": "Statut",
+    "type": "Type",
+    "description": "Description",
+    "notes": "Notes",
+    "actions": "Actions",
+    "name": "Nom",
+    "email": "Adresse e-mail",
+    "phone": "Téléphone",
+    "total": "Total",
+    "aircraft": "Avion",
+    "pilot": "Pilote",
+    "instructor": "Instructeur",
+    "student": "Élève",
+    "technician": "Technicien",
+    "category": "Catégorie",
+    "duration": "Durée",
+    "distance": "Distance",
+    "cost": "Coût",
+    "today": "Aujourd'hui",
+    "yesterday": "Hier",
+    "you": "Vous",
+    "missing": "—",
+    "requiredFieldsHint": "Les champs marqués d'un astérisque sont obligatoires."
+  },
+  "pagination": {
+    "previous": "Précédent",
+    "next": "Suivant",
+    "previousPage": "Page précédente",
+    "nextPage": "Page suivante",
+    "morePages": "Autres pages",
+    "pageOf": "Page {{page}} sur {{total}}",
+    "range": "{{from}}–{{to}} sur {{total}}",
+    "label": "Pagination"
+  },
+  "panel": {
+    "steps": "Étapes"
+  },
+  "format": {
+    "dateTime": "{{date}} à {{time}}"
+  },
+  "language": {
+    "label": "Langue",
+    "change": "Changer de langue",
+    "current": "Langue actuelle"
+  },
+  "theme": {
+    "change": "Changer le thème",
+    "light": "Clair",
+    "dark": "Sombre",
+    "system": "Système",
+    "current": "Thème actuel"
+  },
+  "reservationStatus": {
+    "CONFIRMED": "Confirmée",
+    "PENDING": "En attente",
+    "CANCELLED": "Annulée",
+    "unknown": "Inconnu"
+  },
+  "datePicker": {
+    "placeholder": "Sélectionner une date",
+    "rangePlaceholder": "Sélectionner une période",
+    "clear": "Effacer la date",
+    "empty": "Sélectionnez une date",
+    "rangeEmpty": "Sélectionnez une période",
+    "clearRange": "Effacer la période",
+    "from": "À partir du {{date}}",
+    "until": "Jusqu'au {{date}}",
+    "thisMonth": "Ce mois",
+    "lastMonth": "Mois précédent",
+    "last30Days": "30 derniers jours"
+  },
+  "files": {
+    "add": "Ajouter la pièce jointe",
+    "openLink": "Ouvrir le lien",
+    "remove": "Supprimer",
+    "empty": "Aucune pièce jointe",
+    "urlPlaceholder": "https://exemple.com/document.pdf"
+  },
+  "validation": {
+    "required": "Ce champ est obligatoire.",
+    "email": "Indiquez une adresse e-mail valide.",
+    "minLength": "{{count}} caractères minimum.",
+    "positiveNumber": "Indiquez un nombre positif."
+  },
+  "combobox": {
+    "searchWaypoint": "Rechercher un waypoint...",
+    "noWaypoint": "Aucun waypoint trouvé.",
+    "searchAerodrome": "Rechercher un aérodrome...",
+    "noAerodrome": "Aucun aérodrome trouvé.",
+    "loading": "Chargement...",
+    "searchTimezone": "Rechercher un fuseau horaire...",
+    "noTimezone": "Aucun fuseau horaire trouvé.",
+    "selectOptions": "Sélectionner des options..."
+  },
+  "commandPalette": {
+    "title": "Recherche rapide"
+  },
+  "sidebarRail": {
+    "toggle": "Afficher ou masquer le menu"
+  },
+  "editor": {
+    "placeholder": "Commencez à écrire...",
+    "bold": "Gras",
+    "italic": "Italique",
+    "bulletList": "Liste à puces",
+    "orderedList": "Liste numérotée",
+    "heading1": "Titre 1",
+    "heading2": "Titre 2",
+    "heading3": "Titre 3",
+    "quote": "Citation",
+    "codeBlock": "Bloc de code",
+    "paragraph": "Paragraphe",
+    "addLink": "Ajouter le lien",
+    "addImage": "Ajouter l'image",
+    "linkPlaceholder": "https://exemple.com",
+    "imagePlaceholder": "https://exemple.com/image.jpg",
+    "imageAlt": "Image"
+  }
+}

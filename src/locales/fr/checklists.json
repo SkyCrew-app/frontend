@@ -1,0 +1,241 @@
+{
+  "status": {
+    "IN_PROGRESS": "En cours",
+    "COMPLETED": "Terminée",
+    "CANCELLED": "Annulée",
+    "unknown": "Statut inconnu"
+  },
+  "category": {
+    "EXTERIOR": "Extérieur",
+    "COCKPIT": "Cockpit",
+    "ENGINE": "Moteur",
+    "EMERGENCY": "Urgences",
+    "DOCUMENTS": "Documents",
+    "other": "Autres points"
+  },
+  "submission": {
+    "completedOn": "Terminée le {{date}}",
+    "startedOn": "Commencée le {{date}}"
+  },
+  "progress": {
+    "checked_one": "<figures>{{checked}} / {{total}}</figures> point vérifié",
+    "checked_other": "<figures>{{checked}} / {{total}}</figures> points vérifiés",
+    "percentage": "{{value}} %",
+    "ariaLabel": "Progression de la checklist",
+    "requiredRemaining_one": "{{count}} point obligatoire restant",
+    "requiredRemaining_other": "{{count}} points obligatoires restants"
+  },
+  "list": {
+    "title": "Checklists",
+    "description": "Vos vérifications avant le vol, point par point.",
+    "new": "Nouvelle checklist",
+    "empty": {
+      "title": "Aucune checklist pour le moment",
+      "description": "Démarrez une checklist avant votre prochain vol : vos réponses s'enregistrent au fur et à mesure."
+    },
+    "sections": {
+      "inProgress": "En cours",
+      "history": "Historique"
+    },
+    "card": {
+      "itemsChecked_one": "{{checked}} / {{total}} point vérifié",
+      "itemsChecked_other": "{{checked}} / {{total}} points vérifiés",
+      "resume": "Reprendre",
+      "view": "Consulter"
+    },
+    "showLess": "Afficher moins",
+    "showAll": "Afficher les {{total}} checklists",
+    "start": {
+      "title": "Démarrer une checklist",
+      "description": "Choisissez le modèle correspondant à l'avion que vous préparez.",
+      "submit": "Démarrer la checklist",
+      "templateLabel": "Modèle de checklist",
+      "noTemplate": "Aucun modèle de checklist n'est disponible. Demandez à un administrateur du club d'en activer un.",
+      "placeholder": "Choisir un modèle"
+    }
+  },
+  "detail": {
+    "back": "Mes checklists",
+    "title": "Checklist",
+    "loadError": "Cette checklist n'a pas pu être chargée. Elle n'existe peut-être plus."
+  },
+  "form": {
+    "empty": {
+      "title": "Cette checklist ne contient aucun point",
+      "description": "Le modèle utilisé est vide. Signalez-le à un administrateur du club."
+    },
+    "requiredMissing_one": "Cochez le dernier point obligatoire pour terminer.",
+    "requiredMissing_other": "Cochez les {{count}} points obligatoires restants pour terminer.",
+    "complete": "Terminer la checklist",
+    "save": {
+      "error": "Dernières réponses non enregistrées.",
+      "saved": "Réponses enregistrées",
+      "auto": "Vos réponses s'enregistrent automatiquement."
+    }
+  },
+  "item": {
+    "viewNoteLabel": "Voir la note de « {{label}} »",
+    "addNoteLabel": "Ajouter une note à « {{label}} »",
+    "note": "Note",
+    "addNote": "Ajouter une note",
+    "noteLabel": "Note pour « {{label}} »",
+    "notePlaceholder": "Ex. : pneu avant légèrement usé, à surveiller"
+  },
+  "toast": {
+    "retryLater": "Réessayez dans un instant.",
+    "startFailed": {
+      "title": "La checklist n'a pas pu être démarrée"
+    },
+    "answersNotSaved": {
+      "title": "Réponses non enregistrées",
+      "description": "Vérifiez votre connexion : vos dernières réponses n'ont pas pu être enregistrées."
+    },
+    "completed": {
+      "title": "Checklist terminée"
+    },
+    "completeFailed": {
+      "title": "La checklist n'a pas pu être terminée",
+      "description": "Vérifiez que tous les points obligatoires sont cochés, puis réessayez."
+    }
+  },
+  "admin": {
+    "active": "Actif",
+    "inactive": "Inactif",
+    "fields": {
+      "name": "Nom du modèle",
+      "namePlaceholder": "Prévol DR400",
+      "aircraftModel": "Modèle d'avion",
+      "aircraftModelPlaceholder": "Robin DR400",
+      "descriptionPlaceholder": "Visite prévol complète, à faire avant chaque premier vol de la journée",
+      "descriptionHint": "Facultatif. Affichée au pilote en tête de la checklist."
+    },
+    "list": {
+      "title": "Modèles de checklists",
+      "description": "Les checklists prévol proposées aux pilotes, par type d'avion.",
+      "create": "Créer un modèle",
+      "empty": {
+        "title": "Aucun modèle de checklist",
+        "description": "Créez un modèle par type d'avion : les pilotes le rempliront avant chaque vol."
+      },
+      "columns": {
+        "template": "Modèle",
+        "items": "Points",
+        "offered": "Proposé aux pilotes"
+      },
+      "emptyTemplate": "Vide",
+      "deactivateLabel": "Désactiver le modèle {{name}}",
+      "activateLabel": "Activer le modèle {{name}}",
+      "editLabel": "Modifier le modèle {{name}}",
+      "deleteLabel": "Supprimer le modèle {{name}}",
+      "deleteDialog": {
+        "title": "Supprimer le modèle « {{name}} » ?",
+        "description": "Le modèle et ses points de contrôle seront supprimés définitivement. Si des pilotes l'ont déjà rempli, il sera seulement désactivé afin de conserver l'historique de leurs checklists.",
+        "confirm": "Supprimer le modèle"
+      },
+      "createPanel": {
+        "title": "Créer un modèle de checklist",
+        "description": "Vous ajouterez les points de contrôle juste après.",
+        "submit": "Créer le modèle"
+      }
+    },
+    "detail": {
+      "back": "Tous les modèles",
+      "title": "Modèle de checklist",
+      "loadError": "Ce modèle n'a pas pu être chargé. Il n'existe peut-être plus.",
+      "subtitle": "Modèle de checklist · {{model}}",
+      "info": {
+        "title": "Informations",
+        "description": "Ce que le pilote voit avant de commencer la checklist."
+      },
+      "unsavedChanges": "Modifications non enregistrées"
+    },
+    "toast": {
+      "created": {
+        "title": "Modèle créé",
+        "description": "Ajoutez maintenant ses points de contrôle."
+      },
+      "createFailed": {
+        "title": "Le modèle n'a pas pu être créé"
+      },
+      "deactivated": {
+        "title": "Modèle désactivé",
+        "description": "« {{name}} » n'est plus proposé aux pilotes."
+      },
+      "activated": {
+        "title": "Modèle activé",
+        "description": "« {{name}} » est maintenant proposé aux pilotes."
+      },
+      "toggleFailed": {
+        "title": "Le statut du modèle n'a pas pu être modifié"
+      },
+      "deleted": {
+        "title": "Modèle supprimé",
+        "description": "« {{name}} » a été supprimé."
+      },
+      "deactivatedNotDeleted": {
+        "title": "Modèle désactivé, non supprimé",
+        "description": "« {{name}} » est utilisé par des checklists déjà remplies : il a été désactivé pour conserver l'historique."
+      },
+      "deleteFailed": {
+        "title": "Le modèle n'a pas pu être supprimé"
+      },
+      "saved": {
+        "title": "Modèle enregistré"
+      },
+      "saveFailed": {
+        "title": "Les modifications n'ont pas pu être enregistrées"
+      },
+      "itemAdded": {
+        "title": "Point ajouté"
+      },
+      "itemAddFailed": {
+        "title": "Le point n'a pas pu être ajouté"
+      },
+      "itemSaved": {
+        "title": "Point enregistré"
+      },
+      "itemSaveFailed": {
+        "title": "Le point n'a pas pu être enregistré"
+      },
+      "itemDeleted": {
+        "title": "Point supprimé"
+      },
+      "itemDeleteFailed": {
+        "title": "Le point n'a pas pu être supprimé"
+      },
+      "reorderFailed": {
+        "title": "Le nouvel ordre n'a pas pu être enregistré",
+        "description": "Les points ont repris leur ordre précédent."
+      }
+    }
+  },
+  "editor": {
+    "title": "Points de contrôle ({{total}})",
+    "dragHint": "Faites glisser un point par sa poignée pour changer l'ordre dans sa catégorie.",
+    "addItem": "Ajouter un point",
+    "empty": {
+      "title": "Aucun point de contrôle",
+      "description": "Ajoutez les vérifications que le pilote devra cocher avant le vol.",
+      "action": "Ajouter le premier point"
+    },
+    "moveLabel": "Déplacer le point {{name}}",
+    "move": "Déplacer",
+    "editLabel": "Modifier le point {{name}}",
+    "deleteLabel": "Supprimer le point {{name}}",
+    "panel": {
+      "editTitle": "Modifier le point",
+      "editDescription": "Les checklists déjà commencées afficheront la nouvelle version.",
+      "addDescription": "Une vérification que le pilote cochera avant le vol.",
+      "name": "Intitulé",
+      "namePlaceholder": "Vérifier le niveau d'huile",
+      "details": "Précisions",
+      "detailsPlaceholder": "Entre 6 et 8 quarts sur la jauge",
+      "detailsHint": "Facultatif. Affiché sous l'intitulé pendant la visite prévol.",
+      "requiredHint": "La checklist ne peut pas être terminée tant que ce point n'est pas coché."
+    },
+    "deleteDialog": {
+      "title": "Supprimer ce point ?",
+      "description": "« {{name}} » sera retiré du modèle. Cette action est définitive."
+    }
+  }
+}

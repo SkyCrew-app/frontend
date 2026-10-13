@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { useQuery } from "@apollo/client"
 import { useFormContext } from "react-hook-form"
+import { useTranslation } from "react-i18next"
 import { Plane } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -13,7 +14,7 @@ import { EmptyState } from "@/components/layout/EmptyState"
 import { ErrorState } from "@/components/layout/ErrorState"
 import { GET_AIRCRAFTS } from "@/graphql/planes"
 import { formatMoney } from "@/lib/format"
-import { FUEL_MANAGEMENT_OPTIONS, type FuelManagement, type SettingsFormValues } from "@/lib/settings"
+import { fuelManagementOptions, type FuelManagement, type SettingsFormValues } from "@/lib/settings"
 import { SettingsField, SettingsSection, UnitInput, errorMessage } from "../settings-field"
 
 interface Aircraft {
@@ -24,6 +25,7 @@ interface Aircraft {
 }
 
 export function AircraftTab() {
+  const { t } = useTranslation("administration")
   const {
     register,
     watch,
@@ -36,25 +38,25 @@ export function AircraftTab() {
 
   const manageAircrafts = (
     <Button asChild variant="outline" size="sm">
-      <Link href="/administration/planes">Gérer les avions</Link>
+      <Link href="/administration/planes">{t("settings.aircraft.manage")}</Link>
     </Button>
   )
 
   return (
     <div className="space-y-6">
       <SettingsSection
-        title="Carburant"
-        description="Qui fait le plein, et le prix du litre utilisé pour estimer les coûts d'exploitation."
+        title={t("settings.aircraft.fuel.title")}
+        description={t("settings.aircraft.fuel.description")}
       >
         <div className="grid gap-6 md:grid-cols-2">
           <fieldset className="space-y-3">
-            <legend className="text-sm font-medium leading-none">Gestion du carburant</legend>
+            <legend className="text-sm font-medium leading-none">{t("settings.aircraft.fuel.management")}</legend>
             <RadioGroup
               value={fuelManagement}
               onValueChange={(value) => setValue("fuelManagement", value as FuelManagement, { shouldDirty: true })}
               className="gap-3"
             >
-              {FUEL_MANAGEMENT_OPTIONS.map((option) => (
+              {fuelManagementOptions().map((option) => (
                 <div key={option.value} className="flex items-start gap-2">
                   <RadioGroupItem value={option.value} id={`fuel-${option.value}`} className="mt-0.5" />
                   <div className="space-y-1">
@@ -65,13 +67,18 @@ export function AircraftTab() {
               ))}
             </RadioGroup>
           </fieldset>
-          <SettingsField id="fuel-price" label="Prix du carburant" required error={errorMessage(errors.fuelPrice)}>
+          <SettingsField
+            id="fuel-price"
+            label={t("settings.aircraft.fuel.price")}
+            required
+            error={errorMessage(errors.fuelPrice)}
+          >
             <UnitInput
               id="fuel-price"
               unit="€/L"
               min="0"
               step="0.01"
-              placeholder="2,35"
+              placeholder={t("settings.aircraft.fuel.pricePlaceholder")}
               aria-invalid={errors.fuelPrice ? true : undefined}
               {...register("fuelPrice", { valueAsNumber: true })}
             />
@@ -80,8 +87,8 @@ export function AircraftTab() {
       </SettingsSection>
 
       <SettingsSection
-        title="Tarifs horaires des avions"
-        description="Le tarif de chaque avion se modifie dans sa fiche, depuis la gestion des avions."
+        title={t("settings.aircraft.rates.title")}
+        description={t("settings.aircraft.rates.description")}
         action={aircrafts.length > 0 ? manageAircrafts : undefined}
       >
         {error ? (
@@ -95,8 +102,8 @@ export function AircraftTab() {
         ) : aircrafts.length === 0 ? (
           <EmptyState
             icon={Plane}
-            title="Aucun avion"
-            description="Ajoutez les avions du club depuis la gestion des avions."
+            title={t("settings.aircraft.rates.empty.title")}
+            description={t("settings.aircraft.rates.empty.description")}
             action={manageAircrafts}
           />
         ) : (
@@ -104,9 +111,9 @@ export function AircraftTab() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Immatriculation</TableHead>
-                  <TableHead>Modèle</TableHead>
-                  <TableHead className="text-right">Tarif horaire</TableHead>
+                  <TableHead>{t("settings.aircraft.rates.registration")}</TableHead>
+                  <TableHead>{t("settings.aircraft.rates.model")}</TableHead>
+                  <TableHead className="text-right">{t("settings.aircraft.rates.hourlyRate")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -117,7 +124,7 @@ export function AircraftTab() {
                     <TableCell className="text-right tabular-nums">
                       {aircraft.hourly_cost === null || aircraft.hourly_cost === undefined
                         ? "—"
-                        : `${formatMoney(aircraft.hourly_cost)} / h`}
+                        : t("settings.aircraft.rates.perHour", { amount: formatMoney(aircraft.hourly_cost) })}
                     </TableCell>
                   </TableRow>
                 ))}

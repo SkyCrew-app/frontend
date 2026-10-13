@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslation } from "react-i18next"
 import Link from "next/link"
 import { useParams } from "next/navigation"
 import { useMutation, useQuery } from "@apollo/client"
@@ -17,6 +18,7 @@ import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
 import { lessonHtml, lessonSections } from "@/components/e-learning/lesson-content"
 import { RichText } from "@/components/ui/rich-text"
 import { COMPLETE_LESSON, GET_COURSE_DETAILS, GET_LESSON_CONTENT, GET_LESSON_PROGRESS } from "@/graphql/instruction"
+import i18n from "@/lib/i18n"
 import { adjacentLessons, learningRoutes, videoEmbedUrl } from "@/lib/learning-navigation"
 
 interface Lesson {
@@ -31,7 +33,7 @@ interface Lesson {
 // "guide-meteo.pdf" out of the address of an attachment.
 const attachmentName = (url: string, index: number) => {
   const last = url.split(/[?#]/)[0].split("/").filter(Boolean).pop()
-  if (!last) return `Document ${index + 1}`
+  if (!last) return i18n.t("instruction:eLearning.lesson.document", { number: index + 1 })
   try {
     return decodeURIComponent(last)
   } catch {
@@ -60,6 +62,7 @@ function LessonSkeleton() {
 }
 
 export default function LessonPage() {
+  const { t } = useTranslation("instruction")
   const params = useParams()
   const courseId = params.courseId as string
   const lessonId = params.lessonId as string
@@ -102,11 +105,14 @@ export default function LessonPage() {
     try {
       await completeLesson({ variables: { lessonId: numericLessonId, userId } })
       await refetchProgress()
-      toast({ title: "Leçon terminée", description: "Votre progression a été enregistrée." })
+      toast({
+        title: t("eLearning.lesson.toast.completed.title"),
+        description: t("eLearning.lesson.toast.completed.description"),
+      })
     } catch {
       toast({
-        title: "Leçon non enregistrée",
-        description: "La leçon n'a pas pu être marquée comme terminée. Réessayez dans un instant.",
+        title: t("eLearning.lesson.toast.failed.title"),
+        description: t("eLearning.lesson.toast.failed.description"),
         variant: "destructive",
       })
     } finally {
@@ -128,25 +134,25 @@ export default function LessonPage() {
         <Button variant="ghost" size="sm" asChild className="-ml-3 mb-2 max-w-full text-muted-foreground">
           <Link href={courseHref}>
             <ArrowLeft className="h-4 w-4" />
-            <span className="truncate">{course?.title ?? "Retour au cours"}</span>
+            <span className="truncate">{course?.title ?? t("eLearning.lesson.backFallback")}</span>
           </Link>
         </Button>
         <PageHeader
           className="mb-0"
-          title={lesson?.title ?? "Leçon"}
+          title={lesson?.title ?? t("eLearning.lesson.titleFallback")}
           description={lesson?.description || undefined}
           actions={
             lesson && isCompleted ? (
               <Badge variant="success" className="gap-1">
                 <CheckCircle2 className="h-3.5 w-3.5" />
-                Terminée
+                {t("eLearning.lesson.completed")}
               </Badge>
             ) : undefined
           }
         />
         {lesson && position !== null && (
           <p className="mt-2 text-xs tabular-nums text-muted-foreground">
-            Leçon {position} sur {total}
+            {t("eLearning.lesson.position", { position, total })}
           </p>
         )}
       </div>
@@ -155,11 +161,11 @@ export default function LessonPage() {
         <LessonSkeleton />
       ) : !lesson ? (
         <ErrorState
-          title="Leçon introuvable"
+          title={t("eLearning.lesson.notFound.title")}
           description={
             error
-              ? "Cette leçon n'a pas pu être chargée. Vérifiez votre connexion puis réessayez."
-              : "Cette leçon n'existe pas ou n'est plus publiée."
+              ? t("eLearning.lesson.notFound.error")
+              : t("eLearning.lesson.notFound.missing")
           }
           onRetry={() => refetch()}
         />
@@ -169,7 +175,7 @@ export default function LessonPage() {
             <div className="aspect-video w-full overflow-hidden rounded-xl border bg-muted">
               <iframe
                 src={videoUrl}
-                title={`Vidéo : ${lesson.title}`}
+                title={t("eLearning.lesson.videoTitle", { title: lesson.title })}
                 className="h-full w-full"
                 allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
@@ -202,8 +208,8 @@ export default function LessonPage() {
             !videoUrl && (
               <EmptyState
                 icon={FileText}
-                title="Cette leçon n'a pas encore de contenu"
-                description="Le texte de la leçon apparaîtra ici dès sa publication."
+                title={t("eLearning.lesson.emptyTitle")}
+                description={t("eLearning.lesson.emptyDescription")}
               />
             )
           )}
@@ -211,7 +217,7 @@ export default function LessonPage() {
           {attachments.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Ressources</CardTitle>
+                <CardTitle className="text-lg">{t("eLearning.lesson.resources")}</CardTitle>
               </CardHeader>
               <CardContent>
                 <ul className="divide-y">
@@ -225,7 +231,10 @@ export default function LessonPage() {
                       >
                         <FileText className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
                         <span className="min-w-0 flex-1 truncate">{attachmentName(url, index)}</span>
-                        <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground" aria-label="Ouvre un nouvel onglet" />
+                        <ExternalLink
+                          className="h-4 w-4 shrink-0 text-muted-foreground"
+                          aria-label={t("eLearning.lesson.newTabAria")}
+                        />
                       </a>
                     </li>
                   ))}
@@ -236,13 +245,13 @@ export default function LessonPage() {
 
           <nav
             className="flex flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:items-center sm:justify-between"
-            aria-label="Navigation entre les leçons"
+            aria-label={t("eLearning.lesson.navAria")}
           >
             {previous !== null ? (
               <Button variant="outline" asChild>
                 <Link href={learningRoutes.lesson(courseId, previous)}>
                   <ArrowLeft className="h-4 w-4" />
-                  Leçon précédente
+                  {t("eLearning.lesson.previous")}
                 </Link>
               </Button>
             ) : (
@@ -254,7 +263,7 @@ export default function LessonPage() {
               {!isCompleted && (
                 <Button onClick={handleComplete} disabled={isCompleting}>
                   {isCompleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-                  Marquer comme terminée
+                  {t("eLearning.lesson.markDone")}
                 </Button>
               )}
               {isLastLesson ? (
@@ -262,7 +271,7 @@ export default function LessonPage() {
                 isCompleted && (
                   <Button asChild>
                     <Link href={courseHref}>
-                      Revenir au cours
+                      {t("eLearning.lesson.backToCourse")}
                       <ArrowRight className="h-4 w-4" />
                     </Link>
                   </Button>
@@ -271,7 +280,7 @@ export default function LessonPage() {
                 next !== null && (
                   <Button variant={isCompleted ? "default" : "outline"} asChild>
                     <Link href={learningRoutes.lesson(courseId, next)}>
-                      Leçon suivante
+                      {t("eLearning.lesson.next")}
                       <ArrowRight className="h-4 w-4" />
                     </Link>
                   </Button>

@@ -1,5 +1,6 @@
 "use client"
 
+import i18n from "@/lib/i18n"
 import { Eye } from "lucide-react"
 
 export default function DemoBanner() {
@@ -8,7 +9,7 @@ export default function DemoBanner() {
   return (
     <div className="bg-brand text-brand-foreground px-4 py-1.5 text-xs font-medium flex items-center justify-center gap-2 shrink-0">
       <Eye className="h-4 w-4" />
-      Mode d&eacute;monstration &mdash; les modifications ne sont pas enregistr&eacute;es
+      {i18n.t("common:states.demoMode")}
     </div>
   )
 }

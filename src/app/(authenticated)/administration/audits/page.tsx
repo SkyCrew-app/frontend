@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useQuery } from "@apollo/client"
+import { useTranslation } from "react-i18next"
 import { AlertTriangle, CheckCircle, ClipboardCheck, Clock, Plus, Search } from "lucide-react"
 import { GET_ALL_AUDITS, GET_AUDIT_ENUMS } from "@/graphql/audit"
 import type { AuditFrequencyType, AuditResultType } from "@/interfaces/audit"
@@ -18,15 +19,16 @@ import { CreateAuditDialog } from "@/components/audits/create-audit-dialog"
 import { AuditStatistics } from "@/components/audits/audit-statistics"
 import { TemplateManagement } from "@/components/audits/template-management"
 
-const STATUS_TABS: { value: AuditStatusTab; label: string; count: "total" | "open" | "closed" | "nonconform" | "overdue" }[] = [
-  { value: "all", label: "Tous", count: "total" },
-  { value: "open", label: "En cours", count: "open" },
-  { value: "closed", label: "Clôturés", count: "closed" },
-  { value: "nonconform", label: "Non conformes", count: "nonconform" },
-  { value: "overdue", label: "En retard", count: "overdue" },
+const STATUS_TABS: { value: AuditStatusTab; count: "total" | "open" | "closed" | "nonconform" | "overdue" }[] = [
+  { value: "all", count: "total" },
+  { value: "open", count: "open" },
+  { value: "closed", count: "closed" },
+  { value: "nonconform", count: "nonconform" },
+  { value: "overdue", count: "overdue" },
 ]
 
 export default function SecurityAuditsPage() {
+  const { t } = useTranslation("administration")
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<AuditStatusTab>("all")
   const [activeMainTab, setActiveMainTab] = useState<string>("audits")
@@ -93,28 +95,43 @@ export default function SecurityAuditsPage() {
     <div className="space-y-6">
       <PageHeader
         className="mb-0"
-        title="Audits de sécurité"
-        description="Suivez les audits de sécurité des aéronefs et les modèles qui servent à les réaliser."
+        title={t("audits.title")}
+        description={t("audits.description")}
         actions={
           <Button onClick={() => setIsCreateModalOpen(true)}>
             <Plus className="h-4 w-4" />
-            Nouvel audit
+            {t("audits.newAudit")}
           </Button>
         }
       />
 
       <Tabs value={activeMainTab} onValueChange={setActiveMainTab} className="space-y-6">
         <TabsList>
-          <TabsTrigger value="audits">Audits</TabsTrigger>
-          <TabsTrigger value="templates">Modèles d'audit</TabsTrigger>
+          <TabsTrigger value="audits">{t("audits.tabs.audits")}</TabsTrigger>
+          <TabsTrigger value="templates">{t("audits.tabs.templates")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="audits" className="mt-0 space-y-6">
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            <StatCard label="Audits" value={count(statusCounts.total)} icon={ClipboardCheck} tone="info" />
-            <StatCard label="En cours" value={count(statusCounts.open)} icon={Clock} tone="warning" />
-            <StatCard label="Clôturés" value={count(statusCounts.closed)} icon={CheckCircle} tone="success" />
-            <StatCard label="En retard" value={count(statusCounts.overdue)} icon={AlertTriangle} tone="danger" />
+            <StatCard
+              label={t("audits.stats.total")}
+              value={count(statusCounts.total)}
+              icon={ClipboardCheck}
+              tone="info"
+            />
+            <StatCard label={t("audits.stats.open")} value={count(statusCounts.open)} icon={Clock} tone="warning" />
+            <StatCard
+              label={t("audits.stats.closed")}
+              value={count(statusCounts.closed)}
+              icon={CheckCircle}
+              tone="success"
+            />
+            <StatCard
+              label={t("audits.stats.overdue")}
+              value={count(statusCounts.overdue)}
+              icon={AlertTriangle}
+              tone="danger"
+            />
           </div>
 
           <div className="space-y-4">
@@ -123,11 +140,11 @@ export default function SecurityAuditsPage() {
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   type="search"
-                  placeholder="Immatriculation, auditeur, note…"
+                  placeholder={t("audits.searchPlaceholder")}
                   className="pl-9"
                   value={filters.searchTerm}
                   onChange={(e) => handleFilterChange({ searchTerm: e.target.value })}
-                  aria-label="Rechercher un audit"
+                  aria-label={t("audits.search")}
                 />
               </div>
               <AuditFilters
@@ -143,7 +160,7 @@ export default function SecurityAuditsPage() {
               <TabsList>
                 {STATUS_TABS.map((tab) => (
                   <TabsTrigger key={tab.value} value={tab.value} className="gap-1.5">
-                    {tab.label}
+                    {t(`audits.statusTabs.${tab.value}`)}
                     {!countsLoading && (
                       <span className="text-xs tabular-nums text-muted-foreground">{statusCounts[tab.count]}</span>
                     )}

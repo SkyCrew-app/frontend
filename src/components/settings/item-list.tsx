@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useTranslation } from "react-i18next"
 import { Loader2, Pencil, Trash2 } from "lucide-react"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -32,6 +33,7 @@ interface ItemListProps {
 
 /** The list of the roles and of every choice list: name on the left, edit and delete on the right. */
 export function ItemList({ items, onEdit, onDelete }: ItemListProps) {
+  const { t } = useTranslation("administration")
   return (
     <ul className="divide-y rounded-md border">
       {items.map((item) => (
@@ -47,8 +49,8 @@ export function ItemList({ items, onEdit, onDelete }: ItemListProps) {
               size="icon"
               className="h-9 w-9"
               onClick={() => onEdit(item)}
-              aria-label={`Modifier ${item.name}`}
-              title="Modifier"
+              aria-label={t("settings.items.edit", { name: item.name })}
+              title={t("common:actions.edit")}
             >
               <Pencil className="h-4 w-4" />
             </Button>
@@ -58,8 +60,8 @@ export function ItemList({ items, onEdit, onDelete }: ItemListProps) {
               size="icon"
               className="h-9 w-9 text-destructive hover:text-destructive"
               onClick={() => onDelete(item)}
-              aria-label={`Supprimer ${item.name}`}
-              title="Supprimer"
+              aria-label={t("settings.items.delete", { name: item.name })}
+              title={t("common:actions.delete")}
             >
               <Trash2 className="h-4 w-4" />
             </Button>
@@ -104,6 +106,7 @@ export function NameDialog({
   notice,
   onSubmit,
 }: NameDialogProps) {
+  const { t } = useTranslation("administration")
   const id = React.useId()
   const [name, setName] = React.useState(initialValue)
   const [error, setError] = React.useState<string | null>(null)
@@ -120,7 +123,7 @@ export function NameDialog({
   const handleSubmit = () => {
     const trimmed = name.trim()
     if (!trimmed) {
-      setError("Indiquez un nom.")
+      setError(t("settings.items.nameRequired"))
       return
     }
     const taken = existingNames.some(
@@ -197,6 +200,7 @@ export function DeleteItemDialog({
   isDeleting = false,
   onConfirm,
 }: DeleteItemDialogProps) {
+  const { t } = useTranslation("administration")
   return (
     <AlertDialog open={open} onOpenChange={(next) => !isDeleting && onOpenChange(next)}>
       <AlertDialogContent>
@@ -205,7 +209,7 @@ export function DeleteItemDialog({
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>Annuler</AlertDialogCancel>
+          <AlertDialogCancel disabled={isDeleting}>{t("common:actions.cancel")}</AlertDialogCancel>
           <AlertDialogAction
             className={buttonVariants({ variant: "destructive" })}
             disabled={isDeleting}
@@ -216,7 +220,7 @@ export function DeleteItemDialog({
             }}
           >
             {isDeleting && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-            Supprimer
+            {t("common:actions.delete")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

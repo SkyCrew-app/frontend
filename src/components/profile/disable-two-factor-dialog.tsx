@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState } from "react"
+import { useTranslation } from "react-i18next"
 import { useMutation } from "@apollo/client"
 import { Loader2 } from "lucide-react"
 import {
@@ -26,6 +27,7 @@ interface DisableTwoFactorDialogProps {
 
 // Turning two-factor off weakens the account: the current password is asked again.
 export function DisableTwoFactorDialog({ open, onOpenChange, onDisabled }: DisableTwoFactorDialogProps) {
+  const { t } = useTranslation("profile")
   const { toast } = useToast()
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
@@ -46,7 +48,7 @@ export function DisableTwoFactorDialog({ open, onOpenChange, onDisabled }: Disab
   const submit = async (event: React.FormEvent) => {
     event.preventDefault()
     if (!password) {
-      setError("Saisissez votre mot de passe actuel.")
+      setError(t("twoFactor.disableDialog.passwordRequired"))
       return
     }
     try {
@@ -55,12 +57,12 @@ export function DisableTwoFactorDialog({ open, onOpenChange, onDisabled }: Disab
       setError("")
       onOpenChange(false)
       toast({
-        title: "Double authentification désactivée",
-        description: "Seul votre mot de passe sera demandé à la connexion.",
+        title: t("twoFactor.disableDialog.toastTitle"),
+        description: t("twoFactor.disableDialog.toastDescription"),
       })
       onDisabled?.()
     } catch {
-      setError("Mot de passe incorrect, ou trop de tentatives. Vérifiez-le puis réessayez.")
+      setError(t("twoFactor.disableDialog.passwordRejected"))
     }
   }
 
@@ -69,14 +71,11 @@ export function DisableTwoFactorDialog({ open, onOpenChange, onDisabled }: Disab
       <AlertDialogContent>
         <form onSubmit={submit} className="space-y-4" noValidate>
           <AlertDialogHeader>
-            <AlertDialogTitle>Désactiver la double authentification ?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Votre compte ne sera plus protégé que par son mot de passe. Pour confirmer, saisissez votre mot de passe
-              actuel.
-            </AlertDialogDescription>
+            <AlertDialogTitle>{t("twoFactor.disableDialog.title")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("twoFactor.disableDialog.description")}</AlertDialogDescription>
           </AlertDialogHeader>
           <div className="space-y-2">
-            <Label htmlFor="disable-2fa-password">Mot de passe actuel</Label>
+            <Label htmlFor="disable-2fa-password">{t("twoFactor.disableDialog.passwordLabel")}</Label>
             <Input
               id="disable-2fa-password"
               type="password"
@@ -97,11 +96,11 @@ export function DisableTwoFactorDialog({ open, onOpenChange, onDisabled }: Disab
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel type="button" disabled={loading}>
-              Annuler
+              {t("common:actions.cancel")}
             </AlertDialogCancel>
             <Button type="submit" variant="destructive" disabled={loading}>
               {loading && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-              Désactiver le 2FA
+              {t("twoFactor.disable")}
             </Button>
           </AlertDialogFooter>
         </form>

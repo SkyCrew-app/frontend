@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState } from "react"
+import { useTranslation } from "react-i18next"
 import { useQuery } from "@apollo/client"
 import { useRouter } from "next/navigation"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -29,15 +30,10 @@ import { PasswordForm } from "@/components/profile/password-form"
 import { DisableTwoFactorDialog } from "@/components/profile/disable-two-factor-dialog"
 import { LicensesSection } from "@/components/profile/licenses-section"
 
-const TABS = [
-  { value: "profile", label: "Profil" },
-  { value: "security", label: "Sécurité" },
-  { value: "notifications", label: "Notifications" },
-  { value: "preferences", label: "Préférences" },
-  { value: "licenses", label: "Licences" },
-]
+const TABS = ["profile", "security", "notifications", "preferences", "licenses"]
 
 export default function ProfilePage() {
+  const { t } = useTranslation("profile")
   const [activeTab, setActiveTab] = useState("profile")
   const [show2FAAlert, setShow2FAAlert] = useState(false)
   const [showDisable2FA, setShowDisable2FA] = useState(false)
@@ -79,8 +75,8 @@ export default function ProfilePage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Mon profil"
-        description="Vos informations personnelles, la sécurité de votre compte et vos préférences."
+        title={t("page.title")}
+        description={t("page.description")}
         className="mb-0"
       />
 
@@ -91,15 +87,15 @@ export default function ProfilePage() {
         </div>
       ) : errorUser && !user ? (
         <ErrorState
-          description="Votre profil n'a pas pu être chargé. Vérifiez votre connexion puis réessayez."
+          description={t("page.loadError")}
           onRetry={() => refetch()}
         />
       ) : (
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
             {TABS.map((tab) => (
-              <TabsTrigger key={tab.value} value={tab.value}>
-                {tab.label}
+              <TabsTrigger key={tab} value={tab}>
+                {t(`page.tabs.${tab}`)}
               </TabsTrigger>
             ))}
           </TabsList>
@@ -114,24 +110,21 @@ export default function ProfilePage() {
             <Card>
               <CardHeader>
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <CardTitle>Double authentification (2FA)</CardTitle>
+                  <CardTitle>{t("twoFactor.title")}</CardTitle>
                   {twoFactorKnown ? (
                     <Badge variant={twoFactorEnabled ? "success" : "neutral"}>
-                      {twoFactorEnabled ? "Activée" : "Désactivée"}
+                      {twoFactorEnabled ? t("twoFactor.enabled") : t("twoFactor.disabled")}
                     </Badge>
                   ) : twoFactorQuery.loading ? (
                     <Skeleton className="h-6 w-20 rounded-full" />
                   ) : null}
                 </div>
-                <CardDescription>
-                  En plus du mot de passe, un code à usage unique généré par une application sur votre téléphone est
-                  demandé à chaque connexion.
-                </CardDescription>
+                <CardDescription>{t("twoFactor.description")}</CardDescription>
               </CardHeader>
               {!twoFactorKnown && !twoFactorQuery.loading && (
                 <CardContent>
                   <p className="text-sm text-muted-foreground" role="alert">
-                    L&apos;état de la double authentification n&apos;a pas pu être vérifié.
+                    {t("twoFactor.statusUnknown")}
                   </p>
                 </CardContent>
               )}
@@ -139,17 +132,17 @@ export default function ProfilePage() {
                 {twoFactorKnown ? (
                   twoFactorEnabled ? (
                     <Button variant="outline" className="text-destructive" onClick={() => setShowDisable2FA(true)}>
-                      Désactiver le 2FA
+                      {t("twoFactor.disable")}
                     </Button>
                   ) : (
                     <Button variant="outline" onClick={() => setShow2FAAlert(true)}>
-                      Activer le 2FA
+                      {t("twoFactor.enable")}
                     </Button>
                   )
                 ) : (
                   !twoFactorQuery.loading && (
                     <Button variant="outline" onClick={() => twoFactorQuery.refetch()}>
-                      Réessayer
+                      {t("common:actions.retry")}
                     </Button>
                   )
                 )}
@@ -174,15 +167,12 @@ export default function ProfilePage() {
       <AlertDialog open={show2FAAlert} onOpenChange={setShow2FAAlert}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Activer la double authentification ?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Vous allez être dirigé vers la page de configuration. Munissez-vous de votre téléphone et d'une
-              application d'authentification.
-            </AlertDialogDescription>
+            <AlertDialogTitle>{t("twoFactor.enableDialog.title")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("twoFactor.enableDialog.description")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmActivate2FA}>Configurer le 2FA</AlertDialogAction>
+            <AlertDialogCancel>{t("common:actions.cancel")}</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmActivate2FA}>{t("twoFactor.enableDialog.confirm")}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

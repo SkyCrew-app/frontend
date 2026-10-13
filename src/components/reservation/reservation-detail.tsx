@@ -2,10 +2,11 @@
 
 import { useState } from "react"
 import { format } from "date-fns"
-import { fr } from "date-fns/locale"
+import { useTranslation } from "react-i18next"
 import { Loader2, Pencil, Trash2 } from "lucide-react"
 import { reservationStatus } from "@/lib/reservation-status"
 import { formatDate, formatFlightDuration, formatTime } from "@/lib/format"
+import { dateFnsLocale } from "@/lib/i18n"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -41,6 +42,7 @@ export function ReservationDetail({
   onDelete,
   canEdit,
 }: ReservationDetailProps) {
+  const { t } = useTranslation("reservations")
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 
@@ -62,7 +64,7 @@ export function ReservationDetail({
     <SidePanel
       open={open}
       onOpenChange={onOpenChange}
-      title="Détails de la réservation"
+      title={t("detail.title")}
       size="md"
       footerStart={
         canEdit ? (
@@ -72,7 +74,7 @@ export function ReservationDetail({
             onClick={() => setConfirmOpen(true)}
           >
             <Trash2 className="h-4 w-4" />
-            Supprimer
+            {t("common:actions.delete")}
           </Button>
         ) : undefined
       }
@@ -80,14 +82,14 @@ export function ReservationDetail({
         canEdit ? (
           <Button variant="outline" onClick={onEdit}>
             <Pencil className="h-4 w-4" />
-            Modifier
+            {t("common:actions.edit")}
           </Button>
         ) : undefined
       }
     >
       <div className="space-y-4">
         <div className="flex items-start justify-between gap-3">
-          <h3 className="text-lg font-semibold leading-tight">{reservation.purpose || "Réservation"}</h3>
+          <h3 className="text-lg font-semibold leading-tight">{reservation.purpose || t("shared.untitled")}</h3>
           <Badge variant={status.variant} className="shrink-0">
             {status.label}
           </Badge>
@@ -95,24 +97,24 @@ export function ReservationDetail({
 
         <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
           <div>
-            <dt className="text-xs text-muted-foreground">Avion</dt>
+            <dt className="text-xs text-muted-foreground">{t("common:labels.aircraft")}</dt>
             <dd className="font-medium">{reservation.aircraft.registration_number}</dd>
           </div>
           <div>
-            <dt className="text-xs text-muted-foreground">Pilote</dt>
+            <dt className="text-xs text-muted-foreground">{t("common:labels.pilot")}</dt>
             <dd className="font-medium">{pilot || "—"}</dd>
             {reservation.user?.email && <dd className="text-xs text-muted-foreground">{reservation.user.email}</dd>}
           </div>
           <div>
-            <dt className="text-xs text-muted-foreground">Date</dt>
+            <dt className="text-xs text-muted-foreground">{t("common:labels.date")}</dt>
             <dd className="font-medium">
               {format(new Date(reservation.start_time), "EEEE d MMMM yyyy", {
-                locale: fr,
+                locale: dateFnsLocale(),
               })}
             </dd>
           </div>
           <div>
-            <dt className="text-xs text-muted-foreground">Horaire</dt>
+            <dt className="text-xs text-muted-foreground">{t("detail.schedule")}</dt>
             <dd className="font-medium tabular-nums">{timeRange}</dd>
             <dd className="text-xs text-muted-foreground">
               {formatFlightDuration(reservationDurationHours(reservation))}
@@ -120,13 +122,13 @@ export function ReservationDetail({
           </div>
           {reservation.flight_category && (
             <div>
-              <dt className="text-xs text-muted-foreground">Catégorie de vol</dt>
+              <dt className="text-xs text-muted-foreground">{t("shared.flightCategory")}</dt>
               <dd className="font-medium">{flightCategoryLabel(reservation.flight_category)}</dd>
             </div>
           )}
           {reservation.notes && (
             <div className="col-span-2">
-              <dt className="text-xs text-muted-foreground">Notes</dt>
+              <dt className="text-xs text-muted-foreground">{t("common:labels.notes")}</dt>
               <dd className="whitespace-pre-wrap">{reservation.notes}</dd>
             </div>
           )}
@@ -135,15 +137,18 @@ export function ReservationDetail({
         <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Supprimer cette réservation ?</AlertDialogTitle>
+              <AlertDialogTitle>{t("detail.deleteConfirm.title")}</AlertDialogTitle>
               <AlertDialogDescription>
-                La réservation de {reservation.aircraft.registration_number} du {formatDate(reservation.start_time)}, de{" "}
-                {formatTime(reservation.start_time)} à {formatTime(reservation.end_time)}, sera définitivement supprimée
-                et le créneau redeviendra libre.
+                {t("detail.deleteConfirm.description", {
+                  aircraft: reservation.aircraft.registration_number,
+                  date: formatDate(reservation.start_time),
+                  start: formatTime(reservation.start_time),
+                  end: formatTime(reservation.end_time),
+                })}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel disabled={isDeleting}>Annuler</AlertDialogCancel>
+              <AlertDialogCancel disabled={isDeleting}>{t("common:actions.cancel")}</AlertDialogCancel>
               <AlertDialogAction
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 disabled={isDeleting}
@@ -153,7 +158,7 @@ export function ReservationDetail({
                 }}
               >
                 {isDeleting && <Loader2 className="h-4 w-4 animate-spin" />}
-                Supprimer la réservation
+                {t("detail.deleteConfirm.action")}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

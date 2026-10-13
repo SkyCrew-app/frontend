@@ -1,10 +1,12 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useTranslation } from "react-i18next"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { SidePanel } from "@/components/layout/SidePanel"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { roleLabel } from "@/lib/settings"
 import type { User, Role } from "@/interfaces/user"
 
 interface EditUserFormProps {
@@ -60,6 +62,7 @@ export function EditUserForm({
   saving = false,
   onSubmit,
 }: EditUserFormProps) {
+  const { t } = useTranslation("administration")
   const [values, setValues] = useState<Values>(() => valuesOf(user))
   const [errors, setErrors] = useState<Errors>({})
 
@@ -79,8 +82,8 @@ export function EditUserForm({
 
   const handleSubmit = () => {
     const nextErrors: Errors = {}
-    if (!values.first_name.trim()) nextErrors.first_name = "Indiquez le prénom."
-    if (!values.last_name.trim()) nextErrors.last_name = "Indiquez le nom."
+    if (!values.first_name.trim()) nextErrors.first_name = t("users.form.errors.firstName")
+    if (!values.last_name.trim()) nextErrors.last_name = t("users.form.errors.lastName")
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length > 0) return
 
@@ -97,17 +100,17 @@ export function EditUserForm({
     <SidePanel
       open={isOpen}
       onOpenChange={(next) => (next || !saving) && onOpenChange(next)}
-      title="Modifier le membre"
+      title={t("users.edit.title")}
       description={`${user.first_name} ${user.last_name}`}
       onSubmit={handleSubmit}
-      submitLabel="Enregistrer"
+      submitLabel={t("common:actions.save")}
       submitting={saving}
     >
       <div className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="edit_first_name">
-              Prénom
+              {t("users.fields.firstName")}
               <Required />
             </Label>
             <Input
@@ -122,7 +125,7 @@ export function EditUserForm({
           </div>
           <div className="space-y-2">
             <Label htmlFor="edit_last_name">
-              Nom
+              {t("users.fields.lastName")}
               <Required />
             </Label>
             <Input
@@ -137,7 +140,7 @@ export function EditUserForm({
           </div>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="edit_email">Adresse e-mail</Label>
+          <Label htmlFor="edit_email">{t("common:labels.email")}</Label>
           {/* The API finds the member by this address: changing it here would target another account. */}
           <Input
             id="edit_email"
@@ -149,23 +152,23 @@ export function EditUserForm({
             className="bg-muted text-muted-foreground"
           />
           <p id="edit_email_hint" className="text-xs text-muted-foreground">
-            L'adresse e-mail identifie le compte et ne peut pas être modifiée ici.
+            {t("users.edit.emailHint")}
           </p>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="edit_phone">Téléphone</Label>
+            <Label htmlFor="edit_phone">{t("common:labels.phone")}</Label>
             <Input
               id="edit_phone"
               name="phone_number"
               type="tel"
               value={values.phone_number}
               onChange={(e) => setField("phone_number", e.target.value)}
-              placeholder="06 12 34 56 78"
+              placeholder={t("users.edit.phonePlaceholder")}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="edit_date_of_birth">Date de naissance</Label>
+            <Label htmlFor="edit_date_of_birth">{t("users.fields.dateOfBirth")}</Label>
             <Input
               id="edit_date_of_birth"
               name="date_of_birth"
@@ -177,20 +180,20 @@ export function EditUserForm({
           </div>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="edit_role">Rôle</Label>
+          <Label htmlFor="edit_role">{t("users.fields.role")}</Label>
           <Select onValueChange={onRoleChange} defaultValue={user.role?.id.toString() || undefined}>
             <SelectTrigger id="edit_role">
-              <SelectValue placeholder="Choisir un rôle" />
+              <SelectValue placeholder={t("users.edit.chooseRole")} />
             </SelectTrigger>
             <SelectContent>
               {roles.map((role) => (
                 <SelectItem key={role.id} value={role.id.toString()}>
-                  {role.role_name}
+                  {roleLabel(role.role_name)}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <p className="text-xs text-muted-foreground">Le rôle détermine ce que le membre peut voir et modifier.</p>
+          <p className="text-xs text-muted-foreground">{t("users.edit.roleHint")}</p>
         </div>
       </div>
     </SidePanel>

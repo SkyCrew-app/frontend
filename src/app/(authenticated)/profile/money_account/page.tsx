@@ -1,16 +1,19 @@
 "use client"
 
+import { useTranslation } from "react-i18next"
 import AccountOverview from "@/components/account/AccountOverview"
 import TransactionHistory from "@/components/account/TransactionHistory"
 import TopUpAccount from "@/components/account/TopUpAccount"
 import { PageHeader } from "@/components/layout/PageHeader"
 
 export default function MoneyAccountPage() {
+  const { t } = useTranslation("profile")
+
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Mon compte"
-        description="Votre solde, le rechargement de votre compte et l'historique de vos transactions."
+        title={t("account.title")}
+        description={t("account.description")}
         className="mb-0"
       />
 

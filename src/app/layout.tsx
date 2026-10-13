@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import SkipLink from "@/components/navigation/SkipLink"
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -45,12 +46,7 @@ export default function RootLayout({
         className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}
       >
         <Providers>
-          <a
-            href="#main-content"
-            className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground focus:shadow-lg"
-          >
-            Aller au contenu principal
-          </a>
+          <SkipLink />
           <div className='bg-background'>
             {children}
           </div>

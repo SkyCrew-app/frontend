@@ -1,0 +1,223 @@
+{
+  "flightCategory": {
+    "LOCAL": "Local",
+    "CROSS_COUNTRY": "Navigation",
+    "INSTRUCTION": "Instruction",
+    "TOURISM": "Tourisme",
+    "TRAINING": "Entraînement",
+    "MAINTENANCE": "Maintenance",
+    "PRIVATE": "Privé",
+    "CORPORATE": "Affaires"
+  },
+  "weekday": {
+    "0": "Dimanche",
+    "1": "Lundi",
+    "2": "Mardi",
+    "3": "Mercredi",
+    "4": "Jeudi",
+    "5": "Vendredi",
+    "6": "Samedi"
+  },
+  "shared": {
+    "newReservation": "Nouvelle réservation",
+    "untitled": "Réservation",
+    "flightCategory": "Catégorie de vol"
+  },
+  "calendar": {
+    "title": "Calendrier des réservations",
+    "description": "Disponibilité des avions du club, jour par jour.",
+    "previousDay": "Jour précédent",
+    "nextDay": "Jour suivant",
+    "aircraftUnavailable": "Indisponible",
+    "loadError": "Les réservations de cette journée n'ont pas pu être chargées. Vérifiez votre connexion puis réessayez.",
+    "closed": {
+      "title": "Aéroclub fermé",
+      "description": "Votre aéroclub est fermé ce jour ({{day}})"
+    },
+    "noAircraft": {
+      "title": "Aucun avion à réserver",
+      "description": "Les avions du club apparaîtront ici dès qu'ils seront ajoutés à la flotte."
+    },
+    "noHours": {
+      "title": "Horaires de réservation non définis",
+      "description": "Un administrateur doit renseigner les heures d'ouverture du club dans les paramètres."
+    },
+    "freeSlot": "Réserver {{aircraft}} à {{time}}",
+    "legend": {
+      "label": "Légende",
+      "currentHour": "Heure en cours"
+    },
+    "hint": "Cliquez sur un créneau libre, ou glissez sur plusieurs, pour réserver.",
+    "mobile": {
+      "allAircraft": "Tous les avions",
+      "heading": "Réservations du {{date}}",
+      "aircraftFree": "Cet avion est libre toute la journée",
+      "noReservation": "Aucune réservation ce jour",
+      "emptyDescription": "Utilisez « Nouvelle réservation » pour réserver un créneau."
+    }
+  },
+  "form": {
+    "createTitle": "Créer une réservation",
+    "createDescription": "Vérifiez le créneau choisi, puis précisez votre vol.",
+    "editTitle": "Modifier la réservation",
+    "editDescription": "L'avion et l'horaire ne sont pas modifiables.",
+    "newDescription": "Choisissez l'avion, le jour et l'horaire de votre vol.",
+    "submitCreate": "Créer la réservation",
+    "aircraftPlaceholder": "Sélectionner un avion",
+    "purpose": "But de la réservation",
+    "purposePlaceholder": "Ex. : tours de piste, navigation vers Deauville",
+    "categoryPlaceholder": "Sélectionner une catégorie",
+    "notesPlaceholder": "Passagers, plein à prévoir, consignes particulières…",
+    "errors": {
+      "aircraft": "Veuillez sélectionner un avion.",
+      "closedDay": "L'aéroclub est fermé ce jour-là.",
+      "timeMissing": "Indiquez l'heure de début et l'heure de fin.",
+      "timeOrder": "L'heure de fin doit être après l'heure de début.",
+      "category": "Veuillez sélectionner une catégorie de vol."
+    }
+  },
+  "detail": {
+    "title": "Détails de la réservation",
+    "schedule": "Horaire",
+    "deleteConfirm": {
+      "title": "Supprimer cette réservation ?",
+      "description": "La réservation de {{aircraft}} du {{date}}, de {{start}} à {{end}}, sera définitivement supprimée et le créneau redeviendra libre.",
+      "action": "Supprimer la réservation"
+    }
+  },
+  "toast": {
+    "slotUnavailable": {
+      "title": "Créneau indisponible",
+      "description": "La sélection chevauche une réservation existante. Choisissez uniquement des créneaux libres."
+    },
+    "accountNotLoaded": {
+      "title": "Réservation impossible",
+      "description": "Votre compte n'est pas encore chargé. Réessayez dans un instant."
+    },
+    "categoryMissing": {
+      "title": "Catégorie de vol manquante",
+      "description": "Veuillez sélectionner une catégorie de vol."
+    },
+    "created": {
+      "title": "Réservation créée",
+      "description": "{{aircraft}} · {{date}} de {{start}} à {{end}}"
+    },
+    "refused": {
+      "title": "Réservation refusée",
+      "description": "La réservation n'a pas pu être créée. Vérifiez votre connexion puis réessayez."
+    },
+    "updated": {
+      "title": "Réservation mise à jour",
+      "description": "La réservation de {{aircraft}} a été modifiée."
+    },
+    "updateFailed": {
+      "title": "Modification impossible",
+      "description": "La réservation n'a pas pu être modifiée. Réessayez dans un instant."
+    },
+    "deleted": {
+      "title": "Réservation supprimée",
+      "description": "La réservation de {{aircraft}} a été supprimée."
+    },
+    "deleteFailed": {
+      "title": "Suppression impossible",
+      "description": "La réservation n'a pas pu être supprimée. Réessayez dans un instant."
+    },
+    "templateCreated": {
+      "title": "Modèle créé"
+    },
+    "templateUpdated": {
+      "title": "Modèle mis à jour"
+    },
+    "templateSaveFailed": {
+      "title": "Enregistrement impossible",
+      "description": "Le modèle n'a pas pu être enregistré. Réessayez dans un instant."
+    },
+    "templateDeleted": {
+      "title": "Modèle supprimé"
+    },
+    "templateDeleteFailed": {
+      "title": "Suppression impossible",
+      "description": "Le modèle n'a pas pu être supprimé. Réessayez dans un instant."
+    }
+  },
+  "my": {
+    "title": "Mes réservations",
+    "description": "Vos réservations d'avion et les modèles qui vous font gagner du temps.",
+    "tabs": {
+      "reservations": "Réservations",
+      "templates": "Modèles",
+      "templatesWithTotal": "Modèles ({{total}})"
+    },
+    "pager": {
+      "singular": "réservation",
+      "plural": "réservations"
+    },
+    "stats": {
+      "confirmed": "Confirmées",
+      "pending": "En attente",
+      "cancelled": "Annulées"
+    },
+    "filters": {
+      "searchLabel": "Rechercher une réservation",
+      "searchPlaceholder": "But ou immatriculation",
+      "statusLabel": "Filtrer par statut",
+      "allStatuses": "Tous les statuts",
+      "categoryLabel": "Filtrer par catégorie de vol",
+      "allCategories": "Toutes les catégories",
+      "sortLabel": "Trier les réservations",
+      "newestFirst": "Plus récentes d'abord",
+      "oldestFirst": "Plus anciennes d'abord"
+    },
+    "empty": {
+      "title": "Aucune réservation pour le moment",
+      "description": "Réservez un avion depuis le calendrier : vos réservations apparaîtront ici.",
+      "action": "Réserver un avion",
+      "filteredTitle": "Aucune réservation ne correspond",
+      "filteredDescription": "Modifiez la recherche ou les filtres pour retrouver vos réservations.",
+      "resetFilters": "Réinitialiser les filtres"
+    },
+    "card": {
+      "noPurpose": "But non précisé",
+      "viewFlightPlan": "Voir le plan de vol",
+      "createFlightPlan": "Créer un plan de vol"
+    }
+  },
+  "template": {
+    "intro": "Un modèle préremplit le formulaire de réservation pour vos vols habituels.",
+    "new": "Nouveau modèle",
+    "empty": {
+      "title": "Aucun modèle de réservation",
+      "description": "Enregistrez vos vols habituels (avion, horaire, catégorie) pour réserver en deux clics.",
+      "action": "Créer un modèle"
+    },
+    "card": {
+      "noDetails": "Aucun détail prérempli.",
+      "deleteLabel": "Supprimer le modèle {{name}}",
+      "editLabel": "Modifier le modèle {{name}}",
+      "use": "Réserver avec ce modèle"
+    },
+    "deleteConfirm": {
+      "title": "Supprimer ce modèle ?",
+      "description": "Le modèle « {{name}} » sera définitivement supprimé. Vos réservations existantes ne sont pas modifiées.",
+      "action": "Supprimer le modèle"
+    },
+    "form": {
+      "editTitle": "Modifier le modèle",
+      "submitCreate": "Créer le modèle",
+      "stepFlight": "Vol",
+      "stepSlot": "Créneau habituel",
+      "stepSlotDescription": "Facultatif : le jour et l'horaire proposés quand vous utilisez le modèle.",
+      "name": "Nom du modèle",
+      "namePlaceholder": "Ex. : vol du samedi matin",
+      "nameRequired": "Donnez un nom au modèle.",
+      "anyAircraft": "Au choix",
+      "purpose": "But du vol",
+      "purposePlaceholder": "Ex. : tours de piste",
+      "usualDay": "Jour habituel",
+      "flightHours": "Durée de vol (h)",
+      "flightHoursPlaceholder": "1,5",
+      "startTime": "Heure de début",
+      "endTime": "Heure de fin"
+    }
+  }
+}

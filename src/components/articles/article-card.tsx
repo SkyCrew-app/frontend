@@ -1,10 +1,12 @@
 "use client"
 
 import Link from "next/link"
+import { useTranslation } from "react-i18next"
 import { ArrowRight, Calendar, Clock } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 import { formatDate } from "@/lib/format"
+import i18n from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 import { ArticleImage } from "./article-image"
 
@@ -26,8 +28,25 @@ interface ArticleCardProps {
 
 const MAX_TAGS = 3
 
+// The club's themes are stored in French: the stored value stays, only its label follows the language.
+const TAG_KEYS: Record<string, string> = {
+  Actualités: "news",
+  Événements: "events",
+  Formation: "training",
+  Réglementation: "regulation",
+  Sécurité: "safety",
+  Technique: "technical",
+  Information: "information",
+}
+
+export const articleTagLabel = (tag: string): string =>
+  Object.prototype.hasOwnProperty.call(TAG_KEYS, tag)
+    ? i18n.t(`articles:tags.${TAG_KEYS[tag]}`, { defaultValue: tag })
+    : tag
+
 /** One article in the news list. Same anatomy in both views: picture, date, title, summary, tags. */
 export function ArticleCard({ article, viewMode }: ArticleCardProps) {
+  const { t } = useTranslation("articles")
   const isList = viewMode === "list"
   const tags = article.tags ?? []
 
@@ -53,12 +72,12 @@ export function ArticleCard({ article, viewMode }: ArticleCardProps) {
             {article.eventDate ? (
               <>
                 <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
-                Événement du {formatDate(article.eventDate)}
+                {t("card.eventOn", { date: formatDate(article.eventDate) })}
               </>
             ) : (
               <>
                 <Clock className="h-3.5 w-3.5" aria-hidden="true" />
-                Publié le {formatDate(article.createdAt)}
+                {t("shared.publishedOn", { date: formatDate(article.createdAt) })}
               </>
             )}
           </p>
@@ -72,13 +91,13 @@ export function ArticleCard({ article, viewMode }: ArticleCardProps) {
             <div className="flex flex-wrap gap-1">
               {tags.slice(0, MAX_TAGS).map((tag) => (
                 <Badge key={tag} variant="secondary">
-                  {tag}
+                  {articleTagLabel(tag)}
                 </Badge>
               ))}
               {tags.length > MAX_TAGS && <Badge variant="outline">+{tags.length - MAX_TAGS}</Badge>}
             </div>
             <span className="ml-auto inline-flex items-center gap-2 text-sm font-medium text-primary group-hover:underline">
-              Lire l'article
+              {t("card.read")}
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </span>
           </div>

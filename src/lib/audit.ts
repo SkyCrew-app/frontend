@@ -1,3 +1,5 @@
+import i18n from "@/lib/i18n"
+
 // Pure helpers turning the audit forms' state into what the GraphQL API accepts.
 
 export interface AuditTemplateItemInput {
@@ -174,62 +176,72 @@ interface AuditBadge {
   variant: AuditBadgeVariant
 }
 
-const UNKNOWN: AuditBadge = { label: "Non renseigné", variant: "neutral" }
+// Labels are read when they are shown, so that they follow the language.
+const unknownLabel = () => i18n.t("administration:auditUnknown")
 
-const RESULTS: Record<string, AuditBadge> = {
-  CONFORME: { label: "Conforme", variant: "success" },
-  NON_CONFORME: { label: "Non conforme", variant: "danger" },
-  CONFORME_AVEC_REMARQUES: { label: "Conforme avec remarques", variant: "warning" },
-  NON_APPLICABLE: { label: "Non applicable", variant: "neutral" },
+const badge = (family: string, variants: Record<string, AuditBadgeVariant>, code: string | null | undefined): AuditBadge =>
+  code && Object.prototype.hasOwnProperty.call(variants, code)
+    ? { label: i18n.t(`administration:${family}.${code}`), variant: variants[code] }
+    : { label: unknownLabel(), variant: "neutral" }
+
+const label = (family: string, codes: readonly string[], code: string | null | undefined): string =>
+  code && codes.includes(code) ? i18n.t(`administration:${family}.${code}`) : unknownLabel()
+
+const RESULTS: Record<string, AuditBadgeVariant> = {
+  CONFORME: "success",
+  NON_CONFORME: "danger",
+  CONFORME_AVEC_REMARQUES: "warning",
+  NON_APPLICABLE: "neutral",
 }
 
-export const auditResult = (result: string | null | undefined): AuditBadge => RESULTS[result ?? ""] ?? UNKNOWN
+export const auditResult = (result: string | null | undefined): AuditBadge => badge("auditResult", RESULTS, result)
 
 export const auditStatus = (
   audit: { is_closed?: boolean | null; next_audit_date?: string | Date | null },
   now: Date = new Date(),
 ): AuditBadge => {
-  if (audit.is_closed) return { label: "Clôturé", variant: "success" }
-  if (isAuditOverdue(audit, now)) return { label: "En retard", variant: "danger" }
-  return { label: "En cours", variant: "info" }
+  if (audit.is_closed) return { label: i18n.t("administration:auditStatus.closed"), variant: "success" }
+  if (isAuditOverdue(audit, now)) return { label: i18n.t("administration:auditStatus.overdue"), variant: "danger" }
+  return { label: i18n.t("administration:auditStatus.inProgress"), variant: "info" }
 }
 
-const CRITICALITIES: Record<string, AuditBadge> = {
-  CRITIQUE: { label: "Critique", variant: "danger" },
-  MAJEUR: { label: "Majeur", variant: "warning" },
-  MINEUR: { label: "Mineur", variant: "info" },
-  INFO: { label: "Information", variant: "neutral" },
+const CRITICALITIES: Record<string, AuditBadgeVariant> = {
+  CRITIQUE: "danger",
+  MAJEUR: "warning",
+  MINEUR: "info",
+  INFO: "neutral",
 }
 
-export const auditCriticality = (level: string | null | undefined): AuditBadge => CRITICALITIES[level ?? ""] ?? UNKNOWN
+export const auditCriticality = (level: string | null | undefined): AuditBadge =>
+  badge("auditCriticality", CRITICALITIES, level)
 
-const FREQUENCIES: Record<string, string> = {
-  QUOTIDIEN: "Quotidien",
-  HEBDOMADAIRE: "Hebdomadaire",
-  MENSUEL: "Mensuel",
-  TRIMESTRIEL: "Trimestriel",
-  SEMESTRIEL: "Semestriel",
-  ANNUEL: "Annuel",
-  BIANNUEL: "Tous les 2 ans",
-  HEURES_DE_VOL: "Selon les heures de vol",
-  APRES_INCIDENT: "Après incident",
-  AUTRE: "Autre",
-}
+const FREQUENCIES = [
+  "QUOTIDIEN",
+  "HEBDOMADAIRE",
+  "MENSUEL",
+  "TRIMESTRIEL",
+  "SEMESTRIEL",
+  "ANNUEL",
+  "BIANNUEL",
+  "HEURES_DE_VOL",
+  "APRES_INCIDENT",
+  "AUTRE",
+]
 
 export const auditFrequencyLabel = (frequency: string | null | undefined): string =>
-  FREQUENCIES[frequency ?? ""] ?? UNKNOWN.label
+  label("auditFrequency", FREQUENCIES, frequency)
 
-const CATEGORIES: Record<string, string> = {
-  CELLULE: "Cellule",
-  MOTEUR: "Moteur",
-  AVIONIQUE: "Avionique",
-  TRAIN_ATTERRISSAGE: "Train d'atterrissage",
-  SYSTEME_CARBURANT: "Système carburant",
-  SYSTEME_ELECTRIQUE: "Système électrique",
-  DOCUMENTATION: "Documentation",
-  EQUIPEMENT_SECURITE: "Équipement de sécurité",
-  AUTRE: "Autre",
-}
+const CATEGORIES = [
+  "CELLULE",
+  "MOTEUR",
+  "AVIONIQUE",
+  "TRAIN_ATTERRISSAGE",
+  "SYSTEME_CARBURANT",
+  "SYSTEME_ELECTRIQUE",
+  "DOCUMENTATION",
+  "EQUIPEMENT_SECURITE",
+  "AUTRE",
+]
 
 export const auditCategoryLabel = (category: string | null | undefined): string =>
-  CATEGORIES[category ?? ""] ?? UNKNOWN.label
+  label("auditCategory", CATEGORIES, category)

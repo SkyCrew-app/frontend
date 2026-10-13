@@ -1,5 +1,6 @@
 "use client"
 
+import i18n from "@/lib/i18n"
 import * as React from "react"
 import useEmblaCarousel, {
   type UseEmblaCarouselType,
@@ -217,7 +218,7 @@ const CarouselPrevious = React.forwardRef<
       {...props}
     >
       <ArrowLeft className="h-4 w-4" />
-      <span className="sr-only">Précédent</span>
+      <span className="sr-only">{i18n.t("common:actions.previous")}</span>
     </Button>
   )
 })
@@ -246,7 +247,7 @@ const CarouselNext = React.forwardRef<
       {...props}
     >
       <ArrowRight className="h-4 w-4" />
-      <span className="sr-only">Suivant</span>
+      <span className="sr-only">{i18n.t("common:actions.next")}</span>
     </Button>
   )
 })

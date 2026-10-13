@@ -1,0 +1,1175 @@
+{
+  "home": {
+    "title": "Administration",
+    "description": "The club's activity at a glance.",
+    "noRole": "No role",
+    "stats": {
+      "members": "Members",
+      "aircraft": "Aircraft",
+      "available_one": "{{count}} available",
+      "available_other": "{{count}} available",
+      "bookings": "Bookings",
+      "pending": "{{count}} pending",
+      "flightHoursThisMonth": "Flight hours this month"
+    },
+    "attention": {
+      "title": "Needs attention",
+      "empty": "Nothing to report for now.",
+      "pendingBookings_one": "{{count}} pending booking",
+      "pendingBookings_other": "{{count}} pending bookings",
+      "pendingBookingsHint": "To confirm or decline in the schedule.",
+      "unavailableAircraft_one": "{{count}} aircraft unavailable",
+      "unavailableAircraft_other": "{{count}} aircraft unavailable",
+      "unavailableAircraftHint": "In maintenance or removed from the schedule.",
+      "severeIncidents_one": "{{count}} recent high-severity incident",
+      "severeIncidents_other": "{{count}} recent high-severity incidents"
+    },
+    "recentActivity": "Recent activity",
+    "bookings": {
+      "title": "Latest bookings",
+      "link": "Schedule",
+      "empty": "No recent bookings"
+    },
+    "flights": {
+      "title": "Latest flights",
+      "empty": "No recent flights"
+    },
+    "incidents": {
+      "title": "Latest incidents",
+      "empty": "No recent incidents"
+    },
+    "membersByRole": {
+      "title": "Members by role",
+      "link": "Members",
+      "empty": "No members yet."
+    },
+    "bookingsByFlightType": {
+      "title": "Bookings by flight type",
+      "empty": "No bookings yet."
+    },
+    "distribution": {
+      "share": "{{value}} {{unit}} · {{share}}%"
+    }
+  },
+  "users": {
+    "title": "Members",
+    "description": "The club's members, their roles and their licences.",
+    "noRole": "No role",
+    "searchMember": "Search for a member",
+    "fields": {
+      "firstName": "First name",
+      "lastName": "Last name",
+      "dateOfBirth": "Date of birth",
+      "role": "Role"
+    },
+    "account": {
+      "active": "Active",
+      "pending": "Invitation pending"
+    },
+    "twoFactor": {
+      "enabled": "Enabled",
+      "disabled": "Disabled"
+    },
+    "filters": {
+      "searchPlaceholder": "Name or email address",
+      "byRole": "Filter by role",
+      "allRoles": "All roles",
+      "byAccount": "Filter by account status",
+      "allAccounts": "All accounts",
+      "accountActive": "Account active",
+      "byTwoFactor": "Filter by two-factor authentication",
+      "twoFactorAll": "2FA: all",
+      "twoFactorEnabled": "2FA enabled",
+      "twoFactorDisabled": "2FA disabled"
+    },
+    "table": {
+      "member": "Member",
+      "account": "Account",
+      "twoFactor": "2FA",
+      "actionsFor": "Actions for {{name}}",
+      "viewDetails": "View details",
+      "resetFilters": "Reset filters",
+      "noMatch": {
+        "title": "No matching members",
+        "description": "Change the search or the filters to widen the list."
+      },
+      "empty": {
+        "title": "No members yet",
+        "description": "Add a first member: they will receive an email to activate their account."
+      }
+    },
+    "pagination": {
+      "range": "{{from}}–{{to}} of {{total}} {{label}}",
+      "members_one": "member",
+      "members_other": "members",
+      "bookings_one": "booking",
+      "bookings_other": "bookings",
+      "licences_one": "licence",
+      "licences_other": "licences"
+    },
+    "form": {
+      "errors": {
+        "firstName": "Enter the first name.",
+        "lastName": "Enter the last name.",
+        "email": "Enter the email address.",
+        "emailInvalid": "This email address is not valid.",
+        "dateOfBirth": "Enter the date of birth.",
+        "dateOfBirthFuture": "The date of birth cannot be in the future."
+      }
+    },
+    "create": {
+      "title": "Add a member",
+      "description": "The member will receive an email to activate their account and choose a password.",
+      "submit": "Add member",
+      "firstNamePlaceholder": "Camille",
+      "lastNamePlaceholder": "Martin",
+      "emailPlaceholder": "camille.martin@example.com"
+    },
+    "edit": {
+      "title": "Edit member",
+      "emailHint": "The email address identifies the account and cannot be changed here.",
+      "phonePlaceholder": "07700 900123",
+      "chooseRole": "Choose a role",
+      "roleHint": "The role determines what the member can see and change."
+    },
+    "licence": {
+      "add": "Add a licence",
+      "description": "Record a member's licence or rating.",
+      "submit": "Add licence",
+      "steps": {
+        "licence": "Licence",
+        "validity": "Validity and supporting documents"
+      },
+      "member": "Member",
+      "chooseMember": "Choose a member",
+      "noMemberFound": "No member found.",
+      "type": "Licence type",
+      "chooseType": "Choose a type",
+      "types": {
+        "PPL": "PPL – private pilot",
+        "CPL": "CPL – commercial pilot",
+        "ATPL": "ATPL – airline transport pilot",
+        "FI": "FI – flight instructor"
+      },
+      "number": "Licence number",
+      "authority": "Issuing authority",
+      "issueDate": "Date of issue",
+      "chooseDate": "Choose a date",
+      "expirationDate": "Expiry date",
+      "noExpiration": "No expiry",
+      "documents": "Supporting documents",
+      "documentsHint": "Optional. Scan or photo of the licence; several files allowed.",
+      "errors": {
+        "member": "Choose the member concerned.",
+        "type": "Choose the licence type.",
+        "number": "Enter the licence number.",
+        "issueDate": "Enter the date of issue.",
+        "expirationBeforeIssue": "The expiry date cannot be before the date of issue."
+      }
+    },
+    "details": {
+      "title": "Member details",
+      "description": "Information, bookings and licences.",
+      "tabs": {
+        "info": "Information",
+        "bookings": "Bookings ({{total}})",
+        "licences": "Licences ({{total}})"
+      },
+      "contact": "Contact details",
+      "postalAddress": "Postal address",
+      "activity": "Activity",
+      "flightHours": "Flight hours",
+      "accountBalance": "Account balance",
+      "slot": "Slot",
+      "noBookings": {
+        "title": "No bookings",
+        "description": "This member has not booked an aircraft yet."
+      },
+      "licence": "Licence",
+      "authority": "Authority",
+      "issued": "Issued",
+      "expiry": "Expiry",
+      "licenceExpired": "Expired",
+      "licenceValid": "Valid",
+      "document": "Document {{number}}",
+      "noLicences": "No licences recorded"
+    },
+    "toast": {
+      "retryLater": "Try again in a moment.",
+      "created": {
+        "title": "Member added",
+        "description": "They will receive an email to activate their account."
+      },
+      "createFailed": {
+        "title": "The member could not be added",
+        "description": "Check that this email address is not already in use, then try again."
+      },
+      "updated": {
+        "title": "Member updated"
+      },
+      "updateFailed": {
+        "title": "The changes could not be saved"
+      },
+      "detailsFailed": {
+        "title": "The member's details could not be loaded"
+      },
+      "licenceAdded": {
+        "title": "Licence added"
+      },
+      "licenceFailed": {
+        "title": "The licence could not be added",
+        "description": "Check the information entered, then try again."
+      }
+    }
+  },
+  "finance": {
+    "title": "Finances",
+    "description": "The club's revenue, expenses and forecasts.",
+    "loading": "Loading data",
+    "percent": "{{value}}%",
+    "tabs": {
+      "summary": "Summary",
+      "expenses": "Expenses",
+      "operating": "Costs per aircraft",
+      "forecast": "Forecasts"
+    },
+    "labels": {
+      "revenue": "Revenue",
+      "expenses": "Expenses",
+      "netResult": "Net result",
+      "result": "Result",
+      "averageRevenuePerMember": "Average revenue per member",
+      "fuel": "Fuel",
+      "maintenance": "Maintenance",
+      "amount": "Amount"
+    },
+    "period": {
+      "type": "Period type",
+      "monthly": "By month",
+      "annual": "By year",
+      "month": "Month",
+      "year": "Year",
+      "range": "From {{from}} to {{to}}"
+    },
+    "export": {
+      "title": "Export the financial report",
+      "description": "Choose the format and the period to include in the report.",
+      "exporting": "Exporting…",
+      "format": "Format",
+      "spreadsheet": "Spreadsheet (Excel)",
+      "from": "From",
+      "to": "To",
+      "chooseDate": "Choose a date",
+      "invalidRange": "The end date must be after the start date.",
+      "toast": {
+        "done": {
+          "title": "Report generated",
+          "description": "The file opens in a new tab."
+        },
+        "failed": {
+          "title": "Could not export",
+          "description": "The report could not be generated. Try again in a moment."
+        }
+      }
+    },
+    "summary": {
+      "noPreviousReport": "No previous report",
+      "lastReport": "Last report: {{change}}",
+      "reportOf": "Report of {{date}}",
+      "empty": {
+        "title": "No financial reports",
+        "description": "The summary will appear here once a first report has been generated."
+      },
+      "trend": {
+        "title": "Trend",
+        "description_one": "Revenue, expenses and net result of the recorded reports.",
+        "description_other": "Revenue, expenses and net result of the {{count}} recorded reports."
+      },
+      "reports": {
+        "title": "Reports",
+        "description": "Most recent first.",
+        "resultChange": "Change in result"
+      },
+      "recommendations": {
+        "title": "Recommendations",
+        "description": "From the report of {{date}}."
+      }
+    },
+    "expenses": {
+      "empty": {
+        "title": "No expenses in this period",
+        "description": "From {{from}} to {{to}}. Change the period or add an expense."
+      },
+      "total": "Total expenses",
+      "count": "Number of expenses",
+      "average": "Average expense",
+      "topCategory": "Largest category",
+      "byCategory": "Breakdown by category",
+      "share": "Share",
+      "detail": {
+        "title": "Expense details",
+        "description": "Most recent first.",
+        "shown": "{{shown}} of {{total}} expenses shown",
+        "showMore": "Show more"
+      }
+    },
+    "operating": {
+      "empty": {
+        "title": "No aircraft in the fleet",
+        "description": "Costs per aircraft will appear here once an aircraft has been added."
+      },
+      "flightRevenue": "Flight revenue",
+      "confirmedBookings": "Confirmed bookings",
+      "fuelEstimate": "Estimated at {{price}} per litre",
+      "profitable": "Fleet profitable over the period",
+      "unprofitable": "Costs higher than revenue",
+      "chartTitle": "Costs and revenue per aircraft",
+      "tableTitle": "Details per aircraft",
+      "tableDescription": "Revenue is calculated from the hours booked, fuel from each aircraft's hourly consumption."
+    },
+    "forecast": {
+      "error": "The forecasts could not be calculated. Check your connection and try again.",
+      "monthlyAverage": "Monthly average: {{amount}}",
+      "revenue": "Forecast revenue",
+      "expenses": "Forecast expenses",
+      "netResult": "Forecast net result",
+      "surplus": "Surplus over {{months}} months",
+      "deficit": "Deficit over {{months}} months",
+      "title": "{{months}}-month forecast",
+      "description": "Month-by-month estimate, starting from the current month.",
+      "byMonth": "Details by month"
+    },
+    "expenseForm": {
+      "title": "Add an expense",
+      "description": "It will be counted in the expenses of the corresponding period.",
+      "submit": "Save expense",
+      "amountPlaceholder": "120.50",
+      "chooseCategory": "Choose a category",
+      "descriptionPlaceholder": "E.g. 50-hour check on F-GABC",
+      "error": "The expense could not be saved. Try again in a moment.",
+      "errors": {
+        "amount": "Enter the amount of the expense.",
+        "amountPositive": "The amount must be greater than €0.",
+        "category": "Choose a category."
+      },
+      "toast": {
+        "title": "Expense saved",
+        "description": "{{amount}} on {{date}}."
+      }
+    }
+  },
+  "audits": {
+    "title": "Safety audits",
+    "description": "Follow the aircraft safety audits and the templates used to carry them out.",
+    "newAudit": "New audit",
+    "search": "Search for an audit",
+    "searchPlaceholder": "Registration, auditor, note…",
+    "allAircraft": "All aircraft",
+    "auditOf": "Audit of {{date}}",
+    "tabs": {
+      "audits": "Audits",
+      "templates": "Audit templates"
+    },
+    "stats": {
+      "total": "Audits",
+      "open": "In progress",
+      "closed": "Closed",
+      "overdue": "Overdue"
+    },
+    "statusTabs": {
+      "all": "All",
+      "open": "In progress",
+      "closed": "Closed",
+      "nonconform": "Non-compliant",
+      "overdue": "Overdue"
+    },
+    "fields": {
+      "aircraft": "Aircraft",
+      "auditor": "Auditor",
+      "auditDate": "Audit date",
+      "result": "Result",
+      "frequency": "Frequency",
+      "nextAudit": "Next audit",
+      "correctiveActions": "Corrective actions",
+      "checkedItems": "Items checked"
+    },
+    "form": {
+      "steps": {
+        "audit": "Audit"
+      },
+      "selectDate": "Select a date",
+      "selectResult": "Select a result",
+      "selectFrequency": "Select a frequency",
+      "selectCategory": "Select a category",
+      "notPlanned": "Not planned",
+      "nextAuditHint": "The next audit is calculated from the date and the frequency; you can change it."
+    },
+    "list": {
+      "columns": {
+        "audit_date": "Date",
+        "aircraft": "Aircraft",
+        "auditor": "Auditor",
+        "audit_result": "Result",
+        "next_audit_date": "Next audit"
+      },
+      "actionsFor": "Actions for the audit of {{date}}",
+      "viewDetails": "View details",
+      "noMatch": {
+        "title": "No matching audits",
+        "description": "Change the search, the filters or the selected tab."
+      },
+      "empty": {
+        "title": "No audits yet",
+        "description": "Record an aircraft's first safety audit."
+      },
+      "deleteConfirm": {
+        "title": "Delete this audit?",
+        "description": "The audit of {{date}} for aircraft {{registration}} and its checked items will be permanently deleted."
+      },
+      "toast": {
+        "deleted": "Audit deleted",
+        "deleteFailed": {
+          "title": "Could not delete",
+          "description": "The audit could not be deleted. Try again in a moment."
+        }
+      }
+    },
+    "filters": {
+      "button": "Filters",
+      "title": "Filter audits",
+      "description": "Filters apply as soon as you choose them.",
+      "allResults": "All results",
+      "allFrequencies": "All frequencies",
+      "from": "Audited from",
+      "startDate": "Start date",
+      "until": "Until",
+      "endDate": "End date",
+      "show": "View audits",
+      "chips": {
+        "aircraft": "Aircraft: {{value}}",
+        "removeAircraft": "Remove the aircraft filter",
+        "result": "Result: {{value}}",
+        "removeResult": "Remove the result filter",
+        "frequency": "Frequency: {{value}}",
+        "removeFrequency": "Remove the frequency filter",
+        "range": "From {{from}} to {{to}}",
+        "removePeriod": "Remove the period filter"
+      }
+    },
+    "statistics": {
+      "title": "Statistics",
+      "periodLabel": "Statistics period",
+      "period": "Period",
+      "lastMonths": "Last {{months}} months",
+      "empty": "No audits in this period.",
+      "tooltipLabel": "{{name}}:",
+      "byMonth": "Audits by month",
+      "byAircraft": "Audits by aircraft",
+      "byResult": "Breakdown by result",
+      "byStatus": "Breakdown by status",
+      "results": {
+        "conform": "Compliant",
+        "withRemarks": "With remarks",
+        "nonConform": "Non-compliant"
+      }
+    },
+    "details": {
+      "close": "Close the audit",
+      "closedOn": "Closed on",
+      "closedBy": "Closed by",
+      "noNotes": "No notes.",
+      "noCorrectiveActions": "No corrective actions.",
+      "noItems": "This audit has no checked items.",
+      "actionRequired": "Corrective action required",
+      "photoRequired": "Photo required",
+      "inspectionMethod": "Inspection method: ",
+      "expectedResult": "Expected result: ",
+      "documentation": "Documentation: ",
+      "closeConfirm": {
+        "title": "Close this audit?",
+        "description": "The audit of {{date}} for aircraft {{registration}} will be marked as closed in your name."
+      },
+      "toast": {
+        "closed": "Audit closed",
+        "closeFailed": {
+          "title": "Could not close",
+          "description": "The audit could not be closed. Try again in a moment."
+        }
+      }
+    },
+    "create": {
+      "title": "Create an audit",
+      "description": "Record an aircraft's safety audit, with or without a template.",
+      "submit": "Create audit",
+      "steps": {
+        "template": "Template",
+        "planning": "Planning"
+      },
+      "selectAircraft": "Select an aircraft",
+      "selectAuditor": "Select an auditor",
+      "notesPlaceholder": "E.g. audit carried out after the 100-hour check",
+      "errors": {
+        "aircraft": "Choose the aircraft audited.",
+        "auditor": "Choose the auditor."
+      },
+      "template": {
+        "change": "Change",
+        "choose": "Choose a template",
+        "hint": "Optional: a template adds the list of items to check to the audit.",
+        "itemsCreated_one": "{{count}} item to check will be created with the audit.",
+        "itemsCreated_other": "{{count}} items to check will be created with the audit.",
+        "fillLater": "You will enter their results by editing the audit.",
+        "moreItems_one": "and {{count}} other item.",
+        "moreItems_other": "and {{count}} other items.",
+        "noItems": "This template has no items to check."
+      },
+      "toast": {
+        "created": "Audit created",
+        "failed": {
+          "title": "Could not create",
+          "description": "The audit could not be created. Check the information and try again."
+        }
+      }
+    },
+    "edit": {
+      "title": "Edit audit",
+      "steps": {
+        "findings": "Findings"
+      },
+      "notesPlaceholder": "E.g. slight corrosion on the engine cowling, to be monitored",
+      "correctiveActionsPlaceholder": "E.g. replace the fuel hose before the next flight",
+      "itemNotesPlaceholder": "E.g. oil topped up, 0.5 L",
+      "requiresAction": "Requires corrective action",
+      "itemsToFill_one": "{{count}} item to fill in.",
+      "itemsToFill_other": "{{count}} items to fill in.",
+      "toast": {
+        "updated": "Audit updated",
+        "failed": {
+          "title": "Could not save",
+          "description": "The audit could not be updated. Try again in a moment."
+        },
+        "partial": {
+          "title": "Partly saved",
+          "description_one": "The audit is updated, but {{count}} item out of {{total}} could not be saved. Try again.",
+          "description_other": "The audit is updated, but {{count}} items out of {{total}} could not be saved. Try again."
+        }
+      }
+    },
+    "templateSelector": {
+      "title": "Choose an audit template",
+      "description": "The template adds the list of items to check to the audit.",
+      "descriptionForType": "Templates intended for the {{type}} appear first.",
+      "submit": "Use this template",
+      "search": "Search for a template",
+      "searchPlaceholder": "Template name or aircraft type…",
+      "recommended": "Recommended",
+      "itemCount_zero": "{{count}} items",
+      "itemCount_one": "{{count}} item",
+      "itemCount_other": "{{count}} items",
+      "empty": {
+        "title": "No template found",
+        "search": "Change your search.",
+        "none": "No active template is available. Create one in the “Audit templates” tab."
+      }
+    },
+    "templates": {
+      "intro": "A template provides the list of items to check during an audit.",
+      "new": "New template",
+      "active": "Active",
+      "inactive": "Inactive",
+      "actionsFor": "Actions for the template {{name}}",
+      "duplicate": "Duplicate",
+      "copyName": "{{name}} (copy)",
+      "recommendedFrequency": "Recommended frequency",
+      "aircraftTypes": "Aircraft types",
+      "allTypes": "All",
+      "itemsToCheck_zero": "{{count}} items to check",
+      "itemsToCheck_one": "{{count}} item to check",
+      "itemsToCheck_other": "{{count}} items to check",
+      "noItems": "No items in this template.",
+      "empty": {
+        "title": "No audit templates",
+        "description": "Create a first template to prepare the list of items to check."
+      },
+      "deleteConfirm": {
+        "title": "Delete this template?",
+        "description": "The template “{{name}}” and its items will be permanently deleted. Audits already carried out are not changed."
+      },
+      "toast": {
+        "created": "Template created",
+        "createFailed": {
+          "title": "Could not create",
+          "description": "The template could not be created. Check the information and try again."
+        },
+        "updated": "Template updated",
+        "updateFailed": {
+          "title": "Could not save",
+          "description": "The template could not be updated. Try again in a moment."
+        },
+        "deleted": "Template deleted",
+        "deleteFailed": {
+          "title": "Could not delete",
+          "description": "The template could not be deleted. Try again in a moment."
+        },
+        "noUser": "User not identified, please try again in a moment."
+      },
+      "form": {
+        "createTitle": "Create an audit template",
+        "editTitle": "Edit the audit template",
+        "description": "Describe the template, then list the items to check in inspection order.",
+        "createSubmit": "Create template",
+        "steps": {
+          "general": "General information",
+          "items": "Items to check"
+        },
+        "name": "Template name",
+        "namePlaceholder": "E.g. DR400 annual inspection",
+        "descriptionPlaceholder": "E.g. full check of the airframe and engine before the season",
+        "active": "Active template",
+        "activeHint": "An inactive template is no longer offered when creating an audit.",
+        "aircraftConcerned": "Aircraft concerned",
+        "aircraftType": "Aircraft type",
+        "aircraftTypePlaceholder": "E.g. DR400",
+        "noAircraftType": "No type specified: the template applies to all aircraft.",
+        "dragHint": "Drag the handle to change the order.",
+        "noItems": "No items yet. Add the points to check during the audit.",
+        "move": "Move",
+        "moveNamed": "Move {{name}}",
+        "editNamed": "Edit {{name}}",
+        "removeNamed": "Remove {{name}}",
+        "removeFromTemplate": "Remove from template",
+        "errors": {
+          "name": "Enter the template name.",
+          "items": "Add at least one item to check."
+        }
+      },
+      "item": {
+        "add": "Add an item",
+        "edit": "Edit item",
+        "description": "A point to check during the audit.",
+        "save": "Save item",
+        "addSubmit": "Add item",
+        "steps": {
+          "item": "Item",
+          "inspection": "Inspection"
+        },
+        "title": "Title",
+        "titlePlaceholder": "E.g. Engine oil level",
+        "descriptionPlaceholder": "E.g. check the level on the dipstick, engine cold",
+        "criticality": "Criticality",
+        "selectLevel": "Select a level",
+        "inspectionMethod": "Inspection method",
+        "inspectionMethodPlaceholder": "E.g. visual check",
+        "expectedResult": "Expected result",
+        "expectedResultPlaceholder": "E.g. level between min and max",
+        "reference": "Reference documentation",
+        "referencePlaceholder": "E.g. maintenance manual, chapter 12",
+        "options": "Options",
+        "mandatory": "Mandatory item",
+        "photo": "Photo to attach as evidence",
+        "errors": {
+          "title": "Enter the item title."
+        }
+      }
+    }
+  },
+  "incidents": {
+    "title": "Incidents",
+    "description": "Follow up the incidents reported by pilots when they close their flights.",
+    "loading": "Loading incidents",
+    "stats": {
+      "open": "Open",
+      "inProgress": "In progress",
+      "resolved": "Resolved",
+      "highSeverity": "High severity",
+      "unresolved": "Unresolved"
+    },
+    "filters": {
+      "search": "Search incidents",
+      "searchPlaceholder": "Description, aircraft or pilot",
+      "bySeverity": "Filter by severity",
+      "allSeverities": "All severities",
+      "byStatus": "Filter by status",
+      "allStatuses": "All statuses",
+      "byAircraft": "Filter by aircraft",
+      "allAircraft": "All aircraft"
+    },
+    "fields": {
+      "aircraft": "Aircraft",
+      "severity": "Severity",
+      "priority": "Priority"
+    },
+    "table": {
+      "rowLabel": "Incident of {{date}} on {{registration}}: view details",
+      "itemsLabel_one": "incident",
+      "itemsLabel_other": "incidents",
+      "resetFilters": "Reset filters",
+      "noMatch": {
+        "title": "No matching incidents",
+        "description": "Change the search or the filters."
+      },
+      "empty": {
+        "title": "No incidents reported",
+        "description": "Incidents are reported by pilots when they close a flight. They will appear here."
+      }
+    },
+    "actions": {
+      "take": "Take charge",
+      "resolve": "Mark as resolved",
+      "reopen": "Reopen",
+      "saveNote": "Save note"
+    },
+    "detail": {
+      "title": "Incident of {{date}} on {{registration}}",
+      "dateTime": "Date and time",
+      "damage": "Damage found",
+      "correctiveActions": "Pilot's corrective actions",
+      "pilotAndFlight": "Pilot and flight",
+      "reportedBy": "Reported by",
+      "flight": "Flight",
+      "flightTime": "Flight time",
+      "noFlight": "No associated flight",
+      "viewFlightPlan": "View flight plan",
+      "followUp": "Follow-up",
+      "resolvedAt": "Resolved on",
+      "resolvedBy": "Resolved by",
+      "resolutionNote": "Resolution note",
+      "notePlaceholder": "E.g. tyre replaced on 14 October, ground test satisfactory."
+    },
+    "confirm": {
+      "reopenTitle": "Reopen this incident?",
+      "resolveTitle": "Mark this incident as resolved?",
+      "reopenDescription": "The incident of {{date}} on {{registration}} will go back to “Open”. The resolution note is kept.",
+      "resolveDescription": "The incident of {{date}} on {{registration}} will be closed. It can be reopened if necessary.",
+      "notePlaceholder": "What was done to resolve the incident."
+    },
+    "toast": {
+      "failed": "Action failed",
+      "take": {
+        "title": "Incident taken in charge",
+        "description": "Its status is now “In progress”.",
+        "failure": "The incident could not be taken in charge. Try again."
+      },
+      "resolve": {
+        "title": "Incident resolved",
+        "description": "The incident is closed.",
+        "failure": "The incident could not be marked as resolved. Try again."
+      },
+      "reopen": {
+        "title": "Incident reopened",
+        "description": "Its status is “Open” again.",
+        "failure": "The incident could not be reopened. Try again."
+      },
+      "note": {
+        "title": "Note saved",
+        "description": "The resolution note has been updated.",
+        "failure": "The resolution note could not be saved. Try again."
+      }
+    }
+  },
+  "settings": {
+    "title": "Club settings",
+    "description": "The club's contact details, bookings, rates, roles and choice lists.",
+    "notFound": {
+      "title": "Settings not found",
+      "description": "No settings have been defined for this club yet."
+    },
+    "tabs": {
+      "general": "General",
+      "reservations": "Bookings",
+      "aircraft": "Aircraft and fuel",
+      "members": "Members",
+      "lists": "Choice lists",
+      "roles": "Roles",
+      "invalid": "(fields to correct)"
+    },
+    "unsaved": "Unsaved changes",
+    "nothingToSave": "No changes to save",
+    "discard": "Discard changes",
+    "maintenanceConfirm": {
+      "title": "Switch maintenance mode on?",
+      "description": "As soon as you save, visitors will be redirected to the maintenance page until you switch this mode off.",
+      "confirm": "Switch on and save"
+    },
+    "toast": {
+      "saveFailed": "Could not save",
+      "notLoaded": "The settings could not be loaded. Reload the page and try again.",
+      "notSaved": "The settings could not be saved. Try again in a moment.",
+      "invalid": "Some fields need correcting: they are marked in red.",
+      "saved": {
+        "title": "Settings saved",
+        "description": "Your changes have been saved."
+      }
+    },
+    "general": {
+      "contact": {
+        "title": "Club contact details",
+        "description": "The club's name and how to contact it.",
+        "clubName": "Club name",
+        "clubNamePlaceholder": "E.g. Loire Valley Flying Club",
+        "email": "Contact email",
+        "emailPlaceholder": "contact@flyingclub.org",
+        "phone": "Contact phone",
+        "phoneHint": "10 to 14 digits, no spaces. The international dialling code (+44…) is accepted.",
+        "address": "Address",
+        "addressPlaceholder": "Tours-Sorigny Aerodrome\n37250 Sorigny"
+      },
+      "maintenance": {
+        "title": "Site maintenance mode",
+        "description": "While it is on, visitors are redirected to a maintenance page.",
+        "enable": "Switch maintenance mode on",
+        "enableHint": "Takes effect when the settings are saved.",
+        "message": "Message displayed",
+        "messageHint": "Leave empty to show the default message.",
+        "messagePlaceholder": "E.g. The site is being updated and will be available again this evening.",
+        "end": "Planned end of maintenance",
+        "endHint": "Used for the countdown on the maintenance page."
+      }
+    },
+    "bookings": {
+      "hours": {
+        "title": "Booking hours",
+        "description": "The hours open to bookings and the length of a slot.",
+        "start": "Bookings start",
+        "end": "Bookings end",
+        "slot": "Slot length",
+        "slotPlaceholder": "Choose a length"
+      },
+      "closure": {
+        "title": "Closing days",
+        "description": "Tick the days of the week when the club is closed."
+      },
+      "maintenance": {
+        "title": "Weekly maintenance",
+        "description": "The day and length of the aircraft's weekly maintenance.",
+        "day": "Maintenance day",
+        "dayPlaceholder": "Choose a day",
+        "duration": "Maintenance duration",
+        "durationHint": "Whole number of hours, from 1 to 24."
+      }
+    },
+    "timeSlot": {
+      "30": "30 minutes",
+      "60": "1 hour",
+      "90": "1 hour 30",
+      "120": "2 hours"
+    },
+    "aircraft": {
+      "manage": "Manage aircraft",
+      "fuel": {
+        "title": "Fuel",
+        "description": "Who refuels, and the price per litre used to estimate operating costs.",
+        "management": "Fuel management",
+        "price": "Fuel price",
+        "pricePlaceholder": "2.35"
+      },
+      "rates": {
+        "title": "Aircraft hourly rates",
+        "description": "Each aircraft's rate is changed on its own page, in aircraft management.",
+        "empty": {
+          "title": "No aircraft",
+          "description": "Add the club's aircraft from aircraft management."
+        },
+        "registration": "Registration",
+        "model": "Model",
+        "hourlyRate": "Hourly rate",
+        "perHour": "{{amount}} / h"
+      }
+    },
+    "fuelManagement": {
+      "self-service": {
+        "label": "Self-service",
+        "hint": "Pilots refuel themselves."
+      },
+      "staff-only": {
+        "label": "Staff only",
+        "hint": "Refuelling is done by club staff."
+      },
+      "external": {
+        "label": "External supplier",
+        "hint": "Refuelling is handled by a contractor."
+      }
+    },
+    "members": {
+      "fees": {
+        "title": "Membership fee and guest pilots",
+        "description": "The amounts charged to members and guests.",
+        "membershipFee": "Annual membership fee",
+        "allowGuests": "Allow guest pilots",
+        "allowGuestsHint": "Pilots from outside the club may fly its aircraft.",
+        "guestFee": "Guest pilot fee"
+      },
+      "licences": {
+        "title": "Accepted pilot licences",
+        "description": "Tick the licences recognised by the club."
+      },
+      "rules": {
+        "title": "Club rules",
+        "description": "The text of the club's rules.",
+        "label": "Text of the rules",
+        "placeholder": "E.g. Article 1 – Every pilot must have paid their membership fee before booking an aircraft."
+      }
+    },
+    "items": {
+      "edit": "Edit {{name}}",
+      "delete": "Delete {{name}}",
+      "nameRequired": "Enter a name."
+    },
+    "lists": {
+      "intro": "The values offered in the club's choice lists. Your changes take effect when you save the settings.",
+      "editTitle": "Edit “{{name}}”",
+      "listName": "List “{{list}}”.",
+      "examplePlaceholder": "E.g. {{example}}",
+      "duplicate": "This value is already in the list.",
+      "deleteDescription": "“{{name}}” will be removed from the “{{list}}” list the next time the settings are saved.",
+      "aircraftCategories": {
+        "title": "Aircraft categories",
+        "addTitle": "Add an aircraft category",
+        "deleteTitle": "Delete this aircraft category?",
+        "emptyText": "No aircraft categories yet.",
+        "example": "Single-engine"
+      },
+      "flightTypes": {
+        "title": "Flight types",
+        "addTitle": "Add a flight type",
+        "deleteTitle": "Delete this flight type?",
+        "emptyText": "No flight types yet.",
+        "example": "Local flight"
+      },
+      "licenseTypes": {
+        "title": "Licence types",
+        "addTitle": "Add a licence type",
+        "deleteTitle": "Delete this licence type?",
+        "emptyText": "No licence types yet.",
+        "example": "PPL"
+      },
+      "maintenanceTypes": {
+        "title": "Maintenance types",
+        "addTitle": "Add a maintenance type",
+        "deleteTitle": "Delete this maintenance type?",
+        "emptyText": "No maintenance types yet.",
+        "example": "50-hour check"
+      }
+    },
+    "roles": {
+      "title": "Roles",
+      "description": "The roles that can be given to members. Every addition, change or deletion is saved immediately.",
+      "add": "Add a role",
+      "addDescription": "The role can then be given to members.",
+      "edit": "Edit role",
+      "editDescription": "The new name applies to every member who has this role.",
+      "name": "Role name",
+      "namePlaceholder": "E.g. Mechanic",
+      "create": "Create role",
+      "duplicate": "A role already has this name.",
+      "builtIn": "Built-in role",
+      "builtInNotice": "The application recognises this role by its name: renaming or deleting it may remove access for the members concerned.",
+      "empty": {
+        "title": "No roles",
+        "description": "Create a first role so that it can be given to members."
+      },
+      "deleteTitle": "Delete this role?",
+      "deleteDescription": "The “{{name}}” role will be permanently deleted.",
+      "toast": {
+        "created": {
+          "title": "Role created",
+          "description": "The “{{name}}” role has been added."
+        },
+        "createFailed": {
+          "title": "Could not create",
+          "description": "The role could not be created. Try again."
+        },
+        "updated": {
+          "title": "Role updated",
+          "description": "The role is now called “{{name}}”."
+        },
+        "updateFailed": {
+          "title": "Could not update",
+          "description": "The role could not be renamed. Try again."
+        },
+        "deleted": {
+          "title": "Role deleted",
+          "description": "The “{{name}}” role has been deleted."
+        },
+        "deleteFailed": {
+          "title": "Could not delete",
+          "description": "The role could not be deleted. Check that no member still has it."
+        }
+      }
+    },
+    "validation": {
+      "amount": "Enter an amount",
+      "amountNegative": "The amount cannot be negative",
+      "clubName": "The club name must be at least 2 characters long",
+      "contactEmail": "Enter a valid email address",
+      "contactPhone": "Enter 10 to 14 digits, no spaces (e.g. 0478123456)",
+      "address": "The address must be at least 5 characters long",
+      "timeSlotRequired": "Choose a slot length",
+      "timeSlotMin": "A slot lasts at least 30 minutes",
+      "timeSlotMax": "A slot lasts at most 2 hours",
+      "maintenanceDurationRequired": "Enter a duration in hours",
+      "maintenanceDurationInteger": "The maintenance duration must be a whole number of hours",
+      "maintenanceDurationMin": "Maintenance lasts at least 1 hour",
+      "maintenanceDurationMax": "Maintenance lasts at most 24 hours",
+      "fuelPrice": "Enter a price",
+      "fuelPriceNegative": "The fuel price cannot be negative",
+      "endAfterStart": "The end time must be after the start time"
+    }
+  },
+  "twoFactor": {
+    "title": "Two-factor authentication",
+    "description": "Protect your account: on top of your password, you will be asked for a 6-digit code each time you sign in.",
+    "backToProfile": "Back to profile",
+    "statusError": "The two-factor authentication status could not be checked. Check your connection and try again.",
+    "active": {
+      "title": "Your account is protected",
+      "badge": "Enabled",
+      "description": "Two-factor authentication is on. You will be asked for a code from your authenticator app each time you sign in.",
+      "disable": "Turn off two-factor authentication"
+    },
+    "scan": {
+      "title": "1. Scan the QR code",
+      "waitingForCode": "Waiting for the code",
+      "toGenerate": "QR code to generate",
+      "description": "Install an authenticator app on your phone (Google Authenticator, Microsoft Authenticator, Authy…), then generate a QR code and scan it with that app.",
+      "qrAlt": "QR code to scan with your authenticator app",
+      "generate": "Generate the QR code",
+      "regenerate": "Generate a new QR code"
+    },
+    "confirm": {
+      "title": "2. Enter the code shown",
+      "description": "Enter the 6-digit code shown by the app to turn on two-factor authentication.",
+      "code": "Verification code",
+      "submit": "Turn on two-factor authentication"
+    },
+    "toast": {
+      "generated": {
+        "title": "QR code generated",
+        "description": "Scan it with your authenticator app."
+      },
+      "generateFailed": {
+        "title": "Could not generate",
+        "description": "The QR code could not be generated. Try again in a moment."
+      },
+      "enabled": {
+        "title": "Two-factor authentication turned on",
+        "description": "You will be asked for a code each time you sign in."
+      },
+      "wrongCode": {
+        "title": "Incorrect code",
+        "description": "The code entered is not valid. Check your app and try again."
+      }
+    }
+  },
+  "roleName": {
+    "Administrateur": "Administrator",
+    "Pilote": "Pilot",
+    "Instructeur": "Instructor",
+    "Technicien": "Technician"
+  },
+  "weekday": {
+    "Lundi": "Monday",
+    "Mardi": "Tuesday",
+    "Mercredi": "Wednesday",
+    "Jeudi": "Thursday",
+    "Vendredi": "Friday",
+    "Samedi": "Saturday",
+    "Dimanche": "Sunday"
+  },
+  "licenceStatus": {
+    "active": "Active",
+    "expired": "Expired",
+    "pending": "Pending"
+  },
+  "flightCategory": {
+    "local": "Local",
+    "cross_country": "Cross-country",
+    "instruction": "Instruction",
+    "tourism": "Touring",
+    "training": "Training",
+    "maintenance": "Maintenance",
+    "private": "Private",
+    "corporate": "Corporate",
+    "other": "Other"
+  },
+  "expenseCategory": {
+    "maintenance": "Maintenance",
+    "carburant": "Fuel",
+    "assurance": "Insurance",
+    "salaires": "Salaries",
+    "autres": "Other",
+    "none": "Uncategorised"
+  },
+  "auditUnknown": "Not specified",
+  "auditResult": {
+    "CONFORME": "Compliant",
+    "NON_CONFORME": "Non-compliant",
+    "CONFORME_AVEC_REMARQUES": "Compliant with remarks",
+    "NON_APPLICABLE": "Not applicable"
+  },
+  "auditStatus": {
+    "closed": "Closed",
+    "overdue": "Overdue",
+    "inProgress": "In progress"
+  },
+  "auditCriticality": {
+    "CRITIQUE": "Critical",
+    "MAJEUR": "Major",
+    "MINEUR": "Minor",
+    "INFO": "Information"
+  },
+  "auditFrequency": {
+    "QUOTIDIEN": "Daily",
+    "HEBDOMADAIRE": "Weekly",
+    "MENSUEL": "Monthly",
+    "TRIMESTRIEL": "Quarterly",
+    "SEMESTRIEL": "Every six months",
+    "ANNUEL": "Annual",
+    "BIANNUEL": "Every 2 years",
+    "HEURES_DE_VOL": "Based on flight hours",
+    "APRES_INCIDENT": "After an incident",
+    "AUTRE": "Other"
+  },
+  "auditCategory": {
+    "CELLULE": "Airframe",
+    "MOTEUR": "Engine",
+    "AVIONIQUE": "Avionics",
+    "TRAIN_ATTERRISSAGE": "Landing gear",
+    "SYSTEME_CARBURANT": "Fuel system",
+    "SYSTEME_ELECTRIQUE": "Electrical system",
+    "DOCUMENTATION": "Documentation",
+    "EQUIPEMENT_SECURITE": "Safety equipment",
+    "AUTRE": "Other"
+  },
+  "incidentSeverity": {
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High",
+    "unknown": "Not specified"
+  },
+  "incidentSeverityBadge": {
+    "low": "Low severity",
+    "medium": "Medium severity",
+    "high": "High severity",
+    "unknown": "Severity not specified"
+  },
+  "incidentPriority": {
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High",
+    "unknown": "Not specified"
+  },
+  "incidentStatus": {
+    "open": "Open",
+    "in_progress": "In progress",
+    "resolved": "Resolved",
+    "unknown": "Not specified"
+  },
+  "incidentCategory": {
+    "mechanical": "Mechanical",
+    "electrical": "Electrical",
+    "weather": "Weather",
+    "human_error": "Human error",
+    "other": "Other"
+  }
+}

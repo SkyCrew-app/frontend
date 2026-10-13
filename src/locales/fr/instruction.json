@@ -1,0 +1,740 @@
+{
+  "status": {
+    "SCHEDULED": "Planifié",
+    "IN_PROGRESS": "En cours",
+    "COMPLETED": "Terminé",
+    "CANCELED": "Annulé",
+    "CANCELLED": "Annulé",
+    "unknown": "Statut inconnu"
+  },
+  "shared": {
+    "percent": "{{value}} %",
+    "requiredScore": "Score requis : {{score}}",
+    "lessonsRatio": "{{done}} / {{total}} leçons",
+    "progressAria": "Progression : {{percent}} %",
+    "roleWithName": "{{role}} : {{name}}",
+    "evaluationFallback": "Évaluation",
+    "take": "Passer",
+    "retake": "Repasser",
+    "toTake": "À passer",
+    "toRetake": "À repasser",
+    "passed": "Réussie",
+    "failed": "Non réussie",
+    "myResults": "Mes résultats",
+    "optional": "Facultatif.",
+    "changesSaved": "Les changements ont été enregistrés.",
+    "saveFailed": "L'enregistrement a échoué. Vérifiez les informations puis réessayez.",
+    "deleteFailed": "La suppression a échoué. Réessayez dans un instant.",
+    "retryLater": "Réessayez dans un instant."
+  },
+  "home": {
+    "title": "Centre d'instruction",
+    "description": "Vos prochains cours, votre progression en ligne et vos évaluations.",
+    "stats": {
+      "lessonsDone": {
+        "label": "Leçons terminées",
+        "hint": "{{percent}} % des cours en ligne",
+        "hintEmpty": "Aucune leçon publiée"
+      },
+      "upcoming": {
+        "label": "Cours à venir",
+        "hint": "Prochain le {{date}}",
+        "hintEmpty": "Aucun cours planifié"
+      },
+      "toTake": {
+        "label": "Évaluations à passer",
+        "hint_one": "{{count}} réussie",
+        "hint_other": "{{count}} réussies"
+      },
+      "average": {
+        "label": "Score moyen",
+        "hint": "Sur vos évaluations passées"
+      }
+    },
+    "upcoming": {
+      "title": "Prochains cours",
+      "description": "Vos cours planifiés avec un instructeur ou un élève.",
+      "link": "Tous mes cours",
+      "emptyTitle": "Aucun cours à venir",
+      "emptyDescription": "Vos prochains cours apparaîtront ici."
+    },
+    "eLearning": {
+      "title": "E-learning",
+      "description": "Votre avancement dans les cours en ligne.",
+      "link": "Tous les cours",
+      "emptyTitle": "Aucun cours en ligne",
+      "emptyDescription": "Les cours en ligne du club apparaîtront ici dès leur publication."
+    },
+    "evaluations": {
+      "title": "Évaluations à passer",
+      "description": "Les évaluations que vous n'avez pas encore réussies.",
+      "link": "Mes évaluations",
+      "emptyTitle": "Aucune évaluation à passer",
+      "emptyDescription": "Vous êtes à jour : toutes les évaluations disponibles sont réussies.",
+      "more_one": "Et {{count}} autre.",
+      "more_other": "Et {{count}} autres."
+    }
+  },
+  "courses": {
+    "title": "Mes cours",
+    "schedule": "Horaire",
+    "open": "Ouvrir le cours",
+    "page": {
+      "description": {
+        "instructor": "Les cours que vous donnez à vos élèves, et ceux que vous suivez.",
+        "admin": "Les cours auxquels vous participez. Vous pouvez en planifier pour un instructeur.",
+        "student": "Vos cours avec vos instructeurs : dates, compétences travaillées et notes."
+      },
+      "plan": "Planifier un cours",
+      "searchAria": "Rechercher un cours par personne",
+      "searchPlaceholder": "Rechercher une personne, ex. {{name}}",
+      "filterStatusAria": "Filtrer par statut",
+      "allStatuses": "Tous les statuts",
+      "viewAria": "Affichage des cours",
+      "viewList": "Liste",
+      "viewCalendar": "Calendrier",
+      "empty": {
+        "title": "Aucun cours pour le moment",
+        "filteredTitle": "Aucun cours ne correspond",
+        "filteredDescription": "Modifiez la recherche ou le filtre de statut.",
+        "planDescription": "Planifiez un premier cours avec un élève.",
+        "studentDescription": "Vos cours apparaîtront ici dès qu'un instructeur en aura planifié un avec vous."
+      }
+    },
+    "list": {
+      "with": "Avec",
+      "validatedCompetencies": "Compétences validées",
+      "rating": "Note",
+      "actionsAria": "Actions du cours",
+      "toast": {
+        "deleted": {
+          "title": "Cours supprimé",
+          "description": "Le cours a été retiré de la liste."
+        },
+        "deleteFailed": {
+          "title": "Cours non supprimé"
+        }
+      },
+      "deleteConfirm": {
+        "title": "Supprimer ce cours ?",
+        "description": "Le cours du {{date}} avec {{name}} sera définitivement supprimé."
+      }
+    },
+    "pagination": {
+      "label": "Pagination"
+    },
+    "calendar": {
+      "hint": "Les jours soulignés ont un cours.",
+      "emptyTitle": "Aucun cours ce jour-là",
+      "emptyDescription": "Choisissez un jour souligné dans le calendrier.",
+      "roleWithCompetencies": "{{role}} · {{validated}} / {{total}} compétences validées"
+    },
+    "form": {
+      "title": {
+        "create": "Planifier un cours",
+        "edit": "Modifier le cours"
+      },
+      "description": {
+        "create": "Choisissez l'élève et l'horaire du cours.",
+        "edit": "Changez l'élève, l'horaire ou le statut du cours."
+      },
+      "submitCreate": "Planifier le cours",
+      "instructorPlaceholder": "Choisir un instructeur",
+      "noInstructor": "Aucun instructeur dans le club",
+      "studentPlaceholder": "Choisir un élève",
+      "noMember": "Aucun membre disponible",
+      "loadingMembers": "Chargement des membres",
+      "errors": {
+        "instructor": "Choisissez l'instructeur.",
+        "student": "Choisissez l'élève.",
+        "start": "Indiquez le début du cours.",
+        "end": "La fin doit être après le début."
+      },
+      "toast": {
+        "created": {
+          "title": "Cours planifié",
+          "description": "Le cours a été ajouté à votre liste."
+        },
+        "updated": {
+          "title": "Cours modifié"
+        },
+        "createFailed": {
+          "title": "Cours non planifié"
+        },
+        "updateFailed": {
+          "title": "Cours non modifié"
+        }
+      }
+    },
+    "detail": {
+      "title": "Cours du {{date}}",
+      "titleFallback": "Cours",
+      "description": "{{hours}} · {{role}} : {{name}}",
+      "notFound": {
+        "title": "Cours introuvable",
+        "error": "Ce cours n'a pas pu être chargé. Il n'existe peut-être plus, ou vous n'y participez pas.",
+        "missing": "Ce cours n'existe pas ou plus."
+      },
+      "info": "Informations",
+      "instructorYou": "Instructeur (vous)",
+      "studentYou": "Élève (vous)",
+      "toast": {
+        "commentPublished": "Commentaire publié",
+        "commentFailed": "Le commentaire n'a pas pu être publié",
+        "competencyAdded": "Compétence ajoutée",
+        "competencyAddFailed": "La compétence n'a pas pu être ajoutée",
+        "competencyValidated": "Compétence validée",
+        "competencyValidateFailed": "La compétence n'a pas pu être validée",
+        "ratingSaved": "Avis enregistré",
+        "ratingFailed": "L'avis n'a pas pu être enregistré"
+      }
+    },
+    "competencies": {
+      "title": "Compétences",
+      "description": "Ce qui est travaillé pendant le cours.",
+      "summary_one": "{{count}} sur {{total}} validée",
+      "summary_other": "{{count}} sur {{total}} validées",
+      "progressAria": "{{validated}} compétences validées sur {{total}}",
+      "empty": {
+        "title": "Aucune compétence",
+        "manage": "Ajoutez les compétences travaillées pendant ce cours pour suivre la progression de l'élève.",
+        "readOnly": "L'instructeur n'a pas encore ajouté de compétence à ce cours."
+      },
+      "addOne": "Ajouter une compétence",
+      "validated": "Validée",
+      "validate": "Valider",
+      "toValidate": "À valider",
+      "nameLabel": "Nom de la compétence",
+      "namePlaceholder": "Ex. Atterrissage par vent de travers",
+      "descriptionPlaceholder": "Ex. Tenir l'axe et corriger la dérive jusqu'au toucher des roues.",
+      "submit": "Ajouter la compétence",
+      "confirm": {
+        "title": "Valider cette compétence ?",
+        "description": "« {{name}} » sera marquée comme acquise et l'élève en sera informé. Une validation ne peut pas être annulée.",
+        "submit": "Valider la compétence"
+      }
+    },
+    "comments": {
+      "title": "Commentaires",
+      "description": "Les échanges entre l'instructeur et l'élève à propos de ce cours.",
+      "empty": "Aucun commentaire pour le moment.",
+      "label": "Ajouter un commentaire",
+      "placeholder": "Ex. Bonne séance, à revoir : la tenue de l'altitude en virage.",
+      "submit": "Publier le commentaire"
+    },
+    "rating": {
+      "title": {
+        "own": "Votre avis",
+        "student": "Avis de l'élève"
+      },
+      "description": {
+        "own": "Notez ce cours et dites ce que vous en avez retenu.",
+        "student": "La note et le retour de l'élève sur ce cours."
+      },
+      "starsAria": "Note : {{value}} sur 5",
+      "starAria": "{{value}} sur 5",
+      "edit": "Modifier l'avis",
+      "none": "L'élève n'a pas encore donné son avis.",
+      "label": "Note",
+      "errorRating": "Choisissez une note.",
+      "feedbackLabel": "Votre retour",
+      "feedbackPlaceholder": "Ex. Explications claires, j'aimerais refaire des tours de piste.",
+      "errorFeedback": "Écrivez quelques mots sur le cours.",
+      "submit": "Envoyer l'avis"
+    }
+  },
+  "eLearning": {
+    "title": "E-learning",
+    "progress": {
+      "done": "Terminé",
+      "inProgress": "En cours",
+      "notStarted": "Non commencé",
+      "review": "Revoir",
+      "start": "Commencer"
+    },
+    "catalogue": {
+      "description": "Les cours en ligne du club, à suivre à votre rythme.",
+      "manage": "Gérer les cours",
+      "searchAria": "Rechercher un cours en ligne",
+      "searchPlaceholder": "Rechercher un cours, ex. météorologie",
+      "filterCategoryAria": "Filtrer par catégorie",
+      "allCategories": "Toutes les catégories",
+      "empty": {
+        "title": "Aucun cours en ligne pour le moment",
+        "description": "Les cours apparaîtront ici dès que le club en aura publié.",
+        "filteredTitle": "Aucun cours ne correspond",
+        "filteredDescription": "Modifiez la recherche ou la catégorie."
+      }
+    },
+    "card": {
+      "licence": "Licence {{licence}}",
+      "noDescription": "Ce cours n'a pas encore de description.",
+      "noLessons": "Aucune leçon publiée pour le moment.",
+      "open": "Ouvrir le cours"
+    },
+    "course": {
+      "titleFallback": "Cours en ligne",
+      "notFound": {
+        "title": "Cours introuvable",
+        "error": "Ce cours n'a pas pu être chargé. Vérifiez votre connexion puis réessayez.",
+        "missing": "Ce cours n'existe pas ou n'est plus publié."
+      },
+      "requiredLicence": "Licence requise : {{licence}}",
+      "modulesCount_one": "{{count}} module",
+      "modulesCount_other": "{{count}} modules",
+      "lessonsCount_one": "{{count}} leçon",
+      "lessonsCount_other": "{{count}} leçons",
+      "evaluationsCount_one": "{{count}} évaluation",
+      "evaluationsCount_other": "{{count}} évaluations",
+      "resumeStart": "Commencer le cours",
+      "resumeReview": "Revoir le cours",
+      "progressTitle": "Votre progression",
+      "progressUnavailable": "Indisponible pour le moment",
+      "lessonsDone": "{{done}} sur {{total}} leçons terminées",
+      "progressAria": "Progression du cours",
+      "outlineTitle": "Programme",
+      "emptyTitle": "Ce cours n'a pas encore de contenu",
+      "emptyDescription": "Les modules et les leçons apparaîtront ici dès leur publication."
+    },
+    "outline": {
+      "requiredAndYourScore": "Score requis : {{required}} · Votre score : {{score}}",
+      "module": "Module {{number}}",
+      "moduleDone": "Terminé",
+      "lessonsRatio_one": "{{done}} / {{count}} leçon",
+      "lessonsRatio_other": "{{done}} / {{count}} leçons",
+      "noLessons": "Ce module n'a pas encore de leçon.",
+      "lessonDoneAria": "Leçon terminée",
+      "lessonTodoAria": "Leçon à suivre",
+      "next": "À suivre",
+      "evaluationSingle": "Évaluation du module",
+      "evaluationNumbered": "Évaluation {{number}} du module"
+    },
+    "lesson": {
+      "backFallback": "Retour au cours",
+      "titleFallback": "Leçon",
+      "completed": "Terminée",
+      "position": "Leçon {{position}} sur {{total}}",
+      "notFound": {
+        "title": "Leçon introuvable",
+        "error": "Cette leçon n'a pas pu être chargée. Vérifiez votre connexion puis réessayez.",
+        "missing": "Cette leçon n'existe pas ou n'est plus publiée."
+      },
+      "videoTitle": "Vidéo : {{title}}",
+      "emptyTitle": "Cette leçon n'a pas encore de contenu",
+      "emptyDescription": "Le texte de la leçon apparaîtra ici dès sa publication.",
+      "resources": "Ressources",
+      "document": "Document {{number}}",
+      "newTabAria": "Ouvre un nouvel onglet",
+      "navAria": "Navigation entre les leçons",
+      "previous": "Leçon précédente",
+      "next": "Leçon suivante",
+      "markDone": "Marquer comme terminée",
+      "backToCourse": "Revenir au cours",
+      "toast": {
+        "completed": {
+          "title": "Leçon terminée",
+          "description": "Votre progression a été enregistrée."
+        },
+        "failed": {
+          "title": "Leçon non enregistrée",
+          "description": "La leçon n'a pas pu être marquée comme terminée. Réessayez dans un instant."
+        }
+      }
+    }
+  },
+  "evaluations": {
+    "title": "Mes évaluations",
+    "page": {
+      "description": "Les évaluations à passer et les résultats de celles que vous avez déjà passées.",
+      "stats": {
+        "passed": "Réussies",
+        "average": "Score moyen",
+        "lastAttempt": "Dernière tentative"
+      },
+      "toTake": {
+        "emptyTitle": "Aucune évaluation à passer",
+        "emptyDescription": "Toutes les évaluations disponibles sont réussies. Les nouvelles apparaîtront ici.",
+        "lastScore": "Dernier score : {{score}}",
+        "lastScoreOn": "Dernier score : {{score}}, le {{date}}",
+        "take": "Passer l'évaluation",
+        "retake": "Repasser l'évaluation"
+      },
+      "results": {
+        "emptyTitle": "Aucun résultat pour le moment",
+        "emptyDescription": "Vos scores apparaîtront ici après votre première évaluation.",
+        "searchAria": "Rechercher un résultat par module",
+        "searchPlaceholder": "Rechercher un module, ex. navigation",
+        "filterAria": "Filtrer par résultat",
+        "filterAll": "Tous les résultats",
+        "filterPassed": "Réussies",
+        "filterFailed": "Non réussies",
+        "columns": {
+          "module": "Module",
+          "score": "Score",
+          "requiredScore": "Score requis",
+          "result": "Résultat"
+        },
+        "noMatchTitle": "Aucun résultat ne correspond",
+        "noMatchFiltered": "Modifiez la recherche ou le filtre.",
+        "noMatchEmpty": "Aucune tentative enregistrée."
+      }
+    },
+    "take": {
+      "title": "Évaluation : {{module}}",
+      "description_one": "Score requis : {{score}} · {{count}} question",
+      "description_other": "Score requis : {{score}} · {{count}} questions",
+      "notFound": {
+        "title": "Évaluation introuvable",
+        "error": "Cette évaluation n'a pas pu être chargée. Vérifiez votre connexion puis réessayez.",
+        "missing": "Cette évaluation n'existe pas ou n'est plus disponible."
+      },
+      "noQuestions": {
+        "title": "Cette évaluation n'a pas encore de question",
+        "description": "Elle pourra être passée dès que ses questions auront été ajoutées.",
+        "back": "Revenir à mes évaluations"
+      },
+      "position": "Question {{number}} sur {{total}}",
+      "hintAria": "Afficher l'indice",
+      "imageAlt": "Illustration de la question",
+      "previous": "Précédente",
+      "next": "Suivante",
+      "finish": "Terminer l'évaluation",
+      "missing": {
+        "title_one": "Il reste une question sans réponse",
+        "title_other": "Il reste {{count}} questions sans réponse",
+        "description": "Répondez à toutes les questions avant de terminer l'évaluation.",
+        "question": "Question {{number}}"
+      },
+      "confirm": {
+        "title": "Envoyer vos réponses ?",
+        "description_one": "Vous avez répondu à la question. Une fois envoyées, vos réponses ne peuvent plus être modifiées et votre score est enregistré.",
+        "description_other": "Vous avez répondu aux {{count}} questions. Une fois envoyées, vos réponses ne peuvent plus être modifiées et votre score est enregistré.",
+        "submit": "Envoyer mes réponses"
+      },
+      "toast": {
+        "failed": {
+          "title": "Réponses non envoyées",
+          "description": "L'envoi a échoué. Vos réponses sont conservées, vous pouvez réessayer."
+        }
+      }
+    },
+    "stepper": {
+      "navAria": "Questions de l'évaluation",
+      "answeredAria": "Question {{number}}, répondue",
+      "unansweredAria": "Question {{number}}, sans réponse",
+      "summary": "Réponses données : {{answered}} sur {{total}}"
+    },
+    "result": {
+      "passedTitle": "Évaluation réussie",
+      "failedTitle": "Évaluation non réussie",
+      "passedDescription": "Bravo, vous avez atteint le score demandé. Le résultat est enregistré dans vos évaluations.",
+      "failedDescription": "Vous n'avez pas atteint le score demandé. Revoyez les leçons du module, puis réessayez quand vous voulez.",
+      "scoreAria": "Votre score : {{score}} %",
+      "viewAll": "Voir mes évaluations"
+    }
+  },
+  "admin": {
+    "title": "Gestion de l'e-learning",
+    "description": "Un cours se compose de modules, un module de leçons et d'évaluations.",
+    "viewCatalogue": "Voir le catalogue",
+    "tabs": {
+      "courses": "Cours",
+      "modules": "Modules",
+      "lessons": "Leçons",
+      "evaluations": "Évaluations"
+    },
+    "shared": {
+      "course": "Cours",
+      "module": "Module",
+      "title": "Titre",
+      "number": "N°",
+      "chooseCourse": "Choisir un cours",
+      "chooseModule": "Choisir un module",
+      "clearSearch": "Effacer la recherche",
+      "changeSearch": "Modifiez la recherche.",
+      "createCourseFirst": "Créez d'abord un cours",
+      "noModuleYet": "Ce cours n'a pas encore de module",
+      "editRow": "Modifier {{name}}",
+      "deleteRow": "Supprimer {{name}}"
+    },
+    "courses": {
+      "create": "Créer un cours",
+      "searchAria": "Rechercher un cours",
+      "searchPlaceholder": "Rechercher un cours, ex. navigation",
+      "filterLicenceAria": "Filtrer par licence requise",
+      "allLicences": "Toutes les licences",
+      "withoutLicence": "Sans licence requise",
+      "requiredLicence": "Licence requise",
+      "noLicence": "Aucune",
+      "rowName": "le cours {{title}}",
+      "empty": {
+        "title": "Aucun cours pour le moment",
+        "description": "Créez un premier cours, puis ajoutez-lui des modules et des leçons.",
+        "filteredTitle": "Aucun cours ne correspond",
+        "filteredDescription": "Modifiez la recherche ou le filtre de licence."
+      },
+      "form": {
+        "editTitle": "Modifier le cours",
+        "editDescription": "Ces informations sont visibles dans le catalogue des membres.",
+        "createDescription": "Le cours apparaît dans le catalogue ; ses modules et ses leçons s'ajoutent ensuite.",
+        "submitCreate": "Créer le cours",
+        "titlePlaceholder": "Ex. Météorologie pour le PPL",
+        "titleError": "Donnez un titre au cours.",
+        "descriptionHint": "Deux ou trois phrases sur ce que le cours apprend.",
+        "descriptionPlaceholder": "Ex. Lire une carte TEMSI, comprendre les fronts et préparer un vol en sécurité.",
+        "categoryPlaceholder": "Ex. Navigation"
+      },
+      "toast": {
+        "created": {
+          "title": "Cours créé",
+          "description": "Ajoutez-lui maintenant des modules dans l'onglet Modules."
+        },
+        "updated": {
+          "title": "Cours modifié"
+        },
+        "createFailed": {
+          "title": "Cours non créé"
+        },
+        "updateFailed": {
+          "title": "Cours non modifié"
+        },
+        "deleted": {
+          "title": "Cours supprimé",
+          "description": "Le cours a été retiré du catalogue."
+        },
+        "deleteFailed": {
+          "title": "Cours non supprimé"
+        }
+      },
+      "deleteConfirm": {
+        "title": "Supprimer ce cours ?",
+        "description": "Le cours « {{title}} » sera définitivement supprimé, avec ses modules et ses leçons."
+      }
+    },
+    "modules": {
+      "create": "Créer un module",
+      "courseFilterAria": "Cours dont afficher les modules",
+      "searchAria": "Rechercher un module",
+      "searchPlaceholder": "Rechercher un module, ex. circulation aérienne",
+      "rowName": "le module {{title}}",
+      "empty": {
+        "noCourseDescription": "Un module appartient à un cours : ajoutez un cours dans l'onglet Cours, puis revenez ici.",
+        "description": "Les modules découpent le cours en chapitres.",
+        "filteredTitle": "Aucun module ne correspond"
+      },
+      "form": {
+        "editTitle": "Modifier le module",
+        "description": "Un module est un chapitre du cours : il regroupe des leçons.",
+        "submitCreate": "Créer le module",
+        "courseError": "Choisissez le cours du module.",
+        "titlePlaceholder": "Ex. Les masses d'air et les fronts",
+        "titleError": "Donnez un titre au module.",
+        "descriptionHint": "Une phrase sur ce que couvre le module.",
+        "descriptionPlaceholder": "Ex. Reconnaître les fronts et anticiper leurs effets sur le vol."
+      },
+      "toast": {
+        "created": {
+          "title": "Module créé",
+          "description": "Ajoutez-lui maintenant des leçons dans l'onglet Leçons."
+        },
+        "updated": {
+          "title": "Module modifié"
+        },
+        "createFailed": {
+          "title": "Module non créé"
+        },
+        "updateFailed": {
+          "title": "Module non modifié"
+        },
+        "deleted": {
+          "title": "Module supprimé",
+          "description": "Le module a été retiré du cours."
+        },
+        "deleteFailed": {
+          "title": "Module non supprimé"
+        }
+      },
+      "deleteConfirm": {
+        "title": "Supprimer ce module ?",
+        "description": "Le module « {{title}} » sera définitivement supprimé, avec ses leçons."
+      }
+    },
+    "lessons": {
+      "create": "Créer une leçon",
+      "moduleFilterAria": "Module dont afficher les leçons",
+      "noModule": "Aucun module",
+      "searchAria": "Rechercher une leçon",
+      "searchPlaceholder": "Rechercher une leçon, ex. altimétrie",
+      "rowName": "la leçon {{title}}",
+      "columns": {
+        "lesson": "Leçon",
+        "video": "Vidéo",
+        "attachments": "Pièces jointes"
+      },
+      "empty": {
+        "noCourseDescription": "Une leçon appartient à un module, lui-même rangé dans un cours. Commencez par l'onglet Cours.",
+        "noModuleDescription": "Ajoutez un module à ce cours dans l'onglet Modules, puis revenez créer ses leçons.",
+        "title": "Ce module n'a pas encore de leçon",
+        "description": "Une leçon réunit un texte, une vidéo et des documents.",
+        "filteredTitle": "Aucune leçon ne correspond"
+      },
+      "form": {
+        "editTitle": "Modifier la leçon",
+        "description": "Le texte est obligatoire ; la vidéo et les pièces jointes sont facultatives.",
+        "submitCreate": "Créer la leçon",
+        "stepPresentation": "Présentation",
+        "stepContent": "Contenu",
+        "stepResources": "Ressources",
+        "moduleError": "Choisissez le module de la leçon.",
+        "titlePlaceholder": "Ex. Lire un METAR",
+        "titleError": "Donnez un titre à la leçon.",
+        "descriptionHint": "Une phrase affichée sous le titre de la leçon.",
+        "descriptionPlaceholder": "Ex. Décoder un message d'observation, groupe par groupe.",
+        "videoHint": "Facultatif. Collez le lien d'une vidéo YouTube.",
+        "videoError": "Collez l'adresse complète de la vidéo, en commençant par https://.",
+        "contentPlaceholder": "Rédigez le texte de la leçon…",
+        "contentError": "Rédigez le contenu de la leçon.",
+        "attachmentsHint": "Facultatif. Des liens vers des documents à consulter ou à télécharger."
+      },
+      "toast": {
+        "created": {
+          "title": "Leçon créée",
+          "description": "Elle est visible dès maintenant dans le cours."
+        },
+        "updated": {
+          "title": "Leçon modifiée"
+        },
+        "createFailed": {
+          "title": "Leçon non créée"
+        },
+        "updateFailed": {
+          "title": "Leçon non modifiée"
+        },
+        "deleted": {
+          "title": "Leçon supprimée",
+          "description": "La leçon a été retirée du module."
+        },
+        "deleteFailed": {
+          "title": "Leçon non supprimée"
+        }
+      },
+      "deleteConfirm": {
+        "title": "Supprimer cette leçon ?",
+        "description": "La leçon « {{title}} » sera définitivement supprimée, avec la progression des membres sur cette leçon."
+      }
+    },
+    "evaluations": {
+      "create": "Créer une évaluation",
+      "searchAria": "Rechercher une évaluation par module",
+      "searchPlaceholder": "Rechercher un module, ex. réglementation",
+      "columns": {
+        "module": "Module évalué",
+        "passScore": "Score de réussite",
+        "questions": "Questions"
+      },
+      "noQuestion": "Aucune question",
+      "actionsAria": "Actions de l'évaluation {{module}}",
+      "manageQuestions": "Gérer les questions",
+      "editPassScore": "Modifier le score de réussite",
+      "empty": {
+        "title": "Aucune évaluation pour le moment",
+        "description": "Une évaluation vérifie les acquis d'un module par un questionnaire.",
+        "filteredTitle": "Aucune évaluation ne correspond"
+      },
+      "form": {
+        "editTitle": "Modifier l'évaluation",
+        "editDescription": "Évaluation du module « {{module}} ».",
+        "createDescription": "Choisissez le module évalué ; les questions s'ajoutent juste après.",
+        "submitCreate": "Créer l'évaluation",
+        "moduleError": "Choisissez le module évalué.",
+        "loadingModules": "Chargement des modules",
+        "noModules": "Aucun module : créez-en un dans l'onglet Modules.",
+        "passScoreHint": "Part de bonnes réponses à atteindre pour réussir.",
+        "passScoreError": "Indiquez un score entre 1 et 100."
+      },
+      "toast": {
+        "created": {
+          "title": "Évaluation créée",
+          "description": "Ajoutez maintenant ses questions."
+        },
+        "updated": {
+          "title": "Évaluation modifiée",
+          "description": "Le score de réussite a été enregistré."
+        },
+        "createFailed": {
+          "title": "Évaluation non créée"
+        },
+        "updateFailed": {
+          "title": "Évaluation non modifiée"
+        },
+        "deleted": {
+          "title": "Évaluation supprimée",
+          "description": "Elle n'est plus proposée aux membres."
+        },
+        "deleteFailed": {
+          "title": "Évaluation non supprimée"
+        }
+      },
+      "deleteConfirm": {
+        "title": "Supprimer cette évaluation ?",
+        "description": "L'évaluation du module « {{module}} » sera définitivement supprimée, avec toutes ses questions."
+      }
+    },
+    "questions": {
+      "title": "Questions de l'évaluation",
+      "editTitle": "Modifier la question",
+      "add": "Ajouter une question",
+      "listDescription_one": "{{module}} · score de réussite : {{score}} % · {{count}} question",
+      "listDescription_other": "{{module}} · score de réussite : {{score}} % · {{count}} questions",
+      "formDescription": "{{module}} · une seule bonne réponse par question.",
+      "submitCreate": "Ajouter la question",
+      "emptyTitle": "Aucune question",
+      "emptyDescription": "Tant qu'elle n'a pas de question, l'évaluation ne peut pas être passée.",
+      "rowName": "la question {{number}}",
+      "correctAnswer": "Bonne réponse",
+      "form": {
+        "question": "Question",
+        "questionPlaceholder": "Ex. Que signifie le groupe « CAVOK » dans un METAR ?",
+        "questionError": "Écrivez la question.",
+        "options": "Réponses proposées",
+        "optionsHint": "Cochez le rond de la bonne réponse. Deux réponses au minimum.",
+        "option": "Réponse {{number}}",
+        "optionIsCorrectAria": "La réponse {{number}} est la bonne",
+        "removeOptionAria": "Supprimer la réponse {{number}}",
+        "removeOption": "Supprimer la réponse",
+        "minOptions": "Deux réponses au minimum",
+        "addOption": "Ajouter une réponse",
+        "errorEmptyOption": "Remplissez chaque réponse, ou supprimez celles qui sont vides.",
+        "errorDuplicateOption": "Deux réponses sont identiques : chaque réponse doit être différente.",
+        "errorNoCorrect": "Cochez la bonne réponse."
+      },
+      "toast": {
+        "created": {
+          "title": "Question ajoutée",
+          "description": "Elle fait maintenant partie de l'évaluation."
+        },
+        "updated": {
+          "title": "Question modifiée"
+        },
+        "createFailed": {
+          "title": "Question non ajoutée"
+        },
+        "updateFailed": {
+          "title": "Question non modifiée"
+        },
+        "saveFailed": "L'enregistrement a échoué. Vérifiez la question puis réessayez.",
+        "deleted": {
+          "title": "Question supprimée",
+          "description": "Elle a été retirée de l'évaluation."
+        },
+        "deleteFailed": {
+          "title": "Question non supprimée"
+        }
+      },
+      "deleteConfirm": {
+        "title": "Supprimer cette question ?",
+        "description": "La question « {{question}} » sera définitivement supprimée de l'évaluation."
+      }
+    }
+  }
+}

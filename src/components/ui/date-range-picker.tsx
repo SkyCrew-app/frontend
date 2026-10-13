@@ -1,8 +1,8 @@
 "use client"
 
+import i18n, { dateFnsLocale } from "@/lib/i18n"
 import * as React from "react"
 import { format, isValid, addMonths, startOfMonth, endOfMonth } from "date-fns"
-import { fr } from "date-fns/locale"
 import { CalendarIcon, X } from "lucide-react"
 import type { DateRange } from "react-day-picker"
 import { cn } from "@/lib/utils"
@@ -25,7 +25,7 @@ export interface DateRangePickerProps {
 export function DateRangePicker({
   dateRange,
   onSelect,
-  placeholder = "Sélectionner une période",
+  placeholder,
   disabled = false,
   className,
   align = "start",
@@ -54,23 +54,23 @@ export function DateRangePicker({
 
     if (from && to) {
       if (size === "sm") {
-        return `${format(from, "dd/MM/yy", { locale: fr })} - ${format(to, "dd/MM/yy", { locale: fr })}`
+        return `${format(from, "dd/MM/yy", { locale: dateFnsLocale() })} - ${format(to, "dd/MM/yy", { locale: dateFnsLocale() })}`
       }
-      return `${format(from, "dd MMM yyyy", { locale: fr })} - ${format(to, "dd MMM yyyy", { locale: fr })}`
+      return `${format(from, "dd MMM yyyy", { locale: dateFnsLocale() })} - ${format(to, "dd MMM yyyy", { locale: dateFnsLocale() })}`
     }
 
     if (from) {
       if (size === "sm") {
-        return `À partir du ${format(from, "dd/MM/yy", { locale: fr })}`
+        return i18n.t("common:datePicker.from", { date: format(from, "dd/MM/yy", { locale: dateFnsLocale() }) })
       }
-      return `À partir du ${format(from, "dd MMM yyyy", { locale: fr })}`
+      return i18n.t("common:datePicker.from", { date: format(from, "dd MMM yyyy", { locale: dateFnsLocale() }) })
     }
 
     if (to) {
       if (size === "sm") {
-        return `Jusqu'au ${format(to, "dd/MM/yy", { locale: fr })}`
+        return i18n.t("common:datePicker.until", { date: format(to, "dd/MM/yy", { locale: dateFnsLocale() }) })
       }
-      return `Jusqu'au ${format(to, "dd MMM yyyy", { locale: fr })}`
+      return i18n.t("common:datePicker.until", { date: format(to, "dd MMM yyyy", { locale: dateFnsLocale() }) })
     }
 
     return ""
@@ -85,7 +85,7 @@ export function DateRangePicker({
   // Préréglages de périodes
   const presets = [
     {
-      label: "Ce mois",
+      label: i18n.t("common:datePicker.thisMonth"),
       getRange: () => {
         const today = new Date()
         return {
@@ -95,7 +95,7 @@ export function DateRangePicker({
       },
     },
     {
-      label: "Mois précédent",
+      label: i18n.t("common:datePicker.lastMonth"),
       getRange: () => {
         const today = new Date()
         const lastMonth = addMonths(today, -1)
@@ -106,7 +106,7 @@ export function DateRangePicker({
       },
     },
     {
-      label: "30 derniers jours",
+      label: i18n.t("common:datePicker.last30Days"),
       getRange: () => {
         const today = new Date()
         const thirtyDaysAgo = new Date()
@@ -135,7 +135,7 @@ export function DateRangePicker({
             )}
           >
             <CalendarIcon className={cn("mr-2 opacity-70", size === "sm" ? "h-3.5 w-3.5" : "h-4 w-4")} />
-            {hasValidRange ? <span className="flex-1">{formatDateRange(dateRange)}</span> : <span>{placeholder}</span>}
+            {hasValidRange ? <span className="flex-1">{formatDateRange(dateRange)}</span> : <span>{placeholder ?? i18n.t("common:datePicker.rangePlaceholder")}</span>}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0 shadow-md" align={align} sideOffset={5}>
@@ -143,12 +143,12 @@ export function DateRangePicker({
             <div className="text-xs font-medium text-center text-muted-foreground">
               {hasValidRange ? (
                 <span>
-                  {dateRange?.from && format(dateRange.from, "d MMM yyyy", { locale: fr })}
+                  {dateRange?.from && format(dateRange.from, "d MMM yyyy", { locale: dateFnsLocale() })}
                   {dateRange?.from && dateRange?.to && " - "}
-                  {dateRange?.to && format(dateRange.to, "d MMM yyyy", { locale: fr })}
+                  {dateRange?.to && format(dateRange.to, "d MMM yyyy", { locale: dateFnsLocale() })}
                 </span>
               ) : (
-                "Sélectionnez une période"
+                i18n.t("common:datePicker.rangeEmpty")
               )}
             </div>
           </div>
@@ -215,7 +215,7 @@ export function DateRangePicker({
           onClick={handleClear}
         >
           <X className={cn("text-muted-foreground", size === "sm" ? "h-3 w-3" : "h-3.5 w-3.5")} />
-          <span className="sr-only">Effacer la période</span>
+          <span className="sr-only">{i18n.t("common:datePicker.clearRange")}</span>
         </Button>
       )}
     </div>

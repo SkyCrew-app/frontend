@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -56,6 +57,7 @@ export function AddLicenseForm({
   saving = false,
   onSubmit,
 }: AddLicenseFormProps) {
+  const { t } = useTranslation("administration")
   const [userPickerOpen, setUserPickerOpen] = useState(false)
   const [userId, setUserId] = useState<string | null>(defaultUserId)
   const [licenseType, setLicenseType] = useState("")
@@ -85,17 +87,17 @@ export function AddLicenseForm({
   // Each step checks its own fields, so an error is always shown on the step in view.
   const licenseErrors = (): Errors => {
     const next: Errors = {}
-    if (!userId) next.user = "Choisissez le membre concerné."
-    if (!licenseType) next.license_type = "Choisissez le type de licence."
-    if (!licenseNumber.trim()) next.license_number = "Indiquez le numéro de la licence."
+    if (!userId) next.user = t("users.licence.errors.member")
+    if (!licenseType) next.license_type = t("users.licence.errors.type")
+    if (!licenseNumber.trim()) next.license_number = t("users.licence.errors.number")
     return next
   }
 
   const validityErrors = (): Errors => {
     const next: Errors = {}
-    if (!issueDate) next.issueDate = "Indiquez la date de délivrance."
+    if (!issueDate) next.issueDate = t("users.licence.errors.issueDate")
     if (issueDate && expirationDate && expirationDate < issueDate) {
-      next.expirationDate = "La date d'expiration ne peut pas précéder la date de délivrance."
+      next.expirationDate = t("users.licence.errors.expirationBeforeIssue")
     }
     return next
   }
@@ -128,7 +130,7 @@ export function AddLicenseForm({
     <div className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="license_user">
-          Membre
+          {t("users.licence.member")}
           <Required />
         </Label>
         <Popover open={userPickerOpen} onOpenChange={setUserPickerOpen}>
@@ -142,7 +144,7 @@ export function AddLicenseForm({
               className={cn("w-full justify-between font-normal", !selectedUser && "text-muted-foreground")}
             >
               <span className="truncate">
-                {selectedUser ? `${selectedUser.first_name} ${selectedUser.last_name}` : "Choisir un membre"}
+                {selectedUser ? `${selectedUser.first_name} ${selectedUser.last_name}` : t("users.licence.chooseMember")}
               </span>
               <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
             </Button>
@@ -155,9 +157,9 @@ export function AddLicenseForm({
               </div>
             ) : (
               <Command>
-                <CommandInput placeholder="Rechercher un membre" />
+                <CommandInput placeholder={t("users.searchMember")} />
                 <CommandList>
-                  <CommandEmpty>Aucun membre trouvé.</CommandEmpty>
+                  <CommandEmpty>{t("users.licence.noMemberFound")}</CommandEmpty>
                   <CommandGroup>
                     {users.map((user) => (
                       <CommandItem
@@ -190,7 +192,7 @@ export function AddLicenseForm({
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="license_type">
-            Type de licence
+            {t("users.licence.type")}
             <Required />
           </Label>
           <Select
@@ -201,20 +203,20 @@ export function AddLicenseForm({
             }}
           >
             <SelectTrigger id="license_type">
-              <SelectValue placeholder="Choisir un type" />
+              <SelectValue placeholder={t("users.licence.chooseType")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="PPL">PPL – pilote privé</SelectItem>
-              <SelectItem value="CPL">CPL – pilote professionnel</SelectItem>
-              <SelectItem value="ATPL">ATPL – pilote de ligne</SelectItem>
-              <SelectItem value="FI">FI – instructeur</SelectItem>
+              <SelectItem value="PPL">{t("users.licence.types.PPL")}</SelectItem>
+              <SelectItem value="CPL">{t("users.licence.types.CPL")}</SelectItem>
+              <SelectItem value="ATPL">{t("users.licence.types.ATPL")}</SelectItem>
+              <SelectItem value="FI">{t("users.licence.types.FI")}</SelectItem>
             </SelectContent>
           </Select>
           <FieldError message={errors.license_type} />
         </div>
         <div className="space-y-2">
           <Label htmlFor="license_number">
-            Numéro de licence
+            {t("users.licence.number")}
             <Required />
           </Label>
           <Input
@@ -234,7 +236,7 @@ export function AddLicenseForm({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="certification_authority">Autorité de délivrance</Label>
+        <Label htmlFor="certification_authority">{t("users.licence.authority")}</Label>
         <Input
           id="certification_authority"
           name="certification_authority"
@@ -251,7 +253,7 @@ export function AddLicenseForm({
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label>
-            Date de délivrance
+            {t("users.licence.issueDate")}
             <Required />
           </Label>
           <DatePicker
@@ -260,20 +262,20 @@ export function AddLicenseForm({
               setIssueDate(date)
               setErrors((current) => ({ ...current, issueDate: undefined }))
             }}
-            placeholder="Choisir une date"
+            placeholder={t("users.licence.chooseDate")}
             toDate={new Date()}
           />
           <FieldError message={errors.issueDate} />
         </div>
         <div className="space-y-2">
-          <Label>Date d'expiration</Label>
+          <Label>{t("users.licence.expirationDate")}</Label>
           <DatePicker
             date={expirationDate}
             onSelect={(date) => {
               setExpirationDate(date)
               setErrors((current) => ({ ...current, expirationDate: undefined }))
             }}
-            placeholder="Sans expiration"
+            placeholder={t("users.licence.noExpiration")}
             fromDate={issueDate}
             clearable
           />
@@ -283,24 +285,24 @@ export function AddLicenseForm({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="license_status">Statut</Label>
+          <Label htmlFor="license_status">{t("common:labels.status")}</Label>
           <Select value={status} onValueChange={setStatus}>
             <SelectTrigger id="license_status">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="expired">Expirée</SelectItem>
-              <SelectItem value="pending">En attente</SelectItem>
+              <SelectItem value="active">{t("licenceStatus.active")}</SelectItem>
+              <SelectItem value="expired">{t("licenceStatus.expired")}</SelectItem>
+              <SelectItem value="pending">{t("licenceStatus.pending")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="documents">Justificatifs</Label>
+        <Label htmlFor="documents">{t("users.licence.documents")}</Label>
         <Input ref={documentsRef} id="documents" name="documents" type="file" multiple />
-        <p className="text-xs text-muted-foreground">Facultatif. Scan ou photo de la licence, plusieurs fichiers possibles.</p>
+        <p className="text-xs text-muted-foreground">{t("users.licence.documentsHint")}</p>
       </div>
     </div>
   )
@@ -309,19 +311,23 @@ export function AddLicenseForm({
     <>
       <Button variant="outline" onClick={() => onOpenChange(true)}>
         <BadgeCheck className="h-4 w-4" />
-        Ajouter une licence
+        {t("users.licence.add")}
       </Button>
       <SidePanel
         open={isOpen}
         onOpenChange={(next) => (next || !saving) && onOpenChange(next)}
-        title="Ajouter une licence"
-        description="Enregistrez la licence ou la qualification d'un membre."
+        title={t("users.licence.add")}
+        description={t("users.licence.description")}
         onSubmit={handleSubmit}
-        submitLabel="Ajouter la licence"
+        submitLabel={t("users.licence.submit")}
         submitting={saving}
         steps={[
-          { title: "Licence", content: licenseFields, validate: () => validateStep(licenseErrors()) },
-          { title: "Validité et justificatifs", content: validityFields, validate: () => validateStep(validityErrors()) },
+          { title: t("users.licence.steps.licence"), content: licenseFields, validate: () => validateStep(licenseErrors()) },
+          {
+            title: t("users.licence.steps.validity"),
+            content: validityFields,
+            validate: () => validateStep(validityErrors()),
+          },
         ]}
       />
     </>

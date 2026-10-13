@@ -1,5 +1,6 @@
 "use client"
 
+import i18n from "@/lib/i18n"
 import * as React from "react"
 import { Check, ChevronsUpDown } from 'lucide-react'
 
@@ -42,8 +43,8 @@ export function Combobox({ options, value, onChange }: {
       </PopoverTrigger>
       <PopoverContent className="w-full p-0">
         <Command>
-          <CommandInput placeholder="Rechercher un waypoint..." />
-          <CommandEmpty>Aucun waypoint trouvé.</CommandEmpty>
+          <CommandInput placeholder={i18n.t("common:combobox.searchWaypoint")} />
+          <CommandEmpty>{i18n.t("common:combobox.noWaypoint")}</CommandEmpty>
           <CommandGroup>
             {options.map((option) => (
               <CommandItem

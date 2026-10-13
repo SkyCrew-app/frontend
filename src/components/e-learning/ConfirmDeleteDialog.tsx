@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react"
 import { Loader2 } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -32,6 +33,7 @@ export function ConfirmDeleteDialog({
   onConfirm,
   loading = false,
 }: ConfirmDeleteDialogProps) {
+  const { t } = useTranslation()
   return (
     <AlertDialog open={open} onOpenChange={(next) => !loading && onOpenChange(next)}>
       <AlertDialogContent>
@@ -40,11 +42,11 @@ export function ConfirmDeleteDialog({
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={loading}>Annuler</AlertDialogCancel>
+          <AlertDialogCancel disabled={loading}>{t("common:actions.cancel")}</AlertDialogCancel>
           {/* A plain button: the dialog closes once the deletion has succeeded. */}
           <Button variant="destructive" onClick={onConfirm} disabled={loading}>
             {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-            Supprimer
+            {t("common:actions.delete")}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

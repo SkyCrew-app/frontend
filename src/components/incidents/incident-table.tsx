@@ -1,6 +1,7 @@
 "use client"
 
 import { AlertTriangle, Search } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -39,19 +40,20 @@ export function IncidentTable({
   hasFilters,
   onResetFilters,
 }: IncidentTableProps) {
+  const { t } = useTranslation("administration")
   return (
     <div className="space-y-4">
       <Card className="overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Aéronef</TableHead>
-              <TableHead>Pilote</TableHead>
-              <TableHead>Catégorie</TableHead>
-              <TableHead>Gravité</TableHead>
-              <TableHead>Statut</TableHead>
-              <TableHead>Description</TableHead>
+              <TableHead>{t("common:labels.date")}</TableHead>
+              <TableHead>{t("incidents.fields.aircraft")}</TableHead>
+              <TableHead>{t("common:labels.pilot")}</TableHead>
+              <TableHead>{t("common:labels.category")}</TableHead>
+              <TableHead>{t("incidents.fields.severity")}</TableHead>
+              <TableHead>{t("common:labels.status")}</TableHead>
+              <TableHead>{t("common:labels.description")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -63,7 +65,10 @@ export function IncidentTable({
                   <TableRow
                     key={incident.id}
                     tabIndex={0}
-                    aria-label={`Incident du ${formatDate(incident.incident_date)} sur ${incident.aircraft.registration_number} : voir le détail`}
+                    aria-label={t("incidents.table.rowLabel", {
+                      date: formatDate(incident.incident_date),
+                      registration: incident.aircraft.registration_number,
+                    })}
                     className="cursor-pointer focus-visible:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                     onClick={() => onSelectIncident(incident)}
                     onKeyDown={(event) => {
@@ -106,11 +111,11 @@ export function IncidentTable({
                   {hasFilters ? (
                     <EmptyState
                       icon={Search}
-                      title="Aucun incident ne correspond"
-                      description="Modifiez la recherche ou les filtres."
+                      title={t("incidents.table.noMatch.title")}
+                      description={t("incidents.table.noMatch.description")}
                       action={
                         <Button variant="outline" onClick={onResetFilters}>
-                          Réinitialiser les filtres
+                          {t("incidents.table.resetFilters")}
                         </Button>
                       }
                       className="border-0"
@@ -118,8 +123,8 @@ export function IncidentTable({
                   ) : (
                     <EmptyState
                       icon={AlertTriangle}
-                      title="Aucun incident déclaré"
-                      description="Les incidents sont déclarés par les pilotes au moment de clôturer un vol. Ils apparaîtront ici."
+                      title={t("incidents.table.empty.title")}
+                      description={t("incidents.table.empty.description")}
                       className="border-0"
                     />
                   )}
@@ -135,7 +140,7 @@ export function IncidentTable({
         pageSize={itemsPerPage}
         totalItems={totalItems}
         onPageChange={onPageChange}
-        itemsLabel={totalItems > 1 ? "incidents" : "incident"}
+        itemsLabel={t("incidents.table.itemsLabel", { count: totalItems })}
       />
     </div>
   )

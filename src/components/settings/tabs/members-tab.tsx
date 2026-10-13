@@ -1,6 +1,7 @@
 "use client"
 
 import { useFormContext } from "react-hook-form"
+import { useTranslation } from "react-i18next"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
@@ -9,6 +10,7 @@ import { PILOT_LICENSES, type SettingsFormValues } from "@/lib/settings"
 import { SettingsField, SettingsSection, UnitInput, errorMessage } from "../settings-field"
 
 export function MembersTab() {
+  const { t } = useTranslation("administration")
   const {
     register,
     watch,
@@ -34,11 +36,11 @@ export function MembersTab() {
 
   return (
     <div className="space-y-6">
-      <SettingsSection title="Cotisation et pilotes invités" description="Les montants demandés aux membres et aux invités.">
+      <SettingsSection title={t("settings.members.fees.title")} description={t("settings.members.fees.description")}>
         <div className="grid gap-4 md:grid-cols-2">
           <SettingsField
             id="membership-fee"
-            label="Cotisation annuelle"
+            label={t("settings.members.fees.membershipFee")}
             required
             error={errorMessage(errors.membershipFee)}
           >
@@ -55,9 +57,9 @@ export function MembersTab() {
           <div className="space-y-4 md:col-span-2">
             <div className="flex items-start justify-between gap-4 rounded-md border p-3">
               <div className="space-y-1">
-                <Label htmlFor="allow-guest-pilots">Autoriser les pilotes invités</Label>
+                <Label htmlFor="allow-guest-pilots">{t("settings.members.fees.allowGuests")}</Label>
                 <p id="allow-guest-pilots-hint" className="text-xs text-muted-foreground">
-                  Des pilotes extérieurs au club peuvent voler sur ses avions.
+                  {t("settings.members.fees.allowGuestsHint")}
                 </p>
               </div>
               <Switch
@@ -70,7 +72,7 @@ export function MembersTab() {
             {allowGuestPilots && (
               <SettingsField
                 id="guest-pilot-fee"
-                label="Frais pour un pilote invité"
+                label={t("settings.members.fees.guestFee")}
                 required
                 error={errorMessage(errors.guestPilotFee)}
                 className="md:max-w-sm"
@@ -90,9 +92,9 @@ export function MembersTab() {
         </div>
       </SettingsSection>
 
-      <SettingsSection title="Licences de pilote acceptées" description="Cochez les licences reconnues par le club.">
+      <SettingsSection title={t("settings.members.licences.title")} description={t("settings.members.licences.description")}>
         <fieldset>
-          <legend className="sr-only">Licences de pilote acceptées</legend>
+          <legend className="sr-only">{t("settings.members.licences.title")}</legend>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {PILOT_LICENSES.map((license) => (
               <div key={license} className="flex min-h-9 items-center gap-2">
@@ -110,11 +112,11 @@ export function MembersTab() {
         </fieldset>
       </SettingsSection>
 
-      <SettingsSection title="Règlement intérieur" description="Le texte du règlement intérieur de l'aéroclub.">
-        <SettingsField id="club-rules" label="Texte du règlement">
+      <SettingsSection title={t("settings.members.rules.title")} description={t("settings.members.rules.description")}>
+        <SettingsField id="club-rules" label={t("settings.members.rules.label")}>
           <Textarea
             id="club-rules"
-            placeholder="Ex. Article 1 – Tout pilote doit être à jour de sa cotisation avant de réserver un avion."
+            placeholder={t("settings.members.rules.placeholder")}
             className="min-h-[200px]"
             {...register("clubRules")}
           />

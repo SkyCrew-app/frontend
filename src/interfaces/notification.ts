@@ -1,33 +1,10 @@
-const NOTIFICATION_TYPES: Record<string, string> = {
-  COURSE_COMPLETED: 'Cours terminé',
-  COURSE_STARTED: 'Cours commencé',
-  COURSE_CANCELED: 'Cours annulé',
-  COURSE_CREATED: 'Cours créé',
-  COURSE_COMMENT: 'Commentaire de cours',
-  COMPETENCY_VALIDATED: 'Compétence validée',
-  LICENSE_EXPIRED: 'Licence expirée',
-  LICENSE_EXPIRING_SOON: 'Licence expirant bientôt',
-  RESERVATION_PENDING: 'Réservation en attente',
-  RESERVATION_CONFIRMED: 'Réservation confirmée',
-  RESERVATION_CANCELED: 'Réservation annulée',
-  RESERVATION_CANCELLED: 'Réservation annulée',
-  RESERVATION_MODIFIED: 'Réservation modifiée',
-  RESERVATION_FINISHED: 'Réservation terminée',
-  MISSING_FLIGHT_PLAN: 'Plan de vol manquant',
-  INCOMPLETE_FLIGHT_PLAN: 'Plan de vol incomplet',
-  MISSING_PASSENGER_COUNT: 'Nombre de passagers manquant',
-  FLIGHT_CREATED: 'Plan de vol créé',
-  WITHDRAWAL: 'Retrait',
-  INVOICE_CREATED: 'Facture créée',
-  PAYMENT_RECEIVED: 'Paiement reçu',
-  PAYMENT_REFUNDED: 'Paiement remboursé',
-  '2FA_ENABLED': 'Double authentification activée',
-  USER_UPDATED: 'Profil mis à jour',
-};
+import i18n, { currentLocale } from '@/lib/i18n';
 
-// An unknown code is still shown readably: "SOME_NEW_TYPE" becomes "Some new type".
-export const getNotificationTypeInFrench = (type: string) => {
-  if (NOTIFICATION_TYPES[type]) return NOTIFICATION_TYPES[type];
+// Label of a notification type code. An unknown code is still shown readably:
+// "SOME_NEW_TYPE" becomes "Some new type".
+export const notificationTypeLabel = (type: string) => {
+  const key = `notifications:type.${type}`;
+  if (type && i18n.exists(key)) return i18n.t(key);
   const words = (type ?? '').replace(/_/g, ' ').toLowerCase();
   return words.charAt(0).toUpperCase() + words.slice(1);
 };
@@ -48,18 +25,18 @@ export const isHighPriority = (notification: Pick<AppNotification, 'priority'>) 
 
 const dayKey = (date: Date) => `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
 
-// Heading of a day in a list of notifications: "Aujourd'hui", "Hier", then the full date.
+// Heading of a day in a list of notifications: today, yesterday, then the full date.
 export const notificationDayLabel = (value: string | Date, now: Date = new Date()) => {
   const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return 'Date inconnue';
+  if (Number.isNaN(date.getTime())) return i18n.t('notifications:day.unknown');
 
   const yesterday = new Date(now);
   yesterday.setDate(now.getDate() - 1);
 
-  if (dayKey(date) === dayKey(now)) return "Aujourd'hui";
-  if (dayKey(date) === dayKey(yesterday)) return 'Hier';
+  if (dayKey(date) === dayKey(now)) return i18n.t('common:labels.today');
+  if (dayKey(date) === dayKey(yesterday)) return i18n.t('common:labels.yesterday');
 
-  const label = date.toLocaleDateString('fr-FR', {
+  const label = date.toLocaleDateString(currentLocale(), {
     weekday: 'long',
     day: 'numeric',
     month: 'long',

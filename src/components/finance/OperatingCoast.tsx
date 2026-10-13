@@ -1,6 +1,7 @@
 "use client"
 
 import { useQuery } from "@apollo/client"
+import { useTranslation } from "react-i18next"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts"
 import { Fuel, PiggyBank, Plane, TrendingUp, Wrench } from "lucide-react"
 import { startOfMonth, endOfMonth, startOfYear, endOfYear, isWithinInterval } from "date-fns"
@@ -34,6 +35,7 @@ interface OperatingCostsProps {
 const profitClass = (value: number) => (value >= 0 ? "text-success" : "text-destructive")
 
 export default function OperatingCosts({ period, date }: OperatingCostsProps) {
+  const { t } = useTranslation("administration")
   const aircraftsQuery = useQuery(GET_AIRCRAFTS)
   const reservationsQuery = useQuery(GET_RESERVATIONS)
   const maintenancesQuery = useQuery(GET_ALL_MAINTENANCES)
@@ -94,8 +96,8 @@ export default function OperatingCosts({ period, date }: OperatingCostsProps) {
     return (
       <EmptyState
         icon={Plane}
-        title="Aucun avion dans la flotte"
-        description="Les coûts par avion s'afficheront ici dès qu'un avion aura été ajouté."
+        title={t("finance.operating.empty.title")}
+        description={t("finance.operating.empty.description")}
       />
     )
   }
@@ -110,30 +112,35 @@ export default function OperatingCosts({ period, date }: OperatingCostsProps) {
     { fuelCost: 0, maintenanceCost: 0, revenue: 0, profit: 0 },
   )
 
-  const periodLabel = `Du ${formatDate(startDate)} au ${formatDate(endDate)}`
+  const periodLabel = t("finance.period.range", { from: formatDate(startDate), to: formatDate(endDate) })
 
   return (
     <div className="space-y-6">
       <StatGrid>
         <StatCard
-          label="Revenus des vols"
+          label={t("finance.operating.flightRevenue")}
           value={formatMoney(totals.revenue)}
-          hint="Réservations confirmées"
+          hint={t("finance.operating.confirmedBookings")}
           icon={TrendingUp}
           tone="primary"
         />
         <StatCard
-          label="Carburant"
+          label={t("finance.labels.fuel")}
           value={formatMoney(totals.fuelCost)}
-          hint={`Estimé à ${formatMoney(fuelPrice)} le litre`}
+          hint={t("finance.operating.fuelEstimate", { price: formatMoney(fuelPrice) })}
           icon={Fuel}
           tone="warning"
         />
-        <StatCard label="Maintenance" value={formatMoney(totals.maintenanceCost)} icon={Wrench} tone="info" />
         <StatCard
-          label="Résultat"
+          label={t("finance.labels.maintenance")}
+          value={formatMoney(totals.maintenanceCost)}
+          icon={Wrench}
+          tone="info"
+        />
+        <StatCard
+          label={t("finance.labels.result")}
           value={formatMoney(totals.profit)}
-          hint={totals.profit >= 0 ? "Flotte rentable sur la période" : "Coûts supérieurs aux revenus"}
+          hint={totals.profit >= 0 ? t("finance.operating.profitable") : t("finance.operating.unprofitable")}
           icon={PiggyBank}
           tone={totals.profit >= 0 ? "success" : "danger"}
         />
@@ -141,7 +148,7 @@ export default function OperatingCosts({ period, date }: OperatingCostsProps) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Coûts et revenus par avion</CardTitle>
+          <CardTitle>{t("finance.operating.chartTitle")}</CardTitle>
           <CardDescription>{periodLabel}</CardDescription>
         </CardHeader>
         <CardContent>
@@ -157,15 +164,30 @@ export default function OperatingCosts({ period, date }: OperatingCostsProps) {
                   formatter={(value: number) => formatMoney(value)}
                 />
                 <Legend verticalAlign="top" height={32} iconType="circle" wrapperStyle={{ fontSize: 12 }} />
-                <Bar dataKey="revenue" name="Revenus" fill={FINANCE_COLORS.revenue} radius={[4, 4, 0, 0]} />
-                <Bar dataKey="fuelCost" name="Carburant" fill={FINANCE_COLORS.fuel} radius={[4, 4, 0, 0]} />
+                <Bar
+                  dataKey="revenue"
+                  name={t("finance.labels.revenue")}
+                  fill={FINANCE_COLORS.revenue}
+                  radius={[4, 4, 0, 0]}
+                />
+                <Bar
+                  dataKey="fuelCost"
+                  name={t("finance.labels.fuel")}
+                  fill={FINANCE_COLORS.fuel}
+                  radius={[4, 4, 0, 0]}
+                />
                 <Bar
                   dataKey="maintenanceCost"
-                  name="Maintenance"
+                  name={t("finance.labels.maintenance")}
                   fill={FINANCE_COLORS.maintenance}
                   radius={[4, 4, 0, 0]}
                 />
-                <Bar dataKey="profit" name="Résultat" fill={FINANCE_COLORS.result} radius={[4, 4, 0, 0]} />
+                <Bar
+                  dataKey="profit"
+                  name={t("finance.labels.result")}
+                  fill={FINANCE_COLORS.result}
+                  radius={[4, 4, 0, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -174,20 +196,18 @@ export default function OperatingCosts({ period, date }: OperatingCostsProps) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Détail par avion</CardTitle>
-          <CardDescription>
-            Revenus calculés sur les heures réservées, carburant sur la consommation horaire de chaque avion.
-          </CardDescription>
+          <CardTitle>{t("finance.operating.tableTitle")}</CardTitle>
+          <CardDescription>{t("finance.operating.tableDescription")}</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Avion</TableHead>
-                <TableHead className="text-right">Revenus</TableHead>
-                <TableHead className="text-right">Carburant</TableHead>
-                <TableHead className="text-right">Maintenance</TableHead>
-                <TableHead className="text-right">Résultat</TableHead>
+                <TableHead>{t("common:labels.aircraft")}</TableHead>
+                <TableHead className="text-right">{t("finance.labels.revenue")}</TableHead>
+                <TableHead className="text-right">{t("finance.labels.fuel")}</TableHead>
+                <TableHead className="text-right">{t("finance.labels.maintenance")}</TableHead>
+                <TableHead className="text-right">{t("finance.labels.result")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -213,7 +233,7 @@ export default function OperatingCosts({ period, date }: OperatingCostsProps) {
             </TableBody>
             <TableFooter>
               <TableRow>
-                <TableCell>Total</TableCell>
+                <TableCell>{t("common:labels.total")}</TableCell>
                 <TableCell className="whitespace-nowrap text-right tabular-nums">
                   {formatMoney(totals.revenue)}
                 </TableCell>

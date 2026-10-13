@@ -5,8 +5,10 @@ import type { ReactNode } from "react"
 import Link from "next/link"
 import { Cloud, CloudSun, MapPin, RefreshCw, Sun, Sunrise, Thermometer, Wind } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { useApolloClient } from "@apollo/client"
 import { cn } from "@/lib/utils"
+import i18n, { currentLocale } from "@/lib/i18n"
 import { WEATHER_AT } from "@/graphql/aviation"
 import { findAerodromeByCode } from "@/lib/aerodromes"
 import { Button } from "@/components/ui/button"
@@ -37,7 +39,7 @@ const figure = (value: number | null | undefined, unit: string) =>
 
 const sunTime = (timestamp: number | null | undefined) =>
   timestamp
-    ? new Date(timestamp * 1000).toLocaleTimeString("fr-FR", {
+    ? new Date(timestamp * 1000).toLocaleTimeString(currentLocale(), {
         timeZone: "Europe/Paris",
         hour: "2-digit",
         minute: "2-digit",
@@ -46,9 +48,9 @@ const sunTime = (timestamp: number | null | undefined) =>
 
 const skyCondition = (cloudPct: number | null | undefined): { label: string; icon: LucideIcon } => {
   if (cloudPct === undefined || cloudPct === null) return { label: "—", icon: Cloud }
-  if (cloudPct < 30) return { label: "Ensoleillé", icon: Sun }
-  if (cloudPct < 70) return { label: "Éclaircies", icon: CloudSun }
-  return { label: "Nuageux", icon: Cloud }
+  if (cloudPct < 30) return { label: i18n.t("dashboard:weather.condition.sunny"), icon: Sun }
+  if (cloudPct < 70) return { label: i18n.t("dashboard:weather.condition.partlyCloudy"), icon: CloudSun }
+  return { label: i18n.t("dashboard:weather.condition.cloudy"), icon: Cloud }
 }
 
 function Tile({ label, icon: Icon, value, hint }: { label: string; icon: LucideIcon; value: ReactNode; hint: ReactNode }) {
@@ -69,6 +71,7 @@ export default function WeatherWidget({ preferredAerodrome, wide = false }: Weat
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [failed, setFailed] = useState(false)
   const { toast } = useToast()
+  const { t } = useTranslation("dashboard")
   const client = useApolloClient()
 
   // `manual` is true when the member pressed the refresh button: only then is
@@ -93,15 +96,18 @@ export default function WeatherWidget({ preferredAerodrome, wide = false }: Weat
         setWeatherData(data.weatherAt)
         setFailed(false)
         if (manual) {
-          toast({ title: "Météo actualisée", description: `Conditions à jour pour ${preferredAerodrome}.` })
+          toast({
+            title: t("weather.toast.refreshed.title"),
+            description: t("weather.toast.refreshed.description", { aerodrome: preferredAerodrome }),
+          })
         }
       } catch (error) {
         console.error("Erreur lors de la récupération des données météo:", error)
         setFailed(true)
         if (manual) {
           toast({
-            title: "Actualisation impossible",
-            description: "La météo n'a pas pu être récupérée. Réessayez dans un instant.",
+            title: t("weather.toast.failed.title"),
+            description: t("weather.toast.failed.description"),
             variant: "destructive",
           })
         }
@@ -109,7 +115,7 @@ export default function WeatherWidget({ preferredAerodrome, wide = false }: Weat
         setIsRefreshing(false)
       }
     },
-    [client, preferredAerodrome, toast],
+    [client, preferredAerodrome, toast, t],
   )
 
   useEffect(() => {
@@ -124,11 +130,11 @@ export default function WeatherWidget({ preferredAerodrome, wide = false }: Weat
       return (
         <WidgetEmpty
           icon={MapPin}
-          title="Aucun aérodrome préféré"
-          description="Indiquez votre aérodrome dans votre profil pour voir sa météo ici."
+          title={t("weather.empty.title")}
+          description={t("weather.empty.description")}
           action={
             <Button asChild variant="outline" size="sm">
-              <Link href="/profile">Compléter mon profil</Link>
+              <Link href="/profile">{t("weather.empty.action")}</Link>
             </Button>
           }
         />
@@ -148,28 +154,31 @@ export default function WeatherWidget({ preferredAerodrome, wide = false }: Weat
     return (
       <div className={grid}>
         <Tile
-          label="Température"
+          label={t("weather.temperature")}
           icon={Thermometer}
           value={figure(weatherData.temperature, " °C")}
-          hint={`Ressenti ${figure(weatherData.feelsLike, " °C")}`}
+          hint={t("weather.feelsLike", { value: figure(weatherData.feelsLike, " °C") })}
         />
         <Tile
-          label="Ciel"
+          label={t("weather.sky")}
           icon={sky.icon}
           value={sky.label}
-          hint={`Nuages ${figure(weatherData.cloudCover, " %")} · Humidité ${figure(weatherData.humidity, " %")}`}
+          hint={t("weather.skyHint", {
+            clouds: figure(weatherData.cloudCover, " %"),
+            humidity: figure(weatherData.humidity, " %"),
+          })}
         />
         <Tile
-          label="Vent"
+          label={t("weather.wind")}
           icon={Wind}
           value={figure(weatherData.windSpeed, " km/h")}
-          hint={`Direction ${figure(weatherData.windDegrees, "°")}`}
+          hint={t("weather.windDirection", { value: figure(weatherData.windDegrees, "°") })}
         />
         <Tile
-          label="Soleil"
+          label={t("weather.sun")}
           icon={Sunrise}
           value={`${sunTime(weatherData.sunrise)} – ${sunTime(weatherData.sunset)}`}
-          hint="Lever – coucher (heure de Paris)"
+          hint={t("weather.sunHint")}
         />
       </div>
     )
@@ -178,7 +187,7 @@ export default function WeatherWidget({ preferredAerodrome, wide = false }: Weat
   return (
     <WidgetContainer
       title={WIDGET_REGISTRY["weather"].label}
-      description={preferredAerodrome ? `Aérodrome ${preferredAerodrome}` : undefined}
+      description={preferredAerodrome ? t("weather.aerodrome", { code: preferredAerodrome }) : undefined}
       action={
         preferredAerodrome ? (
           <Button
@@ -187,8 +196,8 @@ export default function WeatherWidget({ preferredAerodrome, wide = false }: Weat
             className="h-9 w-9"
             onClick={() => fetchWeather(true)}
             disabled={isRefreshing}
-            aria-label="Actualiser la météo"
-            title="Actualiser la météo"
+            aria-label={t("weather.refresh")}
+            title={t("weather.refresh")}
           >
             <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
           </Button>

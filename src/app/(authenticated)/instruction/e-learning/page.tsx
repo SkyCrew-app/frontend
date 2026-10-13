@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import { useTranslation } from "react-i18next"
 import Link from "next/link"
 import { useQuery } from "@apollo/client"
 import { BookOpen, Search, Settings } from "lucide-react"
@@ -21,6 +22,7 @@ import {
 import { GET_USER_INSTRUCTION_SUMMARY } from "@/graphql/evaluation"
 import { GET_COURSES } from "@/graphql/learningAdmin"
 import type { InstructionSummary } from "@/interfaces/instruction"
+import { currentLocale } from "@/lib/i18n"
 import { percentage } from "@/lib/learning-progress"
 import { isAdministrator } from "@/lib/roles"
 
@@ -33,6 +35,7 @@ const progressRank = (progress: CourseProgress | undefined) => {
 }
 
 export default function ELearningPage() {
+  const { t } = useTranslation("instruction")
   const [searchTerm, setSearchTerm] = useState("")
   const [category, setCategory] = useState("all")
   const userEmail = useCurrentUser()
@@ -64,7 +67,7 @@ export default function ELearningPage() {
   const categories = useMemo(
     () =>
       [...new Set((courses ?? []).map((course) => course.category?.trim()).filter((name): name is string => !!name))].sort(
-        (a, b) => a.localeCompare(b, "fr"),
+        (a, b) => a.localeCompare(b, currentLocale()),
       ),
     [courses],
   )
@@ -83,7 +86,7 @@ export default function ELearningPage() {
       .sort(
         (a, b) =>
           progressRank(progressByCourse.get(Number(a.id))) - progressRank(progressByCourse.get(Number(b.id))) ||
-          a.title.localeCompare(b.title, "fr"),
+          a.title.localeCompare(b.title, currentLocale()),
       )
   }, [courses, searchTerm, category, progressByCourse])
 
@@ -92,7 +95,7 @@ export default function ELearningPage() {
     <Button variant="outline" asChild>
       <Link href="/administration/e-learning">
         <Settings className="h-4 w-4" />
-        Gérer les cours
+        {t("eLearning.catalogue.manage")}
       </Link>
     </Button>
   ) : null
@@ -101,8 +104,8 @@ export default function ELearningPage() {
     <div className="space-y-6">
       <PageHeader
         className="mb-0"
-        title="E-learning"
-        description="Les cours en ligne du club, à suivre à votre rythme."
+        title={t("eLearning.title")}
+        description={t("eLearning.catalogue.description")}
         actions={manageButton}
       />
 
@@ -111,8 +114,8 @@ export default function ELearningPage() {
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="search"
-            aria-label="Rechercher un cours en ligne"
-            placeholder="Rechercher un cours, ex. météorologie"
+            aria-label={t("eLearning.catalogue.searchAria")}
+            placeholder={t("eLearning.catalogue.searchPlaceholder")}
             className="pl-9"
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
@@ -120,11 +123,11 @@ export default function ELearningPage() {
         </div>
         {categories.length > 1 && (
           <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger className="w-full sm:w-56" aria-label="Filtrer par catégorie">
+            <SelectTrigger className="w-full sm:w-56" aria-label={t("eLearning.catalogue.filterCategoryAria")}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Toutes les catégories</SelectItem>
+              <SelectItem value="all">{t("eLearning.catalogue.allCategories")}</SelectItem>
               {categories.map((name) => (
                 <SelectItem key={name} value={name}>
                   {name}
@@ -156,11 +159,11 @@ export default function ELearningPage() {
       ) : visibleCourses.length === 0 ? (
         <EmptyState
           icon={BookOpen}
-          title={isFiltered ? "Aucun cours ne correspond" : "Aucun cours en ligne pour le moment"}
+          title={isFiltered ? t("eLearning.catalogue.empty.filteredTitle") : t("eLearning.catalogue.empty.title")}
           description={
             isFiltered
-              ? "Modifiez la recherche ou la catégorie."
-              : "Les cours apparaîtront ici dès que le club en aura publié."
+              ? t("eLearning.catalogue.empty.filteredDescription")
+              : t("eLearning.catalogue.empty.description")
           }
           action={
             isFiltered ? (
@@ -171,7 +174,7 @@ export default function ELearningPage() {
                   setCategory("all")
                 }}
               >
-                Effacer les filtres
+                {t("common:actions.clearFilters")}
               </Button>
             ) : (
               manageButton

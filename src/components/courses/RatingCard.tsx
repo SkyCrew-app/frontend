@@ -3,6 +3,7 @@
 import type React from "react"
 import { useState } from "react"
 import { Loader2, Star } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
@@ -12,8 +13,9 @@ import { cn } from "@/lib/utils"
 const STARS = [1, 2, 3, 4, 5]
 
 function Stars({ value }: { value: number }) {
+  const { t } = useTranslation("instruction")
   return (
-    <div className="flex items-center gap-0.5" role="img" aria-label={`Note : ${value} sur 5`}>
+    <div className="flex items-center gap-0.5" role="img" aria-label={t("courses.rating.starsAria", { value })}>
       {STARS.map((star) => (
         <Star
           key={star}
@@ -37,6 +39,7 @@ interface RatingCardProps {
 }
 
 export function RatingCard({ rating, feedback, canRate, isOwnRating, onRate }: RatingCardProps) {
+  const { t } = useTranslation("instruction")
   const hasRating = Boolean(rating)
   const [isEditing, setIsEditing] = useState(false)
   const [newRating, setNewRating] = useState(0)
@@ -71,9 +74,9 @@ export function RatingCard({ rating, feedback, canRate, isOwnRating, onRate }: R
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">{isOwnRating ? "Votre avis" : "Avis de l'élève"}</CardTitle>
+        <CardTitle className="text-lg">{isOwnRating ? t("courses.rating.title.own") : t("courses.rating.title.student")}</CardTitle>
         <CardDescription>
-          {isOwnRating ? "Notez ce cours et dites ce que vous en avez retenu." : "La note et le retour de l'élève sur ce cours."}
+          {isOwnRating ? t("courses.rating.description.own") : t("courses.rating.description.student")}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -86,21 +89,21 @@ export function RatingCard({ rating, feedback, canRate, isOwnRating, onRate }: R
             {feedback && <p className="whitespace-pre-line text-sm">{feedback}</p>}
             {canRate && (
               <Button variant="outline" size="sm" onClick={startEditing}>
-                Modifier l'avis
+                {t("courses.rating.edit")}
               </Button>
             )}
           </div>
         )}
 
         {!hasRating && !canRate && (
-          <p className="text-sm text-muted-foreground">L'élève n'a pas encore donné son avis.</p>
+          <p className="text-sm text-muted-foreground">{t("courses.rating.none")}</p>
         )}
 
         {showForm && (
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             <div className="space-y-2">
               <Label id="rating-label">
-                Note <span className="text-destructive">*</span>
+                {t("courses.rating.label")} <span className="text-destructive">*</span>
               </Label>
               <div className="flex items-center gap-2" role="radiogroup" aria-labelledby="rating-label">
                 {STARS.map((star) => (
@@ -109,7 +112,7 @@ export function RatingCard({ rating, feedback, canRate, isOwnRating, onRate }: R
                     type="button"
                     role="radio"
                     aria-checked={newRating === star}
-                    aria-label={`${star} sur 5`}
+                    aria-label={t("courses.rating.starAria", { value: star })}
                     onClick={() => setNewRating(star)}
                     className="flex h-9 w-9 items-center justify-center rounded-md transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
@@ -123,32 +126,32 @@ export function RatingCard({ rating, feedback, canRate, isOwnRating, onRate }: R
                 ))}
                 {newRating > 0 && <span className="ml-2 text-sm tabular-nums text-muted-foreground">{newRating} / 5</span>}
               </div>
-              {submitted && newRating === 0 && <p className="text-sm text-destructive">Choisissez une note.</p>}
+              {submitted && newRating === 0 && <p className="text-sm text-destructive">{t("courses.rating.errorRating")}</p>}
             </div>
             <div className="space-y-2">
               <Label htmlFor="course-feedback">
-                Votre retour <span className="text-destructive">*</span>
+                {t("courses.rating.feedbackLabel")} <span className="text-destructive">*</span>
               </Label>
               <Textarea
                 id="course-feedback"
-                placeholder="Ex. Explications claires, j'aimerais refaire des tours de piste."
+                placeholder={t("courses.rating.feedbackPlaceholder")}
                 value={newFeedback}
                 onChange={(event) => setNewFeedback(event.target.value)}
                 rows={4}
               />
               {submitted && !newFeedback.trim() && (
-                <p className="text-sm text-destructive">Écrivez quelques mots sur le cours.</p>
+                <p className="text-sm text-destructive">{t("courses.rating.errorFeedback")}</p>
               )}
             </div>
             <div className="flex flex-wrap justify-end gap-2">
               {isEditing && (
                 <Button type="button" variant="outline" onClick={() => setIsEditing(false)} disabled={saving}>
-                  Annuler
+                  {t("common:actions.cancel")}
                 </Button>
               )}
               <Button type="submit" disabled={saving}>
                 {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                Envoyer l'avis
+                {t("courses.rating.submit")}
               </Button>
             </div>
           </form>

@@ -1,5 +1,6 @@
 "use client"
 
+import i18n from "@/lib/i18n"
 import { useState, useEffect } from "react"
 import { WifiOff } from "lucide-react"
 
@@ -26,7 +27,7 @@ export default function OfflineIndicator() {
   return (
     <div className="bg-warning text-warning-foreground px-4 py-2 text-sm flex items-center justify-center gap-2">
       <WifiOff className="h-4 w-4" />
-      Mode hors-ligne &mdash; les donn&eacute;es affich&eacute;es peuvent ne pas &ecirc;tre &agrave; jour
+      {i18n.t("common:states.offlineBanner")}
     </div>
   )
 }

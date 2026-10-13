@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { useTranslation } from "react-i18next"
 import { useParams } from "next/navigation"
 import { useMutation, useQuery } from "@apollo/client"
 import { ArrowLeft } from "lucide-react"
@@ -17,6 +18,7 @@ import { CompetenciesCard, type Competency } from "@/components/courses/Competen
 import { CommentsCard, type CourseCommentItem } from "@/components/courses/CommentsCard"
 import { RatingCard } from "@/components/courses/RatingCard"
 import {
+  counterpartRoleLabel,
   courseCounterpart,
   courseHours,
   courseStatus,
@@ -74,6 +76,7 @@ function CourseSkeleton() {
 }
 
 export default function CourseDetails() {
+  const { t } = useTranslation("instruction")
   const { id } = useParams()
   const courseId = Number(id)
   const { toast } = useToast()
@@ -104,7 +107,7 @@ export default function CourseDetails() {
       toast({ title: success })
       return true
     } catch {
-      toast({ variant: "destructive", title: failure, description: "Réessayez dans un instant." })
+      toast({ variant: "destructive", title: failure, description: t("shared.retryLater") })
       return false
     }
   }
@@ -113,30 +116,30 @@ export default function CourseDetails() {
     if (userId === null) return Promise.resolve(false)
     return save(
       () => addComment({ variables: { input: { courseId, content, author: userId } } }),
-      "Commentaire publié",
-      "Le commentaire n'a pas pu être publié",
+      t("courses.detail.toast.commentPublished"),
+      t("courses.detail.toast.commentFailed"),
     )
   }
 
   const handleAddCompetency = ({ name, description }: { name: string; description: string }) =>
     save(
       () => addCompetency({ variables: { input: { courseId, name, description } } }),
-      "Compétence ajoutée",
-      "La compétence n'a pas pu être ajoutée",
+      t("courses.detail.toast.competencyAdded"),
+      t("courses.detail.toast.competencyAddFailed"),
     )
 
   const handleValidateCompetency = (competencyId: number) =>
     save(
       () => validateCompetency({ variables: { competencyId } }),
-      "Compétence validée",
-      "La compétence n'a pas pu être validée",
+      t("courses.detail.toast.competencyValidated"),
+      t("courses.detail.toast.competencyValidateFailed"),
     )
 
   const handleRate = (rating: number, feedback: string) =>
     save(
       () => rateCourse({ variables: { id: courseId, rating: Math.round(rating), feedback } }),
-      "Avis enregistré",
-      "L'avis n'a pas pu être enregistré",
+      t("courses.detail.toast.ratingSaved"),
+      t("courses.detail.toast.ratingFailed"),
     )
 
   const givesCourse = course !== null && userId !== null && Number(course.instructor.id) === userId
@@ -151,15 +154,21 @@ export default function CourseDetails() {
         <Button variant="ghost" size="sm" asChild className="-ml-3 mb-2 text-muted-foreground">
           <Link href={learningRoutes.courses}>
             <ArrowLeft className="h-4 w-4" />
-            Mes cours
+            {t("courses.title")}
           </Link>
         </Button>
         <PageHeader
           className="mb-0"
-          title={course ? `Cours du ${formatDate(course.startTime)}` : "Cours"}
+          title={
+            course ? t("courses.detail.title", { date: formatDate(course.startTime) }) : t("courses.detail.titleFallback")
+          }
           description={
             course && counterpart
-              ? `${courseHours(course)} · ${counterpart.role} : ${personName(counterpart.person)}`
+              ? t("courses.detail.description", {
+                  hours: courseHours(course),
+                  role: counterpartRoleLabel(counterpart.role),
+                  name: personName(counterpart.person),
+                })
               : undefined
           }
           actions={status ? <Badge variant={status.variant}>{status.label}</Badge> : undefined}
@@ -170,11 +179,11 @@ export default function CourseDetails() {
         <CourseSkeleton />
       ) : !course ? (
         <ErrorState
-          title="Cours introuvable"
+          title={t("courses.detail.notFound.title")}
           description={
             error
-              ? "Ce cours n'a pas pu être chargé. Il n'existe peut-être plus, ou vous n'y participez pas."
-              : "Ce cours n'existe pas ou plus."
+              ? t("courses.detail.notFound.error")
+              : t("courses.detail.notFound.missing")
           }
           onRetry={() => refetch()}
         />
@@ -196,22 +205,22 @@ export default function CourseDetails() {
           <div className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Informations</CardTitle>
+                <CardTitle className="text-lg">{t("courses.detail.info")}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <dl className="space-y-3 text-sm">
                   <div className="flex justify-between gap-3">
-                    <dt className="text-muted-foreground">Date</dt>
+                    <dt className="text-muted-foreground">{t("common:labels.date")}</dt>
                     <dd className="font-medium">{formatDate(course.startTime)}</dd>
                   </div>
                   <div className="flex justify-between gap-3">
-                    <dt className="text-muted-foreground">Horaire</dt>
+                    <dt className="text-muted-foreground">{t("courses.schedule")}</dt>
                     <dd className="font-medium tabular-nums">{courseHours(course)}</dd>
                   </div>
                 </dl>
                 <div className="space-y-3 border-t pt-4">
-                  <Participant person={course.instructor} role={givesCourse ? "Instructeur (vous)" : "Instructeur"} />
-                  <Participant person={course.student} role={takesCourse ? "Élève (vous)" : "Élève"} />
+                  <Participant person={course.instructor} role={givesCourse ? t("courses.detail.instructorYou") : t("common:labels.instructor")} />
+                  <Participant person={course.student} role={takesCourse ? t("courses.detail.studentYou") : t("common:labels.student")} />
                 </div>
               </CardContent>
             </Card>

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react"
 import { Settings2 } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { useQuery } from "@apollo/client"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -14,6 +15,7 @@ import WidgetSettingsDialog from "@/components/dashboard/WidgetSettingsDialog"
 import { normalizeWidgets } from "@/components/dashboard/widget-config"
 
 export default function DashboardPage() {
+  const { t } = useTranslation("dashboard")
   const userEmail = useCurrentUser()
   const userData = useUserData(userEmail)
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -39,12 +41,12 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <PageHeader
         className="mb-0"
-        title={firstName ? `Bienvenue, ${firstName}` : "Tableau de bord"}
-        description="Votre activité et celle du club en un coup d'œil."
+        title={firstName ? t("page.welcome", { name: firstName }) : t("page.title")}
+        description={t("page.description")}
         actions={
           <Button variant="outline" onClick={() => setSettingsOpen(true)} disabled={profileLoading}>
             <Settings2 className="h-4 w-4" />
-            Personnaliser
+            {t("page.customize")}
           </Button>
         }
       />

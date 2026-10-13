@@ -31,8 +31,10 @@ import {
   type ChecklistItemDraft,
 } from "@/lib/checklist-items"
 import { ChecklistTemplateEditor } from "@/components/checklists/ChecklistTemplateEditor"
+import { useTranslation } from "react-i18next"
 
 export default function AdminChecklistDetailPage() {
+  const { t } = useTranslation("checklists")
   const params = useParams()
   const { toast } = useToast()
   const id = Number(params.id)
@@ -87,12 +89,12 @@ export default function AdminChecklistDetailPage() {
         refetchQueries: [{ query: GET_CHECKLIST_TEMPLATE, variables: { id } }],
       })
       setInfoEdits({})
-      toast({ title: "Modèle enregistré" })
+      toast({ title: t("admin.toast.saved.title") })
     } catch {
       toast({
         variant: "destructive",
-        title: "Les modifications n'ont pas pu être enregistrées",
-        description: "Réessayez dans un instant.",
+        title: t("admin.toast.saveFailed.title"),
+        description: t("toast.retryLater"),
       })
     }
   }
@@ -106,13 +108,13 @@ export default function AdminChecklistDetailPage() {
         variables: { input },
         refetchQueries: [{ query: GET_CHECKLIST_TEMPLATE, variables: { id } }],
       })
-      toast({ title: "Point ajouté", description: input.item_name })
+      toast({ title: t("admin.toast.itemAdded.title"), description: input.item_name })
       return true
     } catch {
       toast({
         variant: "destructive",
-        title: "Le point n'a pas pu être ajouté",
-        description: "Réessayez dans un instant.",
+        title: t("admin.toast.itemAddFailed.title"),
+        description: t("toast.retryLater"),
       })
       return false
     }
@@ -127,13 +129,13 @@ export default function AdminChecklistDetailPage() {
         variables: { input },
         refetchQueries: [{ query: GET_CHECKLIST_TEMPLATE, variables: { id } }],
       })
-      toast({ title: "Point enregistré", description: input.item_name })
+      toast({ title: t("admin.toast.itemSaved.title"), description: input.item_name })
       return true
     } catch {
       toast({
         variant: "destructive",
-        title: "Le point n'a pas pu être enregistré",
-        description: "Réessayez dans un instant.",
+        title: t("admin.toast.itemSaveFailed.title"),
+        description: t("toast.retryLater"),
       })
       return false
     }
@@ -145,12 +147,12 @@ export default function AdminChecklistDetailPage() {
         variables: { id: Number(itemId) },
         refetchQueries: [{ query: GET_CHECKLIST_TEMPLATE, variables: { id } }],
       })
-      toast({ title: "Point supprimé" })
+      toast({ title: t("admin.toast.itemDeleted.title") })
     } catch {
       toast({
         variant: "destructive",
-        title: "Le point n'a pas pu être supprimé",
-        description: "Réessayez dans un instant.",
+        title: t("admin.toast.itemDeleteFailed.title"),
+        description: t("toast.retryLater"),
       })
     }
   }
@@ -171,8 +173,8 @@ export default function AdminChecklistDetailPage() {
     } catch {
       toast({
         variant: "destructive",
-        title: "Le nouvel ordre n'a pas pu être enregistré",
-        description: "Les points ont repris leur ordre précédent.",
+        title: t("admin.toast.reorderFailed.title"),
+        description: t("admin.toast.reorderFailed.description"),
       })
     }
   }
@@ -181,7 +183,7 @@ export default function AdminChecklistDetailPage() {
     <Button variant="outline" asChild>
       <Link href="/administration/checklists">
         <ArrowLeft className="h-4 w-4" />
-        Tous les modèles
+        {t("admin.detail.back")}
       </Link>
     </Button>
   )
@@ -199,9 +201,9 @@ export default function AdminChecklistDetailPage() {
   if (error || !template) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Modèle de checklist" actions={backButton} className="mb-0" />
+        <PageHeader title={t("admin.detail.title")} actions={backButton} className="mb-0" />
         <ErrorState
-          description="Ce modèle n'a pas pu être chargé. Il n'existe peut-être plus."
+          description={t("admin.detail.loadError")}
           onRetry={() => refetch()}
         />
       </div>
@@ -214,10 +216,12 @@ export default function AdminChecklistDetailPage() {
         title={
           <span className="flex flex-wrap items-center gap-3">
             {template.name}
-            <Badge variant={template.is_active ? "success" : "neutral"}>{template.is_active ? "Actif" : "Inactif"}</Badge>
+            <Badge variant={template.is_active ? "success" : "neutral"}>
+              {template.is_active ? t("admin.active") : t("admin.inactive")}
+            </Badge>
           </span>
         }
-        description={`Modèle de checklist · ${template.aircraft_model}`}
+        description={t("admin.detail.subtitle", { model: template.aircraft_model })}
         actions={backButton}
         className="mb-0"
       />
@@ -225,14 +229,14 @@ export default function AdminChecklistDetailPage() {
       <Card>
         <form onSubmit={handleSaveInfo}>
           <CardHeader>
-            <CardTitle className="text-base">Informations</CardTitle>
-            <CardDescription>Ce que le pilote voit avant de commencer la checklist.</CardDescription>
+            <CardTitle className="text-base">{t("admin.detail.info.title")}</CardTitle>
+            <CardDescription>{t("admin.detail.info.description")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="edit-name">
-                  Nom du modèle
+                  {t("admin.fields.name")}
                   <span className="text-destructive" aria-hidden="true">
                     {" *"}
                   </span>
@@ -241,13 +245,13 @@ export default function AdminChecklistDetailPage() {
                   id="edit-name"
                   value={templateInfo.name}
                   onChange={(e) => handleInfoChange("name", e.target.value)}
-                  placeholder="Prévol DR400"
+                  placeholder={t("admin.fields.namePlaceholder")}
                   required
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-model">
-                  Modèle d&apos;avion
+                  {t("admin.fields.aircraftModel")}
                   <span className="text-destructive" aria-hidden="true">
                     {" *"}
                   </span>
@@ -256,29 +260,29 @@ export default function AdminChecklistDetailPage() {
                   id="edit-model"
                   value={templateInfo.aircraft_model}
                   onChange={(e) => handleInfoChange("aircraft_model", e.target.value)}
-                  placeholder="Robin DR400"
+                  placeholder={t("admin.fields.aircraftModelPlaceholder")}
                   required
                 />
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-desc">Description</Label>
+              <Label htmlFor="edit-desc">{t("common:labels.description")}</Label>
               <Textarea
                 id="edit-desc"
                 value={templateInfo.description}
                 onChange={(e) => handleInfoChange("description", e.target.value)}
-                placeholder="Visite prévol complète, à faire avant chaque premier vol de la journée"
+                placeholder={t("admin.fields.descriptionPlaceholder")}
               />
             </div>
           </CardContent>
           <CardFooter className="flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-end">
-            {hasChanges && <p className="text-sm text-muted-foreground sm:mr-auto">Modifications non enregistrées</p>}
+            {hasChanges && <p className="text-sm text-muted-foreground sm:mr-auto">{t("admin.detail.unsavedChanges")}</p>}
             <Button type="button" variant="outline" onClick={() => setInfoEdits({})} disabled={!hasChanges || saving}>
-              Annuler
+              {t("common:actions.cancel")}
             </Button>
             <Button type="submit" disabled={!hasChanges || !infoValid || saving}>
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              Enregistrer
+              {t("common:actions.save")}
             </Button>
           </CardFooter>
         </form>

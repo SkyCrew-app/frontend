@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useQuery } from "@apollo/client"
+import { useTranslation } from "react-i18next"
 import { Filter, X } from "lucide-react"
 import { GET_AIRCRAFT_FOR_AUDIT } from "@/graphql/audit"
 import type { AuditResultType, AuditFrequencyType } from "@/interfaces/audit"
@@ -61,6 +62,7 @@ function FilterChip({ label, removeLabel, onRemove }: FilterChipProps) {
 }
 
 export function AuditFilters({ filters, onFilterChange, onClearFilters, enumsData }: AuditFiltersProps) {
+  const { t } = useTranslation("administration")
   const [isSheetOpen, setIsSheetOpen] = useState(false)
 
   const { data: aircraftData } = useQuery(GET_AIRCRAFT_FOR_AUDIT)
@@ -86,7 +88,7 @@ export function AuditFilters({ filters, onFilterChange, onClearFilters, enumsDat
         <SheetTrigger asChild>
           <Button variant="outline">
             <Filter className="h-4 w-4" />
-            Filtres
+            {t("audits.filters.button")}
             {activeFiltersCount > 0 && (
               <Badge variant="secondary" className="px-1.5 tabular-nums">
                 {activeFiltersCount}
@@ -96,13 +98,13 @@ export function AuditFilters({ filters, onFilterChange, onClearFilters, enumsDat
         </SheetTrigger>
         <SheetContent side="right" className="flex w-full flex-col gap-6 overflow-y-auto sm:max-w-md">
           <SheetHeader>
-            <SheetTitle>Filtrer les audits</SheetTitle>
-            <SheetDescription>Les filtres s'appliquent dès que vous les choisissez.</SheetDescription>
+            <SheetTitle>{t("audits.filters.title")}</SheetTitle>
+            <SheetDescription>{t("audits.filters.description")}</SheetDescription>
           </SheetHeader>
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="aircraft-filter">Aéronef</Label>
+              <Label htmlFor="aircraft-filter">{t("audits.fields.aircraft")}</Label>
               <Select
                 value={filters.aircraftId?.toString() || "all"}
                 onValueChange={(value) =>
@@ -110,10 +112,10 @@ export function AuditFilters({ filters, onFilterChange, onClearFilters, enumsDat
                 }
               >
                 <SelectTrigger id="aircraft-filter">
-                  <SelectValue placeholder="Tous les aéronefs" />
+                  <SelectValue placeholder={t("audits.allAircraft")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tous les aéronefs</SelectItem>
+                  <SelectItem value="all">{t("audits.allAircraft")}</SelectItem>
                   {(aircraftData?.getAircrafts ?? []).map((aircraft: any) => (
                     <SelectItem key={aircraft.id} value={aircraft.id.toString()}>
                       {aircraft.registration_number}
@@ -124,16 +126,16 @@ export function AuditFilters({ filters, onFilterChange, onClearFilters, enumsDat
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="result-filter">Résultat</Label>
+              <Label htmlFor="result-filter">{t("audits.fields.result")}</Label>
               <Select
                 value={filters.auditResult || "all"}
                 onValueChange={(value) => onFilterChange({ auditResult: value !== "all" ? value : null })}
               >
                 <SelectTrigger id="result-filter">
-                  <SelectValue placeholder="Tous les résultats" />
+                  <SelectValue placeholder={t("audits.filters.allResults")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tous les résultats</SelectItem>
+                  <SelectItem value="all">{t("audits.filters.allResults")}</SelectItem>
                   {enumsData?.auditResultTypes?.map((result: string) => (
                     <SelectItem key={result} value={result}>
                       {auditResult(result).label}
@@ -144,16 +146,16 @@ export function AuditFilters({ filters, onFilterChange, onClearFilters, enumsDat
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="frequency-filter">Fréquence</Label>
+              <Label htmlFor="frequency-filter">{t("audits.fields.frequency")}</Label>
               <Select
                 value={filters.auditFrequency || "all"}
                 onValueChange={(value) => onFilterChange({ auditFrequency: value !== "all" ? value : null })}
               >
                 <SelectTrigger id="frequency-filter">
-                  <SelectValue placeholder="Toutes les fréquences" />
+                  <SelectValue placeholder={t("audits.filters.allFrequencies")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Toutes les fréquences</SelectItem>
+                  <SelectItem value="all">{t("audits.filters.allFrequencies")}</SelectItem>
                   {enumsData?.auditFrequencyTypes?.map((frequency: string) => (
                     <SelectItem key={frequency} value={frequency}>
                       {auditFrequencyLabel(frequency)}
@@ -165,21 +167,21 @@ export function AuditFilters({ filters, onFilterChange, onClearFilters, enumsDat
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2" role="group" aria-labelledby="start-date-filter-label">
-                <Label id="start-date-filter-label">Audités à partir du</Label>
+                <Label id="start-date-filter-label">{t("audits.filters.from")}</Label>
                 <DatePicker
                   date={filters.startDate || undefined}
                   onSelect={(date) => onFilterChange({ startDate: date ?? null })}
-                  placeholder="Date de début"
+                  placeholder={t("audits.filters.startDate")}
                   toDate={filters.endDate || undefined}
                   clearable
                 />
               </div>
               <div className="space-y-2" role="group" aria-labelledby="end-date-filter-label">
-                <Label id="end-date-filter-label">Jusqu'au</Label>
+                <Label id="end-date-filter-label">{t("audits.filters.until")}</Label>
                 <DatePicker
                   date={filters.endDate || undefined}
                   onSelect={(date) => onFilterChange({ endDate: date ?? null })}
-                  placeholder="Date de fin"
+                  placeholder={t("audits.filters.endDate")}
                   fromDate={filters.startDate || undefined}
                   popoverAlign="end"
                   clearable
@@ -190,33 +192,33 @@ export function AuditFilters({ filters, onFilterChange, onClearFilters, enumsDat
 
           <SheetFooter className="mt-auto flex-row justify-end gap-2 sm:space-x-0">
             <Button variant="outline" onClick={handleClearFilters} disabled={activeFiltersCount === 0}>
-              Réinitialiser
+              {t("common:actions.reset")}
             </Button>
-            <Button onClick={() => setIsSheetOpen(false)}>Voir les audits</Button>
+            <Button onClick={() => setIsSheetOpen(false)}>{t("audits.filters.show")}</Button>
           </SheetFooter>
         </SheetContent>
       </Sheet>
 
       {filters.aircraftId && selectedAircraft && (
         <FilterChip
-          label={`Aéronef : ${selectedAircraft.registration_number}`}
-          removeLabel="Retirer le filtre d'aéronef"
+          label={t("audits.filters.chips.aircraft", { value: selectedAircraft.registration_number })}
+          removeLabel={t("audits.filters.chips.removeAircraft")}
           onRemove={() => onFilterChange({ aircraftId: null })}
         />
       )}
 
       {filters.auditResult && (
         <FilterChip
-          label={`Résultat : ${auditResult(filters.auditResult).label}`}
-          removeLabel="Retirer le filtre de résultat"
+          label={t("audits.filters.chips.result", { value: auditResult(filters.auditResult).label })}
+          removeLabel={t("audits.filters.chips.removeResult")}
           onRemove={() => onFilterChange({ auditResult: null })}
         />
       )}
 
       {filters.auditFrequency && (
         <FilterChip
-          label={`Fréquence : ${auditFrequencyLabel(filters.auditFrequency)}`}
-          removeLabel="Retirer le filtre de fréquence"
+          label={t("audits.filters.chips.frequency", { value: auditFrequencyLabel(filters.auditFrequency) })}
+          removeLabel={t("audits.filters.chips.removeFrequency")}
           onRemove={() => onFilterChange({ auditFrequency: null })}
         />
       )}
@@ -225,19 +227,22 @@ export function AuditFilters({ filters, onFilterChange, onClearFilters, enumsDat
         <FilterChip
           label={
             filters.startDate && filters.endDate
-              ? `Du ${formatDate(filters.startDate)} au ${formatDate(filters.endDate)}`
+              ? t("audits.filters.chips.range", {
+                  from: formatDate(filters.startDate),
+                  to: formatDate(filters.endDate),
+                })
               : filters.startDate
-                ? `À partir du ${formatDate(filters.startDate)}`
-                : `Jusqu'au ${formatDate(filters.endDate)}`
+                ? t("common:datePicker.from", { date: formatDate(filters.startDate) })
+                : t("common:datePicker.until", { date: formatDate(filters.endDate) })
           }
-          removeLabel="Retirer le filtre de période"
+          removeLabel={t("audits.filters.chips.removePeriod")}
           onRemove={() => onFilterChange({ startDate: null, endDate: null })}
         />
       )}
 
       {activeFiltersCount > 0 && (
         <Button variant="ghost" size="sm" onClick={onClearFilters}>
-          Réinitialiser
+          {t("common:actions.reset")}
         </Button>
       )}
     </div>

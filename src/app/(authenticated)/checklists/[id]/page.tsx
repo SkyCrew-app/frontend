@@ -20,8 +20,10 @@ import { ChecklistSubmission, ChecklistSubmissionStatus, ChecklistResponse } fro
 import { ChecklistForm } from "@/components/checklists/ChecklistForm"
 import { checklistStatus } from "@/lib/checklist-items"
 import { formatDateTime } from "@/lib/format"
+import { useTranslation } from "react-i18next"
 
 export default function ChecklistDetailPage() {
+  const { t } = useTranslation("checklists")
   const params = useParams()
   const { toast } = useToast()
   const id = Number(params.id)
@@ -57,13 +59,13 @@ export default function ChecklistDetailPage() {
       } catch {
         toast({
           variant: "destructive",
-          title: "Réponses non enregistrées",
-          description: "Vérifiez votre connexion : vos dernières réponses n'ont pas pu être enregistrées.",
+          title: t("toast.answersNotSaved.title"),
+          description: t("toast.answersNotSaved.description"),
         })
         return false
       }
     },
-    [id, updateSubmission, toast],
+    [id, updateSubmission, toast, t],
   )
 
   const handleComplete = useCallback(async () => {
@@ -72,21 +74,21 @@ export default function ChecklistDetailPage() {
         variables: { id },
         refetchQueries: [{ query: GET_CHECKLIST_SUBMISSION, variables: { id } }],
       })
-      toast({ title: "Checklist terminée" })
+      toast({ title: t("toast.completed.title") })
     } catch {
       toast({
         variant: "destructive",
-        title: "La checklist n'a pas pu être terminée",
-        description: "Vérifiez que tous les points obligatoires sont cochés, puis réessayez.",
+        title: t("toast.completeFailed.title"),
+        description: t("toast.completeFailed.description"),
       })
     }
-  }, [id, completeSubmission, toast])
+  }, [id, completeSubmission, toast, t])
 
   const backButton = (
     <Button variant="outline" asChild>
       <Link href="/checklists">
         <ArrowLeft className="h-4 w-4" />
-        Mes checklists
+        {t("detail.back")}
       </Link>
     </Button>
   )
@@ -108,9 +110,9 @@ export default function ChecklistDetailPage() {
   if (error || !submission) {
     return (
       <div className="mx-auto max-w-3xl space-y-6">
-        <PageHeader title="Checklist" actions={backButton} className="mb-0" />
+        <PageHeader title={t("detail.title")} actions={backButton} className="mb-0" />
         <ErrorState
-          description="Cette checklist n'a pas pu être chargée. Elle n'existe peut-être plus."
+          description={t("detail.loadError")}
           onRetry={() => refetch()}
         />
       </div>
@@ -133,8 +135,8 @@ export default function ChecklistDetailPage() {
         <Badge variant={status.variant}>{status.label}</Badge>
         <span>
           {isCompleted && submission.completed_at
-            ? `Terminée le ${formatDateTime(submission.completed_at)}`
-            : `Commencée le ${formatDateTime(submission.started_at)}`}
+            ? t("submission.completedOn", { date: formatDateTime(submission.completed_at) })
+            : t("submission.startedOn", { date: formatDateTime(submission.started_at) })}
         </span>
       </div>
 

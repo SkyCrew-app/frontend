@@ -1,5 +1,6 @@
 import { AvailabilityStatus } from "@/interfaces/aircraft"
 import { DashboardWidgetConfig, WIDGET_REGISTRY, WidgetSize } from "@/interfaces/dashboard"
+import i18n from "@/lib/i18n"
 
 const SIZES: WidgetSize[] = ["sm", "md", "lg"]
 
@@ -34,11 +35,15 @@ export function normalizeWidgets(stored: StoredWidget[] | null | undefined): Das
 type AvailabilityVariant = "success" | "warning" | "info" | "neutral"
 
 // Same wording and colours as the fleet page.
-const AVAILABILITY: Record<string, { label: string; variant: AvailabilityVariant }> = {
-  [AvailabilityStatus.AVAILABLE]: { label: "Disponible", variant: "success" },
-  [AvailabilityStatus.UNAVAILABLE]: { label: "En maintenance", variant: "warning" },
-  [AvailabilityStatus.RESERVED]: { label: "Réservé", variant: "info" },
+const AVAILABILITY: Record<string, AvailabilityVariant> = {
+  [AvailabilityStatus.AVAILABLE]: "success",
+  [AvailabilityStatus.UNAVAILABLE]: "warning",
+  [AvailabilityStatus.RESERVED]: "info",
 }
 
-export const aircraftAvailability = (status: string | null | undefined) =>
-  AVAILABILITY[(status ?? "").toUpperCase()] ?? { label: "Statut inconnu", variant: "neutral" as AvailabilityVariant }
+export const aircraftAvailability = (status: string | null | undefined) => {
+  const code = (status ?? "").toUpperCase()
+  return AVAILABILITY[code]
+    ? { label: i18n.t(`dashboard:availability.${code}`), variant: AVAILABILITY[code] }
+    : { label: i18n.t("dashboard:availability.unknown"), variant: "neutral" as AvailabilityVariant }
+}
