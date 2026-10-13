@@ -109,7 +109,8 @@
     },
     "map": {
       "unavailableTitle": "Carte indisponible",
-      "unavailableDescription": "Les coordonnées des aérodromes ne sont pas enregistrées pour ce plan de vol."
+      "unavailableDescription": "Les coordonnées des aérodromes ne sont pas enregistrées pour ce plan de vol.",
+      "notDisplayable": "La carte ne peut pas être affichée sur cet appareil. Le reste du plan de vol reste consultable."
     },
     "navigation": {
       "emptyTitle": "Pas de journal de navigation",

@@ -109,7 +109,8 @@
     },
     "map": {
       "unavailableTitle": "Map unavailable",
-      "unavailableDescription": "The aerodrome coordinates are not recorded for this flight plan."
+      "unavailableDescription": "The aerodrome coordinates are not recorded for this flight plan.",
+      "notDisplayable": "The map cannot be displayed on this device. The rest of the flight plan remains available."
     },
     "navigation": {
       "emptyTitle": "No navigation log",

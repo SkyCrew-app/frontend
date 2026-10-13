@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback } from 'react'
+import React, { useEffect, useRef, useCallback, useState } from 'react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { escapeHtml } from '@/lib/sanitize-html'
@@ -339,6 +339,7 @@ const MapboxMap: React.FC<MapboxMapProps> = ({ waypoints, departure, arrival, fo
   const map = useRef<mapboxgl.Map | null>(null)
   const markersRef = useRef<mapboxgl.Marker[]>([])
   const legendRef = useRef<HTMLDivElement | null>(null)
+  const [unavailable, setUnavailable] = useState(false)
 
   /* ---- Cleanup markers ---- */
   const clearMarkers = useCallback(() => {
@@ -351,17 +352,29 @@ const MapboxMap: React.FC<MapboxMapProps> = ({ waypoints, departure, arrival, fo
     if (!mapContainer.current) return
     if (map.current) return
 
-    mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || ''
+    // Without a key, or in a browser that cannot draw it (no WebGL), the map is
+    // replaced by a message: the rest of the flight plan must stay readable.
+    if (!process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN) {
+      setUnavailable(true)
+      return
+    }
+    mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN
 
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/dark-v11',
-      center: [2.35, 46.85],
-      zoom: 5,
-      pitch: 0,
-      bearing: 0,
-      antialias: true,
-    })
+    try {
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/mapbox/dark-v11',
+        center: [2.35, 46.85],
+        zoom: 5,
+        pitch: 0,
+        bearing: 0,
+        antialias: true,
+      })
+    } catch {
+      map.current = null
+      setUnavailable(true)
+      return
+    }
 
     map.current.addControl(new mapboxgl.NavigationControl({ showCompass: true }), 'top-right')
     map.current.addControl(new mapboxgl.ScaleControl({ unit: 'nautical' }), 'bottom-right')
@@ -595,6 +608,17 @@ const MapboxMap: React.FC<MapboxMapProps> = ({ waypoints, departure, arrival, fo
       })
     }
   }, [focusPoint])
+
+  if (unavailable) {
+    return (
+      <div
+        role="status"
+        className="flex h-full w-full items-center justify-center bg-muted p-6 text-center text-sm text-muted-foreground"
+      >
+        {i18n.t('flights:planDetail.map.notDisplayable')}
+      </div>
+    )
+  }
 
   return (
     <div ref={mapContainer} className="h-full w-full" style={{ background: '#0a0a0f' }}>
