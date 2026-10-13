@@ -48,6 +48,8 @@ export interface Reservation {
   status: string
   start_time: string
   end_time: string
+  /** What the member was charged for the booking; null when unknown. */
+  charged_amount?: number | null
 }
 
 export interface Maintenance {

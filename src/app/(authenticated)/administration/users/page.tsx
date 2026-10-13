@@ -4,7 +4,15 @@ import { useState } from "react"
 import { useQuery, useMutation, useLazyQuery } from "@apollo/client"
 import { useTranslation } from "react-i18next"
 import { useToast } from "@/components/hooks/use-toast"
-import { CREATE_USER, GET_USERS, UPDATE_USER, GET_USER_DETAILS } from "@/graphql/user"
+import {
+  CREATE_USER,
+  DELETE_USER,
+  GET_USERS,
+  GET_USER_DETAILS,
+  RESEND_INVITATION,
+  SET_USER_ACTIVE,
+  UPDATE_USER,
+} from "@/graphql/user"
 import { CREATE_LICENSE } from "@/graphql/licences"
 import { GET_ROLES } from "@/graphql/roles"
 import type { User, Role, UserDetails } from "@/interfaces/user"
@@ -17,9 +25,13 @@ import { AddLicenseForm, type LicenseFormValues } from "@/components/admin-user/
 import { UserDetailsDialog } from "@/components/admin-user/user-details"
 import { UserFilters } from "@/components/admin-user/user-filters"
 import { PaginationControls } from "@/components/admin-user/pagination-controls"
+import { AccountConfirmDialog } from "@/components/admin-user/account-confirm-dialog"
 import { calendarDayToISOString } from "@/lib/datetime"
+import { apiErrorMessage } from "@/lib/api-error"
 
 const USERS_PER_PAGE = 10
+
+const nameOf = (user: User) => `${user.first_name ?? ""} ${user.last_name ?? ""}`.trim() || user.email
 
 export default function AdministrationPage() {
   const { t } = useTranslation("administration")
@@ -38,6 +50,10 @@ export default function AdministrationPage() {
   const [filterRole, setFilterRole] = useState<string | null>(null)
   const [filterConfirmed, setFilterConfirmed] = useState<boolean | null>(null)
   const [filter2FA, setFilter2FA] = useState<boolean | null>(null)
+  // The member whose deactivation or deletion is waiting for a confirmation.
+  const [accountAction, setAccountAction] = useState<{ kind: "deactivate" | "delete"; user: User } | null>(null)
+  // Kept after closing so the dialog text does not change while it fades out.
+  const [lastAccountAction, setLastAccountAction] = useState(accountAction)
 
   const { toast } = useToast()
 
@@ -52,6 +68,9 @@ export default function AdministrationPage() {
   const [createUser, { loading: creating }] = useMutation(CREATE_USER)
   const [updateUser, { loading: updating }] = useMutation(UPDATE_USER)
   const [onAddLicense, { loading: addingLicense }] = useMutation(CREATE_LICENSE)
+  const [setUserActive, { loading: settingActive }] = useMutation(SET_USER_ACTIVE)
+  const [deleteUser, { loading: deleting }] = useMutation(DELETE_USER)
+  const [resendInvitation] = useMutation(RESEND_INVITATION)
   const [getUserDetails] = useLazyQuery<{ getUserDetails: UserDetails }>(GET_USER_DETAILS, {
     fetchPolicy: "network-only",
   })
@@ -71,10 +90,10 @@ export default function AdministrationPage() {
       })
       setIsCreateDialogOpen(false)
       refetch()
-    } catch {
+    } catch (error) {
       toast({
         title: t("users.toast.createFailed.title"),
-        description: t("users.toast.createFailed.description"),
+        description: apiErrorMessage(error) ?? t("users.toast.createFailed.description"),
         variant: "destructive",
       })
     }
@@ -101,13 +120,88 @@ export default function AdministrationPage() {
       toast({ title: t("users.toast.updated.title") })
       setIsEditDialogOpen(false)
       refetch()
-    } catch {
+    } catch (error) {
+      // The API says why when a rule refuses the change (last administrator…).
       toast({
         title: t("users.toast.updateFailed.title"),
-        description: t("users.toast.retryLater"),
+        description: apiErrorMessage(error) ?? t("users.toast.retryLater"),
         variant: "destructive",
       })
     }
+  }
+
+  const applySetActive = async (user: User, active: boolean) => {
+    try {
+      await setUserActive({ variables: { id: Number(user.id), active } })
+      toast({
+        title: t(active ? "users.toast.reactivated.title" : "users.toast.deactivated.title"),
+        description: t(active ? "users.toast.reactivated.description" : "users.toast.deactivated.description", {
+          name: nameOf(user),
+        }),
+      })
+      setAccountAction(null)
+      refetch()
+    } catch (error) {
+      toast({
+        title: t("users.toast.accountFailed.title"),
+        description: apiErrorMessage(error) ?? t("users.toast.retryLater"),
+        variant: "destructive",
+      })
+    }
+  }
+
+  // Deactivating closes the member's sessions: it is confirmed first. Reactivating is not.
+  const handleSetActive = (user: User, active: boolean) => {
+    if (active) {
+      void applySetActive(user, true)
+      return
+    }
+    setAccountAction({ kind: "deactivate", user })
+    setLastAccountAction({ kind: "deactivate", user })
+  }
+
+  const handleAskDelete = (user: User) => {
+    setAccountAction({ kind: "delete", user })
+    setLastAccountAction({ kind: "delete", user })
+  }
+
+  const handleDeleteUser = async (user: User) => {
+    try {
+      await deleteUser({ variables: { id: Number(user.id) } })
+      toast({ title: t("users.toast.deleted.title") })
+      setAccountAction(null)
+      refetch()
+    } catch (error) {
+      // Typically: the member has a history and must be deactivated instead.
+      toast({
+        title: t("users.toast.deleteFailed.title"),
+        description: apiErrorMessage(error) ?? t("users.toast.retryLater"),
+        variant: "destructive",
+      })
+      setAccountAction(null)
+    }
+  }
+
+  const handleResendInvitation = async (user: User) => {
+    try {
+      await resendInvitation({ variables: { id: Number(user.id) } })
+      toast({
+        title: t("users.toast.invitationSent.title"),
+        description: t("users.toast.invitationSent.description", { name: nameOf(user) }),
+      })
+    } catch (error) {
+      toast({
+        title: t("users.toast.invitationFailed.title"),
+        description: apiErrorMessage(error) ?? t("users.toast.retryLater"),
+        variant: "destructive",
+      })
+    }
+  }
+
+  const confirmAccountAction = () => {
+    if (!accountAction) return
+    if (accountAction.kind === "delete") void handleDeleteUser(accountAction.user)
+    else void applySetActive(accountAction.user, false)
   }
 
   const loadUserDetails = async (userId: string) => {
@@ -278,6 +372,9 @@ export default function AdministrationPage() {
             onViewDetails={handleViewDetails}
             onAddLicense={openLicenseDialog}
             onResetFilters={resetFilters}
+            onSetActive={handleSetActive}
+            onResendInvitation={handleResendInvitation}
+            onDelete={handleAskDelete}
           />
 
           <PaginationControls
@@ -301,12 +398,27 @@ export default function AdministrationPage() {
         onSubmit={handleUpdateUser}
       />
 
+      {lastAccountAction && (
+        <AccountConfirmDialog
+          open={accountAction !== null}
+          onOpenChange={(open) => !open && setAccountAction(null)}
+          title={t(`users.accountActions.${lastAccountAction.kind}Confirm.title`, {
+            name: nameOf(lastAccountAction.user),
+          })}
+          description={t(`users.accountActions.${lastAccountAction.kind}Confirm.description`)}
+          confirmLabel={t(`users.accountActions.${lastAccountAction.kind}Confirm.confirm`)}
+          pending={settingActive || deleting}
+          onConfirm={confirmAccountAction}
+        />
+      )}
+
       <UserDetailsDialog
         isOpen={isDetailsDialogOpen}
         onOpenChange={setIsDetailsDialogOpen}
         userDetails={selectedUserDetails}
         onEdit={handleEditFromDetails}
         onAddLicense={openLicenseFromDetails}
+        onBalanceAdjusted={(userId) => void loadUserDetails(userId)}
       />
     </div>
   )

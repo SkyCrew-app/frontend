@@ -11,6 +11,7 @@ export const GET_FILTERED_RESERVATIONS = gql`
       status
       notes
       flight_category
+      charged_amount
       user {
         id
         first_name
@@ -73,6 +74,7 @@ export const GET_USER_RESERVATIONS = gql`
       flight_category
       status
       notes
+      charged_amount
       aircraft {
         id
         registration_number
@@ -102,6 +104,7 @@ export const GET_RESERVATIONS = gql`
       start_time
       end_time
       status
+      charged_amount
     }
   }
 `

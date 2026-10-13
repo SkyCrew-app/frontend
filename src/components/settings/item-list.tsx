@@ -23,6 +23,8 @@ export interface ListItem {
   name: string
   /** Extra information next to the name, e.g. a badge. */
   meta?: React.ReactNode
+  /** An item the application relies on: it can be neither renamed nor deleted. */
+  locked?: boolean
 }
 
 interface ItemListProps {
@@ -37,35 +39,37 @@ export function ItemList({ items, onEdit, onDelete }: ItemListProps) {
   return (
     <ul className="divide-y rounded-md border">
       {items.map((item) => (
-        <li key={item.key} className="flex items-center justify-between gap-3 py-1.5 pl-3 pr-1.5">
+        <li key={item.key} className="flex min-h-12 items-center justify-between gap-3 py-1.5 pl-3 pr-1.5">
           <div className="flex min-w-0 flex-wrap items-center gap-2">
             <span className="break-words text-sm font-medium">{item.name}</span>
             {item.meta}
           </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9"
-              onClick={() => onEdit(item)}
-              aria-label={t("settings.items.edit", { name: item.name })}
-              title={t("common:actions.edit")}
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 text-destructive hover:text-destructive"
-              onClick={() => onDelete(item)}
-              aria-label={t("settings.items.delete", { name: item.name })}
-              title={t("common:actions.delete")}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
+          {!item.locked && (
+            <div className="flex shrink-0 items-center gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9"
+                onClick={() => onEdit(item)}
+                aria-label={t("settings.items.edit", { name: item.name })}
+                title={t("common:actions.edit")}
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 text-destructive hover:text-destructive"
+                onClick={() => onDelete(item)}
+                aria-label={t("settings.items.delete", { name: item.name })}
+                title={t("common:actions.delete")}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
         </li>
       ))}
     </ul>

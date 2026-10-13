@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SidePanel } from "@/components/layout/SidePanel"
 import { useToast } from "@/components/hooks/use-toast"
 import { CREATE_COURSE, GET_MEMBERS_DIRECTORY, UPDATE_COURSE } from "@/graphql/course"
+import { apiRefusal } from "@/lib/api-refusal"
 import { datetimeLocalToISOString } from "@/lib/datetime"
 import { courseParticipants } from "@/lib/roles"
 import { courseStatusOptions, personName, type InstructionCourse } from "./course-helpers"
@@ -136,11 +137,12 @@ export default function CourseFormDialog({ open, onClose, onSaved, course = null
       }
       onSaved()
       onClose()
-    } catch {
+    } catch (error) {
+      // A refusal (slot already taken, change reserved to administrators…) is explained by the API.
       toast({
         variant: "destructive",
         title: isEdit ? t("courses.form.toast.updateFailed.title") : t("courses.form.toast.createFailed.title"),
-        description: t("shared.saveFailed"),
+        description: apiRefusal(error, t("shared.saveFailed")),
       })
     }
   }

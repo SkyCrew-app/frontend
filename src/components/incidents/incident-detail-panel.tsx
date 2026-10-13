@@ -4,7 +4,7 @@ import { useEffect, useState, type ReactNode } from "react"
 import Link from "next/link"
 import { useMutation } from "@apollo/client"
 import { useTranslation } from "react-i18next"
-import { CheckCircle, ExternalLink, Loader2, RotateCcw, Wrench } from "lucide-react"
+import { CheckCircle, ExternalLink, Loader2, PlaneTakeoff, RotateCcw, Wrench } from "lucide-react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,6 +23,9 @@ import { SidePanel } from "@/components/layout/SidePanel"
 import { useToast } from "@/components/hooks/use-toast"
 import { flightTypeLabel } from "@/components/flight/flight-type"
 import { GET_ALL_INCIDENTS, UPDATE_INCIDENT_STATUS } from "@/graphql/incident"
+import { GET_AIRCRAFTS, SET_AIRCRAFT_AVAILABILITY } from "@/graphql/planes"
+import { aircraftAvailability } from "@/lib/aircraft"
+import { apiRefusal } from "@/lib/api-refusal"
 import { formatDate, formatDateTime, formatFlightDuration } from "@/lib/format"
 import {
   INCIDENT_STATUS_VALUES,
@@ -74,6 +77,8 @@ export function IncidentDetailPanel({ incident, onClose, canFollowUp }: Incident
   const [note, setNote] = useState("")
   const [saving, setSaving] = useState<Action | null>(null)
   const [confirm, setConfirm] = useState<"resolve" | "reopen" | null>(null)
+  const [setAircraftAvailability, { loading: returning }] = useMutation(SET_AIRCRAFT_AVAILABILITY)
+  const [confirmReturn, setConfirmReturn] = useState(false)
 
   const storedNote = incident?.resolution_note ?? ""
 
@@ -123,6 +128,31 @@ export function IncidentDetailPanel({ incident, onClose, canFollowUp }: Incident
     }
   }
 
+  // A severe incident grounds the aircraft; putting it back is a separate decision of the staff.
+  const availability = aircraftAvailability(incident.aircraft.availability_status)
+  const isGrounded = incident.aircraft.availability_status === "UNAVAILABLE"
+
+  const returnToService = async () => {
+    try {
+      await setAircraftAvailability({
+        variables: { aircraftId: Number(incident.aircraft.id), availability_status: "AVAILABLE" },
+        refetchQueries: [{ query: GET_ALL_INCIDENTS }, { query: GET_AIRCRAFTS }],
+        awaitRefetchQueries: true,
+      })
+      toast({
+        title: t("fleet:incidents.toast.returned.title"),
+        description: t("fleet:incidents.toast.returned.description", { registration }),
+      })
+      setConfirmReturn(false)
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: t("fleet:incidents.toast.returnFailed.title"),
+        description: apiRefusal(error, t("fleet:incidents.toast.returnFailed.description")),
+      })
+    }
+  }
+
   const spinner = (action: Action) =>
     saving === action ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null
 
@@ -157,7 +187,7 @@ export function IncidentDetailPanel({ incident, onClose, canFollowUp }: Incident
     <>
       <SidePanel
         open
-        onOpenChange={(next) => !next && !busy && !confirm && onClose()}
+        onOpenChange={(next) => !next && !busy && !confirm && !confirmReturn && onClose()}
         title={t("incidents.detail.title", naming)}
         description={incident.aircraft.model || undefined}
         footer={footer}
@@ -180,6 +210,26 @@ export function IncidentDetailPanel({ incident, onClose, canFollowUp }: Incident
               )}
             </Fact>
           </dl>
+
+          {incident.aircraft.availability_status && (
+            <section className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3">
+              <div className="min-w-0 space-y-1">
+                <p className="flex flex-wrap items-center gap-2 text-sm font-medium">
+                  {t("fleet:incidents.aircraftState")}
+                  <Badge variant={availability.variant}>{availability.label}</Badge>
+                </p>
+                {isGrounded && severity.level === "high" && (
+                  <p className="text-xs text-muted-foreground">{t("fleet:incidents.groundedHint")}</p>
+                )}
+              </div>
+              {canFollowUp && isGrounded && (
+                <Button variant="outline" size="sm" onClick={() => setConfirmReturn(true)} disabled={busy || returning}>
+                  <PlaneTakeoff className="h-4 w-4" aria-hidden="true" />
+                  {t("fleet:incidents.returnToService")}
+                </Button>
+              )}
+            </section>
+          )}
 
           <TextSection title={t("common:labels.description")} text={incident.description} />
           <div className="grid gap-4 sm:grid-cols-2">
@@ -306,6 +356,29 @@ export function IncidentDetailPanel({ incident, onClose, canFollowUp }: Incident
             >
               {busy && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
               {confirm === "reopen" ? t("incidents.actions.reopen") : t("incidents.actions.resolve")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={confirmReturn} onOpenChange={(open) => !open && !returning && setConfirmReturn(false)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("fleet:incidents.confirmReturn.title", { registration })}</AlertDialogTitle>
+            <AlertDialogDescription>{t("fleet:incidents.confirmReturn.description")}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={returning}>{t("common:actions.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              // Stays open until the change is saved.
+              onClick={(event) => {
+                event.preventDefault()
+                void returnToService()
+              }}
+              disabled={returning}
+            >
+              {returning && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+              {t("fleet:incidents.returnToService")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

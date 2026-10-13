@@ -112,7 +112,8 @@
     "deleteLabel": "Delete {{registration}}",
     "deleteDialog": {
       "title": "Delete {{registration}}?",
-      "description": "Aircraft {{registration}} ({{model}}) will be permanently removed from the fleet, along with its photo and documents. This cannot be undone."
+      "description": "Aircraft {{registration}} ({{model}}) will be permanently removed from the fleet, along with its photo and documents. This cannot be undone.",
+      "historyNote": "An aircraft with a history (bookings, maintenance, incidents…) is not deleted: it is taken out of service and its history is kept."
     },
     "toast": {
       "deleted": {
@@ -121,6 +122,10 @@
       },
       "deleteFailed": {
         "description": "The aircraft could not be deleted. It may still be linked to bookings or maintenance tasks."
+      },
+      "retired": {
+        "title": "Aircraft taken out of service",
+        "description": "{{registration}} has a history: it was not deleted. It is now unavailable and its history is kept."
       }
     }
   },
@@ -148,7 +153,9 @@
       "registrationPlaceholder": "G-ABCD",
       "yearOfManufacture": "Year of manufacture",
       "maintenanceState": "Maintenance state",
-      "fuelType": "Fuel type"
+      "fuelType": "Fuel type",
+      "totalFlightHours": "Total flight hours",
+      "totalFlightHoursHint": "Hours already on the airframe. Each closed flight is added automatically."
     },
     "validation": {
       "registration": "Enter the registration.",
@@ -337,6 +344,25 @@
       "tab": "Maintenance ({{total}})",
       "empty": "No maintenance for this aircraft.",
       "noMatch": "No maintenance task matches these filters."
+    }
+  },
+  "incidents": {
+    "aircraftState": "Aircraft state",
+    "groundedHint": "A high-severity incident grounds the aircraft: it cannot be booked until it is put back in service.",
+    "returnToService": "Put back in service",
+    "confirmReturn": {
+      "title": "Put {{registration}} back in service?",
+      "description": "The aircraft will be available for booking again. Make sure it is airworthy."
+    },
+    "toast": {
+      "returned": {
+        "title": "Aircraft back in service",
+        "description": "{{registration}} can be booked again."
+      },
+      "returnFailed": {
+        "title": "Could not put the aircraft back in service",
+        "description": "The aircraft state could not be changed. Please try again."
+      }
     }
   }
 }

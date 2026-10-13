@@ -64,7 +64,24 @@
     },
     "account": {
       "active": "Activé",
-      "pending": "Invitation en attente"
+      "pending": "Invitation en attente",
+      "inactive": "Désactivé"
+    },
+    "accountActions": {
+      "deactivate": "Désactiver le compte",
+      "reactivate": "Réactiver le compte",
+      "resendInvitation": "Renvoyer l'invitation",
+      "delete": "Supprimer le membre",
+      "deactivateConfirm": {
+        "title": "Désactiver le compte de {{name}} ?",
+        "description": "Ce membre ne pourra plus se connecter et sera déconnecté immédiatement. Ses réservations, ses vols et ses factures sont conservés, et le compte peut être réactivé à tout moment.",
+        "confirm": "Désactiver"
+      },
+      "deleteConfirm": {
+        "title": "Supprimer {{name}} ?",
+        "description": "La suppression est définitive et réservée à un compte créé par erreur. Un membre qui a déjà des réservations, des vols ou des factures ne peut pas être supprimé : désactivez son compte.",
+        "confirm": "Supprimer"
+      }
     },
     "twoFactor": {
       "enabled": "Activée",
@@ -221,6 +238,71 @@
       "licenceFailed": {
         "title": "La licence n'a pas pu être ajoutée",
         "description": "Vérifiez les informations saisies, puis réessayez."
+      },
+      "deactivated": {
+        "title": "Compte désactivé",
+        "description": "{{name}} ne peut plus se connecter."
+      },
+      "reactivated": {
+        "title": "Compte réactivé",
+        "description": "{{name}} peut de nouveau se connecter."
+      },
+      "accountFailed": {
+        "title": "Le compte n'a pas pu être modifié"
+      },
+      "invitationSent": {
+        "title": "Invitation renvoyée",
+        "description": "{{name}} va recevoir un nouveau lien, valable 7 jours. L'ancien ne fonctionne plus."
+      },
+      "invitationFailed": {
+        "title": "L'invitation n'a pas pu être renvoyée"
+      },
+      "deleted": {
+        "title": "Membre supprimé"
+      },
+      "deleteFailed": {
+        "title": "Le membre n'a pas pu être supprimé"
+      }
+    },
+    "balance": {
+      "action": "Créditer ou débiter",
+      "title": "Créditer ou débiter le compte",
+      "description": "{{name}} · solde actuel {{balance}}",
+      "operation": "Opération",
+      "credit": "Créditer le compte",
+      "debit": "Débiter le compte",
+      "amount": "Montant (€)",
+      "method": "Mode de règlement",
+      "methods": {
+        "cash": "Espèces",
+        "cheque": "Chèque",
+        "transfer": "Virement",
+        "correction": "Correction"
+      },
+      "reason": "Motif",
+      "reasonPlaceholder": "Ex. : chèque n° 1234 remis le 12 octobre",
+      "reasonHint": "Le motif est visible par le membre dans l'historique de son compte.",
+      "newBalance": "Nouveau solde : {{balance}}",
+      "submitCredit": "Créditer",
+      "submitDebit": "Débiter",
+      "errors": {
+        "amount": "Indiquez un montant positif, avec deux décimales au plus.",
+        "overdraw": "Le débit dépasse le solde du membre.",
+        "reason": "Indiquez le motif de l'opération."
+      },
+      "toast": {
+        "credited": {
+          "title": "Compte crédité",
+          "description": "{{amount}} ajoutés au compte de {{name}}."
+        },
+        "debited": {
+          "title": "Compte débité",
+          "description": "{{amount}} retirés du compte de {{name}}."
+        },
+        "failed": {
+          "title": "Opération impossible",
+          "description": "Le compte n'a pas pu être modifié. Réessayez dans un instant."
+        }
       }
     }
   },
@@ -966,7 +1048,7 @@
       "create": "Créer le rôle",
       "duplicate": "Un rôle porte déjà ce nom.",
       "builtIn": "Rôle de l'application",
-      "builtInNotice": "L'application reconnaît ce rôle à son nom : le renommer ou le supprimer peut retirer leurs accès aux membres concernés.",
+      "builtInHint": "Les rôles de l'application ne peuvent être ni renommés ni supprimés.",
       "empty": {
         "title": "Aucun rôle",
         "description": "Créez un premier rôle pour pouvoir l'attribuer aux membres."
@@ -1174,5 +1256,29 @@
     "weather": "Météorologique",
     "human_error": "Erreur humaine",
     "other": "Autre"
+  },
+  "accountLines": {
+    "booking_refund": {
+      "label": "Remboursement de réservation",
+      "plural": "Remboursements de réservation"
+    },
+    "manual_credit": {
+      "label": "Crédit par le club",
+      "plural": "Crédits par le club"
+    },
+    "manual_debit": {
+      "label": "Débit par le club",
+      "plural": "Débits par le club"
+    },
+    "provider_refund": {
+      "label": "Rechargement remboursé",
+      "plural": "Rechargements remboursés"
+    },
+    "method": {
+      "cash": "Espèces",
+      "cheque": "Chèque",
+      "transfer": "Virement",
+      "correction": "Correction"
+    }
   }
 }

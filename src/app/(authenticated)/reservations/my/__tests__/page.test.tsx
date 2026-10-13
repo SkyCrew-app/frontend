@@ -2,10 +2,11 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { MockedProvider, type MockedResponse } from '@apollo/client/testing';
+import { GraphQLError } from 'graphql';
 import MyReservations from '../page';
 import { DELETE_RESERVATION, GET_MY_TEMPLATES, GET_USER_RESERVATIONS } from '@/graphql/reservation';
 import { GET_AIRCRAFTS } from '@/graphql/planes';
-import { canCancelReservation } from '@/lib/reservation-status';
+import { canCancelReservation, canEditReservation } from '@/lib/reservation-status';
 
 const USER_ID = 42;
 
@@ -23,6 +24,21 @@ jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: jest.fn() }),
 }));
 
+// The bookings below are on 20 October 2026: the tests run a week before, whatever the
+// day they are run. Only the clock is frozen; timers keep running for Apollo.
+const TODAY = new Date('2026-10-13T08:00:00');
+beforeAll(() => {
+  jest.useFakeTimers({
+    now: TODAY,
+    doNotFake: [
+      'nextTick', 'setImmediate', 'clearImmediate', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval',
+      'queueMicrotask', 'performance', 'hrtime', 'requestAnimationFrame', 'cancelAnimationFrame',
+      'requestIdleCallback', 'cancelIdleCallback',
+    ],
+  });
+});
+afterAll(() => jest.useRealTimers());
+
 const reservation = (id: number, registration: string, overrides: object = {}) => ({
   id,
   start_time: '2026-10-20T09:00:00',
@@ -31,6 +47,7 @@ const reservation = (id: number, registration: string, overrides: object = {}) =
   flight_category: 'TRAINING',
   status: 'CONFIRMED',
   notes: null,
+  charged_amount: 300,
   aircraft: { id, registration_number: registration },
   user: { id: USER_ID, first_name: 'Alex', last_name: 'Martin' },
   flights: [],
@@ -41,6 +58,8 @@ const OPEN = reservation(1, 'F-OPEN');
 const WITH_PLAN = reservation(2, 'F-PLAN', { flights: [{ id: 20, closed_at: null }] });
 const CANCELLED = reservation(3, 'F-CANC', { status: 'CANCELLED' });
 const FLOWN = reservation(4, 'F-DONE', { flights: [{ id: 40, closed_at: '2026-10-20T11:30:00.000Z' }] });
+// Started an hour before the frozen clock.
+const STARTED = reservation(5, 'F-PAST', { start_time: '2026-10-13T07:00:00', end_time: '2026-10-13T09:00:00' });
 
 const reservationsMock = (userReservations: object[]): MockedResponse => ({
   request: { query: GET_USER_RESERVATIONS, variables: { userId: USER_ID } },
@@ -81,6 +100,30 @@ describe('canCancelReservation', () => {
   });
 });
 
+describe('règles de modification et d’annulation, les mêmes que celles de l’API', () => {
+  const booking = { status: 'CONFIRMED', start_time: '2026-10-13T10:00:00', flights: [] };
+
+  it('laisse le membre annuler jusqu’à l’heure de début, pas après', () => {
+    expect(canCancelReservation(booking, { now: new Date('2026-10-13T09:59:00') })).toBe(true);
+    expect(canCancelReservation(booking, { now: new Date('2026-10-13T10:00:00') })).toBe(true);
+    expect(canCancelReservation(booking, { now: new Date('2026-10-13T10:00:01') })).toBe(false);
+  });
+
+  it('laisse un administrateur annuler après le début, sauf si le vol est clôturé', () => {
+    const later = new Date('2026-10-14T10:00:00');
+    expect(canCancelReservation(booking, { isAdmin: true, now: later })).toBe(true);
+    expect(
+      canCancelReservation({ ...booking, flights: [{ closed_at: '2026-10-13T12:00:00Z' }] }, { isAdmin: true, now: later }),
+    ).toBe(false);
+  });
+
+  it('ne laisse modifier une réservation qu’avant son début', () => {
+    expect(canEditReservation(booking, new Date('2026-10-13T09:00:00'))).toBe(true);
+    expect(canEditReservation(booking, new Date('2026-10-13T10:30:00'))).toBe(false);
+    expect(canEditReservation({ ...booking, status: 'CANCELLED' }, new Date('2026-10-13T09:00:00'))).toBe(false);
+  });
+});
+
 describe('Mes réservations — annulation', () => {
   beforeEach(() => jest.clearAllMocks());
 
@@ -92,6 +135,45 @@ describe('Mes réservations — annulation', () => {
     expect(cardOf('F-PLAN').getByRole('button', { name: 'Annuler la réservation' })).toBeInTheDocument();
     expect(cardOf('F-CANC').queryByRole('button', { name: 'Annuler la réservation' })).not.toBeInTheDocument();
     expect(cardOf('F-DONE').queryByRole('button', { name: 'Annuler la réservation' })).not.toBeInTheDocument();
+  });
+
+  it('ne propose ni modification ni annulation pour une réservation commencée', async () => {
+    renderPage([reservationsMock([OPEN, STARTED])]);
+    await screen.findByText('F-PAST');
+
+    expect(cardOf('F-PAST').queryByRole('button', { name: 'Annuler la réservation' })).not.toBeInTheDocument();
+    expect(cardOf('F-PAST').queryByRole('button', { name: 'Modifier' })).not.toBeInTheDocument();
+    expect(cardOf('F-OPEN').getByRole('button', { name: 'Modifier' })).toBeInTheDocument();
+  });
+
+  it('affiche le prix payé, celui que l’API a enregistré', async () => {
+    renderPage([reservationsMock([{ ...OPEN, charged_amount: 123.45 }])]);
+    await screen.findByText('F-OPEN');
+
+    expect(cardOf('F-OPEN').getByText(/123,45\s€/)).toBeInTheDocument();
+  });
+
+  it('affiche le refus de l’API tel qu’elle l’a écrit pour le membre', async () => {
+    const refusal = 'Cette réservation a commencé : seul un administrateur peut l’annuler';
+    renderPage([
+      reservationsMock([OPEN]),
+      {
+        request: { query: DELETE_RESERVATION, variables: { id: 1 } },
+        result: { errors: [new GraphQLError(refusal, { extensions: { code: 'FORBIDDEN' } })] },
+      },
+    ]);
+    await screen.findByText('F-OPEN');
+
+    fireEvent.click(cardOf('F-OPEN').getByRole('button', { name: 'Annuler la réservation' }));
+    fireEvent.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Annuler la réservation' }));
+
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith({
+        variant: 'destructive',
+        title: 'Annulation impossible',
+        description: refusal,
+      }),
+    );
   });
 
   it('demande confirmation en nommant la réservation, puis annule et rafraîchit la liste', async () => {

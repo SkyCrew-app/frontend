@@ -185,6 +185,7 @@ export const GET_USERS = gql`
       date_of_birth
       is2FAEnabled
       isEmailConfirmed
+      is_active
       role {
         id
         role_name
@@ -228,6 +229,29 @@ export const GET_USER_DETAILS = gql`
         role_name
       }
     }
+  }
+`;
+
+// A deactivated member can no longer sign in; everything they did is kept.
+export const SET_USER_ACTIVE = gql`
+  mutation SetUserActive($id: Int!, $active: Boolean!) {
+    setUserActive(id: $id, active: $active) {
+      id
+      is_active
+    }
+  }
+`;
+
+// Refused by the API for a member with any history.
+export const DELETE_USER = gql`
+  mutation DeleteUser($id: Int!) {
+    deleteUser(id: $id)
+  }
+`;
+
+export const RESEND_INVITATION = gql`
+  mutation ResendInvitation($id: Int!) {
+    resendInvitation(id: $id)
   }
 `;
 

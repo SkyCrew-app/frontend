@@ -4,8 +4,10 @@ import { expect } from "./test"
 // A booking whose flight is closed stays on the calendar for good. Each run therefore
 // works on a month and a day drawn at random, far enough ahead, so runs do not collide.
 // Drawn from the clock: any spread will do, this is not a secret.
+// Not further than four months: the API refuses a booking beyond the expiry of the pilot's
+// licence, and the demo pilot's licence is valid for 365 days from the day the data is seeded.
 const STARTED = Date.now()
-const MONTHS_AHEAD = 2 + (STARTED % 10)
+const MONTHS_AHEAD = 2 + (STARTED % 3)
 const DAY_DRAW = (Math.floor(STARTED / 10) % 100) / 100
 
 /**

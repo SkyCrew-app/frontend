@@ -28,6 +28,7 @@ import { flightTypeLabel } from "@/components/flight/flight-type"
 import { flightPlanState } from "@/components/flight-plan/flight-plan-state"
 import { GET_FLIGHT_PLAN_BY_ID } from "@/graphql/flights"
 import { getWeather } from "@/lib/weather"
+import { closeBlocker } from "@/lib/flight-closing"
 import { formatDate, formatDateTime, formatDecimal, formatFlightDuration, formatTime } from "@/lib/format"
 import type { Weather } from "@/interfaces/weather"
 
@@ -311,7 +312,7 @@ export default function FlightPlanDetails() {
               weatherConditions={fp.weather_conditions}
               passengers={fp.number_of_passengers}
             />
-            {!fp.closed_at && (
+            {closeBlocker(fp) === null && (
               <Button asChild>
                 <Link href={`/close_flight/${fp.id}`}>{t("plans.actions.closeFlight")}</Link>
               </Button>

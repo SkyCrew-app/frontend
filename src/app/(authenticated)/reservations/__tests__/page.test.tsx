@@ -10,6 +10,9 @@ import { GET_ME, GET_USER_BY_EMAIL } from '@/graphql/user';
 
 // Mercredi 23 octobre 2024, 10h00 (heure locale) : la page démarre sur "aujourd'hui".
 const TODAY = new Date(2024, 9, 23, 10, 0, 0);
+// The same day before the club opens: a slot is booked, changed or cancelled before it starts.
+// The API refuses otherwise, and the interface no longer offers it.
+const EARLY_MORNING = new Date(2024, 9, 23, 7, 30, 0);
 const TODAY_STR = '2024-10-23';
 const TOMORROW_STR = '2024-10-24';
 const AFTER_TOMORROW_STR = '2024-10-25';
@@ -51,6 +54,7 @@ const existingReservation = {
   status: 'PENDING',
   notes: 'Prévoir le plein avant le départ',
   flight_category: 'TRAINING',
+  charged_amount: 300,
   user: { id: OTHER_USER_ID, first_name: 'Camille', last_name: null },
   aircraft: { id: 1, registration_number: 'F-ABCD' },
   flights: [],
@@ -65,6 +69,7 @@ const createdReservation = {
   status: 'PENDING',
   notes: '',
   flight_category: '',
+  charged_amount: 300,
   user: { id: USER_ID, first_name: 'Alex', last_name: null },
   aircraft: { id: 2, registration_number: 'F-EFGH' },
   flights: [],
@@ -318,6 +323,7 @@ describe('ReservationCalendar', () => {
   });
 
   it("doit proposer de modifier et de supprimer une réservation à son propriétaire", async () => {
+    jest.setSystemTime(EARLY_MORNING);
     const user = userEvent.setup();
     renderPage([
       meMock,
@@ -333,9 +339,45 @@ describe('ReservationCalendar', () => {
     const dialog = await screen.findByRole('dialog', { name: 'Détails de la réservation' });
     expect(await within(dialog).findByRole('button', { name: 'Modifier' })).toBeInTheDocument();
     expect(within(dialog).getByRole('button', { name: 'Supprimer' })).toBeInTheDocument();
+    // Le prix affiché est celui que l'API a enregistré en débitant la réservation.
+    expect(within(dialog).getByText('Prix payé')).toBeInTheDocument();
+    expect(within(dialog).getByText(/300,00\s€/)).toBeInTheDocument();
+  });
+
+  it("ne doit plus proposer ni modification ni suppression une fois la réservation commencée", async () => {
+    // Il est 10h00 : la réservation de 09:00 à 11:00 a commencé, l'API refuserait.
+    const user = userEvent.setup();
+    renderPage([
+      meMock,
+      userMock,
+      settingsMock,
+      aircraftsMock,
+      reservationsMock(TODAY_STR, TOMORROW_STR, [createdReservation]),
+    ]);
+    await screen.findByRole('table');
+
+    await user.click(screen.getByText('Vol local'));
+
+    const dialog = await screen.findByRole('dialog', { name: 'Détails de la réservation' });
+    expect(await within(dialog).findByText(/seul un administrateur peut l'annuler/)).toBeInTheDocument();
+    expect(within(dialog).queryByRole('button', { name: 'Modifier' })).not.toBeInTheDocument();
+    expect(within(dialog).queryByRole('button', { name: 'Supprimer' })).not.toBeInTheDocument();
+  });
+
+  it("doit refuser la sélection d'un créneau déjà commencé", async () => {
+    renderPage();
+    await screen.findByRole('table');
+
+    // Il est 10h00 : le créneau de 09:00 (index 1) de F-EFGH est passé.
+    dragOverFreeCells('F-EFGH', 1, 1);
+
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(screen.queryByRole('dialog', { name: 'Créer une réservation' })).not.toBeInTheDocument();
+    getFreeCells('F-EFGH').forEach((cell) => expect(cell).not.toHaveClass('bg-primary/80'));
   });
 
   it("doit demander confirmation avant de supprimer une réservation", async () => {
+    jest.setSystemTime(EARLY_MORNING);
     const user = userEvent.setup();
     const deleteVariables = jest.fn();
     renderPage([
@@ -388,6 +430,7 @@ describe('ReservationCalendar', () => {
   });
 
   it('doit créer une réservation après la sélection de créneaux libres à la souris', async () => {
+    jest.setSystemTime(EARLY_MORNING);
     const user = userEvent.setup();
     const createVariables = jest.fn();
     const userLoaded = jest.fn(() => userMock.result as { data: Record<string, unknown> });
@@ -497,6 +540,7 @@ describe('ReservationCalendar', () => {
   });
 
   it("doit ouvrir le formulaire prérempli quand on arrive depuis un modèle de réservation", async () => {
+    jest.setSystemTime(EARLY_MORNING);
     const user = userEvent.setup();
     const createVariables = jest.fn();
     const userLoaded = jest.fn(() => userMock.result as { data: Record<string, unknown> });

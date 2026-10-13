@@ -56,6 +56,12 @@ export const expenseCategoryLabel = (category: string | null | undefined): strin
   return text.charAt(0).toUpperCase() + text.slice(1)
 }
 
+// What the members were actually charged for these bookings: the amount stored on each
+// booking when it was paid, summed in cents. A booking with an unknown charge counts for nothing.
+export const chargedRevenue = (reservations: { charged_amount?: number | string | null }[]): number =>
+  reservations.reduce((cents, reservation) => cents + Math.round(Number(reservation.charged_amount ?? 0) * 100), 0) /
+  100
+
 // Change between two values in percent; null when it cannot be computed.
 export const percentChange = (previous: number | undefined, current: number | undefined): number | null => {
   if (previous === undefined || current === undefined || previous === 0) return null

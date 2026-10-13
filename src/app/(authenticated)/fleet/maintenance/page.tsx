@@ -22,7 +22,7 @@ import { PageHeader } from "@/components/layout/PageHeader"
 import { StatCard } from "@/components/layout/StatCard"
 import { ErrorState } from "@/components/layout/ErrorState"
 import { GET_ALL_MAINTENANCES, CREATE_MAINTENANCE, UPDATE_MAINTENANCE, DELETE_MAINTENANCE } from "@/graphql/maintenance"
-import { GET_USERS } from "@/graphql/user"
+import { GET_MEMBERS_DIRECTORY } from "@/graphql/course"
 import { GET_AIRCRAFTS } from "@/graphql/planes"
 import type { Maintenance } from "@/interfaces/maintenance"
 import { useToast } from "@/components/hooks/use-toast"
@@ -69,12 +69,13 @@ export default function MaintenanceTablePage() {
 
   const { toast } = useToast()
 
-  const { data: usersData } = useQuery(GET_USERS)
+  // The directory, not the administrator's list of users: a technician opens this screen too.
+  const { data: usersData } = useQuery(GET_MEMBERS_DIRECTORY)
   const { data: aircraftsData } = useQuery(GET_AIRCRAFTS)
 
   const aircrafts = aircraftsData?.getAircrafts || []
   const technicians =
-    usersData?.getUsers.filter((user: { role: { role_name: string } }) => user.role?.role_name === ROLE_TECHNICIAN) || []
+    usersData?.membersDirectory.filter((user: { role: { role_name: string } }) => user.role?.role_name === ROLE_TECHNICIAN) || []
 
   const maintenances: Maintenance[] = data?.getAllMaintenances || []
 

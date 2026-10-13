@@ -25,6 +25,7 @@ import {
   maintenanceTypeLabel,
   validateMaintenanceAttachments,
 } from "@/lib/maintenance"
+import { apiRefusal } from "@/lib/api-refusal"
 import { REMOVE_MAINTENANCE_ATTACHMENT } from "@/graphql/maintenance"
 import { cn } from "@/lib/utils"
 
@@ -288,11 +289,12 @@ export function MaintenanceFormDialog({
         title: isEditing ? t("maintenance.form.toast.updated.title") : t("maintenance.form.toast.created.title"),
         description: isEditing ? t("shared.changesSaved") : t("maintenance.form.toast.created.description"),
       })
-    } catch {
+    } catch (error) {
+      // A refusal is explained by the API: bookings in the way are named, for instance.
       toast({
         variant: "destructive",
         title: t("shared.saveFailed"),
-        description: t("maintenance.form.toast.saveFailed.description"),
+        description: apiRefusal(error, t("maintenance.form.toast.saveFailed.description")),
       })
     } finally {
       setIsSubmitting(false)

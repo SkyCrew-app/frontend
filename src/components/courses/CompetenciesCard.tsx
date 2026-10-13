@@ -34,12 +34,20 @@ interface CompetenciesCardProps {
   competencies: Competency[]
   // The instructor of the course adds and validates; the student only reads.
   canManage: boolean
+  // Nothing is validated on a course that has not started or is cancelled (the API refuses it).
+  canValidate?: boolean
   // Both resolve to true when the change was saved.
   onAdd: (competency: { name: string; description: string }) => Promise<boolean>
   onValidate: (competencyId: number) => Promise<boolean>
 }
 
-export function CompetenciesCard({ competencies, canManage, onAdd, onValidate }: CompetenciesCardProps) {
+export function CompetenciesCard({
+  competencies,
+  canManage,
+  canValidate = canManage,
+  onAdd,
+  onValidate,
+}: CompetenciesCardProps) {
   const { t } = useTranslation("instruction")
   const [isAdding, setIsAdding] = useState(false)
   const [name, setName] = useState("")
@@ -137,7 +145,7 @@ export function CompetenciesCard({ competencies, canManage, onAdd, onValidate }:
                 </div>
                 {competency.validated ? (
                   <Badge variant="success">{t("courses.competencies.validated")}</Badge>
-                ) : canManage ? (
+                ) : canManage && canValidate ? (
                   <Button variant="outline" size="sm" onClick={() => setToValidate(competency)}>
                     {t("courses.competencies.validate")}
                   </Button>

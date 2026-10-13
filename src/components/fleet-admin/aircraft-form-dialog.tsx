@@ -29,6 +29,7 @@ import {
   buildAircraftInput,
   manufactureYearBounds,
 } from "@/lib/aircraft"
+import { apiRefusal } from "@/lib/api-refusal"
 import { getBackendBaseUrl } from "@/lib/runtime-config"
 import { cn } from "@/lib/utils"
 
@@ -53,7 +54,13 @@ const OPTIONAL_NUMBERS = [
 type OptionalNumber = (typeof OPTIONAL_NUMBERS)[number]
 
 // Required fields, all on the first step of the form.
-const IDENTIFICATION_FIELDS = ["registration_number", "model", "year_of_manufacture", "hourly_cost"] as const
+const IDENTIFICATION_FIELDS = [
+  "registration_number",
+  "model",
+  "year_of_manufacture",
+  "hourly_cost",
+  "total_flight_hours",
+] as const
 
 // The form holds what is typed; numbers are read when it is sent.
 type FormState = Record<
@@ -64,6 +71,7 @@ type FormState = Record<
   | "availability_status"
   | "maintenance_status"
   | "fuel_type"
+  | "total_flight_hours"
   | OptionalNumber,
   string
 >
@@ -86,6 +94,7 @@ const initialState = (aircraft?: Aircraft | null): FormState => ({
   availability_status: aircraft?.availability_status ?? AvailabilityStatus.AVAILABLE,
   maintenance_status: formMaintenanceState(aircraft?.maintenance_status),
   fuel_type: aircraft?.fuel_type ?? "",
+  total_flight_hours: text(aircraft?.total_flight_hours),
   maxAltitude: text(aircraft?.maxAltitude),
   cruiseSpeed: text(aircraft?.cruiseSpeed),
   consumption: text(aircraft?.consumption),
@@ -187,10 +196,11 @@ export function AircraftFormDialog({ aircraft, isOpen, onClose, onSuccess }: Air
       })
       onSuccess()
     },
-    onError: () => {
+    onError: (updateError) => {
+      // A refusal (aircraft held by a maintenance…) is explained by the API.
       toast({
         title: t("shared.saveFailed"),
-        description: t("aircraftForm.toast.updateFailed.description"),
+        description: apiRefusal(updateError, t("aircraftForm.toast.updateFailed.description")),
         variant: "destructive",
       })
     },
@@ -256,7 +266,7 @@ export function AircraftFormDialog({ aircraft, isOpen, onClose, onSuccess }: Air
       next.hourly_cost = t("aircraftForm.validation.hourlyCost")
     }
 
-    for (const field of OPTIONAL_NUMBERS) {
+    for (const field of [...OPTIONAL_NUMBERS, "total_flight_hours"] as const) {
       if (form[field] !== "" && !(Number(form[field]) >= 0)) {
         next[field] = t("common:validation.positiveNumber")
       }
@@ -293,6 +303,14 @@ export function AircraftFormDialog({ aircraft, isOpen, onClose, onSuccess }: Air
       const hadValue = aircraft?.[field] !== null && aircraft?.[field] !== undefined
       if (form[field] !== "") input[field] = Number(form[field])
       else if (hadValue) input[field] = Number.NaN
+    }
+
+    // The total follows the closed flights: it is only sent when the administrator corrects it.
+    if (
+      form.total_flight_hours !== "" &&
+      Number(form.total_flight_hours) !== Number(aircraft?.total_flight_hours ?? 0)
+    ) {
+      input.total_flight_hours = Number(form.total_flight_hours)
     }
 
     const fuelType = form.fuel_type.trim()
@@ -384,6 +402,14 @@ export function AircraftFormDialog({ aircraft, isOpen, onClose, onSuccess }: Air
                 ))}
               </SelectContent>
             </Select>
+          </Field>
+          <Field
+            id="total_flight_hours"
+            label={t("aircraftForm.fields.totalFlightHours")}
+            error={errors.total_flight_hours}
+          >
+            <UnitInput {...inputProps("total_flight_hours")} unit="h" step="0.1" placeholder="1245" />
+            <p className="text-xs text-muted-foreground">{t("aircraftForm.fields.totalFlightHoursHint")}</p>
           </Field>
         </div>
       </section>

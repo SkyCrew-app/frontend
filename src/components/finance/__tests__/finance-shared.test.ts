@@ -1,4 +1,10 @@
-import { expenseCategoryLabel, formatPercentChange, formatShare, percentChange } from "../finance-shared"
+import {
+  chargedRevenue,
+  expenseCategoryLabel,
+  formatPercentChange,
+  formatShare,
+  percentChange,
+} from "../finance-shared"
 
 describe("finance-shared", () => {
   it("doit donner un libellé français aux catégories connues", () => {
@@ -27,5 +33,13 @@ describe("finance-shared", () => {
   it("doit signer les évolutions positives", () => {
     expect(formatPercentChange(12.54)).toBe("+12,5 %")
     expect(formatPercentChange(-3)).toBe("-3 %")
+  })
+
+  it("doit compter en recettes ce que les membres ont réellement payé", () => {
+    // Stored amounts, not hours at today's rate; an unknown charge counts for nothing.
+    expect(chargedRevenue([{ charged_amount: 560 }, { charged_amount: "199.99" }, { charged_amount: null }, {}])).toBe(
+      759.99,
+    )
+    expect(chargedRevenue([{ charged_amount: 0.1 }, { charged_amount: 0.2 }])).toBe(0.3)
   })
 })

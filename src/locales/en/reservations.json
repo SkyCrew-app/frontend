@@ -21,7 +21,8 @@
   "shared": {
     "newReservation": "New booking",
     "untitled": "Booking",
-    "flightCategory": "Flight category"
+    "flightCategory": "Flight category",
+    "pricePaid": "Price paid"
   },
   "calendar": {
     "title": "Booking calendar",
@@ -78,7 +79,8 @@
       "closedDay": "The flying club is closed on that day.",
       "timeMissing": "Enter the start time and the end time.",
       "timeOrder": "The end time must be after the start time.",
-      "category": "Please select a flight category."
+      "category": "Please select a flight category.",
+      "past": "A booking cannot start in the past."
     }
   },
   "detail": {
@@ -88,7 +90,8 @@
       "title": "Delete this booking?",
       "description": "The booking of {{aircraft}} on {{date}}, from {{start}} to {{end}}, will be permanently deleted and the slot will become free again.",
       "action": "Delete the booking"
-    }
+    },
+    "startedHint": "This booking has started: it can no longer be changed, and only an administrator can cancel it."
   },
   "toast": {
     "slotUnavailable": {
@@ -151,6 +154,10 @@
     "templateDeleteFailed": {
       "title": "Could not delete",
       "description": "The template could not be deleted. Try again in a moment."
+    },
+    "slotPast": {
+      "title": "Slot in the past",
+      "description": "This slot has already started. Choose an upcoming slot."
     }
   },
   "my": {

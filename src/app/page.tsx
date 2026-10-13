@@ -16,6 +16,7 @@ import { loginSchema } from '@/lib/validations';
 import { clearSessionCache } from '@/lib/apollo-client';
 import { AuthCard, AuthLink, FieldError } from '@/app/auth/_components/AuthCard';
 import { authIssueMessage } from '@/app/auth/_components/validation-message';
+import { apiRefusalMessage } from '@/lib/api-error';
 
 const DEMO_ACCOUNTS = [
   { labelKey: 'login.demo.admin', email: 'demo@skycrew.fr', password: 'demo1234' },
@@ -76,11 +77,12 @@ export default function LoginPage() {
       } else {
         router.push('/dashboard');
       }
-    } catch {
+    } catch (error) {
+      // A deactivated account is told so by the API (only with the right password).
       toast({
         variant: "destructive",
         title: t('login.toast.failed.title'),
-        description: t('login.toast.failed.description'),
+        description: apiRefusalMessage(error, 403) ?? t('login.toast.failed.description'),
       });
     }
   };

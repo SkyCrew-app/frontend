@@ -35,6 +35,21 @@ describe("CompetenciesCard", () => {
     await waitFor(() => expect(onValidate).toHaveBeenCalledWith(2))
   })
 
+  it("ne propose pas de valider tant que le cours n'a pas commencé, mais laisse préparer les compétences", () => {
+    render(
+      <CompetenciesCard
+        competencies={competencies}
+        canManage
+        canValidate={false}
+        onAdd={jest.fn()}
+        onValidate={jest.fn()}
+      />,
+    )
+
+    expect(screen.queryByRole("button", { name: "Valider" })).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Ajouter" })).toBeInTheDocument()
+  })
+
   it("ajoute une compétence depuis le formulaire, la description restant facultative", async () => {
     const onAdd = jest.fn().mockResolvedValue(true)
     render(<CompetenciesCard competencies={[]} canManage onAdd={onAdd} onValidate={jest.fn()} />)

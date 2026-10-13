@@ -39,4 +39,30 @@ test.describe("Droits d'un pilote", () => {
     await expect(page).toHaveURL(/\/system\/unauthorized$/)
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible()
   })
+
+  // The two-factor setup lives under /administration but belongs to every member.
+  test("la double authentification reste accessible", async ({ page }) => {
+    await page.goto("/administration/2fa")
+    await expect(page).toHaveURL(/\/administration\/2fa$/)
+    await expect(page.getByRole("heading", { level: 1, name: "Authentification à deux facteurs" })).toBeVisible()
+  })
+})
+
+test.describe("Droits d'un instructeur", () => {
+  test.use({ storageState: sessionFile("instructor") })
+
+  test("le menu Administration mène aux modèles de checklist, le reste est refusé", async ({ page }) => {
+    await page.goto("/dashboard")
+    const sidebar = page.getByRole("navigation", { name: "Navigation principale" })
+    await expect(sidebar).toContainText(ACCOUNTS.instructor.name)
+
+    await sidebar.getByRole("link", { name: "Administration" }).click()
+    await expect(page).toHaveURL(/\/administration\/checklists$/)
+    await expect(page.getByRole("main").getByRole("heading", { level: 1 })).toBeVisible()
+
+    for (const refused of ["/administration", "/administration/users", "/administration/incidents"]) {
+      await page.goto(refused)
+      await expect(page).toHaveURL(/\/system\/unauthorized$/)
+    }
+  })
 })

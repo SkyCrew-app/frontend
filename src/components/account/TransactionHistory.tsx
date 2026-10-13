@@ -17,12 +17,14 @@ import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
 import { formatDate, formatMoney } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import {
+  ACCOUNT_LINE_KINDS,
   PAYMENT_STATUS_FILTERS,
-  TRANSACTION_TYPES,
+  accountLineKind,
+  accountLineLabel,
+  accountLineSign,
   paymentMethodLabel,
   paymentStatus,
-  transactionType,
-  type TransactionType,
+  type AccountLineKind,
 } from "./payment-labels"
 
 interface Transaction {
@@ -31,7 +33,21 @@ interface Transaction {
   amount: number
   payment_status: string
   payment_method: string
-  type: TransactionType
+  type: AccountLineKind
+  /** What the line did to the balance: +1, -1, or 0 for an older booking charged then refunded. */
+  sign: 1 | -1 | 0
+  /** Why an administrator credited or debited the account. */
+  reason: string | null
+}
+
+interface PaymentRow {
+  id: string
+  amount: number | string
+  payment_date: string
+  payment_method: string
+  payment_status: string
+  kind?: string | null
+  reason?: string | null
 }
 
 const ITEMS_PER_PAGE = 10
@@ -41,9 +57,28 @@ const COLUMN_COUNT = 5
 // "+50,00 €" for money coming in, "−50,00 €" for money leaving the account.
 function signedAmount(transaction: Transaction) {
   const amount = formatMoney(transaction.amount)
-  if (transaction.type === "topup") return `+${amount}`
-  if (transaction.type === "spend") return `−${amount}`
+  if (transaction.sign > 0) return `+${amount}`
+  if (transaction.sign < 0) return `−${amount}`
   return amount
+}
+
+// One row per movement of the balance, so that the rows add up to it. A payment still
+// waiting or refused moved nothing and is left out; an older booking that was charged and
+// refunded in one line stays, marked as refunded.
+export function toTransactions(payments: PaymentRow[]): Transaction[] {
+  return payments
+    .map((payment) => ({
+      id: payment.id,
+      invoice_date: payment.payment_date,
+      amount: Number(payment.amount),
+      payment_status: payment.payment_status,
+      payment_method: payment.payment_method,
+      type: accountLineKind(payment),
+      sign: accountLineSign(payment),
+      reason: accountLineKind(payment).startsWith("manual_") ? payment.reason?.trim() || null : null,
+    }))
+    .filter((transaction) => transaction.sign !== 0 || paymentStatus(transaction.payment_status).key === "refunded")
+    .sort((a, b) => new Date(b.invoice_date).getTime() - new Date(a.invoice_date).getTime())
 }
 
 export default function TransactionHistory() {
@@ -69,20 +104,8 @@ export default function TransactionHistory() {
     skip: !userId,
   })
 
-  const transactions: Transaction[] = (data?.paymentsByUser ?? [])
-    .filter((payment: { invoice: any }) => payment.invoice)
-    .map((payment: { id: string; invoice: any; payment_method: string }) => ({
-      id: payment.id,
-      invoice_date: payment.invoice.invoice_date,
-      amount: Number(payment.invoice.amount),
-      payment_status: payment.invoice.payment_status,
-      payment_method: payment.payment_method,
-      type: transactionType(payment.payment_method),
-    }))
-    // Most recent first.
-    .sort(
-      (a: Transaction, b: Transaction) => new Date(b.invoice_date).getTime() - new Date(a.invoice_date).getTime(),
-    )
+  // Most recent first.
+  const transactions: Transaction[] = toTransactions(data?.paymentsByUser ?? [])
 
   const search = searchTerm.trim().toLowerCase()
   const filteredTransactions = transactions.filter((transaction) => {
@@ -91,7 +114,8 @@ export default function TransactionHistory() {
       !search ||
       [
         formatDate(transaction.invoice_date),
-        TRANSACTION_TYPES[transaction.type].label,
+        accountLineLabel(transaction.type),
+        transaction.reason ?? "",
         paymentMethodLabel(transaction.payment_method),
         paymentStatus(transaction.payment_status).label,
         formatMoney(transaction.amount),
@@ -164,9 +188,9 @@ export default function TransactionHistory() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={ALL}>{t("history.allTypes")}</SelectItem>
-                {(Object.keys(TRANSACTION_TYPES) as TransactionType[]).map((type) => (
+                {ACCOUNT_LINE_KINDS.map((type) => (
                   <SelectItem key={type} value={type}>
-                    {TRANSACTION_TYPES[type].plural}
+                    {accountLineLabel(type, "plural")}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -227,7 +251,12 @@ export default function TransactionHistory() {
                     return (
                       <TableRow key={transaction.id}>
                         <TableCell className="whitespace-nowrap">{formatDate(transaction.invoice_date)}</TableCell>
-                        <TableCell>{TRANSACTION_TYPES[transaction.type].label}</TableCell>
+                        <TableCell>
+                          {accountLineLabel(transaction.type)}
+                          {transaction.reason && (
+                            <span className="block text-xs text-muted-foreground">{transaction.reason}</span>
+                          )}
+                        </TableCell>
                         <TableCell className="text-muted-foreground">
                           {paymentMethodLabel(transaction.payment_method)}
                         </TableCell>
@@ -237,7 +266,7 @@ export default function TransactionHistory() {
                         <TableCell
                           className={cn(
                             "whitespace-nowrap text-right font-medium tabular-nums",
-                            transaction.type === "topup" && "text-success",
+                            transaction.sign > 0 && "text-success",
                           )}
                         >
                           {signedAmount(transaction)}
