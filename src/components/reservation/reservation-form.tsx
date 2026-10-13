@@ -9,6 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SidePanel } from "@/components/layout/SidePanel"
 import { FlightCategoryError } from "@/components/reservation/flight-category-error"
 import { flightCategoryOptions } from "@/components/reservation/flight-category"
+import { InstructorField } from "@/components/reservation/instructor-field"
+
+// A flight with an instructor is an instruction flight: the API sets this category itself.
+export const INSTRUCTION_CATEGORY = "INSTRUCTION"
 
 export interface ReservationSlotSummary {
   aircraft: string
@@ -36,6 +40,15 @@ interface ReservationFormProps {
   isSubmitting: boolean
   /** Optional action shown at the start of the footer (e.g. cancelling the booking). */
   footerStart?: ReactNode
+  /**
+   * "With an instructor": shown when a setter is given. `instructorId` is "" for a flight
+   * without one; `instructorRequired` when the member has no valid licence.
+   */
+  instructorId?: string
+  setInstructorId?: (value: string) => void
+  instructorRequired?: boolean
+  /** The pilot of the booking, who cannot be their own instructor. */
+  pilotId?: number | string | null
 }
 
 /** Side panel with the purpose, category and notes of a reservation whose slot is already chosen. */
@@ -55,20 +68,30 @@ export function ReservationForm({
   onSubmit,
   isSubmitting,
   footerStart,
+  instructorId = "",
+  setInstructorId,
+  instructorRequired = false,
+  pilotId,
 }: ReservationFormProps) {
   const { t } = useTranslation("reservations")
   const [categoryError, setCategoryError] = useState(false)
+  const [instructorError, setInstructorError] = useState(false)
+  const withInstructor = !!setInstructorId && instructorId !== ""
 
   useEffect(() => {
-    if (open) setCategoryError(false)
+    if (open) {
+      setCategoryError(false)
+      setInstructorError(false)
+    }
   }, [open])
 
-  // The category is a required enum of the API.
+  // The category is a required enum of the API; a member without a licence needs an instructor.
   const handleSubmit = async () => {
-    if (!flightCategory) {
-      setCategoryError(true)
-      return
-    }
+    const missingInstructor = !!setInstructorId && instructorRequired && !instructorId
+    const missingCategory = !flightCategory && !withInstructor
+    setInstructorError(missingInstructor)
+    setCategoryError(missingCategory)
+    if (missingInstructor || missingCategory) return
     await onSubmit()
   }
 
@@ -119,6 +142,24 @@ export function ReservationForm({
           />
         </div>
 
+        {setInstructorId && (
+          <InstructorField
+            id="instructor"
+            value={instructorId}
+            onChange={(value) => {
+              setInstructorId(value)
+              setInstructorError(false)
+              if (value) {
+                setFlightCategory(INSTRUCTION_CATEGORY)
+                setCategoryError(false)
+              }
+            }}
+            required={instructorRequired}
+            error={instructorError ? t("form.errors.instructor") : undefined}
+            excludeId={pilotId}
+          />
+        )}
+
         <div className="space-y-2">
           <Label htmlFor="category">
             {t("shared.flightCategory")}{" "}
@@ -127,11 +168,12 @@ export function ReservationForm({
             </span>
           </Label>
           <Select
-            value={flightCategory || undefined}
+            value={(withInstructor ? INSTRUCTION_CATEGORY : flightCategory) || undefined}
             onValueChange={(value) => {
               setFlightCategory(value)
               setCategoryError(false)
             }}
+            disabled={withInstructor}
           >
             <SelectTrigger
               id="category"

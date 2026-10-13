@@ -18,6 +18,25 @@ input AdjustBalanceInput {
   user_id: Int!
 }
 
+type AdminAction {
+  action: String!
+  actor_id: Int
+  actor_label: String
+  created_at: DateTime!
+  id: Int!
+  summary: JSON
+  target_id: String
+  target_label: String
+  target_type: String!
+}
+
+type AdminActionsPage {
+  items: [AdminAction!]!
+  page: Int!
+  pageSize: Int!
+  total: Int!
+}
+
 type Administration {
   address: String!
   allowGuestPilots: Boolean!
@@ -265,6 +284,8 @@ enum AvailabilityStatus {
 }
 
 type BudgetForecast {
+  cashReceived: Float!
+  cashRefunded: Float!
   expenseForecast: Float!
   netForecast: Float!
   revenueForecast: Float!
@@ -373,6 +394,8 @@ type CourseCompetency {
   id: Int!
   name: String!
   validated: Boolean
+  validatedAt: DateTime
+  validatedBy: User
 }
 
 type CourseDto {
@@ -672,9 +695,11 @@ input CreateQuestionDTO {
 
 input CreateReservationInput {
   aircraft_id: Int!
+  course_id: Int
   end_time: DateTime!
   estimated_flight_hours: Float
   flight_category: FlightCategory!
+  instructor_id: Int
   notes: String
   purpose: String
   reservation_date: DateTime
@@ -787,6 +812,8 @@ type Flight {
   fuel_policy: String
   id: Int!
   incident: Incident
+  instructor: User
+  logbook_role: LogbookRole
   number_of_passengers: Int
   origin_icao: String!
   performance_profile: String
@@ -841,6 +868,7 @@ type Incident {
   damage_report: String
   description: String!
   flight: Flight
+  hasFlight: Boolean!
   id: Int!
   incident_date: DateTime!
   priority: String!
@@ -860,6 +888,7 @@ type InstructionCourse {
   id: Int!
   instructor: User!
   rating: Float
+  reservation: Reservation
   startTime: DateTime!
   status: CourseStatus!
   student: User!
@@ -878,11 +907,17 @@ type Invoice {
   id: Int!
   invoice_date: DateTime!
   invoice_items: String
+  invoice_number: String
   next_payment_due_date: DateTime
   payment_method: String
   payment_status: String!
   payments: [Payment!]!
   user: User!
+}
+
+type InvoiceDocument {
+  content: String!
+  fileName: String!
 }
 
 """
@@ -938,17 +973,27 @@ input LogbookFilterInput {
   aircraftId: Int
   endDate: DateTime
   flightType: String
+  role: LogbookRole
   startDate: DateTime
+}
+
+enum LogbookRole {
+  DUAL
+  INSTRUCTOR
+  PILOT_IN_COMMAND
 }
 
 type LogbookStats {
   averageFlightDuration: Float!
+  dualHours: Float!
   hoursByCategory: [HoursEntry!]!
   hoursByModel: [HoursEntry!]!
+  instructionGivenHours: Float!
   last30DaysHours: Float!
   last90DaysHours: Float!
   longestFlight: Float!
   monthlyHours: [MonthlyHoursEntry!]!
+  pilotInCommandHours: Float!
   totalFlights: Int!
   totalHours: Float!
 }
@@ -985,6 +1030,24 @@ enum MaintenanceType {
   OVERHAUL
   REPAIR
   SOFTWARE_UPDATE
+}
+
+type MemberCommitments {
+  upcomingCourses: [InstructionCourse!]!
+  upcomingInstructionReservations: [Reservation!]!
+  upcomingReservations: [Reservation!]!
+}
+
+type MemberDeactivation {
+  cancelledInstructionReservations: Int!
+  cancelledReservations: Int!
+  keptReservationIds: [Int!]!
+  refundedAmount: Float!
+  refundedToStudents: Float!
+  upcomingCourses: Int!
+  upcomingInstructionReservations: Int!
+  upcomingReservations: Int!
+  user: User!
 }
 
 type Module {
@@ -1047,6 +1110,7 @@ type Mutation {
   createReservationTemplate(input: CreateReservationTemplateInput!): ReservationTemplate!
   createRole(createRoleInput: CreateRoleInput!): Role!
   createUser(date_of_birth: DateTime!, email: String!, first_name: String!, language: String, last_name: String!, roleId: Int): User!
+  deactivateMember(cancelUpcomingBookings: Boolean! = false, id: Int!): MemberDeactivation!
   deleteAdministration(id: Int!): Boolean!
 
   """
@@ -1185,6 +1249,8 @@ type PaymentResult {
 }
 
 type Query {
+  adminActionNames: [String!]!
+  adminActions(action: String, memberId: Int, page: Int, pageSize: Int): AdminActionsPage!
   adminDashboardStats: adminStatus!
   aerodromeByIata(iata: String!): Aerodrome
   aerodromeByIcao(icao: String!): Aerodrome
@@ -1199,6 +1265,7 @@ type Query {
   auditTemplates: [AuditTemplate!]!
   auditTemplatesForAircraftType(aircraftType: String!): [AuditTemplate!]!
   audits(filter: AuditFilterInput): [Audit!]!
+  bookableInstructors: [User!]!
   checklistSubmission(id: Int!): ChecklistSubmission!
   checklistSubmissions(status: ChecklistSubmissionStatus): [ChecklistSubmission!]!
   checklistSubmissionsByReservation(reservationId: Int!): [ChecklistSubmission!]!
@@ -1257,12 +1324,16 @@ type Query {
   getUsers: [User!]!
   hello: String!
   invoice(id: Int!): Invoice!
+  invoiceDocument(id: Int!): InvoiceDocument!
   invoices: [Invoice!]!
   invoicesByUser(userId: Int!): [Invoice!]!
   logbookEntries(filter: LogbookFilterInput): [Flight!]!
   logbookStats(filter: LogbookFilterInput): LogbookStats!
+  mayBookWithoutInstructor(until: DateTime): Boolean!
   me: User!
+  memberCommitments(id: Int!): MemberCommitments!
   membersDirectory: [User!]!
+  myInstructionReservations: [Reservation!]!
   myReservationTemplates: [ReservationTemplate!]!
   notification(id: Int!): Notification!
   notificationsByUser(userId: Int!): [Notification!]!
@@ -1309,6 +1380,7 @@ type Reservation {
   flight_category: FlightCategory!
   flights: [Flight!]
   id: Int!
+  instructor: User
   notes: String
   number_of_passengers: Float
   purpose: String
@@ -1657,6 +1729,7 @@ input UpdateReservationInput {
   estimated_flight_hours: Float
   flight_category: FlightCategory!
   id: Int!
+  instructor_id: Int
   notes: String
   purpose: String
   reservation_date: DateTime

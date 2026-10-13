@@ -53,6 +53,8 @@ test("l'administrateur ajoute un membre et le retrouve avec la recherche", async
     await openActions()
     await page.getByRole("menuitem", { name: "Désactiver le compte" }).click()
     await expect(page.getByRole("alertdialog")).toContainText(`Désactiver le compte de E2E ${lastName} ?`)
+    // The dialog says what the member still has ahead of them: nothing, for a new one.
+    await expect(page.getByRole("alertdialog")).toContainText("Aucune réservation à venir.")
     await confirmAlert(page, "Désactiver")
     await expect(toast(page, "Compte désactivé")).toBeVisible()
     await expect(rows.first()).toContainText("Désactivé")

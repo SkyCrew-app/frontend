@@ -22,7 +22,9 @@
     "newReservation": "New booking",
     "untitled": "Booking",
     "flightCategory": "Flight category",
-    "pricePaid": "Price paid"
+    "pricePaid": "Price paid",
+    "withInstructor": "with {{name}}",
+    "instructorNamed": "Instructor: {{name}}"
   },
   "calendar": {
     "title": "Booking calendar",
@@ -80,7 +82,18 @@
       "timeMissing": "Enter the start time and the end time.",
       "timeOrder": "The end time must be after the start time.",
       "category": "Please select a flight category.",
-      "past": "A booking cannot start in the past."
+      "past": "A booking cannot start in the past.",
+      "instructor": "Please choose an instructor."
+    },
+    "instructor": {
+      "label": "With an instructor",
+      "none": "No instructor",
+      "placeholder": "Choose an instructor",
+      "requiredHint": "Without a valid licence you fly with an instructor: choose the one for this flight. You pay for the aircraft; the instructor is notified and may decline.",
+      "optionalHint": "Optional. With an instructor the flight becomes an instruction flight; the instructor is notified and may decline."
+    },
+    "course": {
+      "note": "Booking the aircraft for {{student}}'s course with {{instructor}}. The student is the pilot of the flight: they pay for the aircraft and receive the confirmation."
     }
   },
   "detail": {
@@ -91,7 +104,14 @@
       "description": "The booking of {{aircraft}} on {{date}}, from {{start}} to {{end}}, will be permanently deleted and the slot will become free again.",
       "action": "Delete the booking"
     },
-    "startedHint": "This booking has started: it can no longer be changed, and only an administrator can cancel it."
+    "startedHint": "This booking has started: it can no longer be changed, and only an administrator can cancel it.",
+    "decline": "Decline the flight",
+    "instructorHint": "You are the instructor of this flight. You can decline it before it starts: the booking is cancelled and the student is refunded.",
+    "declineConfirm": {
+      "title": "Decline this instruction flight?",
+      "description": "The booking of {{aircraft}} on {{date}}, from {{start}} to {{end}}, will be cancelled. The student will be notified and refunded, and the slot will be free again.",
+      "action": "Decline the flight"
+    }
   },
   "toast": {
     "slotUnavailable": {
@@ -166,7 +186,9 @@
     "tabs": {
       "reservations": "Bookings",
       "templates": "Templates",
-      "templatesWithTotal": "Templates ({{total}})"
+      "templatesWithTotal": "Templates ({{total}})",
+      "instruction": "As instructor",
+      "instructionWithTotal": "As instructor ({{total}})"
     },
     "pager": {
       "singular": "booking",
@@ -207,6 +229,15 @@
       "description": "The booking of {{aircraft}} on {{date}}, from {{start}} to {{end}}, will be cancelled: it will disappear from your bookings and the slot will become free again.",
       "keep": "Keep the booking",
       "action": "Cancel the booking"
+    },
+    "instruction": {
+      "intro": "The instruction flights booked with you. You can decline a flight before it starts: the student is then refunded.",
+      "cardSubtitle": "Instruction flight",
+      "decline": "Decline the flight",
+      "empty": {
+        "title": "No instruction flight",
+        "description": "Bookings where a member chooses you as their instructor will appear here."
+      }
     }
   },
   "template": {

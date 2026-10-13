@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next"
 import AccountOverview from "@/components/account/AccountOverview"
 import TransactionHistory from "@/components/account/TransactionHistory"
 import TopUpAccount from "@/components/account/TopUpAccount"
+import InvoiceList from "@/components/account/InvoiceList"
 import { PageHeader } from "@/components/layout/PageHeader"
 
 export default function MoneyAccountPage() {
@@ -25,6 +26,8 @@ export default function MoneyAccountPage() {
           <TransactionHistory />
         </div>
       </div>
+
+      <InvoiceList />
     </div>
   )
 }

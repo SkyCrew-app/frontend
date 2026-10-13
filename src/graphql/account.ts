@@ -106,3 +106,27 @@ export const ADJUST_MEMBER_BALANCE = gql`
     }
   }
 `;
+
+// The invoices of a member: their own, or any member's for an administrator.
+export const GET_MEMBER_INVOICES = gql`
+  query GetMemberInvoices($userId: Int!) {
+    invoicesByUser(userId: $userId) {
+      id
+      invoice_number
+      invoice_date
+      amount
+      payment_status
+      payment_method
+    }
+  }
+`;
+
+// One invoice as a PDF (base64), written in the language of the interface.
+export const GET_INVOICE_DOCUMENT = gql`
+  query GetInvoiceDocument($id: Int!) {
+    invoiceDocument(id: $id) {
+      fileName
+      content
+    }
+  }
+`;

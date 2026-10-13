@@ -15,6 +15,7 @@ import ExpensesReport from "./ExpenseReport"
 import OperatingCosts from "./OperatingCoast"
 import ExpenseForm from "./ExpenseForm"
 import BudgetForecast from "./BudgetForecast"
+import CashReceived from "./CashReceived"
 import { GENERATE_FINANCIAL_REPORT_PDF, GENERATE_FINANCIAL_REPORT_EXCEL } from "@/graphql/finance"
 import type { GenerateReportResponse, GenerateReportVariables } from "@/interfaces/finance"
 import { currentLocale } from "@/lib/i18n"
@@ -143,8 +144,16 @@ export default function FinancialDashboard() {
           <TabsTrigger value="forecast">{t("finance.tabs.forecast")}</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="financial" className="mt-6">
+        <TabsContent value="financial" className="mt-6 space-y-6">
           <FinancialReportComponent />
+          {/* Top-ups are money received, shown apart from the revenue of the flights charged. */}
+          <section className="space-y-4" aria-labelledby="finance-cash-title">
+            <h2 id="finance-cash-title" className="text-lg font-semibold">
+              {t("finance.cash.title")}
+            </h2>
+            {periodFilter}
+            <CashReceived period={period} date={date} />
+          </section>
         </TabsContent>
         <TabsContent value="expenses" className="mt-6 space-y-6">
           {periodFilter}

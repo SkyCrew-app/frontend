@@ -10,6 +10,17 @@ export const GET_LOGBOOK_ENTRIES = gql`
       destination_icao
       remarks
       departure_time
+      logbook_role
+      user {
+        id
+        first_name
+        last_name
+      }
+      instructor {
+        id
+        first_name
+        last_name
+      }
       reservation {
         id
         aircraft {
@@ -43,6 +54,9 @@ export const GET_LOGBOOK_STATS = gql`
       longestFlight
       last30DaysHours
       last90DaysHours
+      pilotInCommandHours
+      dualHours
+      instructionGivenHours
     }
   }
 `;

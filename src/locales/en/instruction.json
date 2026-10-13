@@ -5,7 +5,8 @@
     "COMPLETED": "Completed",
     "CANCELED": "Cancelled",
     "CANCELLED": "Cancelled",
-    "unknown": "Unknown status"
+    "unknown": "Unknown status",
+    "toConfirm": "To confirm"
   },
   "shared": {
     "percent": "{{value}}%",
@@ -187,7 +188,11 @@
         "competencyValidateFailed": "The competency could not be validated",
         "ratingSaved": "Review saved",
         "ratingFailed": "The review could not be saved"
-      }
+      },
+      "noAircraft": "No aircraft booked",
+      "bookAircraft": "Book an aircraft",
+      "toConfirmInstructor": "The time of this course has passed. Say whether it took place by setting it to “Completed” or “Cancelled” from the list of courses.",
+      "toConfirmStudent": "The time of this course has passed. Your instructor still has to say whether it took place."
     },
     "competencies": {
       "title": "Competencies",
@@ -212,7 +217,9 @@
         "title": "Validate this competency?",
         "description": "“{{name}}” will be marked as acquired and the student will be notified. A validation cannot be undone.",
         "submit": "Validate the competency"
-      }
+      },
+      "validatedBy": "Validated by {{name}} on {{date}}",
+      "validatedOn": "Validated on {{date}}"
     },
     "comments": {
       "title": "Comments",

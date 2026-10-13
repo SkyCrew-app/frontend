@@ -1,0 +1,161 @@
+name: Browser journeys
+
+# The Playwright suite (e2e/) against a real stack: PostgreSQL, Redis, a mail
+# sink, the API built from the backend repository with the demo data, and
+# this frontend as a production build. It runs on the pull requests that
+# promote dev to main and by hand from the Actions tab; it is deliberately
+# not a required check. See e2e/README.md.
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      backend_ref:
+        description: Branch or tag of the backend to test against (empty - the branch this run is on when it is main or dev, otherwise dev)
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  BACKEND_REPOSITORY: SkyCrew-app/backend
+
+jobs:
+  journeys:
+    name: journeys
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # Optional. Only needed if the backend repository becomes private: a
+      # fine-grained token with read access to its contents.
+      BACKEND_REPO_TOKEN: ${{ secrets.BACKEND_REPO_TOKEN }}
+      # The journeys book at local hours of the club: the API runs in its
+      # time zone, as on the machines where the suite is written.
+      TZ: Europe/Paris
+      # git must never wait for a password.
+      GIT_TERMINAL_PROMPT: "0"
+    steps:
+      - name: Checkout the frontend
+        uses: actions/checkout@v4
+        with:
+          path: frontend
+
+      # A pull request to main is tested against the main of the backend.
+      - name: Choose the version of the backend
+        id: backend
+        env:
+          REQUESTED_REF: ${{ inputs.backend_ref }}
+          TARGET_BRANCH: ${{ github.base_ref }}
+          CURRENT_BRANCH: ${{ github.ref_name }}
+          DEFAULT_TOKEN: ${{ github.token }}
+        run: |
+          ref=$REQUESTED_REF
+          if [ -z "$ref" ]; then ref=$TARGET_BRANCH; fi
+          if [ -z "$ref" ]; then
+            case $CURRENT_BRANCH in
+              main | dev) ref=$CURRENT_BRANCH ;;
+              *) ref=dev ;;
+            esac
+          fi
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
+
+          # Without access to the backend there is nothing to run against:
+          # the job then ends green, with a notice, rather than red.
+          token=${BACKEND_REPO_TOKEN:-$DEFAULT_TOKEN}
+          if git ls-remote --exit-code "https://x-access-token:${token}@github.com/${BACKEND_REPOSITORY}.git" "$ref" > /dev/null 2>&1 ||
+            git ls-remote --exit-code "https://github.com/${BACKEND_REPOSITORY}.git" "$ref" > /dev/null 2>&1; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+            echo "Backend: $BACKEND_REPOSITORY at $ref"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Browser journeys skipped::$BACKEND_REPOSITORY at \"$ref\" cannot be read from this workflow. If the repository is private, add a secret BACKEND_REPO_TOKEN (read access to its contents); otherwise check that \"$ref\" exists there."
+          fi
+
+      - name: Checkout the backend
+        if: steps.backend.outputs.available == 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.BACKEND_REPOSITORY }}
+          ref: ${{ steps.backend.outputs.ref }}
+          token: ${{ secrets.BACKEND_REPO_TOKEN || github.token }}
+          path: backend
+
+      - name: Setup Node.js
+        if: steps.backend.outputs.available == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            backend/package-lock.json
+
+      # The lockfile of the backend is generated with npm 11.
+      - name: Pin npm
+        if: steps.backend.outputs.available == 'true'
+        run: npm install --global --ignore-scripts npm@11.11.0
+
+      - name: Install the dependencies of the backend
+        if: steps.backend.outputs.available == 'true'
+        working-directory: backend
+        run: |
+          npm ci --ignore-scripts
+          npm rebuild bcrypt
+
+      - name: Install the dependencies of the frontend
+        if: steps.backend.outputs.available == 'true'
+        working-directory: frontend
+        run: npm ci --legacy-peer-deps --ignore-scripts
+
+      - name: Install the browser
+        if: steps.backend.outputs.available == 'true'
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      # Database, cache and mail sink in Docker, the API with a fresh demo
+      # data set and writes enabled, the frontend as a production build.
+      - name: Start the stack
+        if: steps.backend.outputs.available == 'true'
+        working-directory: frontend
+        env:
+          BACKEND_DIR: ${{ github.workspace }}/backend
+        run: sh e2e/support/stack.sh up
+
+      - name: Run the journeys
+        id: journeys
+        if: steps.backend.outputs.available == 'true'
+        working-directory: frontend
+        env:
+          CI: "true"
+        run: |
+          eval "$(sh e2e/support/stack.sh env)"
+          npx playwright test
+
+      - name: Show the logs of the stack
+        if: failure() && steps.backend.outputs.available == 'true'
+        working-directory: frontend
+        run: sh e2e/support/stack.sh logs 200
+
+      # The report holds, for each failed attempt, a screenshot and a trace.
+      - name: Upload the report and the traces
+        if: failure() && steps.backend.outputs.available == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-journeys-report
+          path: |
+            frontend/e2e/.report/
+            frontend/e2e/.results/
+            frontend/e2e/.stack/*.log
+          include-hidden-files: true
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Stop the stack
+        if: always() && steps.backend.outputs.available == 'true'
+        working-directory: frontend
+        run: sh e2e/support/stack.sh down

@@ -5,7 +5,8 @@
     "COMPLETED": "Terminé",
     "CANCELED": "Annulé",
     "CANCELLED": "Annulé",
-    "unknown": "Statut inconnu"
+    "unknown": "Statut inconnu",
+    "toConfirm": "À confirmer"
   },
   "shared": {
     "percent": "{{value}} %",
@@ -187,7 +188,11 @@
         "competencyValidateFailed": "La compétence n'a pas pu être validée",
         "ratingSaved": "Avis enregistré",
         "ratingFailed": "L'avis n'a pas pu être enregistré"
-      }
+      },
+      "noAircraft": "Aucun avion réservé",
+      "bookAircraft": "Réserver un avion",
+      "toConfirmInstructor": "L'heure de ce cours est passée. Indiquez s'il a eu lieu ou non en le passant au statut « Terminé » ou « Annulé » depuis la liste des cours.",
+      "toConfirmStudent": "L'heure de ce cours est passée. Votre instructeur doit encore indiquer s'il a eu lieu."
     },
     "competencies": {
       "title": "Compétences",
@@ -212,7 +217,9 @@
         "title": "Valider cette compétence ?",
         "description": "« {{name}} » sera marquée comme acquise et l'élève en sera informé. Une validation ne peut pas être annulée.",
         "submit": "Valider la compétence"
-      }
+      },
+      "validatedBy": "Validée par {{name}} le {{date}}",
+      "validatedOn": "Validée le {{date}}"
     },
     "comments": {
       "title": "Commentaires",

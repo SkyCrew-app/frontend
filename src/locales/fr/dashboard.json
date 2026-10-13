@@ -76,6 +76,10 @@
       "partlyCloudy": "Éclaircies",
       "cloudy": "Nuageux"
     },
+    "unavailable": {
+      "title": "Météo indisponible",
+      "description": "Aucune donnée météo pour cet aérodrome pour le moment."
+    },
     "empty": {
       "title": "Aucun aérodrome préféré",
       "description": "Indiquez votre aérodrome dans votre profil pour voir sa météo ici.",

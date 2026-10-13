@@ -8,7 +8,9 @@ import { ArrowDown, ArrowUp, ArrowUpDown, BookOpen } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { EmptyState } from "@/components/layout/EmptyState"
+import { logbookRole } from "@/components/logbook/logbook-role"
 import { ListPager } from "@/components/reservation/list-pager"
 import { flightTypeLabel } from "@/components/flight/flight-type"
 import { formatDate, formatFlightDuration } from "@/lib/format"
@@ -156,6 +158,7 @@ export default function LogbookTable({ flights, loading, filtered = false, onRes
               <SortableHead label={t("logbook.table.arrival")} column="destination" />
               <SortableHead label={t("common:labels.duration")} column="hours" align="right" />
               <SortableHead label={t("logbook.table.flightType")} column="flight_type" />
+              <TableHead>{t("logbook.table.role")}</TableHead>
               <TableHead>{t("logbook.table.remarks")}</TableHead>
             </TableRow>
           </TableHeader>
@@ -183,6 +186,18 @@ export default function LogbookTable({ flights, loading, filtered = false, onRes
                   {formatFlightDuration(flight.flight_hours)}
                 </TableCell>
                 <TableCell className="whitespace-nowrap">{flightTypeLabel(flight.flight_type)}</TableCell>
+                <TableCell className="whitespace-nowrap">
+                  {(() => {
+                    const role = logbookRole(flight)
+                    if (!role) return "—"
+                    return (
+                      <>
+                        <Badge variant={role.variant}>{role.label}</Badge>
+                        {role.withWhom && <span className="block text-xs text-muted-foreground">{role.withWhom}</span>}
+                      </>
+                    )
+                  })()}
+                </TableCell>
                 <TableCell className="max-w-[240px] truncate text-muted-foreground" title={flight.remarks ?? undefined}>
                   {flight.remarks || "—"}
                 </TableCell>

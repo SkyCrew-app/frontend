@@ -105,6 +105,8 @@ export const ACCOUNT_LINE_KINDS = [
   "manual_credit",
   "manual_debit",
   "provider_refund",
+  // A chargeback the club won: what the dispute had taken comes back.
+  "dispute_won",
 ] as const
 
 export type AccountLineKind = (typeof ACCOUNT_LINE_KINDS)[number]
@@ -116,7 +118,7 @@ interface PaymentLine {
   amount?: number | string | null
 }
 
-const CREDIT_KINDS: AccountLineKind[] = ["top_up", "booking_refund", "manual_credit"]
+const CREDIT_KINDS: AccountLineKind[] = ["top_up", "booking_refund", "manual_credit", "dispute_won"]
 
 // The kind given by the API; a line without one (an older answer) is read from its method.
 export const accountLineKind = (payment: PaymentLine): AccountLineKind => {
@@ -154,6 +156,8 @@ export const accountTotals = (payments: PaymentLine[]) => {
     const kind = accountLineKind(payment)
     if (kind === "top_up" || kind === "manual_credit") cents.toppedUp += amount
     if (kind === "provider_refund") cents.toppedUp -= amount
+    // The dispute had been taken off what was paid in: winning it puts it back.
+    if (kind === "dispute_won") cents.toppedUp += amount
     if (kind === "booking" || kind === "manual_debit") cents.spent += amount
     if (kind === "booking_refund") cents.spent -= amount
   }

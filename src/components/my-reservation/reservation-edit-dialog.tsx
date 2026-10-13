@@ -14,8 +14,11 @@ interface ReservationEditDialogProps {
   isOpen: boolean
   onOpenChange: (open: boolean) => void
   reservation: Reservation | null
-  onSave: (purpose: string, notes: string, flightCategory: string) => Promise<void>
+  /** `instructorId` is "" for a flight without an instructor. */
+  onSave: (purpose: string, notes: string, flightCategory: string, instructorId: string) => Promise<void>
   onCancelReservation: (reservation: Reservation) => void
+  /** The member has no valid licence: the booking keeps an instructor. */
+  instructorRequired?: boolean
 }
 
 /** Same panel as the calendar's edit form: purpose, category and notes of a reservation. */
@@ -25,11 +28,13 @@ export function ReservationEditDialog({
   reservation,
   onSave,
   onCancelReservation,
+  instructorRequired = false,
 }: ReservationEditDialogProps) {
   const { t } = useTranslation("reservations")
   const [purpose, setPurpose] = useState("")
   const [notes, setNotes] = useState("")
   const [flightCategory, setFlightCategory] = useState("")
+  const [instructorId, setInstructorId] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
@@ -37,6 +42,7 @@ export function ReservationEditDialog({
       setPurpose(reservation.purpose || "")
       setNotes(reservation.notes || "")
       setFlightCategory(reservation.flight_category || "")
+      setInstructorId(reservation.instructor?.id != null ? String(reservation.instructor.id) : "")
     }
   }, [reservation, isOpen])
 
@@ -45,7 +51,7 @@ export function ReservationEditDialog({
 
     setIsSubmitting(true)
     try {
-      await onSave(purpose, notes, flightCategory)
+      await onSave(purpose, notes, flightCategory, instructorId)
     } finally {
       setIsSubmitting(false)
     }
@@ -72,6 +78,10 @@ export function ReservationEditDialog({
       setNotes={setNotes}
       flightCategory={flightCategory}
       setFlightCategory={setFlightCategory}
+      instructorId={instructorId}
+      setInstructorId={setInstructorId}
+      instructorRequired={instructorRequired}
+      pilotId={reservation.user?.id}
       onSubmit={handleSave}
       isSubmitting={isSubmitting}
       footerStart={

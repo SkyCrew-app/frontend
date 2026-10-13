@@ -63,6 +63,28 @@ test("l'instructeur planifie un cours, le voit dans la liste puis le supprime", 
     await expect(courseRow(page)).toContainText("Élève")
   })
 
+  await test.step("le cours n'a pas encore d'avion : la réservation est proposée, préremplie", async () => {
+    await courseRow(page).getByRole("link").first().click()
+    await expect(page.getByRole("heading", { level: 1, name: `Cours du ${dateLabel}` })).toBeVisible()
+    await expect(page.getByText("Aucun avion réservé")).toBeVisible()
+
+    await page.getByRole("link", { name: "Réserver un avion" }).click()
+    await expect(page).toHaveURL(/\/reservations$/)
+    const panel = sidePanel(page, "Nouvelle réservation")
+    // The student flies and pays, the instructor of the course instructs: neither is asked again.
+    await expect(panel.getByRole("note")).toContainText(`Réservation de l'avion du cours de ${STUDENT} avec Marie Laurent`)
+    await expect(panel.getByRole("combobox", { name: "Avec un instructeur" })).toHaveCount(0)
+    await expect(panel.getByLabel("Début")).toHaveValue(`${pad(hour)}:${pad(minutes)}`)
+    await expect(panel.getByLabel("Fin")).toHaveValue(`${pad(hour + 1)}:${pad(minutes)}`)
+    // Nothing is booked here: the slot is a year ahead, only the pre-filled form is checked.
+    await panel.getByRole("button", { name: "Annuler" }).click()
+    await expect(panel).toBeHidden()
+
+    await page.goto("/instruction/courses")
+    await page.getByRole("searchbox", { name: "Rechercher un cours par personne" }).fill(STUDENT)
+    await expect(courseRow(page)).toHaveCount(1)
+  })
+
   await test.step("suppression", async () => {
     await deleteCourse(page)
     scheduled = false

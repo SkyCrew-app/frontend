@@ -8,7 +8,7 @@ import client from '@/lib/apollo-client';
 import i18n, { applyLanguage, preferredLanguage } from '@/lib/i18n';
 import { Toaster } from '../ui/toaster';
 
-export default function Providers({ children }: { children: ReactNode }) {
+export default function Providers({ children, nonce }: { children: ReactNode; nonce?: string }) {
   // The member's language is only known in the browser: nothing is shown
   // until it is applied, so no screen appears in the wrong language first.
   const [languageReady, setLanguageReady] = useState(false);
@@ -27,6 +27,8 @@ export default function Providers({ children }: { children: ReactNode }) {
         defaultTheme="system"
         enableSystem
         disableTransitionOnChange
+        // The theme is applied by an inline script: it carries the nonce of the request.
+        nonce={nonce}
       >
         <ApolloProvider client={client}>
           {languageReady ? children : null}

@@ -26,8 +26,8 @@ import CourseFormDialog from "./CourseFormDialog"
 import {
   counterpartRoleLabel,
   courseCounterpart,
+  courseDisplayStatus,
   courseHours,
-  courseStatus,
   personName,
   type InstructionCourse,
 } from "./course-helpers"
@@ -93,7 +93,7 @@ export default function CourseList({ courses, userId, isAdministrator = false, o
           <TableBody>
             {courses.map((course) => {
               const { person, role } = courseCounterpart(course, userId)
-              const status = courseStatus(course.status)
+              const status = courseDisplayStatus(course)
               const validated = course.competencies.filter((competency) => competency.validated).length
               const href = learningRoutes.course(course.id)
 

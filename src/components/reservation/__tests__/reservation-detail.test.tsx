@@ -25,7 +25,10 @@ const reservation = (startsInHours: number, overrides: Partial<Reservation> = {}
   ...overrides,
 })
 
-const renderDetail = (booking: Reservation, props: { canEdit: boolean; isAdmin?: boolean }) =>
+const renderDetail = (
+  booking: Reservation,
+  props: { canEdit: boolean; isAdmin?: boolean; isInstructor?: boolean },
+) =>
   render(
     <ReservationDetail open onOpenChange={jest.fn()} reservation={booking} onEdit={jest.fn()} onDelete={jest.fn()} {...props} />,
   )
@@ -65,6 +68,33 @@ describe("Détail d'une réservation — ce que l'API accepterait", () => {
 
     expect(action("Supprimer")).not.toBeInTheDocument()
     expect(action("Modifier")).not.toBeInTheDocument()
+  })
+
+  describe("avec un instructeur", () => {
+    const instructor = { id: 8, first_name: "Marie", last_name: "Laurent" }
+
+    it("montre l'instructeur du vol à tout le monde", () => {
+      renderDetail(reservation(24, { instructor }), { canEdit: false })
+
+      expect(screen.getByText("Instructeur")).toBeInTheDocument()
+      expect(screen.getByText("Marie Laurent")).toBeInTheDocument()
+    })
+
+    it("laisse l'instructeur décliner le vol avant son début, sans le modifier ni voir le prix", () => {
+      renderDetail(reservation(24, { instructor }), { canEdit: false, isInstructor: true })
+
+      expect(action("Décliner le vol")).toBeInTheDocument()
+      expect(action("Modifier")).not.toBeInTheDocument()
+      expect(screen.queryByText("Prix payé")).not.toBeInTheDocument()
+      expect(screen.getByText(/la réservation est annulée et l'élève est remboursé/)).toBeInTheDocument()
+    })
+
+    it("ne laisse plus l'instructeur décliner une fois le vol commencé", () => {
+      renderDetail(reservation(-1, { instructor }), { canEdit: false, isInstructor: true })
+
+      expect(action("Décliner le vol")).not.toBeInTheDocument()
+      expect(action("Supprimer")).not.toBeInTheDocument()
+    })
   })
 
   it("ne montre ni action ni prix à un autre membre", () => {

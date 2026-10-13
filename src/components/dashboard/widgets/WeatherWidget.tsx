@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import type { ReactNode } from "react"
 import Link from "next/link"
-import { Cloud, CloudSun, MapPin, RefreshCw, Sun, Sunrise, Thermometer, Wind } from "lucide-react"
+import { Cloud, CloudOff, CloudSun, MapPin, RefreshCw, Sun, Sunrise, Thermometer, Wind } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { useApolloClient } from "@apollo/client"
@@ -85,6 +85,9 @@ export default function WeatherWidget({ preferredAerodrome, wide = false }: Weat
   const [timeZone, setTimeZone] = useState<string | null>(null)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [failed, setFailed] = useState(false)
+  // The API answered, with nothing: the club has no weather provider, the
+  // provider is silent or it does not know the aerodrome. Not an error.
+  const [unavailable, setUnavailable] = useState(false)
   const { toast } = useToast()
   const { t } = useTranslation("dashboard")
   const client = useApolloClient()
@@ -97,20 +100,29 @@ export default function WeatherWidget({ preferredAerodrome, wide = false }: Weat
       setIsRefreshing(true)
       try {
         const airport = await findAerodromeByCode(client, preferredAerodrome)
-        if (typeof airport?.latitude !== "number" || typeof airport?.longitude !== "number") {
-          throw new Error("Aérodrome introuvable")
-        }
-
-        const { data } = await client.query<{ weatherAt: WeatherData | null }>({
-          query: WEATHER_AT,
-          variables: { latitude: airport.latitude, longitude: airport.longitude },
-          // The API keeps the conditions for a few minutes itself.
-          fetchPolicy: "network-only",
-        })
-        if (!data?.weatherAt) throw new Error("Météo indisponible")
-        setWeatherData(data.weatherAt)
-        setTimeZone(usableTimeZone(airport.timezone))
+        const located = typeof airport?.latitude === "number" && typeof airport?.longitude === "number"
+        const conditions = located
+          ? (
+              await client.query<{ weatherAt: WeatherData | null }>({
+                query: WEATHER_AT,
+                variables: { latitude: airport.latitude, longitude: airport.longitude },
+                // The API keeps the conditions for a few minutes itself.
+                fetchPolicy: "network-only",
+              })
+            ).data?.weatherAt
+          : null
         setFailed(false)
+        if (!conditions) {
+          setWeatherData(null)
+          setUnavailable(true)
+          if (manual) {
+            toast({ title: t("weather.unavailable.title"), description: t("weather.unavailable.description") })
+          }
+          return
+        }
+        setUnavailable(false)
+        setWeatherData(conditions)
+        setTimeZone(usableTimeZone(airport?.timezone))
         if (manual) {
           toast({
             title: t("weather.toast.refreshed.title"),
@@ -157,6 +169,15 @@ export default function WeatherWidget({ preferredAerodrome, wide = false }: Weat
       )
     }
     if (!weatherData && failed) return <WidgetError onRetry={() => fetchWeather(true)} />
+    if (!weatherData && unavailable) {
+      return (
+        <WidgetEmpty
+          icon={CloudOff}
+          title={t("weather.unavailable.title")}
+          description={t("weather.unavailable.description")}
+        />
+      )
+    }
     if (!weatherData) {
       return (
         <div className={grid} aria-hidden="true">

@@ -19,6 +19,29 @@ describe("CompetenciesCard", () => {
     expect(screen.queryByRole("button", { name: "Ajouter" })).not.toBeInTheDocument()
   })
 
+  it("dit qui a validé une compétence et quand, quand c'est connu", () => {
+    render(
+      <CompetenciesCard
+        competencies={[
+          {
+            ...competencies[0],
+            validatedAt: "2026-10-12T10:00:00.000Z",
+            validatedBy: { id: 2, first_name: "Paul", last_name: "Durand" },
+          },
+          // Validated before this was recorded: nothing is invented.
+          { id: 3, name: "Roulage", description: "", validated: true },
+          competencies[1],
+        ]}
+        canManage={false}
+        onAdd={jest.fn()}
+        onValidate={jest.fn()}
+      />,
+    )
+
+    expect(screen.getByText("Validée par Paul Durand le 12 oct. 2026")).toBeInTheDocument()
+    expect(screen.getAllByText(/Validée par/)).toHaveLength(1)
+  })
+
   it("fait confirmer la validation à l'instructeur, et ne la propose pas deux fois", async () => {
     const onValidate = jest.fn().mockResolvedValue(true)
     render(<CompetenciesCard competencies={competencies} canManage onAdd={jest.fn()} onValidate={onValidate} />)

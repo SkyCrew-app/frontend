@@ -4,8 +4,16 @@ import userEvent from '@testing-library/user-event';
 import { MockedProvider, MockedResponse } from '@apollo/client/testing';
 import { GraphQLError } from 'graphql';
 import MembersPage from '../page';
-import { DELETE_USER, GET_USERS, RESEND_INVITATION, SET_USER_ACTIVE } from '@/graphql/user';
+import {
+  DEACTIVATE_MEMBER,
+  DELETE_USER,
+  GET_MEMBER_COMMITMENTS,
+  GET_USERS,
+  RESEND_INVITATION,
+  SET_USER_ACTIVE,
+} from '@/graphql/user';
 import { GET_ROLES } from '@/graphql/roles';
+import { formatMoney } from '@/lib/format';
 
 const mockToast = jest.fn();
 jest.mock('@/components/hooks/use-toast', () => ({
@@ -54,6 +62,71 @@ const renderPage = (mocks: MockedResponse[]) =>
     </MockedProvider>,
   );
 
+// What the API says a member still has ahead of them.
+const commitmentsMock = (
+  upcomingReservations: unknown[] = [],
+  upcomingCourses: unknown[] = [],
+  upcomingInstructionReservations: unknown[] = [],
+): MockedResponse => ({
+  request: { query: GET_MEMBER_COMMITMENTS, variables: { id: 7 } },
+  result: {
+    data: { memberCommitments: { upcomingReservations, upcomingInstructionReservations, upcomingCourses } },
+  },
+});
+// Bookings of other members on which the member is the instructor.
+const instructedBookings = [
+  {
+    id: 21,
+    start_time: '2031-05-14T08:00:00.000Z',
+    end_time: '2031-05-14T09:00:00.000Z',
+    charged_amount: 120,
+    aircraft: { id: 1, registration_number: 'F-GABC' },
+    user: { id: 9, first_name: 'Léa', last_name: 'Petit' },
+  },
+  {
+    id: 22,
+    start_time: '2031-06-03T08:00:00.000Z',
+    end_time: '2031-06-03T09:00:00.000Z',
+    charged_amount: 60,
+    aircraft: { id: 2, registration_number: 'F-HXYZ' },
+    user: { id: 10, first_name: 'Hugo', last_name: 'Roux' },
+  },
+];
+const twoBookings = [
+  {
+    id: 11,
+    start_time: '2031-05-12T08:00:00.000Z',
+    end_time: '2031-05-12T09:00:00.000Z',
+    charged_amount: 150,
+    aircraft: { id: 1, registration_number: 'F-GABC' },
+  },
+  {
+    id: 12,
+    start_time: '2031-06-02T08:00:00.000Z',
+    end_time: '2031-06-02T09:00:00.000Z',
+    charged_amount: 80.5,
+    aircraft: { id: 2, registration_number: 'F-HXYZ' },
+  },
+];
+const lesson = {
+  id: 31,
+  startTime: '2031-05-20T08:00:00.000Z',
+  instructor: { id: 3, first_name: 'Paul', last_name: 'Durand' },
+  student: { id: 7, first_name: 'Camille', last_name: 'Martin' },
+};
+const outcome = (overrides: Record<string, unknown> = {}) => ({
+  user: { id: '7', is_active: false },
+  upcomingReservations: 0,
+  cancelledReservations: 0,
+  refundedAmount: 0,
+  keptReservationIds: [],
+  upcomingInstructionReservations: 0,
+  cancelledInstructionReservations: 0,
+  refundedToStudents: 0,
+  upcomingCourses: 0,
+  ...overrides,
+});
+
 const openActions = async (user: ReturnType<typeof userEvent.setup>, name = 'Camille Martin') => {
   await user.click(await screen.findByRole('button', { name: `Actions pour ${name}` }));
 };
@@ -61,12 +134,18 @@ const openActions = async (user: ReturnType<typeof userEvent.setup>, name = 'Cam
 describe('Administration des membres : état du compte', () => {
   beforeEach(() => mockToast.mockClear());
 
+  // These tests used to deactivate through setUserActive, with nothing said
+  // about the bookings the member still had.
   it('désactive un compte après confirmation, puis le montre désactivé', async () => {
     const user = userEvent.setup();
-    const deactivated = jest.fn(() => ({ data: { setUserActive: { id: '7', is_active: false } } }));
+    const deactivated = jest.fn(() => ({ data: { deactivateMember: outcome() } }));
     renderPage([
       usersMock([member()]),
-      { request: { query: SET_USER_ACTIVE, variables: { id: 7, active: false } }, result: deactivated },
+      commitmentsMock(),
+      {
+        request: { query: DEACTIVATE_MEMBER, variables: { id: 7, cancelUpcomingBookings: false } },
+        result: deactivated,
+      },
       usersMock([member({ is_active: false })]),
     ]);
 
@@ -76,6 +155,8 @@ describe('Administration des membres : état du compte', () => {
     const confirm = await screen.findByRole('alertdialog');
     expect(confirm).toHaveTextContent('Désactiver le compte de Camille Martin ?');
     expect(confirm).toHaveTextContent('Ses réservations, ses vols et ses factures sont conservés');
+    expect(await within(confirm).findByText('Aucune réservation à venir.')).toBeInTheDocument();
+    expect(within(confirm).queryByRole('checkbox')).not.toBeInTheDocument();
     expect(deactivated).not.toHaveBeenCalled();
     await user.click(within(confirm).getByRole('button', { name: 'Désactiver' }));
 
@@ -85,6 +166,166 @@ describe('Administration des membres : état du compte', () => {
       description: 'Camille Martin ne peut plus se connecter.',
     });
     expect((await screen.findAllByText('Désactivé')).length).toBeGreaterThan(0);
+  });
+
+  it('annonce les réservations et les cours à venir, sans rien annuler par défaut', async () => {
+    const user = userEvent.setup();
+    const deactivated = jest.fn(() => ({
+      data: { deactivateMember: outcome({ upcomingReservations: 2, upcomingCourses: 1 }) },
+    }));
+    renderPage([
+      usersMock([member()]),
+      commitmentsMock(twoBookings, [lesson]),
+      {
+        request: { query: DEACTIVATE_MEMBER, variables: { id: 7, cancelUpcomingBookings: false } },
+        result: deactivated,
+      },
+      usersMock([member({ is_active: false })]),
+    ]);
+
+    await openActions(user);
+    await user.click(await screen.findByRole('menuitem', { name: 'Désactiver le compte' }));
+    const confirm = await screen.findByRole('alertdialog');
+
+    expect(await within(confirm).findByText('2 réservations à venir')).toBeInTheDocument();
+    expect(confirm).toHaveTextContent('F-GABC');
+    expect(confirm).toHaveTextContent('150,00 €');
+    expect(confirm).toHaveTextContent('1 cours planifié');
+    expect(confirm).toHaveTextContent("avec l'instructeur Paul Durand");
+    const choice = within(confirm).getByRole('checkbox', {
+      // The total of what the two bookings cost.
+      name: `Annuler ces réservations et rembourser le membre (${formatMoney(230.5)})`,
+    });
+    expect(choice).not.toBeChecked();
+
+    await user.click(within(confirm).getByRole('button', { name: 'Désactiver' }));
+
+    await waitFor(() => expect(deactivated).toHaveBeenCalledTimes(1));
+    expect(mockToast).toHaveBeenCalledWith({
+      title: 'Compte désactivé',
+      description: 'Camille Martin ne peut plus se connecter. 1 cours planifié reste à réorganiser.',
+    });
+  });
+
+  it("annule et rembourse les réservations dans la même action quand l'administrateur le choisit", async () => {
+    const user = userEvent.setup();
+    const deactivated = jest.fn(() => ({
+      data: {
+        deactivateMember: outcome({
+          upcomingReservations: 2,
+          cancelledReservations: 1,
+          refundedAmount: 150,
+          keptReservationIds: [12],
+        }),
+      },
+    }));
+    renderPage([
+      usersMock([member()]),
+      commitmentsMock(twoBookings),
+      {
+        request: { query: DEACTIVATE_MEMBER, variables: { id: 7, cancelUpcomingBookings: true } },
+        result: deactivated,
+      },
+      usersMock([member({ is_active: false })]),
+    ]);
+
+    await openActions(user);
+    await user.click(await screen.findByRole('menuitem', { name: 'Désactiver le compte' }));
+    const confirm = await screen.findByRole('alertdialog');
+    await user.click(await within(confirm).findByRole('checkbox'));
+    await user.click(within(confirm).getByRole('button', { name: 'Désactiver et annuler les réservations' }));
+
+    await waitFor(() => expect(deactivated).toHaveBeenCalledTimes(1));
+    // What the API did, including the booking it could not cancel.
+    expect(mockToast).toHaveBeenCalledWith({
+      title: 'Compte désactivé',
+      description:
+        `Camille Martin ne peut plus se connecter. 1 réservation annulée, ${formatMoney(150)} remboursés. 1 réservation n'a pas pu être annulée (n° 12) : traitez-la à la main.`,
+    });
+  });
+
+  it("montre à part les vols qu'un instructeur devait encadrer, et prévient qu'ils restent s'ils ne sont pas annulés", async () => {
+    const user = userEvent.setup();
+    const deactivated = jest.fn(() => ({
+      data: { deactivateMember: outcome({ upcomingInstructionReservations: 2 }) },
+    }));
+    renderPage([
+      usersMock([member()]),
+      commitmentsMock([], [], instructedBookings),
+      {
+        request: { query: DEACTIVATE_MEMBER, variables: { id: 7, cancelUpcomingBookings: false } },
+        result: deactivated,
+      },
+      usersMock([member({ is_active: false })]),
+    ]);
+
+    await openActions(user);
+    await user.click(await screen.findByRole('menuitem', { name: 'Désactiver le compte' }));
+    const confirm = await screen.findByRole('alertdialog');
+
+    expect(await within(confirm).findByText("2 vols à venir en tant qu'instructeur")).toBeInTheDocument();
+    expect(confirm).toHaveTextContent('Aucune réservation à venir.');
+    expect(confirm).toHaveTextContent("avec l'élève Léa Petit");
+    expect(confirm).toHaveTextContent("avec l'élève Hugo Roux");
+    // Without a booking of their own, the choice is about the students' money.
+    const choice = within(confirm).getByRole('checkbox', {
+      name: `Annuler ces vols d'instruction et rembourser les élèves (${formatMoney(180)})`,
+    });
+    expect(choice).not.toBeChecked();
+
+    await user.click(within(confirm).getByRole('button', { name: 'Désactiver' }));
+
+    await waitFor(() => expect(deactivated).toHaveBeenCalledTimes(1));
+    expect(mockToast).toHaveBeenCalledWith({
+      title: 'Compte désactivé',
+      description:
+        "Camille Martin ne peut plus se connecter. 2 vols d'instruction restent au planning sans instructeur actif : prévenez les élèves.",
+    });
+  });
+
+  it("annule aussi les vols encadrés quand l'administrateur le choisit, et dit ce que les élèves récupèrent", async () => {
+    const user = userEvent.setup();
+    const deactivated = jest.fn(() => ({
+      data: {
+        deactivateMember: outcome({
+          upcomingReservations: 2,
+          cancelledReservations: 2,
+          refundedAmount: 230.5,
+          upcomingInstructionReservations: 2,
+          cancelledInstructionReservations: 2,
+          refundedToStudents: 180,
+        }),
+      },
+    }));
+    renderPage([
+      usersMock([member()]),
+      commitmentsMock(twoBookings, [], instructedBookings),
+      {
+        request: { query: DEACTIVATE_MEMBER, variables: { id: 7, cancelUpcomingBookings: true } },
+        result: deactivated,
+      },
+      usersMock([member({ is_active: false })]),
+    ]);
+
+    await openActions(user);
+    await user.click(await screen.findByRole('menuitem', { name: 'Désactiver le compte' }));
+    const confirm = await screen.findByRole('alertdialog');
+    // One choice for both lists; the member's own refund keeps its wording.
+    await user.click(
+      await within(confirm).findByRole('checkbox', {
+        name: `Annuler ces réservations et rembourser le membre (${formatMoney(230.5)})`,
+      }),
+    );
+    expect(confirm).toHaveTextContent(
+      'Les 2 vols où ce membre est instructeur sont annulés eux aussi : chaque élève est prévenu et remboursé (180,00 € au total).',
+    );
+    await user.click(within(confirm).getByRole('button', { name: 'Désactiver et annuler les réservations' }));
+
+    await waitFor(() => expect(deactivated).toHaveBeenCalledTimes(1));
+    expect(mockToast).toHaveBeenCalledWith({
+      title: 'Compte désactivé',
+      description: `Camille Martin ne peut plus se connecter. 2 réservations annulées, ${formatMoney(230.5)} remboursés. 2 vols d'instruction annulés, ${formatMoney(180)} remboursés aux élèves.`,
+    });
   });
 
   it('réactive un compte désactivé sans confirmation', async () => {
@@ -112,15 +353,18 @@ describe('Administration des membres : état du compte', () => {
     const reason = 'Le club doit garder au moins un administrateur actif : ce compte est le dernier.';
     renderPage([
       usersMock([member()]),
+      commitmentsMock(),
       {
-        request: { query: SET_USER_ACTIVE, variables: { id: 7, active: false } },
+        request: { query: DEACTIVATE_MEMBER, variables: { id: 7, cancelUpcomingBookings: false } },
         result: refused(reason, 403),
       },
     ]);
 
     await openActions(user);
     await user.click(await screen.findByRole('menuitem', { name: 'Désactiver le compte' }));
-    await user.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Désactiver' }));
+    const refusedDialog = await screen.findByRole('alertdialog');
+    await within(refusedDialog).findByText('Aucune réservation à venir.');
+    await user.click(within(refusedDialog).getByRole('button', { name: 'Désactiver' }));
 
     await waitFor(() =>
       expect(mockToast).toHaveBeenCalledWith({

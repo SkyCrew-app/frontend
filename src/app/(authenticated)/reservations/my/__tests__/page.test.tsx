@@ -4,7 +4,12 @@ import '@testing-library/jest-dom';
 import { MockedProvider, type MockedResponse } from '@apollo/client/testing';
 import { GraphQLError } from 'graphql';
 import MyReservations from '../page';
-import { DELETE_RESERVATION, GET_MY_TEMPLATES, GET_USER_RESERVATIONS } from '@/graphql/reservation';
+import {
+  DELETE_RESERVATION,
+  GET_MY_INSTRUCTION_RESERVATIONS,
+  GET_MY_TEMPLATES,
+  GET_USER_RESERVATIONS,
+} from '@/graphql/reservation';
 import { GET_AIRCRAFTS } from '@/graphql/planes';
 import { canCancelReservation, canEditReservation } from '@/lib/reservation-status';
 
@@ -50,6 +55,7 @@ const reservation = (id: number, registration: string, overrides: object = {}) =
   charged_amount: 300,
   aircraft: { id, registration_number: registration },
   user: { id: USER_ID, first_name: 'Alex', last_name: 'Martin' },
+  instructor: null,
   flights: [],
   ...overrides,
 });
@@ -249,5 +255,78 @@ describe('Mes réservations — annulation', () => {
     fireEvent.click(within(panel).getByRole('button', { name: 'Annuler la réservation' }));
 
     expect(await screen.findByRole('alertdialog')).toHaveTextContent('La réservation de F-OPEN');
+  });
+});
+
+describe('Mes réservations — comme instructeur', () => {
+  const me = { id: USER_ID, first_name: 'Alex', last_name: 'Martin' };
+  const student = { id: 9, first_name: 'Emma', last_name: 'Girard' };
+  const LESSON = reservation(7, 'F-ECOL', { user: student, instructor: me, flight_category: 'INSTRUCTION' });
+  const instructionMock = (myInstructionReservations: object[]): MockedResponse => ({
+    request: { query: GET_MY_INSTRUCTION_RESERVATIONS },
+    result: { data: { myInstructionReservations } },
+  });
+  const openTab = async () => {
+    const tab = await screen.findByRole('tab', { name: 'Comme instructeur (1)' });
+    fireEvent.mouseDown(tab);
+    fireEvent.click(tab);
+  };
+
+  it('n’offre pas l’onglet à un membre qui n’instruit aucun vol', async () => {
+    renderPage([reservationsMock([OPEN]), instructionMock([])]);
+    await screen.findByText('F-OPEN');
+
+    expect(screen.queryByRole('tab', { name: /Comme instructeur/ })).not.toBeInTheDocument();
+  });
+
+  it('liste les vols où le membre est instructeur, avec l’élève', async () => {
+    renderPage([reservationsMock([OPEN]), instructionMock([LESSON])]);
+    await openTab();
+
+    const card = cardOf('F-ECOL');
+    expect(card.getByText('Emma Girard')).toBeInTheDocument();
+    expect(card.getByText('Vol d\'instruction')).toBeInTheDocument();
+    // Its own bookings are not mixed in.
+    expect(screen.queryByText('F-OPEN')).not.toBeInTheDocument();
+  });
+
+  it('laisse l’instructeur décliner un vol à venir, après confirmation', async () => {
+    const deleteResult = jest.fn(() => ({ data: { deleteReservation: true } }));
+    renderPage([
+      reservationsMock([OPEN]),
+      instructionMock([LESSON]),
+      { request: { query: DELETE_RESERVATION, variables: { id: 7 } }, result: deleteResult },
+      reservationsMock([OPEN]),
+      instructionMock([]),
+    ]);
+    await openTab();
+
+    fireEvent.click(cardOf('F-ECOL').getByRole('button', { name: 'Décliner le vol' }));
+    const dialog = await screen.findByRole('alertdialog');
+    expect(within(dialog).getByText("Décliner ce vol d'instruction ?")).toBeInTheDocument();
+    expect(within(dialog).getByText(/L'élève sera prévenu et remboursé/)).toBeInTheDocument();
+    expect(deleteResult).not.toHaveBeenCalled();
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Décliner le vol' }));
+
+    await waitFor(() => expect(deleteResult).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(screen.queryByText('F-ECOL')).not.toBeInTheDocument());
+  });
+
+  it('ne propose plus de décliner un vol commencé', async () => {
+    renderPage([
+      reservationsMock([OPEN]),
+      instructionMock([{ ...LESSON, start_time: STARTED.start_time, end_time: STARTED.end_time }]),
+    ]);
+    await openTab();
+
+    expect(cardOf('F-ECOL').queryByRole('button', { name: 'Décliner le vol' })).not.toBeInTheDocument();
+  });
+
+  it('montre au pilote l’instructeur de sa réservation', async () => {
+    renderPage([reservationsMock([reservation(8, 'F-DUAL', { instructor: { id: 3, first_name: 'Marie', last_name: 'Laurent' } })])]);
+    await screen.findByText('F-DUAL');
+
+    expect(cardOf('F-DUAL').getByText('Marie Laurent')).toBeInTheDocument();
   });
 });

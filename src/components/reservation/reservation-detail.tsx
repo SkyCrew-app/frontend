@@ -28,6 +28,7 @@ import type { Reservation } from "@/interfaces/reservation"
 import { flightCategoryLabel } from "@/components/reservation/flight-category"
 import { reservationDurationHours, reservationPilotName } from "@/components/reservation/reservation-cell"
 import { SidePanel } from "@/components/layout/SidePanel"
+import { instructorName } from "@/components/reservation/instructor-field"
 
 interface ReservationDetailProps {
   open: boolean
@@ -38,6 +39,8 @@ interface ReservationDetailProps {
   canEdit: boolean
   /** An administrator may cancel any booking, even once it has started. */
   isAdmin?: boolean
+  /** The signed-in member is the instructor of this booking: they may decline it before it starts. */
+  isInstructor?: boolean
 }
 
 /** Read-only side panel of a reservation; its owner can edit or delete it from the footer. */
@@ -49,6 +52,7 @@ export function ReservationDetail({
   onDelete,
   canEdit,
   isAdmin = false,
+  isInstructor = false,
 }: ReservationDetailProps) {
   const { t } = useTranslation("reservations")
   const [confirmOpen, setConfirmOpen] = useState(false)
@@ -72,7 +76,10 @@ export function ReservationDetail({
   // a booking is changed before it starts, cancelled by its holder until then and by an
   // administrator afterwards, and kept for good once its flight is closed.
   const canChange = canEdit && canEditReservation(reservation)
-  const canDelete = (canEdit || isAdmin) && canCancelReservation(reservation, { isAdmin })
+  // Its instructor declines it under the same rule as its holder: before it starts.
+  const canDelete = (canEdit || isAdmin || isInstructor) && canCancelReservation(reservation, { isAdmin })
+  const declines = isInstructor && !canEdit && !isAdmin
+  const instructor = instructorName(reservation.instructor)
   const showStartedHint = canEdit && !canChange && !isAdmin && hasReservationStarted(reservation)
   const showPrice = (canEdit || isAdmin) && reservation.charged_amount != null
 
@@ -90,7 +97,7 @@ export function ReservationDetail({
             onClick={() => setConfirmOpen(true)}
           >
             <Trash2 className="h-4 w-4" />
-            {t("common:actions.delete")}
+            {declines ? t("detail.decline") : t("common:actions.delete")}
           </Button>
         ) : undefined
       }
@@ -121,6 +128,12 @@ export function ReservationDetail({
             <dd className="font-medium">{pilot || "—"}</dd>
             {reservation.user?.email && <dd className="text-xs text-muted-foreground">{reservation.user.email}</dd>}
           </div>
+          {instructor && (
+            <div className="col-span-2">
+              <dt className="text-xs text-muted-foreground">{t("common:labels.instructor")}</dt>
+              <dd className="font-medium">{instructor}</dd>
+            </div>
+          )}
           <div>
             <dt className="text-xs text-muted-foreground">{t("common:labels.date")}</dt>
             <dd className="font-medium">
@@ -157,13 +170,16 @@ export function ReservationDetail({
         </dl>
 
         {showStartedHint && <p className="text-sm text-muted-foreground">{t("detail.startedHint")}</p>}
+        {declines && canDelete && <p className="text-sm text-muted-foreground">{t("detail.instructorHint")}</p>}
 
         <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>{t("detail.deleteConfirm.title")}</AlertDialogTitle>
+              <AlertDialogTitle>
+                {declines ? t("detail.declineConfirm.title") : t("detail.deleteConfirm.title")}
+              </AlertDialogTitle>
               <AlertDialogDescription>
-                {t("detail.deleteConfirm.description", {
+                {t(declines ? "detail.declineConfirm.description" : "detail.deleteConfirm.description", {
                   aircraft: reservation.aircraft.registration_number,
                   date: formatDate(reservation.start_time),
                   start: formatTime(reservation.start_time),
@@ -182,7 +198,7 @@ export function ReservationDetail({
                 }}
               >
                 {isDeleting && <Loader2 className="h-4 w-4 animate-spin" />}
-                {t("detail.deleteConfirm.action")}
+                {declines ? t("detail.declineConfirm.action") : t("detail.deleteConfirm.action")}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

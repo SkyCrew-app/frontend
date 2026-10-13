@@ -52,7 +52,9 @@ export default function OperatingCosts({ period, date }: OperatingCostsProps) {
   const aircrafts: Aircraft[] = aircraftsQuery.data?.getAircrafts ?? []
   const allReservations: Reservation[] = reservationsQuery.data?.reservations ?? []
   const allMaintenances: Maintenance[] = maintenancesQuery.data?.getAllMaintenances ?? []
-  const fuelPrice: number = adminQuery.data?.getAdministration?.[0]?.fuelPrice || 1.5
+  // The price per litre set by the club. Without one there is no fuel estimate: no price is
+  // made up.
+  const fuelPrice: number | null = Number(adminQuery.data?.getAllAdministrations?.[0]?.fuelPrice) || null
 
   const startDate = period === "monthly" ? startOfMonth(date) : startOfYear(date)
   const endDate = period === "monthly" ? endOfMonth(date) : endOfYear(date)
@@ -80,14 +82,17 @@ export default function OperatingCosts({ period, date }: OperatingCostsProps) {
       )
       .reduce((total, maintenance) => total + (maintenance.maintenance_cost || 0), 0)
 
-    const fuelCost = reservationHours * (aircraft.consumption || 0) * fuelPrice
+    // The figures are the recorded ones, as in the API's reports: what was charged and what
+    // the maintenances cost. Fuel is only an estimate (hours × consumption × price), shown
+    // apart and never counted in the result: fuel bills are entered as expenses.
+    const fuelEstimate = fuelPrice === null ? null : reservationHours * (aircraft.consumption || 0) * fuelPrice
 
     return {
       name: aircraft.registration_number,
-      fuelCost,
+      fuelEstimate,
       maintenanceCost,
       revenue,
-      profit: revenue - (fuelCost + maintenanceCost),
+      profit: revenue - maintenanceCost,
     }
   }
 
@@ -105,12 +110,12 @@ export default function OperatingCosts({ period, date }: OperatingCostsProps) {
 
   const totals = rows.reduce(
     (acc, row) => ({
-      fuelCost: acc.fuelCost + row.fuelCost,
+      fuelEstimate: acc.fuelEstimate + (row.fuelEstimate ?? 0),
       maintenanceCost: acc.maintenanceCost + row.maintenanceCost,
       revenue: acc.revenue + row.revenue,
       profit: acc.profit + row.profit,
     }),
-    { fuelCost: 0, maintenanceCost: 0, revenue: 0, profit: 0 },
+    { fuelEstimate: 0, maintenanceCost: 0, revenue: 0, profit: 0 },
   )
 
   const periodLabel = t("finance.period.range", { from: formatDate(startDate), to: formatDate(endDate) })
@@ -126,15 +131,9 @@ export default function OperatingCosts({ period, date }: OperatingCostsProps) {
           tone="primary"
         />
         <StatCard
-          label={t("finance.labels.fuel")}
-          value={formatMoney(totals.fuelCost)}
-          hint={t("finance.operating.fuelEstimate", { price: formatMoney(fuelPrice) })}
-          icon={Fuel}
-          tone="warning"
-        />
-        <StatCard
           label={t("finance.labels.maintenance")}
           value={formatMoney(totals.maintenanceCost)}
+          hint={t("finance.operating.maintenanceRecorded")}
           icon={Wrench}
           tone="info"
         />
@@ -144,6 +143,17 @@ export default function OperatingCosts({ period, date }: OperatingCostsProps) {
           hint={totals.profit >= 0 ? t("finance.operating.profitable") : t("finance.operating.unprofitable")}
           icon={PiggyBank}
           tone={totals.profit >= 0 ? "success" : "danger"}
+        />
+        <StatCard
+          label={t("finance.operating.fuelEstimated")}
+          value={fuelPrice === null ? "—" : formatMoney(totals.fuelEstimate)}
+          hint={
+            fuelPrice === null
+              ? t("finance.operating.fuelEstimateUnavailable")
+              : t("finance.operating.fuelEstimateHint", { price: formatMoney(fuelPrice) })
+          }
+          icon={Fuel}
+          tone="warning"
         />
       </StatGrid>
 
@@ -172,12 +182,6 @@ export default function OperatingCosts({ period, date }: OperatingCostsProps) {
                   radius={[4, 4, 0, 0]}
                 />
                 <Bar
-                  dataKey="fuelCost"
-                  name={t("finance.labels.fuel")}
-                  fill={FINANCE_COLORS.fuel}
-                  radius={[4, 4, 0, 0]}
-                />
-                <Bar
                   dataKey="maintenanceCost"
                   name={t("finance.labels.maintenance")}
                   fill={FINANCE_COLORS.maintenance}
@@ -198,7 +202,7 @@ export default function OperatingCosts({ period, date }: OperatingCostsProps) {
       <Card>
         <CardHeader>
           <CardTitle>{t("finance.operating.tableTitle")}</CardTitle>
-          <CardDescription>{t("finance.operating.tableDescription")}</CardDescription>
+          <CardDescription>{t("finance.operating.tableNote")}</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -206,9 +210,11 @@ export default function OperatingCosts({ period, date }: OperatingCostsProps) {
               <TableRow>
                 <TableHead>{t("common:labels.aircraft")}</TableHead>
                 <TableHead className="text-right">{t("finance.labels.revenue")}</TableHead>
-                <TableHead className="text-right">{t("finance.labels.fuel")}</TableHead>
                 <TableHead className="text-right">{t("finance.labels.maintenance")}</TableHead>
                 <TableHead className="text-right">{t("finance.labels.result")}</TableHead>
+                <TableHead className="text-right font-normal italic">
+                  {t("finance.operating.fuelEstimated")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -219,15 +225,15 @@ export default function OperatingCosts({ period, date }: OperatingCostsProps) {
                     {formatMoney(row.revenue)}
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-right tabular-nums">
-                    {formatMoney(row.fuelCost)}
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap text-right tabular-nums">
                     {formatMoney(row.maintenanceCost)}
                   </TableCell>
                   <TableCell
                     className={`whitespace-nowrap text-right font-medium tabular-nums ${profitClass(row.profit)}`}
                   >
                     {formatMoney(row.profit)}
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap text-right italic tabular-nums text-muted-foreground">
+                    {row.fuelEstimate === null ? "—" : formatMoney(row.fuelEstimate)}
                   </TableCell>
                 </TableRow>
               ))}
@@ -239,13 +245,13 @@ export default function OperatingCosts({ period, date }: OperatingCostsProps) {
                   {formatMoney(totals.revenue)}
                 </TableCell>
                 <TableCell className="whitespace-nowrap text-right tabular-nums">
-                  {formatMoney(totals.fuelCost)}
-                </TableCell>
-                <TableCell className="whitespace-nowrap text-right tabular-nums">
                   {formatMoney(totals.maintenanceCost)}
                 </TableCell>
                 <TableCell className={`whitespace-nowrap text-right tabular-nums ${profitClass(totals.profit)}`}>
                   {formatMoney(totals.profit)}
+                </TableCell>
+                <TableCell className="whitespace-nowrap text-right font-normal italic tabular-nums text-muted-foreground">
+                  {fuelPrice === null ? "—" : formatMoney(totals.fuelEstimate)}
                 </TableCell>
               </TableRow>
             </TableFooter>

@@ -25,6 +25,8 @@ export interface Incident {
   resolved_at?: string | null
   resolved_by?: IncidentPerson | null
   aircraft: { id: number; registration_number: string; model?: string | null; availability_status?: string | null }
+  /** True when a flight is attached, even one the reader may not see (`flight` is then null). */
+  hasFlight?: boolean | null
   flight?: {
     id: number
     origin_icao?: string | null

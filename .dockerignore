@@ -11,3 +11,7 @@ screen
 src/**/__tests__
 jest.config.js
 jest.setup.js
+# Browser journeys: not part of the application, and a change to them must
+# not rebuild the image.
+e2e
+playwright.config.ts

@@ -61,7 +61,8 @@ export interface Maintenance {
 
 export interface OperatingCostItem {
   name: string
-  fuelCost: number
+  /** Hours × consumption × fuel price: an estimate, never part of the result. Null without a fuel price. */
+  fuelEstimate: number | null
   maintenanceCost: number
   revenue: number
   profit: number

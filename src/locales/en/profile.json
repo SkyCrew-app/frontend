@@ -70,7 +70,7 @@
     "current": "Current password",
     "new": "New password",
     "confirm": "Confirm new password",
-    "hint": "At least 8 characters.",
+    "hint": "At least {{min}} characters.",
     "show": "Show password",
     "hide": "Hide password",
     "submit": "Change password",
@@ -78,7 +78,7 @@
     "errors": {
       "currentRequired": "Current password is required.",
       "newRequired": "New password is required.",
-      "newTooShort": "The new password must be at least 8 characters long.",
+      "newTooShort": "The new password must be at least {{min}} characters long.",
       "confirmRequired": "Password confirmation is required.",
       "mismatch": "The passwords do not match."
     },
@@ -268,7 +268,7 @@
     "emailRequired": "Email address is required",
     "emailInvalid": "Invalid email address",
     "passwordRequired": "Password is required",
-    "passwordTooShort": "The password must be at least 8 characters long",
+    "passwordTooShort": "The password must be at least {{min}} characters long",
     "passwordUppercase": "The password must contain at least one uppercase letter",
     "passwordLowercase": "The password must contain at least one lowercase letter",
     "passwordDigit": "The password must contain at least one digit",
@@ -289,5 +289,27 @@
     "registrationFormat": "Expected format: F-XXXX",
     "modelRequired": "Model is required",
     "hourlyCostNegative": "The hourly cost must be positive"
+  },
+  "invoices": {
+    "title": "My invoices",
+    "description": "One invoice for each top-up and each booking paid.",
+    "loading": "Loading invoices",
+    "number": "Number",
+    "date": "Date",
+    "subject": "For",
+    "amount": "Amount",
+    "subjectBooking": "Booking",
+    "subjectTopUp": "Account top-up",
+    "subjectOther": "Invoice",
+    "download": "Download invoice {{number}}",
+    "empty": {
+      "title": "No invoice",
+      "description": "Your invoices will appear here after a top-up or a booking."
+    },
+    "showMore": "Show older invoices",
+    "downloadFailed": {
+      "title": "The invoice could not be downloaded",
+      "description": "Try again in a moment."
+    }
   }
 }

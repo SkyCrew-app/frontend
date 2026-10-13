@@ -92,7 +92,7 @@ export function PasswordForm() {
       newErrors.newPassword = t("password.errors.newRequired")
     } else if (newPassword.length < PASSWORD_MIN_LENGTH) {
       valid = false
-      newErrors.newPassword = t("password.errors.newTooShort")
+      newErrors.newPassword = t("password.errors.newTooShort", { min: PASSWORD_MIN_LENGTH })
     }
 
     if (!confirmPassword) {
@@ -188,7 +188,7 @@ export function PasswordForm() {
             }}
             autoComplete="new-password"
             error={errors.newPassword}
-            hint={t("password.hint")}
+            hint={t("password.hint", { min: PASSWORD_MIN_LENGTH })}
           />
           <PasswordField
             id="confirmPassword"

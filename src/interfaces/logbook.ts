@@ -25,4 +25,7 @@ export interface LogbookStats {
   longestFlight: number
   last30DaysHours: number
   last90DaysHours: number
+  pilotInCommandHours?: number
+  dualHours?: number
+  instructionGivenHours?: number
 }

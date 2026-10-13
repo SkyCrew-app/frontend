@@ -5,7 +5,8 @@ import { TableCell } from "@/components/ui/table"
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card"
 import { Badge } from "@/components/ui/badge"
 import type { Reservation } from "@/interfaces/reservation"
-import { Clock, User, FileText, Tag } from "lucide-react"
+import { Clock, GraduationCap, User, FileText, Tag } from "lucide-react"
+import { instructorName } from "@/components/reservation/instructor-field"
 import { cn } from "@/lib/utils"
 import { formatFlightDuration, formatTime } from "@/lib/format"
 import { reservationStatus } from "@/lib/reservation-status"
@@ -31,6 +32,9 @@ export function ReservationCell({ reservation, colSpan, isMine = false, onClick 
   const status = reservationStatus(reservation.status)
   const pilot = isMine ? t("common:labels.you") : reservationPilotName(reservation)
   const timeRange = `${formatTime(reservation.start_time)} – ${formatTime(reservation.end_time)}`
+  const instructor = instructorName(reservation.instructor)
+  // "Camille · avec Marie Laurent": who flies, and with which instructor.
+  const crew = [pilot, instructor && t("shared.withInstructor", { name: instructor })].filter(Boolean).join(" · ")
 
   return (
     <TableCell
@@ -45,7 +49,7 @@ export function ReservationCell({ reservation, colSpan, isMine = false, onClick 
             className="flex h-12 w-full flex-col items-start justify-center px-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
           >
             <span className="w-full truncate text-sm leading-tight">{reservation.purpose || t("shared.untitled")}</span>
-            {pilot && <span className="w-full truncate text-xs font-normal leading-tight opacity-80">{pilot}</span>}
+            {crew && <span className="w-full truncate text-xs font-normal leading-tight opacity-80">{crew}</span>}
           </button>
         </HoverCardTrigger>
         <HoverCardContent className="w-72 space-y-3">
@@ -64,6 +68,12 @@ export function ReservationCell({ reservation, colSpan, isMine = false, onClick 
               <li className="flex items-center gap-2">
                 <User className="h-4 w-4 text-muted-foreground" />
                 {pilot}
+              </li>
+            )}
+            {instructor && (
+              <li className="flex items-center gap-2">
+                <GraduationCap className="h-4 w-4 text-muted-foreground" />
+                {t("shared.instructorNamed", { name: instructor })}
               </li>
             )}
             {reservation.flight_category && (

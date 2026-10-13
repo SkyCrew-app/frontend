@@ -85,6 +85,7 @@ const menuItems = [
       { labelKey: "pages.checklists", path: "/administration/checklists" },
       { labelKey: "pages.eLearning", path: "/administration/e-learning" },
       { labelKey: "pages.settings", path: "/administration/settings" },
+      { labelKey: "pages.actionLog", path: "/administration/actions" },
     ],
   },
 ]

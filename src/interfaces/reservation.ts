@@ -28,6 +28,12 @@ export interface Reservation {
     first_name?: string
     last_name?: string
   }
+  /** The instructor on board, for an instruction flight. */
+  instructor?: {
+    id?: number | string
+    first_name?: string | null
+    last_name?: string | null
+  } | null
   flights?: {
     id: number | string
     closed_at?: string | null

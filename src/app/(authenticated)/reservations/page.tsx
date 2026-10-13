@@ -30,6 +30,7 @@ import { DateNavigator } from "@/components/reservation/reservation-header"
 import { ReservationCell } from "@/components/reservation/reservation-cell"
 import { FreeCell } from "@/components/reservation/free-cell"
 import { ReservationForm } from "@/components/reservation/reservation-form"
+import { useInstructorRequired } from "@/components/reservation/instructor-field"
 import { ReservationDetail } from "@/components/reservation/reservation-detail"
 import { MobileReservationView } from "@/components/reservation/mobile-reservation-view"
 import {
@@ -74,11 +75,23 @@ const normalizeDayName = (day: string) =>
 
 const longDate = (date: Date) => format(date, "EEEE d MMMM yyyy", { locale: dateFnsLocale() })
 
-// A reservation template sends its values in the query string ("Utiliser" in "Mes réservations").
+// A reservation template sends its values in the query string ("Utiliser" in "Mes réservations"),
+// and so does a course whose aircraft is being booked ("Réserver un avion" on the course).
 const readPrefillFromUrl = (): NewReservationPrefill | null => {
   if (typeof window === "undefined") return null
   const params = new URLSearchParams(window.location.search)
+  const courseId = Number(params.get("course_id"))
   const prefill: NewReservationPrefill = {
+    date: params.get("date") ?? undefined,
+    instructorId: params.get("instructor_id") ?? undefined,
+    course:
+      Number.isInteger(courseId) && courseId > 0
+        ? {
+            id: courseId,
+            instructorName: params.get("instructor") ?? "",
+            studentName: params.get("student") ?? "",
+          }
+        : undefined,
     aircraftId: params.get("aircraft_id") ?? undefined,
     startTime: params.get("start_time") ?? undefined,
     endTime: params.get("end_time") ?? undefined,
@@ -105,6 +118,8 @@ export default function ReservationCalendar() {
   const [purpose, setPurpose] = useState("")
   const [notes, setNotes] = useState("")
   const [flightCategory, setFlightCategory] = useState("")
+  const [instructorId, setInstructorId] = useState("")
+  const [editInstructorId, setEditInstructorId] = useState("")
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [editPurpose, setEditPurpose] = useState("")
   const [editNotes, setEditNotes] = useState("")
@@ -117,6 +132,8 @@ export default function ReservationCalendar() {
   const userData = useUserData(userEmail)
   const userId: string | number | null = userData?.id ?? null
   const isAdmin = isAdministrator(userData)
+  // A member without a valid licence books with an instructor (the API decides).
+  const instructorRequired = useInstructorRequired()
   const { toast } = useToast()
 
   const formattedDate = format(currentDate, "yyyy-MM-dd")
@@ -188,6 +205,9 @@ export default function ReservationCalendar() {
   useEffect(() => {
     const fromUrl = readPrefillFromUrl()
     if (!fromUrl) return
+    // A course is booked on its own day.
+    const day = fromUrl.date ? new Date(`${fromUrl.date}T00:00:00`) : null
+    if (day && !Number.isNaN(day.getTime())) setCurrentDate(day)
     setPrefill(fromUrl)
     setNewFormKey((key) => key + 1)
     setIsNewDialogOpen(true)
@@ -207,6 +227,11 @@ export default function ReservationCalendar() {
     return userId != null && ownerId != null && String(userId) === String(ownerId)
   }
 
+  const isInstructorOf = (reservation: Reservation) => {
+    const instructorId = reservation.instructor?.id
+    return userId != null && instructorId != null && String(userId) === String(instructorId)
+  }
+
   const reservationsOverlapping = (aircraftId: number, start: Date, end: Date) =>
     dayReservations.filter(
       (reservation) =>
@@ -219,6 +244,7 @@ export default function ReservationCalendar() {
     setPurpose("")
     setNotes("")
     setFlightCategory("")
+    setInstructorId("")
     setDrag(null)
     setSlotSelection(null)
   }
@@ -300,6 +326,7 @@ export default function ReservationCalendar() {
     setEditPurpose(reservation.purpose || "")
     setEditNotes(reservation.notes || "")
     setEditFlightCategory(reservation.flight_category || "")
+    setEditInstructorId(reservation.instructor?.id != null ? String(reservation.instructor.id) : "")
     setIsReservationDialogOpen(false)
     setIsEditDialogOpen(true)
   }
@@ -315,7 +342,7 @@ export default function ReservationCalendar() {
       return false
     }
 
-    if (!values.flightCategory) {
+    if (!values.flightCategory && !values.instructorId && !values.courseId) {
       toast({
         variant: "destructive",
         title: t("toast.categoryMissing.title"),
@@ -340,6 +367,9 @@ export default function ReservationCalendar() {
             status: ReservationStatus.PENDING,
             notes: values.notes,
             flight_category: values.flightCategory,
+            // Sent only when there is one: the pilot's licence is then not required.
+            ...(values.instructorId ? { instructor_id: Number(values.instructorId) } : {}),
+            ...(values.courseId ? { course_id: values.courseId } : {}),
           },
         },
         refetchQueries: refetchDay,
@@ -377,6 +407,7 @@ export default function ReservationCalendar() {
       purpose,
       notes,
       flightCategory,
+      instructorId,
     })
     if (created) {
       setIsCreateDialogOpen(false)
@@ -406,6 +437,10 @@ export default function ReservationCalendar() {
             purpose: editPurpose,
             notes: editNotes,
             flight_category: editFlightCategory || selectedReservation.flight_category,
+            // Sent only when it changes: null takes the instructor off the booking.
+            ...(editInstructorId !== String(selectedReservation.instructor?.id ?? "")
+              ? { instructor_id: editInstructorId ? Number(editInstructorId) : null }
+              : {}),
           },
         },
         refetchQueries: refetchDay,
@@ -695,6 +730,10 @@ export default function ReservationCalendar() {
         setNotes={setNotes}
         flightCategory={flightCategory}
         setFlightCategory={setFlightCategory}
+        instructorId={instructorId}
+        setInstructorId={setInstructorId}
+        instructorRequired={instructorRequired}
+        pilotId={userId}
         onSubmit={handleCreateFromSlot}
         isSubmitting={isCreating}
       />
@@ -714,6 +753,8 @@ export default function ReservationCalendar() {
           isClosedDay={isClosedDay}
           onSubmit={handleCreateFromForm}
           isSubmitting={isCreating}
+          instructorRequired={instructorRequired}
+          pilotId={userId}
         />
       )}
 
@@ -726,6 +767,7 @@ export default function ReservationCalendar() {
           onDelete={handleDeleteReservation}
           canEdit={isOwnReservation(selectedReservation)}
           isAdmin={isAdmin}
+          isInstructor={isInstructorOf(selectedReservation)}
         />
       )}
 
@@ -748,6 +790,10 @@ export default function ReservationCalendar() {
           setNotes={setEditNotes}
           flightCategory={editFlightCategory}
           setFlightCategory={setEditFlightCategory}
+          instructorId={editInstructorId}
+          setInstructorId={setEditInstructorId}
+          instructorRequired={instructorRequired && isOwnReservation(selectedReservation)}
+          pilotId={selectedReservation.user?.id}
           onSubmit={handleUpdateReservation}
           isSubmitting={isUpdating}
         />

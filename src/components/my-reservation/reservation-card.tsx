@@ -2,7 +2,8 @@
 
 import Link from "next/link"
 import { useTranslation } from "react-i18next"
-import { CalendarClock, CalendarX, FileText, Pencil, Wallet } from "lucide-react"
+import { CalendarClock, CalendarX, FileText, GraduationCap, Pencil, Wallet } from "lucide-react"
+import { instructorName } from "@/components/reservation/instructor-field"
 import { canCancelReservation, canEditReservation, reservationStatus } from "@/lib/reservation-status"
 import { formatDate, formatFlightDuration, formatMoney, formatTime } from "@/lib/format"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -26,6 +27,7 @@ export function ReservationCard({ reservation, onEdit, onCancel }: ReservationCa
   const status = reservationStatus(reservation.status)
   const flightPlanId = reservation.flights?.[0]?.id
   const isCancelled = String(reservation.status).toUpperCase() === "CANCELLED"
+  const instructor = instructorName(reservation.instructor)
 
   return (
     <Card className="flex h-full flex-col">
@@ -54,6 +56,15 @@ export function ReservationCard({ reservation, onEdit, onCancel }: ReservationCa
             <span className="text-muted-foreground">{t("my.card.noPurpose")}</span>
           )}
         </p>
+        {instructor && (
+          <p className="flex items-start gap-2">
+            <GraduationCap className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+            <span>
+              <span className="text-muted-foreground">{t("common:labels.instructor")} · </span>
+              {instructor}
+            </span>
+          </p>
+        )}
         {reservation.charged_amount != null && (
           <p className="flex items-start gap-2">
             <Wallet className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
