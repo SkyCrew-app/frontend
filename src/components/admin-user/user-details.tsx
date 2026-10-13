@@ -8,9 +8,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { BadgeCheck, FileText, Pencil, Plane, Shield } from "lucide-react"
+import { BadgeCheck, FileText, Pencil, Plane, Shield, Wallet } from "lucide-react"
 import { EmptyState } from "@/components/layout/EmptyState"
 import { PaginationControls } from "@/components/admin-user/pagination-controls"
+import { AdjustBalancePanel } from "@/components/admin-user/adjust-balance-panel"
 import { formatDate, formatDateTime, formatFlightDuration, formatMoney, formatTime } from "@/lib/format"
 import type { UserDetails } from "@/interfaces/user"
 import { getBackendBaseUrl } from "@/lib/runtime-config"
@@ -24,6 +25,8 @@ interface UserDetailsProps {
   itemsPerPage?: number
   onEdit?: (userId: string) => void
   onAddLicense?: (userId: string) => void
+  /** The account was credited or debited by hand: reload the member. Enables the action. */
+  onBalanceAdjusted?: (userId: string) => void
 }
 
 const Fact = ({ label, children }: { label: string; children: ReactNode }) => (
@@ -49,10 +52,12 @@ export function UserDetailsDialog({
   itemsPerPage = 5,
   onEdit,
   onAddLicense,
+  onBalanceAdjusted,
 }: UserDetailsProps) {
   const { t } = useTranslation("administration")
   const [reservationPage, setReservationPage] = useState(1)
   const [licensePage, setLicensePage] = useState(1)
+  const [isBalancePanelOpen, setIsBalancePanelOpen] = useState(false)
 
   // Another member: back to the first pages.
   const memberId = userDetails?.id
@@ -167,6 +172,20 @@ export function UserDetailsDialog({
                   <span className="tabular-nums">{formatMoney(userDetails.user_account_balance ?? 0)}</span>
                 </Fact>
               </dl>
+              {onBalanceAdjusted && (
+                <>
+                  <Button type="button" variant="outline" size="sm" onClick={() => setIsBalancePanelOpen(true)}>
+                    <Wallet className="h-4 w-4" />
+                    {t("users.balance.action")}
+                  </Button>
+                  <AdjustBalancePanel
+                    open={isBalancePanelOpen}
+                    onOpenChange={setIsBalancePanelOpen}
+                    member={userDetails}
+                    onAdjusted={() => onBalanceAdjusted(userDetails.id)}
+                  />
+                </>
+              )}
             </section>
           </TabsContent>
 

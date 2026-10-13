@@ -11,6 +11,7 @@ import { UPDATE_PASSWORD } from "@/graphql/user"
 import { useToast } from "@/components/hooks/use-toast"
 import { useLogout } from "@/components/hooks/useLogout"
 import { cn } from "@/lib/utils"
+import { PASSWORD_MIN_LENGTH } from "@/lib/password"
 import { FormField } from "./form-field"
 
 interface PasswordFieldProps {
@@ -89,7 +90,7 @@ export function PasswordForm() {
     if (!newPassword) {
       valid = false
       newErrors.newPassword = t("password.errors.newRequired")
-    } else if (newPassword.length < 8) {
+    } else if (newPassword.length < PASSWORD_MIN_LENGTH) {
       valid = false
       newErrors.newPassword = t("password.errors.newTooShort")
     }

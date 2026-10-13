@@ -116,6 +116,9 @@ export function NewReservationForm({
       nextErrors.time = t("form.errors.timeMissing")
     } else if (endTime <= startTime) {
       nextErrors.time = t("form.errors.timeOrder")
+    } else if (withTime(selectedDate, startTime) < new Date()) {
+      // The API refuses it too; saying so here spares a round trip.
+      nextErrors.time = t("form.errors.past")
     }
     if (!flightCategory) nextErrors.category = t("form.errors.category")
 

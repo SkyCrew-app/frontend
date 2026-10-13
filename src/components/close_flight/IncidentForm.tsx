@@ -10,6 +10,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { groundsAircraft } from "@/lib/flight-closing"
 
 const RequiredMark = () => (
   <span className="text-destructive" aria-hidden="true">
@@ -163,6 +164,11 @@ export default function IncidentForm() {
                       ))}
                     </RadioGroup>
                   </FormControl>
+                  {groundsAircraft(field.value) && (
+                    <FormDescription className="text-destructive">
+                      {t("closeFlight.incident.groundingHint")}
+                    </FormDescription>
+                  )}
                   <FormMessage />
                 </FormItem>
               )}

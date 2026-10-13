@@ -2,11 +2,18 @@ import React from 'react';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MockedProvider, type MockedResponse } from '@apollo/client/testing';
+import { GraphQLError } from 'graphql';
 import MaintenanceTablePage from '../page';
 import { DELETE_MAINTENANCE, GET_ALL_MAINTENANCES, UPDATE_MAINTENANCE } from '@/graphql/maintenance';
-import { GET_USERS } from '@/graphql/user';
+import { GET_MEMBERS_DIRECTORY } from '@/graphql/course';
 import { GET_AIRCRAFTS } from '@/graphql/planes';
 import { formatDate, formatMoney } from '@/lib/format';
+
+const mockToast = jest.fn();
+jest.mock('@/components/hooks/use-toast', () => ({
+  toast: (...args: unknown[]) => mockToast(...args),
+  useToast: () => ({ toast: mockToast }),
+}));
 
 // Radix Select s'appuie sur des API absentes de jsdom.
 beforeAll(() => {
@@ -78,8 +85,8 @@ const mockMaintenances: MaintenanceMock[] = [
 ];
 
 const usersMock: MockedResponse = {
-  request: { query: GET_USERS },
-  result: { data: { getUsers: [] } },
+  request: { query: GET_MEMBERS_DIRECTORY },
+  result: { data: { membersDirectory: [] } },
 };
 
 const aircraftsMock: MockedResponse = {
@@ -351,10 +358,12 @@ describe('MaintenanceTablePage', () => {
     renderPage([
       maintenancesMock(withFullName),
       {
-        request: { query: GET_USERS },
+        // The technicians come from the directory every member can read:
+        // the administrator-only list of users would fail for a technician.
+        request: { query: GET_MEMBERS_DIRECTORY },
         result: {
           data: {
-            getUsers: [
+            membersDirectory: [
               technician(7, 'John', 'Doe', 'Technicien'),
               technician(9, 'Luc', 'Martin', 'Technicien'),
               technician(10, 'Paul', 'Pilote', 'Pilote'),
@@ -417,6 +426,38 @@ describe('MaintenanceTablePage', () => {
 
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(await within(getRowFor('F-ABCD')).findByText('Non assigné')).toBeInTheDocument();
+  });
+
+  it("doit expliquer le refus de l'API quand la maintenance chevauche des réservations, et garder le formulaire ouvert", async () => {
+    const user = userEvent.setup();
+    const refusal =
+      'Cette maintenance chevauche 1 réservation(s) : N°12 Jean Dupont (14/10/2026 10:00 – 14/10/2026 12:00). Annulez ou déplacez ces réservations, ou choisissez une autre période.';
+    renderPage([
+      maintenancesMock([mockMaintenances[0]]),
+      usersMock,
+      aircraftsMock,
+      {
+        request: { query: UPDATE_MAINTENANCE },
+        variableMatcher: () => true,
+        result: { errors: [new GraphQLError(refusal)] },
+      },
+    ]);
+    await screen.findByText('F-ABCD');
+
+    const menu = await openRowMenu(user, 'F-ABCD');
+    await user.click(menu.getByRole('menuitem', { name: 'Modifier' }));
+    const form = within(await screen.findByRole('dialog', { name: 'Modifier la maintenance' }));
+    await user.click(form.getByRole('button', { name: 'Suivant' }));
+    await user.click(form.getByRole('button', { name: 'Suivant' }));
+    await user.click(form.getByRole('button', { name: 'Enregistrer' }));
+
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith(
+        expect.objectContaining({ variant: 'destructive', description: refusal }),
+      ),
+    );
+    // Nothing was saved: the planner can pick another period.
+    expect(screen.getByRole('dialog', { name: 'Modifier la maintenance' })).toBeInTheDocument();
   });
 
   it('doit paginer le tableau par pages de 10 maintenances', async () => {

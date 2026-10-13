@@ -10,9 +10,10 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { BadgeCheck, Eye, MoreHorizontal, Pencil, Users } from "lucide-react"
+import { BadgeCheck, Eye, MailPlus, MoreHorizontal, Pencil, Trash2, UserCheck, UserX, Users } from "lucide-react"
 import { EmptyState } from "@/components/layout/EmptyState"
 import { formatDate } from "@/lib/format"
 import { roleLabel } from "@/lib/settings"
@@ -27,6 +28,23 @@ interface UsersTableProps {
   onViewDetails: (userId: string) => void
   onAddLicense?: (userId: string) => void
   onResetFilters?: () => void
+  /** Deactivate (false) or reactivate (true) the account. */
+  onSetActive?: (user: User, active: boolean) => void
+  onResendInvitation?: (user: User) => void
+  onDelete?: (user: User) => void
+}
+
+// The API only says "false" for a deactivated account.
+const isDeactivated = (user: User) => user.is_active === false
+
+function AccountBadge({ user }: { user: User }) {
+  const { t } = useTranslation("administration")
+  if (isDeactivated(user)) return <Badge variant="neutral">{t("users.account.inactive")}</Badge>
+  return user.isEmailConfirmed ? (
+    <Badge variant="success">{t("users.account.active")}</Badge>
+  ) : (
+    <Badge variant="warning">{t("users.account.pending")}</Badge>
+  )
 }
 
 const getInitials = (firstName: string, lastName: string) =>
@@ -40,6 +58,9 @@ export function UsersTable({
   onViewDetails,
   onAddLicense,
   onResetFilters,
+  onSetActive,
+  onResendInvitation,
+  onDelete,
 }: UsersTableProps) {
   const { t } = useTranslation("administration")
   if (loading) {
@@ -104,7 +125,7 @@ export function UsersTable({
             return (
               <TableRow
                 key={user.id}
-                className="cursor-pointer"
+                className={isDeactivated(user) ? "cursor-pointer text-muted-foreground" : "cursor-pointer"}
                 onClick={() => onViewDetails(user.id)}
               >
                 <TableCell>
@@ -119,7 +140,7 @@ export function UsersTable({
                       <p className="truncate text-xs text-muted-foreground">{user.email}</p>
                       <div className="mt-1 flex flex-wrap gap-1 md:hidden">
                         <Badge variant="neutral">{roleLabel(user.role?.role_name) ?? t("users.noRole")}</Badge>
-                        {!user.isEmailConfirmed && <Badge variant="warning">{t("users.account.pending")}</Badge>}
+                        {(isDeactivated(user) || !user.isEmailConfirmed) && <AccountBadge user={user} />}
                       </div>
                     </div>
                   </div>
@@ -135,11 +156,7 @@ export function UsersTable({
                   )}
                 </TableCell>
                 <TableCell className="hidden md:table-cell">
-                  {user.isEmailConfirmed ? (
-                    <Badge variant="success">{t("users.account.active")}</Badge>
-                  ) : (
-                    <Badge variant="warning">{t("users.account.pending")}</Badge>
-                  )}
+                  <AccountBadge user={user} />
                 </TableCell>
                 <TableCell className="hidden lg:table-cell">
                   {user.is2FAEnabled ? (
@@ -173,6 +190,34 @@ export function UsersTable({
                         <DropdownMenuItem onClick={() => onAddLicense(user.id)}>
                           <BadgeCheck className="h-4 w-4" />
                           {t("users.licence.add")}
+                        </DropdownMenuItem>
+                      )}
+                      {onResendInvitation && !user.isEmailConfirmed && !isDeactivated(user) && (
+                        <DropdownMenuItem onClick={() => onResendInvitation(user)}>
+                          <MailPlus className="h-4 w-4" />
+                          {t("users.accountActions.resendInvitation")}
+                        </DropdownMenuItem>
+                      )}
+                      {(onSetActive || onDelete) && <DropdownMenuSeparator />}
+                      {onSetActive &&
+                        (isDeactivated(user) ? (
+                          <DropdownMenuItem onClick={() => onSetActive(user, true)}>
+                            <UserCheck className="h-4 w-4" />
+                            {t("users.accountActions.reactivate")}
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem onClick={() => onSetActive(user, false)}>
+                            <UserX className="h-4 w-4" />
+                            {t("users.accountActions.deactivate")}
+                          </DropdownMenuItem>
+                        ))}
+                      {onDelete && (
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onClick={() => onDelete(user)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          {t("users.accountActions.delete")}
                         </DropdownMenuItem>
                       )}
                     </DropdownMenuContent>

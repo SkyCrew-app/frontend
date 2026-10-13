@@ -1,9 +1,9 @@
-import { test, expect, sidePanel, toast, choose } from "./support/test"
+import { test, expect, sidePanel, toast, choose, confirmAlert } from "./support/test"
 import { sessionFile } from "./support/accounts"
 
 test.use({ storageState: sessionFile("admin") })
 
-// The application has no way to delete a member: each run leaves one invited account behind.
+// The account created here has no history, so the run ends by deleting it.
 test("l'administrateur ajoute un membre et le retrouve avec la recherche", async ({ page }) => {
   const stamp = Date.now()
   const lastName = `Membre${stamp}`
@@ -31,9 +31,11 @@ test("l'administrateur ajoute un membre et le retrouve avec la recherche", async
   await expect(rows.first()).toContainText("15 mai 1990")
   await expect(rows.first()).toContainText("Invitation en attente")
 
-  // The API gives every new member the Administrateur role (see e2e/README.md). The account
-  // cannot be deleted, so it is handed the Pilote role rather than left as a pending administrator.
-  await test.step("rôle Pilote", async () => {
+  // A new member is a pilot unless the administrator says otherwise (it used to be an administrator).
+  await expect(rows.first().getByRole("cell", { name: "Pilote", exact: true })).toBeVisible()
+
+  // The edit form saves and keeps the role.
+  await test.step("modification du membre", async () => {
     await rows.first().getByRole("button", { name: `Actions pour E2E ${lastName}` }).click()
     await page.getByRole("menuitem", { name: "Modifier" }).click()
     const edit = sidePanel(page, "Modifier le membre")
@@ -44,4 +46,45 @@ test("l'administrateur ajoute un membre et le retrouve avec la recherche", async
     await expect(edit).toBeHidden()
     await expect(rows.first().getByRole("cell", { name: "Pilote", exact: true })).toBeVisible()
   })
+
+  const openActions = () => rows.first().getByRole("button", { name: `Actions pour E2E ${lastName}` }).click()
+
+  await test.step("désactivation puis réactivation du compte", async () => {
+    await openActions()
+    await page.getByRole("menuitem", { name: "Désactiver le compte" }).click()
+    await expect(page.getByRole("alertdialog")).toContainText(`Désactiver le compte de E2E ${lastName} ?`)
+    await confirmAlert(page, "Désactiver")
+    await expect(toast(page, "Compte désactivé")).toBeVisible()
+    await expect(rows.first()).toContainText("Désactivé")
+
+    await openActions()
+    await page.getByRole("menuitem", { name: "Réactiver le compte" }).click()
+    await expect(toast(page, "Compte réactivé")).toBeVisible()
+    await expect(rows.first()).toContainText("Invitation en attente")
+  })
+
+  // Only possible because this member never booked, flew or was invoiced.
+  await test.step("suppression du compte créé par erreur", async () => {
+    await openActions()
+    await page.getByRole("menuitem", { name: "Supprimer le membre" }).click()
+    await expect(page.getByRole("alertdialog")).toContainText(`Supprimer E2E ${lastName} ?`)
+    await confirmAlert(page, "Supprimer")
+    await expect(toast(page, "Membre supprimé")).toBeVisible()
+    await expect(rows).toHaveCount(0)
+  })
+})
+
+test("un membre qui a un historique ne peut pas être supprimé", async ({ page }) => {
+  await page.goto("/administration/users")
+  await page.getByRole("searchbox", { name: "Rechercher un membre" }).fill("jean.dupont@skycrew.fr")
+  const rows = page.getByRole("table").getByRole("row").filter({ has: page.getByRole("cell") })
+  await expect(rows).toHaveCount(1)
+
+  await rows.first().getByRole("button", { name: "Actions pour Jean Dupont" }).click()
+  await page.getByRole("menuitem", { name: "Supprimer le membre" }).click()
+  await confirmAlert(page, "Supprimer")
+
+  await expect(toast(page, "Le membre n'a pas pu être supprimé")).toBeVisible()
+  await expect(page.getByText("Désactivez son compte à la place.").first()).toBeVisible()
+  await expect(rows).toHaveCount(1)
 })

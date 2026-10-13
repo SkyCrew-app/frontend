@@ -32,7 +32,8 @@
       "passengers_one": "{{count}} passager",
       "passengers_other": "{{count}} passagers",
       "noReservation": "Sans réservation associée",
-      "editLabel": "Modifier le plan de vol {{origin}} → {{destination}}"
+      "editLabel": "Modifier le plan de vol {{origin}} → {{destination}}",
+      "closeFrom": "Clôture possible à partir du {{date}}"
     },
     "filters": {
       "searchLabel": "Rechercher un plan de vol",
@@ -390,7 +391,8 @@
       "description": "Le vol est enregistré dans votre carnet de vol.",
       "flightTime": "Temps de vol",
       "distance": "Distance parcourue",
-      "incidentReported": "Incident signalé au club"
+      "incidentReported": "Incident signalé au club",
+      "aircraftGrounded": "L'avion est immobilisé : il ne peut plus être réservé jusqu'à sa remise en service par un technicien ou un administrateur."
     },
     "steps": {
       "flight": "Vol réalisé",
@@ -423,6 +425,9 @@
       "exportError": {
         "title": "Export impossible",
         "description": "Le PDF n'a pas pu être généré. Réessayez dans un instant."
+      },
+      "incidentRecordedCloseFailed": {
+        "title": "Incident enregistré, vol non clôturé"
       }
     },
     "details": {
@@ -474,7 +479,8 @@
         "weather": "Météorologique",
         "human_error": "Erreur humaine",
         "other": "Autre"
-      }
+      },
+      "groundingHint": "Un incident de gravité élevée immobilise l'avion dès la clôture, jusqu'à sa remise en service par le club."
     },
     "waypoints": {
       "unreadable": "Les points de route de ce plan ne sont pas lisibles.",
@@ -484,6 +490,20 @@
       "longitude": "Longitude",
       "altitude": "Altitude",
       "ground": "Sol"
+    },
+    "notYet": {
+      "notStarted": {
+        "title": "Ce vol ne peut pas encore être clôturé",
+        "description": "Sa réservation commence le {{date}}. Vous pourrez clôturer le vol à partir de ce moment."
+      },
+      "noBooking": {
+        "title": "Ce vol n'est rattaché à aucune réservation",
+        "description": "Seul un administrateur peut clôturer un vol sans réservation. Contactez le club."
+      },
+      "bookingCancelled": {
+        "title": "La réservation de ce vol est annulée",
+        "description": "Un vol dont la réservation est annulée ne peut pas être clôturé."
+      }
     }
   },
   "recapValidation": {
@@ -495,7 +515,9 @@
     "severityRequired": "La gravité de l'incident est requise",
     "descriptionRequired": "La description de l'incident est requise",
     "priorityRequired": "La priorité de l'incident est requise",
-    "categoryRequired": "La catégorie de l'incident est requise"
+    "categoryRequired": "La catégorie de l'incident est requise",
+    "flightHoursPositive": "Indiquez un temps de vol supérieur à zéro",
+    "flightHoursTooLong": "Le temps de vol ne peut pas dépasser {{max}} heures"
   },
   "logbook": {
     "title": "Carnet de vol",

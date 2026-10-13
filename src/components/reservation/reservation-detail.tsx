@@ -4,8 +4,13 @@ import { useState } from "react"
 import { format } from "date-fns"
 import { useTranslation } from "react-i18next"
 import { Loader2, Pencil, Trash2 } from "lucide-react"
-import { canCancelReservation, reservationStatus } from "@/lib/reservation-status"
-import { formatDate, formatFlightDuration, formatTime } from "@/lib/format"
+import {
+  canCancelReservation,
+  canEditReservation,
+  hasReservationStarted,
+  reservationStatus,
+} from "@/lib/reservation-status"
+import { formatDate, formatFlightDuration, formatMoney, formatTime } from "@/lib/format"
 import { dateFnsLocale } from "@/lib/i18n"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -31,6 +36,8 @@ interface ReservationDetailProps {
   onEdit: () => void
   onDelete: () => Promise<void> | void
   canEdit: boolean
+  /** An administrator may cancel any booking, even once it has started. */
+  isAdmin?: boolean
 }
 
 /** Read-only side panel of a reservation; its owner can edit or delete it from the footer. */
@@ -41,6 +48,7 @@ export function ReservationDetail({
   onEdit,
   onDelete,
   canEdit,
+  isAdmin = false,
 }: ReservationDetailProps) {
   const { t } = useTranslation("reservations")
   const [confirmOpen, setConfirmOpen] = useState(false)
@@ -60,8 +68,13 @@ export function ReservationDetail({
     }
   }
 
-  // A booking whose flight is closed is in the logbook: it can no longer be changed or removed.
-  const canChange = canEdit && canCancelReservation(reservation)
+  // The API decides; these are the same rules, so that nothing it would refuse is offered:
+  // a booking is changed before it starts, cancelled by its holder until then and by an
+  // administrator afterwards, and kept for good once its flight is closed.
+  const canChange = canEdit && canEditReservation(reservation)
+  const canDelete = (canEdit || isAdmin) && canCancelReservation(reservation, { isAdmin })
+  const showStartedHint = canEdit && !canChange && !isAdmin && hasReservationStarted(reservation)
+  const showPrice = (canEdit || isAdmin) && reservation.charged_amount != null
 
   return (
     <SidePanel
@@ -70,7 +83,7 @@ export function ReservationDetail({
       title={t("detail.title")}
       size="md"
       footerStart={
-        canChange ? (
+        canDelete ? (
           <Button
             variant="ghost"
             className="text-destructive hover:text-destructive"
@@ -129,6 +142,12 @@ export function ReservationDetail({
               <dd className="font-medium">{flightCategoryLabel(reservation.flight_category)}</dd>
             </div>
           )}
+          {showPrice && (
+            <div>
+              <dt className="text-xs text-muted-foreground">{t("shared.pricePaid")}</dt>
+              <dd className="font-medium tabular-nums">{formatMoney(Number(reservation.charged_amount))}</dd>
+            </div>
+          )}
           {reservation.notes && (
             <div className="col-span-2">
               <dt className="text-xs text-muted-foreground">{t("common:labels.notes")}</dt>
@@ -136,6 +155,8 @@ export function ReservationDetail({
             </div>
           )}
         </dl>
+
+        {showStartedHint && <p className="text-sm text-muted-foreground">{t("detail.startedHint")}</p>}
 
         <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
           <AlertDialogContent>

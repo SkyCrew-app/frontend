@@ -10,6 +10,14 @@ input AddCompetencyInput {
   name: String!
 }
 
+input AdjustBalanceInput {
+  amount: Float!
+  credit: Boolean!
+  payment_method: String!
+  reason: String!
+  user_id: Int!
+}
+
 type Administration {
   address: String!
   allowGuestPilots: Boolean!
@@ -424,6 +432,7 @@ input CreateAircraftInput {
   max_takeoff_weight: Float
   model: String
   registration_number: String
+  total_flight_hours: Float
   year_of_manufacture: Int
 }
 
@@ -1004,6 +1013,7 @@ type MonthlyHoursEntry {
 type Mutation {
   addCommentToCourse(input: AddCommentInput!): CourseComment!
   addCompetencyToCourse(input: AddCompetencyInput!): CourseCompetency!
+  adjustMemberBalance(input: AdjustBalanceInput!): Payment!
   completeChecklistSubmission(id: Int!): ChecklistSubmission!
   completeLesson(lessonId: Float!, userId: Float!): Boolean!
   confirm2FA(token: String!): Boolean!
@@ -1038,6 +1048,10 @@ type Mutation {
   createRole(createRoleInput: CreateRoleInput!): Role!
   createUser(date_of_birth: DateTime!, email: String!, first_name: String!, language: String, last_name: String!, roleId: Int): User!
   deleteAdministration(id: Int!): Boolean!
+
+  """
+  true when the aircraft was deleted, false when it has a history and was retired (made unavailable) instead
+  """
   deleteAircraft(aircraftId: Int!): Boolean!
   deleteAllNotifications: Int!
   deleteAnswer(id: Float!): Boolean!
@@ -1058,10 +1072,11 @@ type Mutation {
   deleteReservation(id: Int!): Boolean!
   deleteReservationTemplate(id: Int!): Boolean!
   deleteRole(id: Int!): Boolean!
+  deleteUser(id: Int!): Boolean!
   disable2FA(password: String!): Boolean!
   exportFlightRecapPDF(flightId: Int!): String!
   exportLogbookPDF(filter: LogbookFilterInput): String!
-  generate2FASecret(email: String): String!
+  generate2FASecret(code: String, email: String, password: String): String!
   generateCsvFinancialReport(endDate: DateTime!, startDate: DateTime!): String!
   generateFlightPlan(input: GenerateFlightPlanInput!): Flight!
   generatePdfFinancialReport(endDate: DateTime!, startDate: DateTime!): String!
@@ -1082,9 +1097,12 @@ type Mutation {
   removeNotification(id: Int!): Boolean!
   reorderChecklistItems(itemIds: [Int!]!, templateId: Int!): [ChecklistItem!]!
   requestPasswordReset(email: String!): Boolean!
+  resendInvitation(id: Int!): Boolean!
   resetPassword(newPassword: String!, token: String!): Boolean!
   seenNotification(id: Int!): Boolean!
+  setAircraftAvailability(aircraftId: Int!, availability_status: AvailabilityStatus!): Aircraft!
   setSiteStatus: Boolean!
+  setUserActive(active: Boolean!, id: Int!): User!
   startChecklistSubmission(submitChecklistInput: SubmitChecklistInput!): ChecklistSubmission!
   toggle2FA(email: String, is2FAEnabled: Boolean!): User!
   updateAdministration(updateAdministrationInput: UpdateAdministrationInput!): Administration!
@@ -1145,10 +1163,14 @@ type Payment {
   external_payment_id: String
   id: Int!
   invoice: Invoice
+  kind: String!
   payment_date: DateTime!
   payment_details: String
   payment_method: String!
   payment_status: String!
+  reason: String
+  refunded_amount: Float!
+  reservation_id: Int
   user: User!
 }
 
@@ -1281,6 +1303,7 @@ type Question {
 type Reservation {
   aircraft: Aircraft!
   calendar_integration_url: String
+  charged_amount: Float
   end_time: DateTime!
   estimated_flight_hours: Float
   flight_category: FlightCategory!
@@ -1390,6 +1413,7 @@ input UpdateAircraftInput {
   max_takeoff_weight: Float
   model: String
   registration_number: String
+  total_flight_hours: Float
   year_of_manufacture: Int
 }
 
@@ -1665,14 +1689,9 @@ input UpdateUserInput {
   email: String
   first_name: String
   id: Float
-  is_instructor: Boolean
   language: String
   last_name: String
-  membership_end_date: DateTime
-  membership_start_date: DateTime
-  password: String
   phone_number: String
-  profile_picture: String
   roleId: Float
   speed_unit: String
   timezone: String
@@ -1692,36 +1711,37 @@ scalar Upload
 
 type User {
   address: String
-  answers: [Answer!]!
+  answers: [Answer!]
   dashboard_widgets: [DashboardWidgetConfig!]
-  date_of_birth: DateTime!
+  date_of_birth: DateTime
   distance_unit: String
   email: String!
-  email_notifications_enabled: Boolean!
+  email_notifications_enabled: Boolean
   first_name: String!
-  flights: [Flight!]!
+  flights: [Flight!]
   id: Int!
-  invoices: [Invoice!]!
-  is2FAEnabled: Boolean!
-  isEmailConfirmed: Boolean!
+  invoices: [Invoice!]
+  is2FAEnabled: Boolean
+  isEmailConfirmed: Boolean
+  is_active: Boolean
   language: String
   last_name: String!
   licenses: [License!]
   maintenances: [Maintenance!]
-  newsletter_subscribed: Boolean!
+  newsletter_subscribed: Boolean
   password: String @deprecated(reason: "Never returned.")
-  payments: [Payment!]!
+  payments: [Payment!]
   phone_number: String
   preferred_aerodrome: String
   profile_picture: String
   reservations: [Reservation!]!
   role: Role
-  sms_notifications_enabled: Boolean!
+  sms_notifications_enabled: Boolean
   speed_unit: String
   timezone: String
   total_flight_hours: Float
-  userProgresses: [UserProgress!]!
-  user_account_balance: Float!
+  userProgresses: [UserProgress!]
+  user_account_balance: Float
   validation_token: String @deprecated(reason: "Never returned.")
 }
 

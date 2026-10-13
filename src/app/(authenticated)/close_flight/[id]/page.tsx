@@ -1,12 +1,12 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { useTranslation } from "react-i18next"
 import { useForm, FormProvider } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import Link from "next/link"
-import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle, FileDown, FileSearch, Loader2 } from "lucide-react"
-import { ApolloError, useMutation, useQuery } from "@apollo/client"
+import { AlertTriangle, ArrowLeft, ArrowRight, CalendarClock, CheckCircle, FileDown, FileSearch, Loader2 } from "lucide-react"
+import { useMutation, useQuery } from "@apollo/client"
 import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -42,11 +42,14 @@ import { CREATE_INCIDENT } from "@/graphql/incident"
 import { useToast } from "@/components/hooks/use-toast"
 import { buildFlightRecapSchema, type FlightRecapFormValues } from "@/lib/flight-recap-schema"
 import { toIntId } from "@/lib/graphql-inputs"
+import { closeBlocker, groundsAircraft } from "@/lib/flight-closing"
+import { apiRefusal } from "@/lib/api-refusal"
+import { isAdministrator } from "@/lib/roles"
+import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
 import { formatDateTime, formatDecimal, formatFlightDuration } from "@/lib/format"
 
 // Refusals of the API are written for the pilot; anything else gets a plain message.
-const apiMessage = (error: unknown, fallback: string) =>
-  (error instanceof ApolloError ? error.graphQLErrors[0]?.message : undefined) || fallback
+const apiMessage = apiRefusal
 
 // The form is filled in three short steps; each one only checks its own fields.
 const STEPS: { key: "flight" | "incident" | "remarks"; fields: (keyof FlightRecapFormValues)[] }[] = [
@@ -98,6 +101,9 @@ export default function FlightRecap() {
   const id = params.id as string
   const { toast } = useToast()
   const { t } = useTranslation("flights")
+  const isAdmin = isAdministrator(useUserData(useCurrentUser()))
+  // The incident is sent before the closing: it must not be sent twice when the closing is retried.
+  const incidentRecorded = useRef(false)
 
   // Rebuilt when the language changes so validation messages follow it.
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -185,6 +191,30 @@ export default function FlightRecap() {
     setIsSubmitting(true)
     try {
       const pilotId = flight?.user?.id
+
+      // The incident first: a refused closing must never lose a report, least of all a severe one.
+      // The API opens it itself, on the aircraft of the flight.
+      if (formData.incidentOccurred && !incidentRecorded.current) {
+        await createIncident({
+          variables: {
+            incident: {
+              incident_date: formData.incident_date,
+              aircraft_id: aircraftId,
+              user_id: Number(flight?.user?.id),
+              severity_level: formData.severity_level,
+              description: formData.incident_description,
+              damage_report: formData.damage_report,
+              corrective_actions: formData.corrective_actions,
+              status: formData.incident_status,
+              priority: formData.incident_priority,
+              category: formData.incident_category,
+              flight_id: Number.parseInt(id),
+            },
+          },
+        })
+        incidentRecorded.current = true
+      }
+
       await updateFlight({
         variables: {
           updateFlightInput: {
@@ -210,31 +240,13 @@ export default function FlightRecap() {
         ],
       })
 
-      if (formData.incidentOccurred) {
-        await createIncident({
-          variables: {
-            incident: {
-              incident_date: formData.incident_date,
-              aircraft_id: aircraftId,
-              user_id: Number(flight?.user?.id),
-              severity_level: formData.severity_level,
-              description: formData.incident_description,
-              damage_report: formData.damage_report,
-              corrective_actions: formData.corrective_actions,
-              status: formData.incident_status,
-              priority: formData.incident_priority,
-              category: formData.incident_category,
-              flight_id: Number.parseInt(id),
-            },
-          },
-        })
-      }
-
       setIsSubmitted(true)
     } catch (error) {
       toast({
         variant: "destructive",
-        title: t("closeFlight.toast.closeError.title"),
+        title: incidentRecorded.current
+          ? t("closeFlight.toast.incidentRecordedCloseFailed.title")
+          : t("closeFlight.toast.closeError.title"),
         description: apiMessage(error, t("closeFlight.toast.closeError.description")),
       })
     } finally {
@@ -366,7 +378,12 @@ export default function FlightRecap() {
               <Alert variant="destructive">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertTitle>{t("closeFlight.done.incidentReported")}</AlertTitle>
-                <AlertDescription>{methods.getValues("incident_description")}</AlertDescription>
+                <AlertDescription>
+                  <p>{methods.getValues("incident_description")}</p>
+                  {groundsAircraft(methods.getValues("severity_level")) && (
+                    <p className="mt-2 font-medium">{t("closeFlight.done.aircraftGrounded")}</p>
+                  )}
+                </AlertDescription>
               </Alert>
             )}
           </CardContent>
@@ -378,6 +395,29 @@ export default function FlightRecap() {
             <Button onClick={() => router.push("/logbook")}>{t("closeFlight.viewLogbook")}</Button>
           </CardFooter>
         </Card>
+      </div>
+    )
+  }
+
+  // The API refuses to close a flight before its booking starts, without a booking or on a
+  // cancelled one: say so instead of offering a form that cannot be sent.
+  const blocker = closeBlocker(flight, { isAdmin })
+  if (blocker !== null && blocker !== "closed") {
+    return (
+      <div className="space-y-6">
+        <PageHeader className="mb-0" title={t("closeFlight.title")} description={route} actions={backButton} />
+        <EmptyState
+          icon={CalendarClock}
+          title={t(`closeFlight.notYet.${blocker}.title`)}
+          description={t(`closeFlight.notYet.${blocker}.description`, {
+            date: formatDateTime(flight.reservation?.start_time),
+          })}
+          action={
+            <Button variant="outline" asChild>
+              <Link href="/reservations/flight-plans">{t("closeFlight.notFound.action")}</Link>
+            </Button>
+          }
+        />
       </div>
     )
   }

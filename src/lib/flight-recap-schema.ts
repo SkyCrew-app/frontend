@@ -1,5 +1,6 @@
 import * as z from "zod"
 import i18n from "@/lib/i18n"
+import { MAX_FLIGHT_HOURS } from "@/lib/flight-closing"
 
 /**
  * Fields `CreateIncidentInput` declares as `String!`: they become required
@@ -16,7 +17,12 @@ const REQUIRED_INCIDENT_FIELDS = [
 export const buildFlightRecapSchema = () =>
   z
     .object({
-      flight_hours: z.number().min(0, i18n.t("flights:recapValidation.flightHoursNegative")),
+      // Same bounds as the API: a flown flight lasts more than nothing and less than a day.
+      flight_hours: z
+        .number()
+        .min(0, i18n.t("flights:recapValidation.flightHoursNegative"))
+        .gt(0, i18n.t("flights:recapValidation.flightHoursPositive"))
+        .max(MAX_FLIGHT_HOURS, i18n.t("flights:recapValidation.flightHoursTooLong", { max: MAX_FLIGHT_HOURS })),
       flight_type: z.string().min(1, i18n.t("flights:recapValidation.flightTypeRequired")),
       origin_icao: z.string().length(4, i18n.t("flights:recapValidation.icaoLength")),
       destination_icao: z.string().length(4, i18n.t("flights:recapValidation.icaoLength")),

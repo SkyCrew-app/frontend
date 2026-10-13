@@ -11,7 +11,8 @@ import { EmptyState } from "@/components/layout/EmptyState"
 import { ErrorState } from "@/components/layout/ErrorState"
 import { toast } from "@/components/hooks/use-toast"
 import { CREATE_ROLE, UPDATE_ROLE, DELETE_ROLE, GET_ROLES } from "@/graphql/roles"
-import { ROLE_ADMIN, ROLE_INSTRUCTOR } from "@/lib/roles"
+import { BUILT_IN_ROLES } from "@/lib/roles"
+import { apiErrorMessage } from "@/lib/api-error"
 import { roleLabel } from "@/lib/settings"
 import { SettingsSection } from "../settings-field"
 import { DeleteItemDialog, ItemList, NameDialog } from "../item-list"
@@ -21,12 +22,11 @@ interface Role {
   role_name: string
 }
 
-// The application recognises these two roles by their name.
-const isBuiltInRole = (role: Role) => role.role_name === ROLE_ADMIN || role.role_name === ROLE_INSTRUCTOR
+// The application recognises these roles by their name: the API refuses to rename or delete them.
+const isBuiltInRole = (role: Role) => BUILT_IN_ROLES.includes(role.role_name)
 
 export function RoleManager() {
   const { t } = useTranslation("administration")
-  const builtInNotice = t("settings.roles.builtInNotice")
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [roleToEdit, setRoleToEdit] = useState<Role | null>(null)
   const [roleToDelete, setRoleToDelete] = useState<Role | null>(null)
@@ -52,10 +52,10 @@ export function RoleManager() {
       })
       setIsCreateDialogOpen(false)
       await refetch()
-    } catch {
+    } catch (error) {
       toast({
         title: t("settings.roles.toast.createFailed.title"),
-        description: t("settings.roles.toast.createFailed.description"),
+        description: apiErrorMessage(error) ?? t("settings.roles.toast.createFailed.description"),
         variant: "destructive",
       })
     }
@@ -76,10 +76,10 @@ export function RoleManager() {
       })
       setRoleToEdit(null)
       await refetch()
-    } catch {
+    } catch (error) {
       toast({
         title: t("settings.roles.toast.updateFailed.title"),
-        description: t("settings.roles.toast.updateFailed.description"),
+        description: apiErrorMessage(error) ?? t("settings.roles.toast.updateFailed.description"),
         variant: "destructive",
       })
     }
@@ -98,10 +98,10 @@ export function RoleManager() {
       })
       setRoleToDelete(null)
       await refetch()
-    } catch {
+    } catch (error) {
       toast({
         title: t("settings.roles.toast.deleteFailed.title"),
-        description: t("settings.roles.toast.deleteFailed.description"),
+        description: apiErrorMessage(error) ?? t("settings.roles.toast.deleteFailed.description"),
         variant: "destructive",
       })
     }
@@ -142,6 +142,7 @@ export function RoleManager() {
             key: String(role.id),
             name: roleLabel(role.role_name),
             meta: isBuiltInRole(role) ? <Badge variant="neutral">{t("settings.roles.builtIn")}</Badge> : undefined,
+            locked: isBuiltInRole(role),
           }))}
           onEdit={(item) => setRoleToEdit(roles.find((role) => String(role.id) === item.key) ?? null)}
           onDelete={(item) => {
@@ -150,6 +151,10 @@ export function RoleManager() {
             setLastRoleToDelete(role)
           }}
         />
+      )}
+
+      {roles.some(isBuiltInRole) && (
+        <p className="text-sm text-muted-foreground">{t("settings.roles.builtInHint")}</p>
       )}
 
       <NameDialog
@@ -178,11 +183,6 @@ export function RoleManager() {
         existingNames={roleNames}
         duplicateMessage={t("settings.roles.duplicate")}
         isSubmitting={mutationInProgress}
-        notice={
-          roleToEdit && isBuiltInRole(roleToEdit) ? (
-            <p className="rounded-md bg-warning/15 p-3 text-sm text-warning">{builtInNotice}</p>
-          ) : undefined
-        }
         onSubmit={handleUpdateRole}
       />
 
@@ -190,12 +190,9 @@ export function RoleManager() {
         open={roleToDelete !== null}
         onOpenChange={(open) => !open && setRoleToDelete(null)}
         title={t("settings.roles.deleteTitle")}
-        description={
-          <>
-            {t("settings.roles.deleteDescription", { name: roleLabel((roleToDelete ?? lastRoleToDelete)?.role_name) })}
-            {roleToDelete && isBuiltInRole(roleToDelete) && <> {builtInNotice}</>}
-          </>
-        }
+        description={t("settings.roles.deleteDescription", {
+          name: roleLabel((roleToDelete ?? lastRoleToDelete)?.role_name),
+        })}
         isDeleting={mutationInProgress}
         onConfirm={handleDeleteRole}
       />

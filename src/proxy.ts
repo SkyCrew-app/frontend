@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtDecode } from "jwt-decode";
 import { getServerGraphqlUrl, stripBasePath, withBasePath } from '@/lib/runtime-config';
-import { isNextAsset, sessionCookieMaxAge } from '@/lib/proxy-rules';
+import { canOpenPage, isNextAsset, sessionCookieMaxAge } from '@/lib/proxy-rules';
 
 interface CustomJwtPayload {
   exp: number;
@@ -11,11 +11,6 @@ interface CustomJwtPayload {
 }
 
 const publicPaths = new Set(['/', '/auth/2fa', '/auth/forgot-password', '/auth/reset-password', '/auth/new-account', '/system/notconnected', '/system/unauthorized', '/system/maintenance']);
-
-const roleBasedRoutes = {
-  '/admin': ['Administrateur'],
-  '/user-management': ['user', 'user']
-};
 
 async function isInMaintenanceMode(req: NextRequest) {
   try {
@@ -77,13 +72,9 @@ export async function proxy(req: NextRequest) {
       return NextResponse.redirect(new URL(withBasePath('/system/notconnected'), req.url));
     }
 
-    const userRole = decodedToken.role;
-    if (userRole) {
-      for (const [route, allowedRoles] of Object.entries(roleBasedRoutes)) {
-        if (pathname.startsWith(route) && !allowedRoles.includes(userRole)) {
-          return NextResponse.redirect(new URL(withBasePath('/system/unauthorized'), req.url));
-        }
-      }
+    // Comfort only: the API decides what each role may read and change.
+    if (!canOpenPage(decodedToken.role, pathname)) {
+      return NextResponse.redirect(new URL(withBasePath('/system/unauthorized'), req.url));
     }
 
     response.cookies.set({

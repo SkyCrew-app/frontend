@@ -25,6 +25,7 @@ import type { Airport, Waypoint } from "@/lib/aviation-api"
 import { buildCreateFlightInput } from "@/lib/graphql-inputs"
 import { formatDate, formatFlightDuration, formatTime } from "@/lib/format"
 import { cn } from "@/lib/utils"
+import { apiRefusal } from "@/lib/api-refusal"
 import type { Reservation } from "@/interfaces/reservation"
 
 enum FlightCategory {
@@ -223,11 +224,12 @@ export default function CreateCustomFlightPlan() {
         })
         router.push(`/reservations/flight-plans/${data.createFlight.id}`)
       }
-    } catch {
+    } catch (error) {
+      // A refusal (booking of someone else, cancelled booking…) is explained by the API.
       toast({
         variant: "destructive",
         title: t("planCreate.toast.createFailed.title"),
-        description: t("planCreate.toast.createFailed.description"),
+        description: apiRefusal(error, t("planCreate.toast.createFailed.description")),
       })
     }
   }

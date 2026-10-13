@@ -3,13 +3,14 @@
 import Link from "next/link"
 import { useTranslation } from "react-i18next"
 import { CalendarClock, Pencil, Plane, Route } from "lucide-react"
-import { formatDate, formatDecimal, formatFlightDuration, formatTime } from "@/lib/format"
+import { formatDate, formatDateTime, formatDecimal, formatFlightDuration, formatTime } from "@/lib/format"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import type { Flight } from "@/interfaces/flight"
 import { flightTypeLabel } from "@/components/flight/flight-type"
 import { flightPlanState } from "@/components/flight-plan/flight-plan-state"
+import { closeBlocker } from "@/lib/flight-closing"
 
 interface FlightPlanCardProps {
   flight: Flight
@@ -19,6 +20,8 @@ interface FlightPlanCardProps {
 export function FlightPlanCard({ flight, onEdit }: FlightPlanCardProps) {
   const { t } = useTranslation("flights")
   const state = flightPlanState(flight)
+  // The API only closes a flight once its booking has started.
+  const blocker = closeBlocker(flight)
   const reservation = flight.reservation
   const passengers = flight.number_of_passengers ?? 0
 
@@ -66,6 +69,11 @@ export function FlightPlanCard({ flight, onEdit }: FlightPlanCardProps) {
           <Route className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
           <span className="tabular-nums">{routeFacts.join(" · ")}</span>
         </p>
+        {blocker === "notStarted" && reservation && (
+          <p className="text-xs text-muted-foreground">
+            {t("plans.card.closeFrom", { date: formatDateTime(reservation.start_time) })}
+          </p>
+        )}
       </CardContent>
       <CardFooter className="flex flex-wrap justify-end gap-2 border-t pt-4">
         {!flight.closed_at && (
@@ -80,9 +88,11 @@ export function FlightPlanCard({ flight, onEdit }: FlightPlanCardProps) {
             >
               <Pencil className="h-4 w-4" />
             </Button>
-            <Button size="sm" variant="outline" asChild>
-              <Link href={`/close_flight/${flight.id}`}>{t("plans.actions.closeFlight")}</Link>
-            </Button>
+            {blocker === null && (
+              <Button size="sm" variant="outline" asChild>
+                <Link href={`/close_flight/${flight.id}`}>{t("plans.actions.closeFlight")}</Link>
+              </Button>
+            )}
           </>
         )}
         <Button size="sm" asChild>

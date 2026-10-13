@@ -112,7 +112,8 @@
     "deleteLabel": "Supprimer {{registration}}",
     "deleteDialog": {
       "title": "Supprimer {{registration}} ?",
-      "description": "L'aéronef {{registration}} ({{model}}) sera définitivement retiré de la flotte, avec sa photo et ses documents. Cette action est irréversible."
+      "description": "L'aéronef {{registration}} ({{model}}) sera définitivement retiré de la flotte, avec sa photo et ses documents. Cette action est irréversible.",
+      "historyNote": "Un aéronef qui a un historique (réservations, maintenances, incidents…) n'est pas supprimé : il est retiré du service et son historique est conservé."
     },
     "toast": {
       "deleted": {
@@ -121,6 +122,10 @@
       },
       "deleteFailed": {
         "description": "L'aéronef n'a pas pu être supprimé. Il est peut-être encore lié à des réservations ou à des maintenances."
+      },
+      "retired": {
+        "title": "Aéronef retiré du service",
+        "description": "{{registration}} a un historique : il n'a pas été supprimé. Il est maintenant indisponible et son historique est conservé."
       }
     }
   },
@@ -148,7 +153,9 @@
       "registrationPlaceholder": "F-GABC",
       "yearOfManufacture": "Année de fabrication",
       "maintenanceState": "État de maintenance",
-      "fuelType": "Type de carburant"
+      "fuelType": "Type de carburant",
+      "totalFlightHours": "Heures de vol totales",
+      "totalFlightHoursHint": "Heures déjà au compteur de l'appareil. Chaque vol clôturé s'y ajoute automatiquement."
     },
     "validation": {
       "registration": "Indiquez l'immatriculation.",
@@ -337,6 +344,25 @@
       "tab": "Maintenances ({{total}})",
       "empty": "Aucune maintenance pour cet aéronef.",
       "noMatch": "Aucune maintenance ne correspond à ces filtres."
+    }
+  },
+  "incidents": {
+    "aircraftState": "État de l'aéronef",
+    "groundedHint": "Un incident de gravité élevée immobilise l'aéronef : il ne peut plus être réservé tant qu'il n'est pas remis en service.",
+    "returnToService": "Remettre en service",
+    "confirmReturn": {
+      "title": "Remettre {{registration}} en service ?",
+      "description": "L'aéronef redeviendra disponible à la réservation. Vérifiez qu'il est en état de voler."
+    },
+    "toast": {
+      "returned": {
+        "title": "Aéronef remis en service",
+        "description": "{{registration}} est de nouveau disponible à la réservation."
+      },
+      "returnFailed": {
+        "title": "Remise en service impossible",
+        "description": "L'état de l'aéronef n'a pas pu être modifié. Réessayez."
+      }
     }
   }
 }

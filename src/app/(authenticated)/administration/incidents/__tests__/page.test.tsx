@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { MockedProvider, type MockedResponse } from '@apollo/client/testing';
 import IncidentsPage from '../page';
 import { GET_ALL_INCIDENTS, UPDATE_INCIDENT_STATUS } from '@/graphql/incident';
+import { GET_AIRCRAFTS, SET_AIRCRAFT_AVAILABILITY } from '@/graphql/planes';
 import { formatDate, formatDateTime } from '@/lib/format';
 import type { Incident } from '@/lib/incident';
 
@@ -57,7 +58,7 @@ const incidents: Incident[] = [
     resolution_note: null,
     resolved_at: null,
     resolved_by: null,
-    aircraft: { id: 1, registration_number: 'F-ABCD', model: 'Cessna 172' },
+    aircraft: { id: 1, registration_number: 'F-ABCD', model: 'Cessna 172', availability_status: 'UNAVAILABLE' },
     flight: {
       id: 42,
       origin_icao: 'LFPG',
@@ -82,7 +83,7 @@ const incidents: Incident[] = [
     resolution_note: 'Faisceau en cours de contrôle',
     resolved_at: null,
     resolved_by: null,
-    aircraft: { id: 2, registration_number: 'F-WXYZ', model: 'Piper PA-28' },
+    aircraft: { id: 2, registration_number: 'F-WXYZ', model: 'Piper PA-28', availability_status: 'AVAILABLE' },
     flight: null,
     user: marc,
   },
@@ -99,7 +100,7 @@ const incidents: Incident[] = [
     resolution_note: 'Aucun dommage après inspection',
     resolved_at: '2026-08-03T10:15:00',
     resolved_by: admin,
-    aircraft: { id: 1, registration_number: 'F-ABCD', model: 'Cessna 172' },
+    aircraft: { id: 1, registration_number: 'F-ABCD', model: 'Cessna 172', availability_status: 'UNAVAILABLE' },
     flight: null,
     user: marc,
   },
@@ -507,6 +508,73 @@ describe('IncidentsPage', () => {
     const panel = within(await screen.findByRole('dialog'));
     expect(panel.getByRole('button', { name: 'Prendre en charge' })).toBeInTheDocument();
     expect(panel.getByRole('button', { name: 'Marquer comme résolu' })).toBeInTheDocument();
+  });
+
+  it("doit proposer au suivi de remettre en service un aéronef immobilisé, après confirmation", async () => {
+    mockUser = { id: 4, role: { role_name: 'Technicien' } };
+    const user = userEvent.setup();
+    const backInService = incidents.map((incident) =>
+      incident.aircraft.id === 1
+        ? { ...incident, aircraft: { ...incident.aircraft, availability_status: 'AVAILABLE' } }
+        : incident,
+    );
+    const returned = jest.fn(() => ({
+      data: {
+        setAircraftAvailability: { id: 1, availability_status: 'AVAILABLE', maintenance_status: 'OK' },
+      },
+    }));
+    renderPage([
+      incidentsMock(),
+      {
+        request: {
+          query: SET_AIRCRAFT_AVAILABILITY,
+          variables: { aircraftId: 1, availability_status: 'AVAILABLE' },
+        },
+        result: returned,
+      },
+      incidentsMock(backInService),
+      { request: { query: GET_AIRCRAFTS }, result: { data: { getAircrafts: [] } } },
+    ]);
+    await screen.findByText('Crevaison du pneu avant au roulage');
+    await user.click(screen.getByText('Crevaison du pneu avant au roulage'));
+
+    const panel = within(await screen.findByRole('dialog'));
+    expect(panel.getByText('Indisponible')).toBeInTheDocument();
+    expect(panel.getByText(/immobilise l'aéronef/)).toBeInTheDocument();
+    await user.click(panel.getByRole('button', { name: 'Remettre en service' }));
+
+    // Rien n'est envoyé avant la confirmation.
+    expect(returned).not.toHaveBeenCalled();
+    const confirmation = within(await screen.findByRole('alertdialog'));
+    expect(confirmation.getByText('Remettre F-ABCD en service ?')).toBeInTheDocument();
+    await user.click(confirmation.getByRole('button', { name: 'Remettre en service' }));
+
+    await waitFor(() => expect(returned).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Aéronef remis en service' })),
+    );
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
+    expect(screen.queryByRole('button', { name: 'Remettre en service' })).not.toBeInTheDocument();
+  });
+
+  it("ne propose pas la remise en service à un membre, ni pour un aéronef disponible", async () => {
+    const user = userEvent.setup();
+    mockUser = { id: 9, role: { role_name: 'Pilote' } };
+    const { unmount } = renderPage();
+    await screen.findByText('Crevaison du pneu avant au roulage');
+    await user.click(screen.getByText('Crevaison du pneu avant au roulage'));
+    let panel = within(await screen.findByRole('dialog'));
+    expect(panel.getByText('Indisponible')).toBeInTheDocument();
+    expect(panel.queryByRole('button', { name: 'Remettre en service' })).not.toBeInTheDocument();
+    unmount();
+
+    mockUser = { id: 1, role: { role_name: 'Administrateur' } };
+    renderPage();
+    await screen.findByText('Radio muette pendant dix minutes');
+    await user.click(screen.getByText('Radio muette pendant dix minutes'));
+    panel = within(await screen.findByRole('dialog'));
+    expect(panel.getByText('Disponible')).toBeInTheDocument();
+    expect(panel.queryByRole('button', { name: 'Remettre en service' })).not.toBeInTheDocument();
   });
 
   it("doit afficher un état d'erreur avec une action pour réessayer", async () => {

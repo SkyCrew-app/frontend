@@ -9,6 +9,8 @@ export const GET_USER_DATA = gql`
       payment_method
       payment_status
       external_payment_id
+      kind
+      reason
       user {
         id
         first_name
@@ -83,6 +85,24 @@ export const PROCESS_REFUND = gql`
     processRefund(paymentIntentId: $paymentIntentId, amount: $amount) {
       id
       payment_status
+    }
+  }
+`;
+
+// An administrator credits or debits a member's account by hand, with a reason.
+export const ADJUST_MEMBER_BALANCE = gql`
+  mutation AdjustMemberBalance($input: AdjustBalanceInput!) {
+    adjustMemberBalance(input: $input) {
+      id
+      amount
+      kind
+      reason
+      payment_method
+      payment_date
+      user {
+        id
+        user_account_balance
+      }
     }
   }
 `;

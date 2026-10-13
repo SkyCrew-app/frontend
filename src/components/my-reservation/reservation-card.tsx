@@ -2,9 +2,9 @@
 
 import Link from "next/link"
 import { useTranslation } from "react-i18next"
-import { CalendarClock, CalendarX, FileText, Pencil } from "lucide-react"
-import { canCancelReservation, reservationStatus } from "@/lib/reservation-status"
-import { formatDate, formatFlightDuration, formatTime } from "@/lib/format"
+import { CalendarClock, CalendarX, FileText, Pencil, Wallet } from "lucide-react"
+import { canCancelReservation, canEditReservation, reservationStatus } from "@/lib/reservation-status"
+import { formatDate, formatFlightDuration, formatMoney, formatTime } from "@/lib/format"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -54,6 +54,15 @@ export function ReservationCard({ reservation, onEdit, onCancel }: ReservationCa
             <span className="text-muted-foreground">{t("my.card.noPurpose")}</span>
           )}
         </p>
+        {reservation.charged_amount != null && (
+          <p className="flex items-start gap-2">
+            <Wallet className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+            <span>
+              <span className="text-muted-foreground">{t("shared.pricePaid")} · </span>
+              <span className="tabular-nums">{formatMoney(Number(reservation.charged_amount))}</span>
+            </span>
+          </p>
+        )}
       </CardContent>
       <CardFooter className="flex flex-wrap justify-end gap-2 border-t pt-4">
         {canCancelReservation(reservation) && (
@@ -67,10 +76,12 @@ export function ReservationCard({ reservation, onEdit, onCancel }: ReservationCa
             {t("my.card.cancel")}
           </Button>
         )}
-        <Button size="sm" variant="outline" onClick={() => onEdit(reservation)}>
-          <Pencil className="h-4 w-4" />
-          {t("common:actions.edit")}
-        </Button>
+        {canEditReservation(reservation) && (
+          <Button size="sm" variant="outline" onClick={() => onEdit(reservation)}>
+            <Pencil className="h-4 w-4" />
+            {t("common:actions.edit")}
+          </Button>
+        )}
         {flightPlanId ? (
           <Button size="sm" asChild>
             <Link href={`/reservations/flight-plans/${flightPlanId}`}>{t("my.card.viewFlightPlan")}</Link>

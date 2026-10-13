@@ -15,6 +15,8 @@ export interface Reservation {
   status: ReservationStatus | string
   flight_category: string
   estimated_flight_hours?: number
+  /** What the member was charged, fixed when the booking was paid; null when unknown. */
+  charged_amount?: number | null
   aircraft: {
     id?: number | string
     registration_number: string
