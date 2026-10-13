@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.12.1](https://github.com/SkyCrew-app/frontend/compare/2.12.0...2.12.1) (2026-10-13)
+
+
+### Bug Fixes
+
+* **flights:** :bug: keep the flight plan readable when the map cannot be drawn ([#167](https://github.com/SkyCrew-app/frontend/issues/167)) ([3da239a](https://github.com/SkyCrew-app/frontend/commit/3da239a0c3c1a3882400b66304292055eea2dae1))
+
 ## [2.12.0](https://github.com/SkyCrew-app/frontend/compare/2.11.0...2.12.0) (2026-10-13)
 
 
