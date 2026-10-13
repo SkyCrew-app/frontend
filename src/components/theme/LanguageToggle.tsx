@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { chooseLanguage, currentLanguage, LANGUAGES } from "@/lib/i18n"
+import { saveLanguage } from "@/lib/stored-language"
 
 export default function LanguageToggle() {
   const { t } = useTranslation("common")
@@ -29,7 +30,10 @@ export default function LanguageToggle() {
             key={code}
             lang={code}
             onSelect={() => {
-              if (code !== active) void chooseLanguage(code)
+              if (code === active) return
+              // Sent before the page reloads, and built to outlive it.
+              void saveLanguage(code)
+              void chooseLanguage(code)
             }}
             className="cursor-pointer"
           >

@@ -237,6 +237,25 @@ export const GET_ME = gql`
   }
 `;
 
+// Language the server writes to the signed-in member in (e-mails, notifications).
+export const GET_MY_LANGUAGE = gql`
+  query MyLanguage {
+    me {
+      id
+      language
+    }
+  }
+`;
+
+export const UPDATE_MY_LANGUAGE = gql`
+  mutation UpdateMyLanguage($language: String!) {
+    updateMyLanguage(language: $language) {
+      id
+      language
+    }
+  }
+`;
+
 export const UPDATE_USER_PREFERENCES = gql`
   mutation updateUserPreferences($userId: Float!, $preference: UpdateUserPreferencesInput!) {
     updateUserPreferences(userId: $userId, preference: $preference) {

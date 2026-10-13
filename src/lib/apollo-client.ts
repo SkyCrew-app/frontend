@@ -1,7 +1,9 @@
 import { ApolloClient, InMemoryCache, NormalizedCacheObject } from '@apollo/client';
+import { setContext } from "@apollo/client/link/context";
 import { onError } from "@apollo/client/link/error";
 import { createUploadLink } from 'apollo-upload-client';
 import { CachePersistor, LocalStorageWrapper } from 'apollo3-cache-persist';
+import { currentLanguage } from './i18n';
 import { getGraphqlUrl } from './runtime-config';
 
 const uploadLink = createUploadLink({
@@ -24,6 +26,12 @@ const errorLink = onError(({ graphQLErrors, networkError }) => {
     console.log(`[Network error]: ${networkError}`);
   }
 });
+
+// Tells the API which language the interface is shown in, so that the
+// messages it writes for the person making the request follow it.
+export const languageLink = setContext((_operation, { headers }) => ({
+  headers: { ...headers, "Accept-Language": currentLanguage() },
+}));
 
 const cache = new InMemoryCache({
   typePolicies: {
@@ -56,7 +64,7 @@ if (typeof window !== 'undefined') {
 }
 
 const client = new ApolloClient({
-  link: errorLink.concat(uploadLink),
+  link: errorLink.concat(languageLink).concat(uploadLink),
   cache,
   defaultOptions: {
     watchQuery: {
