@@ -11,7 +11,7 @@ import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
 import { GET_USER_DATA } from "@/graphql/account"
 import { GET_USER_PROFILE } from "@/graphql/user"
 import { formatMoney } from "@/lib/format"
-import { isBalanceSpend, isTopUp, paymentStatus } from "./payment-labels"
+import { accountTotals } from "./payment-labels"
 
 export default function AccountOverview() {
   const { t } = useTranslation("profile")
@@ -63,15 +63,9 @@ export default function AccountOverview() {
     profileData?.userByEmail?.user_account_balance ?? transactions[0]?.user?.user_account_balance ?? 0,
   )
 
-  // Only money actually received counts: abandoned or refused attempts stay out.
-  const settled = transactions.filter((t) => paymentStatus(t.payment_status).key === "paid")
-  const totalDeposits = settled
-    .filter((t) => isTopUp(t.payment_method))
-    .reduce((sum, t) => sum + (Number(t.amount) || 0), 0)
-
-  const totalSpent = settled
-    .filter((t) => isBalanceSpend(t.payment_method))
-    .reduce((sum, t) => sum + (Number(t.amount) || 0), 0)
+  // Only what moved the balance counts: abandoned or refused attempts stay out, and a
+  // refund comes off what it gave back, so the totals agree with the history below.
+  const { toppedUp: totalDeposits, spent: totalSpent } = accountTotals(transactions)
 
   return (
     <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">

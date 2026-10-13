@@ -21,7 +21,8 @@
   "shared": {
     "newReservation": "Nouvelle réservation",
     "untitled": "Réservation",
-    "flightCategory": "Catégorie de vol"
+    "flightCategory": "Catégorie de vol",
+    "pricePaid": "Prix payé"
   },
   "calendar": {
     "title": "Calendrier des réservations",
@@ -78,7 +79,8 @@
       "closedDay": "L'aéroclub est fermé ce jour-là.",
       "timeMissing": "Indiquez l'heure de début et l'heure de fin.",
       "timeOrder": "L'heure de fin doit être après l'heure de début.",
-      "category": "Veuillez sélectionner une catégorie de vol."
+      "category": "Veuillez sélectionner une catégorie de vol.",
+      "past": "Une réservation ne peut pas commencer dans le passé."
     }
   },
   "detail": {
@@ -88,7 +90,8 @@
       "title": "Supprimer cette réservation ?",
       "description": "La réservation de {{aircraft}} du {{date}}, de {{start}} à {{end}}, sera définitivement supprimée et le créneau redeviendra libre.",
       "action": "Supprimer la réservation"
-    }
+    },
+    "startedHint": "Cette réservation a commencé : elle ne peut plus être modifiée, et seul un administrateur peut l'annuler."
   },
   "toast": {
     "slotUnavailable": {
@@ -151,6 +154,10 @@
     "templateDeleteFailed": {
       "title": "Suppression impossible",
       "description": "Le modèle n'a pas pu être supprimé. Réessayez dans un instant."
+    },
+    "slotPast": {
+      "title": "Créneau passé",
+      "description": "Ce créneau a déjà commencé. Choisissez un créneau à venir."
     }
   },
   "my": {

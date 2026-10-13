@@ -27,6 +27,7 @@ import {
   type CoursePerson,
 } from "@/components/courses/course-helpers"
 import { ADD_COMMENT, ADD_COMPETENCY, GET_COURSE_BY_ID, RATE_COURSE, VALIDATE_COMPETENCY } from "@/graphql/course"
+import { apiRefusal } from "@/lib/api-refusal"
 import { formatDate } from "@/lib/format"
 import { learningRoutes } from "@/lib/learning-navigation"
 import { isAdministrator } from "@/lib/roles"
@@ -106,8 +107,9 @@ export default function CourseDetails() {
       await refetch()
       toast({ title: success })
       return true
-    } catch {
-      toast({ variant: "destructive", title: failure, description: t("shared.retryLater") })
+    } catch (error) {
+      // A refusal of the API says why; anything else gets the plain message.
+      toast({ variant: "destructive", title: failure, description: apiRefusal(error, t("shared.retryLater")) })
       return false
     }
   }
@@ -145,6 +147,8 @@ export default function CourseDetails() {
   const givesCourse = course !== null && userId !== null && Number(course.instructor.id) === userId
   const takesCourse = course !== null && userId !== null && Number(course.student.id) === userId
   const isAdmin = isAdministrator(userData)
+  // Like the API: nothing is rated or validated on a course that is cancelled or has not started.
+  const tookPlace = course !== null && course.status !== "CANCELED" && new Date(course.startTime) <= new Date()
   const status = course ? courseStatus(course.status) : null
   const counterpart = course ? courseCounterpart(course, userId) : null
 
@@ -193,6 +197,7 @@ export default function CourseDetails() {
             <CompetenciesCard
               competencies={course.competencies}
               canManage={givesCourse || isAdmin}
+              canValidate={tookPlace}
               onAdd={handleAddCompetency}
               onValidate={handleValidateCompetency}
             />
@@ -228,7 +233,7 @@ export default function CourseDetails() {
             <RatingCard
               rating={course.rating}
               feedback={course.feedback}
-              canRate={takesCourse || isAdmin}
+              canRate={(takesCourse || isAdmin) && tookPlace}
               isOwnRating={takesCourse}
               onRate={handleRate}
             />

@@ -288,15 +288,24 @@ describe('SettingsPage', () => {
         result: created,
       },
       rolesMock([...initialRoles, { id: '3', role_name: 'Mécanicien' }]),
-      { request: { query: DELETE_ROLE, variables: { id: '2' } }, result: deleted },
-      rolesMock([initialRoles[0], { id: '3', role_name: 'Mécanicien' }]),
+      { request: { query: DELETE_ROLE, variables: { id: '3' } }, result: deleted },
+      rolesMock(initialRoles),
     ]);
 
     // A pending edit in another tab must stay pending.
     await user.type(await screen.findByLabelText(/Nom de l'aéroclub/), ' bis');
     await openTab(user, 'Rôles');
     expect(await screen.findByText('Pilote')).toBeInTheDocument();
-    expect(screen.getByText("Rôle de l'application")).toBeInTheDocument();
+    // Rewritten: built-in roles used to be renamable and deletable from here,
+    // which the API now refuses.
+    expect(screen.getAllByText("Rôle de l'application")).toHaveLength(2);
+    expect(
+      screen.getByText("Les rôles de l'application ne peuvent être ni renommés ni supprimés."),
+    ).toBeInTheDocument();
+    for (const builtIn of ['Administrateur', 'Pilote']) {
+      expect(screen.queryByRole('button', { name: `Supprimer ${builtIn}` })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: `Modifier ${builtIn}` })).not.toBeInTheDocument();
+    }
 
     await user.click(screen.getByRole('button', { name: 'Ajouter un rôle' }));
     const dialog = await screen.findByRole('dialog');
@@ -307,13 +316,14 @@ describe('SettingsPage', () => {
     expect(created).toHaveBeenCalledTimes(1);
     expect(mockToast).toHaveBeenCalledWith({ title: 'Rôle créé', description: 'Le rôle « Mécanicien » a été ajouté.' });
 
-    await user.click(screen.getByRole('button', { name: 'Supprimer Pilote' }));
+    expect(screen.getByRole('button', { name: 'Modifier Mécanicien' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Supprimer Mécanicien' }));
     const confirm = await screen.findByRole('alertdialog');
-    expect(confirm).toHaveTextContent('Le rôle « Pilote » sera supprimé définitivement.');
+    expect(confirm).toHaveTextContent('Le rôle « Mécanicien » sera supprimé définitivement.');
     await user.click(within(confirm).getByRole('button', { name: 'Supprimer' }));
 
     await waitFor(() => expect(deleted).toHaveBeenCalledTimes(1));
-    await waitFor(() => expect(screen.queryByText('Pilote')).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByText('Mécanicien')).not.toBeInTheDocument());
 
     expect(update.result).not.toHaveBeenCalled();
     expect(screen.getByText('Modifications non enregistrées')).toBeInTheDocument();

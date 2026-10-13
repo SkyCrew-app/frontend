@@ -1,4 +1,4 @@
-import { isNextAsset, sessionCookieMaxAge } from '../proxy-rules';
+import { canOpenPage, isNextAsset, sessionCookieMaxAge } from '../proxy-rules';
 
 describe('isNextAsset', () => {
   it.each(['/_next/static/chunks/main.js', '/_next/image', '/_next/webpack-hmr'])('laisse passer %s', (pathname) => {
@@ -38,5 +38,59 @@ describe('sessionCookieMaxAge', () => {
 
   it.each([undefined, null, '1800000000', Number.NaN, Infinity])('ne garde pas de cookie quand l’expiration est %p', (exp) => {
     expect(sessionCookieMaxAge(exp, now)).toBe(0);
+  });
+});
+
+describe('canOpenPage', () => {
+  const ROLES = ['Administrateur', 'Instructeur', 'Technicien', 'Pilote'];
+  const ADMIN_ONLY = [
+    '/administration',
+    '/administration/users',
+    '/administration/finance',
+    '/administration/audits',
+    '/administration/articles',
+    '/administration/planes',
+    '/administration/e-learning',
+    '/administration/settings',
+    '/administration/unknown-page',
+  ];
+
+  it.each(ADMIN_ONLY)("réserve %s à l'administrateur", (pathname) => {
+    expect(ROLES.filter((role) => canOpenPage(role, pathname))).toEqual(['Administrateur']);
+    expect(canOpenPage(undefined, pathname)).toBe(false);
+  });
+
+  it('ouvre les modèles de checklist aux instructeurs et aux techniciens', () => {
+    for (const pathname of ['/administration/checklists', '/administration/checklists/12']) {
+      expect(ROLES.filter((role) => canOpenPage(role, pathname))).toEqual([
+        'Administrateur',
+        'Instructeur',
+        'Technicien',
+      ]);
+    }
+  });
+
+  it('ouvre le suivi des incidents aux techniciens', () => {
+    expect(ROLES.filter((role) => canOpenPage(role, '/administration/incidents'))).toEqual([
+      'Administrateur',
+      'Technicien',
+    ]);
+  });
+
+  it('laisse chaque membre régler sa double authentification', () => {
+    expect(ROLES.every((role) => canOpenPage(role, '/administration/2fa'))).toBe(true);
+    expect(canOpenPage(undefined, '/administration/2fa')).toBe(true);
+  });
+
+  it.each(['/dashboard', '/fleet/maintenance', '/profile', '/administrationx', '/admin'])(
+    "ne restreint pas %s, qui n'est pas dans l'administration",
+    (pathname) => {
+      expect(ROLES.every((role) => canOpenPage(role, pathname))).toBe(true);
+    },
+  );
+
+  it("ne se laisse pas tromper par une page dont le nom commence comme une page ouverte", () => {
+    expect(canOpenPage('Technicien', '/administration/incidents-export')).toBe(false);
+    expect(canOpenPage('Pilote', '/administration/2fa-admin')).toBe(false);
   });
 });

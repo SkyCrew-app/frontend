@@ -23,6 +23,7 @@ import {
   FINANCE_COLORS,
   FinanceTabSkeleton,
   StatGrid,
+  chargedRevenue,
   chartTooltipStyle,
   formatAxisMoney,
 } from "./finance-shared"
@@ -58,19 +59,19 @@ export default function OperatingCosts({ period, date }: OperatingCostsProps) {
   const interval = { start: startDate, end: endDate }
 
   const calculateCosts = (aircraft: Aircraft): OperatingCostItem => {
-    const reservationHours = allReservations
-      .filter(
-        (reservation) =>
-          reservation.aircraft?.id === aircraft.id &&
-          reservation.status === "CONFIRMED" &&
-          isWithinInterval(new Date(reservation.start_time), interval),
-      )
-      .reduce((total, reservation) => {
-        const duration = new Date(reservation.end_time).getTime() - new Date(reservation.start_time).getTime()
-        return total + duration / (1000 * 60 * 60)
-      }, 0)
+    const reservations = allReservations.filter(
+      (reservation) =>
+        reservation.aircraft?.id === aircraft.id &&
+        reservation.status === "CONFIRMED" &&
+        isWithinInterval(new Date(reservation.start_time), interval),
+    )
+    const reservationHours = reservations.reduce((total, reservation) => {
+      const duration = new Date(reservation.end_time).getTime() - new Date(reservation.start_time).getTime()
+      return total + duration / (1000 * 60 * 60)
+    }, 0)
 
-    const revenue = reservationHours * (aircraft.hourly_cost || 0)
+    // What the members were actually charged, not the hours at today's rate.
+    const revenue = chargedRevenue(reservations)
 
     const maintenanceCost = allMaintenances
       .filter(

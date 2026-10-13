@@ -19,6 +19,7 @@ import {
 import { useToast } from "@/components/hooks/use-toast"
 import { ConfirmDeleteDialog } from "@/components/e-learning/ConfirmDeleteDialog"
 import { DELETE_COURSE } from "@/graphql/course"
+import { apiRefusal } from "@/lib/api-refusal"
 import { formatDate } from "@/lib/format"
 import { learningRoutes } from "@/lib/learning-navigation"
 import CourseFormDialog from "./CourseFormDialog"
@@ -62,11 +63,12 @@ export default function CourseList({ courses, userId, isAdministrator = false, o
         title: t("courses.list.toast.deleted.title"),
         description: t("courses.list.toast.deleted.description"),
       })
-    } catch {
+    } catch (error) {
+      // A course that is part of a training record is refused by the API, which says why.
       toast({
         variant: "destructive",
         title: t("courses.list.toast.deleteFailed.title"),
-        description: t("shared.deleteFailed"),
+        description: apiRefusal(error, t("shared.deleteFailed")),
       })
     }
   }

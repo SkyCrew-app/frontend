@@ -2,6 +2,9 @@
 export const ROLE_ADMIN = "Administrateur"
 export const ROLE_INSTRUCTOR = "Instructeur"
 
+// The roles the application relies on: the API refuses to rename or delete them.
+export const BUILT_IN_ROLES: readonly string[] = [ROLE_ADMIN, "Pilote", ROLE_INSTRUCTOR, "Technicien"]
+
 type WithRole = { role?: { role_name?: string | null } | null } | null | undefined
 
 const roleOf = (user: WithRole) => user?.role?.role_name ?? null

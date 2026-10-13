@@ -30,6 +30,19 @@ export function taxonomiesFromRecord(record: { taxonomies?: LoadedTaxonomies } |
 // Day names are stored in French by the API (closure days, maintenance day).
 export const WEEKDAYS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"] as const
 
+const ENGLISH_WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+
+/**
+ * A closure day as the settings screen names it. The API may hold English names
+ * (the club is created with "Sunday") or names without their capital letter.
+ */
+export const toWeekday = (day: string): string => {
+  const plain = day.trim().toLowerCase()
+  const english = ENGLISH_WEEKDAYS.indexOf(plain)
+  if (english >= 0) return WEEKDAYS[english]
+  return WEEKDAYS.find((weekday) => weekday.toLowerCase() === plain) ?? day
+}
+
 // The stored value stays French; this is what the user reads.
 export const weekdayLabel = (day: string): string =>
   (WEEKDAYS as readonly string[]).includes(day) ? i18n.t(`administration:weekday.${day}`) : day
@@ -182,7 +195,7 @@ export function settingsFormValuesFromRecord(record: AdministrationRecord): Sett
     contactEmail: record.contactEmail ?? "",
     contactPhone: record.contactPhone ?? "",
     address: record.address ?? "",
-    closureDays: [...(record.closureDays ?? [])],
+    closureDays: (record.closureDays ?? []).map(toWeekday),
     timeSlotDuration: record.timeSlotDuration as number,
     reservationStartTime: record.reservationStartTime ?? "",
     reservationEndTime: record.reservationEndTime ?? "",

@@ -3,6 +3,10 @@
 import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
 import { useTranslation } from "react-i18next"
+import { useQuery } from "@apollo/client"
+import { GET_USER_PROFILE } from "@/graphql/user"
+import { useCurrentUser } from "@/components/hooks/userHooks"
+import { canOpenPage } from "@/lib/proxy-rules"
 import {
   AlertTriangle,
   LayoutDashboard,
@@ -43,6 +47,13 @@ export default function CommandPalette({ open, onOpenChange }: CommandPalettePro
   const { t } = useTranslation("nav")
   const router = useRouter()
   const { setTheme } = useTheme()
+  const userEmail = useCurrentUser()
+  const { data } = useQuery(GET_USER_PROFILE, {
+    variables: { email: userEmail || "" },
+    skip: !userEmail,
+  })
+  // Same rule as the route guard and the menu.
+  const userRole: string | null = data?.userByEmail?.role?.role_name ?? null
 
   const navigate = (path: string) => {
     onOpenChange(false)
@@ -110,14 +121,18 @@ export default function CommandPalette({ open, onOpenChange }: CommandPalettePro
             <Bell className="mr-2 h-4 w-4" />
             {t("pages.notifications")}
           </CommandItem>
-          <CommandItem onSelect={() => navigate("/administration")}>
-            <Settings className="mr-2 h-4 w-4" />
-            {t("pages.administration")}
-          </CommandItem>
-          <CommandItem onSelect={() => navigate("/administration/incidents")}>
-            <AlertTriangle className="mr-2 h-4 w-4" />
-            {t("pages.incidents")}
-          </CommandItem>
+          {canOpenPage(userRole, "/administration") && (
+            <CommandItem onSelect={() => navigate("/administration")}>
+              <Settings className="mr-2 h-4 w-4" />
+              {t("pages.administration")}
+            </CommandItem>
+          )}
+          {canOpenPage(userRole, "/administration/incidents") && (
+            <CommandItem onSelect={() => navigate("/administration/incidents")}>
+              <AlertTriangle className="mr-2 h-4 w-4" />
+              {t("pages.incidents")}
+            </CommandItem>
+          )}
         </CommandGroup>
 
         <CommandSeparator />

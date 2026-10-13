@@ -82,3 +82,20 @@ describe('notes de vol', () => {
     expect(flightRecapSchema.safeParse({ ...baseValues, flightNotes: 'a'.repeat(2001) }).success).toBe(false);
   });
 });
+
+describe('temps de vol', () => {
+  const messages = (flight_hours: number) => {
+    const result = flightRecapSchema.safeParse({ ...baseValues, flight_hours });
+    return result.success ? [] : result.error.issues.map((issue) => issue.message);
+  };
+
+  it('refuse une clôture sans temps de vol, comme l’API', () => {
+    expect(messages(0)).toEqual(['Indiquez un temps de vol supérieur à zéro']);
+  });
+
+  it('refuse un temps de vol négatif ou de plus de 24 heures', () => {
+    expect(messages(-1)).toContain('Les heures de vol ne peuvent pas être négatives');
+    expect(messages(24.5)).toEqual(['Le temps de vol ne peut pas dépasser 24 heures']);
+    expect(messages(24)).toEqual([]);
+  });
+});

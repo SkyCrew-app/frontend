@@ -4,6 +4,7 @@ import {
   settingsFormValuesFromRecord,
   tabsWithErrors,
   taxonomiesFromRecord,
+  toWeekday,
 } from '../settings';
 
 describe('taxonomiesFromRecord', () => {
@@ -134,3 +135,15 @@ describe('formulaire des paramètres', () => {
     expect(tabsWithErrors([])).toEqual([]);
   });
 });
+
+describe("toWeekday", () => {
+  it("reads the English names the club is created with", () => {
+    expect(toWeekday("Sunday")).toBe("Dimanche")
+    expect(toWeekday("monday ")).toBe("Lundi")
+  })
+
+  it("keeps French names, whatever their case", () => {
+    expect(toWeekday("dimanche")).toBe("Dimanche")
+    expect(toWeekday("Samedi")).toBe("Samedi")
+  })
+})

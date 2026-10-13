@@ -1,10 +1,19 @@
 import type { Page } from "@playwright/test"
-import { test, expect, sidePanel, toast, confirmAlert, choose, uniqueName } from "./support/test"
+import { test, expect, sidePanel, toast, confirmAlert, choose, asRole, uniqueName } from "./support/test"
 import { sessionFile } from "./support/accounts"
+import { ensureAircraft, type TestAircraft } from "./support/aircraft"
 
 test.use({ storageState: sessionFile("admin") })
 
-const AIRCRAFT = "F-GPIL"
+// An aircraft kept for this journey and never booked: the API refuses a maintenance planned
+// over existing bookings, which an aircraft of the demo data set may have in the coming days.
+// While the maintenance exists the aircraft is shown unavailable; it is deleted at the end.
+const aircraft: TestAircraft = { registration: "F-EMNT", model: "E2E avion maintenance" }
+const AIRCRAFT = aircraft.registration
+
+test.beforeAll(async ({ browser }) => {
+  await asRole(browser, "admin", (page) => ensureAircraft(page, aircraft, "0.01"))
+})
 
 const bodyRows = (page: Page) => page.getByRole("table").getByRole("row").filter({ has: page.getByRole("cell") })
 const taskRows = (page: Page) => bodyRows(page).filter({ hasText: AIRCRAFT })

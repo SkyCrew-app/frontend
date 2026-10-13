@@ -6,6 +6,8 @@ export interface User {
   date_of_birth: string
   is2FAEnabled: boolean
   isEmailConfirmed: boolean
+  /** False once an administrator has deactivated the account. */
+  is_active?: boolean | null
   phone_number: string
   role: Role | null
 }

@@ -9,14 +9,32 @@ const VARIANTS: Record<string, StatusVariant> = {
   CANCELLED: "danger",
 }
 
-// A booking can still be cancelled by its holder unless it already is, or
-// its flight has been closed (the hours are then in the logbook).
-export const canCancelReservation = (reservation: {
+type Booking = {
   status?: string | null
+  start_time?: string | Date | null
   flights?: { closed_at?: string | null }[] | null
-}) =>
-  (reservation.status ?? "").toUpperCase() !== "CANCELLED" &&
-  !(reservation.flights ?? []).some((flight) => Boolean(flight.closed_at))
+}
+
+// The same rules as the API (booking-rules.ts), so that the interface does not
+// offer what the API would refuse. The API remains the one that decides.
+export const hasReservationStarted = (reservation: Booking, now: Date = new Date()) =>
+  reservation.start_time != null && now.getTime() > new Date(reservation.start_time).getTime()
+
+const isCancelled = (reservation: Booking) => (reservation.status ?? "").toUpperCase() === "CANCELLED"
+const hasClosedFlight = (reservation: Booking) =>
+  (reservation.flights ?? []).some((flight) => Boolean(flight.closed_at))
+
+// A booking can be cancelled by its holder until it starts, unless it already is or its
+// flight has been closed (the hours are then in the logbook). Once it has started, only an
+// administrator cancels it.
+export const canCancelReservation = (
+  reservation: Booking,
+  { isAdmin = false, now = new Date() }: { isAdmin?: boolean; now?: Date } = {},
+) => !isCancelled(reservation) && !hasClosedFlight(reservation) && (isAdmin || !hasReservationStarted(reservation, now))
+
+// A booking is changed before it starts, by anyone.
+export const canEditReservation = (reservation: Booking, now: Date = new Date()) =>
+  !isCancelled(reservation) && !hasClosedFlight(reservation) && !hasReservationStarted(reservation, now)
 
 export const reservationStatus = (status: string | null | undefined) => {
   const code = (status ?? "").toUpperCase()

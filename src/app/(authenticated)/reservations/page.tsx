@@ -1,6 +1,6 @@
 "use client"
 
-import { ApolloError, useMutation, useQuery } from "@apollo/client"
+import { useMutation, useQuery } from "@apollo/client"
 import { useState, useEffect, useMemo, useRef } from "react"
 import { format, addHours, eachHourOfInterval, isSameDay } from "date-fns"
 import { fr } from "date-fns/locale"
@@ -21,6 +21,7 @@ import {
 import { GET_AIRCRAFTS } from "@/graphql/planes"
 import { type Reservation, ReservationStatus } from "@/interfaces/reservation"
 import { GET_SETTINGS } from "@/graphql/settings"
+import { toWeekday } from "@/lib/settings"
 import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { EmptyState } from "@/components/layout/EmptyState"
@@ -40,7 +41,9 @@ import { LEGEND_STATUSES, reservationDotClass } from "@/components/reservation/s
 import { reservationStatus } from "@/lib/reservation-status"
 import { formatDate, formatTime } from "@/lib/format"
 import type { TimeRange } from "@/lib/free-ranges"
-import i18n, { dateFnsLocale } from "@/lib/i18n"
+import { dateFnsLocale } from "@/lib/i18n"
+import { isAdministrator } from "@/lib/roles"
+import { apiRefusalMessage } from "@/components/reservation/api-refusal"
 import { cn } from "@/lib/utils"
 import { useMediaQuery } from "@/hooks/use-media-query"
 
@@ -70,12 +73,6 @@ const normalizeDayName = (day: string) =>
     .toLowerCase()
 
 const longDate = (date: Date) => format(date, "EEEE d MMMM yyyy", { locale: dateFnsLocale() })
-
-// Business refusals of the API (aircraft already booked, licence, balance) are written for the pilot.
-const creationErrorMessage = (error: unknown) => {
-  const apiMessage = error instanceof ApolloError ? error.graphQLErrors[0]?.message : undefined
-  return apiMessage || i18n.t("reservations:toast.refused.description")
-}
 
 // A reservation template sends its values in the query string ("Utiliser" in "Mes réservations").
 const readPrefillFromUrl = (): NewReservationPrefill | null => {
@@ -119,6 +116,7 @@ export default function ReservationCalendar() {
   const userEmail = useCurrentUser()
   const userData = useUserData(userEmail)
   const userId: string | number | null = userData?.id ?? null
+  const isAdmin = isAdministrator(userData)
   const { toast } = useToast()
 
   const formattedDate = format(currentDate, "yyyy-MM-dd")
@@ -174,9 +172,9 @@ export default function ReservationCalendar() {
   const aircrafts: Aircraft[] = aircraftData?.getAircrafts ?? []
   const dayReservations: Reservation[] = reservationData?.filteredReservations ?? []
 
-  // Closure days come from the API as French day names: compared in French whatever the language.
+  // Closure days come from the API as French or English day names: compared in French whatever the language.
   const isClosedDay = (date: Date) =>
-    disabledDays.map(normalizeDayName).includes(normalizeDayName(format(date, "EEEE", { locale: fr })))
+    disabledDays.map(toWeekday).map(normalizeDayName).includes(normalizeDayName(format(date, "EEEE", { locale: fr })))
   const dayClosed = isClosedDay(currentDate)
 
   const now = new Date()
@@ -230,6 +228,17 @@ export default function ReservationCalendar() {
     const last = Math.max(from, to)
     const start = slots[first]
     const end = slotEnd(last)
+
+    // The API refuses a booking that starts in the past.
+    if (start < new Date()) {
+      setDrag(null)
+      toast({
+        variant: "destructive",
+        title: t("toast.slotPast.title"),
+        description: t("toast.slotPast.description"),
+      })
+      return
+    }
 
     if (reservationsOverlapping(aircraftId, start, end).length > 0) {
       setDrag(null)
@@ -351,7 +360,7 @@ export default function ReservationCalendar() {
       toast({
         variant: "destructive",
         title: t("toast.refused.title"),
-        description: creationErrorMessage(error),
+        description: apiRefusalMessage(error, t("toast.refused.description")),
       })
       return false
     } finally {
@@ -407,11 +416,11 @@ export default function ReservationCalendar() {
         title: t("toast.updated.title"),
         description: t("toast.updated.description", { aircraft: selectedReservation.aircraft.registration_number }),
       })
-    } catch {
+    } catch (error) {
       toast({
         variant: "destructive",
         title: t("toast.updateFailed.title"),
-        description: t("toast.updateFailed.description"),
+        description: apiRefusalMessage(error, t("toast.updateFailed.description")),
       })
     } finally {
       setIsUpdating(false)
@@ -434,11 +443,11 @@ export default function ReservationCalendar() {
         title: t("toast.deleted.title"),
         description: t("toast.deleted.description", { aircraft: selectedReservation.aircraft.registration_number }),
       })
-    } catch {
+    } catch (error) {
       toast({
         variant: "destructive",
         title: t("toast.deleteFailed.title"),
-        description: t("toast.deleteFailed.description"),
+        description: apiRefusalMessage(error, t("toast.deleteFailed.description")),
       })
     }
   }
@@ -716,6 +725,7 @@ export default function ReservationCalendar() {
           onEdit={() => handleUpdate(selectedReservation)}
           onDelete={handleDeleteReservation}
           canEdit={isOwnReservation(selectedReservation)}
+          isAdmin={isAdmin}
         />
       )}
 

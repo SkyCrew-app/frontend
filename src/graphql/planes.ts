@@ -102,3 +102,14 @@ export const DELETE_AIRCRAFT = gql`
     deleteAircraft(aircraftId: $aircraftId)
   }
 `
+
+// Grounds an aircraft or puts it back in service (administrators and technicians).
+export const SET_AIRCRAFT_AVAILABILITY = gql`
+  mutation SetAircraftAvailability($aircraftId: Int!, $availability_status: AvailabilityStatus!) {
+    setAircraftAvailability(aircraftId: $aircraftId, availability_status: $availability_status) {
+      id
+      availability_status
+      maintenance_status
+    }
+  }
+`

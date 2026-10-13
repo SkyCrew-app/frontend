@@ -2,6 +2,7 @@ import React from 'react';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MockedProvider, type MockedResponse } from '@apollo/client/testing';
+import { GraphQLError } from 'graphql';
 import FleetManagementPage from '../page';
 import { CREATE_AIRCRAFT, DELETE_AIRCRAFT, GET_AIRCRAFTS, UPDATE_AIRCRAFT } from '@/graphql/planes';
 
@@ -319,6 +320,63 @@ describe('FleetManagementPage', () => {
     expect(screen.getByRole('heading', { level: 3, name: 'F-GABC' })).toBeInTheDocument();
     await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
     expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Aéronef supprimé' }));
+  });
+
+  const askToDelete = async (user: ReturnType<typeof userEvent.setup>) => {
+    await screen.findByRole('heading', { level: 3, name: 'F-HDIA' });
+    await user.click(screen.getByRole('button', { name: 'Supprimer F-HDIA' }));
+    const confirmation = await screen.findByRole('alertdialog', { name: 'Supprimer F-HDIA ?' });
+    // The dialog says what happens to an aircraft that has a history.
+    expect(confirmation).toHaveTextContent(/n'est pas supprimé : il est retiré du service/);
+    await user.click(within(confirmation).getByRole('button', { name: 'Supprimer' }));
+  };
+
+  it("annonce le retrait du service, et non une suppression, quand l'aéronef a un historique", async () => {
+    const user = userEvent.setup();
+    renderPage([
+      listMock(),
+      {
+        request: { query: DELETE_AIRCRAFT, variables: { aircraftId: 2 } },
+        // The API keeps the aircraft and its history: it answers false.
+        result: { data: { deleteAircraft: false } },
+      },
+      listMock(),
+    ]);
+
+    await askToDelete(user);
+
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: 'Aéronef retiré du service',
+          description: expect.stringContaining("F-HDIA a un historique : il n'a pas été supprimé"),
+        }),
+      ),
+    );
+    expect(mockToast).not.toHaveBeenCalledWith(expect.objectContaining({ title: 'Aéronef supprimé' }));
+    expect(screen.getByRole('heading', { level: 3, name: 'F-HDIA' })).toBeInTheDocument();
+  });
+
+  it("explique le refus de l'API quand des réservations à venir empêchent le retrait", async () => {
+    const user = userEvent.setup();
+    const refusal = 'Cet avion a 2 réservation(s) à venir : annulez-les ou déplacez-les avant de le retirer';
+    renderPage([
+      listMock(),
+      {
+        request: { query: DELETE_AIRCRAFT, variables: { aircraftId: 2 } },
+        result: { errors: [new GraphQLError(refusal)] },
+      },
+    ]);
+
+    await askToDelete(user);
+
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith(
+        expect.objectContaining({ title: 'Suppression impossible', description: refusal, variant: 'destructive' }),
+      ),
+    );
+    // The aircraft is still there, behind the confirmation left open.
+    expect(screen.getByRole('heading', { level: 3, name: 'F-HDIA', hidden: true })).toBeInTheDocument();
   });
 
   it("affiche un état d'erreur avec Réessayer quand la liste ne se charge pas", async () => {

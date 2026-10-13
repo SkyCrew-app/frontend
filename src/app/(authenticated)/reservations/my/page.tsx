@@ -42,6 +42,7 @@ import { StatsCards } from "@/components/my-reservation/stats-cards"
 import { TemplateCard } from "@/components/my-reservation/template-card"
 import { TemplateDialog } from "@/components/my-reservation/template-dialog"
 import { ListPager } from "@/components/reservation/list-pager"
+import { apiRefusalMessage } from "@/components/reservation/api-refusal"
 import type { Reservation } from "@/interfaces/reservation"
 import { formatDate, formatTime } from "@/lib/format"
 import type { ReservationTemplate } from "@/interfaces/reservation-template"
@@ -149,11 +150,11 @@ export default function MyReservations() {
         title: t("toast.updated.title"),
         description: t("toast.updated.description", { aircraft: selectedReservation.aircraft.registration_number }),
       })
-    } catch {
+    } catch (error) {
       toast({
         variant: "destructive",
         title: t("toast.updateFailed.title"),
-        description: t("toast.updateFailed.description"),
+        description: apiRefusalMessage(error, t("toast.updateFailed.description")),
       })
     }
   }
@@ -175,11 +176,11 @@ export default function MyReservations() {
         title: t("toast.cancelled.title"),
         description: t("toast.cancelled.description", { aircraft: reservationToCancel.aircraft.registration_number }),
       })
-    } catch {
+    } catch (error) {
       toast({
         variant: "destructive",
         title: t("toast.cancelFailed.title"),
-        description: t("toast.cancelFailed.description"),
+        description: apiRefusalMessage(error, t("toast.cancelFailed.description")),
       })
     } finally {
       setReservationToCancel(null)

@@ -38,6 +38,7 @@ const INCIDENT_FIELDS = `
     id
     registration_number
     model
+    availability_status
   }
   flight {
     id

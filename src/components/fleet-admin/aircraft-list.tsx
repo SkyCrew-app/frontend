@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next"
 import { useMutation, useQuery } from "@apollo/client"
 import { Loader2, Plane, Plus, Search } from "lucide-react"
 import { DELETE_AIRCRAFT, GET_AIRCRAFTS } from "@/graphql/planes"
+import { apiRefusal } from "@/lib/api-refusal"
 import type { Aircraft, AircraftsResponse } from "@/interfaces/aircraft"
 import { AircraftCard } from "./aircraft-card"
 import { AircraftFormDialog } from "./aircraft-form-dialog"
@@ -47,19 +48,22 @@ export function AircraftList({ onCreate }: AircraftListProps) {
   const [deleteAircraft, { loading: deleteLoading }] = useMutation(DELETE_AIRCRAFT, {
     refetchQueries: [{ query: GET_AIRCRAFTS }],
     awaitRefetchQueries: true,
-    onCompleted: () => {
+    onCompleted: (result) => {
+      // The API never deletes an aircraft that has a history: it answers false and retires it.
+      const outcome = result?.deleteAircraft === false ? "retired" : "deleted"
       toast({
-        title: t("admin.toast.deleted.title"),
+        title: t(`admin.toast.${outcome}.title`),
         description: aircraftToDelete
-          ? t("admin.toast.deleted.description", { registration: aircraftToDelete.registration_number })
+          ? t(`admin.toast.${outcome}.description`, { registration: aircraftToDelete.registration_number })
           : undefined,
       })
       setAircraftToDelete(null)
     },
-    onError: () => {
+    onError: (deleteError) => {
+      // A refusal (upcoming bookings…) is explained by the API.
       toast({
         title: t("shared.deleteFailed"),
-        description: t("admin.toast.deleteFailed.description"),
+        description: apiRefusal(deleteError, t("admin.toast.deleteFailed.description")),
         variant: "destructive",
       })
     },
@@ -215,7 +219,8 @@ export function AircraftList({ onCreate }: AircraftListProps) {
               {t("admin.deleteDialog.description", {
                 registration: aircraftToDelete?.registration_number ?? "",
                 model: aircraftToDelete?.model ?? "",
-              })}
+              })}{" "}
+              {t("admin.deleteDialog.historyNote")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

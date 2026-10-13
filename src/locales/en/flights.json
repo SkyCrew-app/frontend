@@ -32,7 +32,8 @@
       "passengers_one": "{{count}} passenger",
       "passengers_other": "{{count}} passengers",
       "noReservation": "No linked booking",
-      "editLabel": "Edit the flight plan {{origin}} → {{destination}}"
+      "editLabel": "Edit the flight plan {{origin}} → {{destination}}",
+      "closeFrom": "Can be closed from {{date}}"
     },
     "filters": {
       "searchLabel": "Search for a flight plan",
@@ -390,7 +391,8 @@
       "description": "The flight is recorded in your logbook.",
       "flightTime": "Flight time",
       "distance": "Distance flown",
-      "incidentReported": "Incident reported to the club"
+      "incidentReported": "Incident reported to the club",
+      "aircraftGrounded": "The aircraft is grounded: it can no longer be booked until a technician or an administrator puts it back in service."
     },
     "steps": {
       "flight": "Flight flown",
@@ -423,6 +425,9 @@
       "exportError": {
         "title": "Export failed",
         "description": "The PDF could not be generated. Try again in a moment."
+      },
+      "incidentRecordedCloseFailed": {
+        "title": "Incident recorded, flight not closed"
       }
     },
     "details": {
@@ -474,7 +479,8 @@
         "weather": "Weather",
         "human_error": "Human error",
         "other": "Other"
-      }
+      },
+      "groundingHint": "A high-severity incident grounds the aircraft as soon as the flight is closed, until the club puts it back in service."
     },
     "waypoints": {
       "unreadable": "The waypoints of this plan cannot be read.",
@@ -484,6 +490,20 @@
       "longitude": "Longitude",
       "altitude": "Altitude",
       "ground": "Ground"
+    },
+    "notYet": {
+      "notStarted": {
+        "title": "This flight cannot be closed yet",
+        "description": "Its booking starts on {{date}}. You will be able to close the flight from then on."
+      },
+      "noBooking": {
+        "title": "This flight is not attached to any booking",
+        "description": "Only an administrator can close a flight without a booking. Please contact the club."
+      },
+      "bookingCancelled": {
+        "title": "The booking of this flight is cancelled",
+        "description": "A flight whose booking is cancelled cannot be closed."
+      }
     }
   },
   "recapValidation": {
@@ -495,7 +515,9 @@
     "severityRequired": "The severity of the incident is required",
     "descriptionRequired": "The description of the incident is required",
     "priorityRequired": "The priority of the incident is required",
-    "categoryRequired": "The category of the incident is required"
+    "categoryRequired": "The category of the incident is required",
+    "flightHoursPositive": "Enter a flight time greater than zero",
+    "flightHoursTooLong": "The flight time cannot exceed {{max}} hours"
   },
   "logbook": {
     "title": "Logbook",

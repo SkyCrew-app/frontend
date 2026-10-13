@@ -24,7 +24,7 @@ export interface Incident {
   resolution_note?: string | null
   resolved_at?: string | null
   resolved_by?: IncidentPerson | null
-  aircraft: { id: number; registration_number: string; model?: string | null }
+  aircraft: { id: number; registration_number: string; model?: string | null; availability_status?: string | null }
   flight?: {
     id: number
     origin_icao?: string | null

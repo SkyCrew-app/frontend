@@ -64,7 +64,24 @@
     },
     "account": {
       "active": "Active",
-      "pending": "Invitation pending"
+      "pending": "Invitation pending",
+      "inactive": "Deactivated"
+    },
+    "accountActions": {
+      "deactivate": "Deactivate account",
+      "reactivate": "Reactivate account",
+      "resendInvitation": "Resend invitation",
+      "delete": "Delete member",
+      "deactivateConfirm": {
+        "title": "Deactivate {{name}}'s account?",
+        "description": "This member will no longer be able to sign in and is signed out immediately. Their bookings, flights and invoices are kept, and the account can be reactivated at any time.",
+        "confirm": "Deactivate"
+      },
+      "deleteConfirm": {
+        "title": "Delete {{name}}?",
+        "description": "Deletion is permanent and meant for an account created by mistake. A member who already has bookings, flights or invoices cannot be deleted: deactivate the account instead.",
+        "confirm": "Delete"
+      }
     },
     "twoFactor": {
       "enabled": "Enabled",
@@ -221,6 +238,71 @@
       "licenceFailed": {
         "title": "The licence could not be added",
         "description": "Check the information entered, then try again."
+      },
+      "deactivated": {
+        "title": "Account deactivated",
+        "description": "{{name}} can no longer sign in."
+      },
+      "reactivated": {
+        "title": "Account reactivated",
+        "description": "{{name}} can sign in again."
+      },
+      "accountFailed": {
+        "title": "The account could not be changed"
+      },
+      "invitationSent": {
+        "title": "Invitation resent",
+        "description": "{{name}} will receive a new link, valid for 7 days. The previous one no longer works."
+      },
+      "invitationFailed": {
+        "title": "The invitation could not be resent"
+      },
+      "deleted": {
+        "title": "Member deleted"
+      },
+      "deleteFailed": {
+        "title": "The member could not be deleted"
+      }
+    },
+    "balance": {
+      "action": "Credit or debit",
+      "title": "Credit or debit the account",
+      "description": "{{name}} · current balance {{balance}}",
+      "operation": "Operation",
+      "credit": "Credit the account",
+      "debit": "Debit the account",
+      "amount": "Amount (€)",
+      "method": "Payment method",
+      "methods": {
+        "cash": "Cash",
+        "cheque": "Cheque",
+        "transfer": "Bank transfer",
+        "correction": "Correction"
+      },
+      "reason": "Reason",
+      "reasonPlaceholder": "E.g. cheque no. 1234 handed in on 12 October",
+      "reasonHint": "The member sees the reason in their account history.",
+      "newBalance": "New balance: {{balance}}",
+      "submitCredit": "Credit",
+      "submitDebit": "Debit",
+      "errors": {
+        "amount": "Enter a positive amount, with at most two decimals.",
+        "overdraw": "The debit exceeds the member's balance.",
+        "reason": "Enter the reason for the operation."
+      },
+      "toast": {
+        "credited": {
+          "title": "Account credited",
+          "description": "{{amount}} added to {{name}}'s account."
+        },
+        "debited": {
+          "title": "Account debited",
+          "description": "{{amount}} taken from {{name}}'s account."
+        },
+        "failed": {
+          "title": "Operation not possible",
+          "description": "The account could not be changed. Try again in a moment."
+        }
       }
     }
   },
@@ -966,7 +1048,7 @@
       "create": "Create role",
       "duplicate": "A role already has this name.",
       "builtIn": "Built-in role",
-      "builtInNotice": "The application recognises this role by its name: renaming or deleting it may remove access for the members concerned.",
+      "builtInHint": "Built-in roles can be neither renamed nor deleted.",
       "empty": {
         "title": "No roles",
         "description": "Create a first role so that it can be given to members."
@@ -1174,5 +1256,29 @@
     "weather": "Weather",
     "human_error": "Human error",
     "other": "Other"
+  },
+  "accountLines": {
+    "booking_refund": {
+      "label": "Booking refund",
+      "plural": "Booking refunds"
+    },
+    "manual_credit": {
+      "label": "Credit by the club",
+      "plural": "Credits by the club"
+    },
+    "manual_debit": {
+      "label": "Debit by the club",
+      "plural": "Debits by the club"
+    },
+    "provider_refund": {
+      "label": "Top-up refunded",
+      "plural": "Top-ups refunded"
+    },
+    "method": {
+      "cash": "Cash",
+      "cheque": "Cheque",
+      "transfer": "Bank transfer",
+      "correction": "Correction"
+    }
   }
 }
