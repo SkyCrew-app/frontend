@@ -39,7 +39,7 @@ export function adjacentLessons(course: CourseOutline, lessonId: Id): AdjacentLe
 }
 
 // A video link as pasted by an administrator, turned into the address a
-// player frame can load. Links that are not YouTube ones are kept as they are.
+// player frame can load. Other web links are kept as they are.
 export function videoEmbedUrl(url: string | null | undefined): string | null {
   const value = url?.trim()
   if (!value) return null
@@ -47,5 +47,6 @@ export function videoEmbedUrl(url: string | null | undefined): string | null {
   if (short) return `https://www.youtube.com/embed/${short[1]}`
   const watch = value.match(/^https?:\/\/(?:www\.|m\.)?youtube\.com\/watch\?(?:.*&)?v=([\w-]+)/)
   if (watch) return `https://www.youtube.com/embed/${watch[1]}`
-  return value
+  // The address goes into a frame: nothing but a web address.
+  return /^https?:\/\//i.test(value) ? value : null
 }

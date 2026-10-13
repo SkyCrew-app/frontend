@@ -80,6 +80,13 @@ describe('videoEmbedUrl', () => {
     expect(videoEmbedUrl(' https://player.vimeo.com/video/1 ')).toBe('https://player.vimeo.com/video/1');
   });
 
+  it('refuse ce qui n’est pas une adresse web', () => {
+    expect(videoEmbedUrl('javascript:alert(1)')).toBeNull();
+    expect(videoEmbedUrl('data:text/html,<script>alert(1)</script>')).toBeNull();
+    expect(videoEmbedUrl('//exemple.fr/video')).toBeNull();
+    expect(videoEmbedUrl('/uploads/video.mp4')).toBeNull();
+  });
+
   it('vaut null sans lien', () => {
     expect(videoEmbedUrl('')).toBeNull();
     expect(videoEmbedUrl(null)).toBeNull();

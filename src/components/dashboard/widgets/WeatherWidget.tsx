@@ -5,25 +5,25 @@ import type { ReactNode } from "react"
 import Link from "next/link"
 import { Cloud, CloudSun, MapPin, RefreshCw, Sun, Sunrise, Thermometer, Wind } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
+import { useApolloClient } from "@apollo/client"
 import { cn } from "@/lib/utils"
+import { WEATHER_AT } from "@/graphql/aviation"
+import { findAerodromeByCode } from "@/lib/aerodromes"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/components/hooks/use-toast"
 import { WIDGET_REGISTRY } from "@/interfaces/dashboard"
 import WidgetContainer, { WidgetEmpty, WidgetError } from "../WidgetContainer"
 
-const API_BASE = "https://api.api-ninjas.com/v1"
-const API_HEADERS = { "X-Api-Key": "KX6n/kOCJpKDEl+/mF+5/g==p9iHRQBed2N8KbiU" }
-
 interface WeatherData {
-  temp?: number
-  feels_like?: number
-  humidity?: number
-  cloud_pct?: number
-  wind_speed?: number
-  wind_degrees?: number
-  sunrise?: number
-  sunset?: number
+  temperature?: number | null
+  feelsLike?: number | null
+  humidity?: number | null
+  cloudCover?: number | null
+  windSpeed?: number | null
+  windDegrees?: number | null
+  sunrise?: number | null
+  sunset?: number | null
 }
 
 interface WeatherWidgetProps {
@@ -32,10 +32,10 @@ interface WeatherWidgetProps {
   wide?: boolean
 }
 
-const figure = (value: number | undefined, unit: string) =>
+const figure = (value: number | null | undefined, unit: string) =>
   value === undefined || value === null ? "—" : `${Math.round(value)}${unit}`
 
-const sunTime = (timestamp: number | undefined) =>
+const sunTime = (timestamp: number | null | undefined) =>
   timestamp
     ? new Date(timestamp * 1000).toLocaleTimeString("fr-FR", {
         timeZone: "Europe/Paris",
@@ -44,7 +44,7 @@ const sunTime = (timestamp: number | undefined) =>
       })
     : "—"
 
-const skyCondition = (cloudPct: number | undefined): { label: string; icon: LucideIcon } => {
+const skyCondition = (cloudPct: number | null | undefined): { label: string; icon: LucideIcon } => {
   if (cloudPct === undefined || cloudPct === null) return { label: "—", icon: Cloud }
   if (cloudPct < 30) return { label: "Ensoleillé", icon: Sun }
   if (cloudPct < 70) return { label: "Éclaircies", icon: CloudSun }
@@ -69,6 +69,7 @@ export default function WeatherWidget({ preferredAerodrome, wide = false }: Weat
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [failed, setFailed] = useState(false)
   const { toast } = useToast()
+  const client = useApolloClient()
 
   // `manual` is true when the member pressed the refresh button: only then is
   // the outcome announced by a toast.
@@ -77,18 +78,19 @@ export default function WeatherWidget({ preferredAerodrome, wide = false }: Weat
       if (!preferredAerodrome) return
       setIsRefreshing(true)
       try {
-        const airportResponse = await fetch(`${API_BASE}/airports?icao=${encodeURIComponent(preferredAerodrome)}`, {
-          headers: API_HEADERS,
-        })
-        if (!airportResponse.ok) throw new Error("Aérodrome introuvable")
-        const airport = (await airportResponse.json())?.[0]
-        if (!airport?.latitude || !airport?.longitude) throw new Error("Aérodrome introuvable")
+        const airport = await findAerodromeByCode(client, preferredAerodrome)
+        if (typeof airport?.latitude !== "number" || typeof airport?.longitude !== "number") {
+          throw new Error("Aérodrome introuvable")
+        }
 
-        const response = await fetch(`${API_BASE}/weather?lat=${airport.latitude}&lon=${airport.longitude}`, {
-          headers: API_HEADERS,
+        const { data } = await client.query<{ weatherAt: WeatherData | null }>({
+          query: WEATHER_AT,
+          variables: { latitude: airport.latitude, longitude: airport.longitude },
+          // The API keeps the conditions for a few minutes itself.
+          fetchPolicy: "network-only",
         })
-        if (!response.ok) throw new Error("Météo indisponible")
-        setWeatherData(await response.json())
+        if (!data?.weatherAt) throw new Error("Météo indisponible")
+        setWeatherData(data.weatherAt)
         setFailed(false)
         if (manual) {
           toast({ title: "Météo actualisée", description: `Conditions à jour pour ${preferredAerodrome}.` })
@@ -107,14 +109,14 @@ export default function WeatherWidget({ preferredAerodrome, wide = false }: Weat
         setIsRefreshing(false)
       }
     },
-    [preferredAerodrome, toast],
+    [client, preferredAerodrome, toast],
   )
 
   useEffect(() => {
     fetchWeather(false)
   }, [fetchWeather])
 
-  const sky = skyCondition(weatherData?.cloud_pct)
+  const sky = skyCondition(weatherData?.cloudCover)
   const grid = cn("grid grid-cols-2 gap-3", wide && "sm:grid-cols-4")
 
   const renderContent = () => {
@@ -148,20 +150,20 @@ export default function WeatherWidget({ preferredAerodrome, wide = false }: Weat
         <Tile
           label="Température"
           icon={Thermometer}
-          value={figure(weatherData.temp, " °C")}
-          hint={`Ressenti ${figure(weatherData.feels_like, " °C")}`}
+          value={figure(weatherData.temperature, " °C")}
+          hint={`Ressenti ${figure(weatherData.feelsLike, " °C")}`}
         />
         <Tile
           label="Ciel"
           icon={sky.icon}
           value={sky.label}
-          hint={`Nuages ${figure(weatherData.cloud_pct, " %")} · Humidité ${figure(weatherData.humidity, " %")}`}
+          hint={`Nuages ${figure(weatherData.cloudCover, " %")} · Humidité ${figure(weatherData.humidity, " %")}`}
         />
         <Tile
           label="Vent"
           icon={Wind}
-          value={figure(weatherData.wind_speed, " km/h")}
-          hint={`Direction ${figure(weatherData.wind_degrees, "°")}`}
+          value={figure(weatherData.windSpeed, " km/h")}
+          hint={`Direction ${figure(weatherData.windDegrees, "°")}`}
         />
         <Tile
           label="Soleil"
