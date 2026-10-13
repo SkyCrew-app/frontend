@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, type FormEvent, type ReactNode } from "react"
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react"
 import { ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
@@ -70,9 +70,41 @@ export function SidePanel({
   const hasSteps = stepCount > 1
   const isLast = !hasSteps || current === stepCount - 1
 
+  const bodyRef = useRef<HTMLDivElement>(null)
+
   // Always start on the first step.
   useEffect(() => {
     if (open) setCurrent(0)
+  }, [open])
+
+  // Put the cursor in the first field of what is shown, so the user can type straight away.
+  const focusFirstField = () => {
+    const fields = bodyRef.current?.querySelectorAll<HTMLElement>(
+      "input:not([type=hidden]):not([type=file]):not([disabled]), textarea:not([disabled]), [contenteditable=true], [role=combobox]:not([disabled])",
+    )
+    // Steps that are not shown stay in the page, hidden: skip their fields.
+    const visible = Array.from(fields ?? []).filter((element) => !element.closest("[hidden]"))
+    let field = visible[0]
+    // A rich text editor starts with its toolbar: go to the text, not to the toolbar's first menu.
+    if (field?.getAttribute("role") === "combobox") {
+      field = visible.find((element) => element.isContentEditable) ?? field
+    }
+    field?.focus()
+    return !!field
+  }
+
+  useEffect(() => {
+    if (open && current > 0) focusFirstField()
+  }, [open, current])
+
+  // The panel can be opened from a control that takes the focus back for an instant
+  // (a menu item, a card button): check again once it has settled.
+  useEffect(() => {
+    if (!open) return
+    const timer = setTimeout(() => {
+      if (!bodyRef.current?.contains(document.activeElement)) focusFirstField()
+    }, 100)
+    return () => clearTimeout(timer)
   }, [open])
 
   const goNext = async () => {
@@ -143,7 +175,7 @@ export function SidePanel({
         </ol>
       )}
 
-      <div className="flex-1 overflow-y-auto px-6 py-5">
+      <div ref={bodyRef} className="flex-1 overflow-y-auto px-6 py-5">
         {steps
           ? steps.map((step, index) => (
               // Every step stays mounted so that fields keep their value; only the current one shows.
@@ -191,7 +223,13 @@ export function SidePanel({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className={cn("flex h-full w-full flex-col gap-0 p-0", SIZES[size])}>
+      <SheetContent
+        side="right"
+        className={cn("flex h-full w-full flex-col gap-0 p-0", SIZES[size])}
+        onOpenAutoFocus={(event) => {
+          if (focusFirstField()) event.preventDefault()
+        }}
+      >
         <SheetHeader className="space-y-1 border-b px-6 py-4 pr-12 text-left">
           <SheetTitle className="text-lg">{title}</SheetTitle>
           {description ? (

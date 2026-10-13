@@ -36,6 +36,40 @@ type Administration {
   timeSlotDuration: Int!
 }
 
+type Aerodrome {
+  city: String
+  country: String
+  iata: String
+  icao: String
+  latitude: Float
+  longitude: Float
+  name: String!
+}
+
+type AerodromeWeather {
+  """Percent"""
+  cloudCover: Float
+
+  """Degrees Celsius"""
+  feelsLike: Float
+
+  """Percent"""
+  humidity: Float
+
+  """Unix time, in seconds"""
+  sunrise: Int
+
+  """Unix time, in seconds"""
+  sunset: Int
+
+  """Degrees Celsius"""
+  temperature: Float
+
+  """Degrees"""
+  windDegrees: Float
+  windSpeed: Float
+}
+
 type Aircraft {
   audits: [Audit!]!
   availability_status: AvailabilityStatus!
@@ -1106,6 +1140,8 @@ type PaymentResult {
 
 type Query {
   adminDashboardStats: adminStatus!
+  aerodromeByIata(iata: String!): Aerodrome
+  aerodromeByIcao(icao: String!): Aerodrome
   article(id: Int!): Article!
   articles: [Article!]!
   audit(id: Int!): Audit!
@@ -1196,9 +1232,14 @@ type Query {
   reservations: [Reservation!]!
   role(id: Int!): Role!
   roles: [Role!]!
+  searchAerodromes(
+    """ICAO code, IATA code or part of the name"""
+    query: String!
+  ): [Aerodrome!]!
   upcomingAudits(daysAhead: Int! = 30): [Audit!]!
   userByEmail(email: String!): User!
   userReservations(userId: Int!): [Reservation!]!
+  weatherAt(latitude: Float!, longitude: Float!): AerodromeWeather
 }
 
 type Question {
