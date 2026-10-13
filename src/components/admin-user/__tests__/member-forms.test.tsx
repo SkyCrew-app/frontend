@@ -226,6 +226,28 @@ describe("CreateUserForm", () => {
       }),
     )
   })
+
+  it("proposes the pilot role by default and sends the role chosen", async () => {
+    const onSubmit = jest.fn()
+    const roles = [
+      { id: 1, role_name: "Administrateur" },
+      { id: 2, role_name: "Pilote" },
+      { id: 3, role_name: "Instructeur" },
+    ]
+    render(<CreateUserForm isOpen onOpenChange={jest.fn()} roles={roles as never} onSubmit={onSubmit} />)
+
+    // Nobody becomes an administrator without the administrator choosing it.
+    expect(screen.getByLabelText("Rôle")).toHaveValue("2")
+
+    fireEvent.change(screen.getByLabelText(/^Prénom/), { target: { value: "Camille" } })
+    fireEvent.change(screen.getByLabelText(/^Nom/), { target: { value: "Martin" } })
+    fireEvent.change(screen.getByLabelText(/^Adresse e-mail/), { target: { value: "camille@exemple.fr" } })
+    fireEvent.change(screen.getByLabelText(/^Date de naissance/), { target: { value: "1990-05-12" } })
+    fireEvent.change(screen.getByLabelText("Rôle"), { target: { value: "3" } })
+    fireEvent.click(screen.getByRole("button", { name: "Ajouter le membre" }))
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ roleId: 3 })))
+  })
 })
 
 describe("AddLicenseForm", () => {

@@ -61,6 +61,7 @@ export default function AdministrationPage() {
     last_name: string
     email: string
     date_of_birth: string
+    roleId?: number
   }) => {
     try {
       await createUser({ variables: userData })
@@ -245,6 +246,7 @@ export default function AdministrationPage() {
               isOpen={isCreateDialogOpen}
               onOpenChange={setIsCreateDialogOpen}
               saving={creating}
+              roles={roles}
               onSubmit={handleCreateUser}
             />
           </>

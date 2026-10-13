@@ -1,8 +1,20 @@
 import { gql } from '@apollo/client';
 
 export const CREATE_USER = gql`
-  mutation CreateUser($first_name: String!, $last_name: String!, $email: String!, $date_of_birth: DateTime!) {
-    createUser(first_name: $first_name, last_name: $last_name, email: $email, date_of_birth: $date_of_birth) {
+  mutation CreateUser(
+    $first_name: String!
+    $last_name: String!
+    $email: String!
+    $date_of_birth: DateTime!
+    $roleId: Int
+  ) {
+    createUser(
+      first_name: $first_name
+      last_name: $last_name
+      email: $email
+      date_of_birth: $date_of_birth
+      roleId: $roleId
+    ) {
       id
       first_name
       last_name
