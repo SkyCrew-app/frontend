@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.10.0](https://github.com/SkyCrew-app/frontend/compare/2.9.1...2.10.0) (2026-10-13)
+
+
+### Features
+
+* **i18n:** :globe_with_meridians: the whole application in English as well as French ([#151](https://github.com/SkyCrew-app/frontend/issues/151)) ([b773a70](https://github.com/SkyCrew-app/frontend/commit/b773a70ee71c361094957e7119fad72afd2ae4d5))
+* **incidents:** :sparkles: incident follow-up page, 2FA state, bulk notification actions ([#150](https://github.com/SkyCrew-app/frontend/issues/150)) ([2c5bd12](https://github.com/SkyCrew-app/frontend/commit/2c5bd129eb08e56aadcdf6453db5e8e07c79da46))
+
 ## [2.9.1](https://github.com/SkyCrew-app/frontend/compare/2.9.0...2.9.1) (2026-10-13)
 
 
