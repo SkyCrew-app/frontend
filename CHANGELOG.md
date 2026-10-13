@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.10.1](https://github.com/SkyCrew-app/frontend/compare/2.10.0...2.10.1) (2026-10-13)
+
+
+### Bug Fixes
+
+* **ui:** :lock: security headers, known defects, member language and browser tests ([#155](https://github.com/SkyCrew-app/frontend/issues/155)) ([5132716](https://github.com/SkyCrew-app/frontend/commit/5132716fff1d25dc6d3ee5fab9ad9c3d5e37578f))
+
 ## [2.10.0](https://github.com/SkyCrew-app/frontend/compare/2.9.1...2.10.0) (2026-10-13)
 
 
