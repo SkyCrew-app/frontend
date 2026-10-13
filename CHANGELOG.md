@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.11.0](https://github.com/SkyCrew-app/frontend/compare/2.10.1...2.11.0) (2026-10-13)
+
+
+### Features
+
+* **rules:** :sparkles: follow the API's business rules, add manual account entries ([#159](https://github.com/SkyCrew-app/frontend/issues/159)) ([1755555](https://github.com/SkyCrew-app/frontend/commit/175555534d3c889cf94616dd4cef2097c451c3d9))
+
 ## [2.10.1](https://github.com/SkyCrew-app/frontend/compare/2.10.0...2.10.1) (2026-10-13)
 
 
