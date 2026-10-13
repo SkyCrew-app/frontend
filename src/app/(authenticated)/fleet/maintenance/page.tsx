@@ -40,6 +40,9 @@ import {
 import { formatDate, formatMoney } from "@/lib/format"
 
 const ITEMS_PER_PAGE = 10
+// Role name as the API returns it.
+const ROLE_TECHNICIAN = "Technicien"
+
 const UNASSIGNED = "non_assigned"
 
 export default function MaintenanceTablePage() {
@@ -68,7 +71,7 @@ export default function MaintenanceTablePage() {
 
   const aircrafts = aircraftsData?.getAircrafts || []
   const technicians =
-    usersData?.getUsers.filter((user: { role: { role_name: string } }) => user.role?.role_name === "TECHNICIAN") || []
+    usersData?.getUsers.filter((user: { role: { role_name: string } }) => user.role?.role_name === ROLE_TECHNICIAN) || []
 
   const maintenances: Maintenance[] = data?.getAllMaintenances || []
 

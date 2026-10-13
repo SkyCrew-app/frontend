@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation"
 import { useTheme } from "next-themes"
 import {
+  AlertTriangle,
   LayoutDashboard,
   Plane,
   Calendar,
@@ -110,6 +111,10 @@ export default function CommandPalette({ open, onOpenChange }: CommandPalettePro
           <CommandItem onSelect={() => navigate("/administration")}>
             <Settings className="mr-2 h-4 w-4" />
             Administration
+          </CommandItem>
+          <CommandItem onSelect={() => navigate("/administration/incidents")}>
+            <AlertTriangle className="mr-2 h-4 w-4" />
+            Incidents
           </CommandItem>
         </CommandGroup>
 

@@ -27,7 +27,13 @@ import { EmptyState } from "@/components/layout/EmptyState"
 import { ErrorState } from "@/components/layout/ErrorState"
 import { useToast } from "@/components/hooks/use-toast"
 import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
-import { GET_NOTIFICATIONS, SEEN_NOTIFICATION, REMOVE_NOTIFICATION } from "@/graphql/notifications"
+import {
+  DELETE_ALL_NOTIFICATIONS,
+  GET_NOTIFICATIONS,
+  MARK_ALL_NOTIFICATIONS_READ,
+  REMOVE_NOTIFICATION,
+  SEEN_NOTIFICATION,
+} from "@/graphql/notifications"
 import {
   type AppNotification,
   getNotificationTypeInFrench,
@@ -71,6 +77,8 @@ export default function NotificationsPage() {
 
   const [seenNotification] = useMutation(SEEN_NOTIFICATION)
   const [removeNotification] = useMutation(REMOVE_NOTIFICATION)
+  const [markAllNotificationsRead] = useMutation(MARK_ALL_NOTIFICATIONS_READ)
+  const [deleteAllNotifications] = useMutation(DELETE_ALL_NOTIFICATIONS)
 
   // Newest first, whatever the order of the API.
   const notifications = useMemo<AppNotification[]>(
@@ -161,8 +169,13 @@ export default function NotificationsPage() {
     const count = filteredUnread.length
     setIsMarkingAllAsRead(true)
     try {
-      for (const notification of filteredUnread) {
-        await seenNotification({ variables: { id: notification.id } })
+      if (isFiltered) {
+        // Only the notifications of the filtered list: one by one.
+        for (const notification of filteredUnread) {
+          await seenNotification({ variables: { id: notification.id } })
+        }
+      } else {
+        await markAllNotificationsRead()
       }
       toast({ title: `${count} notification${plural(count)} marquée${plural(count)} comme lue${plural(count)}` })
     } catch (error) {
@@ -182,8 +195,12 @@ export default function NotificationsPage() {
     const targets = filteredNotifications
     setIsDeletingAll(true)
     try {
-      for (const notification of targets) {
-        await removeNotification({ variables: { id: notification.id } })
+      if (isFiltered) {
+        for (const notification of targets) {
+          await removeNotification({ variables: { id: notification.id } })
+        }
+      } else {
+        await deleteAllNotifications()
       }
       toast({ title: `${targets.length} notification${plural(targets.length)} supprimée${plural(targets.length)}` })
     } catch (error) {

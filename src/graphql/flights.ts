@@ -18,6 +18,7 @@ export const GET_USER_FLIGHT_PLANS = gql`
       flight_type
       origin_icao
       destination_icao
+      weather_conditions
       number_of_passengers
       distance_km
       estimated_flight_time

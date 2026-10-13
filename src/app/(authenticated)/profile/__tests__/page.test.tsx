@@ -2,7 +2,14 @@ import React from 'react';
 import { render, screen, waitFor, fireEvent, within } from '@testing-library/react';
 import ProfilePage from '../page';
 import { MockedProvider, MockedResponse } from '@apollo/client/testing';
-import { GET_ME, GET_USER_BY_EMAIL, UPDATE_NOTIFICATION_SETTINGS, UPDATE_USER } from '@/graphql/user';
+import {
+  DISABLE_2FA_MUTATION,
+  GET_ME,
+  GET_TWO_FACTOR_STATUS,
+  GET_USER_BY_EMAIL,
+  UPDATE_NOTIFICATION_SETTINGS,
+  UPDATE_USER,
+} from '@/graphql/user';
 import { GraphQLError } from 'graphql';
 import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
@@ -82,9 +89,16 @@ const userMock = (getUser: () => typeof baseUser = () => baseUser, delay = 0): M
   maxUsageCount: Number.POSITIVE_INFINITY,
 });
 
-const renderPage = (mocks: MockedResponse[]) =>
+const twoFactorMock = (enabled: boolean, maxUsageCount = Number.POSITIVE_INFINITY): MockedResponse => ({
+  request: { query: GET_TWO_FACTOR_STATUS },
+  result: { data: { twoFactorEnabled: enabled } },
+  maxUsageCount,
+});
+
+// Two-factor is off unless the test provides its own status mocks.
+const renderPage = (mocks: MockedResponse[], twoFactorMocks: MockedResponse[] = [twoFactorMock(false)]) =>
   render(
-    <MockedProvider mocks={mocks} addTypename={false}>
+    <MockedProvider mocks={[...mocks, ...twoFactorMocks]} addTypename={false}>
       <ProfilePage />
     </MockedProvider>
   );
@@ -184,7 +198,7 @@ describe('ProfilePage Component', () => {
     openTab('Sécurité');
     expect(screen.getByLabelText('Prénom')).not.toBeVisible();
     expect(screen.getByLabelText('Mot de passe actuel')).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Activer le 2FA' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Activer le 2FA' })).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('Mot de passe actuel'), { target: { value: 'secret' } });
 
     openTab('Profil');
@@ -455,6 +469,10 @@ describe('ProfilePage Component', () => {
     await waitForProfile();
     openTab('Sécurité');
 
+    // L'état affiché est celui que renvoie l'API.
+    expect(await screen.findByText('Désactivée')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Désactiver le 2FA' })).not.toBeInTheDocument();
+
     fireEvent.click(screen.getByRole('button', { name: 'Activer le 2FA' }));
     expect(screen.getByRole('alertdialog', { name: 'Activer la double authentification ?' })).toBeInTheDocument();
 
@@ -469,6 +487,57 @@ describe('ProfilePage Component', () => {
 
     expect(mockPush).toHaveBeenCalledTimes(1);
     expect(mockPush).toHaveBeenCalledWith('/administration/2fa');
+  });
+
+  test('affiche la 2FA comme activée et permet de la désactiver avec le mot de passe actuel', async () => {
+    renderPage(
+      [
+        meMock,
+        userMock(),
+        {
+          request: { query: DISABLE_2FA_MUTATION, variables: { password: 'secret' } },
+          result: { data: { disable2FA: true } },
+        },
+      ],
+      [twoFactorMock(true, 1), twoFactorMock(false)],
+    );
+
+    await waitForProfile();
+    openTab('Sécurité');
+
+    expect(await screen.findByText('Activée')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Activer le 2FA' })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Désactiver le 2FA' }));
+    const dialog = screen.getByRole('alertdialog', { name: 'Désactiver la double authentification ?' });
+    fireEvent.change(within(dialog).getByLabelText('Mot de passe actuel'), { target: { value: 'secret' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Désactiver le 2FA' }));
+
+    expect(await screen.findByText('Désactivée')).toBeInTheDocument();
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Activer le 2FA' })).toBeInTheDocument();
+    expect(mockToast).toHaveBeenCalledWith({
+      title: 'Double authentification désactivée',
+      description: 'Seul votre mot de passe sera demandé à la connexion.',
+    });
+  });
+
+  test('ne propose ni activation ni désactivation quand l\'état de la 2FA est inconnu', async () => {
+    renderPage(
+      [meMock, userMock()],
+      [{ request: { query: GET_TWO_FACTOR_STATUS }, error: new Error('Erreur réseau') }, twoFactorMock(false)],
+    );
+
+    await waitForProfile();
+    openTab('Sécurité');
+
+    expect(await screen.findByText(/n'a pas pu être vérifié/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Activer le 2FA' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Désactiver le 2FA' })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Réessayer' }));
+
+    expect(await screen.findByRole('button', { name: 'Activer le 2FA' })).toBeInTheDocument();
   });
 
   test('affiche les licences avec leur statut, la plus proche de l\'expiration en premier', async () => {

@@ -17,6 +17,7 @@ import { StatusBadge } from "./status-badge"
 import { MaintenanceTypeIcon } from "./maintenance-type-icon"
 import type { Maintenance } from "@/interfaces/maintenance"
 import { formatDate, formatMoney } from "@/lib/format"
+import { maintenanceTechnicianName } from "@/lib/maintenance"
 
 interface MaintenanceTableProps {
   /** Maintenances of the current page. */
@@ -89,8 +90,8 @@ export function MaintenanceTable({
                   <TableCell>
                     {maintenance.technician ? (
                       <>
-                        <div>{maintenance.technician.first_name || maintenance.technician.email}</div>
-                        {maintenance.technician.first_name && (
+                        <div>{maintenanceTechnicianName(maintenance.technician)}</div>
+                        {(maintenance.technician.first_name || maintenance.technician.last_name) && (
                           <div className="text-xs text-muted-foreground">{maintenance.technician.email}</div>
                         )}
                       </>

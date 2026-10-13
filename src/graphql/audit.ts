@@ -11,6 +11,12 @@ export const GET_ALL_AUDITS = gql`
       next_audit_date
       audit_frequency
       is_closed
+      closed_date
+      closed_by {
+        id
+        first_name
+        last_name
+      }
       aircraft {
         id
         registration_number

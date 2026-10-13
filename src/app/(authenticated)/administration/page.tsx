@@ -21,6 +21,7 @@ import {
 } from "@/graphql/admin"
 import { formatDate, formatDateTime, formatFlightDuration, formatTime } from "@/lib/format"
 import { reservationStatus } from "@/lib/reservation-status"
+import { incidentSeverity, incidentStatus } from "@/lib/incident"
 
 const FLIGHT_CATEGORIES: Record<string, string> = {
   local: "Local",
@@ -36,15 +37,12 @@ const FLIGHT_CATEGORIES: Record<string, string> = {
 const flightCategoryLabel = (category: string | null | undefined) =>
   FLIGHT_CATEGORIES[(category ?? "").toLowerCase()] ?? "Autre"
 
-type BadgeVariant = "success" | "warning" | "danger" | "neutral"
-
-const SEVERITIES: Record<string, { label: string; variant: BadgeVariant }> = {
-  low: { label: "Gravité faible", variant: "neutral" },
-  medium: { label: "Gravité moyenne", variant: "warning" },
-  high: { label: "Gravité élevée", variant: "danger" },
-}
-
-const incidentSeverity = (level: string | null | undefined) => SEVERITIES[(level ?? "").toLowerCase()] ?? null
+// The date of a flight: when it was planned, else when it left, else when it was closed.
+const flightDate = (flight: {
+  reservation?: { start_time?: string | null } | null
+  departure_time?: string | null
+  closed_at?: string | null
+}) => flight.reservation?.start_time ?? flight.departure_time ?? flight.closed_at
 
 // "12 oct. 2026, 14:30 – 16:00" when both ends are on the same day.
 const formatSlot = (start: string, end: string) => {
@@ -164,7 +162,11 @@ export default function AdminHomePage() {
 
   const pendingReservations: number = stats?.pendingReservations ?? 0
   const unavailableAircrafts = Math.max(0, (stats?.totalAircrafts ?? 0) - (stats?.availableAircrafts ?? 0))
-  const severeIncidents = recentIncidents.filter((incident) => (incident.severity_level ?? "").toLowerCase() === "high")
+  // A resolved incident no longer needs attention.
+  const severeIncidents = recentIncidents.filter(
+    (incident) =>
+      incidentSeverity(incident.severity_level).level === "high" && incidentStatus(incident.status).key !== "resolved",
+  )
 
   const attention: AttentionItem[] = []
   if (pendingReservations > 0) {
@@ -200,6 +202,7 @@ export default function AdminHomePage() {
           ? `${severeIncidents.length} incidents récents de gravité élevée`
           : "1 incident récent de gravité élevée",
       description: severeIncidents.map((incident) => incident.aircraft?.registration_number).filter(Boolean).join(", "),
+      href: "/administration/incidents",
     })
   }
 
@@ -357,6 +360,8 @@ export default function AdminHomePage() {
                         {flight.origin_icao} → {flight.destination_icao}
                       </p>
                       <p className="truncate text-sm text-muted-foreground">
+                        {formatDate(flightDate(flight))}
+                        {" · "}
                         {flight.user?.first_name} {flight.user?.last_name}
                         {flight.flight_type ? ` · ${flight.flight_type}` : ""}
                       </p>
@@ -376,6 +381,7 @@ export default function AdminHomePage() {
 
         <Section
           title="Derniers incidents"
+          href="/administration/incidents"
           loading={incidentsQuery.loading && recentIncidents.length === 0}
           failed={Boolean(incidentsQuery.error) && recentIncidents.length === 0}
           onRetry={() => incidentsQuery.refetch()}
@@ -386,23 +392,28 @@ export default function AdminHomePage() {
             <ul className="divide-y">
               {recentIncidents.map((incident) => {
                 const severity = incidentSeverity(incident.severity_level)
+                const status = incidentStatus(incident.status)
                 return (
-                  <li key={incident.id} className="space-y-1 py-3 first:pt-0 last:pb-0">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="truncate text-sm font-medium">
-                        {incident.aircraft?.registration_number}
-                        <span className="font-normal text-muted-foreground">
-                          {" · "}
-                          {formatDate(incident.incident_date)}
-                        </span>
-                      </p>
-                      {severity && (
-                        <Badge variant={severity.variant} className="shrink-0">
-                          {severity.label}
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="line-clamp-2 text-sm text-muted-foreground">{incident.description}</p>
+                  <li key={incident.id} className="first:[&>a]:pt-0 last:[&>a]:pb-0">
+                    <Link
+                      href={`/administration/incidents?incident=${incident.id}`}
+                      className="group block space-y-1 py-3"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                        <p className="truncate text-sm font-medium transition-colors group-hover:text-primary">
+                          {incident.aircraft?.registration_number}
+                          <span className="font-normal text-muted-foreground">
+                            {" · "}
+                            {formatDate(incident.incident_date)}
+                          </span>
+                        </p>
+                        <div className="flex shrink-0 items-center gap-2">
+                          <Badge variant={severity.variant}>Gravité {severity.label.toLowerCase()}</Badge>
+                          <Badge variant={status.variant}>{status.label}</Badge>
+                        </div>
+                      </div>
+                      <p className="line-clamp-2 text-sm text-muted-foreground">{incident.description}</p>
+                    </Link>
                   </li>
                 )
               })}

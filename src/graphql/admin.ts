@@ -54,6 +54,12 @@ export const GET_RECENT_FLIGHTS = gql`
       flight_type
       origin_icao
       destination_icao
+      departure_time
+      closed_at
+      reservation {
+        id
+        start_time
+      }
       user {
         id
         first_name

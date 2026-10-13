@@ -20,6 +20,7 @@ import {
   MAINTENANCE_TYPE_VALUES,
   maintenanceFileName,
   maintenanceStatus,
+  maintenanceTechnicianName,
   maintenanceTypeLabel,
   validateMaintenanceAttachments,
 } from "@/lib/maintenance"
@@ -86,9 +87,6 @@ const emptyForm = (): MaintenanceFormData => ({
   documents: [],
 })
 
-const technicianName = (technician: Technician) =>
-  [technician.first_name, technician.last_name].filter(Boolean).join(" ") || technician.email
-
 function Required() {
   return (
     <span className="text-destructive" aria-hidden="true">
@@ -154,12 +152,12 @@ export function MaintenanceFormDialog({
   // The technician of the maintenance stays selectable even when he is no longer in the list.
   const currentTechnician = maintenance?.technician
   const technicianOptions = [
-    ...technicians.map((technician) => ({ value: String(technician.id), label: technicianName(technician) })),
+    ...technicians.map((technician) => ({ value: String(technician.id), label: maintenanceTechnicianName(technician) })),
     ...(currentTechnician && !technicians.some((technician) => String(technician.id) === String(currentTechnician.id))
       ? [
           {
             value: String(currentTechnician.id),
-            label: currentTechnician.first_name || currentTechnician.email,
+            label: maintenanceTechnicianName(currentTechnician),
           },
         ]
       : []),
@@ -455,6 +453,12 @@ export function MaintenanceFormDialog({
             ))}
           </SelectContent>
         </Select>
+        {currentTechnician && !formData.technician_id && (
+          <p className="text-xs text-muted-foreground">
+            {maintenanceTechnicianName(currentTechnician)} ne sera plus affecté à cette maintenance après
+            l&apos;enregistrement.
+          </p>
+        )}
       </div>
     </div>
   )

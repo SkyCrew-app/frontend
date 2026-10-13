@@ -12,8 +12,19 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ClipboardCheck, Pencil, Plus } from "lucide-react"
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { ClipboardCheck, Loader2, Pencil, Plus, Trash2 } from "lucide-react"
 import { useToast } from "@/components/hooks/use-toast"
+import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
+import { isAdministrator } from "@/lib/roles"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { SidePanel } from "@/components/layout/SidePanel"
 import { EmptyState } from "@/components/layout/EmptyState"
@@ -22,6 +33,7 @@ import {
   GET_CHECKLIST_TEMPLATES,
   CREATE_CHECKLIST_TEMPLATE,
   UPDATE_CHECKLIST_TEMPLATE,
+  DELETE_CHECKLIST_TEMPLATE,
 } from "@/graphql/checklist"
 import type { ChecklistTemplate } from "@/interfaces/checklist"
 
@@ -41,6 +53,9 @@ export default function AdminChecklistsPage() {
     description: "",
   })
   const [togglingId, setTogglingId] = useState<number | string | null>(null)
+  const [templateToDelete, setTemplateToDelete] = useState<ChecklistTemplate | null>(null)
+  // Deleting a template is reserved to administrators by the API.
+  const canDelete = isAdministrator(useUserData(useCurrentUser()))
 
   const { data, loading, error, refetch } = useQuery(GET_CHECKLIST_TEMPLATES, {
     fetchPolicy: "network-only",
@@ -48,6 +63,7 @@ export default function AdminChecklistsPage() {
 
   const [createTemplate, { loading: creating }] = useMutation(CREATE_CHECKLIST_TEMPLATE)
   const [updateTemplate] = useMutation(UPDATE_CHECKLIST_TEMPLATE)
+  const [deleteTemplate, { loading: deleting }] = useMutation(DELETE_CHECKLIST_TEMPLATE)
 
   const templates: ChecklistTemplate[] = data?.checklistTemplates || []
   const canCreate = newTemplate.name.trim() !== "" && newTemplate.aircraft_model.trim() !== ""
@@ -113,6 +129,36 @@ export default function AdminChecklistsPage() {
     }
   }
 
+  const handleConfirmDelete = async () => {
+    if (!templateToDelete) return
+    try {
+      const result = await deleteTemplate({
+        variables: { id: Number(templateToDelete.id) },
+        refetchQueries: [{ query: GET_CHECKLIST_TEMPLATES }],
+        awaitRefetchQueries: true,
+      })
+      const removal = result.data?.deleteChecklistTemplate
+      // A template that filled-in checklists refer to is kept, only taken out of use.
+      toast(
+        removal?.deleted
+          ? { title: "Modèle supprimé", description: `« ${templateToDelete.name} » a été supprimé.` }
+          : {
+              title: "Modèle désactivé, non supprimé",
+              description:
+                removal?.message ??
+                `« ${templateToDelete.name} » est utilisé par des checklists déjà remplies : il a été désactivé pour conserver l'historique.`,
+            },
+      )
+      setTemplateToDelete(null)
+    } catch {
+      toast({
+        variant: "destructive",
+        title: "Le modèle n'a pas pu être supprimé",
+        description: "Réessayez dans un instant.",
+      })
+    }
+  }
+
   const createButton = (
     <Button onClick={() => setIsCreateOpen(true)}>
       <Plus className="h-4 w-4" />
@@ -158,7 +204,7 @@ export default function AdminChecklistsPage() {
                 <TableHead>Avion</TableHead>
                 <TableHead className="text-right">Points</TableHead>
                 <TableHead>Proposé aux pilotes</TableHead>
-                <TableHead className="w-12">
+                <TableHead className="w-24">
                   <span className="sr-only">Actions</span>
                 </TableHead>
               </TableRow>
@@ -198,15 +244,29 @@ export default function AdminChecklistsPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => router.push(`/administration/checklists/${template.id}`)}
-                        aria-label={`Modifier le modèle ${template.name}`}
-                        title="Modifier"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => router.push(`/administration/checklists/${template.id}`)}
+                          aria-label={`Modifier le modèle ${template.name}`}
+                          title="Modifier"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        {canDelete && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => setTemplateToDelete(template)}
+                            aria-label={`Supprimer le modèle ${template.name}`}
+                            title="Supprimer"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 )
@@ -215,6 +275,28 @@ export default function AdminChecklistsPage() {
           </Table>
         </Card>
       )}
+
+      <AlertDialog
+        open={templateToDelete !== null}
+        onOpenChange={(open) => !open && !deleting && setTemplateToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer le modèle « {templateToDelete?.name} » ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Le modèle et ses points de contrôle seront supprimés définitivement. Si des pilotes l&apos;ont déjà
+              rempli, il sera seulement désactivé afin de conserver l&apos;historique de leurs checklists.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Annuler</AlertDialogCancel>
+            <Button variant="destructive" onClick={handleConfirmDelete} disabled={deleting}>
+              {deleting && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+              Supprimer le modèle
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <SidePanel
         open={isCreateOpen}

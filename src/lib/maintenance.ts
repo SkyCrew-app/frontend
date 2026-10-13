@@ -19,6 +19,7 @@ export const toMaintenanceInput = (formData: MaintenanceFormValues) => ({
   end_date: formData.end_date,
   description: formData.description,
   maintenance_cost: Number.parseFloat(formData.maintenance_cost) || 0,
+  // null is meaningful: it removes the technician currently assigned.
   technician_id: formData.technician_id ? Number.parseInt(formData.technician_id, 10) : null,
 })
 
@@ -130,6 +131,13 @@ export const MAINTENANCE_STATUS_VALUES = Object.keys(MAINTENANCE_STATUSES)
 
 export const maintenanceStatus = (status: string | null | undefined) =>
   MAINTENANCE_STATUSES[(status ?? "").toUpperCase()] ?? { label: status || "—", variant: "neutral" as StatusVariant }
+
+// "John Doe", or the e-mail address when no name is known.
+export const maintenanceTechnicianName = (technician: {
+  first_name?: string | null
+  last_name?: string | null
+  email?: string | null
+}) => [technician.first_name, technician.last_name].filter(Boolean).join(" ") || technician.email || "—"
 
 // "John Doe · john@example.com"
 export const maintenanceTechnicianLabel = (technician: {

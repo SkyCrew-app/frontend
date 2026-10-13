@@ -76,6 +76,7 @@ const menuItems = [
       { name: "Membres", path: "/administration/users" },
       { name: "Finance", path: "/administration/finance" },
       { name: "Sécurité", path: "/administration/audits" },
+      { name: "Incidents", path: "/administration/incidents" },
       { name: "Articles", path: "/administration/articles" },
       { name: "Checklists", path: "/administration/checklists" },
       { name: "E-learning", path: "/administration/e-learning" },

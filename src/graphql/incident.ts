@@ -15,3 +15,62 @@ export const CREATE_INCIDENT = gql`
     }
   }
 `
+
+// The same fields for the list and for the mutation, so the page can show the answer as is.
+const INCIDENT_FIELDS = `
+  id
+  incident_date
+  description
+  damage_report
+  corrective_actions
+  severity_level
+  status
+  priority
+  category
+  resolution_note
+  resolved_at
+  resolved_by {
+    id
+    first_name
+    last_name
+  }
+  aircraft {
+    id
+    registration_number
+    model
+  }
+  flight {
+    id
+    origin_icao
+    destination_icao
+    departure_time
+    flight_hours
+    flight_type
+    reservation {
+      id
+      start_time
+    }
+  }
+  user {
+    id
+    first_name
+    last_name
+    email
+  }
+`
+
+export const GET_ALL_INCIDENTS = gql`
+  query GetAllIncidents {
+    getAllIncidents {
+      ${INCIDENT_FIELDS}
+    }
+  }
+`
+
+export const UPDATE_INCIDENT_STATUS = gql`
+  mutation UpdateIncidentStatus($id: Int!, $status: String!, $resolution_note: String) {
+    updateIncidentStatus(id: $id, status: $status, resolution_note: $resolution_note) {
+      ${INCIDENT_FIELDS}
+    }
+  }
+`
