@@ -44,6 +44,8 @@ async function bookSlot(page: Page, purpose: string, hour = "08:00") {
   await expect(panel).toContainText(hour)
   await expect(panel).toContainText(end)
   await panel.getByLabel("But de la réservation").fill(purpose)
+  // The pilot holds a licence: the instructor is optional and none is chosen.
+  await expect(panel.getByRole("combobox", { name: "Avec un instructeur" })).toContainText("Sans instructeur")
   await choose(page, panel.getByRole("combobox", { name: "Catégorie de vol" }), "Local")
   await panel.getByRole("button", { name: "Créer la réservation" }).click()
   booked = { purpose, day, hour }
@@ -212,6 +214,8 @@ test("le pilote clôture un vol dont la réservation a commencé et le retrouve 
     await expect(row).toBeVisible()
     await expect(row).toContainText("25 min")
     await expect(row).toContainText("VFR")
+    // Flown without an instructor: the pilot was in command.
+    await expect(row).toContainText("Commandant de bord")
   })
 })
 

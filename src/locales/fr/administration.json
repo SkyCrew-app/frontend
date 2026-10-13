@@ -304,6 +304,39 @@
           "description": "Le compte n'a pas pu être modifié. Réessayez dans un instant."
         }
       }
+    },
+    "departure": {
+      "loading": "Chargement des réservations et des cours à venir",
+      "loadFailed": "Les réservations et les cours à venir de ce membre n'ont pas pu être chargés. Vous pouvez tout de même désactiver le compte : rien ne sera annulé.",
+      "noBookings": "Aucune réservation à venir.",
+      "bookings_one": "{{count}} réservation à venir",
+      "bookings_other": "{{count}} réservations à venir",
+      "more_one": "… et {{count}} autre",
+      "more_other": "… et {{count}} autres",
+      "cancelAndRefund": "Annuler ces réservations et rembourser le membre ({{amount}})",
+      "cancelHint": "Chaque réservation est annulée comme d'habitude : le membre est prévenu et son solde est recrédité du montant payé. Sans cela, elles restent au planning.",
+      "confirmWithCancel": "Désactiver et annuler les réservations",
+      "courses_one": "{{count}} cours planifié",
+      "courses_other": "{{count}} cours planifiés",
+      "courseWithInstructor": "avec l'instructeur {{name}}",
+      "courseWithStudent": "avec l'élève {{name}}",
+      "coursesHint": "Les cours ne sont pas annulés par la désactivation : prévenez la personne concernée.",
+      "cancelled_one": "{{count}} réservation annulée, {{amount}} remboursés.",
+      "cancelled_other": "{{count}} réservations annulées, {{amount}} remboursés.",
+      "kept_one": "{{count}} réservation n'a pas pu être annulée (n° {{ids}}) : traitez-la à la main.",
+      "kept_other": "{{count}} réservations n'ont pas pu être annulées (n° {{ids}}) : traitez-les à la main.",
+      "coursesLeft_one": "{{count}} cours planifié reste à réorganiser.",
+      "coursesLeft_other": "{{count}} cours planifiés restent à réorganiser.",
+      "instructionBookings_one": "{{count}} vol à venir en tant qu'instructeur",
+      "instructionBookings_other": "{{count}} vols à venir en tant qu'instructeur",
+      "instructionHint": "Ces réservations sont celles d'autres membres. Si elles ne sont pas annulées, elles restent au planning avec un instructeur qui ne peut plus se connecter : prévenez les élèves.",
+      "cancelInstructionAndRefund": "Annuler ces vols d'instruction et rembourser les élèves ({{amount}})",
+      "cancelInstructionHint_one": "Le vol où ce membre est instructeur est annulé lui aussi : l'élève est prévenu et remboursé ({{amount}}).",
+      "cancelInstructionHint_other": "Les {{count}} vols où ce membre est instructeur sont annulés eux aussi : chaque élève est prévenu et remboursé ({{amount}} au total).",
+      "instructionCancelled_one": "{{count}} vol d'instruction annulé, {{amount}} remboursés à l'élève.",
+      "instructionCancelled_other": "{{count}} vols d'instruction annulés, {{amount}} remboursés aux élèves.",
+      "instructionLeft_one": "{{count}} vol d'instruction reste au planning sans instructeur actif : prévenez l'élève.",
+      "instructionLeft_other": "{{count}} vols d'instruction restent au planning sans instructeur actif : prévenez les élèves."
     }
   },
   "finance": {
@@ -404,12 +437,15 @@
       },
       "flightRevenue": "Revenus des vols",
       "confirmedBookings": "Réservations confirmées",
-      "fuelEstimate": "Estimé à {{price}} le litre",
       "profitable": "Flotte rentable sur la période",
       "unprofitable": "Coûts supérieurs aux revenus",
       "chartTitle": "Coûts et revenus par avion",
       "tableTitle": "Détail par avion",
-      "tableDescription": "Revenus calculés sur les heures réservées, carburant sur la consommation horaire de chaque avion."
+      "maintenanceRecorded": "Coûts enregistrés sur les maintenances",
+      "fuelEstimated": "Carburant (estimation)",
+      "fuelEstimateHint": "Heures réservées × consommation × {{price}} le litre. Non compté dans le résultat.",
+      "fuelEstimateUnavailable": "Renseignez le prix du carburant dans les paramètres du club pour obtenir une estimation.",
+      "tableNote": "Revenus : montants facturés aux membres. Maintenance : coûts enregistrés. Résultat = revenus − maintenance. Le carburant est une estimation indicative, hors totaux : les factures de carburant se saisissent dans les dépenses."
     },
     "forecast": {
       "error": "Les prévisions n'ont pas pu être calculées. Vérifiez votre connexion puis réessayez.",
@@ -440,6 +476,16 @@
         "title": "Dépense enregistrée",
         "description": "{{amount}} le {{date}}."
       }
+    },
+    "cash": {
+      "title": "Encaissements",
+      "received": "Encaissé sur la période",
+      "receivedHint": "Rechargements par carte et PayPal, espèces, chèques et virements saisis.",
+      "refunded": "Remboursé par le prestataire",
+      "refundedHint": "Remboursements et contestations de paiement, moins les contestations gagnées.",
+      "net": "Encaissement net",
+      "netHint": "Ce qui est réellement entré, à ne pas confondre avec les vols facturés.",
+      "error": "Les encaissements n'ont pas pu être chargés."
     }
   },
   "audits": {
@@ -813,6 +859,7 @@
       "flight": "Vol",
       "flightTime": "Temps de vol",
       "noFlight": "Aucun vol associé",
+      "flightRestricted": "Un vol est associé à cet incident. Son détail est réservé au pilote, à ses instructeurs et aux administrateurs.",
       "viewFlightPlan": "Voir le plan de vol",
       "followUp": "Suivi",
       "resolvedAt": "Résolu le",
@@ -1279,6 +1326,160 @@
       "cheque": "Chèque",
       "transfer": "Virement",
       "correction": "Correction"
+    },
+    "dispute_won": {
+      "label": "Contestation de paiement gagnée",
+      "plural": "Contestations de paiement gagnées"
     }
+  },
+  "actionLog": {
+    "title": "Journal des actions",
+    "description": "Les actions sensibles des administrateurs : qui a fait quoi, et quand.",
+    "loading": "Chargement du journal",
+    "filters": {
+      "member": "Membre concerné",
+      "allMembers": "Tous les membres",
+      "action": "Type d'action",
+      "allActions": "Toutes les actions"
+    },
+    "table": {
+      "date": "Date",
+      "actor": "Par",
+      "action": "Action",
+      "target": "Sur",
+      "details": "Détails"
+    },
+    "empty": {
+      "title": "Aucune action enregistrée",
+      "description": "Les actions des administrateurs apparaîtront ici au fur et à mesure."
+    },
+    "noMatch": {
+      "title": "Aucune action ne correspond",
+      "description": "Élargissez les filtres pour voir d'autres actions."
+    },
+    "pagination": {
+      "actions_one": "action",
+      "actions_other": "actions"
+    },
+    "yes": "oui",
+    "no": "non",
+    "actions": {
+      "balance": {
+        "adjusted": "Écriture manuelle sur un compte"
+      },
+      "payment": {
+        "status_changed": "Statut d'un paiement modifié",
+        "refund_recorded": "Remboursement enregistré"
+      },
+      "member": {
+        "role_changed": "Rôle d'un membre modifié",
+        "deactivated": "Compte désactivé",
+        "reactivated": "Compte réactivé",
+        "deleted": "Membre supprimé",
+        "invitation_resent": "Invitation renvoyée"
+      },
+      "settings": {
+        "changed": "Paramètres du club modifiés",
+        "maintenance_toggled": "Mode maintenance du site modifié"
+      },
+      "incident": {
+        "status_changed": "Statut d'un incident modifié",
+        "deleted": "Incident supprimé"
+      },
+      "role": {
+        "created": "Rôle créé",
+        "renamed": "Rôle renommé",
+        "deleted": "Rôle supprimé"
+      },
+      "reservation": {
+        "changed_for_member": "Réservation d'un membre modifiée",
+        "cancelled_for_member": "Réservation d'un membre annulée"
+      },
+      "flight": {
+        "record_amended": "Vol clôturé corrigé",
+        "record_deleted": "Vol clôturé supprimé"
+      },
+      "aircraft": {
+        "grounded": "Avion immobilisé",
+        "returned_to_service": "Avion remis en service",
+        "deleted": "Avion supprimé",
+        "retired": "Avion retiré de la flotte"
+      }
+    },
+    "targets": {
+      "member": "Membre",
+      "payment": "Paiement",
+      "settings": "Paramètres",
+      "incident": "Incident",
+      "role": "Rôle",
+      "reservation": "Réservation",
+      "flight": "Vol",
+      "aircraft": "Avion"
+    },
+    "fields": {
+      "amount": "Montant",
+      "direction": "Sens",
+      "method": "Moyen",
+      "reason": "Motif",
+      "paymentId": "Ligne de compte n°",
+      "upcomingReservations": "Réservations à venir",
+      "cancelledReservations": "Réservations annulées",
+      "refundedAmount": "Remboursé",
+      "keptReservationIds": "Réservations non annulées",
+      "upcomingCourses": "Cours planifiés",
+      "email": "Adresse e-mail",
+      "requested": "Statut demandé",
+      "status": "Statut",
+      "memberId": "Membre n°",
+      "refundedInTotal": "Remboursé au total",
+      "maintenanceActive": "Site en maintenance",
+      "created": "Création",
+      "upcomingInstructionReservations": "Vols à venir comme instructeur",
+      "cancelledInstructionReservations": "Vols d'instruction annulés",
+      "refundedToStudents": "Remboursé aux élèves",
+      "start": "Début",
+      "end": "Fin",
+      "clubName": "Nom de l'aéroclub",
+      "contactEmail": "E-mail de contact",
+      "contactPhone": "Téléphone de contact",
+      "address": "Adresse",
+      "closureDays": "Jours de fermeture",
+      "timeSlotDuration": "Durée d'un créneau (min)",
+      "reservationStartTime": "Début des réservations",
+      "reservationEndTime": "Fin des réservations",
+      "maintenanceDay": "Jour de maintenance",
+      "maintenanceDuration": "Durée de la maintenance (h)",
+      "pilotLicenses": "Licences acceptées",
+      "membershipFee": "Cotisation annuelle",
+      "flightHourRate": "Tarif de l'heure de vol",
+      "clubRules": "Règlement intérieur",
+      "allowGuestPilots": "Pilotes invités autorisés",
+      "guestPilotFee": "Frais pour un pilote invité",
+      "fuelManagement": "Gestion du carburant",
+      "fuelPrice": "Prix du carburant",
+      "isMaintenanceActive": "Mode maintenance",
+      "maintenanceMessage": "Message de maintenance",
+      "maintenanceTime": "Fin prévue de la maintenance",
+      "taxonomies": "Listes du club"
+    },
+    "values": {
+      "credit": "crédit",
+      "debit": "débit",
+      "cash": "espèces",
+      "cheque": "chèque",
+      "transfer": "virement",
+      "correction": "correction",
+      "pending": "en attente",
+      "failed": "échoué",
+      "cancelled": "annulé",
+      "completed": "payé",
+      "refunded": "remboursé",
+      "AVAILABLE": "disponible",
+      "UNAVAILABLE": "indisponible",
+      "RESERVATED": "réservé"
+    },
+    "targetNamed": "{{type}} : {{name}}",
+    "targetNumbered": "{{type}} n° {{id}}",
+    "detail": "{{label}} : {{value}}"
   }
 }

@@ -38,11 +38,26 @@ export const GET_COURSE_BY_ID = gql`
       status
       feedback
       rating
+      reservation {
+        id
+        start_time
+        end_time
+        aircraft {
+          id
+          registration_number
+        }
+      }
       competencies {
         id
         name
         description
         validated
+        validatedAt
+        validatedBy {
+          id
+          first_name
+          last_name
+        }
       }
       comments {
         id
@@ -76,11 +91,26 @@ export const GET_COURSE_BY_USER_ID = gql`
       status
       feedback
       rating
+      reservation {
+        id
+        start_time
+        end_time
+        aircraft {
+          id
+          registration_number
+        }
+      }
       competencies {
         id
         name
         description
         validated
+        validatedAt
+        validatedBy {
+          id
+          first_name
+          last_name
+        }
       }
       comments {
         id
@@ -156,6 +186,7 @@ export const VALIDATE_COMPETENCY = gql`
     validateCompetency(competencyId: $competencyId) {
       id
       validated
+      validatedAt
     }
   }
 `

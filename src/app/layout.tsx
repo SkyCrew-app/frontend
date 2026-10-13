@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import { headers } from 'next/headers';
 import SkipLink from "@/components/navigation/SkipLink"
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
@@ -35,17 +36,22 @@ export const viewport: Viewport = {
   themeColor: '#1e3a5f',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Set by the proxy for each request. Reading it also renders every page on
+  // request, which the Content-Security-Policy needs: a page built ahead of
+  // time could not carry the nonce on its scripts.
+  const nonce = (await headers()).get('x-nonce') ?? undefined;
+
   return (
     <html lang="fr" suppressHydrationWarning>
       <body
         className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}
       >
-        <Providers>
+        <Providers nonce={nonce}>
           <SkipLink />
           <div className='bg-background'>
             {children}

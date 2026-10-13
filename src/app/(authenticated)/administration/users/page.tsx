@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next"
 import { useToast } from "@/components/hooks/use-toast"
 import {
   CREATE_USER,
+  DEACTIVATE_MEMBER,
   DELETE_USER,
   GET_USERS,
   GET_USER_DETAILS,
@@ -26,6 +27,8 @@ import { UserDetailsDialog } from "@/components/admin-user/user-details"
 import { UserFilters } from "@/components/admin-user/user-filters"
 import { PaginationControls } from "@/components/admin-user/pagination-controls"
 import { AccountConfirmDialog } from "@/components/admin-user/account-confirm-dialog"
+import { DeactivateMemberDialog } from "@/components/admin-user/deactivate-member-dialog"
+import { formatMoney } from "@/lib/format"
 import { calendarDayToISOString } from "@/lib/datetime"
 import { apiErrorMessage } from "@/lib/api-error"
 
@@ -68,7 +71,18 @@ export default function AdministrationPage() {
   const [createUser, { loading: creating }] = useMutation(CREATE_USER)
   const [updateUser, { loading: updating }] = useMutation(UPDATE_USER)
   const [onAddLicense, { loading: addingLicense }] = useMutation(CREATE_LICENSE)
-  const [setUserActive, { loading: settingActive }] = useMutation(SET_USER_ACTIVE)
+  const [setUserActive] = useMutation(SET_USER_ACTIVE)
+  const [deactivateMember, { loading: deactivating }] = useMutation<{
+    deactivateMember: {
+      cancelledReservations: number
+      refundedAmount: number
+      keptReservationIds: number[]
+      upcomingInstructionReservations: number
+      cancelledInstructionReservations: number
+      refundedToStudents: number
+      upcomingCourses: number
+    }
+  }>(DEACTIVATE_MEMBER)
   const [deleteUser, { loading: deleting }] = useMutation(DELETE_USER)
   const [resendInvitation] = useMutation(RESEND_INVITATION)
   const [getUserDetails] = useLazyQuery<{ getUserDetails: UserDetails }>(GET_USER_DETAILS, {
@@ -130,15 +144,58 @@ export default function AdministrationPage() {
     }
   }
 
-  const applySetActive = async (user: User, active: boolean) => {
+  const reactivate = async (user: User) => {
     try {
-      await setUserActive({ variables: { id: Number(user.id), active } })
+      await setUserActive({ variables: { id: Number(user.id), active: true } })
       toast({
-        title: t(active ? "users.toast.reactivated.title" : "users.toast.deactivated.title"),
-        description: t(active ? "users.toast.reactivated.description" : "users.toast.deactivated.description", {
-          name: nameOf(user),
-        }),
+        title: t("users.toast.reactivated.title"),
+        description: t("users.toast.reactivated.description", { name: nameOf(user) }),
       })
+      refetch()
+    } catch (error) {
+      toast({
+        title: t("users.toast.accountFailed.title"),
+        description: apiErrorMessage(error) ?? t("users.toast.retryLater"),
+        variant: "destructive",
+      })
+    }
+  }
+
+  // The API closes the account and, when asked, cancels and refunds the bookings still to
+  // come; the toast says what it did with them.
+  const deactivate = async (user: User, cancelUpcomingBookings: boolean) => {
+    try {
+      const { data: result } = await deactivateMember({
+        variables: { id: Number(user.id), cancelUpcomingBookings },
+      })
+      const outcome = result?.deactivateMember
+      const kept = outcome?.keptReservationIds ?? []
+      const description = [
+        t("users.toast.deactivated.description", { name: nameOf(user) }),
+        outcome && outcome.cancelledReservations > 0
+          ? t("users.departure.cancelled", {
+              count: outcome.cancelledReservations,
+              amount: formatMoney(outcome.refundedAmount),
+            })
+          : null,
+        outcome && outcome.cancelledInstructionReservations > 0
+          ? t("users.departure.instructionCancelled", {
+              count: outcome.cancelledInstructionReservations,
+              amount: formatMoney(outcome.refundedToStudents),
+            })
+          : null,
+        kept.length > 0 ? t("users.departure.kept", { count: kept.length, ids: kept.join(", ") }) : null,
+        // Left on the schedule with an instructor who can no longer log in.
+        outcome && !cancelUpcomingBookings && outcome.upcomingInstructionReservations > 0
+          ? t("users.departure.instructionLeft", { count: outcome.upcomingInstructionReservations })
+          : null,
+        outcome && outcome.upcomingCourses > 0
+          ? t("users.departure.coursesLeft", { count: outcome.upcomingCourses })
+          : null,
+      ]
+        .filter(Boolean)
+        .join(" ")
+      toast({ title: t("users.toast.deactivated.title"), description })
       setAccountAction(null)
       refetch()
     } catch (error) {
@@ -153,7 +210,7 @@ export default function AdministrationPage() {
   // Deactivating closes the member's sessions: it is confirmed first. Reactivating is not.
   const handleSetActive = (user: User, active: boolean) => {
     if (active) {
-      void applySetActive(user, true)
+      void reactivate(user)
       return
     }
     setAccountAction({ kind: "deactivate", user })
@@ -199,9 +256,7 @@ export default function AdministrationPage() {
   }
 
   const confirmAccountAction = () => {
-    if (!accountAction) return
-    if (accountAction.kind === "delete") void handleDeleteUser(accountAction.user)
-    else void applySetActive(accountAction.user, false)
+    if (accountAction?.kind === "delete") void handleDeleteUser(accountAction.user)
   }
 
   const loadUserDetails = async (userId: string) => {
@@ -398,17 +453,25 @@ export default function AdministrationPage() {
         onSubmit={handleUpdateUser}
       />
 
-      {lastAccountAction && (
+      {lastAccountAction?.kind === "delete" && (
         <AccountConfirmDialog
-          open={accountAction !== null}
+          open={accountAction?.kind === "delete"}
           onOpenChange={(open) => !open && setAccountAction(null)}
-          title={t(`users.accountActions.${lastAccountAction.kind}Confirm.title`, {
-            name: nameOf(lastAccountAction.user),
-          })}
-          description={t(`users.accountActions.${lastAccountAction.kind}Confirm.description`)}
-          confirmLabel={t(`users.accountActions.${lastAccountAction.kind}Confirm.confirm`)}
-          pending={settingActive || deleting}
+          title={t("users.accountActions.deleteConfirm.title", { name: nameOf(lastAccountAction.user) })}
+          description={t("users.accountActions.deleteConfirm.description")}
+          confirmLabel={t("users.accountActions.deleteConfirm.confirm")}
+          pending={deleting}
           onConfirm={confirmAccountAction}
+        />
+      )}
+
+      {lastAccountAction?.kind === "deactivate" && (
+        <DeactivateMemberDialog
+          open={accountAction?.kind === "deactivate"}
+          onOpenChange={(open) => !open && setAccountAction(null)}
+          member={{ id: lastAccountAction.user.id, name: nameOf(lastAccountAction.user) }}
+          pending={deactivating}
+          onConfirm={(cancelUpcomingBookings) => void deactivate(lastAccountAction.user, cancelUpcomingBookings)}
         />
       )}
 

@@ -4,7 +4,7 @@ import Link from "next/link"
 import { useTranslation } from "react-i18next"
 import { useParams } from "next/navigation"
 import { useMutation, useQuery } from "@apollo/client"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Plane } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -19,16 +19,19 @@ import { CommentsCard, type CourseCommentItem } from "@/components/courses/Comme
 import { RatingCard } from "@/components/courses/RatingCard"
 import {
   counterpartRoleLabel,
+  courseBookingHref,
   courseCounterpart,
+  courseDisplayStatus,
   courseHours,
-  courseStatus,
+  isAwaitingConfirmation,
   personInitials,
   personName,
+  type CourseBooking,
   type CoursePerson,
 } from "@/components/courses/course-helpers"
 import { ADD_COMMENT, ADD_COMPETENCY, GET_COURSE_BY_ID, RATE_COURSE, VALIDATE_COMPETENCY } from "@/graphql/course"
 import { apiRefusal } from "@/lib/api-refusal"
-import { formatDate } from "@/lib/format"
+import { formatDate, formatTime } from "@/lib/format"
 import { learningRoutes } from "@/lib/learning-navigation"
 import { isAdministrator } from "@/lib/roles"
 
@@ -43,6 +46,7 @@ interface CourseDetail {
   rating: number | null
   competencies: Competency[]
   comments: CourseCommentItem[] | null
+  reservation?: CourseBooking | null
 }
 
 function Participant({ person, role }: { person: CoursePerson; role: string }) {
@@ -149,7 +153,14 @@ export default function CourseDetails() {
   const isAdmin = isAdministrator(userData)
   // Like the API: nothing is rated or validated on a course that is cancelled or has not started.
   const tookPlace = course !== null && course.status !== "CANCELED" && new Date(course.startTime) <= new Date()
-  const status = course ? courseStatus(course.status) : null
+  const status = course ? courseDisplayStatus(course) : null
+  // An aircraft is booked for a planned course that has not started, by one of its two participants.
+  const canBookAircraft =
+    course !== null &&
+    !course.reservation &&
+    course.status === "SCHEDULED" &&
+    new Date(course.startTime) > new Date() &&
+    (givesCourse || takesCourse)
   const counterpart = course ? courseCounterpart(course, userId) : null
 
   return (
@@ -222,7 +233,35 @@ export default function CourseDetails() {
                     <dt className="text-muted-foreground">{t("courses.schedule")}</dt>
                     <dd className="font-medium tabular-nums">{courseHours(course)}</dd>
                   </div>
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-muted-foreground">{t("common:labels.aircraft")}</dt>
+                    <dd className="text-right font-medium">
+                      {course.reservation?.aircraft ? (
+                        <>
+                          {course.reservation.aircraft.registration_number}
+                          <span className="block text-xs font-normal tabular-nums text-muted-foreground">
+                            {formatTime(course.reservation.start_time)} – {formatTime(course.reservation.end_time)}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="font-normal text-muted-foreground">{t("courses.detail.noAircraft")}</span>
+                      )}
+                    </dd>
+                  </div>
                 </dl>
+                {canBookAircraft && (
+                  <Button variant="outline" size="sm" asChild className="w-full">
+                    <Link href={courseBookingHref(course)}>
+                      <Plane className="h-4 w-4" />
+                      {t("courses.detail.bookAircraft")}
+                    </Link>
+                  </Button>
+                )}
+                {isAwaitingConfirmation(course) && (
+                  <p className="text-sm text-muted-foreground">
+                    {givesCourse || isAdmin ? t("courses.detail.toConfirmInstructor") : t("courses.detail.toConfirmStudent")}
+                  </p>
+                )}
                 <div className="space-y-3 border-t pt-4">
                   <Participant person={course.instructor} role={givesCourse ? t("courses.detail.instructorYou") : t("common:labels.instructor")} />
                   <Participant person={course.student} role={takesCourse ? t("courses.detail.studentYou") : t("common:labels.student")} />

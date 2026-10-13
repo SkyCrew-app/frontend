@@ -8,11 +8,23 @@
 export const isNextAsset = (pathname: string) => pathname.startsWith("/_next/")
 
 /**
- * Lifetime, in seconds, of the session cookie the proxy sends back: what is
- * left of the token it carries, so the cookie never outlives nor cuts short
- * the session. 0 for a token that is expired or has no expiry.
+ * Files of public/ and the icon of the site: the same for everyone, served
+ * without a session (the browser asks for the manifest, the icons and the
+ * offline worker from the sign-in page). Exact names and one folder of
+ * pictures: no page lives under these addresses. Keep in line with public/
+ * (the test of this file reads the folder).
  */
-export const sessionCookieMaxAge = (expiresAt: unknown, now: number = Date.now()): number => {
+const PUBLIC_FILES = new Set(["/favicon.ico", "/manifest.json", "/placeholder.svg", "/robots.txt", "/sw.js"])
+const PUBLIC_FILE_PATTERNS = [/^\/swe-worker-[\w-]+\.js$/, /^\/images\/[\w.-]+\.(?:png|svg|jpe?g|webp|gif|ico)$/]
+
+export const isPublicFile = (pathname: string) =>
+  PUBLIC_FILES.has(pathname) || PUBLIC_FILE_PATTERNS.some((pattern) => pattern.test(pathname))
+
+/**
+ * Seconds left before a session token expires; 0 for a token that is expired
+ * or has no expiry.
+ */
+export const secondsLeft = (expiresAt: unknown, now: number = Date.now()): number => {
   if (typeof expiresAt !== "number" || !Number.isFinite(expiresAt)) return 0
   return Math.max(0, Math.floor(expiresAt - now / 1000))
 }
@@ -26,7 +38,8 @@ const EVERY_MEMBER = "*"
 
 /**
  * The administration section belongs to administrators, except the pages the
- * club's access rules give to other roles. One list for the proxy, the menu
+ * club's access rules give to other roles. A page that is not listed here, the
+ * action log (/administration/actions) for instance, is for administrators only. One list for the proxy, the menu
  * and the command palette; the API applies the same rules to the data itself.
  */
 const ADMINISTRATION_PAGES_FOR_OTHERS: Record<string, readonly string[]> = {

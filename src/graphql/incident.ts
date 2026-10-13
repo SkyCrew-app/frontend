@@ -40,6 +40,7 @@ const INCIDENT_FIELDS = `
     model
     availability_status
   }
+  hasFlight
   flight {
     id
     origin_icao

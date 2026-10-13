@@ -22,7 +22,9 @@
     "newReservation": "Nouvelle réservation",
     "untitled": "Réservation",
     "flightCategory": "Catégorie de vol",
-    "pricePaid": "Prix payé"
+    "pricePaid": "Prix payé",
+    "withInstructor": "avec {{name}}",
+    "instructorNamed": "Instructeur : {{name}}"
   },
   "calendar": {
     "title": "Calendrier des réservations",
@@ -80,7 +82,18 @@
       "timeMissing": "Indiquez l'heure de début et l'heure de fin.",
       "timeOrder": "L'heure de fin doit être après l'heure de début.",
       "category": "Veuillez sélectionner une catégorie de vol.",
-      "past": "Une réservation ne peut pas commencer dans le passé."
+      "past": "Une réservation ne peut pas commencer dans le passé.",
+      "instructor": "Veuillez choisir un instructeur."
+    },
+    "instructor": {
+      "label": "Avec un instructeur",
+      "none": "Sans instructeur",
+      "placeholder": "Choisir un instructeur",
+      "requiredHint": "Sans licence valide, vous volez avec un instructeur : choisissez celui de ce vol. Vous payez l'avion ; l'instructeur est prévenu et peut décliner.",
+      "optionalHint": "Facultatif. Avec un instructeur, le vol devient un vol d'instruction ; l'instructeur est prévenu et peut décliner."
+    },
+    "course": {
+      "note": "Réservation de l'avion du cours de {{student}} avec {{instructor}}. L'élève est le pilote du vol : il paie l'avion et reçoit la confirmation."
     }
   },
   "detail": {
@@ -91,7 +104,14 @@
       "description": "La réservation de {{aircraft}} du {{date}}, de {{start}} à {{end}}, sera définitivement supprimée et le créneau redeviendra libre.",
       "action": "Supprimer la réservation"
     },
-    "startedHint": "Cette réservation a commencé : elle ne peut plus être modifiée, et seul un administrateur peut l'annuler."
+    "startedHint": "Cette réservation a commencé : elle ne peut plus être modifiée, et seul un administrateur peut l'annuler.",
+    "decline": "Décliner le vol",
+    "instructorHint": "Vous êtes l'instructeur de ce vol. Vous pouvez le décliner avant son début : la réservation est annulée et l'élève est remboursé.",
+    "declineConfirm": {
+      "title": "Décliner ce vol d'instruction ?",
+      "description": "La réservation de {{aircraft}} du {{date}}, de {{start}} à {{end}}, sera annulée. L'élève sera prévenu et remboursé, et le créneau redeviendra libre.",
+      "action": "Décliner le vol"
+    }
   },
   "toast": {
     "slotUnavailable": {
@@ -166,7 +186,9 @@
     "tabs": {
       "reservations": "Réservations",
       "templates": "Modèles",
-      "templatesWithTotal": "Modèles ({{total}})"
+      "templatesWithTotal": "Modèles ({{total}})",
+      "instruction": "Comme instructeur",
+      "instructionWithTotal": "Comme instructeur ({{total}})"
     },
     "pager": {
       "singular": "réservation",
@@ -207,6 +229,15 @@
       "description": "La réservation de {{aircraft}} du {{date}}, de {{start}} à {{end}}, sera annulée : elle disparaîtra de vos réservations et le créneau redeviendra libre.",
       "keep": "Conserver la réservation",
       "action": "Annuler la réservation"
+    },
+    "instruction": {
+      "intro": "Les vols d'instruction réservés avec vous. Vous pouvez décliner un vol avant son début : l'élève est alors remboursé.",
+      "cardSubtitle": "Vol d'instruction",
+      "decline": "Décliner le vol",
+      "empty": {
+        "title": "Aucun vol d'instruction",
+        "description": "Les réservations où un membre vous choisit comme instructeur apparaîtront ici."
+      }
     }
   },
   "template": {

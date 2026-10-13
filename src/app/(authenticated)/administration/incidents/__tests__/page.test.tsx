@@ -59,6 +59,7 @@ const incidents: Incident[] = [
     resolved_at: null,
     resolved_by: null,
     aircraft: { id: 1, registration_number: 'F-ABCD', model: 'Cessna 172', availability_status: 'UNAVAILABLE' },
+    hasFlight: true,
     flight: {
       id: 42,
       origin_icao: 'LFPG',
@@ -84,6 +85,8 @@ const incidents: Incident[] = [
     resolved_at: null,
     resolved_by: null,
     aircraft: { id: 2, registration_number: 'F-WXYZ', model: 'Piper PA-28', availability_status: 'AVAILABLE' },
+    // A flight exists, but the reader may not see it (a technician).
+    hasFlight: true,
     flight: null,
     user: marc,
   },
@@ -101,6 +104,7 @@ const incidents: Incident[] = [
     resolved_at: '2026-08-03T10:15:00',
     resolved_by: admin,
     aircraft: { id: 1, registration_number: 'F-ABCD', model: 'Cessna 172', availability_status: 'UNAVAILABLE' },
+    hasFlight: false,
     flight: null,
     user: marc,
   },
@@ -263,10 +267,16 @@ describe('IncidentsPage', () => {
     await screen.findByText('Crevaison du pneu avant au roulage');
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    const consoleError = jest.spyOn(console, 'error');
     await user.click(screen.getByText('Crevaison du pneu avant au roulage'));
 
     const title = `Incident du ${date('2026-10-05T14:30:00')} sur F-ABCD`;
     const dialog = await screen.findByRole('dialog', { name: title });
+    // The panel is valid HTML: React reports a block inside a paragraph, which
+    // the browser would repair by moving it out.
+    const nesting = consoleError.mock.calls.filter((call) => /cannot be a descendant|cannot contain a nested/.test(String(call[0])));
+    expect(nesting).toEqual([]);
+    consoleError.mockRestore();
     const details = within(dialog);
     expect(details.getByText(dateTime('2026-10-05T14:30:00'))).toBeInTheDocument();
     expect(details.getByText('Mécanique')).toBeInTheDocument();
@@ -299,6 +309,7 @@ describe('IncidentsPage', () => {
       await screen.findByRole('dialog', { name: `Incident du ${date('2026-08-02T16:00:00')} sur F-ABCD` }),
     );
     expect(resolved.getByText('Aucun vol associé')).toBeInTheDocument();
+    expect(resolved.queryByText(/Un vol est associé à cet incident/)).not.toBeInTheDocument();
     expect(resolved.getByText(dateTime('2026-08-03T10:15:00'))).toBeInTheDocument();
     expect(resolved.getByText('Anne Durand')).toBeInTheDocument();
     expect(resolved.getByLabelText('Note de résolution')).toHaveValue('Aucun dommage après inspection');
@@ -314,6 +325,14 @@ describe('IncidentsPage', () => {
     const dialog = await screen.findByRole('dialog', {
       name: `Incident du ${date('2026-09-20T09:00:00')} sur F-WXYZ`,
     });
+    // Its flight exists but is withheld from the reader: the panel does not say there is none.
+    expect(
+      within(dialog).getByText(
+        'Un vol est associé à cet incident. Son détail est réservé au pilote, à ses instructeurs et aux administrateurs.',
+      ),
+    ).toBeInTheDocument();
+    expect(within(dialog).queryByText('Aucun vol associé')).not.toBeInTheDocument();
+    expect(within(dialog).queryByRole('link', { name: /Voir le plan de vol/ })).not.toBeInTheDocument();
     await user.click(within(dialog).getAllByRole('button', { name: 'Fermer' }).at(-1)!);
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(mockReplace).toHaveBeenCalledWith('/administration/incidents', { scroll: false });

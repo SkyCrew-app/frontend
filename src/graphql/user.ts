@@ -316,3 +316,71 @@ export const RESET_PASSWORD = gql`
     resetPassword(token: $token, newPassword: $newPassword)
   }
 `;
+
+// What a member still has ahead of them, shown before their account is closed.
+export const GET_MEMBER_COMMITMENTS = gql`
+  query MemberCommitments($id: Int!) {
+    memberCommitments(id: $id) {
+      upcomingReservations {
+        id
+        start_time
+        end_time
+        charged_amount
+        aircraft {
+          id
+          registration_number
+        }
+      }
+      upcomingInstructionReservations {
+        id
+        start_time
+        end_time
+        charged_amount
+        aircraft {
+          id
+          registration_number
+        }
+        user {
+          id
+          first_name
+          last_name
+        }
+      }
+      upcomingCourses {
+        id
+        startTime
+        instructor {
+          id
+          first_name
+          last_name
+        }
+        student {
+          id
+          first_name
+          last_name
+        }
+      }
+    }
+  }
+`;
+
+// Deactivates a member and, when asked, cancels and refunds the bookings
+// they still had: the API does both, with the ordinary cancellation.
+export const DEACTIVATE_MEMBER = gql`
+  mutation DeactivateMember($id: Int!, $cancelUpcomingBookings: Boolean!) {
+    deactivateMember(id: $id, cancelUpcomingBookings: $cancelUpcomingBookings) {
+      user {
+        id
+        is_active
+      }
+      upcomingReservations
+      cancelledReservations
+      refundedAmount
+      keptReservationIds
+      upcomingInstructionReservations
+      cancelledInstructionReservations
+      refundedToStudents
+      upcomingCourses
+    }
+  }
+`;

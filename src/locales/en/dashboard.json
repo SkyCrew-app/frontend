@@ -76,6 +76,10 @@
       "partlyCloudy": "Sunny spells",
       "cloudy": "Cloudy"
     },
+    "unavailable": {
+      "title": "Weather unavailable",
+      "description": "No weather data for this aerodrome at the moment."
+    },
     "empty": {
       "title": "No preferred aerodrome",
       "description": "Set your aerodrome in your profile to see its weather here.",

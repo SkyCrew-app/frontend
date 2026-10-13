@@ -109,19 +109,50 @@ describe('WeatherWidget', () => {
     expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Météo actualisée' }));
   });
 
-  it('propose de réessayer quand la météo n’est pas disponible', async () => {
+  // The API answers "nothing" when the club has no weather provider (no key)
+  // or when the provider is silent: an empty card, not a failed load.
+  it('reste discrètement vide quand l’API n’a pas de météo à donner', async () => {
     renderWidget([aerodrome, weather(null)]);
 
-    expect(await screen.findByRole('button', { name: /réessayer/i })).toBeInTheDocument();
+    expect(await screen.findByText('Météo indisponible')).toBeInTheDocument();
+    expect(screen.queryByText('Chargement impossible')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /réessayer/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(mockToast).not.toHaveBeenCalled();
+    expect(console.error).not.toHaveBeenCalled();
   });
 
-  it('propose de réessayer quand l’aérodrome est introuvable', async () => {
+  it('reste discrètement vide quand l’aérodrome est inconnu de l’API', async () => {
     renderWidget([
       { request: { query: AERODROME_BY_ICAO, variables: { icao: 'ZZZZ' } }, result: { data: { aerodromeByIcao: null } } },
     ], 'ZZZZ');
 
+    expect(await screen.findByText('Météo indisponible')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /réessayer/i })).not.toBeInTheDocument();
+    expect(console.error).not.toHaveBeenCalled();
+  });
+
+  it('répond sans alarme à une actualisation quand il n’y a toujours rien', async () => {
+    renderWidget([aerodrome, weather(null), weather(null)]);
+    await screen.findByText('Météo indisponible');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Actualiser la météo' }));
+
+    await waitFor(() => expect(mockToast).toHaveBeenCalledWith({
+      title: 'Météo indisponible',
+      description: 'Aucune donnée météo pour cet aérodrome pour le moment.',
+    }));
+  });
+
+  it('propose de réessayer quand l’API ne répond pas', async () => {
+    renderWidget([
+      aerodrome,
+      { request: { query: WEATHER_AT, variables: { latitude: 49.01, longitude: 2.55 } }, error: new Error('Failed to fetch') },
+    ]);
+
     expect(await screen.findByRole('button', { name: /réessayer/i })).toBeInTheDocument();
+    expect(screen.queryByText('Météo indisponible')).not.toBeInTheDocument();
+    expect(mockToast).not.toHaveBeenCalled();
   });
 
   it('invite à choisir un aérodrome quand le profil n’en a pas', async () => {

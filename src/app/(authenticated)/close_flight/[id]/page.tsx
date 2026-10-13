@@ -423,6 +423,9 @@ export default function FlightRecap() {
   }
 
   const aircraft = flight.reservation?.aircraft
+  // The instructor on board is the one of the booking; a closed flight keeps its own.
+  const onBoard = flight.instructor ?? flight.reservation?.instructor
+  const instructor = [onBoard?.first_name, onBoard?.last_name].filter(Boolean).join(" ")
   const pilotName = [flight.user?.first_name, flight.user?.last_name].filter(Boolean).join(" ")
 
   return (
@@ -515,6 +518,13 @@ export default function FlightRecap() {
             <dl className="grid grid-cols-2 gap-4">
               <Fact label={t("common:labels.aircraft")} value={aircraft?.registration_number || "—"} hint={aircraft?.model} />
               <Fact label={t("common:labels.pilot")} value={pilotName || "—"} />
+              {instructor && (
+                <Fact
+                  label={t("common:labels.instructor")}
+                  value={instructor}
+                  hint={t("closeFlight.plan.dualHint")}
+                />
+              )}
               <Fact label={t("closeFlight.plan.plannedDeparture")} value={formatDateTime(flight.reservation?.start_time)} />
               <Fact label={t("closeFlight.plan.flightType")} value={flightTypeLabel(flight.flight_type)} />
               <Fact

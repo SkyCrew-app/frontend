@@ -3,7 +3,13 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import userEvent from '@testing-library/user-event';
 import { MockedProvider, type MockedResponse } from '@apollo/client/testing';
 import ReservationCalendar from '../page';
-import { CREATE_RESERVATION, DELETE_RESERVATION, GET_FILTERED_RESERVATIONS } from '@/graphql/reservation';
+import {
+  CREATE_RESERVATION,
+  DELETE_RESERVATION,
+  GET_BOOKABLE_INSTRUCTORS,
+  GET_FILTERED_RESERVATIONS,
+  GET_MAY_BOOK_WITHOUT_INSTRUCTOR,
+} from '@/graphql/reservation';
 import { GET_AIRCRAFTS } from '@/graphql/planes';
 import { GET_SETTINGS } from '@/graphql/settings';
 import { GET_ME, GET_USER_BY_EMAIL } from '@/graphql/user';
@@ -56,6 +62,7 @@ const existingReservation = {
   flight_category: 'TRAINING',
   charged_amount: 300,
   user: { id: OTHER_USER_ID, first_name: 'Camille', last_name: null },
+  instructor: null as { id: number; first_name: string; last_name: string } | null,
   aircraft: { id: 1, registration_number: 'F-ABCD' },
   flights: [],
 };
@@ -71,6 +78,7 @@ const createdReservation = {
   flight_category: '',
   charged_amount: 300,
   user: { id: USER_ID, first_name: 'Alex', last_name: null },
+  instructor: null,
   aircraft: { id: 2, registration_number: 'F-EFGH' },
   flights: [],
 };
@@ -486,7 +494,9 @@ describe('ReservationCalendar', () => {
     expect(createVariables).not.toHaveBeenCalled();
     expect(screen.getByRole('dialog', { name: 'Créer une réservation' })).toBeInTheDocument();
 
-    await user.click(form.getByRole('combobox'));
+    // Two lists now: the instructor (none by default) and the category.
+    expect(form.getByRole('combobox', { name: /Avec un instructeur/ })).toHaveTextContent('Sans instructeur');
+    await user.click(form.getByRole('combobox', { name: /Catégorie de vol/ }));
     await user.click(await screen.findByRole('option', { name: 'Local' }));
     expect(form.queryByRole('alert')).not.toBeInTheDocument();
     await user.click(form.getByRole('button', { name: 'Créer la réservation' }));
@@ -537,6 +547,198 @@ describe('ReservationCalendar', () => {
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(screen.queryByRole('dialog', { name: 'Créer une réservation' })).not.toBeInTheDocument();
     getFreeCells('F-ABCD').forEach((cell) => expect(cell).not.toHaveClass('bg-primary/80'));
+  });
+
+  describe('avec un instructeur', () => {
+    const instructorsMock: MockedResponse = {
+      request: { query: GET_BOOKABLE_INSTRUCTORS },
+      result: { data: { bookableInstructors: [{ id: 3, first_name: 'Marie', last_name: 'Laurent' }] } },
+    };
+    // The member has no valid licence: the API says they cannot book without an instructor.
+    const studentRightsMock: MockedResponse = {
+      request: { query: GET_MAY_BOOK_WITHOUT_INSTRUCTOR },
+      result: { data: { mayBookWithoutInstructor: false } },
+    };
+    const instruction = {
+      ...existingReservation,
+      id: 5,
+      purpose: 'Leçon 13',
+      flight_category: 'INSTRUCTION',
+      instructor: { id: USER_ID, first_name: 'Alex', last_name: 'Martin' },
+    };
+    const creation = (createVariables: jest.Mock): MockedResponse => ({
+      request: { query: CREATE_RESERVATION },
+      variableMatcher: (variables) => {
+        createVariables(variables);
+        return true;
+      },
+      result: {
+        data: {
+          createReservation: {
+            id: 2,
+            start_time: createdReservation.start_time,
+            end_time: createdReservation.end_time,
+            purpose: createdReservation.purpose,
+            aircraft: createdReservation.aircraft,
+            user: createdReservation.user,
+          },
+        },
+      },
+    });
+
+    it("doit exiger un instructeur de l'élève sans licence, puis l'envoyer avec la réservation", async () => {
+      jest.setSystemTime(EARLY_MORNING);
+      const user = userEvent.setup();
+      const createVariables = jest.fn();
+      const userLoaded = jest.fn(() => userMock.result as { data: Record<string, unknown> });
+
+      renderPage([
+        meMock,
+        { ...userMock, result: userLoaded },
+        settingsMock,
+        aircraftsMock,
+        instructorsMock,
+        studentRightsMock,
+        reservationsMock(TODAY_STR, TOMORROW_STR, [existingReservation]),
+        creation(createVariables),
+        reservationsMock(TODAY_STR, TOMORROW_STR, [existingReservation, createdReservation]),
+      ]);
+      await screen.findByRole('table');
+      await waitFor(() => expect(userLoaded).toHaveBeenCalled());
+
+      dragOverFreeCells('F-EFGH', 1, 2);
+      const form = within(await screen.findByRole('dialog', { name: 'Créer une réservation' }));
+      expect(await form.findByText(/Sans licence valide, vous volez avec un instructeur/)).toBeInTheDocument();
+
+      // Without an instructor nothing is sent.
+      await user.click(form.getByRole('button', { name: 'Créer la réservation' }));
+      expect(await form.findByText('Veuillez choisir un instructeur.')).toBeInTheDocument();
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      expect(createVariables).not.toHaveBeenCalled();
+
+      await user.click(form.getByRole('combobox', { name: /Avec un instructeur/ }));
+      await user.click(await screen.findByRole('option', { name: 'Marie Laurent' }));
+      await user.click(form.getByRole('button', { name: 'Créer la réservation' }));
+
+      await waitFor(() => expect(createVariables).toHaveBeenCalledTimes(1));
+      expect(createVariables.mock.calls[0][0].input).toMatchObject({
+        aircraft_id: 2,
+        user_id: USER_ID,
+        instructor_id: 3,
+        flight_category: 'INSTRUCTION',
+      });
+    });
+
+    it("ne doit envoyer aucun instructeur pour une réservation qui n'en a pas", async () => {
+      jest.setSystemTime(EARLY_MORNING);
+      const user = userEvent.setup();
+      const createVariables = jest.fn();
+      const userLoaded = jest.fn(() => userMock.result as { data: Record<string, unknown> });
+
+      renderPage([
+        meMock,
+        { ...userMock, result: userLoaded },
+        settingsMock,
+        aircraftsMock,
+        instructorsMock,
+        reservationsMock(TODAY_STR, TOMORROW_STR, [existingReservation]),
+        creation(createVariables),
+        reservationsMock(TODAY_STR, TOMORROW_STR, [existingReservation, createdReservation]),
+      ]);
+      await screen.findByRole('table');
+      await waitFor(() => expect(userLoaded).toHaveBeenCalled());
+
+      dragOverFreeCells('F-EFGH', 1, 2);
+      const form = within(await screen.findByRole('dialog', { name: 'Créer une réservation' }));
+      await user.click(form.getByRole('combobox', { name: /Catégorie de vol/ }));
+      await user.click(await screen.findByRole('option', { name: 'Local' }));
+      await user.click(form.getByRole('button', { name: 'Créer la réservation' }));
+
+      await waitFor(() => expect(createVariables).toHaveBeenCalledTimes(1));
+      expect(createVariables.mock.calls[0][0].input).not.toHaveProperty('instructor_id');
+      expect(createVariables.mock.calls[0][0].input).not.toHaveProperty('course_id');
+    });
+
+    it("doit montrer l'instructeur dans la grille et laisser l'instructeur du vol le décliner", async () => {
+      jest.setSystemTime(EARLY_MORNING);
+      const user = userEvent.setup();
+      const deleted = jest.fn(() => ({ data: { deleteReservation: true } }));
+
+      renderPage([
+        meMock,
+        userMock,
+        settingsMock,
+        aircraftsMock,
+        reservationsMock(TODAY_STR, TOMORROW_STR, [instruction]),
+        { request: { query: DELETE_RESERVATION, variables: { id: 5 } }, result: deleted },
+        reservationsMock(TODAY_STR, TOMORROW_STR, []),
+      ]);
+
+      await screen.findByRole('table');
+      // The pilot and the instructor, on the block of the booking.
+      const block = within(getRowFor('F-ABCD')).getByRole('button', { name: /Leçon 13/ });
+      expect(block).toHaveTextContent('Camille · avec Alex Martin');
+
+      await user.click(block);
+      const detail = within(await screen.findByRole('dialog', { name: 'Détails de la réservation' }));
+      // Offered once the signed-in member is known to be the instructor of the booking.
+      expect(await detail.findByRole('button', { name: 'Décliner le vol' })).toBeInTheDocument();
+      expect(detail.getByText('Alex Martin')).toBeInTheDocument();
+      // Changing the booking stays its holder's.
+      expect(detail.queryByRole('button', { name: 'Modifier' })).not.toBeInTheDocument();
+
+      await user.click(detail.getByRole('button', { name: 'Décliner le vol' }));
+      const confirmation = within(await screen.findByRole('alertdialog'));
+      expect(confirmation.getByText("Décliner ce vol d'instruction ?")).toBeInTheDocument();
+      expect(deleted).not.toHaveBeenCalled();
+      await user.click(confirmation.getByRole('button', { name: 'Décliner le vol' }));
+
+      await waitFor(() => expect(deleted).toHaveBeenCalledTimes(1));
+    });
+
+    it("doit réserver l'avion d'un cours : son jour, son élève et son instructeur", async () => {
+      jest.setSystemTime(EARLY_MORNING);
+      const user = userEvent.setup();
+      const createVariables = jest.fn();
+      const userLoaded = jest.fn(() => userMock.result as { data: Record<string, unknown> });
+      window.history.pushState(
+        null,
+        '',
+        `/reservations?course_id=12&date=${AFTER_TOMORROW_STR}&start_time=09%3A00&end_time=11%3A00&flight_category=INSTRUCTION&instructor_id=${USER_ID}&instructor=Alex+Martin&student=Emma+Girard`,
+      );
+
+      try {
+        renderPage([
+          meMock,
+          { ...userMock, result: userLoaded },
+          settingsMock,
+          aircraftsMock,
+          reservationsMock(AFTER_TOMORROW_STR, '2024-10-26', []),
+          creation(createVariables),
+          reservationsMock(AFTER_TOMORROW_STR, '2024-10-26', []),
+        ]);
+
+        const form = within(await screen.findByRole('dialog', { name: 'Nouvelle réservation' }));
+        expect(form.getByRole('note')).toHaveTextContent(
+          "Réservation de l'avion du cours de Emma Girard avec Alex Martin.",
+        );
+        expect(form.queryByRole('combobox', { name: /Avec un instructeur/ })).not.toBeInTheDocument();
+
+        await user.click(form.getByRole('combobox', { name: /Avion/ }));
+        await user.click(await screen.findByRole('option', { name: /F-EFGH/ }));
+        await waitFor(() => expect(userLoaded).toHaveBeenCalled());
+        await user.click(form.getByRole('button', { name: 'Créer la réservation' }));
+
+        await waitFor(() => expect(createVariables).toHaveBeenCalledTimes(1));
+        const { input } = createVariables.mock.calls[0][0];
+        // The API takes the student and the instructor from the course.
+        expect(input).toMatchObject({ aircraft_id: 2, course_id: 12, flight_category: 'INSTRUCTION' });
+        expect(input).not.toHaveProperty('instructor_id');
+        expect(new Date(input.start_time).getTime()).toBe(new Date(2024, 9, 25, 9, 0).getTime());
+      } finally {
+        window.history.pushState(null, '', '/');
+      }
+    });
   });
 
   it("doit ouvrir le formulaire prérempli quand on arrive depuis un modèle de réservation", async () => {

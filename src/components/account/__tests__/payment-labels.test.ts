@@ -55,6 +55,21 @@ describe("lignes du compte", () => {
     expect(paymentMethodLabel("cheque")).toBe("Chèque")
   })
 
+  // A chargeback the club won used not to exist as a line: the member stayed debited.
+  it("recrédite une contestation de paiement gagnée", () => {
+    const history = [
+      line("top_up", 200),
+      // The bank takes the top-up back, then rules for the club.
+      line("provider_refund", 200, { payment_method: "stripe" }),
+      line("dispute_won", 200, { payment_method: "stripe" }),
+    ]
+
+    expect(history.map(accountLineSign)).toEqual([1, -1, 1])
+    expect(accountTotals(history)).toEqual({ toppedUp: 200, spent: 0 })
+    expect(toTransactions(history).reduce((sum, row) => sum + row.sign * row.amount, 0)).toBe(200)
+    expect(accountLineLabel("dispute_won")).toBe("Contestation de paiement gagnée")
+  })
+
   it("garde les anciennes lignes lisibles", () => {
     // Before kinds existed: read from the payment method.
     expect(accountLineKind({ payment_method: "account_balance" })).toBe("booking")

@@ -113,15 +113,16 @@ describe('PasswordForm', () => {
     expect(toast).not.toHaveBeenCalled();
   });
 
-  it('doit exiger un nouveau mot de passe de 8 caractères au moins', async () => {
+  // The rule was 8 characters.
+  it('doit exiger un nouveau mot de passe de 10 caractères au moins', async () => {
     const user = userEvent.setup();
     renderForm();
 
-    await fillForm(user, 'ancienMotDePasse', 'court', 'court');
+    await fillForm(user, 'ancienMotDePasse', 'neuf-cara', 'neuf-cara');
     await submit(user);
 
     expect(
-      await screen.findByText('Le nouveau mot de passe doit contenir au moins 8 caractères.'),
+      await screen.findByText('Le nouveau mot de passe doit contenir au moins 10 caractères.'),
     ).toBeInTheDocument();
     expect(toast).not.toHaveBeenCalled();
   });

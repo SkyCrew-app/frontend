@@ -22,12 +22,17 @@ import { Progress } from "@/components/ui/progress"
 import { Textarea } from "@/components/ui/textarea"
 import { EmptyState } from "@/components/layout/EmptyState"
 import { percentage } from "@/lib/learning-progress"
+import { formatDate } from "@/lib/format"
+import { personName } from "@/components/courses/course-helpers"
 
 export interface Competency {
   id: number
   name: string
   description: string
   validated: boolean
+  /** Who validated it and when; empty on competencies validated before this was recorded. */
+  validatedAt?: string | null
+  validatedBy?: { id: number | string; first_name?: string | null; last_name?: string | null } | null
 }
 
 interface CompetenciesCardProps {
@@ -141,6 +146,16 @@ export function CompetenciesCard({
                   <p className="text-sm font-medium">{competency.name}</p>
                   {competency.description && (
                     <p className="text-sm text-muted-foreground">{competency.description}</p>
+                  )}
+                  {competency.validated && competency.validatedAt && (
+                    <p className="text-xs text-muted-foreground">
+                      {competency.validatedBy
+                        ? t("courses.competencies.validatedBy", {
+                            name: personName(competency.validatedBy),
+                            date: formatDate(competency.validatedAt),
+                          })
+                        : t("courses.competencies.validatedOn", { date: formatDate(competency.validatedAt) })}
+                    </p>
                   )}
                 </div>
                 {competency.validated ? (
