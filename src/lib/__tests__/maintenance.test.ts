@@ -7,6 +7,7 @@ import {
   maintenanceFileUrl,
   maintenanceStatus,
   maintenanceTechnicianLabel,
+  maintenanceTechnicianName,
   maintenanceTypeLabel,
   toMaintenanceInput,
   validateMaintenanceAttachments,
@@ -190,5 +191,14 @@ describe('libellés des maintenances', () => {
       'Marie · marie@example.com',
     );
     expect(maintenanceTechnicianLabel({ email: 'marie@example.com' })).toBe('marie@example.com');
+  });
+
+  it('affiche le prénom et le nom du technicien, à défaut son e-mail', () => {
+    expect(maintenanceTechnicianName({ first_name: 'Marie', last_name: 'Curie', email: 'marie@example.com' })).toBe(
+      'Marie Curie',
+    );
+    expect(maintenanceTechnicianName({ first_name: 'Marie', last_name: null, email: 'marie@example.com' })).toBe('Marie');
+    expect(maintenanceTechnicianName({ email: 'marie@example.com' })).toBe('marie@example.com');
+    expect(maintenanceTechnicianName({})).toBe('—');
   });
 });

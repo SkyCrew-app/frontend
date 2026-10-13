@@ -21,66 +21,70 @@ import {
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useQuery } from "@apollo/client"
+import { useTranslation } from "react-i18next"
 import { GET_USER_PROFILE } from "@/graphql/user"
 import { useCurrentUser } from "@/components/hooks/userHooks"
 import { useMounted } from "@/components/hooks/useMounted"
 import { getBackendBaseUrl } from "@/lib/runtime-config"
 import { useLogout } from "@/components/hooks/useLogout"
 import SkycrewLogo from "./SkycrewLogo"
+import { roleLabel } from "./role-label"
 
+// `labelKey` is a key of the `nav` namespace.
 const menuItems = [
-  { name: "Tableau de bord", icon: LayoutDashboard, path: "/dashboard" },
+  { labelKey: "pages.dashboard", icon: LayoutDashboard, path: "/dashboard" },
   {
-    name: "Flotte",
+    labelKey: "pages.fleet",
     icon: Plane,
     path: "/fleet",
     subItems: [
-      { name: "Historique", path: "/fleet/history" },
-      { name: "Maintenance", path: "/fleet/maintenance" },
+      { labelKey: "pages.fleetHistory", path: "/fleet/history" },
+      { labelKey: "pages.maintenance", path: "/fleet/maintenance" },
     ],
   },
   {
-    name: "Réservations",
+    labelKey: "pages.reservations",
     icon: Calendar,
     path: "/reservations",
     subItems: [
-      { name: "Mes réservations", path: "/reservations/my" },
-      { name: "Mes plans de vol", path: "/reservations/flight-plans" },
+      { labelKey: "pages.myReservations", path: "/reservations/my" },
+      { labelKey: "pages.myFlightPlans", path: "/reservations/flight-plans" },
     ],
   },
   {
-    name: "Checklists",
+    labelKey: "pages.checklists",
     icon: ClipboardCheck,
     path: "/checklists",
   },
   {
-    name: "Carnet de vol",
+    labelKey: "pages.logbook",
     icon: BookOpen,
     path: "/logbook",
   },
   {
-    name: "Instruction",
+    labelKey: "pages.instruction",
     icon: GraduationCap,
     path: "/instruction",
     subItems: [
-      { name: "Mes cours", path: "/instruction/courses" },
-      { name: "Mes évaluations", path: "/instruction/evaluation" },
-      { name: "E-learning", path: "/instruction/e-learning" },
+      { labelKey: "pages.myCourses", path: "/instruction/courses" },
+      { labelKey: "pages.myEvaluations", path: "/instruction/evaluation" },
+      { labelKey: "pages.eLearning", path: "/instruction/e-learning" },
     ],
   },
   {
-    name: "Administration",
+    labelKey: "pages.administration",
     icon: Settings,
     path: "/administration",
     subItems: [
-      { name: "Flotte", path: "/administration/planes" },
-      { name: "Membres", path: "/administration/users" },
-      { name: "Finance", path: "/administration/finance" },
-      { name: "Sécurité", path: "/administration/audits" },
-      { name: "Articles", path: "/administration/articles" },
-      { name: "Checklists", path: "/administration/checklists" },
-      { name: "E-learning", path: "/administration/e-learning" },
-      { name: "Paramètres", path: "/administration/settings" },
+      { labelKey: "pages.adminFleet", path: "/administration/planes" },
+      { labelKey: "pages.members", path: "/administration/users" },
+      { labelKey: "pages.finance", path: "/administration/finance" },
+      { labelKey: "pages.safety", path: "/administration/audits" },
+      { labelKey: "pages.incidents", path: "/administration/incidents" },
+      { labelKey: "pages.articles", path: "/administration/articles" },
+      { labelKey: "pages.checklists", path: "/administration/checklists" },
+      { labelKey: "pages.eLearning", path: "/administration/e-learning" },
+      { labelKey: "pages.settings", path: "/administration/settings" },
     ],
   },
 ]
@@ -98,6 +102,7 @@ interface SidebarProps {
 }
 
 export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarProps) {
+  const { t } = useTranslation("nav")
   const handleLogout = useLogout()
   const pathname = usePathname()
   const mounted = useMounted()
@@ -190,7 +195,7 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
       {/* Sidebar. Off screen on mobile it is also hidden from the keyboard and screen readers. */}
       <aside
         role="navigation"
-        aria-label="Navigation principale"
+        aria-label={t("sidebar.label")}
         className={cn(
           "fixed md:sticky top-0 left-0 h-screen w-64 bg-sidebar text-sidebar-foreground border-r border-sidebar-border flex flex-col overflow-hidden z-50 transition-[transform,visibility] duration-300 ease-in-out",
           isMobileOpen ? "translate-x-0" : "invisible -translate-x-full md:visible md:translate-x-0",
@@ -201,7 +206,7 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
           <Link
             href="/dashboard"
             onClick={onCloseMobileMenu}
-            aria-label="SkyCrew, retour au tableau de bord"
+            aria-label={t("sidebar.home")}
             className={cn("flex items-center justify-center rounded-md", FOCUS_RING)}
           >
             <SkycrewLogo className="text-sidebar-foreground" />
@@ -218,8 +223,8 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate text-sidebar-foreground">{userName || "Mon compte"}</p>
-              {userRole && <p className="text-xs text-sidebar-foreground/60 truncate">{userRole}</p>}
+              <p className="text-sm font-medium truncate text-sidebar-foreground">{userName || t("account.fallbackName")}</p>
+              {userRole && <p className="text-xs text-sidebar-foreground/60 truncate">{roleLabel(userRole)}</p>}
             </div>
           </div>
         </div>
@@ -235,7 +240,7 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
             )}
           >
             <Search className="h-4 w-4" aria-hidden="true" />
-            <span className="flex-1 text-left">Rechercher</span>
+            <span className="flex-1 text-left">{t("common:actions.search")}</span>
             <kbd className="pointer-events-none hidden h-5 select-none items-center rounded border border-sidebar-border bg-sidebar-accent px-1.5 font-mono text-[10px] font-medium text-sidebar-foreground/60 md:inline-flex">
               {isMac ? "⌘K" : "Ctrl K"}
             </kbd>
@@ -247,9 +252,10 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
               const inSection = isWithin(pathname, item.path)
               const isOpen = openMenus.includes(item.path)
               const subMenuId = `sidebar-submenu-${item.path.slice(1)}`
+              const itemName = t(item.labelKey)
 
               return (
-                <li key={item.name}>
+                <li key={item.path}>
                   <div
                     className={cn(
                       "group flex items-center rounded-lg transition-colors duration-150",
@@ -274,7 +280,7 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
                       >
                         <item.icon className="h-4 w-4" aria-hidden="true" />
                       </span>
-                      <span className="truncate">{item.name}</span>
+                      <span className="truncate">{itemName}</span>
                     </Link>
                     {item.subItems && (
                       <button
@@ -282,7 +288,7 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
                         onClick={() => toggleMenu(item.path)}
                         aria-expanded={isOpen}
                         aria-controls={subMenuId}
-                        aria-label={`${isOpen ? "Replier" : "Déplier"} le menu ${item.name}`}
+                        aria-label={t(isOpen ? "sidebar.collapseMenu" : "sidebar.expandMenu", { name: itemName })}
                         className={cn(
                           "mr-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground",
                           FOCUS_RING,
@@ -311,7 +317,7 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
                             const isSubActive = isWithin(pathname, subItem.path)
 
                             return (
-                              <li key={subItem.name} className="py-0.5 first:pt-1.5">
+                              <li key={subItem.path} className="py-0.5 first:pt-1.5">
                                 <Link
                                   href={subItem.path}
                                   onClick={onCloseMobileMenu}
@@ -324,7 +330,7 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
                                       : "text-sidebar-foreground/60 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
                                   )}
                                 >
-                                  {subItem.name}
+                                  {t(subItem.labelKey)}
                                 </Link>
                               </li>
                             )
@@ -354,7 +360,7 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
             )}
           >
             <User className="h-4 w-4 mr-3" aria-hidden="true" />
-            <span>Mon profil</span>
+            <span>{t("pages.profile")}</span>
           </Link>
           <button
             type="button"
@@ -365,7 +371,7 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
             )}
           >
             <LogOut className="h-4 w-4 mr-3" aria-hidden="true" />
-            <span>Se déconnecter</span>
+            <span>{t("account.signOut")}</span>
           </button>
         </div>
       </aside>

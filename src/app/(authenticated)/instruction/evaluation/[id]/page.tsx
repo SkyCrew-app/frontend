@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, use } from "react"
+import { useTranslation } from "react-i18next"
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -36,6 +37,7 @@ import { learningRoutes } from "@/lib/learning-navigation"
 import { cn } from "@/lib/utils"
 
 export default function EvaluationPage({ params }: { params: Promise<{ id: string }> }) {
+  const { t } = useTranslation("instruction")
   const resolvedParams = use(params)
   const evaluationId = Number.parseFloat(resolvedParams.id)
   const [userAnswers, setUserAnswers] = useState<{ [key: string]: string }>({})
@@ -105,8 +107,8 @@ export default function EvaluationPage({ params }: { params: Promise<{ id: strin
       // The answers stay in place so the member can send them again.
       setIsConfirmOpen(false)
       toast({
-        title: "Réponses non envoyées",
-        description: "L'envoi a échoué. Vos réponses sont conservées, vous pouvez réessayer.",
+        title: t("evaluations.take.toast.failed.title"),
+        description: t("evaluations.take.toast.failed.description"),
         variant: "destructive",
       })
     }
@@ -125,15 +127,22 @@ export default function EvaluationPage({ params }: { params: Promise<{ id: strin
         <Button variant="ghost" size="sm" asChild className="-ml-3 mb-2 text-muted-foreground">
           <Link href={learningRoutes.evaluations}>
             <ArrowLeft className="h-4 w-4" />
-            Mes évaluations
+            {t("evaluations.title")}
           </Link>
         </Button>
         <PageHeader
           className="mb-0"
-          title={evaluation ? `Évaluation : ${evaluation.module.title}` : "Évaluation"}
+          title={
+            evaluation
+              ? t("evaluations.take.title", { module: evaluation.module.title })
+              : t("shared.evaluationFallback")
+          }
           description={
             evaluation
-              ? `Score requis : ${Math.round(evaluation.pass_score)} % · ${questions.length} question${questions.length > 1 ? "s" : ""}`
+              ? t("evaluations.take.description", {
+                  score: t("shared.percent", { value: Math.round(evaluation.pass_score) }),
+                  count: questions.length,
+                })
               : undefined
           }
         />
@@ -150,22 +159,22 @@ export default function EvaluationPage({ params }: { params: Promise<{ id: strin
         </div>
       ) : !evaluation ? (
         <ErrorState
-          title="Évaluation introuvable"
+          title={t("evaluations.take.notFound.title")}
           description={
             error
-              ? "Cette évaluation n'a pas pu être chargée. Vérifiez votre connexion puis réessayez."
-              : "Cette évaluation n'existe pas ou n'est plus disponible."
+              ? t("evaluations.take.notFound.error")
+              : t("evaluations.take.notFound.missing")
           }
           onRetry={() => refetch()}
         />
       ) : questions.length === 0 || !question ? (
         <EmptyState
           icon={ClipboardList}
-          title="Cette évaluation n'a pas encore de question"
-          description="Elle pourra être passée dès que ses questions auront été ajoutées."
+          title={t("evaluations.take.noQuestions.title")}
+          description={t("evaluations.take.noQuestions.description")}
           action={
             <Button variant="outline" asChild>
-              <Link href={learningRoutes.evaluations}>Revenir à mes évaluations</Link>
+              <Link href={learningRoutes.evaluations}>{t("evaluations.take.noQuestions.back")}</Link>
             </Button>
           }
         />
@@ -185,7 +194,7 @@ export default function EvaluationPage({ params }: { params: Promise<{ id: strin
             <CardContent className="space-y-5 p-5 sm:p-6">
               <div className="space-y-1">
                 <p className="text-xs tabular-nums text-muted-foreground">
-                  Question {currentQuestion + 1} sur {questions.length}
+                  {t("evaluations.take.position", { number: currentQuestion + 1, total: questions.length })}
                 </p>
                 <div className="flex items-start justify-between gap-3">
                   <h2 id="question-text" className="text-lg font-semibold leading-snug">
@@ -195,7 +204,7 @@ export default function EvaluationPage({ params }: { params: Promise<{ id: strin
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0" aria-label="Afficher l'indice">
+                          <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0" aria-label={t("evaluations.take.hintAria")}>
                             <HelpCircle className="h-4 w-4" />
                           </Button>
                         </TooltipTrigger>
@@ -212,7 +221,7 @@ export default function EvaluationPage({ params }: { params: Promise<{ id: strin
                 <div className="relative h-40 w-full overflow-hidden rounded-lg bg-muted sm:h-56">
                   <Image
                     src={question.content.image}
-                    alt="Illustration de la question"
+                    alt={t("evaluations.take.imageAlt")}
                     fill
                     sizes="(max-width: 640px) 100vw, 720px"
                     className="object-contain"
@@ -248,15 +257,15 @@ export default function EvaluationPage({ params }: { params: Promise<{ id: strin
             <CardFooter className="flex flex-wrap justify-between gap-2 border-t p-5 sm:px-6">
               <Button variant="outline" onClick={() => goToQuestion(currentQuestion - 1)} disabled={currentQuestion === 0}>
                 <ChevronLeft className="h-4 w-4" />
-                Précédente
+                {t("evaluations.take.previous")}
               </Button>
               {isLastQuestion ? (
                 <Button onClick={handleFinish} disabled={validating || userId === null}>
-                  Terminer l'évaluation
+                  {t("evaluations.take.finish")}
                 </Button>
               ) : (
                 <Button onClick={() => goToQuestion(currentQuestion + 1)}>
-                  Suivante
+                  {t("evaluations.take.next")}
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               )}
@@ -267,16 +276,14 @@ export default function EvaluationPage({ params }: { params: Promise<{ id: strin
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>
-                {missing.length > 1
-                  ? `Il reste ${missing.length} questions sans réponse`
-                  : "Il reste une question sans réponse"}
+                {t("evaluations.take.missing.title", { count: missing.length })}
               </AlertTitle>
               <AlertDescription className="space-y-2">
-                <p>Répondez à toutes les questions avant de terminer l'évaluation.</p>
+                <p>{t("evaluations.take.missing.description")}</p>
                 <div className="flex flex-wrap gap-2">
                   {missing.map((index) => (
                     <Button key={index} variant="outline" size="sm" onClick={() => goToQuestion(index)}>
-                      Question {index + 1}
+                      {t("evaluations.take.missing.question", { number: index + 1 })}
                     </Button>
                   ))}
                 </div>
@@ -289,20 +296,16 @@ export default function EvaluationPage({ params }: { params: Promise<{ id: strin
       <AlertDialog open={isConfirmOpen} onOpenChange={(open) => !validating && setIsConfirmOpen(open)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Envoyer vos réponses ?</AlertDialogTitle>
+            <AlertDialogTitle>{t("evaluations.take.confirm.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {questions.length > 1
-                ? `Vous avez répondu aux ${questions.length} questions.`
-                : "Vous avez répondu à la question."}{" "}
-              Une fois envoyées, vos réponses ne peuvent plus être
-              modifiées et votre score est enregistré.
+              {t("evaluations.take.confirm.description", { count: questions.length })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={validating}>Annuler</AlertDialogCancel>
+            <AlertDialogCancel disabled={validating}>{t("common:actions.cancel")}</AlertDialogCancel>
             <Button onClick={handleSubmit} disabled={validating}>
               {validating && <Loader2 className="h-4 w-4 animate-spin" />}
-              Envoyer mes réponses
+              {t("evaluations.take.confirm.submit")}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>

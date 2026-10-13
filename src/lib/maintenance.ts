@@ -1,3 +1,5 @@
+import i18n from "@/lib/i18n"
+
 export interface MaintenanceFormValues {
   id?: string
   aircraft_id: string
@@ -19,6 +21,7 @@ export const toMaintenanceInput = (formData: MaintenanceFormValues) => ({
   end_date: formData.end_date,
   description: formData.description,
   maintenance_cost: Number.parseFloat(formData.maintenance_cost) || 0,
+  // null is meaningful: it removes the technician currently assigned.
   technician_id: formData.technician_id ? Number.parseInt(formData.technician_id, 10) : null,
 })
 
@@ -43,19 +46,19 @@ export function validateMaintenanceAttachments({ images = [], documents = [] }: 
 
   const tooLarge = files.find((file) => file.size > MAINTENANCE_UPLOAD_MAX_FILE_SIZE)
   if (tooLarge) {
-    return `Le fichier « ${tooLarge.name} » dépasse la taille maximale de 1 Mo.`
+    return i18n.t("fleet:maintenance.form.files.tooLarge", { name: tooLarge.name })
   }
 
   const names = new Set<string>()
   for (const file of files) {
     if (names.has(file.name)) {
-      return `Deux fichiers portent le nom « ${file.name} ». Renommez-en un avant de l'ajouter.`
+      return i18n.t("fleet:maintenance.form.files.duplicateName", { name: file.name })
     }
     names.add(file.name)
   }
 
   if (files.length > MAINTENANCE_UPLOAD_MAX_FILES) {
-    return `Vous pouvez joindre au maximum ${MAINTENANCE_UPLOAD_MAX_FILES} fichiers (images et documents confondus).`
+    return i18n.t("fleet:maintenance.form.files.tooMany", { max: MAINTENANCE_UPLOAD_MAX_FILES })
   }
 
   return null
@@ -103,33 +106,47 @@ export const maintenanceFileUrl = (baseUrl: string, path: string) =>
 
 type StatusVariant = "success" | "warning" | "info" | "danger" | "neutral"
 
-// One wording per maintenance type, wherever it is shown.
-const MAINTENANCE_TYPES: Record<string, string> = {
-  INSPECTION: "Inspection",
-  REPAIR: "Réparation",
-  OVERHAUL: "Révision",
-  SOFTWARE_UPDATE: "Mise à jour logicielle",
-  CLEANING: "Nettoyage",
-  OTHER: "Autre",
+// One wording per maintenance type (fleet:maintenanceType.<code>), wherever it is shown.
+export const MAINTENANCE_TYPE_VALUES: string[] = [
+  "INSPECTION",
+  "REPAIR",
+  "OVERHAUL",
+  "SOFTWARE_UPDATE",
+  "CLEANING",
+  "OTHER",
+]
+
+// An unknown code is never shown raw: it reads as "other".
+export const maintenanceTypeLabel = (type: string | null | undefined): string => {
+  if (!type) return "—"
+  const code = type.toUpperCase()
+  return i18n.t(`fleet:maintenanceType.${MAINTENANCE_TYPE_VALUES.includes(code) ? code : "OTHER"}`)
 }
 
-export const MAINTENANCE_TYPE_VALUES = Object.keys(MAINTENANCE_TYPES)
-
-export const maintenanceTypeLabel = (type: string | null | undefined) =>
-  MAINTENANCE_TYPES[(type ?? "").toUpperCase()] ?? (type ? MAINTENANCE_TYPES.OTHER : "—")
-
-// One wording and one colour per maintenance status, wherever it is shown.
-const MAINTENANCE_STATUSES: Record<string, { label: string; variant: StatusVariant }> = {
-  PLANNED: { label: "Planifiée", variant: "info" },
-  IN_PROGRESS: { label: "En cours", variant: "warning" },
-  COMPLETED: { label: "Terminée", variant: "success" },
-  CANCELLED: { label: "Annulée", variant: "danger" },
+// One wording (fleet:maintenanceStatus.<code>) and one colour per maintenance status, wherever it is shown.
+const MAINTENANCE_STATUS_VARIANTS: Record<string, StatusVariant> = {
+  PLANNED: "info",
+  IN_PROGRESS: "warning",
+  COMPLETED: "success",
+  CANCELLED: "danger",
 }
 
-export const MAINTENANCE_STATUS_VALUES = Object.keys(MAINTENANCE_STATUSES)
+export const MAINTENANCE_STATUS_VALUES = Object.keys(MAINTENANCE_STATUS_VARIANTS)
 
-export const maintenanceStatus = (status: string | null | undefined) =>
-  MAINTENANCE_STATUSES[(status ?? "").toUpperCase()] ?? { label: status || "—", variant: "neutral" as StatusVariant }
+export const maintenanceStatus = (status: string | null | undefined): { label: string; variant: StatusVariant } => {
+  const code = (status ?? "").toUpperCase()
+  const variant = MAINTENANCE_STATUS_VARIANTS[code]
+  return variant
+    ? { label: i18n.t(`fleet:maintenanceStatus.${code}`), variant }
+    : { label: status || "—", variant: "neutral" }
+}
+
+// "John Doe", or the e-mail address when no name is known.
+export const maintenanceTechnicianName = (technician: {
+  first_name?: string | null
+  last_name?: string | null
+  email?: string | null
+}) => [technician.first_name, technician.last_name].filter(Boolean).join(" ") || technician.email || "—"
 
 // "John Doe · john@example.com"
 export const maintenanceTechnicianLabel = (technician: {

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useMutation } from '@apollo/client';
 import { CheckCircle2, Link2Off, Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { RESET_PASSWORD } from '@/graphql/user';
 import { PASSWORD_MIN_LENGTH, newPasswordError } from '@/lib/password';
 import { Button } from '@/components/ui/button';
@@ -14,6 +15,7 @@ import { useToast } from "@/components/hooks/use-toast";
 import { AuthCard, AuthCardSkeleton, AuthLink, FieldError } from '@/app/auth/_components/AuthCard';
 
 function ResetPasswordComponent() {
+  const { t } = useTranslation('auth');
   const token = useSearchParams().get('token');
   const [resetPassword, { loading }] = useMutation(RESET_PASSWORD);
 
@@ -35,8 +37,8 @@ function ResetPasswordComponent() {
     } catch {
       toast({
         variant: "destructive",
-        title: "Réinitialisation impossible",
-        description: "Ce lien est invalide ou a expiré. Demandez-en un nouveau.",
+        title: t('resetPassword.toast.failed.title'),
+        description: t('resetPassword.toast.failed.description'),
       });
     }
   };
@@ -46,11 +48,11 @@ function ResetPasswordComponent() {
       <AuthCard
         icon={CheckCircle2}
         tone="success"
-        title="Mot de passe modifié"
-        description="Vous pouvez maintenant vous connecter avec votre nouveau mot de passe."
+        title={t('resetPassword.done.title')}
+        description={t('resetPassword.done.description')}
       >
         <Button asChild className="w-full">
-          <Link href="/">Se connecter</Link>
+          <Link href="/">{t('common.signIn')}</Link>
         </Button>
       </AuthCard>
     );
@@ -61,12 +63,12 @@ function ResetPasswordComponent() {
       <AuthCard
         icon={Link2Off}
         tone="warning"
-        title="Lien incomplet"
-        description="Ce lien de réinitialisation est incomplet. Demandez-en un nouveau."
-        footer={<AuthLink href="/">Retour à la connexion</AuthLink>}
+        title={t('common.incompleteLink')}
+        description={t('resetPassword.incomplete.description')}
+        footer={<AuthLink href="/">{t('common.backToSignIn')}</AuthLink>}
       >
         <Button asChild className="w-full">
-          <Link href="/auth/forgot-password">Demander un nouveau lien</Link>
+          <Link href="/auth/forgot-password">{t('resetPassword.incomplete.action')}</Link>
         </Button>
       </AuthCard>
     );
@@ -74,13 +76,13 @@ function ResetPasswordComponent() {
 
   return (
     <AuthCard
-      title="Nouveau mot de passe"
-      description="Choisissez le mot de passe que vous utiliserez pour vous connecter."
-      footer={<AuthLink href="/">Retour à la connexion</AuthLink>}
+      title={t('resetPassword.title')}
+      description={t('resetPassword.description')}
+      footer={<AuthLink href="/">{t('common.backToSignIn')}</AuthLink>}
     >
       <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         <div className="space-y-1.5">
-          <Label htmlFor="password">Nouveau mot de passe</Label>
+          <Label htmlFor="password">{t('resetPassword.newPassword')}</Label>
           <Input
             id="password"
             type="password"
@@ -91,11 +93,11 @@ function ResetPasswordComponent() {
             aria-describedby="password-hint"
           />
           <p id="password-hint" className="text-xs text-muted-foreground">
-            Au moins {PASSWORD_MIN_LENGTH} caractères.
+            {t('common.passwordHint', { count: PASSWORD_MIN_LENGTH })}
           </p>
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
+          <Label htmlFor="confirmPassword">{t('common.confirmPassword')}</Label>
           <Input
             id="confirmPassword"
             type="password"
@@ -109,7 +111,7 @@ function ResetPasswordComponent() {
         </div>
         <Button type="submit" className="w-full" disabled={loading}>
           {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-          Enregistrer le mot de passe
+          {t('resetPassword.submit')}
         </Button>
       </form>
     </AuthCard>

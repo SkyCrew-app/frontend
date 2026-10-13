@@ -1,6 +1,7 @@
 "use client"
 
 import { useMutation } from "@apollo/client"
+import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { FileDown, Loader2 } from "lucide-react"
 import { EXPORT_LOGBOOK_PDF } from "@/graphql/logbook"
@@ -16,6 +17,7 @@ interface ExportPDFButtonProps {
 /** Downloads the logbook as a PDF, with the filters currently applied. */
 export default function ExportPDFButton({ filter, disabled = false }: ExportPDFButtonProps) {
   const { toast } = useToast()
+  const { t } = useTranslation("flights")
   const [exportPDF, { loading }] = useMutation(EXPORT_LOGBOOK_PDF)
 
   const handleExport = async () => {
@@ -25,17 +27,18 @@ export default function ExportPDFButton({ filter, disabled = false }: ExportPDFB
       })
 
       if (data?.exportLogbookPDF) {
-        downloadBase64Pdf(data.exportLogbookPDF, "carnet-de-vol.pdf")
+        const fileName = t("logbook.export.fileName")
+        downloadBase64Pdf(data.exportLogbookPDF, fileName)
         toast({
-          title: "Carnet de vol exporté",
-          description: "Le fichier carnet-de-vol.pdf a été téléchargé.",
+          title: t("logbook.export.successTitle"),
+          description: t("logbook.export.successDescription", { fileName }),
         })
       }
     } catch {
       toast({
         variant: "destructive",
-        title: "Export impossible",
-        description: "Le PDF du carnet de vol n'a pas pu être généré. Réessayez dans un instant.",
+        title: t("logbook.export.errorTitle"),
+        description: t("logbook.export.errorDescription"),
       })
     }
   }
@@ -43,7 +46,7 @@ export default function ExportPDFButton({ filter, disabled = false }: ExportPDFB
   return (
     <Button onClick={handleExport} disabled={loading || disabled} variant="outline">
       {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
-      {loading ? "Export en cours…" : "Exporter en PDF"}
+      {loading ? t("logbook.export.inProgress") : t("logbook.export.button")}
     </Button>
   )
 }

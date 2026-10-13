@@ -2,10 +2,12 @@
 
 import { useState } from "react"
 import { useMutation } from "@apollo/client"
+import { useTranslation } from "react-i18next"
 import { ArrowDown, ArrowUp, ClipboardCheck, Eye, Loader2, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react"
 import { DELETE_AUDIT } from "@/graphql/audit"
 import { auditResult, auditStatus, isAuditOverdue } from "@/lib/audit"
 import { formatDate } from "@/lib/format"
+import { currentLocale } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 import { EmptyState } from "@/components/layout/EmptyState"
 import { ErrorState } from "@/components/layout/ErrorState"
@@ -48,12 +50,12 @@ interface AuditListProps {
 
 type SortField = "audit_date" | "aircraft" | "auditor" | "audit_result" | "next_audit_date"
 
-const COLUMNS: { field: SortField; label: string; className?: string }[] = [
-  { field: "audit_date", label: "Date" },
-  { field: "aircraft", label: "Aéronef" },
-  { field: "auditor", label: "Auditeur", className: "hidden md:table-cell" },
-  { field: "audit_result", label: "Résultat" },
-  { field: "next_audit_date", label: "Prochain audit", className: "hidden lg:table-cell" },
+const COLUMNS: { field: SortField; className?: string }[] = [
+  { field: "audit_date" },
+  { field: "aircraft" },
+  { field: "auditor", className: "hidden md:table-cell" },
+  { field: "audit_result" },
+  { field: "next_audit_date", className: "hidden lg:table-cell" },
 ]
 
 const auditorName = (audit: any) =>
@@ -83,6 +85,7 @@ export function AuditList({
   onCreate,
   onRefetch,
 }: AuditListProps) {
+  const { t } = useTranslation("administration")
   const { toast } = useToast()
   const [sortField, setSortField] = useState<SortField>("audit_date")
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc")
@@ -93,14 +96,14 @@ export function AuditList({
 
   const [deleteAudit, { loading: deleteLoading }] = useMutation(DELETE_AUDIT, {
     onCompleted: () => {
-      toast({ title: "Audit supprimé" })
+      toast({ title: t("audits.list.toast.deleted") })
       onRefetch()
       setAuditToDelete(null)
     },
     onError: () => {
       toast({
-        title: "Suppression impossible",
-        description: "L'audit n'a pas pu être supprimé. Réessayez dans un instant.",
+        title: t("audits.list.toast.deleteFailed.title"),
+        description: t("audits.list.toast.deleteFailed.description"),
         variant: "destructive",
       })
     },
@@ -148,7 +151,7 @@ export function AuditList({
     const valueB = sortValue(b, sortField)
     const order =
       typeof valueA === "string" || typeof valueB === "string"
-        ? String(valueA).localeCompare(String(valueB), "fr")
+        ? String(valueA).localeCompare(String(valueB), currentLocale())
         : valueA - valueB
     return sortDirection === "asc" ? order : -order
   })
@@ -171,19 +174,19 @@ export function AuditList({
         hasActiveFilters ? (
           <EmptyState
             icon={ClipboardCheck}
-            title="Aucun audit ne correspond"
-            description="Modifiez la recherche, les filtres ou l'onglet sélectionné."
+            title={t("audits.list.noMatch.title")}
+            description={t("audits.list.noMatch.description")}
           />
         ) : (
           <EmptyState
             icon={ClipboardCheck}
-            title="Aucun audit pour le moment"
-            description="Enregistrez le premier audit de sécurité d'un aéronef."
+            title={t("audits.list.empty.title")}
+            description={t("audits.list.empty.description")}
             action={
               onCreate && (
                 <Button onClick={onCreate}>
                   <Plus className="h-4 w-4" />
-                  Nouvel audit
+                  {t("audits.newAudit")}
                 </Button>
               )
             }
@@ -208,7 +211,7 @@ export function AuditList({
                         onClick={() => handleSort(column.field)}
                         className="inline-flex items-center gap-2 rounded-sm hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       >
-                        {column.label}
+                        {t(`audits.list.columns.${column.field}`)}
                         {sortField === column.field &&
                           (sortDirection === "asc" ? (
                             <ArrowUp className="h-3.5 w-3.5" aria-hidden="true" />
@@ -218,9 +221,9 @@ export function AuditList({
                       </button>
                     </TableHead>
                   ))}
-                  <TableHead className="whitespace-nowrap">Statut</TableHead>
+                  <TableHead className="whitespace-nowrap">{t("common:labels.status")}</TableHead>
                   <TableHead className="w-12">
-                    <span className="sr-only">Actions</span>
+                    <span className="sr-only">{t("common:labels.actions")}</span>
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -229,7 +232,6 @@ export function AuditList({
                   const result = auditResult(audit.audit_result)
                   const status = auditStatus(audit)
                   const overdue = isAuditOverdue(audit)
-                  const label = `l'audit du ${formatDate(audit.audit_date)}`
                   return (
                     <TableRow key={audit.id} className="cursor-pointer" onClick={() => handleViewDetails(audit)}>
                       <TableCell className="whitespace-nowrap font-medium">{formatDate(audit.audit_date)}</TableCell>
@@ -264,8 +266,8 @@ export function AuditList({
                               variant="ghost"
                               size="icon"
                               className="h-9 w-9"
-                              aria-label={`Actions pour ${label}`}
-                              title="Actions"
+                              aria-label={t("audits.list.actionsFor", { date: formatDate(audit.audit_date) })}
+                              title={t("common:labels.actions")}
                             >
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
@@ -273,11 +275,11 @@ export function AuditList({
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem className="gap-2" onSelect={() => handleViewDetails(audit)}>
                               <Eye className="h-4 w-4" />
-                              Voir le détail
+                              {t("audits.list.viewDetails")}
                             </DropdownMenuItem>
                             <DropdownMenuItem className="gap-2" onSelect={() => handleEdit(audit)}>
                               <Pencil className="h-4 w-4" />
-                              Modifier
+                              {t("common:actions.edit")}
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
@@ -285,7 +287,7 @@ export function AuditList({
                               onSelect={() => setAuditToDelete(audit)}
                             >
                               <Trash2 className="h-4 w-4" />
-                              Supprimer
+                              {t("common:actions.delete")}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -326,15 +328,16 @@ export function AuditList({
       <AlertDialog open={auditToDelete !== null} onOpenChange={(open) => !open && !deleteLoading && setAuditToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer cet audit ?</AlertDialogTitle>
+            <AlertDialogTitle>{t("audits.list.deleteConfirm.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              L'audit du {formatDate(auditToDelete?.audit_date)} de l'aéronef{" "}
-              {auditToDelete?.aircraft?.registration_number ?? "—"} et ses éléments vérifiés seront définitivement
-              supprimés.
+              {t("audits.list.deleteConfirm.description", {
+                date: formatDate(auditToDelete?.audit_date),
+                registration: auditToDelete?.aircraft?.registration_number ?? "—",
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteLoading}>Annuler</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteLoading}>{t("common:actions.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               // Keep the dialog open until the mutation answers.
               onClick={(e) => {
@@ -345,7 +348,7 @@ export function AuditList({
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {deleteLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-              Supprimer
+              {t("common:actions.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

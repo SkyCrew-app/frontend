@@ -1,13 +1,12 @@
 "use client"
 
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Plane, Clock, Trash2, Pencil, CalendarDays, FileText } from "lucide-react"
 import type { ReservationTemplate } from "@/interfaces/reservation-template"
 import { flightCategoryLabel } from "@/components/reservation/flight-category"
-
-const DAYS = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"]
 
 interface TemplateCardProps {
   template: ReservationTemplate
@@ -19,6 +18,7 @@ interface TemplateCardProps {
 const shortTime = (time: string | undefined) => (time ? time.slice(0, 5) : "…")
 
 export function TemplateCard({ template, onUse, onEdit, onDelete }: TemplateCardProps) {
+  const { t } = useTranslation("reservations")
   const hasDay = template.day_of_week !== null && template.day_of_week !== undefined
   const hasTimes = Boolean(template.preferred_start_time || template.preferred_end_time)
   const hasFacts = Boolean(template.aircraft || hasTimes || hasDay || template.purpose)
@@ -49,7 +49,7 @@ export function TemplateCard({ template, onUse, onEdit, onDelete }: TemplateCard
         {hasDay && (
           <p className="flex items-center gap-2">
             <CalendarDays className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-            {DAYS[template.day_of_week as number]}
+            {t(`weekday.${template.day_of_week as number}`, { defaultValue: "" })}
           </p>
         )}
         {template.purpose && (
@@ -58,7 +58,7 @@ export function TemplateCard({ template, onUse, onEdit, onDelete }: TemplateCard
             <span className="truncate">{template.purpose}</span>
           </p>
         )}
-        {!hasFacts && <p className="text-muted-foreground">Aucun détail prérempli.</p>}
+        {!hasFacts && <p className="text-muted-foreground">{t("template.card.noDetails")}</p>}
       </CardContent>
       <CardFooter className="flex justify-end gap-2 border-t pt-4">
         <Button
@@ -66,8 +66,8 @@ export function TemplateCard({ template, onUse, onEdit, onDelete }: TemplateCard
           variant="ghost"
           className="h-9 w-9 text-destructive hover:text-destructive"
           onClick={() => onDelete(template)}
-          aria-label={`Supprimer le modèle ${template.name}`}
-          title="Supprimer"
+          aria-label={t("template.card.deleteLabel", { name: template.name })}
+          title={t("common:actions.delete")}
         >
           <Trash2 className="h-4 w-4" />
         </Button>
@@ -76,13 +76,13 @@ export function TemplateCard({ template, onUse, onEdit, onDelete }: TemplateCard
           variant="outline"
           className="h-9 w-9"
           onClick={() => onEdit(template)}
-          aria-label={`Modifier le modèle ${template.name}`}
-          title="Modifier"
+          aria-label={t("template.card.editLabel", { name: template.name })}
+          title={t("common:actions.edit")}
         >
           <Pencil className="h-4 w-4" />
         </Button>
         <Button size="sm" onClick={() => onUse(template)}>
-          Réserver avec ce modèle
+          {t("template.card.use")}
         </Button>
       </CardFooter>
     </Card>

@@ -1,6 +1,7 @@
 "use client"
 
 import type { ReactNode } from "react"
+import { useTranslation } from "react-i18next"
 import { SidePanel } from "@/components/layout/SidePanel"
 import { Button } from "@/components/ui/button"
 import { ExternalLink, FileText, Pencil } from "lucide-react"
@@ -30,17 +31,18 @@ function Fact({ label, children }: { label: string; children: ReactNode }) {
 }
 
 export function AircraftDetailDialog({ aircraft, isOpen, onOpenChange, onEdit }: AircraftDetailDialogProps) {
+  const { t } = useTranslation("fleet")
   if (!aircraft) return null
 
   // Optional characteristics: only the ones filled in are listed.
   const characteristics = [
-    { label: "Altitude maximale", value: aircraft.maxAltitude, unit: "ft" },
-    { label: "Vitesse de croisière", value: aircraft.cruiseSpeed, unit: "kt" },
-    { label: "Consommation", value: aircraft.consumption, unit: "L/h" },
-    { label: "Capacité du réservoir", value: aircraft.fuel_capacity, unit: "L" },
-    { label: "Carburant", value: aircraft.fuel_type, unit: "" },
-    { label: "Masse à vide", value: aircraft.empty_weight, unit: "kg" },
-    { label: "Masse maximale au décollage", value: aircraft.max_takeoff_weight, unit: "kg" },
+    { label: t("shared.maxAltitude"), value: aircraft.maxAltitude, unit: "ft" },
+    { label: t("shared.cruiseSpeed"), value: aircraft.cruiseSpeed, unit: "kt" },
+    { label: t("shared.consumption"), value: aircraft.consumption, unit: "L/h" },
+    { label: t("shared.fuelCapacity"), value: aircraft.fuel_capacity, unit: "L" },
+    { label: t("detail.fuel"), value: aircraft.fuel_type, unit: "" },
+    { label: t("shared.emptyWeight"), value: aircraft.empty_weight, unit: "kg" },
+    { label: t("shared.maxTakeoffWeight"), value: aircraft.max_takeoff_weight, unit: "kg" },
   ].filter((item) => hasValue(item.value))
 
   const documents = aircraft.documents_url ?? []
@@ -55,11 +57,11 @@ export function AircraftDetailDialog({ aircraft, isOpen, onOpenChange, onEdit }:
         onEdit ? (
           <>
             <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Fermer
+              {t("common:actions.close")}
             </Button>
             <Button onClick={() => onEdit(aircraft)}>
               <Pencil className="h-4 w-4" aria-hidden="true" />
-              Modifier
+              {t("common:actions.edit")}
             </Button>
           </>
         ) : undefined
@@ -82,19 +84,19 @@ export function AircraftDetailDialog({ aircraft, isOpen, onOpenChange, onEdit }:
         )}
 
         <section className="space-y-3">
-          <h3 className="text-sm font-semibold">Informations générales</h3>
+          <h3 className="text-sm font-semibold">{t("detail.generalInformation")}</h3>
           <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-            <Fact label="Année">{aircraft.year_of_manufacture ?? "—"}</Fact>
-            <Fact label="Heures de vol">
+            <Fact label={t("shared.year")}>{aircraft.year_of_manufacture ?? "—"}</Fact>
+            <Fact label={t("shared.flightHours")}>
               {hasValue(aircraft.total_flight_hours) ? formatFlightDuration(aircraft.total_flight_hours) : "—"}
             </Fact>
-            <Fact label="Coût horaire">{formatMoney(aircraft.hourly_cost)}</Fact>
+            <Fact label={t("shared.hourlyCost")}>{formatMoney(aircraft.hourly_cost)}</Fact>
           </dl>
         </section>
 
         {characteristics.length > 0 && (
           <section className="space-y-3">
-            <h3 className="text-sm font-semibold">Caractéristiques</h3>
+            <h3 className="text-sm font-semibold">{t("shared.characteristics")}</h3>
             <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3">
               {characteristics.map((item) => (
                 <Fact key={item.label} label={item.label}>
@@ -107,7 +109,7 @@ export function AircraftDetailDialog({ aircraft, isOpen, onOpenChange, onEdit }:
         )}
 
         <section className="space-y-3">
-          <h3 className="text-sm font-semibold">Documents</h3>
+          <h3 className="text-sm font-semibold">{t("detail.documents")}</h3>
           {documents.length > 0 ? (
             <ul className="space-y-2">
               {documents.map((url) => (
@@ -121,13 +123,13 @@ export function AircraftDetailDialog({ aircraft, isOpen, onOpenChange, onEdit }:
                     <FileText className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
                     <span className="min-w-0 flex-1 truncate">{aircraftFileName(url)}</span>
                     <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-                    <span className="sr-only">(nouvel onglet)</span>
+                    <span className="sr-only">{t("shared.newTab")}</span>
                   </a>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-muted-foreground">Aucun document pour cet aéronef.</p>
+            <p className="text-sm text-muted-foreground">{t("detail.noDocuments")}</p>
           )}
         </section>
       </div>

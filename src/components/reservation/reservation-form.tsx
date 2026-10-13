@@ -1,13 +1,14 @@
 "use client"
 
 import { useEffect, useState, type ReactNode } from "react"
+import { useTranslation } from "react-i18next"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { SidePanel } from "@/components/layout/SidePanel"
 import { FlightCategoryError } from "@/components/reservation/flight-category-error"
-import { FLIGHT_CATEGORY_OPTIONS } from "@/components/reservation/flight-category"
+import { flightCategoryOptions } from "@/components/reservation/flight-category"
 
 export interface ReservationSlotSummary {
   aircraft: string
@@ -52,6 +53,7 @@ export function ReservationForm({
   onSubmit,
   isSubmitting,
 }: ReservationFormProps) {
+  const { t } = useTranslation("reservations")
   const [categoryError, setCategoryError] = useState(false)
 
   useEffect(() => {
@@ -78,36 +80,36 @@ export function ReservationForm({
       description={description}
       size="md"
       onSubmit={handleSubmit}
-      submitLabel={isEdit ? "Enregistrer" : "Créer la réservation"}
+      submitLabel={isEdit ? t("common:actions.save") : t("form.submitCreate")}
       submitting={isSubmitting}
     >
       <div className="space-y-4">
         {summary && (
           <dl className="grid grid-cols-2 gap-x-4 gap-y-3 rounded-lg bg-muted/50 p-3 text-sm">
             <div>
-              <dt className="text-xs text-muted-foreground">Avion</dt>
+              <dt className="text-xs text-muted-foreground">{t("common:labels.aircraft")}</dt>
               <dd className="font-medium">{summary.aircraft}</dd>
             </div>
             <div>
-              <dt className="text-xs text-muted-foreground">Date</dt>
+              <dt className="text-xs text-muted-foreground">{t("common:labels.date")}</dt>
               <dd className="font-medium">{summary.date}</dd>
             </div>
             <div>
-              <dt className="text-xs text-muted-foreground">Début</dt>
+              <dt className="text-xs text-muted-foreground">{t("common:labels.start")}</dt>
               <dd className="font-medium tabular-nums">{summary.start}</dd>
             </div>
             <div>
-              <dt className="text-xs text-muted-foreground">Fin</dt>
+              <dt className="text-xs text-muted-foreground">{t("common:labels.end")}</dt>
               <dd className="font-medium tabular-nums">{summary.end}</dd>
             </div>
           </dl>
         )}
 
         <div className="space-y-2">
-          <Label htmlFor="purpose">But de la réservation</Label>
+          <Label htmlFor="purpose">{t("form.purpose")}</Label>
           <Input
             id="purpose"
-            placeholder="Ex. : tours de piste, navigation vers Deauville"
+            placeholder={t("form.purposePlaceholder")}
             value={purpose}
             onChange={(e) => setPurpose(e.target.value)}
           />
@@ -115,7 +117,7 @@ export function ReservationForm({
 
         <div className="space-y-2">
           <Label htmlFor="category">
-            Catégorie de vol{" "}
+            {t("shared.flightCategory")}{" "}
             <span className="text-destructive" aria-hidden="true">
               *
             </span>
@@ -133,10 +135,10 @@ export function ReservationForm({
               aria-required="true"
               className={categoryError ? "border-destructive" : ""}
             >
-              <SelectValue placeholder="Sélectionner une catégorie" />
+              <SelectValue placeholder={t("form.categoryPlaceholder")} />
             </SelectTrigger>
             <SelectContent>
-              {FLIGHT_CATEGORY_OPTIONS.map((category) => (
+              {flightCategoryOptions().map((category) => (
                 <SelectItem key={category.value} value={category.value}>
                   {category.label}
                 </SelectItem>
@@ -147,10 +149,10 @@ export function ReservationForm({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="notes">Notes</Label>
+          <Label htmlFor="notes">{t("common:labels.notes")}</Label>
           <Textarea
             id="notes"
-            placeholder="Passagers, plein à prévoir, consignes particulières…"
+            placeholder={t("form.notesPlaceholder")}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={3}

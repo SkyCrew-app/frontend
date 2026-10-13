@@ -4,6 +4,7 @@ import type { ReactNode } from "react"
 import type { LucideIcon } from "lucide-react"
 import Link from "next/link"
 import { ArrowRight } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/layout/EmptyState"
@@ -74,7 +75,8 @@ export function WidgetEmpty({ icon, title, description, action }: WidgetEmptyPro
 }
 
 export function WidgetError({ onRetry }: { onRetry?: () => void }) {
-  return <ErrorState description="Ces informations n'ont pas pu être chargées." onRetry={onRetry} />
+  const { t } = useTranslation("dashboard")
+  return <ErrorState description={t("widgetError")} onRetry={onRetry} />
 }
 
 interface WidgetRowProps {

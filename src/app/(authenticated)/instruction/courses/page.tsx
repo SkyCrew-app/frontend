@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import { useTranslation } from "react-i18next"
 import { useQuery } from "@apollo/client"
 import { CalendarDays, CalendarX, List, Plus, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -16,8 +17,8 @@ import CourseCalendar from "@/components/courses/CourseCalendar"
 import CourseFormDialog from "@/components/courses/CourseFormDialog"
 import { ListPagination, paginate } from "@/components/courses/ListPagination"
 import {
-  COURSE_STATUS_OPTIONS,
   courseCounterpart,
+  courseStatusOptions,
   personName,
   type InstructionCourse,
 } from "@/components/courses/course-helpers"
@@ -28,6 +29,7 @@ import { isAdministrator, isInstructor as hasInstructorRole } from "@/lib/roles"
 const PAGE_SIZE = 10
 
 export default function InstructionDashboard() {
+  const { t } = useTranslation("instruction")
   const [viewMode, setViewMode] = useState<"list" | "calendar">("list")
   const [statusFilter, setStatusFilter] = useState("all")
   const [searchTerm, setSearchTerm] = useState("")
@@ -73,29 +75,29 @@ export default function InstructionDashboard() {
   const searchExample = courses?.[0] ? personName(courseCounterpart(courses[0], userId).person) : "Martin"
 
   const description = isInstructor
-    ? "Les cours que vous donnez à vos élèves, et ceux que vous suivez."
+    ? t("courses.page.description.instructor")
     : isAdmin
-      ? "Les cours auxquels vous participez. Vous pouvez en planifier pour un instructeur."
-      : "Vos cours avec vos instructeurs : dates, compétences travaillées et notes."
+      ? t("courses.page.description.admin")
+      : t("courses.page.description.student")
 
   const planButton = canCreateCourse ? (
     <Button onClick={() => setIsNewCourseOpen(true)}>
       <Plus className="h-4 w-4" />
-      Planifier un cours
+      {t("courses.page.plan")}
     </Button>
   ) : null
 
   return (
     <div className="space-y-6">
-      <PageHeader className="mb-0" title="Mes cours" description={description} actions={planButton} />
+      <PageHeader className="mb-0" title={t("courses.title")} description={description} actions={planButton} />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative w-full sm:max-w-xs">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="search"
-            aria-label="Rechercher un cours par personne"
-            placeholder={`Rechercher une personne, ex. ${searchExample}`}
+            aria-label={t("courses.page.searchAria")}
+            placeholder={t("courses.page.searchPlaceholder", { name: searchExample })}
             className="pl-9"
             value={searchTerm}
             onChange={(event) => {
@@ -111,12 +113,12 @@ export default function InstructionDashboard() {
             setPage(1)
           }}
         >
-          <SelectTrigger className="w-full sm:w-44" aria-label="Filtrer par statut">
+          <SelectTrigger className="w-full sm:w-44" aria-label={t("courses.page.filterStatusAria")}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Tous les statuts</SelectItem>
-            {COURSE_STATUS_OPTIONS.map((option) => (
+            <SelectItem value="all">{t("courses.page.allStatuses")}</SelectItem>
+            {courseStatusOptions().map((option) => (
               <SelectItem key={option.value} value={option.value}>
                 {option.label}
               </SelectItem>
@@ -128,14 +130,14 @@ export default function InstructionDashboard() {
           onValueChange={(value) => setViewMode(value as "list" | "calendar")}
           className="sm:ml-auto"
         >
-          <TabsList aria-label="Affichage des cours">
+          <TabsList aria-label={t("courses.page.viewAria")}>
             <TabsTrigger value="list" className="gap-2">
               <List className="h-4 w-4" />
-              Liste
+              {t("courses.page.viewList")}
             </TabsTrigger>
             <TabsTrigger value="calendar" className="gap-2">
               <CalendarDays className="h-4 w-4" />
-              Calendrier
+              {t("courses.page.viewCalendar")}
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -152,13 +154,13 @@ export default function InstructionDashboard() {
       ) : filteredCourses.length === 0 ? (
         <EmptyState
           icon={CalendarX}
-          title={isFiltered ? "Aucun cours ne correspond" : "Aucun cours pour le moment"}
+          title={isFiltered ? t("courses.page.empty.filteredTitle") : t("courses.page.empty.title")}
           description={
             isFiltered
-              ? "Modifiez la recherche ou le filtre de statut."
+              ? t("courses.page.empty.filteredDescription")
               : canCreateCourse
-                ? "Planifiez un premier cours avec un élève."
-                : "Vos cours apparaîtront ici dès qu'un instructeur en aura planifié un avec vous."
+                ? t("courses.page.empty.planDescription")
+                : t("courses.page.empty.studentDescription")
           }
           action={
             isFiltered ? (
@@ -169,7 +171,7 @@ export default function InstructionDashboard() {
                   setStatusFilter("all")
                 }}
               >
-                Effacer les filtres
+                {t("common:actions.clearFilters")}
               </Button>
             ) : (
               planButton

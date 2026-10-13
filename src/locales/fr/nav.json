@@ -1,0 +1,79 @@
+{
+  "pages": {
+    "dashboard": "Tableau de bord",
+    "fleet": "Flotte",
+    "fleetHistory": "Historique",
+    "maintenance": "Maintenance",
+    "reservations": "Réservations",
+    "myReservations": "Mes réservations",
+    "myFlightPlans": "Mes plans de vol",
+    "newFlightPlan": "Nouveau plan de vol",
+    "checklists": "Checklists",
+    "logbook": "Carnet de vol",
+    "instruction": "Instruction",
+    "myCourses": "Mes cours",
+    "myEvaluations": "Mes évaluations",
+    "eLearning": "E-learning",
+    "administration": "Administration",
+    "adminFleet": "Flotte",
+    "aircraft": "Avions",
+    "members": "Membres",
+    "finance": "Finance",
+    "safety": "Sécurité",
+    "incidents": "Incidents",
+    "articles": "Articles",
+    "settings": "Paramètres",
+    "profile": "Mon profil",
+    "balance": "Mon solde",
+    "notifications": "Notifications",
+    "twoFactor": "Double authentification",
+    "closeFlight": "Clôture de vol"
+  },
+  "layout": {
+    "mainContent": "Contenu principal",
+    "skipToContent": "Aller au contenu principal"
+  },
+  "breadcrumbs": {
+    "label": "Fil d'Ariane",
+    "detail": "Détail",
+    "course": "Cours",
+    "lesson": "Leçon"
+  },
+  "sidebar": {
+    "label": "Navigation principale",
+    "home": "SkyCrew, retour au tableau de bord",
+    "expandMenu": "Déplier le menu {{name}}",
+    "collapseMenu": "Replier le menu {{name}}"
+  },
+  "account": {
+    "fallbackName": "Mon compte",
+    "menu": "Menu du compte de {{name}}",
+    "signOut": "Se déconnecter"
+  },
+  "roles": {
+    "Administrateur": "Administrateur",
+    "Pilote": "Pilote",
+    "Instructeur": "Instructeur",
+    "Technicien": "Technicien"
+  },
+  "navbar": {
+    "openMenu": "Ouvrir le menu",
+    "notificationsUnread": "Notifications, {{unread}} non lues",
+    "unread_one": "{{unread}} non lue",
+    "unread_other": "{{unread}} non lues",
+    "allRead": "Tout est lu",
+    "empty": "Aucune notification",
+    "seeAll": "Voir toutes les notifications"
+  },
+  "command": {
+    "placeholder": "Rechercher une page ou une action…",
+    "empty": "Aucun résultat.",
+    "navigation": "Navigation",
+    "quickActions": "Actions rapides",
+    "newReservation": "Nouvelle réservation",
+    "theme": "Thème",
+    "themeLight": "Thème clair",
+    "themeDark": "Thème sombre",
+    "themeSystem": "Thème du système"
+  }
+}

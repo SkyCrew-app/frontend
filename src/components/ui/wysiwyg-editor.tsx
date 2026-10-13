@@ -1,5 +1,6 @@
 "use client"
 
+import i18n from "@/lib/i18n"
 import { useEditor, EditorContent } from "@tiptap/react"
 import { BubbleMenu } from "@tiptap/react/menus"
 import StarterKit from "@tiptap/starter-kit"
@@ -38,7 +39,7 @@ interface WysiwygEditorProps {
 export function WysiwygEditor({
   value,
   onChange,
-  placeholder = "Commencez à écrire...",
+  placeholder = i18n.t("common:editor.placeholder"),
   className,
 }: WysiwygEditorProps) {
   const [linkUrl, setLinkUrl] = useState("")
@@ -88,7 +89,7 @@ export function WysiwygEditor({
   const addImage = () => {
     if (imageUrl) {
       // Correction de la méthode setImage
-      editor.chain().focus().insertContent(`<img src="${imageUrl}" alt="Image" />`).run()
+      editor.chain().focus().insertContent(`<img src="${imageUrl}" alt="${i18n.t("common:editor.imageAlt")}" />`).run()
       setImageUrl("")
     }
   }
@@ -100,7 +101,7 @@ export function WysiwygEditor({
           size="sm"
           pressed={editor.isActive("bold")}
           onPressedChange={() => editor.chain().focus().toggleBold().run()}
-          aria-label="Gras"
+          aria-label={i18n.t("common:editor.bold")}
         >
           <Bold className="h-4 w-4" />
         </Toggle>
@@ -108,7 +109,7 @@ export function WysiwygEditor({
           size="sm"
           pressed={editor.isActive("italic")}
           onPressedChange={() => editor.chain().focus().toggleItalic().run()}
-          aria-label="Italique"
+          aria-label={i18n.t("common:editor.italic")}
         >
           <Italic className="h-4 w-4" />
         </Toggle>
@@ -116,7 +117,7 @@ export function WysiwygEditor({
           size="sm"
           pressed={editor.isActive("bulletList")}
           onPressedChange={() => editor.chain().focus().toggleBulletList().run()}
-          aria-label="Liste à puces"
+          aria-label={i18n.t("common:editor.bulletList")}
         >
           <List className="h-4 w-4" />
         </Toggle>
@@ -124,7 +125,7 @@ export function WysiwygEditor({
           size="sm"
           pressed={editor.isActive("orderedList")}
           onPressedChange={() => editor.chain().focus().toggleOrderedList().run()}
-          aria-label="Liste numérotée"
+          aria-label={i18n.t("common:editor.orderedList")}
         >
           <ListOrdered className="h-4 w-4" />
         </Toggle>
@@ -132,7 +133,7 @@ export function WysiwygEditor({
           size="sm"
           pressed={editor.isActive("heading", { level: 1 })}
           onPressedChange={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-          aria-label="Titre 1"
+          aria-label={i18n.t("common:editor.heading1")}
         >
           <Heading1 className="h-4 w-4" />
         </Toggle>
@@ -140,7 +141,7 @@ export function WysiwygEditor({
           size="sm"
           pressed={editor.isActive("heading", { level: 2 })}
           onPressedChange={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-          aria-label="Titre 2"
+          aria-label={i18n.t("common:editor.heading2")}
         >
           <Heading2 className="h-4 w-4" />
         </Toggle>
@@ -148,7 +149,7 @@ export function WysiwygEditor({
           size="sm"
           pressed={editor.isActive("heading", { level: 3 })}
           onPressedChange={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-          aria-label="Titre 3"
+          aria-label={i18n.t("common:editor.heading3")}
         >
           <Heading3 className="h-4 w-4" />
         </Toggle>
@@ -156,7 +157,7 @@ export function WysiwygEditor({
           size="sm"
           pressed={editor.isActive("blockquote")}
           onPressedChange={() => editor.chain().focus().toggleBlockquote().run()}
-          aria-label="Citation"
+          aria-label={i18n.t("common:editor.quote")}
         >
           <Quote className="h-4 w-4" />
         </Toggle>
@@ -164,7 +165,7 @@ export function WysiwygEditor({
           size="sm"
           pressed={editor.isActive("codeBlock")}
           onPressedChange={() => editor.chain().focus().toggleCodeBlock().run()}
-          aria-label="Bloc de code"
+          aria-label={i18n.t("common:editor.codeBlock")}
         >
           <Code className="h-4 w-4" />
         </Toggle>
@@ -172,7 +173,7 @@ export function WysiwygEditor({
           size="sm"
           pressed={editor.isActive("paragraph")}
           onPressedChange={() => editor.chain().focus().setParagraph().run()}
-          aria-label="Paragraphe"
+          aria-label={i18n.t("common:editor.paragraph")}
         >
           <Pilcrow className="h-4 w-4" />
         </Toggle>
@@ -187,12 +188,12 @@ export function WysiwygEditor({
             <div className="flex flex-col gap-2">
               <Input
                 type="url"
-                placeholder="https://exemple.com"
+                placeholder={i18n.t("common:editor.linkPlaceholder")}
                 value={linkUrl}
                 onChange={(e) => setLinkUrl(e.target.value)}
               />
               <Button size="sm" onClick={addLink}>
-                Ajouter le lien
+                {i18n.t("common:editor.addLink")}
               </Button>
             </div>
           </PopoverContent>
@@ -208,12 +209,12 @@ export function WysiwygEditor({
             <div className="flex flex-col gap-2">
               <Input
                 type="url"
-                placeholder="https://exemple.com/image.jpg"
+                placeholder={i18n.t("common:editor.imagePlaceholder")}
                 value={imageUrl}
                 onChange={(e) => setImageUrl(e.target.value)}
               />
               <Button size="sm" onClick={addImage}>
-                Ajouter l'image
+                {i18n.t("common:editor.addImage")}
               </Button>
             </div>
           </PopoverContent>

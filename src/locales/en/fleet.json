@@ -1,0 +1,342 @@
+{
+  "availability": {
+    "AVAILABLE": "Available",
+    "RESERVATED": "Booked",
+    "UNAVAILABLE": "Unavailable"
+  },
+  "maintenanceState": {
+    "OPERATIONAL": "Serviceable",
+    "NEEDS_MAINTENANCE": "Maintenance required",
+    "IN_MAINTENANCE": "In maintenance"
+  },
+  "maintenanceType": {
+    "INSPECTION": "Inspection",
+    "REPAIR": "Repair",
+    "OVERHAUL": "Overhaul",
+    "SOFTWARE_UPDATE": "Software update",
+    "CLEANING": "Cleaning",
+    "OTHER": "Other"
+  },
+  "maintenanceStatus": {
+    "PLANNED": "Planned",
+    "IN_PROGRESS": "In progress",
+    "COMPLETED": "Completed",
+    "CANCELLED": "Cancelled"
+  },
+  "shared": {
+    "aircraft": "Aircraft",
+    "aircraftPlural": "Aircraft",
+    "registration": "Registration",
+    "model": "Model",
+    "availability": "Availability",
+    "year": "Year",
+    "flightHours": "Flight hours",
+    "hourlyCost": "Hourly rate",
+    "characteristics": "Specifications",
+    "maxAltitude": "Maximum altitude",
+    "cruiseSpeed": "Cruise speed",
+    "consumption": "Fuel consumption",
+    "fuelCapacity": "Fuel capacity",
+    "emptyWeight": "Empty weight",
+    "maxTakeoffWeight": "Maximum take-off weight",
+    "unassigned": "Unassigned",
+    "allDates": "All dates",
+    "resetFilters": "Reset filters",
+    "newTab": "(new tab)",
+    "refreshed": "Data refreshed",
+    "refreshFailed": "Could not refresh",
+    "searchPlaceholder": "Registration or model",
+    "searchLabel": "Search for an aircraft",
+    "filterByAvailability": "Filter by availability",
+    "allAvailabilities": "Any availability",
+    "noAircraft": "No aircraft",
+    "noMatchTitle": "No matching aircraft",
+    "noMatchDescription": "Change the search or the availability filter.",
+    "addAircraft": "Add an aircraft",
+    "newMaintenance": "New maintenance task",
+    "attachments": "Attachments",
+    "changesSaved": "Your changes have been saved.",
+    "saveFailed": "Could not save",
+    "deleteFailed": "Could not delete"
+  },
+  "pagination": {
+    "label": "Pagination",
+    "rangeOf": "{{from}}–{{to}} of {{total}} {{items}}",
+    "items": {
+      "aircraft_one": "aircraft",
+      "aircraft_other": "aircraft",
+      "maintenance_one": "maintenance task",
+      "maintenance_other": "maintenance tasks",
+      "reservation_one": "booking",
+      "reservation_other": "bookings"
+    }
+  },
+  "overview": {
+    "title": "Fleet",
+    "description": "Availability and condition of the club's aircraft.",
+    "refreshFailedDescription": "The fleet data could not be reloaded.",
+    "stats": {
+      "available": "Available",
+      "reserved": "Booked",
+      "unavailable": "Unavailable",
+      "shareOfFleet": "{{percent}}% of the fleet"
+    },
+    "availabilityChart": {
+      "description": "Current breakdown of the fleet.",
+      "empty": "No aircraft in the fleet."
+    },
+    "maintenanceChart": {
+      "title": "Maintenance by type",
+      "description": "Number of maintenance tasks recorded for the fleet.",
+      "empty": "No maintenance recorded.",
+      "series": "Maintenance tasks"
+    },
+    "table": {
+      "maintenance": "Maintenance",
+      "viewDetails": "View details",
+      "viewDetailsOf": "View details of {{registration}}"
+    },
+    "emptyDescription": "The club's fleet has no aircraft yet."
+  },
+  "detail": {
+    "generalInformation": "General information",
+    "fuel": "Fuel",
+    "documents": "Documents",
+    "noDocuments": "No documents for this aircraft."
+  },
+  "admin": {
+    "title": "Fleet management",
+    "description": "Add, edit or remove the club's aircraft.",
+    "loading": "Loading aircraft",
+    "emptyDescription": "Add the first aircraft of the fleet so that it can be booked and its maintenance tracked.",
+    "deleteLabel": "Delete {{registration}}",
+    "deleteDialog": {
+      "title": "Delete {{registration}}?",
+      "description": "Aircraft {{registration}} ({{model}}) will be permanently removed from the fleet, along with its photo and documents. This cannot be undone."
+    },
+    "toast": {
+      "deleted": {
+        "title": "Aircraft deleted",
+        "description": "{{registration}} has been removed from the fleet."
+      },
+      "deleteFailed": {
+        "description": "The aircraft could not be deleted. It may still be linked to bookings or maintenance tasks."
+      }
+    }
+  },
+  "aircraftForm": {
+    "title": {
+      "edit": "Edit {{registration}}"
+    },
+    "description": {
+      "create": "Only the fields marked with an asterisk are required.",
+      "edit": "Update the aircraft's details."
+    },
+    "submit": {
+      "create": "Add the aircraft"
+    },
+    "steps": {
+      "identification": "Identification",
+      "files": "Photo and document"
+    },
+    "sections": {
+      "state": "Status",
+      "performance": "Performance",
+      "fuelAndWeights": "Fuel and weights"
+    },
+    "fields": {
+      "registrationPlaceholder": "G-ABCD",
+      "yearOfManufacture": "Year of manufacture",
+      "maintenanceState": "Maintenance state",
+      "fuelType": "Fuel type"
+    },
+    "validation": {
+      "registration": "Enter the registration.",
+      "model": "Enter the model.",
+      "year": "Enter a year between {{min}} and {{max}}.",
+      "hourlyCost": "Enter the cost of one flight hour, in euros."
+    },
+    "photo": {
+      "label": "Photo",
+      "previewAlt": "Photo preview",
+      "choose": "Choose a photo",
+      "replace": "Replace",
+      "hint": "PNG or JPG."
+    },
+    "document": {
+      "label": "Document",
+      "choose": "Choose a document",
+      "chooseAnother": "Choose another document",
+      "removeLabel": "Remove the document {{name}}",
+      "doNotSend": "Do not upload this document",
+      "hint": "Flight manual, certificate… PDF, DOC or DOCX.",
+      "hintReplace": "Flight manual, certificate… PDF, DOC or DOCX. The new document will replace those already stored."
+    },
+    "toast": {
+      "created": {
+        "title": "Aircraft added",
+        "description": "{{registration}} is now part of the fleet."
+      },
+      "createFailed": {
+        "title": "Could not create",
+        "description": "The aircraft could not be created. Check that the registration is not already in use."
+      },
+      "updated": {
+        "title": "Aircraft updated"
+      },
+      "updateFailed": {
+        "description": "Your changes could not be saved. Check that the registration is not already in use."
+      }
+    }
+  },
+  "maintenance": {
+    "title": "Maintenance",
+    "description": "Plan and track the work carried out on the fleet's aircraft.",
+    "loading": "Loading maintenance data",
+    "refreshFailedDescription": "The maintenance tasks could not be reloaded.",
+    "invalidId": "Invalid maintenance identifier.",
+    "stats": {
+      "planned": "Planned",
+      "inProgress": "In progress",
+      "completed": "Completed",
+      "totalCost": "Total cost",
+      "totalCostHint": "Excluding cancelled tasks"
+    },
+    "filters": {
+      "searchPlaceholder": "Aircraft or description",
+      "searchLabel": "Search maintenance tasks",
+      "byStatus": "Filter by status",
+      "allStatuses": "All statuses",
+      "byType": "Filter by type",
+      "allTypes": "All types",
+      "byTechnician": "Filter by technician",
+      "allTechnicians": "All technicians"
+    },
+    "table": {
+      "period": "Period",
+      "until": "to {{date}}",
+      "actionsFor": "Actions for the maintenance of {{registration}}",
+      "viewDetail": "View details",
+      "noMatchTitle": "No matching maintenance task",
+      "noMatchDescription": "Change the search or the filters.",
+      "emptyTitle": "No maintenance tasks",
+      "emptyDescription": "Plan the first piece of work on an aircraft of the fleet."
+    },
+    "detail": {
+      "title": "Maintenance of {{registration}}",
+      "noDescription": "No description.",
+      "noAttachments": "No attachments.",
+      "photoAlt": "Photo {{index}} of the maintenance of {{registration}}",
+      "previousImage": "Previous image",
+      "nextImage": "Next image",
+      "imageOf": "Image {{current}} of {{total}}"
+    },
+    "deleteDialog": {
+      "title": "Delete this maintenance task?",
+      "description": "The “{{type}}” maintenance of {{registration}} starting on {{date}} will be permanently deleted, along with its attachments."
+    },
+    "form": {
+      "title": {
+        "edit": "Edit the maintenance task"
+      },
+      "description": {
+        "create": "Plan work on an aircraft of the fleet.",
+        "edit": "Work on {{registration}} ({{model}})."
+      },
+      "submit": {
+        "create": "Create the task"
+      },
+      "steps": {
+        "intervention": "Work",
+        "planning": "Planning"
+      },
+      "fields": {
+        "aircraftPlaceholder": "Select an aircraft",
+        "typePlaceholder": "Select a type",
+        "statusPlaceholder": "Select a status",
+        "technicianRemovedHint": "{{name}} will no longer be assigned to this maintenance task once it is saved.",
+        "startDate": "Start date",
+        "endDate": "End date",
+        "descriptionPlaceholder": "E.g. 50-hour check, spark plug replacement",
+        "costHint": "In euros. Leave empty if the cost is not known yet."
+      },
+      "validation": {
+        "aircraft": "Select an aircraft.",
+        "type": "Select a maintenance type.",
+        "status": "Select a status.",
+        "startDate": "Select a start date.",
+        "endDate": "Select an end date.",
+        "endBeforeStart": "The end date must be after the start date.",
+        "cost": "The cost must be a positive number, for example 450 or 450.50."
+      },
+      "files": {
+        "limits": "1 MB maximum per file, 10 files per upload (images and documents combined).",
+        "images": "Images",
+        "addImages": "Add images",
+        "imageFormats": "PNG or JPG",
+        "documents": "Documents",
+        "addDocuments": "Add documents",
+        "documentFormats": "PDF, DOC, DOCX, XLS or XLSX",
+        "stored": "Stored",
+        "toSend": "To upload",
+        "removeImage": "Remove the image {{name}}",
+        "removeDocument": "Remove the document {{name}}",
+        "removeStored": "Remove this file from the maintenance task",
+        "discardImage": "Discard the image {{name}}",
+        "discardDocument": "Discard the document {{name}}",
+        "doNotSend": "Do not upload this file",
+        "refused": "File rejected",
+        "tooLarge": "The file “{{name}}” exceeds the maximum size of 1 MB.",
+        "duplicateName": "Two files are named “{{name}}”. Rename one before adding it.",
+        "tooMany": "You can attach up to {{max}} files (images and documents combined)."
+      },
+      "toast": {
+        "created": {
+          "title": "Maintenance task created",
+          "description": "The new maintenance task has been added to the list."
+        },
+        "updated": {
+          "title": "Maintenance task updated"
+        },
+        "saveFailed": {
+          "description": "The maintenance task could not be saved. Check the details and try again."
+        },
+        "removeFailed": {
+          "title": "Could not remove",
+          "description": "The file “{{name}}” could not be removed. Try again."
+        }
+      }
+    },
+    "toast": {
+      "deleted": {
+        "title": "Maintenance task deleted",
+        "description": "The maintenance of {{registration}} has been deleted."
+      },
+      "deleteFailed": {
+        "description": "The maintenance task could not be deleted. Try again."
+      }
+    }
+  },
+  "history": {
+    "title": "Fleet history",
+    "description": "Bookings and maintenance for each aircraft, most recent first.",
+    "emptyDescription": "The history will appear here once an aircraft has been added to the fleet.",
+    "searchPlaceholder": "Pilot, technician or type",
+    "searchLabel": "Search the history",
+    "filterByAircraft": "Filter by aircraft",
+    "allAircraft": "All aircraft",
+    "noMatchDescription": "No booking or maintenance task matches these filters.",
+    "durationDays_one": "{{count}} day",
+    "durationDays_other": "{{count}} days",
+    "reservations": {
+      "tab": "Bookings ({{total}})",
+      "empty": "No bookings for this aircraft.",
+      "noMatch": "No booking matches these filters."
+    },
+    "maintenances": {
+      "tab": "Maintenance ({{total}})",
+      "empty": "No maintenance for this aircraft.",
+      "noMatch": "No maintenance task matches these filters."
+    }
+  }
+}

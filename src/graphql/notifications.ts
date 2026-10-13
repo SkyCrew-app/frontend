@@ -25,3 +25,16 @@ export const REMOVE_NOTIFICATION = gql`
     removeNotification(id: $id)
   }
 `
+
+// Bulk actions on the signed-in user's own notifications, in one request.
+export const MARK_ALL_NOTIFICATIONS_READ = gql`
+  mutation MarkAllNotificationsRead {
+    markAllNotificationsRead
+  }
+`
+
+export const DELETE_ALL_NOTIFICATIONS = gql`
+  mutation DeleteAllNotifications {
+    deleteAllNotifications
+  }
+`

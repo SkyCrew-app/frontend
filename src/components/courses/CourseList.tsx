@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslation } from "react-i18next"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useMutation } from "@apollo/client"
@@ -22,6 +23,7 @@ import { formatDate } from "@/lib/format"
 import { learningRoutes } from "@/lib/learning-navigation"
 import CourseFormDialog from "./CourseFormDialog"
 import {
+  counterpartRoleLabel,
   courseCounterpart,
   courseHours,
   courseStatus,
@@ -38,6 +40,7 @@ type CourseListProps = {
 }
 
 export default function CourseList({ courses, userId, isAdministrator = false, onChanged }: CourseListProps) {
+  const { t } = useTranslation("instruction")
   const router = useRouter()
   const { toast } = useToast()
   // The edited course is kept while its dialog closes, so the dialog does not change under the eyes.
@@ -55,12 +58,15 @@ export default function CourseList({ courses, userId, isAdministrator = false, o
       await deleteCourse({ variables: { id: courseToDelete.id } })
       setCourseToDelete(null)
       onChanged()
-      toast({ title: "Cours supprimé", description: "Le cours a été retiré de la liste." })
+      toast({
+        title: t("courses.list.toast.deleted.title"),
+        description: t("courses.list.toast.deleted.description"),
+      })
     } catch {
       toast({
         variant: "destructive",
-        title: "Cours non supprimé",
-        description: "La suppression a échoué. Réessayez dans un instant.",
+        title: t("courses.list.toast.deleteFailed.title"),
+        description: t("shared.deleteFailed"),
       })
     }
   }
@@ -71,14 +77,14 @@ export default function CourseList({ courses, userId, isAdministrator = false, o
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Horaire</TableHead>
-              <TableHead>Avec</TableHead>
-              <TableHead>Statut</TableHead>
-              <TableHead className="text-right">Compétences validées</TableHead>
-              <TableHead className="text-right">Note</TableHead>
+              <TableHead>{t("common:labels.date")}</TableHead>
+              <TableHead>{t("courses.schedule")}</TableHead>
+              <TableHead>{t("courses.list.with")}</TableHead>
+              <TableHead>{t("common:labels.status")}</TableHead>
+              <TableHead className="text-right">{t("courses.list.validatedCompetencies")}</TableHead>
+              <TableHead className="text-right">{t("courses.list.rating")}</TableHead>
               <TableHead className="w-12">
-                <span className="sr-only">Actions</span>
+                <span className="sr-only">{t("common:labels.actions")}</span>
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -101,7 +107,7 @@ export default function CourseList({ courses, userId, isAdministrator = false, o
                   <TableCell>
                     <div className="min-w-[8rem]">
                       <p className="font-medium">{personName(person)}</p>
-                      <p className="text-xs text-muted-foreground">{role}</p>
+                      <p className="text-xs text-muted-foreground">{counterpartRoleLabel(role)}</p>
                     </div>
                   </TableCell>
                   <TableCell>
@@ -124,7 +130,13 @@ export default function CourseList({ courses, userId, isAdministrator = false, o
                     {canEdit(course) ? (
                       <DropdownMenu modal={false}>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="Actions du cours" title="Actions">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-9 w-9"
+                            aria-label={t("courses.list.actionsAria")}
+                            title={t("common:labels.actions")}
+                          >
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -132,7 +144,7 @@ export default function CourseList({ courses, userId, isAdministrator = false, o
                           <DropdownMenuItem asChild>
                             <Link href={href}>
                               <ChevronRight className="h-4 w-4" />
-                              Ouvrir le cours
+                              {t("courses.open")}
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem
@@ -142,7 +154,7 @@ export default function CourseList({ courses, userId, isAdministrator = false, o
                             }}
                           >
                             <Pencil className="h-4 w-4" />
-                            Modifier
+                            {t("common:actions.edit")}
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
@@ -150,13 +162,13 @@ export default function CourseList({ courses, userId, isAdministrator = false, o
                             onSelect={() => setCourseToDelete(course)}
                           >
                             <Trash2 className="h-4 w-4" />
-                            Supprimer
+                            {t("common:actions.delete")}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     ) : (
                       <Button variant="ghost" size="icon" className="h-9 w-9" asChild>
-                        <Link href={href} aria-label="Ouvrir le cours" title="Ouvrir le cours">
+                        <Link href={href} aria-label={t("courses.open")} title={t("courses.open")}>
                           <ChevronRight className="h-4 w-4" />
                         </Link>
                       </Button>
@@ -181,10 +193,13 @@ export default function CourseList({ courses, userId, isAdministrator = false, o
       <ConfirmDeleteDialog
         open={courseToDelete !== null}
         onOpenChange={(open) => !open && setCourseToDelete(null)}
-        title="Supprimer ce cours ?"
+        title={t("courses.list.deleteConfirm.title")}
         description={
           courseToDelete
-            ? `Le cours du ${formatDate(courseToDelete.startTime)} avec ${personName(courseCounterpart(courseToDelete, userId).person)} sera définitivement supprimé.`
+            ? t("courses.list.deleteConfirm.description", {
+                date: formatDate(courseToDelete.startTime),
+                name: personName(courseCounterpart(courseToDelete, userId).person),
+              })
             : ""
         }
         onConfirm={handleDelete}

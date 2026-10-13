@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { useTranslation } from "react-i18next"
 import { useForm, FormProvider, type FieldErrors } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation, useQuery } from "@apollo/client"
@@ -31,7 +32,7 @@ import { TaxonomyManager } from "@/components/settings/taxonomy/taxonomy-manager
 import { RoleManager } from "@/components/settings/roles/roles-manager"
 import {
   administrationInputFromValues,
-  settingsFormSchema,
+  buildSettingsFormSchema,
   settingsFormValuesFromRecord,
   tabsWithErrors,
   type AdministrationRecord,
@@ -42,15 +43,10 @@ import {
 const FORM_ID = "settings-form"
 
 // The tabs saved by the "Enregistrer" button; roles are saved on their own.
-const FORM_TABS: { value: SettingsFormTab; label: string }[] = [
-  { value: "general", label: "Général" },
-  { value: "reservations", label: "Réservations" },
-  { value: "aircraft", label: "Avions et carburant" },
-  { value: "members", label: "Membres" },
-  { value: "lists", label: "Listes de choix" },
-]
+const FORM_TABS: SettingsFormTab[] = ["general", "reservations", "aircraft", "members", "lists"]
 
 export default function SettingsPage() {
+  const { t } = useTranslation("administration")
   const [activeTab, setActiveTab] = useState<string>("general")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isFormReady, setIsFormReady] = useState(false)
@@ -62,7 +58,8 @@ export default function SettingsPage() {
   )
   const record = data?.getAllAdministrations?.[0]
 
-  const form = useForm<SettingsFormValues>({ resolver: zodResolver(settingsFormSchema) })
+  const schema = useMemo(() => buildSettingsFormSchema(), [])
+  const form = useForm<SettingsFormValues>({ resolver: zodResolver(schema) })
   const { isDirty, dirtyFields, errors } = form.formState
 
   // Fill the form once: later cache updates must not overwrite what the user is typing.
@@ -87,8 +84,8 @@ export default function SettingsPage() {
     const administrationId = record?.id
     if (administrationId === undefined || administrationId === null) {
       toast({
-        title: "Enregistrement impossible",
-        description: "Les paramètres n'ont pas pu être chargés. Rechargez la page puis réessayez.",
+        title: t("settings.toast.saveFailed"),
+        description: t("settings.toast.notLoaded"),
         variant: "destructive",
       })
       return
@@ -101,11 +98,11 @@ export default function SettingsPage() {
       })
       // The saved values become the reference for "unsaved changes".
       form.reset(form.getValues())
-      toast({ title: "Paramètres enregistrés", description: "Vos modifications ont été enregistrées." })
+      toast({ title: t("settings.toast.saved.title"), description: t("settings.toast.saved.description") })
     } catch {
       toast({
-        title: "Enregistrement impossible",
-        description: "Les paramètres n'ont pas pu être enregistrés. Réessayez dans un instant.",
+        title: t("settings.toast.saveFailed"),
+        description: t("settings.toast.notSaved"),
         variant: "destructive",
       })
     } finally {
@@ -125,8 +122,8 @@ export default function SettingsPage() {
     const tabs = tabsWithErrors(Object.keys(invalid))
     if (tabs.length > 0 && !tabs.includes(activeTab as SettingsFormTab)) setActiveTab(tabs[0])
     toast({
-      title: "Enregistrement impossible",
-      description: "Certains champs sont à corriger : ils sont signalés en rouge.",
+      title: t("settings.toast.saveFailed"),
+      description: t("settings.toast.invalid"),
       variant: "destructive",
     })
   }
@@ -136,8 +133,8 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Paramètres de l'aéroclub"
-        description="Coordonnées, réservations, tarifs, rôles et listes de choix du club."
+        title={t("settings.title")}
+        description={t("settings.description")}
         className="mb-0"
       />
 
@@ -152,25 +149,25 @@ export default function SettingsPage() {
       ) : !record ? (
         <EmptyState
           icon={Settings}
-          title="Paramètres introuvables"
-          description="Aucun paramètre n'est encore défini pour cet aéroclub."
+          title={t("settings.notFound.title")}
+          description={t("settings.notFound.description")}
         />
       ) : (
         <FormProvider {...form}>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="w-full sm:w-auto">
               {FORM_TABS.map((tab) => (
-                <TabsTrigger key={tab.value} value={tab.value} className="gap-1.5">
-                  {tab.label}
-                  {invalidTabs.includes(tab.value) && (
+                <TabsTrigger key={tab} value={tab} className="gap-1.5">
+                  {t(`settings.tabs.${tab}`)}
+                  {invalidTabs.includes(tab) && (
                     <>
                       <span className="h-2 w-2 rounded-full bg-destructive" aria-hidden="true" />
-                      <span className="sr-only">(champs à corriger)</span>
+                      <span className="sr-only">{t("settings.tabs.invalid")}</span>
                     </>
                   )}
                 </TabsTrigger>
               ))}
-              <TabsTrigger value="roles">Rôles</TabsTrigger>
+              <TabsTrigger value="roles">{t("settings.tabs.roles")}</TabsTrigger>
             </TabsList>
 
             {/* Values live in the form state, so they survive a change of tab. */}
@@ -204,10 +201,10 @@ export default function SettingsPage() {
                 {isDirty ? (
                   <>
                     <span className="h-2 w-2 shrink-0 rounded-full bg-warning" aria-hidden="true" />
-                    <span className="text-foreground">Modifications non enregistrées</span>
+                    <span className="text-foreground">{t("settings.unsaved")}</span>
                   </>
                 ) : (
-                  "Aucune modification à enregistrer"
+                  t("settings.nothingToSave")
                 )}
               </p>
               <div className="flex flex-col-reverse gap-2 sm:flex-row">
@@ -217,11 +214,11 @@ export default function SettingsPage() {
                   disabled={!isDirty || isSubmitting}
                   onClick={() => form.reset()}
                 >
-                  Annuler les modifications
+                  {t("settings.discard")}
                 </Button>
                 <Button type="submit" form={FORM_ID} disabled={!isDirty || isSubmitting}>
                   {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-                  Enregistrer
+                  {t("common:actions.save")}
                 </Button>
               </div>
             </div>
@@ -230,20 +227,17 @@ export default function SettingsPage() {
           <AlertDialog open={pendingValues !== null} onOpenChange={(open) => !open && setPendingValues(null)}>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Activer le mode maintenance ?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Dès l'enregistrement, les visiteurs seront redirigés vers la page de maintenance, jusqu'à ce que
-                  vous désactiviez ce mode.
-                </AlertDialogDescription>
+                <AlertDialogTitle>{t("settings.maintenanceConfirm.title")}</AlertDialogTitle>
+                <AlertDialogDescription>{t("settings.maintenanceConfirm.description")}</AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Annuler</AlertDialogCancel>
+                <AlertDialogCancel>{t("common:actions.cancel")}</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={() => {
                     if (pendingValues) void save(pendingValues)
                   }}
                 >
-                  Activer et enregistrer
+                  {t("settings.maintenanceConfirm.confirm")}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

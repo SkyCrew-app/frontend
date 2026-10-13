@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useQuery, useMutation } from "@apollo/client"
+import { useTranslation } from "react-i18next"
 import { endOfDay, startOfDay } from "date-fns"
 import type { DateRange } from "react-day-picker"
 import { CalendarClock, CheckCircle, Euro, Loader2, Plus, RefreshCw, Wrench } from "lucide-react"
@@ -38,11 +39,16 @@ import {
   type MaintenanceFormValues,
 } from "@/lib/maintenance"
 import { formatDate, formatMoney } from "@/lib/format"
+import { currentLocale } from "@/lib/i18n"
 
 const ITEMS_PER_PAGE = 10
+// Role name as the API returns it.
+const ROLE_TECHNICIAN = "Technicien"
+
 const UNASSIGNED = "non_assigned"
 
 export default function MaintenanceTablePage() {
+  const { t } = useTranslation("fleet")
   const { data, loading, error, refetch } = useQuery(GET_ALL_MAINTENANCES, { notifyOnNetworkStatusChange: true })
 
   const [createMaintenance] = useMutation(CREATE_MAINTENANCE)
@@ -68,7 +74,7 @@ export default function MaintenanceTablePage() {
 
   const aircrafts = aircraftsData?.getAircrafts || []
   const technicians =
-    usersData?.getUsers.filter((user: { role: { role_name: string } }) => user.role?.role_name === "TECHNICIAN") || []
+    usersData?.getUsers.filter((user: { role: { role_name: string } }) => user.role?.role_name === ROLE_TECHNICIAN) || []
 
   const maintenances: Maintenance[] = data?.getAllMaintenances || []
 
@@ -92,12 +98,12 @@ export default function MaintenanceTablePage() {
   const handleRefresh = async () => {
     try {
       await refetch()
-      toast({ title: "Données actualisées" })
+      toast({ title: t("shared.refreshed") })
     } catch {
       toast({
         variant: "destructive",
-        title: "Actualisation impossible",
-        description: "Les maintenances n'ont pas pu être rechargées.",
+        title: t("shared.refreshFailed"),
+        description: t("maintenance.refreshFailedDescription"),
       })
     }
   }
@@ -127,16 +133,18 @@ export default function MaintenanceTablePage() {
         awaitRefetchQueries: true,
       })
       toast({
-        title: "Maintenance supprimée",
-        description: `La maintenance de ${maintenanceToDelete.aircraft.registration_number} a été supprimée.`,
+        title: t("maintenance.toast.deleted.title"),
+        description: t("maintenance.toast.deleted.description", {
+          registration: maintenanceToDelete.aircraft.registration_number,
+        }),
       })
       setIsDetailDialogOpen(false)
       setMaintenanceToDelete(null)
     } catch {
       toast({
         variant: "destructive",
-        title: "Suppression impossible",
-        description: "La maintenance n'a pas pu être supprimée. Réessayez.",
+        title: t("shared.deleteFailed"),
+        description: t("maintenance.toast.deleteFailed.description"),
       })
     }
   }
@@ -145,7 +153,7 @@ export default function MaintenanceTablePage() {
   const handleSubmitMaintenanceForm = async (formData: MaintenanceFormValues & MaintenanceAttachments) => {
     if (formData.id) {
       const variables = buildUpdateMaintenanceVariables(formData)
-      if (!variables) throw new Error("Identifiant de maintenance invalide.")
+      if (!variables) throw new Error(t("maintenance.invalidId"))
 
       await updateMaintenance({
         variables,
@@ -166,11 +174,11 @@ export default function MaintenanceTablePage() {
     if (technicianOptions.some((option) => option.value === value)) continue
     technicianOptions.push({
       value,
-      label: maintenance.technician ? maintenanceTechnicianLabel(maintenance.technician) : "Non assigné",
+      label: maintenance.technician ? maintenanceTechnicianLabel(maintenance.technician) : t("shared.unassigned"),
     })
   }
   technicianOptions.sort((a, b) =>
-    a.value === UNASSIGNED ? 1 : b.value === UNASSIGNED ? -1 : a.label.localeCompare(b.label, "fr"),
+    a.value === UNASSIGNED ? 1 : b.value === UNASSIGNED ? -1 : a.label.localeCompare(b.label, currentLocale()),
   )
 
   const search = searchTerm.trim().toLowerCase()
@@ -220,7 +228,7 @@ export default function MaintenanceTablePage() {
   const renderContent = () => {
     if (loading && !data) {
       return (
-        <div className="space-y-6" aria-busy="true" aria-label="Chargement des données de maintenance">
+        <div className="space-y-6" aria-busy="true" aria-label={t("maintenance.loading")}>
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             {Array.from({ length: 4 }).map((_, index) => (
               <Skeleton key={index} className="h-24 w-full" />
@@ -239,13 +247,13 @@ export default function MaintenanceTablePage() {
     return (
       <>
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <StatCard label="Planifiées" value={countByStatus("PLANNED")} icon={CalendarClock} tone="info" />
-          <StatCard label="En cours" value={countByStatus("IN_PROGRESS")} icon={Wrench} tone="warning" />
-          <StatCard label="Terminées" value={countByStatus("COMPLETED")} icon={CheckCircle} tone="success" />
+          <StatCard label={t("maintenance.stats.planned")} value={countByStatus("PLANNED")} icon={CalendarClock} tone="info" />
+          <StatCard label={t("maintenance.stats.inProgress")} value={countByStatus("IN_PROGRESS")} icon={Wrench} tone="warning" />
+          <StatCard label={t("maintenance.stats.completed")} value={countByStatus("COMPLETED")} icon={CheckCircle} tone="success" />
           <StatCard
-            label="Coût total"
+            label={t("maintenance.stats.totalCost")}
             value={formatMoney(totalCost)}
-            hint="Hors maintenances annulées"
+            hint={t("maintenance.stats.totalCostHint")}
             icon={Euro}
             tone="neutral"
           />
@@ -288,17 +296,17 @@ export default function MaintenanceTablePage() {
     <div className="space-y-6">
       <PageHeader
         className="mb-0"
-        title="Maintenances"
-        description="Planifiez et suivez les interventions sur les aéronefs de la flotte."
+        title={t("maintenance.title")}
+        description={t("maintenance.description")}
         actions={
           <>
             <Button variant="outline" onClick={handleRefresh} disabled={loading}>
               <RefreshCw className="h-4 w-4" aria-hidden="true" />
-              Actualiser
+              {t("common:actions.refresh")}
             </Button>
             <Button onClick={handleCreateMaintenance}>
               <Plus className="h-4 w-4" aria-hidden="true" />
-              Nouvelle maintenance
+              {t("shared.newMaintenance")}
             </Button>
           </>
         }
@@ -329,19 +337,18 @@ export default function MaintenanceTablePage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer cette maintenance ?</AlertDialogTitle>
+            <AlertDialogTitle>{t("maintenance.deleteDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {maintenanceToDelete && (
-                <>
-                  La maintenance « {maintenanceTypeLabel(maintenanceToDelete.maintenance_type)} » de{" "}
-                  {maintenanceToDelete.aircraft.registration_number} du {formatDate(maintenanceToDelete.start_date)} sera
-                  définitivement supprimée, avec ses pièces jointes.
-                </>
-              )}
+              {maintenanceToDelete &&
+                t("maintenance.deleteDialog.description", {
+                  type: maintenanceTypeLabel(maintenanceToDelete.maintenance_type),
+                  registration: maintenanceToDelete.aircraft.registration_number,
+                  date: formatDate(maintenanceToDelete.start_date),
+                })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Annuler</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleting}>{t("common:actions.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               // Stays open until the deletion is done.
               onClick={(event) => {
@@ -352,7 +359,7 @@ export default function MaintenanceTablePage() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {deleting && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-              Supprimer
+              {t("common:actions.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

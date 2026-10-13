@@ -1,5 +1,6 @@
 "use client"
 
+import i18n from "@/lib/i18n"
 import type React from "react"
 
 import { useState } from "react"
@@ -53,7 +54,7 @@ export function AttachmentsInput({ value, onChange, className }: AttachmentsInpu
         <div className="relative flex-1">
           <Paperclip className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="https://exemple.com/document.pdf"
+            placeholder={i18n.t("common:files.urlPlaceholder")}
             value={newAttachment}
             onChange={(e) => setNewAttachment(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -64,7 +65,7 @@ export function AttachmentsInput({ value, onChange, className }: AttachmentsInpu
           type="button"
           variant="outline"
           size="icon"
-          aria-label="Ajouter la pièce jointe"
+          aria-label={i18n.t("common:files.add")}
           onClick={addAttachment}
           disabled={!newAttachment}
         >
@@ -87,7 +88,7 @@ export function AttachmentsInput({ value, onChange, className }: AttachmentsInpu
                 </div>
                 <div className="flex gap-2">
                   <Button type="button" variant="ghost" size="icon" className="h-6 w-6" asChild>
-                    <a href={url} target="_blank" rel="noopener noreferrer" title="Ouvrir le lien">
+                    <a href={url} target="_blank" rel="noopener noreferrer" title={i18n.t("common:files.openLink")}>
                       <LinkIcon className="h-3 w-3" />
                     </a>
                   </Button>
@@ -97,7 +98,7 @@ export function AttachmentsInput({ value, onChange, className }: AttachmentsInpu
                     size="icon"
                     className="h-6 w-6 text-destructive hover:text-destructive"
                     onClick={() => removeAttachment(index)}
-                    title="Supprimer"
+                    title={i18n.t("common:files.remove")}
                   >
                     <X className="h-3 w-3" />
                   </Button>

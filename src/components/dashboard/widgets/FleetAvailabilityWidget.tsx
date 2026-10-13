@@ -2,6 +2,7 @@
 
 import { useQuery } from "@apollo/client"
 import { Plane } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { GET_AIRCRAFTS } from "@/graphql/planes"
 import { AvailabilityStatus } from "@/interfaces/aircraft"
 import { WIDGET_REGISTRY } from "@/interfaces/dashboard"
@@ -12,6 +13,7 @@ import { aircraftAvailability } from "../widget-config"
 const MAX_ROWS = 4
 
 export default function FleetAvailabilityWidget() {
+  const { t } = useTranslation("dashboard")
   const { data, loading, error, refetch } = useQuery(GET_AIRCRAFTS)
 
   const aircrafts: any[] = data?.getAircrafts || []
@@ -27,7 +29,7 @@ export default function FleetAvailabilityWidget() {
   const renderContent = () => {
     if (loading) return <WidgetListSkeleton rows={MAX_ROWS} />
     if (error && aircrafts.length === 0) return <WidgetError onRetry={() => refetch()} />
-    if (aircrafts.length === 0) return <WidgetEmpty icon={Plane} title="Aucun avion dans la flotte" />
+    if (aircrafts.length === 0) return <WidgetEmpty icon={Plane} title={t("fleet.empty")} />
 
     return (
       <div className="space-y-1">
@@ -45,9 +47,7 @@ export default function FleetAvailabilityWidget() {
           )
         })}
         {hiddenCount > 0 && (
-          <p className="pt-1 text-xs text-muted-foreground">
-            et {hiddenCount} autre{hiddenCount > 1 ? "s" : ""} avion{hiddenCount > 1 ? "s" : ""}
-          </p>
+          <p className="pt-1 text-xs text-muted-foreground">{t("fleet.more", { count: hiddenCount })}</p>
         )}
       </div>
     )
@@ -57,11 +57,9 @@ export default function FleetAvailabilityWidget() {
     <WidgetContainer
       title={WIDGET_REGISTRY["fleet-availability"].label}
       description={
-        aircrafts.length > 0
-          ? `${availableCount} disponible${availableCount > 1 ? "s" : ""} sur ${aircrafts.length}`
-          : undefined
+        aircrafts.length > 0 ? t("fleet.summary", { count: availableCount, total: aircrafts.length }) : undefined
       }
-      action={<WidgetLink href="/fleet">Voir la flotte</WidgetLink>}
+      action={<WidgetLink href="/fleet">{t("fleet.link")}</WidgetLink>}
     >
       {renderContent()}
     </WidgetContainer>

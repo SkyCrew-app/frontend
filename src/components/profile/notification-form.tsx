@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
+import { useTranslation } from "react-i18next"
 import { useMutation } from "@apollo/client"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
@@ -16,6 +17,7 @@ interface NotificationFormProps {
 }
 
 export function NotificationForm({ userData, refetch }: NotificationFormProps) {
+  const { t } = useTranslation("profile")
   const [notifications, setNotifications] = useState({
     email_notifications_enabled: false,
     sms_notifications_enabled: false,
@@ -54,8 +56,8 @@ export function NotificationForm({ userData, refetch }: NotificationFormProps) {
 
       if (data?.updateNotificationSettings) {
         toast({
-          title: "Succès",
-          description: "Paramètres de notification mis à jour avec succès",
+          title: t("toast.success"),
+          description: t("notifications.toast.updated"),
         })
         await refetch()
       } else {
@@ -65,8 +67,8 @@ export function NotificationForm({ userData, refetch }: NotificationFormProps) {
       console.error("Erreur lors de la mise à jour des notifications:", error)
       toast({
         variant: "destructive",
-        title: "Erreur",
-        description: "Erreur lors de la mise à jour des notifications",
+        title: t("toast.error"),
+        description: t("notifications.toast.failed"),
       })
 
       setNotifications(prev => ({
@@ -81,21 +83,21 @@ export function NotificationForm({ userData, refetch }: NotificationFormProps) {
   const settings = [
     {
       name: "email_notifications_enabled" as const,
-      label: "Notifications par email",
-      description: "Réservations, rappels et messages du club dans votre boîte mail.",
+      label: t("notifications.email.label"),
+      description: t("notifications.email.description"),
     },
     {
       name: "sms_notifications_enabled" as const,
-      label: "Notifications par SMS",
-      description: "Les alertes importantes sur votre téléphone.",
+      label: t("notifications.sms.label"),
+      description: t("notifications.sms.description"),
     },
   ]
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Notifications</CardTitle>
-        <CardDescription>Chaque changement est enregistré immédiatement.</CardDescription>
+        <CardTitle>{t("notifications.title")}</CardTitle>
+        <CardDescription>{t("notifications.description")}</CardDescription>
       </CardHeader>
       <CardContent className="divide-y border-t p-0">
         {settings.map((setting) => (

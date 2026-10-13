@@ -3,10 +3,11 @@
 import { useMemo } from "react"
 import { useQuery } from "@apollo/client"
 import { Clock } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts"
 import { format, parseISO, startOfMonth } from "date-fns"
-import { fr } from "date-fns/locale"
 import { formatFlightDuration } from "@/lib/format"
+import { dateFnsLocale } from "@/lib/i18n"
 import { GET_USER_FLIGHT_PLANS } from "@/graphql/flights"
 import { WIDGET_REGISTRY } from "@/interfaces/dashboard"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -19,6 +20,7 @@ interface FlightHoursStatsWidgetProps {
 const AXIS_TICK = { fontSize: 12, fill: "hsl(var(--muted-foreground))" }
 
 export default function FlightHoursStatsWidget({ userId }: FlightHoursStatsWidgetProps) {
+  const { t } = useTranslation("dashboard")
   const { data, loading, error, refetch } = useQuery(GET_USER_FLIGHT_PLANS, {
     variables: { userId: userId ? Number(userId) : 0 },
     skip: !userId,
@@ -43,7 +45,7 @@ export default function FlightHoursStatsWidget({ userId }: FlightHoursStatsWidge
     const last6 = Object.keys(monthMap).sort((a, b) => a.localeCompare(b)).slice(-6)
 
     const chart = last6.map((key) => ({
-      month: format(parseISO(`${key}-01`), "MMM yy", { locale: fr }),
+      month: format(parseISO(`${key}-01`), "MMM yy", { locale: dateFnsLocale() }),
       heures: Math.round(monthMap[key] * 10) / 10,
     }))
 
@@ -60,13 +62,13 @@ export default function FlightHoursStatsWidget({ userId }: FlightHoursStatsWidge
       )
     }
     if (error && !data) return <WidgetError onRetry={() => refetch()} />
-    if (totalHours === 0) return <WidgetEmpty icon={Clock} title="Aucune heure de vol enregistrée" />
+    if (totalHours === 0) return <WidgetEmpty icon={Clock} title={t("flightHours.empty")} />
 
     return (
       <div>
         <p className="mb-4 flex items-baseline gap-2">
           <span className="text-2xl font-semibold tracking-tight tabular-nums">{formatFlightDuration(totalHours)}</span>
-          <span className="text-sm text-muted-foreground">au total</span>
+          <span className="text-sm text-muted-foreground">{t("flightHours.total")}</span>
         </p>
 
         {chartData.length > 0 && (
@@ -83,7 +85,7 @@ export default function FlightHoursStatsWidget({ userId }: FlightHoursStatsWidge
                   borderRadius: "8px",
                   fontSize: "12px",
                 }}
-                formatter={(value: number) => [formatFlightDuration(value), "Heures de vol"]}
+                formatter={(value: number) => [formatFlightDuration(value), t("flightHours.series")]}
               />
               <Bar dataKey="heures" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
             </BarChart>
@@ -96,8 +98,8 @@ export default function FlightHoursStatsWidget({ userId }: FlightHoursStatsWidge
   return (
     <WidgetContainer
       title={WIDGET_REGISTRY["flight-hours-stats"].label}
-      description={chartData.length > 0 ? "Par mois, sur les derniers mois volés" : undefined}
-      action={<WidgetLink href="/logbook">Carnet de vol</WidgetLink>}
+      description={chartData.length > 0 ? t("flightHours.description") : undefined}
+      action={<WidgetLink href="/logbook">{t("nav:pages.logbook")}</WidgetLink>}
     >
       {renderContent()}
     </WidgetContainer>

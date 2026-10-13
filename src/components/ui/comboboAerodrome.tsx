@@ -1,5 +1,6 @@
 "use client"
 
+import i18n from "@/lib/i18n"
 import * as React from "react"
 import { Check, ChevronsUpDown, Loader2 } from 'lucide-react'
 import { Button } from "@/components/ui/button"
@@ -121,15 +122,15 @@ export function AerodromeCombobox({ onAerodromeChange, defaultValue }: Aerodrome
       <PopoverContent className="w-[300px] p-0" align="start">
         {/* The API has already filtered the list: a name does not contain its code. */}
         <Command shouldFilter={false}>
-          <CommandInput placeholder="Rechercher un aérodrome..." onValueChange={handleInputChange} />
+          <CommandInput placeholder={i18n.t("common:combobox.searchAerodrome")} onValueChange={handleInputChange} />
           <CommandList className="max-h-[300px]">
             {loading ? (
               <div className="flex items-center justify-center p-4">
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                <span>Chargement...</span>
+                <span>{i18n.t("common:combobox.loading")}</span>
               </div>
             ) : aerodromes.length === 0 ? (
-              <CommandEmpty>Aucun aérodrome trouvé.</CommandEmpty>
+              <CommandEmpty>{i18n.t("common:combobox.noAerodrome")}</CommandEmpty>
             ) : (
               <CommandGroup>
                 {aerodromes.map((aerodrome) => (

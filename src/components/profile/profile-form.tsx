@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useRef } from "react"
+import { useTranslation } from "react-i18next"
 import { useMutation } from "@apollo/client"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -48,6 +49,7 @@ interface ProfileFormProps {
 }
 
 export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
+  const { t } = useTranslation("profile")
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
@@ -144,57 +146,56 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
 
     if (!formData.first_name) {
       valid = false
-      newErrors.first_name = "Le prénom est requis."
+      newErrors.first_name = t("personal.errors.firstNameRequired")
     } else if (formData.first_name.length < 2) {
       valid = false
-      newErrors.first_name = "Le prénom doit contenir au moins 2 caractères."
+      newErrors.first_name = t("personal.errors.firstNameTooShort")
     }
 
     if (!formData.last_name) {
       valid = false
-      newErrors.last_name = "Le nom est requis."
+      newErrors.last_name = t("personal.errors.lastNameRequired")
     } else if (formData.last_name.length < 2) {
       valid = false
-      newErrors.last_name = "Le nom doit contenir au moins 2 caractères."
+      newErrors.last_name = t("personal.errors.lastNameTooShort")
     }
 
     if (!formData.email) {
-      newErrors.email = "L'email est requis"
+      newErrors.email = t("personal.errors.emailRequired")
       valid = false
     } else if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(formData.email)) {
-      newErrors.email = "L'email n'est pas valide"
+      newErrors.email = t("personal.errors.emailInvalid")
       valid = false
     }
 
     if (!formData.phone_number) {
-      newErrors.phone_number = "Le numéro de téléphone est requis."
+      newErrors.phone_number = t("personal.errors.phoneRequired")
       valid = false
     } else if (!/^(?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4}$/.test(formData.phone_number)) {
       valid = false
-      newErrors.phone_number =
-        "Le numéro de téléphone n'est pas valide. Format attendu: 0X XX XX XX XX ou +33 X XX XX XX XX"
+      newErrors.phone_number = t("personal.errors.phoneInvalid")
     }
 
     if (!formData.address) {
       valid = false
-      newErrors.address = "L'adresse est requise."
+      newErrors.address = t("personal.errors.addressRequired")
     } else if (formData.address.length < 5) {
       valid = false
-      newErrors.address = "L'adresse doit être complète."
+      newErrors.address = t("personal.errors.addressIncomplete")
     }
 
     if (!formData.date_of_birth) {
       valid = false
-      newErrors.date_of_birth = "La date de naissance est requise."
+      newErrors.date_of_birth = t("personal.errors.birthDateRequired")
     } else {
       const age = getAge(new Date(formData.date_of_birth))
 
       if (age < 16) {
         valid = false
-        newErrors.date_of_birth = "Vous devez avoir au moins 16 ans."
+        newErrors.date_of_birth = t("personal.errors.tooYoung")
       } else if (age > 100) {
         valid = false
-        newErrors.date_of_birth = "Veuillez vérifier la date de naissance."
+        newErrors.date_of_birth = t("personal.errors.birthDateUnlikely")
       }
     }
 
@@ -233,8 +234,8 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
 
       if (data?.updateUser) {
         toast({
-          title: "Succès",
-          description: "Profil mis à jour avec succès",
+          title: t("toast.success"),
+          description: t("personal.toast.updated"),
         })
 
         if (selectedImage) {
@@ -249,8 +250,8 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
       console.error("Erreur lors de la mise à jour du profil:", error)
       toast({
         variant: "destructive",
-        title: "Erreur",
-        description: "Erreur lors de la mise à jour du profil",
+        title: t("toast.error"),
+        description: t("personal.toast.failed"),
       })
     } finally {
       setIsUpdating(false)
@@ -294,16 +295,16 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
         }}
       >
         <CardHeader>
-          <CardTitle>Informations personnelles</CardTitle>
-          <CardDescription>Ces coordonnées servent au club pour vous identifier et vous contacter.</CardDescription>
+          <CardTitle>{t("personal.title")}</CardTitle>
+          <CardDescription>{t("personal.description")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
             <Avatar className="h-20 w-20 shrink-0">
               {previewImage ? (
-                <AvatarImage src={previewImage} alt="Aperçu de la photo de profil" />
+                <AvatarImage src={previewImage} alt={t("personal.photo.previewAlt")} />
               ) : formData.profile_picture ? (
-                <AvatarImage src={`${getBackendBaseUrl()}${formData.profile_picture}`} alt="Photo de profil" />
+                <AvatarImage src={`${getBackendBaseUrl()}${formData.profile_picture}`} alt={t("personal.photo.alt")} />
               ) : (
                 <AvatarFallback className="bg-primary/10 text-xl text-primary">
                   {formData.first_name?.[0]}
@@ -314,7 +315,7 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
             <div className="space-y-1.5">
               <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
                 <Camera className="h-4 w-4" aria-hidden="true" />
-                Changer la photo
+                {t("personal.photo.change")}
               </Button>
               <input
                 ref={fileInputRef}
@@ -323,44 +324,44 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
                 accept="image/*"
                 onChange={handleImageChange}
                 className="hidden"
-                aria-label="Photo de profil"
+                aria-label={t("personal.photo.alt")}
                 tabIndex={-1}
               />
               <p className="text-xs text-muted-foreground">
                 {selectedImage
-                  ? "La nouvelle photo sera enregistrée avec le formulaire."
-                  : "Une image carrée au format JPG ou PNG."}
+                  ? t("personal.photo.pendingHint")
+                  : t("personal.photo.formatHint")}
               </p>
             </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <FormField id="first_name" label="Prénom" required error={errors.first_name}>
-              <Input {...fieldProps("first_name")} placeholder="Camille" autoComplete="given-name" />
+            <FormField id="first_name" label={t("personal.fields.firstName")} required error={errors.first_name}>
+              <Input {...fieldProps("first_name")} placeholder={t("personal.placeholders.firstName")} autoComplete="given-name" />
             </FormField>
 
-            <FormField id="last_name" label="Nom" required error={errors.last_name}>
-              <Input {...fieldProps("last_name")} placeholder="Martin" autoComplete="family-name" />
+            <FormField id="last_name" label={t("personal.fields.lastName")} required error={errors.last_name}>
+              <Input {...fieldProps("last_name")} placeholder={t("personal.placeholders.lastName")} autoComplete="family-name" />
             </FormField>
 
-            <FormField id="email" label="Email" required error={errors.email}>
+            <FormField id="email" label={t("personal.fields.email")} required error={errors.email}>
               <Input
                 {...fieldProps("email")}
                 type="email"
-                placeholder="camille.martin@exemple.fr"
+                placeholder={t("personal.placeholders.email")}
                 autoComplete="email"
               />
             </FormField>
 
-            <FormField id="phone_number" label="Numéro de téléphone" required error={errors.phone_number}>
-              <Input {...fieldProps("phone_number")} type="tel" placeholder="06 12 34 56 78" autoComplete="tel" />
+            <FormField id="phone_number" label={t("personal.fields.phone")} required error={errors.phone_number}>
+              <Input {...fieldProps("phone_number")} type="tel" placeholder={t("personal.placeholders.phone")} autoComplete="tel" />
             </FormField>
 
-            <FormField id="address" label="Adresse" required error={errors.address} className="sm:col-span-2">
+            <FormField id="address" label={t("personal.fields.address")} required error={errors.address} className="sm:col-span-2">
               <div className="relative">
                 <Input
                   {...fieldProps("address")}
-                  placeholder="12 rue de l'Aérodrome, 31000 Toulouse"
+                  placeholder={t("personal.placeholders.address")}
                   autoComplete="off"
                 />
                 {addressSuggestions.length > 0 && (
@@ -381,7 +382,7 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
               </div>
             </FormField>
 
-            <FormField id="date_of_birth" label="Date de naissance" required error={errors.date_of_birth}>
+            <FormField id="date_of_birth" label={t("personal.fields.birthDate")} required error={errors.date_of_birth}>
               <Input
                 {...fieldProps("date_of_birth")}
                 type="date"
@@ -394,11 +395,11 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
         </CardContent>
         <CardFooter className="flex-wrap justify-end gap-2">
           <Button type="button" variant="outline" onClick={resetForm} disabled={isUpdating || !isDirty}>
-            Annuler
+            {t("common:actions.cancel")}
           </Button>
           <Button type="submit" disabled={isUpdating || !userId}>
             {isUpdating && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-            {isUpdating ? "Enregistrement..." : "Enregistrer les modifications"}
+            {isUpdating ? t("form.saving") : t("form.saveChanges")}
           </Button>
         </CardFooter>
       </form>

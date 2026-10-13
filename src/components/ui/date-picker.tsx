@@ -1,8 +1,8 @@
 "use client"
 
+import i18n, { dateFnsLocale } from "@/lib/i18n"
 import * as React from "react"
 import { format } from "date-fns"
-import { fr } from "date-fns/locale"
 import { CalendarIcon, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -26,7 +26,7 @@ export interface DatePickerProps {
 export function DatePicker({
   date,
   onSelect,
-  placeholder = "Sélectionner une date",
+  placeholder,
   disabled = false,
   className,
   popoverAlign = "start",
@@ -65,16 +65,16 @@ export function DatePicker({
           >
             <CalendarIcon className={cn("mr-2 opacity-70", size === "sm" ? "h-3.5 w-3.5" : "h-4 w-4")} />
             {date ? (
-              <span className="flex-1">{format(date, "dd MMMM yyyy", { locale: fr })}</span>
+              <span className="flex-1">{format(date, "dd MMMM yyyy", { locale: dateFnsLocale() })}</span>
             ) : (
-              <span>{placeholder}</span>
+              <span>{placeholder ?? i18n.t("common:datePicker.placeholder")}</span>
             )}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0 shadow-md" align={popoverAlign} sideOffset={5}>
           <div className="p-3 border-b border-border/10 bg-muted/30">
             <div className="text-xs font-medium text-center text-muted-foreground">
-              {date ? format(date, "EEEE d MMMM yyyy", { locale: fr }) : "Sélectionnez une date"}
+              {date ? format(date, "EEEE d MMMM yyyy", { locale: dateFnsLocale() }) : i18n.t("common:datePicker.empty")}
             </div>
           </div>
           <Calendar
@@ -125,7 +125,7 @@ export function DatePicker({
           )}
           onClick={handleClear}
         >
-          <span className="sr-only">Effacer la date</span>
+          <span className="sr-only">{i18n.t("common:datePicker.clear")}</span>
           <X className={cn("text-muted-foreground", size === "sm" ? "h-3 w-3" : "h-3.5 w-3.5")} />
         </Button>
       )}

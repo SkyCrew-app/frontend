@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useQuery, useMutation } from "@apollo/client"
+import { useTranslation } from "react-i18next"
 import {
   GET_AIRCRAFT_FOR_AUDIT,
   GET_USERS_FOR_AUDIT,
@@ -31,6 +32,7 @@ interface CreateAuditDialogProps {
 const PREVIEW_ITEM_COUNT = 5
 
 export function CreateAuditDialog({ isOpen, onClose, onSuccess }: CreateAuditDialogProps) {
+  const { t } = useTranslation("administration")
   const { toast } = useToast()
   const [formData, setFormData] = useState({
     aircraftId: "",
@@ -60,15 +62,15 @@ export function CreateAuditDialog({ isOpen, onClose, onSuccess }: CreateAuditDia
 
   const [createAudit, { loading: createLoading }] = useMutation(CREATE_AUDIT, {
     onCompleted: () => {
-      toast({ title: "Audit créé" })
+      toast({ title: t("audits.create.toast.created") })
       resetForm()
       onSuccess()
     },
     onError: () => {
       toast({
         variant: "destructive",
-        title: "Création impossible",
-        description: "L'audit n'a pas pu être créé. Vérifiez les informations puis réessayez.",
+        title: t("audits.create.toast.failed.title"),
+        description: t("audits.create.toast.failed.description"),
       })
     },
   })
@@ -183,11 +185,11 @@ export function CreateAuditDialog({ isOpen, onClose, onSuccess }: CreateAuditDia
     const errors: Record<string, string> = {}
 
     if (!formData.aircraftId) {
-      errors.aircraftId = "Choisissez l'aéronef audité."
+      errors.aircraftId = t("audits.create.errors.aircraft")
     }
 
     if (!formData.auditorId) {
-      errors.auditorId = "Choisissez l'auditeur."
+      errors.auditorId = t("audits.create.errors.auditor")
     }
 
     setValidationErrors(errors)
@@ -226,7 +228,7 @@ export function CreateAuditDialog({ isOpen, onClose, onSuccess }: CreateAuditDia
     <div className="grid gap-4 sm:grid-cols-2">
       <div className="space-y-2">
         <Label htmlFor="aircraft">
-          Aéronef <span className="text-destructive">*</span>
+          {t("audits.fields.aircraft")} <span className="text-destructive">*</span>
         </Label>
         <Select value={formData.aircraftId} onValueChange={(value) => handleInputChange("aircraftId", value)}>
           <SelectTrigger
@@ -234,7 +236,7 @@ export function CreateAuditDialog({ isOpen, onClose, onSuccess }: CreateAuditDia
             aria-invalid={Boolean(validationErrors.aircraftId)}
             className={cn(validationErrors.aircraftId && "border-destructive")}
           >
-            <SelectValue placeholder="Sélectionner un aéronef" />
+            <SelectValue placeholder={t("audits.create.selectAircraft")} />
           </SelectTrigger>
           <SelectContent>
             {(aircraftData?.getAircrafts ?? []).map((aircraft: any) => (
@@ -249,7 +251,7 @@ export function CreateAuditDialog({ isOpen, onClose, onSuccess }: CreateAuditDia
 
       <div className="space-y-2">
         <Label htmlFor="auditor">
-          Auditeur <span className="text-destructive">*</span>
+          {t("audits.fields.auditor")} <span className="text-destructive">*</span>
         </Label>
         <Select value={formData.auditorId} onValueChange={(value) => handleInputChange("auditorId", value)}>
           <SelectTrigger
@@ -257,7 +259,7 @@ export function CreateAuditDialog({ isOpen, onClose, onSuccess }: CreateAuditDia
             aria-invalid={Boolean(validationErrors.auditorId)}
             className={cn(validationErrors.auditorId && "border-destructive")}
           >
-            <SelectValue placeholder="Sélectionner un auditeur" />
+            <SelectValue placeholder={t("audits.create.selectAuditor")} />
           </SelectTrigger>
           <SelectContent>
             {userData?.getUsers?.map((user: any) => (
@@ -272,23 +274,23 @@ export function CreateAuditDialog({ isOpen, onClose, onSuccess }: CreateAuditDia
 
       <div className="space-y-2" role="group" aria-labelledby="audit-date-label">
         <Label id="audit-date-label">
-          Date de l'audit <span className="text-destructive">*</span>
+          {t("audits.fields.auditDate")} <span className="text-destructive">*</span>
         </Label>
         <DatePicker
           date={formData.auditDate}
           onSelect={(date) => date && handleInputChange("auditDate", date)}
-          placeholder="Sélectionner une date"
+          placeholder={t("audits.form.selectDate")}
           clearable={false}
         />
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="audit-result">
-          Résultat <span className="text-destructive">*</span>
+          {t("audits.fields.result")} <span className="text-destructive">*</span>
         </Label>
         <Select value={formData.auditResult} onValueChange={(value) => handleInputChange("auditResult", value)}>
           <SelectTrigger id="audit-result">
-            <SelectValue placeholder="Sélectionner un résultat" />
+            <SelectValue placeholder={t("audits.form.selectResult")} />
           </SelectTrigger>
           <SelectContent>
             {enumsData?.auditResultTypes?.map((result: string) => (
@@ -313,7 +315,7 @@ export function CreateAuditDialog({ isOpen, onClose, onSuccess }: CreateAuditDia
         </div>
         <div className="flex shrink-0 gap-2">
           <Button type="button" variant="outline" size="sm" onClick={() => setIsTemplateDialogOpen(true)}>
-            Changer
+            {t("audits.create.template.change")}
           </Button>
           <Button
             type="button"
@@ -327,7 +329,7 @@ export function CreateAuditDialog({ isOpen, onClose, onSuccess }: CreateAuditDia
               }))
             }}
           >
-            Retirer
+            {t("common:actions.remove")}
           </Button>
         </div>
       </div>
@@ -335,10 +337,8 @@ export function CreateAuditDialog({ isOpen, onClose, onSuccess }: CreateAuditDia
       {formData.auditItems.length > 0 ? (
         <div className="space-y-2">
           <p className="text-xs text-muted-foreground">
-            {formData.auditItems.length === 1
-              ? "1 élément à vérifier sera créé avec l'audit."
-              : `${formData.auditItems.length} éléments à vérifier seront créés avec l'audit.`}{" "}
-            Vous renseignerez leur résultat en modifiant l'audit.
+            {t("audits.create.template.itemsCreated", { count: formData.auditItems.length })}{" "}
+            {t("audits.create.template.fillLater")}
           </p>
           <ul className="divide-y rounded-md border">
             {previewItems.map((item, index) => (
@@ -357,18 +357,18 @@ export function CreateAuditDialog({ isOpen, onClose, onSuccess }: CreateAuditDia
           </ul>
           {hiddenItemCount > 0 && (
             <p className="text-xs text-muted-foreground">
-              {hiddenItemCount === 1 ? "et 1 autre élément." : `et ${hiddenItemCount} autres éléments.`}
+              {t("audits.create.template.moreItems", { count: hiddenItemCount })}
             </p>
           )}
         </div>
       ) : (
-        <p className="text-xs text-muted-foreground">Ce modèle ne contient aucun élément à vérifier.</p>
+        <p className="text-xs text-muted-foreground">{t("audits.create.template.noItems")}</p>
       )}
     </div>
   ) : (
     <div className="flex flex-col gap-3 rounded-lg border border-dashed p-4 sm:flex-row sm:items-center sm:justify-between">
       <p className="text-sm text-muted-foreground">
-        Facultatif : un modèle ajoute à l'audit la liste des éléments à vérifier.
+        {t("audits.create.template.hint")}
       </p>
       <Button
         type="button"
@@ -377,7 +377,7 @@ export function CreateAuditDialog({ isOpen, onClose, onSuccess }: CreateAuditDia
         className="shrink-0"
         onClick={() => setIsTemplateDialogOpen(true)}
       >
-        Choisir un modèle
+        {t("audits.create.template.choose")}
       </Button>
     </div>
   )
@@ -387,11 +387,11 @@ export function CreateAuditDialog({ isOpen, onClose, onSuccess }: CreateAuditDia
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="audit-frequency">
-            Fréquence <span className="text-destructive">*</span>
+            {t("audits.fields.frequency")} <span className="text-destructive">*</span>
           </Label>
           <Select value={formData.auditFrequency} onValueChange={(value) => handleInputChange("auditFrequency", value)}>
             <SelectTrigger id="audit-frequency">
-              <SelectValue placeholder="Sélectionner une fréquence" />
+              <SelectValue placeholder={t("audits.form.selectFrequency")} />
             </SelectTrigger>
             <SelectContent>
               {enumsData?.auditFrequencyTypes?.map((frequency: string) => (
@@ -404,24 +404,24 @@ export function CreateAuditDialog({ isOpen, onClose, onSuccess }: CreateAuditDia
         </div>
 
         <div className="space-y-2" role="group" aria-labelledby="next-audit-date-label">
-          <Label id="next-audit-date-label">Prochain audit</Label>
+          <Label id="next-audit-date-label">{t("audits.fields.nextAudit")}</Label>
           <DatePicker
             date={formData.nextAuditDate || undefined}
             onSelect={(date) => handleInputChange("nextAuditDate", date)}
-            placeholder="Non planifié"
+            placeholder={t("audits.form.notPlanned")}
             clearable
           />
         </div>
       </div>
       <p className="text-xs text-muted-foreground">
-        Le prochain audit est calculé à partir de la date et de la fréquence ; vous pouvez le modifier.
+        {t("audits.form.nextAuditHint")}
       </p>
 
       <div className="space-y-2">
-        <Label htmlFor="audit-notes">Notes</Label>
+        <Label htmlFor="audit-notes">{t("common:labels.notes")}</Label>
         <Textarea
           id="audit-notes"
-          placeholder="Ex. : audit réalisé après la visite des 100 heures"
+          placeholder={t("audits.create.notesPlaceholder")}
           value={formData.auditNotes}
           onChange={(e) => handleInputChange("auditNotes", e.target.value)}
           rows={4}
@@ -435,15 +435,15 @@ export function CreateAuditDialog({ isOpen, onClose, onSuccess }: CreateAuditDia
       <SidePanel
         open={isOpen}
         onOpenChange={(open) => !open && !createLoading && onClose()}
-        title="Créer un audit"
-        description="Enregistrez l'audit de sécurité d'un aéronef, avec ou sans modèle."
+        title={t("audits.create.title")}
+        description={t("audits.create.description")}
         onSubmit={handleSubmit}
-        submitLabel="Créer l'audit"
+        submitLabel={t("audits.create.submit")}
         submitting={createLoading}
         steps={[
-          { title: "Audit", content: auditStep, validate: validateForm },
-          { title: "Modèle", content: templateStep },
-          { title: "Planification", content: planningStep },
+          { title: t("audits.form.steps.audit"), content: auditStep, validate: validateForm },
+          { title: t("audits.create.steps.template"), content: templateStep },
+          { title: t("audits.create.steps.planning"), content: planningStep },
         ]}
       />
 

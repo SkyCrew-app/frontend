@@ -1,5 +1,6 @@
 "use client"
 
+import i18n from "@/lib/i18n"
 import { useState } from "react"
 import { Command, CommandInput, CommandGroup, CommandList, CommandItem, CommandEmpty } from "@/components/ui/command"
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover"
@@ -51,9 +52,9 @@ export function TimezoneCombobox({
       </PopoverTrigger>
       <PopoverContent className="w-[300px] p-0" align="start">
         <Command>
-          <CommandInput placeholder="Rechercher un fuseau horaire..." onValueChange={setSearchQuery} />
+          <CommandInput placeholder={i18n.t("common:combobox.searchTimezone")} onValueChange={setSearchQuery} />
           <CommandList className="max-h-[300px]">
-            <CommandEmpty>Aucun fuseau horaire trouvé.</CommandEmpty>
+            <CommandEmpty>{i18n.t("common:combobox.noTimezone")}</CommandEmpty>
             {Object.entries(filteredTimezonesByRegion).map(([region, timezones]) => (
               <CommandGroup key={region} heading={region}>
                 {timezones.map((timezone) => (

@@ -1,6 +1,7 @@
 "use client"
 
 import { ChevronLeft, ChevronRight } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 
 interface ListPaginationProps {
@@ -11,31 +12,32 @@ interface ListPaginationProps {
 
 // Previous / next under a long list. Renders nothing while everything fits on one page.
 export function ListPagination({ page, pageCount, onPageChange }: ListPaginationProps) {
+  const { t } = useTranslation("instruction")
   if (pageCount <= 1) return null
 
   return (
-    <nav className="flex items-center justify-end gap-2" aria-label="Pagination">
+    <nav className="flex items-center justify-end gap-2" aria-label={t("courses.pagination.label")}>
       <Button
         variant="outline"
         size="sm"
         onClick={() => onPageChange(page - 1)}
         disabled={page <= 1}
-        aria-label="Page précédente"
+        aria-label={t("common:pagination.previousPage")}
       >
         <ChevronLeft className="h-4 w-4" />
-        Précédent
+        {t("common:pagination.previous")}
       </Button>
       <span className="px-2 text-sm tabular-nums text-muted-foreground">
-        Page {page} sur {pageCount}
+        {t("common:pagination.pageOf", { page, total: pageCount })}
       </span>
       <Button
         variant="outline"
         size="sm"
         onClick={() => onPageChange(page + 1)}
         disabled={page >= pageCount}
-        aria-label="Page suivante"
+        aria-label={t("common:pagination.nextPage")}
       >
-        Suivant
+        {t("common:pagination.next")}
         <ChevronRight className="h-4 w-4" />
       </Button>
     </nav>

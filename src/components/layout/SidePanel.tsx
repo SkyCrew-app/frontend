@@ -1,5 +1,6 @@
 "use client"
 
+import i18n from "@/lib/i18n"
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react"
 import { ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -56,10 +57,10 @@ export function SidePanel({
   children,
   steps,
   onSubmit,
-  submitLabel = "Enregistrer",
+  submitLabel = i18n.t("common:actions.save"),
   submitting = false,
   submitDisabled = false,
-  cancelLabel = "Annuler",
+  cancelLabel = i18n.t("common:actions.cancel"),
   footer,
   footerStart,
   size = "lg",
@@ -135,7 +136,7 @@ export function SidePanel({
   const body = (
     <>
       {hasSteps && steps && (
-        <ol className="flex items-center gap-2 border-b px-6 py-3" aria-label="Étapes">
+        <ol className="flex items-center gap-2 border-b px-6 py-3" aria-label={i18n.t("common:panel.steps")}>
           {steps.map((step, index) => {
             const done = index < current
             const active = index === current
@@ -195,16 +196,16 @@ export function SidePanel({
               {hasSteps && current > 0 ? (
                 <Button type="button" variant="outline" onClick={() => setCurrent((step) => step - 1)}>
                   <ArrowLeft className="h-4 w-4" />
-                  Précédent
+                  {i18n.t("common:actions.previous")}
                 </Button>
               ) : (
                 <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                  {onSubmit ? cancelLabel : "Fermer"}
+                  {onSubmit ? cancelLabel : i18n.t("common:actions.close")}
                 </Button>
               )}
               {!isLast && (
                 <Button type="submit" disabled={checking}>
-                  Suivant
+                  {i18n.t("common:actions.next")}
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               )}

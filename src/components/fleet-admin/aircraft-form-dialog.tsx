@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useEffect, useRef, useState } from "react"
 import { useMutation } from "@apollo/client"
+import { useTranslation } from "react-i18next"
 import { FileText, ImageIcon, Paperclip, Plane, X } from "lucide-react"
 import { SidePanel } from "@/components/layout/SidePanel"
 import { Button } from "@/components/ui/button"
@@ -135,6 +136,7 @@ function UnitInput({ unit, className, ...props }: React.ComponentProps<typeof In
 }
 
 export function AircraftFormDialog({ aircraft, isOpen, onClose, onSuccess }: AircraftFormDialogProps) {
+  const { t } = useTranslation("fleet")
   const isEditing = !!aircraft
   const [form, setForm] = useState<FormState>(() => initialState(aircraft))
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({})
@@ -159,15 +161,17 @@ export function AircraftFormDialog({ aircraft, isOpen, onClose, onSuccess }: Air
     awaitRefetchQueries: true,
     onCompleted: (result) => {
       toast({
-        title: "Aéronef ajouté",
-        description: `${result.createAircraft.registration_number} fait maintenant partie de la flotte.`,
+        title: t("aircraftForm.toast.created.title"),
+        description: t("aircraftForm.toast.created.description", {
+          registration: result.createAircraft.registration_number,
+        }),
       })
       onSuccess()
     },
     onError: () => {
       toast({
-        title: "Création impossible",
-        description: "L'aéronef n'a pas pu être créé. Vérifiez que l'immatriculation n'est pas déjà utilisée.",
+        title: t("aircraftForm.toast.createFailed.title"),
+        description: t("aircraftForm.toast.createFailed.description"),
         variant: "destructive",
       })
     },
@@ -178,16 +182,15 @@ export function AircraftFormDialog({ aircraft, isOpen, onClose, onSuccess }: Air
     awaitRefetchQueries: true,
     onCompleted: () => {
       toast({
-        title: "Aéronef mis à jour",
-        description: "Les modifications ont été enregistrées.",
+        title: t("aircraftForm.toast.updated.title"),
+        description: t("shared.changesSaved"),
       })
       onSuccess()
     },
     onError: () => {
       toast({
-        title: "Enregistrement impossible",
-        description:
-          "Les modifications n'ont pas pu être enregistrées. Vérifiez que l'immatriculation n'est pas déjà utilisée.",
+        title: t("shared.saveFailed"),
+        description: t("aircraftForm.toast.updateFailed.description"),
         variant: "destructive",
       })
     },
@@ -241,21 +244,21 @@ export function AircraftFormDialog({ aircraft, isOpen, onClose, onSuccess }: Air
   const validate = (fields?: readonly (keyof FormState)[]) => {
     const next: Partial<Record<keyof FormState, string>> = {}
 
-    if (!form.registration_number.trim()) next.registration_number = "Indiquez l'immatriculation."
-    if (!form.model.trim()) next.model = "Indiquez le modèle."
+    if (!form.registration_number.trim()) next.registration_number = t("aircraftForm.validation.registration")
+    if (!form.model.trim()) next.model = t("aircraftForm.validation.model")
 
     const year = Number(form.year_of_manufacture)
     if (!form.year_of_manufacture || !Number.isInteger(year) || year < yearBounds.min || year > yearBounds.max) {
-      next.year_of_manufacture = `Indiquez une année entre ${yearBounds.min} et ${yearBounds.max}.`
+      next.year_of_manufacture = t("aircraftForm.validation.year", { min: yearBounds.min, max: yearBounds.max })
     }
 
     if (form.hourly_cost === "" || !(Number(form.hourly_cost) >= 0)) {
-      next.hourly_cost = "Indiquez le coût d'une heure de vol, en euros."
+      next.hourly_cost = t("aircraftForm.validation.hourlyCost")
     }
 
     for (const field of OPTIONAL_NUMBERS) {
       if (form[field] !== "" && !(Number(form[field]) >= 0)) {
-        next[field] = "Indiquez un nombre positif."
+        next[field] = t("common:validation.positiveNumber")
       }
     }
 
@@ -326,13 +329,13 @@ export function AircraftFormDialog({ aircraft, isOpen, onClose, onSuccess }: Air
   const identificationStep = (
     <>
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field id="registration_number" label="Immatriculation" required error={errors.registration_number}>
-          <Input {...inputProps("registration_number")} placeholder="F-GABC" autoComplete="off" required />
+        <Field id="registration_number" label={t("shared.registration")} required error={errors.registration_number}>
+          <Input {...inputProps("registration_number")} placeholder={t("aircraftForm.fields.registrationPlaceholder")} autoComplete="off" required />
         </Field>
-        <Field id="model" label="Modèle" required error={errors.model}>
+        <Field id="model" label={t("shared.model")} required error={errors.model}>
           <Input {...inputProps("model")} placeholder="Robin DR400-120" autoComplete="off" required />
         </Field>
-        <Field id="year_of_manufacture" label="Année de fabrication" required error={errors.year_of_manufacture}>
+        <Field id="year_of_manufacture" label={t("aircraftForm.fields.yearOfManufacture")} required error={errors.year_of_manufacture}>
           <Input
             {...inputProps("year_of_manufacture")}
             type="number"
@@ -344,14 +347,14 @@ export function AircraftFormDialog({ aircraft, isOpen, onClose, onSuccess }: Air
             className={cn("tabular-nums", errors.year_of_manufacture && "border-destructive")}
           />
         </Field>
-        <Field id="hourly_cost" label="Coût horaire" required error={errors.hourly_cost}>
+        <Field id="hourly_cost" label={t("shared.hourlyCost")} required error={errors.hourly_cost}>
           <UnitInput {...inputProps("hourly_cost")} unit="€/h" step="0.01" placeholder="150" required />
         </Field>
       </div>
       <section className="space-y-4 pt-2">
-        <h3 className="text-sm font-semibold">État</h3>
+        <h3 className="text-sm font-semibold">{t("aircraftForm.sections.state")}</h3>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field id="availability_status" label="Disponibilité" required>
+          <Field id="availability_status" label={t("shared.availability")} required>
             <Select
               value={form.availability_status}
               onValueChange={(value) => setField("availability_status", value)}
@@ -368,7 +371,7 @@ export function AircraftFormDialog({ aircraft, isOpen, onClose, onSuccess }: Air
               </SelectContent>
             </Select>
           </Field>
-          <Field id="maintenance_status" label="État de maintenance" required>
+          <Field id="maintenance_status" label={t("aircraftForm.fields.maintenanceState")} required>
             <Select value={form.maintenance_status} onValueChange={(value) => setField("maintenance_status", value)}>
               <SelectTrigger id="maintenance_status">
                 <SelectValue />
@@ -390,32 +393,32 @@ export function AircraftFormDialog({ aircraft, isOpen, onClose, onSuccess }: Air
   const characteristicsStep = (
     <>
       <section className="space-y-4">
-        <h3 className="text-sm font-semibold">Performances</h3>
+        <h3 className="text-sm font-semibold">{t("aircraftForm.sections.performance")}</h3>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field id="maxAltitude" label="Altitude maximale" error={errors.maxAltitude}>
+          <Field id="maxAltitude" label={t("shared.maxAltitude")} error={errors.maxAltitude}>
             <UnitInput {...inputProps("maxAltitude")} unit="ft" step="1" placeholder="12000" />
           </Field>
-          <Field id="cruiseSpeed" label="Vitesse de croisière" error={errors.cruiseSpeed}>
+          <Field id="cruiseSpeed" label={t("shared.cruiseSpeed")} error={errors.cruiseSpeed}>
             <UnitInput {...inputProps("cruiseSpeed")} unit="kt" step="1" placeholder="110" />
           </Field>
-          <Field id="consumption" label="Consommation" error={errors.consumption}>
+          <Field id="consumption" label={t("shared.consumption")} error={errors.consumption}>
             <UnitInput {...inputProps("consumption")} unit="L/h" step="1" placeholder="25" />
           </Field>
         </div>
       </section>
       <section className="space-y-4 pt-2">
-        <h3 className="text-sm font-semibold">Carburant et masses</h3>
+        <h3 className="text-sm font-semibold">{t("aircraftForm.sections.fuelAndWeights")}</h3>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field id="fuel_type" label="Type de carburant">
+          <Field id="fuel_type" label={t("aircraftForm.fields.fuelType")}>
             <Input {...inputProps("fuel_type")} placeholder="100LL" autoComplete="off" />
           </Field>
-          <Field id="fuel_capacity" label="Capacité du réservoir" error={errors.fuel_capacity}>
+          <Field id="fuel_capacity" label={t("shared.fuelCapacity")} error={errors.fuel_capacity}>
             <UnitInput {...inputProps("fuel_capacity")} unit="L" step="0.1" placeholder="110" />
           </Field>
-          <Field id="empty_weight" label="Masse à vide" error={errors.empty_weight}>
+          <Field id="empty_weight" label={t("shared.emptyWeight")} error={errors.empty_weight}>
             <UnitInput {...inputProps("empty_weight")} unit="kg" step="0.1" placeholder="580" />
           </Field>
-          <Field id="max_takeoff_weight" label="Masse maximale au décollage" error={errors.max_takeoff_weight}>
+          <Field id="max_takeoff_weight" label={t("shared.maxTakeoffWeight")} error={errors.max_takeoff_weight}>
             <UnitInput {...inputProps("max_takeoff_weight")} unit="kg" step="0.1" placeholder="900" />
           </Field>
         </div>
@@ -426,13 +429,13 @@ export function AircraftFormDialog({ aircraft, isOpen, onClose, onSuccess }: Air
   const filesStep = (
     <div className="space-y-6">
       <div className="space-y-2">
-        <Label htmlFor="image">Photo</Label>
+        <Label htmlFor="image">{t("aircraftForm.photo.label")}</Label>
         <div className="flex items-center gap-3">
           <div className="flex h-16 w-24 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-muted text-muted-foreground">
             {shownImage ? (
               // A picked file is previewed from memory; a stored photo comes from the API.
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={shownImage} alt="Aperçu de la photo" className="h-full w-full object-cover" />
+              <img src={shownImage} alt={t("aircraftForm.photo.previewAlt")} className="h-full w-full object-cover" />
             ) : (
               <Plane className="h-5 w-5" aria-hidden="true" />
             )}
@@ -440,17 +443,17 @@ export function AircraftFormDialog({ aircraft, isOpen, onClose, onSuccess }: Air
           <div className="flex flex-wrap gap-2">
             <Button type="button" variant="outline" size="sm" onClick={() => imageInputRef.current?.click()}>
               <ImageIcon className="h-4 w-4" aria-hidden="true" />
-              {shownImage ? "Remplacer" : "Choisir une photo"}
+              {shownImage ? t("aircraftForm.photo.replace") : t("aircraftForm.photo.choose")}
             </Button>
             {imageFile && (
               <Button type="button" variant="ghost" size="sm" onClick={clearImage}>
                 <X className="h-4 w-4" aria-hidden="true" />
-                Retirer
+                {t("common:actions.remove")}
               </Button>
             )}
           </div>
         </div>
-        <p className="text-xs text-muted-foreground">PNG ou JPG.</p>
+        <p className="text-xs text-muted-foreground">{t("aircraftForm.photo.hint")}</p>
         <input
           ref={imageInputRef}
           id="image"
@@ -463,7 +466,7 @@ export function AircraftFormDialog({ aircraft, isOpen, onClose, onSuccess }: Air
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="document">Document</Label>
+        <Label htmlFor="document">{t("aircraftForm.document.label")}</Label>
         {existingDocuments.length > 0 && (
           <ul className="space-y-1">
             {existingDocuments.map((url) => (
@@ -486,8 +489,8 @@ export function AircraftFormDialog({ aircraft, isOpen, onClose, onSuccess }: Air
               size="icon"
               className="h-9 w-9 shrink-0"
               onClick={() => setDocumentFile(null)}
-              aria-label={`Retirer le document ${documentFile.name}`}
-              title="Ne pas envoyer ce document"
+              aria-label={t("aircraftForm.document.removeLabel", { name: documentFile.name })}
+              title={t("aircraftForm.document.doNotSend")}
             >
               <X className="h-4 w-4" aria-hidden="true" />
             </Button>
@@ -495,11 +498,10 @@ export function AircraftFormDialog({ aircraft, isOpen, onClose, onSuccess }: Air
         )}
         <Button type="button" variant="outline" size="sm" onClick={() => documentInputRef.current?.click()}>
           <Paperclip className="h-4 w-4" aria-hidden="true" />
-          {documentFile ? "Choisir un autre document" : "Choisir un document"}
+          {documentFile ? t("aircraftForm.document.chooseAnother") : t("aircraftForm.document.choose")}
         </Button>
         <p className="text-xs text-muted-foreground">
-          Manuel de vol, certificat… PDF, DOC ou DOCX.
-          {existingDocuments.length > 0 && " Le nouveau document remplacera ceux déjà enregistrés."}
+          {existingDocuments.length > 0 ? t("aircraftForm.document.hintReplace") : t("aircraftForm.document.hint")}
         </p>
         <input
           ref={documentInputRef}
@@ -518,19 +520,21 @@ export function AircraftFormDialog({ aircraft, isOpen, onClose, onSuccess }: Air
     <SidePanel
       open={isOpen}
       onOpenChange={(open) => !open && !loading && onClose()}
-      title={isEditing ? `Modifier ${aircraft.registration_number}` : "Ajouter un aéronef"}
+      title={
+        isEditing ? t("aircraftForm.title.edit", { registration: aircraft.registration_number }) : t("shared.addAircraft")
+      }
       description={
         isEditing
-          ? "Mettez à jour les informations de l'aéronef."
-          : "Seules les informations marquées d'un astérisque sont obligatoires."
+          ? t("aircraftForm.description.edit")
+          : t("aircraftForm.description.create")
       }
       onSubmit={handleSubmit}
-      submitLabel={isEditing ? "Enregistrer" : "Ajouter l'aéronef"}
+      submitLabel={isEditing ? t("common:actions.save") : t("aircraftForm.submit.create")}
       submitting={loading}
       steps={[
-        { title: "Identification", content: identificationStep, validate: () => validate(IDENTIFICATION_FIELDS) },
-        { title: "Caractéristiques", content: characteristicsStep, validate: () => validate(OPTIONAL_NUMBERS) },
-        { title: "Photo et document", content: filesStep },
+        { title: t("aircraftForm.steps.identification"), content: identificationStep, validate: () => validate(IDENTIFICATION_FIELDS) },
+        { title: t("shared.characteristics"), content: characteristicsStep, validate: () => validate(OPTIONAL_NUMBERS) },
+        { title: t("aircraftForm.steps.files"), content: filesStep },
       ]}
     />
   )

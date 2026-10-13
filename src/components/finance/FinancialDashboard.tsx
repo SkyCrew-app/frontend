@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useMutation } from "@apollo/client"
+import { useTranslation } from "react-i18next"
 import { Plus } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
@@ -16,15 +17,19 @@ import ExpenseForm from "./ExpenseForm"
 import BudgetForecast from "./BudgetForecast"
 import { GENERATE_FINANCIAL_REPORT_PDF, GENERATE_FINANCIAL_REPORT_EXCEL } from "@/graphql/finance"
 import type { GenerateReportResponse, GenerateReportVariables } from "@/interfaces/finance"
+import { currentLocale } from "@/lib/i18n"
 
-const MONTHS = Array.from({ length: 12 }, (_, index) => {
-  const name = new Date(2024, index, 1).toLocaleString("fr-FR", { month: "long" })
-  return { value: index.toString(), label: name.charAt(0).toUpperCase() + name.slice(1) }
-})
+// Built when shown, so that the month names follow the language.
+const monthOptions = () =>
+  Array.from({ length: 12 }, (_, index) => {
+    const name = new Date(2024, index, 1).toLocaleString(currentLocale(), { month: "long" })
+    return { value: index.toString(), label: name.charAt(0).toUpperCase() + name.slice(1) }
+  })
 
 const YEARS_SHOWN = 5
 
 export default function FinancialDashboard() {
+  const { t } = useTranslation("administration")
   const [period, setPeriod] = useState("monthly")
   const [date, setDate] = useState<Date>(() => new Date())
   const [activeTab, setActiveTab] = useState("financial")
@@ -44,16 +49,16 @@ export default function FinancialDashboard() {
 
       window.open(url, "_blank")
       toast({
-        title: "Rapport généré",
-        description: "Le fichier s'ouvre dans un nouvel onglet.",
+        title: t("finance.export.toast.done.title"),
+        description: t("finance.export.toast.done.description"),
       })
       return true
     } catch (error) {
       console.error("Financial report export failed:", error)
       toast({
         variant: "destructive",
-        title: "Export impossible",
-        description: "Le rapport n'a pas pu être généré. Réessayez dans un instant.",
+        title: t("finance.export.toast.failed.title"),
+        description: t("finance.export.toast.failed.description"),
       })
       return false
     } finally {
@@ -68,12 +73,12 @@ export default function FinancialDashboard() {
   const periodFilter = (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
       <Select value={period} onValueChange={setPeriod}>
-        <SelectTrigger className="sm:w-40" aria-label="Type de période">
+        <SelectTrigger className="sm:w-40" aria-label={t("finance.period.type")}>
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="monthly">Par mois</SelectItem>
-          <SelectItem value="annual">Par année</SelectItem>
+          <SelectItem value="monthly">{t("finance.period.monthly")}</SelectItem>
+          <SelectItem value="annual">{t("finance.period.annual")}</SelectItem>
         </SelectContent>
       </Select>
 
@@ -82,11 +87,11 @@ export default function FinancialDashboard() {
           value={date.getMonth().toString()}
           onValueChange={(value) => setDate(new Date(date.getFullYear(), Number.parseInt(value, 10), 1))}
         >
-          <SelectTrigger className="sm:w-40" aria-label="Mois">
+          <SelectTrigger className="sm:w-40" aria-label={t("finance.period.month")}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {MONTHS.map((month) => (
+            {monthOptions().map((month) => (
               <SelectItem key={month.value} value={month.value}>
                 {month.label}
               </SelectItem>
@@ -99,7 +104,7 @@ export default function FinancialDashboard() {
         value={date.getFullYear().toString()}
         onValueChange={(value) => setDate(new Date(Number.parseInt(value, 10), date.getMonth(), 1))}
       >
-        <SelectTrigger className="sm:w-28" aria-label="Année">
+        <SelectTrigger className="sm:w-28" aria-label={t("finance.period.year")}>
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -116,15 +121,15 @@ export default function FinancialDashboard() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Finances"
-        description="Revenus, dépenses et prévisions de l'aéroclub."
+        title={t("finance.title")}
+        description={t("finance.description")}
         className="mb-0"
         actions={
           <>
             <ExportDialog onExport={handleExport} isLoading={isExporting} />
             <Button onClick={() => setIsExpenseDialogOpen(true)}>
               <Plus className="h-4 w-4" />
-              Ajouter une dépense
+              {t("finance.expenseForm.title")}
             </Button>
           </>
         }
@@ -132,10 +137,10 @@ export default function FinancialDashboard() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
-          <TabsTrigger value="financial">Synthèse</TabsTrigger>
-          <TabsTrigger value="expenses">Dépenses</TabsTrigger>
-          <TabsTrigger value="operating">Coûts par avion</TabsTrigger>
-          <TabsTrigger value="forecast">Prévisions</TabsTrigger>
+          <TabsTrigger value="financial">{t("finance.tabs.summary")}</TabsTrigger>
+          <TabsTrigger value="expenses">{t("finance.tabs.expenses")}</TabsTrigger>
+          <TabsTrigger value="operating">{t("finance.tabs.operating")}</TabsTrigger>
+          <TabsTrigger value="forecast">{t("finance.tabs.forecast")}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="financial" className="mt-6">

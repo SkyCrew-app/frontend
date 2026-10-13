@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { useTranslation } from "react-i18next"
 import { ArrowDown, ArrowUp, ArrowUpDown, BookOpen } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -47,6 +48,7 @@ const sortValue = (flight: Flight, key: SortKey): string | number => {
 
 export default function LogbookTable({ flights, loading, filtered = false, onResetFilters }: LogbookTableProps) {
   const router = useRouter()
+  const { t } = useTranslation("flights")
   const [sortKey, setSortKey] = useState<SortKey>("date")
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc")
   const [currentPage, setCurrentPage] = useState(1)
@@ -96,12 +98,12 @@ export default function LogbookTable({ flights, loading, filtered = false, onRes
     return filtered ? (
       <EmptyState
         icon={BookOpen}
-        title="Aucun vol ne correspond"
-        description="Aucun vol clôturé ne correspond à cette période ou à ces filtres."
+        title={t("logbook.table.noMatch.title")}
+        description={t("logbook.table.noMatch.description")}
         action={
           onResetFilters && (
             <Button variant="outline" onClick={onResetFilters}>
-              Réinitialiser les filtres
+              {t("logbook.table.noMatch.reset")}
             </Button>
           )
         }
@@ -109,11 +111,11 @@ export default function LogbookTable({ flights, loading, filtered = false, onRes
     ) : (
       <EmptyState
         icon={BookOpen}
-        title="Votre carnet de vol est vide"
-        description="Un vol s'inscrit ici dès qu'il est clôturé depuis son plan de vol."
+        title={t("logbook.table.empty.title")}
+        description={t("logbook.table.empty.description")}
         action={
           <Button asChild>
-            <Link href="/reservations/flight-plans">Voir mes plans de vol</Link>
+            <Link href="/reservations/flight-plans">{t("logbook.table.empty.action")}</Link>
           </Button>
         }
       />
@@ -148,13 +150,13 @@ export default function LogbookTable({ flights, loading, filtered = false, onRes
         <Table>
           <TableHeader>
             <TableRow>
-              <SortableHead label="Date" column="date" />
-              <SortableHead label="Avion" column="registration" />
-              <SortableHead label="Départ" column="origin" />
-              <SortableHead label="Arrivée" column="destination" />
-              <SortableHead label="Durée" column="hours" align="right" />
-              <SortableHead label="Type de vol" column="flight_type" />
-              <TableHead>Remarques</TableHead>
+              <SortableHead label={t("common:labels.date")} column="date" />
+              <SortableHead label={t("common:labels.aircraft")} column="registration" />
+              <SortableHead label={t("logbook.table.departure")} column="origin" />
+              <SortableHead label={t("logbook.table.arrival")} column="destination" />
+              <SortableHead label={t("common:labels.duration")} column="hours" align="right" />
+              <SortableHead label={t("logbook.table.flightType")} column="flight_type" />
+              <TableHead>{t("logbook.table.remarks")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -195,7 +197,7 @@ export default function LogbookTable({ flights, loading, filtered = false, onRes
         pageCount={pageCount}
         onPageChange={setCurrentPage}
         total={sortedFlights.length}
-        noun={["vol", "vols"]}
+        noun={[t("logbook.table.flightNoun.singular"), t("logbook.table.flightNoun.plural")]}
       />
     </div>
   )

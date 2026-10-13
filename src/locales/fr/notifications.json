@@ -1,0 +1,94 @@
+{
+  "title": "Notifications",
+  "summary": {
+    "unreadOf_one": "{{count}} non lue sur {{total}}",
+    "unreadOf_other": "{{count}} non lues sur {{total}}",
+    "allRead": "Tout est lu."
+  },
+  "actions": {
+    "deleteAll": "Tout supprimer",
+    "markAllRead": "Tout marquer comme lu"
+  },
+  "search": {
+    "label": "Rechercher dans les notifications",
+    "placeholder": "Rechercher, ex. : réservation"
+  },
+  "tabs": {
+    "all": "Toutes",
+    "unread": "Non lues",
+    "high": "Prioritaires"
+  },
+  "empty": {
+    "title": "Aucune notification",
+    "description": "Les alertes sur vos réservations, vos cours et votre compte s'afficheront ici.",
+    "filteredTitle": "Aucune notification ne correspond",
+    "filteredDescription": "Modifiez votre recherche ou changez d'onglet.",
+    "showAll": "Afficher toutes les notifications"
+  },
+  "day": {
+    "unknown": "Date inconnue"
+  },
+  "item": {
+    "unread": "(non lue)",
+    "priority": "Prioritaire",
+    "markRead": "Marquer comme lue",
+    "markReadNamed": "Marquer comme lue : {{type}}",
+    "deleteNamed": "Supprimer : {{type}}"
+  },
+  "deleteDialog": {
+    "titleOne": "Supprimer cette notification ?",
+    "titleMany_one": "Supprimer {{count}} notification ?",
+    "titleMany_other": "Supprimer {{count}} notifications ?",
+    "descriptionOne": "« {{type}} » sera supprimée définitivement.",
+    "descriptionFiltered": "Seules les notifications de la liste filtrée seront supprimées. Cette action est définitive.",
+    "descriptionAll": "Toutes vos notifications seront supprimées. Cette action est définitive."
+  },
+  "toast": {
+    "markedRead_one": "{{count}} notification marquée comme lue",
+    "markedRead_other": "{{count}} notifications marquées comme lues",
+    "deleted_one": "{{count}} notification supprimée",
+    "deleted_other": "{{count}} notifications supprimées",
+    "readFailed": {
+      "title": "Action impossible",
+      "description": "La notification n'a pas pu être marquée comme lue."
+    },
+    "deleteFailed": {
+      "title": "Suppression impossible",
+      "description": "La notification n'a pas pu être supprimée."
+    },
+    "markAllFailed": {
+      "title": "Action interrompue",
+      "description": "Toutes les notifications n'ont pas pu être marquées comme lues."
+    },
+    "deleteAllFailed": {
+      "title": "Suppression interrompue",
+      "description": "Toutes les notifications n'ont pas pu être supprimées."
+    }
+  },
+  "type": {
+    "COURSE_COMPLETED": "Cours terminé",
+    "COURSE_STARTED": "Cours commencé",
+    "COURSE_CANCELED": "Cours annulé",
+    "COURSE_CREATED": "Cours créé",
+    "COURSE_COMMENT": "Commentaire de cours",
+    "COMPETENCY_VALIDATED": "Compétence validée",
+    "LICENSE_EXPIRED": "Licence expirée",
+    "LICENSE_EXPIRING_SOON": "Licence expirant bientôt",
+    "RESERVATION_PENDING": "Réservation en attente",
+    "RESERVATION_CONFIRMED": "Réservation confirmée",
+    "RESERVATION_CANCELED": "Réservation annulée",
+    "RESERVATION_CANCELLED": "Réservation annulée",
+    "RESERVATION_MODIFIED": "Réservation modifiée",
+    "RESERVATION_FINISHED": "Réservation terminée",
+    "MISSING_FLIGHT_PLAN": "Plan de vol manquant",
+    "INCOMPLETE_FLIGHT_PLAN": "Plan de vol incomplet",
+    "MISSING_PASSENGER_COUNT": "Nombre de passagers manquant",
+    "FLIGHT_CREATED": "Plan de vol créé",
+    "WITHDRAWAL": "Retrait",
+    "INVOICE_CREATED": "Facture créée",
+    "PAYMENT_RECEIVED": "Paiement reçu",
+    "PAYMENT_REFUNDED": "Paiement remboursé",
+    "2FA_ENABLED": "Double authentification activée",
+    "USER_UPDATED": "Profil mis à jour"
+  }
+}

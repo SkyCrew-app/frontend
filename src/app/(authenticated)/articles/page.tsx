@@ -2,9 +2,10 @@
 
 import { useMemo, useState } from "react"
 import { useQuery } from "@apollo/client"
+import { useTranslation } from "react-i18next"
 import { LayoutGrid, List, Newspaper, Search, SearchX, Tag, X } from "lucide-react"
 import { GET_ARTICLES } from "@/graphql/articles"
-import { ArticleCard } from "@/components/articles/article-card"
+import { ArticleCard, articleTagLabel } from "@/components/articles/article-card"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { EmptyState } from "@/components/layout/EmptyState"
 import { ErrorState } from "@/components/layout/ErrorState"
@@ -20,6 +21,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { currentLocale } from "@/lib/i18n"
 
 interface Article {
   id: string
@@ -36,6 +38,7 @@ type SortOrder = "newest" | "oldest"
 type ViewMode = "grid" | "list"
 
 export default function ArticlesPage() {
+  const { t } = useTranslation("articles")
   const { loading, error, data, refetch } = useQuery(GET_ARTICLES)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedTags, setSelectedTags] = useState<string[]>([])
@@ -47,7 +50,7 @@ export default function ArticlesPage() {
   const allTags = useMemo(() => {
     const tags = new Set<string>()
     articles.forEach((article) => article.tags?.forEach((tag) => tags.add(tag)))
-    return Array.from(tags).sort((a, b) => a.localeCompare(b, "fr"))
+    return Array.from(tags).sort((a, b) => articleTagLabel(a).localeCompare(articleTagLabel(b), currentLocale()))
   }, [articles])
 
   const filteredArticles = useMemo(() => {
@@ -84,8 +87,8 @@ export default function ArticlesPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Actualités"
-        description="Les nouvelles et les événements de l'aéroclub."
+        title={t("list.title")}
+        description={t("list.description")}
         className="mb-0"
       />
 
@@ -97,8 +100,8 @@ export default function ArticlesPage() {
           />
           <Input
             type="search"
-            aria-label="Rechercher un article"
-            placeholder="Rechercher un article…"
+            aria-label={t("shared.searchLabel")}
+            placeholder={t("list.searchPlaceholder")}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-9"
@@ -111,7 +114,7 @@ export default function ArticlesPage() {
               <DropdownMenuTrigger asChild>
                 <Button variant="outline">
                   <Tag className="h-4 w-4" />
-                  Thèmes
+                  {t("shared.themes")}
                   {selectedTags.length > 0 && <Badge variant="secondary">{selectedTags.length}</Badge>}
                 </Button>
               </DropdownMenuTrigger>
@@ -124,7 +127,7 @@ export default function ArticlesPage() {
                     // Several themes can be ticked without reopening the menu.
                     onSelect={(e) => e.preventDefault()}
                   >
-                    {tag}
+                    {articleTagLabel(tag)}
                   </DropdownMenuCheckboxItem>
                 ))}
               </DropdownMenuContent>
@@ -132,24 +135,24 @@ export default function ArticlesPage() {
           )}
 
           <Select value={sortOrder} onValueChange={(value) => setSortOrder(value as SortOrder)}>
-            <SelectTrigger className="w-auto min-w-[10rem]" aria-label="Ordre d'affichage">
+            <SelectTrigger className="w-auto min-w-[10rem]" aria-label={t("list.sortLabel")}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="newest">Plus récents d'abord</SelectItem>
-              <SelectItem value="oldest">Plus anciens d'abord</SelectItem>
+              <SelectItem value="newest">{t("list.sort.newest")}</SelectItem>
+              <SelectItem value="oldest">{t("list.sort.oldest")}</SelectItem>
             </SelectContent>
           </Select>
 
           {/* On a phone both views are a single column: the switch would change nothing. */}
-          <div className="hidden items-center gap-2 sm:flex" role="group" aria-label="Affichage">
+          <div className="hidden items-center gap-2 sm:flex" role="group" aria-label={t("list.viewLabel")}>
             <Button
               variant={viewMode === "grid" ? "secondary" : "ghost"}
               size="icon"
               onClick={() => setViewMode("grid")}
-              aria-label="Afficher en grille"
+              aria-label={t("list.view.grid")}
               aria-pressed={viewMode === "grid"}
-              title="Afficher en grille"
+              title={t("list.view.grid")}
             >
               <LayoutGrid className="h-4 w-4" />
             </Button>
@@ -157,9 +160,9 @@ export default function ArticlesPage() {
               variant={viewMode === "list" ? "secondary" : "ghost"}
               size="icon"
               onClick={() => setViewMode("list")}
-              aria-label="Afficher en liste"
+              aria-label={t("list.view.list")}
               aria-pressed={viewMode === "list"}
-              title="Afficher en liste"
+              title={t("list.view.list")}
             >
               <List className="h-4 w-4" />
             </Button>
@@ -169,28 +172,28 @@ export default function ArticlesPage() {
 
       {selectedTags.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm text-muted-foreground">Thèmes choisis :</span>
+          <span className="text-sm text-muted-foreground">{t("list.selectedThemes")}</span>
           {selectedTags.map((tag) => (
             <Badge key={tag} variant="secondary" className="gap-1 pr-1">
-              {tag}
+              {articleTagLabel(tag)}
               <button
                 type="button"
                 className="rounded-full p-0.5 hover:bg-background/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 onClick={() => toggleTag(tag)}
-                aria-label={`Retirer le thème ${tag}`}
+                aria-label={t("shared.removeTheme", { tag: articleTagLabel(tag) })}
               >
                 <X className="h-3 w-3" />
               </button>
             </Badge>
           ))}
           <Button variant="ghost" size="sm" onClick={clearFilters}>
-            Tout effacer
+            {t("list.clearAll")}
           </Button>
         </div>
       )}
 
       {loading && !data ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" role="status" aria-label="Chargement des articles">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" role="status" aria-label={t("shared.loading")}>
           {Array.from({ length: 6 }, (_, index) => (
             <Card key={index} className="overflow-hidden">
               <Skeleton className="aspect-video w-full rounded-none" />
@@ -208,18 +211,18 @@ export default function ArticlesPage() {
       ) : articles.length === 0 ? (
         <EmptyState
           icon={Newspaper}
-          title="Aucun article pour le moment"
-          description="Les actualités de l'aéroclub s'afficheront ici dès leur publication."
+          title={t("shared.emptyTitle")}
+          description={t("list.emptyDescription")}
         />
       ) : filteredArticles.length === 0 ? (
         <EmptyState
           icon={SearchX}
-          title="Aucun article ne correspond"
-          description="Modifiez votre recherche ou retirez des thèmes."
+          title={t("shared.noMatchTitle")}
+          description={t("list.noMatchDescription")}
           action={
             hasFilters ? (
               <Button variant="outline" onClick={clearFilters}>
-                Effacer la recherche
+                {t("shared.clearSearch")}
               </Button>
             ) : undefined
           }

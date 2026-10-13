@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, type ReactNode } from "react"
+import { useTranslation } from "react-i18next"
 import { ExternalLink, FileText, Pencil, Trash2 } from "lucide-react"
 import { getBackendBaseUrl } from "@/lib/runtime-config"
 import { SidePanel } from "@/components/layout/SidePanel"
@@ -10,7 +11,7 @@ import type { CarouselApi } from "@/components/ui/carousel"
 import { StatusBadge } from "./status-badge"
 import { MaintenanceTypeIcon } from "./maintenance-type-icon"
 import type { Maintenance } from "@/interfaces/maintenance"
-import { maintenanceFileName, maintenanceFileUrl } from "@/lib/maintenance"
+import { maintenanceFileName, maintenanceFileUrl, maintenanceTechnicianName } from "@/lib/maintenance"
 import { formatDate, formatMoney } from "@/lib/format"
 
 interface MaintenanceDetailDialogProps {
@@ -38,6 +39,7 @@ export function MaintenanceDetailDialog({
   onEdit,
   onDelete,
 }: MaintenanceDetailDialogProps) {
+  const { t } = useTranslation("fleet")
   const [api, setApi] = useState<CarouselApi | undefined>(undefined)
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [imageCount, setImageCount] = useState(0)
@@ -62,70 +64,70 @@ export function MaintenanceDetailDialog({
     <SidePanel
       open={isOpen}
       onOpenChange={onOpenChange}
-      title={`Maintenance de ${registration}`}
+      title={t("maintenance.detail.title", { registration })}
       description={maintenance.aircraft.model}
       footerStart={
         <Button variant="ghost" className="text-destructive hover:text-destructive" onClick={() => onDelete(maintenance)}>
           <Trash2 className="h-4 w-4" aria-hidden="true" />
-          Supprimer
+          {t("common:actions.delete")}
         </Button>
       }
       footer={
         <>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Fermer
+            {t("common:actions.close")}
           </Button>
           <Button onClick={() => onEdit(maintenance)}>
             <Pencil className="h-4 w-4" aria-hidden="true" />
-            Modifier
+            {t("common:actions.edit")}
           </Button>
         </>
       }
     >
       <div className="space-y-6">
         <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-          <Fact label="Type">
+          <Fact label={t("common:labels.type")}>
             <MaintenanceTypeIcon type={maintenance.maintenance_type} />
           </Fact>
-          <Fact label="Statut">
+          <Fact label={t("common:labels.status")}>
             <StatusBadge status={maintenance.status} />
           </Fact>
-          <Fact label="Coût">
+          <Fact label={t("common:labels.cost")}>
             <span className="tabular-nums">
               {maintenance.maintenance_cost ? formatMoney(maintenance.maintenance_cost) : "—"}
             </span>
           </Fact>
-          <Fact label="Début">{formatDate(maintenance.start_date)}</Fact>
-          <Fact label="Fin">{formatDate(maintenance.end_date)}</Fact>
-          <Fact label="Technicien">
+          <Fact label={t("common:labels.start")}>{formatDate(maintenance.start_date)}</Fact>
+          <Fact label={t("common:labels.end")}>{formatDate(maintenance.end_date)}</Fact>
+          <Fact label={t("common:labels.technician")}>
             {maintenance.technician ? (
               <>
-                {maintenance.technician.first_name || maintenance.technician.email}
-                {maintenance.technician.first_name && (
+                {maintenanceTechnicianName(maintenance.technician)}
+                {(maintenance.technician.first_name || maintenance.technician.last_name) && (
                   <span className="block break-all text-xs font-normal text-muted-foreground">
                     {maintenance.technician.email}
                   </span>
                 )}
               </>
             ) : (
-              <span className="font-normal text-muted-foreground">Non assigné</span>
+              <span className="font-normal text-muted-foreground">{t("shared.unassigned")}</span>
             )}
           </Fact>
         </dl>
 
         <section className="space-y-2">
-          <h3 className="text-sm font-semibold">Description</h3>
+          <h3 className="text-sm font-semibold">{t("common:labels.description")}</h3>
           {maintenance.description ? (
             <p className="whitespace-pre-wrap text-sm">{maintenance.description}</p>
           ) : (
-            <p className="text-sm text-muted-foreground">Aucune description.</p>
+            <p className="text-sm text-muted-foreground">{t("maintenance.detail.noDescription")}</p>
           )}
         </section>
 
         <section className="space-y-3">
-          <h3 className="text-sm font-semibold">Pièces jointes</h3>
+          <h3 className="text-sm font-semibold">{t("shared.attachments")}</h3>
           {images.length === 0 && documents.length === 0 && (
-            <p className="text-sm text-muted-foreground">Aucune pièce jointe.</p>
+            <p className="text-sm text-muted-foreground">{t("maintenance.detail.noAttachments")}</p>
           )}
 
           {images.length > 0 && (
@@ -140,7 +142,7 @@ export function MaintenanceDetailDialog({
                         <img
                           src={maintenanceFileUrl(getBackendBaseUrl(), url)}
                           crossOrigin="use-credentials"
-                          alt={`Photo ${index + 1} de la maintenance de ${registration}`}
+                          alt={t("maintenance.detail.photoAlt", { index: index + 1, registration })}
                           className="aspect-video h-auto w-full object-cover"
                         />
                       </div>
@@ -149,14 +151,14 @@ export function MaintenanceDetailDialog({
                 </CarouselContent>
                 {images.length > 1 && (
                   <>
-                    <CarouselPrevious aria-label="Image précédente" />
-                    <CarouselNext aria-label="Image suivante" />
+                    <CarouselPrevious aria-label={t("maintenance.detail.previousImage")} />
+                    <CarouselNext aria-label={t("maintenance.detail.nextImage")} />
                   </>
                 )}
               </Carousel>
               {images.length > 1 && (
                 <p className="text-center text-xs text-muted-foreground tabular-nums" aria-live="polite">
-                  Image {currentImageIndex} sur {imageCount}
+                  {t("maintenance.detail.imageOf", { current: currentImageIndex, total: imageCount })}
                 </p>
               )}
             </div>
@@ -175,7 +177,7 @@ export function MaintenanceDetailDialog({
                     <FileText className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
                     <span className="min-w-0 flex-1 break-all">{maintenanceFileName(url)}</span>
                     <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-                    <span className="sr-only">(nouvel onglet)</span>
+                    <span className="sr-only">{t("shared.newTab")}</span>
                   </a>
                 </li>
               ))}

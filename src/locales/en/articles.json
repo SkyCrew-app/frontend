@@ -1,0 +1,183 @@
+{
+  "shared": {
+    "publishedOn": "Published on {{date}}",
+    "searchLabel": "Search for an article",
+    "removeTheme": "Remove the topic {{tag}}",
+    "loading": "Loading articles",
+    "emptyTitle": "No articles yet",
+    "noMatchTitle": "No matching articles",
+    "clearSearch": "Clear search",
+    "themes": "Topics",
+    "event": "Event"
+  },
+  "tags": {
+    "news": "News",
+    "events": "Events",
+    "training": "Training",
+    "regulation": "Regulations",
+    "safety": "Safety",
+    "technical": "Technical",
+    "information": "Information"
+  },
+  "card": {
+    "eventOn": "Event on {{date}}",
+    "read": "Read the article"
+  },
+  "list": {
+    "title": "News",
+    "description": "News and events from the flying club.",
+    "searchPlaceholder": "Search for an article…",
+    "sortLabel": "Sort order",
+    "sort": {
+      "newest": "Newest first",
+      "oldest": "Oldest first"
+    },
+    "viewLabel": "View",
+    "view": {
+      "grid": "Show as a grid",
+      "list": "Show as a list"
+    },
+    "selectedThemes": "Selected topics:",
+    "clearAll": "Clear all",
+    "emptyDescription": "The flying club's news will appear here as soon as it is published.",
+    "noMatchDescription": "Change your search or remove some topics."
+  },
+  "reader": {
+    "backToList": "All news",
+    "loading": "Loading the article",
+    "notFound": {
+      "title": "Article not found",
+      "description": "This article may have been deleted or moved.",
+      "action": "See all news"
+    },
+    "readingTime": "{{minutes}} min read",
+    "imageAlt": "Picture for the article “{{title}}”",
+    "event": {
+      "upcoming": "Upcoming",
+      "past": "Past",
+      "addToCalendar": "Add to my calendar",
+      "googleCalendar": "Google Calendar",
+      "icsFile": "Apple, Outlook or other (.ics file)"
+    },
+    "documents": "Attached documents",
+    "share": "Share",
+    "copyLink": "Copy link",
+    "toast": {
+      "linkCopied": {
+        "title": "Link copied",
+        "description": "The link to the article is on the clipboard."
+      },
+      "copyFailed": {
+        "title": "Unable to copy",
+        "description": "The link could not be copied. Copy the address from the browser's address bar."
+      }
+    }
+  },
+  "admin": {
+    "title": "Articles",
+    "description": "Write and manage the news visible to members.",
+    "newArticle": "New article",
+    "searchPlaceholder": "Search by title or topic…",
+    "count_one": "{{count}} article",
+    "count_other": "{{count}} articles",
+    "filteredCount": "{{count}} of {{total}}",
+    "emptyDescription": "Publish a first news item: it will appear on the members' dashboard.",
+    "noMatchDescription": "Try another word or clear the search.",
+    "table": {
+      "article": "Article",
+      "publishedOn": "Published on",
+      "viewAsMember": "View the article as members read it",
+      "editLabel": "Edit the article “{{title}}”",
+      "deleteLabel": "Delete the article “{{title}}”"
+    },
+    "panel": {
+      "editTitle": "Edit the article",
+      "editDescription": "Changes are visible to members as soon as they are saved.",
+      "createDescription": "The article is visible to members as soon as it is published.",
+      "publish": "Publish the article",
+      "steps": {
+        "presentation": "Overview",
+        "content": "Content",
+        "files": "Picture and attachments",
+        "filesDescription": "Optional. The picture illustrates the article in the news list."
+      }
+    },
+    "form": {
+      "title": "Title",
+      "titlePlaceholder": "E.g. Open day on 14 June",
+      "summary": "Summary",
+      "summaryPlaceholder": "One or two sentences shown in the news list",
+      "themesAllAdded": "All topics have been added",
+      "addTheme": "Add a topic",
+      "themesHint": "Topics let members filter the news.",
+      "eventDate": "Event date",
+      "noDate": "No date",
+      "removeEventDate": "Remove the event date",
+      "removeDate": "Remove the date",
+      "eventDateHint": "Optional. Fill in if the article announces an event.",
+      "content": "Article content",
+      "errors": {
+        "title": "Give the article a title.",
+        "summary": "Add a summary: it is shown in the news list.",
+        "content": "Write the content of the article."
+      }
+    },
+    "editor": {
+      "toolbar": "Formatting",
+      "underline": "Underline",
+      "editLink": "Edit the link",
+      "addLink": "Add a link",
+      "linkUrl": "Link address",
+      "linkPlaceholder": "https://www.example.com",
+      "removeLink": "Remove the link",
+      "fontSizeLabel": "Text size",
+      "fontSize": {
+        "xs": "Very small",
+        "sm": "Small",
+        "md": "Normal",
+        "lg": "Large",
+        "xl": "Very large",
+        "xxl": "Huge"
+      }
+    },
+    "files": {
+      "image": "Main picture",
+      "imagePreviewAlt": "Preview of the main picture",
+      "size": "{{size}} MB",
+      "removeFile": "Remove this file",
+      "currentImage": "Current picture. Choose a file to replace it.",
+      "imageHint": "JPG or PNG, 2 MB maximum recommended.",
+      "document": "Attached document",
+      "existingDocuments_one": "{{count}} document already attached. Choose a file to replace it.",
+      "existingDocuments_other": "{{count}} documents already attached. Choose a file to replace them.",
+      "documentHint": "PDF, Word, Excel or PowerPoint."
+    },
+    "deleteDialog": {
+      "title": "Delete this article?",
+      "description": "The article “{{title}}” will be permanently deleted. This cannot be undone."
+    },
+    "toast": {
+      "updated": {
+        "title": "Article updated",
+        "description": "“{{title}}” has been saved."
+      },
+      "published": {
+        "title": "Article published",
+        "description": "“{{title}}” is visible in the news."
+      },
+      "saveFailed": {
+        "title": "Unable to save",
+        "publishTitle": "Unable to publish",
+        "description": "The article could not be saved. Check the fields and the files, then try again."
+      },
+      "deleted": {
+        "title": "Article deleted",
+        "description": "“{{title}}” has been deleted."
+      },
+      "deleteFailed": {
+        "title": "Unable to delete",
+        "description": "The article could not be deleted. Try again in a moment."
+      }
+    }
+  }
+}

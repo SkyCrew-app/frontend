@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { format, addHours, startOfHour } from "date-fns"
-import { fr } from "date-fns/locale"
+import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -12,7 +12,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar"
 import { CalendarIcon } from "lucide-react"
 import { SidePanel } from "@/components/layout/SidePanel"
-import { FLIGHT_CATEGORY_LABELS, FLIGHT_CATEGORY_OPTIONS } from "@/components/reservation/flight-category"
+import { flightCategoryOptions, isFlightCategory } from "@/components/reservation/flight-category"
+import { dateFnsLocale } from "@/lib/i18n"
 
 interface Aircraft {
   id: number
@@ -90,6 +91,7 @@ export function NewReservationForm({
   onSubmit,
   isSubmitting,
 }: NewReservationFormProps) {
+  const { t } = useTranslation("reservations")
   const nextHour = addHours(startOfHour(new Date()), 1)
 
   const [aircraftId, setAircraftId] = useState(
@@ -102,20 +104,20 @@ export function NewReservationForm({
   const [purpose, setPurpose] = useState(prefill?.purpose ?? "")
   const [notes, setNotes] = useState(prefill?.notes ?? "")
   const [flightCategory, setFlightCategory] = useState(
-    prefill?.flightCategory && FLIGHT_CATEGORY_LABELS[prefill.flightCategory] ? prefill.flightCategory : "",
+    prefill?.flightCategory && isFlightCategory(prefill.flightCategory) ? prefill.flightCategory : "",
   )
   const [errors, setErrors] = useState<{ aircraft?: string; date?: string; time?: string; category?: string }>({})
 
   const handleSubmit = async () => {
     const nextErrors: typeof errors = {}
-    if (!aircraftId) nextErrors.aircraft = "Veuillez sélectionner un avion."
-    if (isClosedDay(selectedDate)) nextErrors.date = "L'aéroclub est fermé ce jour-là."
+    if (!aircraftId) nextErrors.aircraft = t("form.errors.aircraft")
+    if (isClosedDay(selectedDate)) nextErrors.date = t("form.errors.closedDay")
     if (!TIME_PATTERN.test(startTime) || !TIME_PATTERN.test(endTime)) {
-      nextErrors.time = "Indiquez l'heure de début et l'heure de fin."
+      nextErrors.time = t("form.errors.timeMissing")
     } else if (endTime <= startTime) {
-      nextErrors.time = "L'heure de fin doit être après l'heure de début."
+      nextErrors.time = t("form.errors.timeOrder")
     }
-    if (!flightCategory) nextErrors.category = "Veuillez sélectionner une catégorie de vol."
+    if (!flightCategory) nextErrors.category = t("form.errors.category")
 
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length > 0) return
@@ -137,16 +139,16 @@ export function NewReservationForm({
         if (!next && isSubmitting) return
         onOpenChange(next)
       }}
-      title="Nouvelle réservation"
-      description="Choisissez l'avion, le jour et l'horaire de votre vol."
+      title={t("shared.newReservation")}
+      description={t("form.newDescription")}
       onSubmit={handleSubmit}
-      submitLabel="Créer la réservation"
+      submitLabel={t("form.submitCreate")}
       submitting={isSubmitting}
     >
       <div className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="new-reservation-aircraft">
-            Avion <RequiredMark />
+            {t("common:labels.aircraft")} <RequiredMark />
           </Label>
           <Select
             value={aircraftId || undefined}
@@ -160,7 +162,7 @@ export function NewReservationForm({
               aria-invalid={!!errors.aircraft}
               className={errors.aircraft ? "border-destructive" : ""}
             >
-              <SelectValue placeholder="Sélectionner un avion" />
+              <SelectValue placeholder={t("form.aircraftPlaceholder")} />
             </SelectTrigger>
             <SelectContent>
               {aircrafts.map((aircraft) => (
@@ -177,7 +179,7 @@ export function NewReservationForm({
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="new-reservation-date">
-              Date <RequiredMark />
+              {t("common:labels.date")} <RequiredMark />
             </Label>
             <Popover open={dateOpen} onOpenChange={setDateOpen}>
               <PopoverTrigger asChild>
@@ -188,7 +190,7 @@ export function NewReservationForm({
                   className="w-full justify-start font-normal"
                 >
                   <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-                  <span className="truncate">{format(selectedDate, "EEE d MMM yyyy", { locale: fr })}</span>
+                  <span className="truncate">{format(selectedDate, "EEE d MMM yyyy", { locale: dateFnsLocale() })}</span>
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -203,7 +205,7 @@ export function NewReservationForm({
                     setDateOpen(false)
                   }}
                   initialFocus
-                  locale={fr}
+                  locale={dateFnsLocale()}
                   disabled={isClosedDay}
                 />
               </PopoverContent>
@@ -215,7 +217,7 @@ export function NewReservationForm({
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-2">
                 <Label htmlFor="new-reservation-start">
-                  Début <RequiredMark />
+                  {t("common:labels.start")} <RequiredMark />
                 </Label>
                 <Input
                   id="new-reservation-start"
@@ -228,7 +230,7 @@ export function NewReservationForm({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="new-reservation-end">
-                  Fin <RequiredMark />
+                  {t("common:labels.end")} <RequiredMark />
                 </Label>
                 <Input
                   id="new-reservation-end"
@@ -245,10 +247,10 @@ export function NewReservationForm({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="new-reservation-purpose">But de la réservation</Label>
+          <Label htmlFor="new-reservation-purpose">{t("form.purpose")}</Label>
           <Input
             id="new-reservation-purpose"
-            placeholder="Ex. : tours de piste, navigation vers Deauville"
+            placeholder={t("form.purposePlaceholder")}
             value={purpose}
             onChange={(e) => setPurpose(e.target.value)}
           />
@@ -256,7 +258,7 @@ export function NewReservationForm({
 
         <div className="space-y-2">
           <Label htmlFor="new-reservation-category">
-            Catégorie de vol <RequiredMark />
+            {t("shared.flightCategory")} <RequiredMark />
           </Label>
           <Select
             value={flightCategory || undefined}
@@ -270,10 +272,10 @@ export function NewReservationForm({
               aria-invalid={!!errors.category}
               className={errors.category ? "border-destructive" : ""}
             >
-              <SelectValue placeholder="Sélectionner une catégorie" />
+              <SelectValue placeholder={t("form.categoryPlaceholder")} />
             </SelectTrigger>
             <SelectContent>
-              {FLIGHT_CATEGORY_OPTIONS.map((category) => (
+              {flightCategoryOptions().map((category) => (
                 <SelectItem key={category.value} value={category.value}>
                   {category.label}
                 </SelectItem>
@@ -284,10 +286,10 @@ export function NewReservationForm({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="new-reservation-notes">Notes</Label>
+          <Label htmlFor="new-reservation-notes">{t("common:labels.notes")}</Label>
           <Textarea
             id="new-reservation-notes"
-            placeholder="Passagers, plein à prévoir, consignes particulières…"
+            placeholder={t("form.notesPlaceholder")}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={3}

@@ -68,6 +68,19 @@ export const UPDATE_CHECKLIST_TEMPLATE = gql`
   }
 `;
 
+// Administrators only. A template already used by filled-in checklists is
+// deactivated instead of deleted; the result says which happened.
+export const DELETE_CHECKLIST_TEMPLATE = gql`
+  mutation DeleteChecklistTemplate($id: Int!) {
+    deleteChecklistTemplate(id: $id) {
+      deleted
+      deactivated
+      submissions_count
+      message
+    }
+  }
+`;
+
 export const CREATE_CHECKLIST_ITEM = gql`
   mutation CreateChecklistItem($input: CreateChecklistItemInput!) {
     createChecklistItem(createChecklistItemInput: $input) {

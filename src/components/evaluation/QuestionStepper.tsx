@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslation } from "react-i18next"
 import { cn } from "@/lib/utils"
 
 interface QuestionStepperProps {
@@ -11,10 +12,11 @@ interface QuestionStepperProps {
 
 // The numbered buttons above a question: where the member is, what is answered, what is left.
 export function QuestionStepper({ currentQuestion, answered, onNavigate }: QuestionStepperProps) {
+  const { t } = useTranslation("instruction")
   const answeredCount = answered.filter(Boolean).length
 
   return (
-    <nav aria-label="Questions de l'évaluation" className="space-y-3">
+    <nav aria-label={t("evaluations.stepper.navAria")} className="space-y-3">
       <ol className="flex flex-wrap gap-2">
         {answered.map((isAnswered, index) => {
           const isCurrent = index === currentQuestion
@@ -24,7 +26,9 @@ export function QuestionStepper({ currentQuestion, answered, onNavigate }: Quest
                 type="button"
                 onClick={() => onNavigate(index)}
                 aria-current={isCurrent ? "step" : undefined}
-                aria-label={`Question ${index + 1}, ${isAnswered ? "répondue" : "sans réponse"}`}
+                aria-label={t(isAnswered ? "evaluations.stepper.answeredAria" : "evaluations.stepper.unansweredAria", {
+                  number: index + 1,
+                })}
                 className={cn(
                   "flex h-9 w-9 items-center justify-center rounded-md border text-sm font-medium tabular-nums transition-colors",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
@@ -42,7 +46,7 @@ export function QuestionStepper({ currentQuestion, answered, onNavigate }: Quest
         })}
       </ol>
       <p className="text-xs tabular-nums text-muted-foreground">
-        Réponses données : {answeredCount} sur {answered.length}
+        {t("evaluations.stepper.summary", { answered: answeredCount, total: answered.length })}
       </p>
     </nav>
   )

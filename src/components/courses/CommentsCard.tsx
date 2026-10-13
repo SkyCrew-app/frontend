@@ -3,6 +3,7 @@
 import type React from "react"
 import { useState } from "react"
 import { Loader2, MessageSquare } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
@@ -24,6 +25,7 @@ interface CommentsCardProps {
 }
 
 export function CommentsCard({ comments, onAdd }: CommentsCardProps) {
+  const { t } = useTranslation("instruction")
   const [content, setContent] = useState("")
   const [saving, setSaving] = useState(false)
 
@@ -39,14 +41,14 @@ export function CommentsCard({ comments, onAdd }: CommentsCardProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">Commentaires</CardTitle>
-        <CardDescription>Les échanges entre l'instructeur et l'élève à propos de ce cours.</CardDescription>
+        <CardTitle className="text-lg">{t("courses.comments.title")}</CardTitle>
+        <CardDescription>{t("courses.comments.description")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {comments.length === 0 ? (
           <p className="flex items-center gap-2 text-sm text-muted-foreground">
             <MessageSquare className="h-4 w-4" aria-hidden="true" />
-            Aucun commentaire pour le moment.
+            {t("courses.comments.empty")}
           </p>
         ) : (
           <ul className="space-y-3">
@@ -63,18 +65,18 @@ export function CommentsCard({ comments, onAdd }: CommentsCardProps) {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-2 border-t pt-4">
-          <Label htmlFor="course-comment">Ajouter un commentaire</Label>
+          <Label htmlFor="course-comment">{t("courses.comments.label")}</Label>
           <Textarea
             id="course-comment"
             value={content}
             onChange={(event) => setContent(event.target.value)}
-            placeholder="Ex. Bonne séance, à revoir : la tenue de l'altitude en virage."
+            placeholder={t("courses.comments.placeholder")}
             rows={3}
           />
           <div className="flex justify-end">
             <Button type="submit" disabled={!content.trim() || saving}>
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              Publier le commentaire
+              {t("courses.comments.submit")}
             </Button>
           </div>
         </form>

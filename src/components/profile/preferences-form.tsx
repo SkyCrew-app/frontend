@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
+import { useTranslation } from "react-i18next"
 import { useMutation } from "@apollo/client"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -15,18 +16,6 @@ const LANGUAGES = [
   { value: "fr", label: "Français", flag: "FR" },
   { value: "en", label: "English", flag: "GB" },
   { value: "es", label: "Español", flag: "ES" },
-]
-
-const SPEED_UNITS = [
-  { value: "kmh", label: "km/h" },
-  { value: "mph", label: "mph" },
-  { value: "knots", label: "Nœuds" },
-]
-
-const DISTANCE_UNITS = [
-  { value: "km", label: "Kilomètres" },
-  { value: "miles", label: "Miles" },
-  { value: "nautical_miles", label: "Milles nautiques" },
 ]
 
 interface ChoiceGroupProps {
@@ -78,6 +67,20 @@ interface PreferencesFormProps {
 }
 
 export function PreferencesForm({ userData, userId, refetch }: PreferencesFormProps) {
+  const { t } = useTranslation("profile")
+
+  const speedUnits = [
+    { value: "kmh", label: "km/h" },
+    { value: "mph", label: "mph" },
+    { value: "knots", label: t("preferences.units.knots") },
+  ]
+
+  const distanceUnits = [
+    { value: "km", label: t("preferences.units.kilometres") },
+    { value: "miles", label: t("preferences.units.miles") },
+    { value: "nautical_miles", label: t("preferences.units.nauticalMiles") },
+  ]
+
   const [preferences, setPreferences] = useState({
     language: "",
     speed_unit: "",
@@ -124,8 +127,8 @@ export function PreferencesForm({ userData, userId, refetch }: PreferencesFormPr
 
       if (data?.updateUserPreferences) {
         toast({
-          title: "Succès",
-          description: "Préférences mises à jour avec succès",
+          title: t("toast.success"),
+          description: t("preferences.toast.updated"),
         })
         await refetch()
       } else {
@@ -135,8 +138,8 @@ export function PreferencesForm({ userData, userId, refetch }: PreferencesFormPr
       console.error("Erreur lors de la mise à jour des préférences:", error)
       toast({
         variant: "destructive",
-        title: "Erreur",
-        description: "Erreur lors de la mise à jour des préférences",
+        title: t("toast.error"),
+        description: t("preferences.toast.failed"),
       })
     } finally {
       setIsUpdating(false)
@@ -151,14 +154,14 @@ export function PreferencesForm({ userData, userId, refetch }: PreferencesFormPr
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Préférences</CardTitle>
-        <CardDescription>Votre terrain habituel, votre fuseau horaire et les unités affichées.</CardDescription>
+        <CardTitle>{t("preferences.title")}</CardTitle>
+        <CardDescription>{t("preferences.description")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
             <p id="preferred_aerodrome_label" className="text-sm font-medium leading-none">
-              Aérodrome préféré
+              {t("preferences.aerodrome")}
             </p>
             <div role="group" aria-labelledby="preferred_aerodrome_label">
               <AerodromeCombobox
@@ -171,7 +174,7 @@ export function PreferencesForm({ userData, userId, refetch }: PreferencesFormPr
 
           <div className="space-y-1.5">
             <p id="timezone_label" className="text-sm font-medium leading-none">
-              Fuseau horaire
+              {t("preferences.timezone")}
             </p>
             <div role="group" aria-labelledby="timezone_label">
               <TimezoneCombobox
@@ -185,23 +188,23 @@ export function PreferencesForm({ userData, userId, refetch }: PreferencesFormPr
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           <ChoiceGroup
             id="language_label"
-            label="Langue"
+            label={t("common:language.label")}
             value={preferences.language}
             options={LANGUAGES}
             onChange={(value) => handlePreferenceChange("language", value)}
           />
           <ChoiceGroup
             id="speed_unit_label"
-            label="Unité de vitesse"
+            label={t("preferences.speedUnit")}
             value={preferences.speed_unit}
-            options={SPEED_UNITS}
+            options={speedUnits}
             onChange={(value) => handlePreferenceChange("speed_unit", value)}
           />
           <ChoiceGroup
             id="distance_unit_label"
-            label="Unité de distance"
+            label={t("preferences.distanceUnit")}
             value={preferences.distance_unit}
-            options={DISTANCE_UNITS}
+            options={distanceUnits}
             onChange={(value) => handlePreferenceChange("distance_unit", value)}
           />
         </div>
@@ -216,11 +219,11 @@ export function PreferencesForm({ userData, userId, refetch }: PreferencesFormPr
           }}
           disabled={isUpdating || !isDirty}
         >
-          Annuler
+          {t("common:actions.cancel")}
         </Button>
         <Button type="button" onClick={savePreferencesChanges} disabled={isUpdating || !userId}>
           {isUpdating && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-          {isUpdating ? "Enregistrement..." : "Enregistrer les modifications"}
+          {isUpdating ? t("form.saving") : t("form.saveChanges")}
         </Button>
       </CardFooter>
     </Card>

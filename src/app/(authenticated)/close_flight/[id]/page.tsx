@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
+import { useTranslation } from "react-i18next"
 import { useForm, FormProvider } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import Link from "next/link"
@@ -39,7 +40,7 @@ import {
 import { downloadBase64Pdf } from "@/lib/download"
 import { CREATE_INCIDENT } from "@/graphql/incident"
 import { useToast } from "@/components/hooks/use-toast"
-import { flightRecapSchema, type FlightRecapFormValues } from "@/lib/flight-recap-schema"
+import { buildFlightRecapSchema, type FlightRecapFormValues } from "@/lib/flight-recap-schema"
 import { toIntId } from "@/lib/graphql-inputs"
 import { formatDateTime, formatDecimal, formatFlightDuration } from "@/lib/format"
 
@@ -48,9 +49,9 @@ const apiMessage = (error: unknown, fallback: string) =>
   (error instanceof ApolloError ? error.graphQLErrors[0]?.message : undefined) || fallback
 
 // The form is filled in three short steps; each one only checks its own fields.
-const STEPS: { title: string; fields: (keyof FlightRecapFormValues)[] }[] = [
+const STEPS: { key: "flight" | "incident" | "remarks"; fields: (keyof FlightRecapFormValues)[] }[] = [
   {
-    title: "Vol réalisé",
+    key: "flight",
     fields: [
       "flight_hours",
       "distance_km",
@@ -62,7 +63,7 @@ const STEPS: { title: string; fields: (keyof FlightRecapFormValues)[] }[] = [
     ],
   },
   {
-    title: "Incident",
+    key: "incident",
     fields: [
       "incidentOccurred",
       "incident_date",
@@ -74,7 +75,7 @@ const STEPS: { title: string; fields: (keyof FlightRecapFormValues)[] }[] = [
       "corrective_actions",
     ],
   },
-  { title: "Remarques", fields: ["flightNotes"] },
+  { key: "remarks", fields: ["flightNotes"] },
 ]
 
 function Fact({ label, value, hint }: { label: string; value: React.ReactNode; hint?: React.ReactNode }) {
@@ -96,6 +97,12 @@ export default function FlightRecap() {
   const params = useParams()
   const id = params.id as string
   const { toast } = useToast()
+  const { t } = useTranslation("flights")
+
+  // Rebuilt when the language changes so validation messages follow it.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const schema = useMemo(() => buildFlightRecapSchema(), [t])
+  const stepTitles = STEPS.map(({ key }) => t(`closeFlight.steps.${key}`))
 
   // Same query as the flight plan page: it carries `closed_at` and `remarks`, which this page relies on.
   const { loading, error, data, refetch } = useQuery(GET_FLIGHT_PLAN_BY_ID, {
@@ -108,7 +115,7 @@ export default function FlightRecap() {
   const [exportRecap, { loading: isExporting }] = useMutation(EXPORT_FLIGHT_RECAP_PDF)
 
   const methods = useForm<FlightRecapFormValues>({
-    resolver: zodResolver(flightRecapSchema),
+    resolver: zodResolver(schema),
     defaultValues: {
       flight_hours: 0,
       flight_type: "",
@@ -161,14 +168,13 @@ export default function FlightRecap() {
 
   // Closing cannot be undone by the pilot: ask once before sending.
   const requestClose = (formData: FlightRecapFormValues) => {
-    // `aircraft_id` est obligatoire (Int!) : sans aéronef connu (vol sans réservation),
-    // l'incident ne peut pas être créé, on n'envoie donc rien.
+    // `aircraft_id` is required (Int!): without a known aircraft (flight without a booking)
+    // the incident cannot be created, so nothing is sent.
     if (formData.incidentOccurred && aircraftId === null) {
       toast({
         variant: "destructive",
-        title: "Incident impossible à enregistrer",
-        description:
-          "Ce vol n'est rattaché à aucun aéronef : l'incident ne peut pas être associé à un aéronef. Le vol n'a pas été clôturé.",
+        title: t("closeFlight.toast.noAircraft.title"),
+        description: t("closeFlight.toast.noAircraft.description"),
       })
       return
     }
@@ -194,7 +200,7 @@ export default function FlightRecap() {
             estimated_flight_time: formData.estimated_flight_time,
             remarks: formData.flightNotes?.trim() || undefined,
             closed: true,
-            // `waypoints` n'est qu'affiché sur cette page : il n'est pas renvoyé à l'API.
+            // `waypoints` is only displayed on this page: it is not sent back to the API.
           },
         },
         // "Mes plans de vol" must show the flight as closed.
@@ -228,8 +234,8 @@ export default function FlightRecap() {
     } catch (error) {
       toast({
         variant: "destructive",
-        title: "Le vol n'a pas été clôturé",
-        description: apiMessage(error, "Une erreur est survenue pendant la clôture. Réessayez dans un instant."),
+        title: t("closeFlight.toast.closeError.title"),
+        description: apiMessage(error, t("closeFlight.toast.closeError.description")),
       })
     } finally {
       setIsSubmitting(false)
@@ -242,13 +248,13 @@ export default function FlightRecap() {
     try {
       const { data: exported } = await exportRecap({ variables: { flightId: Number.parseInt(id) } })
       if (exported?.exportFlightRecapPDF) {
-        downloadBase64Pdf(exported.exportFlightRecapPDF, `vol-${id}.pdf`)
+        downloadBase64Pdf(exported.exportFlightRecapPDF, t("closeFlight.recapFileName", { id }))
       }
     } catch (error) {
       toast({
         variant: "destructive",
-        title: "Export impossible",
-        description: apiMessage(error, "Le PDF n'a pas pu être généré. Réessayez dans un instant."),
+        title: t("closeFlight.toast.exportError.title"),
+        description: apiMessage(error, t("closeFlight.toast.exportError.description")),
       })
     }
   }
@@ -264,7 +270,7 @@ export default function FlightRecap() {
     <Button variant="outline" asChild>
       <Link href={`/reservations/flight-plans/${id}`}>
         <ArrowLeft className="h-4 w-4" />
-        Plan de vol
+        {t("closeFlight.backToPlan")}
       </Link>
     </Button>
   )
@@ -274,7 +280,7 @@ export default function FlightRecap() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <PageHeader className="mb-0" title="Clôturer le vol" />
+        <PageHeader className="mb-0" title={t("closeFlight.title")} />
         <Skeleton className="h-36 w-full rounded-xl" />
         <Skeleton className="h-80 w-full rounded-xl" />
         <Skeleton className="h-32 w-full rounded-xl" />
@@ -285,9 +291,9 @@ export default function FlightRecap() {
   if (error) {
     return (
       <div className="space-y-6">
-        <PageHeader className="mb-0" title="Clôturer le vol" />
+        <PageHeader className="mb-0" title={t("closeFlight.title")} />
         <ErrorState
-          description="Le vol n'a pas pu être chargé. Vérifiez votre connexion puis réessayez."
+          description={t("closeFlight.loadError")}
           onRetry={() => refetch()}
         />
       </div>
@@ -297,14 +303,14 @@ export default function FlightRecap() {
   if (!flight) {
     return (
       <div className="space-y-6">
-        <PageHeader className="mb-0" title="Clôturer le vol" />
+        <PageHeader className="mb-0" title={t("closeFlight.title")} />
         <EmptyState
           icon={FileSearch}
-          title="Vol introuvable"
-          description="Ce vol n'existe pas ou vous n'y avez pas accès."
+          title={t("closeFlight.notFound.title")}
+          description={t("closeFlight.notFound.description")}
           action={
             <Button variant="outline" asChild>
-              <Link href="/reservations/flight-plans">Mes plans de vol</Link>
+              <Link href="/reservations/flight-plans">{t("closeFlight.notFound.action")}</Link>
             </Button>
           }
         />
@@ -316,21 +322,20 @@ export default function FlightRecap() {
   if (flight.closed_at && !isSubmitted) {
     return (
       <div className="space-y-6">
-        <PageHeader className="mb-0" title="Clôturer le vol" description={route} actions={backButton} />
+        <PageHeader className="mb-0" title={t("closeFlight.title")} description={route} actions={backButton} />
         <Card className="max-w-3xl">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <CheckCircle className="h-5 w-5 text-success" />
-              Vol déjà clôturé
+              {t("closeFlight.alreadyClosed.title")}
             </CardTitle>
             <CardDescription>
-              Ce vol a été clôturé le {formatDateTime(flight.closed_at)}. Il figure dans votre carnet de vol ; seul un
-              administrateur peut encore le modifier.
+              {t("closeFlight.alreadyClosed.description", { date: formatDateTime(flight.closed_at) })}
             </CardDescription>
           </CardHeader>
           <CardFooter className="flex flex-wrap justify-end gap-2">
-            {exportButton("Récapitulatif PDF")}
-            <Button onClick={() => router.push("/logbook")}>Voir le carnet de vol</Button>
+            {exportButton(t("closeFlight.recapPdf"))}
+            <Button onClick={() => router.push("/logbook")}>{t("closeFlight.viewLogbook")}</Button>
           </CardFooter>
         </Card>
       </div>
@@ -340,34 +345,37 @@ export default function FlightRecap() {
   if (isSubmitted) {
     return (
       <div className="space-y-6">
-        <PageHeader className="mb-0" title="Clôturer le vol" description={route} />
+        <PageHeader className="mb-0" title={t("closeFlight.title")} description={route} />
         <Card className="max-w-3xl">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <CheckCircle className="h-5 w-5 text-success" />
-              Vol clôturé
+              {t("closeFlight.done.title")}
             </CardTitle>
-            <CardDescription>Le vol est enregistré dans votre carnet de vol.</CardDescription>
+            <CardDescription>{t("closeFlight.done.description")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <dl className="grid grid-cols-2 gap-4">
-              <Fact label="Temps de vol" value={formatFlightDuration(methods.getValues("flight_hours"))} />
-              <Fact label="Distance parcourue" value={`${formatDecimal(methods.getValues("distance_km"))} km`} />
+              <Fact label={t("closeFlight.done.flightTime")} value={formatFlightDuration(methods.getValues("flight_hours"))} />
+              <Fact
+                label={t("closeFlight.done.distance")}
+                value={`${formatDecimal(methods.getValues("distance_km"))} km`}
+              />
             </dl>
             {methods.getValues("incidentOccurred") && (
               <Alert variant="destructive">
                 <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Incident signalé au club</AlertTitle>
+                <AlertTitle>{t("closeFlight.done.incidentReported")}</AlertTitle>
                 <AlertDescription>{methods.getValues("incident_description")}</AlertDescription>
               </Alert>
             )}
           </CardContent>
           <CardFooter className="flex flex-wrap justify-end gap-2">
             <Button variant="outline" onClick={() => router.push("/dashboard")}>
-              Tableau de bord
+              {t("closeFlight.dashboard")}
             </Button>
-            {exportButton("Récapitulatif PDF")}
-            <Button onClick={() => router.push("/logbook")}>Voir le carnet de vol</Button>
+            {exportButton(t("closeFlight.recapPdf"))}
+            <Button onClick={() => router.push("/logbook")}>{t("closeFlight.viewLogbook")}</Button>
           </CardFooter>
         </Card>
       </div>
@@ -381,12 +389,12 @@ export default function FlightRecap() {
     <div className="space-y-6">
       <PageHeader
         className="mb-0"
-        title="Clôturer le vol"
-        description="Confirmez ce qui a réellement été volé : le vol sera inscrit dans votre carnet de vol."
+        title={t("closeFlight.title")}
+        description={t("closeFlight.description")}
         actions={
           <>
             {backButton}
-            {exportButton("Récapitulatif PDF")}
+            {exportButton(t("closeFlight.recapPdf"))}
           </>
         }
       />
@@ -408,20 +416,20 @@ export default function FlightRecap() {
             >
               <StepIndicator
                 className="border-b px-6 py-3"
-                steps={STEPS.map(({ title }) => title)}
+                steps={stepTitles}
                 current={step}
                 onStepClick={setStep}
               />
 
               <CardContent className="p-6">
                 {/* Every step stays mounted so that the form keeps its values. */}
-                <div hidden={step !== 0} role="group" aria-label={STEPS[0].title}>
+                <div hidden={step !== 0} role="group" aria-label={stepTitles[0]}>
                   <FlightDetailsForm />
                 </div>
-                <div hidden={step !== 1} role="group" aria-label={STEPS[1].title}>
+                <div hidden={step !== 1} role="group" aria-label={stepTitles[1]}>
                   <IncidentForm />
                 </div>
-                <div hidden={step !== 2} role="group" aria-label={STEPS[2].title}>
+                <div hidden={step !== 2} role="group" aria-label={stepTitles[2]}>
                   <FlightNotesForm />
                 </div>
               </CardContent>
@@ -429,7 +437,7 @@ export default function FlightRecap() {
               <CardFooter className="flex flex-wrap justify-end gap-2 border-t px-6 py-4">
                 {step === 0 ? (
                   <Button variant="outline" type="button" onClick={() => router.back()} disabled={isSubmitting}>
-                    Annuler
+                    {t("common:actions.cancel")}
                   </Button>
                 ) : (
                   <Button
@@ -439,17 +447,17 @@ export default function FlightRecap() {
                     disabled={isSubmitting}
                   >
                     <ArrowLeft className="h-4 w-4" />
-                    Précédent
+                    {t("common:actions.previous")}
                   </Button>
                 )}
                 {isLastStep ? (
                   <Button type="submit" disabled={isSubmitting}>
                     {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-                    Clôturer le vol
+                    {t("closeFlight.submit")}
                   </Button>
                 ) : (
                   <Button type="submit">
-                    Suivant
+                    {t("common:actions.next")}
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 )}
@@ -461,27 +469,27 @@ export default function FlightRecap() {
         <Card className="order-first self-start lg:order-none">
           <CardHeader className="pb-3">
             <CardTitle className="text-lg">{route}</CardTitle>
-            <CardDescription>Plan de vol prévu</CardDescription>
+            <CardDescription>{t("closeFlight.plan.title")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <dl className="grid grid-cols-2 gap-4">
-              <Fact label="Avion" value={aircraft?.registration_number || "—"} hint={aircraft?.model} />
-              <Fact label="Pilote" value={pilotName || "—"} />
-              <Fact label="Départ prévu" value={formatDateTime(flight.reservation?.start_time)} />
-              <Fact label="Type de vol" value={flightTypeLabel(flight.flight_type)} />
+              <Fact label={t("common:labels.aircraft")} value={aircraft?.registration_number || "—"} hint={aircraft?.model} />
+              <Fact label={t("common:labels.pilot")} value={pilotName || "—"} />
+              <Fact label={t("closeFlight.plan.plannedDeparture")} value={formatDateTime(flight.reservation?.start_time)} />
+              <Fact label={t("closeFlight.plan.flightType")} value={flightTypeLabel(flight.flight_type)} />
               <Fact
-                label="Distance prévue"
+                label={t("closeFlight.plan.plannedDistance")}
                 value={flight.distance_km ? `${formatDecimal(flight.distance_km)} km` : "—"}
               />
               <Fact
-                label="Durée estimée"
+                label={t("closeFlight.plan.estimatedDuration")}
                 value={flight.estimated_flight_time ? formatFlightDuration(flight.estimated_flight_time) : "—"}
               />
-              <Fact label="Passagers" value={flight.number_of_passengers ?? 0} />
+              <Fact label={t("closeFlight.plan.passengers")} value={flight.number_of_passengers ?? 0} />
             </dl>
             {flight.waypoints && (
               <div className="space-y-1 border-t pt-4">
-                <p className="text-xs text-muted-foreground">Points de route</p>
+                <p className="text-xs text-muted-foreground">{t("closeFlight.plan.waypoints")}</p>
                 <WaypointsDisplay waypoints={flight.waypoints} compact />
               </div>
             )}
@@ -492,16 +500,18 @@ export default function FlightRecap() {
       <AlertDialog open={pendingValues !== null} onOpenChange={(open) => !open && !isSubmitting && setPendingValues(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Clôturer ce vol ?</AlertDialogTitle>
+            <AlertDialogTitle>{t("closeFlight.confirm.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Le vol {route} sera inscrit dans votre carnet avec{" "}
-              {formatFlightDuration(pendingValues?.flight_hours ?? 0)} de vol
-              {pendingValues?.incidentOccurred ? ", et l'incident sera signalé au club" : ""}. Après la clôture, seul un
-              administrateur pourra le modifier.
+              {t(
+                pendingValues?.incidentOccurred
+                  ? "closeFlight.confirm.descriptionWithIncident"
+                  : "closeFlight.confirm.description",
+                { route, duration: formatFlightDuration(pendingValues?.flight_hours ?? 0) },
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isSubmitting}>Annuler</AlertDialogCancel>
+            <AlertDialogCancel disabled={isSubmitting}>{t("common:actions.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               disabled={isSubmitting}
               onClick={(event) => {
@@ -510,7 +520,7 @@ export default function FlightRecap() {
               }}
             >
               {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-              Clôturer le vol
+              {t("closeFlight.submit")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

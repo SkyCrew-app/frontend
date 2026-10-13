@@ -22,6 +22,7 @@ import { ChecklistSubmission, ChecklistSubmissionStatus, ChecklistTemplate } fro
 import { ChecklistProgress } from "@/components/checklists/ChecklistProgress"
 import { checklistStatus, submissionProgress } from "@/lib/checklist-items"
 import { formatDateTime } from "@/lib/format"
+import { useTranslation } from "react-i18next"
 
 const HISTORY_PREVIEW = 6
 
@@ -30,6 +31,7 @@ const byMostRecent = (a: ChecklistSubmission, b: ChecklistSubmission) =>
 
 // One card anatomy for every checklist: title, status, facts, action bottom right.
 function SubmissionCard({ submission }: { submission: ChecklistSubmission }) {
+  const { t } = useTranslation("checklists")
   const status = checklistStatus(submission.status)
   const { checked, total } = submissionProgress(submission)
   const inProgress = submission.status === ChecklistSubmissionStatus.IN_PROGRESS
@@ -55,18 +57,18 @@ function SubmissionCard({ submission }: { submission: ChecklistSubmission }) {
             <ChecklistProgress checked={checked} total={total} />
           ) : (
             <p className="text-sm tabular-nums text-muted-foreground">
-              {checked} / {total} {total > 1 ? "points vérifiés" : "point vérifié"}
+              {t("list.card.itemsChecked", { count: total, checked, total })}
             </p>
           )}
           <p className="text-xs text-muted-foreground">
             {isCompleted && submission.completed_at
-              ? `Terminée le ${formatDateTime(submission.completed_at)}`
-              : `Commencée le ${formatDateTime(submission.started_at)}`}
+              ? t("submission.completedOn", { date: formatDateTime(submission.completed_at) })
+              : t("submission.startedOn", { date: formatDateTime(submission.started_at) })}
           </p>
         </CardContent>
         <CardFooter className="justify-end pt-0">
           <span className="flex items-center gap-2 text-sm font-medium text-primary">
-            {inProgress ? "Reprendre" : "Consulter"}
+            {inProgress ? t("list.card.resume") : t("list.card.view")}
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
           </span>
         </CardFooter>
@@ -76,6 +78,7 @@ function SubmissionCard({ submission }: { submission: ChecklistSubmission }) {
 }
 
 export default function ChecklistsPage() {
+  const { t } = useTranslation("checklists")
   const router = useRouter()
   const { toast } = useToast()
   const userEmail = useCurrentUser()
@@ -99,7 +102,7 @@ export default function ChecklistsPage() {
 
   const submissions: ChecklistSubmission[] = submissionsData?.checklistSubmissions || []
   const templates: ChecklistTemplate[] =
-    templatesData?.checklistTemplates?.filter((t: ChecklistTemplate) => t.is_active) || []
+    templatesData?.checklistTemplates?.filter((template: ChecklistTemplate) => template.is_active) || []
 
   const inProgress = submissions.filter((s) => s.status === ChecklistSubmissionStatus.IN_PROGRESS).sort(byMostRecent)
   // Everything that is no longer being filled in, cancelled ones included.
@@ -131,8 +134,8 @@ export default function ChecklistsPage() {
     } catch {
       toast({
         variant: "destructive",
-        title: "La checklist n'a pas pu être démarrée",
-        description: "Réessayez dans un instant.",
+        title: t("toast.startFailed.title"),
+        description: t("toast.retryLater"),
       })
     }
   }
@@ -140,15 +143,15 @@ export default function ChecklistsPage() {
   const newButton = (
     <Button onClick={() => setIsNewDialogOpen(true)}>
       <Plus className="h-4 w-4" />
-      Nouvelle checklist
+      {t("list.new")}
     </Button>
   )
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Checklists"
-        description="Vos vérifications avant le vol, point par point."
+        title={t("list.title")}
+        description={t("list.description")}
         actions={newButton}
         className="mb-0"
       />
@@ -164,15 +167,15 @@ export default function ChecklistsPage() {
       ) : submissions.length === 0 ? (
         <EmptyState
           icon={ClipboardCheck}
-          title="Aucune checklist pour le moment"
-          description="Démarrez une checklist avant votre prochain vol : vos réponses s'enregistrent au fur et à mesure."
+          title={t("list.empty.title")}
+          description={t("list.empty.description")}
           action={newButton}
         />
       ) : (
         <>
           {inProgress.length > 0 && (
             <section className="space-y-3">
-              <h2 className="text-lg font-semibold">En cours</h2>
+              <h2 className="text-lg font-semibold">{t("list.sections.inProgress")}</h2>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {inProgress.map((sub) => (
                   <SubmissionCard key={sub.id} submission={sub} />
@@ -183,7 +186,7 @@ export default function ChecklistsPage() {
 
           {history.length > 0 && (
             <section className="space-y-3">
-              <h2 className="text-lg font-semibold">Historique</h2>
+              <h2 className="text-lg font-semibold">{t("list.sections.history")}</h2>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {visibleHistory.map((sub) => (
                   <SubmissionCard key={sub.id} submission={sub} />
@@ -192,7 +195,7 @@ export default function ChecklistsPage() {
               {history.length > HISTORY_PREVIEW && (
                 <div className="flex justify-center">
                   <Button variant="outline" onClick={() => setShowAllHistory(!showAllHistory)}>
-                    {showAllHistory ? "Afficher moins" : `Afficher les ${history.length} checklists`}
+                    {showAllHistory ? t("list.showLess") : t("list.showAll", { total: history.length })}
                   </Button>
                 </div>
               )}
@@ -204,31 +207,31 @@ export default function ChecklistsPage() {
       <SidePanel
         open={isNewDialogOpen}
         onOpenChange={(open) => !starting && setIsNewDialogOpen(open)}
-        title="Démarrer une checklist"
-        description="Choisissez le modèle correspondant à l'avion que vous préparez."
+        title={t("list.start.title")}
+        description={t("list.start.description")}
         onSubmit={handleStartChecklist}
-        submitLabel="Démarrer la checklist"
+        submitLabel={t("list.start.submit")}
         submitting={starting}
         submitDisabled={!templateId || !userData?.id}
         size="md"
       >
         <div className="space-y-2">
-          <Label htmlFor="checklist-template">Modèle de checklist</Label>
+          <Label htmlFor="checklist-template">{t("list.start.templateLabel")}</Label>
           {loadingTemplates && templates.length === 0 ? (
             <Skeleton className="h-10 w-full" />
           ) : templates.length === 0 ? (
             <p className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
-              Aucun modèle de checklist n&apos;est disponible. Demandez à un administrateur du club d&apos;en activer un.
+              {t("list.start.noTemplate")}
             </p>
           ) : (
             <Select value={templateId} onValueChange={setSelectedTemplateId}>
               <SelectTrigger id="checklist-template">
-                <SelectValue placeholder="Choisir un modèle" />
+                <SelectValue placeholder={t("list.start.placeholder")} />
               </SelectTrigger>
               <SelectContent>
-                {templates.map((t) => (
-                  <SelectItem key={String(t.id)} value={String(t.id)}>
-                    {t.name} — {t.aircraft_model}
+                {templates.map((template) => (
+                  <SelectItem key={String(template.id)} value={String(template.id)}>
+                    {template.name} — {template.aircraft_model}
                   </SelectItem>
                 ))}
               </SelectContent>

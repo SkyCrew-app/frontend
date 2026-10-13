@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useMutation, useQuery } from "@apollo/client"
 import { Bell, ChevronRight, CreditCard, LogOut, Menu, User } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -22,8 +23,10 @@ import { getBackendBaseUrl } from "@/lib/runtime-config"
 import { cn } from "@/lib/utils"
 import { formatDateTime, formatMoney } from "@/lib/format"
 import { GET_NOTIFICATIONS, SEEN_NOTIFICATION } from "@/graphql/notifications"
-import { type AppNotification, getNotificationTypeInFrench, isHighPriority } from "@/interfaces/notification"
+import { type AppNotification, isHighPriority, notificationTypeLabel } from "@/interfaces/notification"
 import ThemeToggle from "@/components/theme/ThemeToggle"
+import LanguageToggle from "@/components/theme/LanguageToggle"
+import { roleLabel } from "./role-label"
 import { useLogout } from "@/components/hooks/useLogout"
 import { useMounted } from "@/components/hooks/useMounted"
 
@@ -34,6 +37,7 @@ interface NavbarProps {
 }
 
 export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
+  const { t } = useTranslation("nav")
   const router = useRouter()
   const handleLogout = useLogout()
   const userEmail = useCurrentUser()
@@ -90,7 +94,7 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
   const profile = data?.userByEmail
   const firstName: string = profile?.first_name ?? ""
   const lastName: string = profile?.last_name ?? ""
-  const userName = `${firstName} ${lastName}`.trim() || "Mon compte"
+  const userName = `${firstName} ${lastName}`.trim() || t("account.fallbackName")
   const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
   const userRole: string | null = profile?.role?.role_name || null
   const profilePicture: string | null = profile?.profile_picture || null
@@ -130,13 +134,14 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
         size="icon"
         className="md:hidden"
         onClick={onToggleMobileMenu}
-        aria-label="Ouvrir le menu"
+        aria-label={t("navbar.openMenu")}
       >
         <Menu className="h-5 w-5" />
       </Button>
 
       {/* Right section */}
       <div className="ml-auto flex items-center gap-2">
+        <LanguageToggle />
         <ThemeToggle />
 
         {/* Notifications */}
@@ -146,8 +151,10 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
               variant="ghost"
               size="icon"
               className="relative rounded-full"
-              aria-label={unreadCount > 0 ? `Notifications, ${unreadLabel} non lues` : "Notifications"}
-              title="Notifications"
+              aria-label={
+                unreadCount > 0 ? t("navbar.notificationsUnread", { unread: unreadLabel }) : t("pages.notifications")
+              }
+              title={t("pages.notifications")}
             >
               <Bell className="h-5 w-5" />
               {unreadCount > 0 && (
@@ -162,9 +169,9 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="max-h-[70vh] w-80 max-w-[calc(100vw-2rem)] overflow-y-auto p-0">
             <DropdownMenuLabel className="px-4 py-3">
-              <span className="block text-sm font-semibold">Notifications</span>
+              <span className="block text-sm font-semibold">{t("pages.notifications")}</span>
               <span className="block text-xs font-normal text-muted-foreground">
-                {unreadCount > 0 ? `${unreadLabel} non lue${unreadCount > 1 ? "s" : ""}` : "Tout est lu"}
+                {unreadCount > 0 ? t("navbar.unread", { count: unreadCount, unread: unreadLabel }) : t("navbar.allRead")}
               </span>
             </DropdownMenuLabel>
             <DropdownMenuSeparator className="m-0" />
@@ -190,7 +197,7 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
                     />
                     <span className="min-w-0 flex-1">
                       <span className={cn("block text-sm", unread ? "font-semibold" : "font-medium")}>
-                        {getNotificationTypeInFrench(notification.notification_type)}
+                        {notificationTypeLabel(notification.notification_type)}
                       </span>
                       <span className="mt-0.5 line-clamp-2 block text-sm text-muted-foreground">
                         {notification.message}
@@ -203,14 +210,14 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
                 )
               })
             ) : (
-              <p className="px-4 py-8 text-center text-sm text-muted-foreground">Aucune notification</p>
+              <p className="px-4 py-8 text-center text-sm text-muted-foreground">{t("navbar.empty")}</p>
             )}
 
             <DropdownMenuItem
               onSelect={() => router.push("/notifications")}
               className="cursor-pointer justify-center rounded-none py-3 text-sm font-medium text-primary focus:text-primary"
             >
-              Voir toutes les notifications
+              {t("navbar.seeAll")}
               <ChevronRight className="h-4 w-4" />
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -231,7 +238,7 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
               <Button
                 variant="ghost"
                 className="h-10 gap-2 rounded-full pl-1 pr-1 sm:pr-3"
-                aria-label={`Menu du compte de ${userName}`}
+                aria-label={t("account.menu", { name: userName })}
               >
                 {avatar("h-8 w-8")}
                 <span className="hidden flex-col items-start leading-tight sm:flex">
@@ -245,17 +252,17 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
                 {avatar("h-10 w-10")}
                 <span className="min-w-0">
                   <span className="block truncate text-sm font-medium">{userName}</span>
-                  {userRole && <span className="block truncate text-xs text-muted-foreground">{userRole}</span>}
+                  {userRole && <span className="block truncate text-xs text-muted-foreground">{roleLabel(userRole)}</span>}
                 </span>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onSelect={() => router.push("/profile/")} className="cursor-pointer">
                 <User className="h-4 w-4 text-muted-foreground" />
-                Mon profil
+                {t("pages.profile")}
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={() => router.push("/profile/money_account")} className="cursor-pointer">
                 <CreditCard className="h-4 w-4 text-muted-foreground" />
-                Mon solde
+                {t("pages.balance")}
                 {balance && <span className="ml-auto text-sm font-medium tabular-nums">{balance}</span>}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -264,7 +271,7 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
                 className="cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive"
               >
                 <LogOut className="h-4 w-4" />
-                Se déconnecter
+                {t("account.signOut")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

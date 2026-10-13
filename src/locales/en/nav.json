@@ -1,0 +1,79 @@
+{
+  "pages": {
+    "dashboard": "Dashboard",
+    "fleet": "Fleet",
+    "fleetHistory": "History",
+    "maintenance": "Maintenance",
+    "reservations": "Bookings",
+    "myReservations": "My bookings",
+    "myFlightPlans": "My flight plans",
+    "newFlightPlan": "New flight plan",
+    "checklists": "Checklists",
+    "logbook": "Logbook",
+    "instruction": "Training",
+    "myCourses": "My sessions",
+    "myEvaluations": "My assessments",
+    "eLearning": "E-learning",
+    "administration": "Administration",
+    "adminFleet": "Fleet",
+    "aircraft": "Aircraft",
+    "members": "Members",
+    "finance": "Finance",
+    "safety": "Safety",
+    "incidents": "Incidents",
+    "articles": "Articles",
+    "settings": "Settings",
+    "profile": "My profile",
+    "balance": "My balance",
+    "notifications": "Notifications",
+    "twoFactor": "Two-factor authentication",
+    "closeFlight": "Close flight"
+  },
+  "layout": {
+    "mainContent": "Main content",
+    "skipToContent": "Skip to main content"
+  },
+  "breadcrumbs": {
+    "label": "Breadcrumb",
+    "detail": "Details",
+    "course": "Course",
+    "lesson": "Lesson"
+  },
+  "sidebar": {
+    "label": "Main navigation",
+    "home": "SkyCrew, back to the dashboard",
+    "expandMenu": "Expand the {{name}} menu",
+    "collapseMenu": "Collapse the {{name}} menu"
+  },
+  "account": {
+    "fallbackName": "My account",
+    "menu": "Account menu for {{name}}",
+    "signOut": "Sign out"
+  },
+  "roles": {
+    "Administrateur": "Administrator",
+    "Pilote": "Pilot",
+    "Instructeur": "Instructor",
+    "Technicien": "Technician"
+  },
+  "navbar": {
+    "openMenu": "Open the menu",
+    "notificationsUnread": "Notifications, {{unread}} unread",
+    "unread_one": "{{unread}} unread",
+    "unread_other": "{{unread}} unread",
+    "allRead": "All read",
+    "empty": "No notifications",
+    "seeAll": "See all notifications"
+  },
+  "command": {
+    "placeholder": "Search for a page or an action…",
+    "empty": "No results.",
+    "navigation": "Navigation",
+    "quickActions": "Quick actions",
+    "newReservation": "New booking",
+    "theme": "Theme",
+    "themeLight": "Light theme",
+    "themeDark": "Dark theme",
+    "themeSystem": "System theme"
+  }
+}

@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState } from "react"
+import { useTranslation } from "react-i18next"
 import { useMutation } from "@apollo/client"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -24,6 +25,7 @@ interface PasswordFieldProps {
 }
 
 function PasswordField({ id, label, value, onChange, autoComplete, error, hint, className }: PasswordFieldProps) {
+  const { t } = useTranslation("profile")
   const [visible, setVisible] = useState(false)
 
   return (
@@ -44,8 +46,8 @@ function PasswordField({ id, label, value, onChange, autoComplete, error, hint, 
           type="button"
           onClick={() => setVisible(!visible)}
           className="absolute right-0 top-0 flex h-full w-10 items-center justify-center rounded-r-md text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          aria-label={visible ? "Masquer le mot de passe" : "Afficher le mot de passe"}
-          title={visible ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+          aria-label={visible ? t("password.hide") : t("password.show")}
+          title={visible ? t("password.hide") : t("password.show")}
         >
           {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
         </button>
@@ -55,6 +57,7 @@ function PasswordField({ id, label, value, onChange, autoComplete, error, hint, 
 }
 
 export function PasswordForm() {
+  const { t } = useTranslation("profile")
   const [currentPassword, setCurrentPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -80,23 +83,23 @@ export function PasswordForm() {
 
     if (!currentPassword) {
       valid = false
-      newErrors.currentPassword = "Le mot de passe actuel est requis."
+      newErrors.currentPassword = t("password.errors.currentRequired")
     }
 
     if (!newPassword) {
       valid = false
-      newErrors.newPassword = "Le nouveau mot de passe est requis."
+      newErrors.newPassword = t("password.errors.newRequired")
     } else if (newPassword.length < 8) {
       valid = false
-      newErrors.newPassword = "Le nouveau mot de passe doit contenir au moins 8 caractères."
+      newErrors.newPassword = t("password.errors.newTooShort")
     }
 
     if (!confirmPassword) {
       valid = false
-      newErrors.confirmPassword = "La confirmation du mot de passe est requise."
+      newErrors.confirmPassword = t("password.errors.confirmRequired")
     } else if (newPassword !== confirmPassword) {
       valid = false
-      newErrors.confirmPassword = "Les mots de passe ne correspondent pas."
+      newErrors.confirmPassword = t("password.errors.mismatch")
     }
 
     setErrors(newErrors)
@@ -117,8 +120,8 @@ export function PasswordForm() {
 
       if (data?.updatePassword?.id) {
         toast({
-          title: "Mot de passe modifié",
-          description: "Toutes vos sessions ont été fermées. Reconnectez-vous avec le nouveau mot de passe.",
+          title: t("password.toast.changedTitle"),
+          description: t("password.toast.changedDescription"),
         })
 
         setCurrentPassword("")
@@ -129,15 +132,15 @@ export function PasswordForm() {
       } else {
         toast({
           variant: "destructive",
-          title: "Erreur",
-          description: "Erreur lors de la modification du mot de passe.",
+          title: t("toast.error"),
+          description: t("password.toast.failed"),
         })
       }
     } catch {
       toast({
         variant: "destructive",
-        title: "Erreur",
-        description: "Erreur lors de la modification du mot de passe.",
+        title: t("toast.error"),
+        description: t("password.toast.failed"),
       })
     } finally {
       setIsUpdating(false)
@@ -158,15 +161,13 @@ export function PasswordForm() {
         }}
       >
         <CardHeader>
-          <CardTitle>Mot de passe</CardTitle>
-          <CardDescription>
-            Après le changement, toutes vos sessions sont fermées et vous devez vous reconnecter.
-          </CardDescription>
+          <CardTitle>{t("password.title")}</CardTitle>
+          <CardDescription>{t("password.description")}</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
           <PasswordField
             id="currentPassword"
-            label="Mot de passe actuel"
+            label={t("password.current")}
             value={currentPassword}
             onChange={(value) => {
               setCurrentPassword(value)
@@ -178,7 +179,7 @@ export function PasswordForm() {
           />
           <PasswordField
             id="newPassword"
-            label="Nouveau mot de passe"
+            label={t("password.new")}
             value={newPassword}
             onChange={(value) => {
               setNewPassword(value)
@@ -186,11 +187,11 @@ export function PasswordForm() {
             }}
             autoComplete="new-password"
             error={errors.newPassword}
-            hint="8 caractères au minimum."
+            hint={t("password.hint")}
           />
           <PasswordField
             id="confirmPassword"
-            label="Confirmer le nouveau mot de passe"
+            label={t("password.confirm")}
             value={confirmPassword}
             onChange={(value) => {
               setConfirmPassword(value)
@@ -203,7 +204,7 @@ export function PasswordForm() {
         <CardFooter className="justify-end">
           <Button type="submit" disabled={isUpdating}>
             {isUpdating && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-            {isUpdating ? "Modification en cours..." : "Changer le mot de passe"}
+            {isUpdating ? t("password.submitting") : t("password.submit")}
           </Button>
         </CardFooter>
       </form>

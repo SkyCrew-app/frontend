@@ -1,0 +1,223 @@
+{
+  "flightCategory": {
+    "LOCAL": "Local",
+    "CROSS_COUNTRY": "Cross-country",
+    "INSTRUCTION": "Instruction",
+    "TOURISM": "Touring",
+    "TRAINING": "Training",
+    "MAINTENANCE": "Maintenance",
+    "PRIVATE": "Private",
+    "CORPORATE": "Business"
+  },
+  "weekday": {
+    "0": "Sunday",
+    "1": "Monday",
+    "2": "Tuesday",
+    "3": "Wednesday",
+    "4": "Thursday",
+    "5": "Friday",
+    "6": "Saturday"
+  },
+  "shared": {
+    "newReservation": "New booking",
+    "untitled": "Booking",
+    "flightCategory": "Flight category"
+  },
+  "calendar": {
+    "title": "Booking calendar",
+    "description": "Availability of the club's aircraft, day by day.",
+    "previousDay": "Previous day",
+    "nextDay": "Next day",
+    "aircraftUnavailable": "Unavailable",
+    "loadError": "The bookings for this day could not be loaded. Check your connection and try again.",
+    "closed": {
+      "title": "Club closed",
+      "description": "Your flying club is closed on this day ({{day}})"
+    },
+    "noAircraft": {
+      "title": "No aircraft to book",
+      "description": "The club's aircraft will appear here as soon as they are added to the fleet."
+    },
+    "noHours": {
+      "title": "Booking hours not set",
+      "description": "An administrator must enter the club's opening hours in the settings."
+    },
+    "freeSlot": "Book {{aircraft}} at {{time}}",
+    "legend": {
+      "label": "Legend",
+      "currentHour": "Current hour"
+    },
+    "hint": "Click a free slot, or drag across several, to book.",
+    "mobile": {
+      "allAircraft": "All aircraft",
+      "heading": "Bookings for {{date}}",
+      "aircraftFree": "This aircraft is free all day",
+      "noReservation": "No bookings on this day",
+      "emptyDescription": "Use “New booking” to book a slot."
+    }
+  },
+  "form": {
+    "createTitle": "Create a booking",
+    "createDescription": "Check the chosen slot, then describe your flight.",
+    "editTitle": "Edit the booking",
+    "editDescription": "The aircraft and the times cannot be changed.",
+    "newDescription": "Choose the aircraft, the day and the times of your flight.",
+    "submitCreate": "Create the booking",
+    "aircraftPlaceholder": "Select an aircraft",
+    "purpose": "Purpose of the booking",
+    "purposePlaceholder": "E.g. circuits, cross-country to Deauville",
+    "categoryPlaceholder": "Select a category",
+    "notesPlaceholder": "Passengers, refuelling needed, special instructions…",
+    "errors": {
+      "aircraft": "Please select an aircraft.",
+      "closedDay": "The flying club is closed on that day.",
+      "timeMissing": "Enter the start time and the end time.",
+      "timeOrder": "The end time must be after the start time.",
+      "category": "Please select a flight category."
+    }
+  },
+  "detail": {
+    "title": "Booking details",
+    "schedule": "Times",
+    "deleteConfirm": {
+      "title": "Delete this booking?",
+      "description": "The booking of {{aircraft}} on {{date}}, from {{start}} to {{end}}, will be permanently deleted and the slot will become free again.",
+      "action": "Delete the booking"
+    }
+  },
+  "toast": {
+    "slotUnavailable": {
+      "title": "Slot unavailable",
+      "description": "The selection overlaps an existing booking. Choose free slots only."
+    },
+    "accountNotLoaded": {
+      "title": "Booking not possible",
+      "description": "Your account is not loaded yet. Try again in a moment."
+    },
+    "categoryMissing": {
+      "title": "Flight category missing",
+      "description": "Please select a flight category."
+    },
+    "created": {
+      "title": "Booking created",
+      "description": "{{aircraft}} · {{date}} from {{start}} to {{end}}"
+    },
+    "refused": {
+      "title": "Booking refused",
+      "description": "The booking could not be created. Check your connection and try again."
+    },
+    "updated": {
+      "title": "Booking updated",
+      "description": "The booking of {{aircraft}} has been changed."
+    },
+    "updateFailed": {
+      "title": "Could not save changes",
+      "description": "The booking could not be changed. Try again in a moment."
+    },
+    "deleted": {
+      "title": "Booking deleted",
+      "description": "The booking of {{aircraft}} has been deleted."
+    },
+    "deleteFailed": {
+      "title": "Could not delete",
+      "description": "The booking could not be deleted. Try again in a moment."
+    },
+    "templateCreated": {
+      "title": "Template created"
+    },
+    "templateUpdated": {
+      "title": "Template updated"
+    },
+    "templateSaveFailed": {
+      "title": "Could not save",
+      "description": "The template could not be saved. Try again in a moment."
+    },
+    "templateDeleted": {
+      "title": "Template deleted"
+    },
+    "templateDeleteFailed": {
+      "title": "Could not delete",
+      "description": "The template could not be deleted. Try again in a moment."
+    }
+  },
+  "my": {
+    "title": "My bookings",
+    "description": "Your aircraft bookings and the templates that save you time.",
+    "tabs": {
+      "reservations": "Bookings",
+      "templates": "Templates",
+      "templatesWithTotal": "Templates ({{total}})"
+    },
+    "pager": {
+      "singular": "booking",
+      "plural": "bookings"
+    },
+    "stats": {
+      "confirmed": "Confirmed",
+      "pending": "Pending",
+      "cancelled": "Cancelled"
+    },
+    "filters": {
+      "searchLabel": "Search a booking",
+      "searchPlaceholder": "Purpose or registration",
+      "statusLabel": "Filter by status",
+      "allStatuses": "All statuses",
+      "categoryLabel": "Filter by flight category",
+      "allCategories": "All categories",
+      "sortLabel": "Sort the bookings",
+      "newestFirst": "Newest first",
+      "oldestFirst": "Oldest first"
+    },
+    "empty": {
+      "title": "No bookings yet",
+      "description": "Book an aircraft from the calendar: your bookings will appear here.",
+      "action": "Book an aircraft",
+      "filteredTitle": "No booking matches",
+      "filteredDescription": "Change the search or the filters to find your bookings.",
+      "resetFilters": "Reset the filters"
+    },
+    "card": {
+      "noPurpose": "No purpose given",
+      "viewFlightPlan": "View the flight plan",
+      "createFlightPlan": "Create a flight plan"
+    }
+  },
+  "template": {
+    "intro": "A template pre-fills the booking form for your usual flights.",
+    "new": "New template",
+    "empty": {
+      "title": "No booking template",
+      "description": "Save your usual flights (aircraft, times, category) to book in two clicks.",
+      "action": "Create a template"
+    },
+    "card": {
+      "noDetails": "No pre-filled details.",
+      "deleteLabel": "Delete the template {{name}}",
+      "editLabel": "Edit the template {{name}}",
+      "use": "Book with this template"
+    },
+    "deleteConfirm": {
+      "title": "Delete this template?",
+      "description": "The template “{{name}}” will be permanently deleted. Your existing bookings are not changed.",
+      "action": "Delete the template"
+    },
+    "form": {
+      "editTitle": "Edit the template",
+      "submitCreate": "Create the template",
+      "stepFlight": "Flight",
+      "stepSlot": "Usual slot",
+      "stepSlotDescription": "Optional: the day and times suggested when you use the template.",
+      "name": "Template name",
+      "namePlaceholder": "E.g. Saturday morning flight",
+      "nameRequired": "Give the template a name.",
+      "anyAircraft": "Any",
+      "purpose": "Purpose of the flight",
+      "purposePlaceholder": "E.g. circuits",
+      "usualDay": "Usual day",
+      "flightHours": "Flight time (h)",
+      "flightHoursPlaceholder": "1.5",
+      "startTime": "Start time",
+      "endTime": "End time"
+    }
+  }
+}

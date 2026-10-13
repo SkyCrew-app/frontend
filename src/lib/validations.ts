@@ -1,66 +1,87 @@
 import { z } from "zod"
+import i18n from "@/lib/i18n"
+
+// The schemas are built once at module load, before the language is known:
+// every message is therefore resolved when a value is validated.
+const text = (key: string) => ({ message: i18n.t(`profile:validation.${key}`) })
+
+// One message per kind of issue raised by the checks of a field.
+const messages =
+  (keys: Partial<Record<z.ZodIssueCode, string>>): z.ZodErrorMap =>
+  (issue, ctx) => {
+    const key = keys[issue.code]
+    return key ? text(key) : { message: ctx.defaultError }
+  }
+
+// Same rule as zod's `required_error`: only a missing value gets the message.
+const required =
+  (key: string): z.ZodErrorMap =>
+  (_issue, ctx) =>
+    typeof ctx.data === "undefined" ? text(key) : { message: ctx.defaultError }
 
 // ---- Auth ----
 
 export const loginSchema = z.object({
   email: z
-    .string()
-    .min(1, "L'adresse e-mail est requise")
-    .email("Adresse e-mail invalide"),
+    .string({ errorMap: messages({ too_small: "emailRequired", invalid_string: "emailInvalid" }) })
+    .min(1)
+    .email(),
   password: z
-    .string()
-    .min(1, "Le mot de passe est requis"),
+    .string({ errorMap: messages({ too_small: "passwordRequired" }) })
+    .min(1),
 })
 
 export type LoginFormData = z.infer<typeof loginSchema>
 
 export const forgotPasswordSchema = z.object({
   email: z
-    .string()
-    .min(1, "L'adresse e-mail est requise")
-    .email("Adresse e-mail invalide"),
+    .string({ errorMap: messages({ too_small: "emailRequired", invalid_string: "emailInvalid" }) })
+    .min(1)
+    .email(),
 })
 
 export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>
 
 export const resetPasswordSchema = z
   .object({
+    // Three pattern checks with their own message: an error map cannot tell
+    // them apart, so they are refinements, still all reported, in this order.
     password: z
-      .string()
-      .min(8, "Le mot de passe doit contenir au moins 8 caractères")
-      .regex(/[A-Z]/, "Le mot de passe doit contenir au moins une majuscule")
-      .regex(/[a-z]/, "Le mot de passe doit contenir au moins une minuscule")
-      .regex(/[0-9]/, "Le mot de passe doit contenir au moins un chiffre"),
-    confirmPassword: z.string().min(1, "La confirmation est requise"),
+      .string({ errorMap: messages({ too_small: "passwordTooShort" }) })
+      .min(8)
+      .refine((value) => /[A-Z]/.test(value), () => text("passwordUppercase"))
+      .refine((value) => /[a-z]/.test(value), () => text("passwordLowercase"))
+      .refine((value) => /[0-9]/.test(value), () => text("passwordDigit")),
+    confirmPassword: z.string({ errorMap: messages({ too_small: "confirmationRequired" }) }).min(1),
   })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Les mots de passe ne correspondent pas",
+  .refine((data) => data.password === data.confirmPassword, () => ({
+    ...text("passwordMismatch"),
     path: ["confirmPassword"],
-  })
+  }))
 
 export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>
 
 // ---- Reservation ----
 
 export const reservationSchema = z.object({
-  aircraftId: z.number().positive("Sélectionnez un avion"),
-  startDate: z.date({ required_error: "Date de début requise" }),
-  endDate: z.date({ required_error: "Date de fin requise" }),
+  aircraftId: z.number({ errorMap: messages({ too_small: "aircraftRequired" }) }).positive(),
+  startDate: z.date({ errorMap: required("startDateRequired") }),
+  endDate: z.date({ errorMap: required("endDateRequired") }),
   purpose: z.string().optional(),
-}).refine((data) => data.endDate > data.startDate, {
-  message: "La date de fin doit être après la date de début",
+}).refine((data) => data.endDate > data.startDate, () => ({
+  ...text("endDateBeforeStart"),
   path: ["endDate"],
-})
+}))
 
 export type ReservationFormData = z.infer<typeof reservationSchema>
 
 // ---- Flight ----
 
 export const flightCloseSchema = z.object({
-  flight_hours: z.number().min(0, "Les heures de vol doivent être positives"),
-  flight_type: z.string().min(1, "Le type de vol est requis"),
-  origin_icao: z.string().length(4, "Le code OACI doit contenir 4 caractères"),
-  destination_icao: z.string().length(4, "Le code OACI doit contenir 4 caractères"),
+  flight_hours: z.number({ errorMap: messages({ too_small: "flightHoursNegative" }) }).min(0),
+  flight_type: z.string({ errorMap: messages({ too_small: "flightTypeRequired" }) }).min(1),
+  origin_icao: z.string({ errorMap: messages({ too_small: "icaoLength", too_big: "icaoLength" }) }).length(4),
+  destination_icao: z.string({ errorMap: messages({ too_small: "icaoLength", too_big: "icaoLength" }) }).length(4),
   weather_conditions: z.string().optional(),
 })
 
@@ -69,14 +90,20 @@ export type FlightCloseFormData = z.infer<typeof flightCloseSchema>
 // ---- Profile ----
 
 export const profileSchema = z.object({
-  first_name: z.string().min(1, "Le prénom est requis").max(50, "50 caractères maximum"),
-  last_name: z.string().min(1, "Le nom est requis").max(50, "50 caractères maximum"),
+  first_name: z
+    .string({ errorMap: messages({ too_small: "firstNameRequired", too_big: "nameTooLong" }) })
+    .min(1)
+    .max(50),
+  last_name: z
+    .string({ errorMap: messages({ too_small: "lastNameRequired", too_big: "nameTooLong" }) })
+    .min(1)
+    .max(50),
   phone: z
     .string()
     .optional()
     .refine(
       (val) => !val || /^(\+33|0)[1-9](\d{2}){4}$/.test(val.replace(/\s/g, "")),
-      "Numéro de téléphone invalide"
+      () => text("phoneInvalid")
     ),
 })
 
@@ -86,12 +113,12 @@ export type ProfileFormData = z.infer<typeof profileSchema>
 
 export const aircraftSchema = z.object({
   registration: z
-    .string()
-    .min(1, "L'immatriculation est requise")
-    .regex(/^[A-Z]-[A-Z]{4}$/, "Format attendu : F-XXXX"),
-  model: z.string().min(1, "Le modèle est requis"),
-  total_flight_hours: z.number().min(0, "Les heures de vol doivent être positives"),
-  hourly_cost: z.number().min(0, "Le coût horaire doit être positif"),
+    .string({ errorMap: messages({ too_small: "registrationRequired", invalid_string: "registrationFormat" }) })
+    .min(1)
+    .regex(/^[A-Z]-[A-Z]{4}$/),
+  model: z.string({ errorMap: messages({ too_small: "modelRequired" }) }).min(1),
+  total_flight_hours: z.number({ errorMap: messages({ too_small: "flightHoursNegative" }) }).min(0),
+  hourly_cost: z.number({ errorMap: messages({ too_small: "hourlyCostNegative" }) }).min(0),
 })
 
 export type AircraftFormData = z.infer<typeof aircraftSchema>

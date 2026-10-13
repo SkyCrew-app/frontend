@@ -1,4 +1,7 @@
+"use client"
+
 import Link from "next/link"
+import { useTranslation } from "react-i18next"
 import { ClipboardCheck } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -22,22 +25,23 @@ interface EvaluationsCardProps {
 }
 
 export function EvaluationsCard({ evaluations, latestAttempts, error = false, onRetry }: EvaluationsCardProps) {
+  const { t } = useTranslation("instruction")
   const shown = evaluations.slice(0, 4)
 
   return (
     <SectionCard
-      title="Évaluations à passer"
-      description="Les évaluations que vous n'avez pas encore réussies."
+      title={t("home.evaluations.title")}
+      description={t("home.evaluations.description")}
       href={learningRoutes.evaluations}
-      linkLabel="Mes évaluations"
+      linkLabel={t("home.evaluations.link")}
     >
       {error ? (
         <ErrorState onRetry={onRetry} />
       ) : shown.length === 0 ? (
         <EmptyState
           icon={ClipboardCheck}
-          title="Aucune évaluation à passer"
-          description="Vous êtes à jour : toutes les évaluations disponibles sont réussies."
+          title={t("home.evaluations.emptyTitle")}
+          description={t("home.evaluations.emptyDescription")}
         />
       ) : (
         <ul className="divide-y">
@@ -46,12 +50,16 @@ export function EvaluationsCard({ evaluations, latestAttempts, error = false, on
             return (
               <li key={evaluation.id} className="flex flex-wrap items-center gap-3 px-2 py-3">
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{evaluation.module?.title ?? "Évaluation"}</p>
-                  <p className="text-sm text-muted-foreground">Score requis : {Math.round(evaluation.pass_score)} %</p>
+                  <p className="truncate text-sm font-medium">{evaluation.module?.title ?? t("shared.evaluationFallback")}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {t("shared.requiredScore", {
+                      score: t("shared.percent", { value: Math.round(evaluation.pass_score) }),
+                    })}
+                  </p>
                 </div>
-                {failed && <Badge variant="warning">À repasser</Badge>}
+                {failed && <Badge variant="warning">{t("shared.toRetake")}</Badge>}
                 <Button variant="outline" size="sm" asChild>
-                  <Link href={learningRoutes.evaluation(evaluation.id)}>{failed ? "Repasser" : "Passer"}</Link>
+                  <Link href={learningRoutes.evaluation(evaluation.id)}>{failed ? t("shared.retake") : t("shared.take")}</Link>
                 </Button>
               </li>
             )
@@ -60,7 +68,7 @@ export function EvaluationsCard({ evaluations, latestAttempts, error = false, on
       )}
       {evaluations.length > shown.length && (
         <p className="mt-3 px-2 text-xs text-muted-foreground">
-          Et {evaluations.length - shown.length} autre{evaluations.length - shown.length > 1 ? "s" : ""}.
+          {t("home.evaluations.more", { count: evaluations.length - shown.length })}
         </p>
       )}
     </SectionCard>

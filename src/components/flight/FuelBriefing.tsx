@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { AlertTriangle } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -78,6 +79,7 @@ const signed = (value: number, digits = 0) => `${value > 0 ? "+" : ""}${formatDe
 /* ------------------------------------------------------------------ */
 
 export function FuelBriefing({ fuelPolicy, windSummary, performanceProfile, flightType }: FuelBriefingProps) {
+  const { t } = useTranslation("flights")
   const fuel = hasFuelData(fuelPolicy) ? fuelPolicy : null
   const wind = hasWindData(windSummary) ? windSummary : null
 
@@ -88,25 +90,29 @@ export function FuelBriefing({ fuelPolicy, windSummary, performanceProfile, flig
       {fuel && (
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Carburant</CardTitle>
+            <CardTitle className="text-base">{t("fuel.title")}</CardTitle>
             <CardDescription>
-              Calcul selon les règles OACI, réserve finale de {flightType === "IFR" ? "30" : "45"} min
-              {performanceProfile ? ` · profil ${performanceProfile}` : ""}.
+              {performanceProfile
+                ? t("fuel.descriptionWithProfile", {
+                    minutes: flightType === "IFR" ? "30" : "45",
+                    profile: performanceProfile,
+                  })
+                : t("fuel.description", { minutes: flightType === "IFR" ? "30" : "45" })}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <FuelBar label="Roulage" liters={fuel.taxi_liters} total={fuel.total_liters} barClass="bg-muted-foreground" />
-              <FuelBar label="Étape" liters={fuel.trip_liters} total={fuel.total_liters} barClass="bg-primary" />
+              <FuelBar label={t("fuel.taxi")} liters={fuel.taxi_liters} total={fuel.total_liters} barClass="bg-muted-foreground" />
+              <FuelBar label={t("fuel.trip")} liters={fuel.trip_liters} total={fuel.total_liters} barClass="bg-primary" />
               <FuelBar
-                label="Réserve de route (5 %)"
+                label={t("fuel.contingency")}
                 liters={fuel.contingency_liters}
                 total={fuel.total_liters}
                 barClass="bg-info"
               />
-              <FuelBar label="Dégagement" liters={fuel.alternate_liters} total={fuel.total_liters} barClass="bg-warning" />
+              <FuelBar label={t("fuel.alternate")} liters={fuel.alternate_liters} total={fuel.total_liters} barClass="bg-warning" />
               <FuelBar
-                label="Réserve finale"
+                label={t("fuel.finalReserve")}
                 liters={fuel.final_reserve_liters}
                 total={fuel.total_liters}
                 barClass="bg-destructive"
@@ -114,13 +120,13 @@ export function FuelBriefing({ fuelPolicy, windSummary, performanceProfile, flig
             </div>
 
             <div className="flex items-center justify-between border-t pt-3">
-              <span className="text-sm font-medium">Total requis</span>
+              <span className="text-sm font-medium">{t("fuel.totalRequired")}</span>
               <span className="text-lg font-semibold tabular-nums">{formatDecimal(fuel.total_liters)} L</span>
             </div>
 
             <p className="flex items-start gap-2 text-xs text-muted-foreground">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" aria-hidden="true" />
-              Vérifiez avant le départ que le carburant embarqué couvre au moins {formatDecimal(fuel.total_liters, 0)} L.
+              {t("fuel.checkBeforeDeparture", { liters: formatDecimal(fuel.total_liters, 0) })}
             </p>
           </CardContent>
         </Card>
@@ -129,27 +135,27 @@ export function FuelBriefing({ fuelPolicy, windSummary, performanceProfile, flig
       {wind && (
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Vent en route</CardTitle>
-            <CardDescription>Vent moyen retenu pour le calcul de la route.</CardDescription>
+            <CardTitle className="text-base">{t("fuel.wind.title")}</CardTitle>
+            <CardDescription>{t("fuel.wind.description")}</CardDescription>
           </CardHeader>
           <CardContent>
             <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               <WindFact
-                label="Vent"
+                label={t("fuel.wind.wind")}
                 value={`${Math.round(wind.wind_dir_deg).toString().padStart(3, "0")}° / ${Math.round(wind.wind_speed_kts)} kt`}
               />
               <WindFact
-                label={wind.headwind_kts >= 0 ? "Vent de face" : "Vent arrière"}
+                label={wind.headwind_kts >= 0 ? t("fuel.wind.headwind") : t("fuel.wind.tailwind")}
                 value={`${Math.round(Math.abs(wind.headwind_kts))} kt`}
                 highlight={wind.headwind_kts > 10}
               />
               <WindFact
-                label="Vent de travers"
+                label={t("fuel.wind.crosswind")}
                 value={`${Math.round(Math.abs(wind.crosswind_kts))} kt`}
                 highlight={Math.abs(wind.crosswind_kts) > 12}
               />
-              <WindFact label="Correction de dérive" value={`${signed(wind.wca_deg, 1)}°`} />
-              <WindFact label="Vitesse sol" value={`${Math.round(wind.ground_speed_kts)} kt`} />
+              <WindFact label={t("fuel.wind.wca")} value={`${signed(wind.wca_deg, 1)}°`} />
+              <WindFact label={t("fuel.wind.groundSpeed")} value={`${Math.round(wind.ground_speed_kts)} kt`} />
             </dl>
           </CardContent>
         </Card>

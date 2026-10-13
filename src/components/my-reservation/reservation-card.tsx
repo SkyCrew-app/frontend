@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { useTranslation } from "react-i18next"
 import { CalendarClock, FileText, Pencil } from "lucide-react"
 import { reservationStatus } from "@/lib/reservation-status"
 import { formatDate, formatFlightDuration, formatTime } from "@/lib/format"
@@ -16,6 +17,7 @@ interface ReservationCardProps {
 }
 
 export function ReservationCard({ reservation, onEdit }: ReservationCardProps) {
+  const { t } = useTranslation("reservations")
   const startDate = new Date(reservation.start_time)
   const endDate = new Date(reservation.end_time)
   const durationHours = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60)
@@ -47,23 +49,23 @@ export function ReservationCard({ reservation, onEdit }: ReservationCardProps) {
           {reservation.purpose ? (
             <span className="line-clamp-2">{reservation.purpose}</span>
           ) : (
-            <span className="text-muted-foreground">But non précisé</span>
+            <span className="text-muted-foreground">{t("my.card.noPurpose")}</span>
           )}
         </p>
       </CardContent>
       <CardFooter className="flex flex-wrap justify-end gap-2 border-t pt-4">
         <Button size="sm" variant="outline" onClick={() => onEdit(reservation)}>
           <Pencil className="h-4 w-4" />
-          Modifier
+          {t("common:actions.edit")}
         </Button>
         {flightPlanId ? (
           <Button size="sm" asChild>
-            <Link href={`/reservations/flight-plans/${flightPlanId}`}>Voir le plan de vol</Link>
+            <Link href={`/reservations/flight-plans/${flightPlanId}`}>{t("my.card.viewFlightPlan")}</Link>
           </Button>
         ) : (
           !isCancelled && (
             <Button size="sm" asChild>
-              <Link href={`/reservations/flight-plans/create/${reservation.id}`}>Créer un plan de vol</Link>
+              <Link href={`/reservations/flight-plans/create/${reservation.id}`}>{t("my.card.createFlightPlan")}</Link>
             </Button>
           )
         )}

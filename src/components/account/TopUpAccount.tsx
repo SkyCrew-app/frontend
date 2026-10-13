@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { useEffect, useState } from "react"
+import { Trans, useTranslation } from "react-i18next"
 import { useMutation } from "@apollo/client"
 import dynamic from "next/dynamic"
 import { loadStripe } from "@stripe/stripe-js"
@@ -45,6 +46,7 @@ interface PayPalButtonsWrapperProps {
 }
 
 function PayPalButtonsWrapper({ amount, userId, setAmount }: PayPalButtonsWrapperProps) {
+  const { t } = useTranslation("profile")
   const { toast } = useToast()
   const [isProcessing, setIsProcessing] = useState(false)
 
@@ -67,14 +69,14 @@ function PayPalButtonsWrapper({ amount, userId, setAmount }: PayPalButtonsWrappe
 
       const externalId = data?.processPayment?.external_payment_id
       if (!externalId) {
-        throw new Error("Impossible de récupérer external_payment_id PayPal")
+        throw new Error(t("topUp.errors.paypalIdMissing"))
       }
       return externalId
     } catch (error) {
       toast({
         variant: "destructive",
-        title: "Erreur PayPal",
-        description: "Impossible de créer la commande PayPal",
+        title: t("topUp.toast.paypalErrorTitle"),
+        description: t("topUp.toast.paypalOrderFailed"),
       })
       throw error
     } finally {
@@ -88,15 +90,15 @@ function PayPalButtonsWrapper({ amount, userId, setAmount }: PayPalButtonsWrappe
       await confirmPayment({ variables: { paymentId: data.orderID } })
 
       toast({
-        title: "Succès",
-        description: "Paiement PayPal confirmé et solde mis à jour !",
+        title: t("toast.success"),
+        description: t("topUp.toast.paypalConfirmed"),
       })
       setAmount("")
     } catch {
       toast({
         variant: "destructive",
-        title: "Erreur PayPal",
-        description: "Le paiement n'a pas pu être capturé.",
+        title: t("topUp.toast.paypalErrorTitle"),
+        description: t("topUp.toast.paypalCaptureFailed"),
       })
     } finally {
       setIsProcessing(false)
@@ -107,11 +109,12 @@ function PayPalButtonsWrapper({ amount, userId, setAmount }: PayPalButtonsWrappe
     <div className="space-y-4">
       <div className="space-y-3 rounded-lg border bg-muted/30 p-4">
         <p className="text-sm text-muted-foreground">
-          Vous allez recharger votre compte de{" "}
-          <strong className="font-semibold text-foreground tabular-nums">
-            {formatMoney(Number.parseFloat(amount))}
-          </strong>{" "}
-          avec PayPal.
+          <Trans
+            t={t}
+            i18nKey="topUp.paypal.summary"
+            values={{ amount: formatMoney(Number.parseFloat(amount)) }}
+            components={{ strong: <strong className="font-semibold text-foreground tabular-nums" /> }}
+          />
         </p>
         <PayPalButtons
           createOrder={createOrder}
@@ -124,7 +127,7 @@ function PayPalButtonsWrapper({ amount, userId, setAmount }: PayPalButtonsWrappe
       {isProcessing && (
         <p className="flex items-center justify-center gap-2 text-sm text-muted-foreground" role="status">
           <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-          Paiement en cours de traitement, ne fermez pas cette page.
+          {t("topUp.paypal.processing")}
         </p>
       )}
     </div>
@@ -145,6 +148,7 @@ function CheckoutForm({
 
   const stripe = useStripe()
   const elements = useElements()
+  const { t } = useTranslation("profile")
   const { toast } = useToast()
 
   // The balance shown elsewhere is read again once the account is credited.
@@ -169,17 +173,17 @@ function CheckoutForm({
         await confirmPayment({ variables: { paymentId: paymentIntent.id } })
 
         toast({
-          title: "Succès",
-          description: "Paiement Stripe confirmé et solde mis à jour !",
+          title: t("toast.success"),
+          description: t("topUp.toast.stripeConfirmed"),
         })
         setAmount("")
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Erreur Stripe inconnue"
+      const msg = err instanceof Error ? err.message : t("topUp.errors.stripeUnknown")
       setError(msg)
       toast({
         variant: "destructive",
-        title: "Erreur Stripe",
+        title: t("topUp.toast.stripeErrorTitle"),
         description: msg,
       })
     } finally {
@@ -191,11 +195,12 @@ function CheckoutForm({
     <div className="space-y-4">
       <div className="space-y-4 rounded-lg border bg-muted/30 p-4">
         <p className="text-sm text-muted-foreground">
-          Vous allez recharger votre compte de{" "}
-          <strong className="font-semibold text-foreground tabular-nums">
-            {formatMoney(Number.parseFloat(amount))}
-          </strong>{" "}
-          par carte bancaire.
+          <Trans
+            t={t}
+            i18nKey="topUp.card.summary"
+            values={{ amount: formatMoney(Number.parseFloat(amount)) }}
+            components={{ strong: <strong className="font-semibold text-foreground tabular-nums" /> }}
+          />
         </p>
         <PaymentElement />
       </div>
@@ -203,10 +208,10 @@ function CheckoutForm({
       <Button className="w-full" disabled={loading} onClick={handleConfirmStripePayment}>
         {loading && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
         {loading
-          ? "Paiement en cours..."
+          ? t("topUp.card.paying")
           : Number.parseFloat(amount) > 0
-            ? `Payer ${formatMoney(Number.parseFloat(amount))}`
-            : "Payer"}
+            ? t("topUp.card.payAmount", { amount: formatMoney(Number.parseFloat(amount)) })
+            : t("topUp.card.pay")}
       </Button>
 
       {error && (
@@ -225,6 +230,7 @@ export default function TopUpAccount() {
   const [error, setError] = useState<string | null>(null)
   const [loadingStripeIntent, setLoadingStripeIntent] = useState(false)
 
+  const { t } = useTranslation("profile")
   const { toast } = useToast()
   const [processPayment] = useMutation(PROCESS_PAYMENT)
 
@@ -242,7 +248,7 @@ export default function TopUpAccount() {
     if (!userId) return
     try {
       if (!amount || Number.parseFloat(amount) <= 0) {
-        throw new Error("Veuillez saisir un montant supérieur à 0")
+        throw new Error(t("topUp.errors.amountRequired"))
       }
       setLoadingStripeIntent(true)
       setError(null)
@@ -259,16 +265,16 @@ export default function TopUpAccount() {
 
       const secret = data?.processPayment?.client_secret
       if (!secret) {
-        throw new Error("Impossible de récupérer le client_secret Stripe")
+        throw new Error(t("topUp.errors.stripeSecretMissing"))
       }
 
       setClientSecret(secret)
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Erreur inconnue"
+      const msg = err instanceof Error ? err.message : t("topUp.errors.unknown")
       setError(msg)
       toast({
         variant: "destructive",
-        title: "Erreur Stripe",
+        title: t("topUp.toast.stripeErrorTitle"),
         description: msg,
       })
     } finally {
@@ -289,13 +295,13 @@ export default function TopUpAccount() {
     <ClientPayPalProvider>
       <Card>
         <CardHeader>
-          <CardTitle>Recharger mon compte</CardTitle>
-          <CardDescription>Choisissez un montant, puis payez par carte bancaire ou avec PayPal.</CardDescription>
+          <CardTitle>{t("topUp.title")}</CardTitle>
+          <CardDescription>{t("topUp.description")}</CardDescription>
         </CardHeader>
 
         <CardContent className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="amount">Montant à recharger (€)</Label>
+            <Label htmlFor="amount">{t("topUp.amountLabel")}</Label>
             <Input
               id="amount"
               type="number"
@@ -309,7 +315,7 @@ export default function TopUpAccount() {
             />
           </div>
 
-          <div className="grid grid-cols-4 gap-2" role="group" aria-label="Montants rapides">
+          <div className="grid grid-cols-4 gap-2" role="group" aria-label={t("topUp.quickAmounts")}>
             {predefinedAmounts.map((amt) => (
               <Button
                 key={amt}
@@ -336,8 +342,8 @@ export default function TopUpAccount() {
 
           <Tabs defaultValue="stripe">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="stripe">Carte bancaire</TabsTrigger>
-              <TabsTrigger value="paypal">PayPal</TabsTrigger>
+              <TabsTrigger value="stripe">{t("topUp.tabs.card")}</TabsTrigger>
+              <TabsTrigger value="paypal">{t("topUp.tabs.paypal")}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="stripe" className="mt-4 space-y-4">
@@ -348,7 +354,7 @@ export default function TopUpAccount() {
                   disabled={loadingStripeIntent || !userId || !amount || Number.parseFloat(amount) <= 0}
                 >
                   {loadingStripeIntent && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
-                  {loadingStripeIntent ? "Préparation du paiement..." : "Continuer vers le paiement par carte"}
+                  {loadingStripeIntent ? t("topUp.card.preparing") : t("topUp.card.continue")}
                 </Button>
               ) : (
                 <Elements
@@ -375,7 +381,7 @@ export default function TopUpAccount() {
                 <PayPalButtonsWrapper amount={amount} userId={Number(userId)} setAmount={setAmount} />
               ) : (
                 <p className="rounded-lg border border-dashed p-4 text-center text-sm text-muted-foreground">
-                  Saisissez un montant pour payer avec PayPal.
+                  {t("topUp.paypal.amountNeeded")}
                 </p>
               )}
             </TabsContent>

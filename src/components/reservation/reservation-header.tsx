@@ -2,11 +2,12 @@
 
 import { useState } from "react"
 import { format, addDays, subDays, isSameDay } from "date-fns"
-import { fr } from "date-fns/locale"
+import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
+import { dateFnsLocale } from "@/lib/i18n"
 
 interface DateNavigatorProps {
   currentDate: Date
@@ -17,6 +18,7 @@ interface DateNavigatorProps {
 
 /** The single date control of the calendar: previous day, today, next day and a date picker. */
 export function DateNavigator({ currentDate, setCurrentDate, isClosedDay }: DateNavigatorProps) {
+  const { t } = useTranslation("reservations")
   const [pickerOpen, setPickerOpen] = useState(false)
   const isToday = isSameDay(currentDate, new Date())
 
@@ -27,20 +29,20 @@ export function DateNavigator({ currentDate, setCurrentDate, isClosedDay }: Date
           variant="outline"
           size="icon"
           onClick={() => setCurrentDate(subDays(currentDate, 1))}
-          aria-label="Jour précédent"
-          title="Jour précédent"
+          aria-label={t("calendar.previousDay")}
+          title={t("calendar.previousDay")}
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <Button variant="outline" onClick={() => setCurrentDate(new Date())} disabled={isToday}>
-          Aujourd&apos;hui
+          {t("common:labels.today")}
         </Button>
         <Button
           variant="outline"
           size="icon"
           onClick={() => setCurrentDate(addDays(currentDate, 1))}
-          aria-label="Jour suivant"
-          title="Jour suivant"
+          aria-label={t("calendar.nextDay")}
+          title={t("calendar.nextDay")}
         >
           <ChevronRight className="h-4 w-4" />
         </Button>
@@ -50,13 +52,13 @@ export function DateNavigator({ currentDate, setCurrentDate, isClosedDay }: Date
         <PopoverTrigger asChild>
           <Button variant="outline" className="min-w-0 flex-1 justify-start font-normal sm:flex-none">
             <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-            <span className="truncate">{format(currentDate, "EEEE d MMMM yyyy", { locale: fr })}</span>
+            <span className="truncate">{format(currentDate, "EEEE d MMMM yyyy", { locale: dateFnsLocale() })}</span>
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
           <Calendar
             mode="single"
-            locale={fr}
+            locale={dateFnsLocale()}
             selected={currentDate}
             defaultMonth={currentDate}
             onSelect={(date) => {

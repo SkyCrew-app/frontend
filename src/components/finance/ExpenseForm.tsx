@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react"
 import { useMutation } from "@apollo/client"
+import { useTranslation } from "react-i18next"
 import { format } from "date-fns"
-import { fr } from "date-fns/locale"
 import { AlertCircle, CalendarIcon } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -17,7 +17,8 @@ import { SidePanel } from "@/components/layout/SidePanel"
 import { toast } from "@/components/hooks/use-toast"
 import { CREATE_EXPENSE } from "@/graphql/finance"
 import { formatDate, formatMoney } from "@/lib/format"
-import { EXPENSE_CATEGORIES } from "./finance-shared"
+import { dateFnsLocale } from "@/lib/i18n"
+import { EXPENSE_CATEGORIES, expenseCategoryLabel } from "./finance-shared"
 
 interface ExpenseFormProps {
   open: boolean
@@ -41,6 +42,7 @@ const RequiredMark = () => (
 
 /** The side panel that records an expense. */
 export default function ExpenseForm({ open, onSuccess, onCancel }: ExpenseFormProps) {
+  const { t } = useTranslation("administration")
   const [amount, setAmount] = useState("")
   const [category, setCategory] = useState("")
   const [description, setDescription] = useState("")
@@ -70,9 +72,9 @@ export default function ExpenseForm({ open, onSuccess, onCancel }: ExpenseFormPr
   const validate = (): FieldErrors => {
     const next: FieldErrors = {}
     const value = Number.parseFloat(amount.replace(",", "."))
-    if (!amount.trim()) next.amount = "Indiquez le montant de la dépense."
-    else if (Number.isNaN(value) || value <= 0) next.amount = "Le montant doit être supérieur à 0 €."
-    if (!category) next.category = "Choisissez une catégorie."
+    if (!amount.trim()) next.amount = t("finance.expenseForm.errors.amount")
+    else if (Number.isNaN(value) || value <= 0) next.amount = t("finance.expenseForm.errors.amountPositive")
+    if (!category) next.category = t("finance.expenseForm.errors.category")
     return next
   }
 
@@ -99,8 +101,11 @@ export default function ExpenseForm({ open, onSuccess, onCancel }: ExpenseFormPr
       })
 
       toast({
-        title: "Dépense enregistrée",
-        description: `${formatMoney(value)} le ${formatDate(date)}.`,
+        title: t("finance.expenseForm.toast.title"),
+        description: t("finance.expenseForm.toast.description", {
+          amount: formatMoney(value),
+          date: formatDate(date),
+        }),
       })
 
       setAmount("")
@@ -117,10 +122,10 @@ export default function ExpenseForm({ open, onSuccess, onCancel }: ExpenseFormPr
     <SidePanel
       open={open}
       onOpenChange={(next) => !next && !loading && onCancel?.()}
-      title="Ajouter une dépense"
-      description="Elle sera comptée dans les dépenses de la période correspondante."
+      title={t("finance.expenseForm.title")}
+      description={t("finance.expenseForm.description")}
       onSubmit={handleSubmit}
-      submitLabel="Enregistrer la dépense"
+      submitLabel={t("finance.expenseForm.submit")}
       submitting={loading}
       size="md"
     >
@@ -128,7 +133,7 @@ export default function ExpenseForm({ open, onSuccess, onCancel }: ExpenseFormPr
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="expense-amount">
-                Montant
+                {t("finance.labels.amount")}
                 <RequiredMark />
               </Label>
               <div className="relative">
@@ -138,7 +143,7 @@ export default function ExpenseForm({ open, onSuccess, onCancel }: ExpenseFormPr
                   inputMode="decimal"
                   min="0.01"
                   step="0.01"
-                  placeholder="120,50"
+                  placeholder={t("finance.expenseForm.amountPlaceholder")}
                   value={amount}
                   onChange={(e) => {
                     setAmount(e.target.value)
@@ -165,7 +170,7 @@ export default function ExpenseForm({ open, onSuccess, onCancel }: ExpenseFormPr
 
             <div className="space-y-2">
               <Label htmlFor="expense-date">
-                Date
+                {t("common:labels.date")}
                 <RequiredMark />
               </Label>
               <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
@@ -186,7 +191,7 @@ export default function ExpenseForm({ open, onSuccess, onCancel }: ExpenseFormPr
                       }
                     }}
                     initialFocus
-                    locale={fr}
+                    locale={dateFnsLocale()}
                   />
                 </PopoverContent>
               </Popover>
@@ -195,7 +200,7 @@ export default function ExpenseForm({ open, onSuccess, onCancel }: ExpenseFormPr
 
           <div className="space-y-2">
             <Label htmlFor="expense-category">
-              Catégorie
+              {t("common:labels.category")}
               <RequiredMark />
             </Label>
             <Select
@@ -210,12 +215,12 @@ export default function ExpenseForm({ open, onSuccess, onCancel }: ExpenseFormPr
                 aria-invalid={Boolean(errors.category)}
                 aria-describedby={errors.category ? "expense-category-error" : undefined}
               >
-                <SelectValue placeholder="Choisir une catégorie" />
+                <SelectValue placeholder={t("finance.expenseForm.chooseCategory")} />
               </SelectTrigger>
               <SelectContent>
                 {EXPENSE_CATEGORIES.map((item) => (
-                  <SelectItem key={item.value} value={item.value}>
-                    {item.label}
+                  <SelectItem key={item} value={item}>
+                    {expenseCategoryLabel(item)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -228,10 +233,10 @@ export default function ExpenseForm({ open, onSuccess, onCancel }: ExpenseFormPr
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="expense-description">Description</Label>
+            <Label htmlFor="expense-description">{t("common:labels.description")}</Label>
             <Textarea
               id="expense-description"
-              placeholder="Ex. : visite des 50 heures du F-GABC"
+              placeholder={t("finance.expenseForm.descriptionPlaceholder")}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
@@ -241,7 +246,7 @@ export default function ExpenseForm({ open, onSuccess, onCancel }: ExpenseFormPr
           {error && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>La dépense n'a pas pu être enregistrée. Réessayez dans un instant.</AlertDescription>
+              <AlertDescription>{t("finance.expenseForm.error")}</AlertDescription>
             </Alert>
           )}
       </div>

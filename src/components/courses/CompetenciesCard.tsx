@@ -3,6 +3,7 @@
 import type React from "react"
 import { useState } from "react"
 import { CheckCircle2, Circle, ListChecks, Loader2, Plus } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -39,6 +40,7 @@ interface CompetenciesCardProps {
 }
 
 export function CompetenciesCard({ competencies, canManage, onAdd, onValidate }: CompetenciesCardProps) {
+  const { t } = useTranslation("instruction")
   const [isAdding, setIsAdding] = useState(false)
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
@@ -77,17 +79,17 @@ export function CompetenciesCard({ competencies, canManage, onAdd, onValidate }:
     <Card>
       <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
         <div className="space-y-1.5">
-          <CardTitle className="text-lg">Compétences</CardTitle>
+          <CardTitle className="text-lg">{t("courses.competencies.title")}</CardTitle>
           <CardDescription>
             {total === 0
-              ? "Ce qui est travaillé pendant le cours."
-              : `${validated} sur ${total} validée${validated > 1 ? "s" : ""}`}
+              ? t("courses.competencies.description")
+              : t("courses.competencies.summary", { count: validated, total })}
           </CardDescription>
         </div>
         {canManage && !isAdding && (
           <Button variant="outline" size="sm" onClick={() => setIsAdding(true)} className="shrink-0">
             <Plus className="h-4 w-4" />
-            Ajouter
+            {t("common:actions.add")}
           </Button>
         )}
       </CardHeader>
@@ -96,24 +98,24 @@ export function CompetenciesCard({ competencies, canManage, onAdd, onValidate }:
           <Progress
             value={percentage(validated, total)}
             className="h-2"
-            aria-label={`${validated} compétences validées sur ${total}`}
+            aria-label={t("courses.competencies.progressAria", { validated, total })}
           />
         )}
 
         {total === 0 && !isAdding ? (
           <EmptyState
             icon={ListChecks}
-            title="Aucune compétence"
+            title={t("courses.competencies.empty.title")}
             description={
               canManage
-                ? "Ajoutez les compétences travaillées pendant ce cours pour suivre la progression de l'élève."
-                : "L'instructeur n'a pas encore ajouté de compétence à ce cours."
+                ? t("courses.competencies.empty.manage")
+                : t("courses.competencies.empty.readOnly")
             }
             action={
               canManage ? (
                 <Button onClick={() => setIsAdding(true)}>
                   <Plus className="h-4 w-4" />
-                  Ajouter une compétence
+                  {t("courses.competencies.addOne")}
                 </Button>
               ) : undefined
             }
@@ -134,13 +136,13 @@ export function CompetenciesCard({ competencies, canManage, onAdd, onValidate }:
                   )}
                 </div>
                 {competency.validated ? (
-                  <Badge variant="success">Validée</Badge>
+                  <Badge variant="success">{t("courses.competencies.validated")}</Badge>
                 ) : canManage ? (
                   <Button variant="outline" size="sm" onClick={() => setToValidate(competency)}>
-                    Valider
+                    {t("courses.competencies.validate")}
                   </Button>
                 ) : (
-                  <Badge variant="neutral">À valider</Badge>
+                  <Badge variant="neutral">{t("courses.competencies.toValidate")}</Badge>
                 )}
               </li>
             ))}
@@ -151,11 +153,11 @@ export function CompetenciesCard({ competencies, canManage, onAdd, onValidate }:
           <form onSubmit={handleAdd} className="space-y-4 rounded-lg border p-4">
             <div className="space-y-2">
               <Label htmlFor="competency-name">
-                Nom de la compétence <span className="text-destructive">*</span>
+                {t("courses.competencies.nameLabel")} <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="competency-name"
-                placeholder="Ex. Atterrissage par vent de travers"
+                placeholder={t("courses.competencies.namePlaceholder")}
                 value={name}
                 onChange={(event) => setName(event.target.value)}
                 required
@@ -163,23 +165,23 @@ export function CompetenciesCard({ competencies, canManage, onAdd, onValidate }:
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="competency-description">Description</Label>
+              <Label htmlFor="competency-description">{t("common:labels.description")}</Label>
               <Textarea
                 id="competency-description"
-                placeholder="Ex. Tenir l'axe et corriger la dérive jusqu'au toucher des roues."
+                placeholder={t("courses.competencies.descriptionPlaceholder")}
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
                 rows={3}
               />
-              <p className="text-xs text-muted-foreground">Facultatif.</p>
+              <p className="text-xs text-muted-foreground">{t("shared.optional")}</p>
             </div>
             <div className="flex flex-wrap justify-end gap-2">
               <Button type="button" variant="outline" onClick={closeForm} disabled={saving}>
-                Annuler
+                {t("common:actions.cancel")}
               </Button>
               <Button type="submit" disabled={!canSubmit || saving}>
                 {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                Ajouter la compétence
+                {t("courses.competencies.submit")}
               </Button>
             </div>
           </form>
@@ -189,17 +191,16 @@ export function CompetenciesCard({ competencies, canManage, onAdd, onValidate }:
       <AlertDialog open={toValidate !== null} onOpenChange={(open) => !open && !validating && setToValidate(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Valider cette compétence ?</AlertDialogTitle>
+            <AlertDialogTitle>{t("courses.competencies.confirm.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              « {toValidate?.name} » sera marquée comme acquise et l'élève en sera informé. Une validation ne peut pas
-              être annulée.
+              {t("courses.competencies.confirm.description", { name: toValidate?.name ?? "" })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={validating}>Annuler</AlertDialogCancel>
+            <AlertDialogCancel disabled={validating}>{t("common:actions.cancel")}</AlertDialogCancel>
             <Button onClick={handleValidate} disabled={validating}>
               {validating && <Loader2 className="h-4 w-4 animate-spin" />}
-              Valider la compétence
+              {t("courses.competencies.confirm.submit")}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>

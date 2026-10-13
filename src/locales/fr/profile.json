@@ -1,0 +1,293 @@
+{
+  "page": {
+    "title": "Mon profil",
+    "description": "Vos informations personnelles, la sécurité de votre compte et vos préférences.",
+    "loadError": "Votre profil n'a pas pu être chargé. Vérifiez votre connexion puis réessayez.",
+    "tabs": {
+      "profile": "Profil",
+      "security": "Sécurité",
+      "notifications": "Notifications",
+      "preferences": "Préférences",
+      "licenses": "Licences"
+    }
+  },
+  "form": {
+    "saving": "Enregistrement...",
+    "saveChanges": "Enregistrer les modifications"
+  },
+  "toast": {
+    "success": "Succès",
+    "error": "Erreur"
+  },
+  "personal": {
+    "title": "Informations personnelles",
+    "description": "Ces coordonnées servent au club pour vous identifier et vous contacter.",
+    "photo": {
+      "previewAlt": "Aperçu de la photo de profil",
+      "alt": "Photo de profil",
+      "change": "Changer la photo",
+      "pendingHint": "La nouvelle photo sera enregistrée avec le formulaire.",
+      "formatHint": "Une image carrée au format JPG ou PNG."
+    },
+    "fields": {
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "email": "Email",
+      "phone": "Numéro de téléphone",
+      "address": "Adresse",
+      "birthDate": "Date de naissance"
+    },
+    "placeholders": {
+      "firstName": "Camille",
+      "lastName": "Martin",
+      "email": "camille.martin@exemple.fr",
+      "phone": "06 12 34 56 78",
+      "address": "12 rue de l'Aérodrome, 31000 Toulouse"
+    },
+    "errors": {
+      "firstNameRequired": "Le prénom est requis.",
+      "firstNameTooShort": "Le prénom doit contenir au moins 2 caractères.",
+      "lastNameRequired": "Le nom est requis.",
+      "lastNameTooShort": "Le nom doit contenir au moins 2 caractères.",
+      "emailRequired": "L'email est requis",
+      "emailInvalid": "L'email n'est pas valide",
+      "phoneRequired": "Le numéro de téléphone est requis.",
+      "phoneInvalid": "Le numéro de téléphone n'est pas valide. Format attendu: 0X XX XX XX XX ou +33 X XX XX XX XX",
+      "addressRequired": "L'adresse est requise.",
+      "addressIncomplete": "L'adresse doit être complète.",
+      "birthDateRequired": "La date de naissance est requise.",
+      "tooYoung": "Vous devez avoir au moins 16 ans.",
+      "birthDateUnlikely": "Veuillez vérifier la date de naissance."
+    },
+    "toast": {
+      "updated": "Profil mis à jour avec succès",
+      "failed": "Erreur lors de la mise à jour du profil"
+    }
+  },
+  "password": {
+    "title": "Mot de passe",
+    "description": "Après le changement, toutes vos sessions sont fermées et vous devez vous reconnecter.",
+    "current": "Mot de passe actuel",
+    "new": "Nouveau mot de passe",
+    "confirm": "Confirmer le nouveau mot de passe",
+    "hint": "8 caractères au minimum.",
+    "show": "Afficher le mot de passe",
+    "hide": "Masquer le mot de passe",
+    "submit": "Changer le mot de passe",
+    "submitting": "Modification en cours...",
+    "errors": {
+      "currentRequired": "Le mot de passe actuel est requis.",
+      "newRequired": "Le nouveau mot de passe est requis.",
+      "newTooShort": "Le nouveau mot de passe doit contenir au moins 8 caractères.",
+      "confirmRequired": "La confirmation du mot de passe est requise.",
+      "mismatch": "Les mots de passe ne correspondent pas."
+    },
+    "toast": {
+      "changedTitle": "Mot de passe modifié",
+      "changedDescription": "Toutes vos sessions ont été fermées. Reconnectez-vous avec le nouveau mot de passe.",
+      "failed": "Erreur lors de la modification du mot de passe."
+    }
+  },
+  "twoFactor": {
+    "title": "Double authentification (2FA)",
+    "enabled": "Activée",
+    "disabled": "Désactivée",
+    "description": "En plus du mot de passe, un code à usage unique généré par une application sur votre téléphone est demandé à chaque connexion.",
+    "statusUnknown": "L'état de la double authentification n'a pas pu être vérifié.",
+    "enable": "Activer le 2FA",
+    "disable": "Désactiver le 2FA",
+    "enableDialog": {
+      "title": "Activer la double authentification ?",
+      "description": "Vous allez être dirigé vers la page de configuration. Munissez-vous de votre téléphone et d'une application d'authentification.",
+      "confirm": "Configurer le 2FA"
+    },
+    "disableDialog": {
+      "title": "Désactiver la double authentification ?",
+      "description": "Votre compte ne sera plus protégé que par son mot de passe. Pour confirmer, saisissez votre mot de passe actuel.",
+      "passwordLabel": "Mot de passe actuel",
+      "passwordRequired": "Saisissez votre mot de passe actuel.",
+      "passwordRejected": "Mot de passe incorrect, ou trop de tentatives. Vérifiez-le puis réessayez.",
+      "toastTitle": "Double authentification désactivée",
+      "toastDescription": "Seul votre mot de passe sera demandé à la connexion."
+    }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "description": "Chaque changement est enregistré immédiatement.",
+    "email": {
+      "label": "Notifications par email",
+      "description": "Réservations, rappels et messages du club dans votre boîte mail."
+    },
+    "sms": {
+      "label": "Notifications par SMS",
+      "description": "Les alertes importantes sur votre téléphone."
+    },
+    "toast": {
+      "updated": "Paramètres de notification mis à jour avec succès",
+      "failed": "Erreur lors de la mise à jour des notifications"
+    }
+  },
+  "preferences": {
+    "title": "Préférences",
+    "description": "Votre terrain habituel, votre fuseau horaire et les unités affichées.",
+    "aerodrome": "Aérodrome préféré",
+    "timezone": "Fuseau horaire",
+    "speedUnit": "Unité de vitesse",
+    "distanceUnit": "Unité de distance",
+    "units": {
+      "knots": "Nœuds",
+      "kilometres": "Kilomètres",
+      "miles": "Miles",
+      "nauticalMiles": "Milles nautiques"
+    },
+    "toast": {
+      "updated": "Préférences mises à jour avec succès",
+      "failed": "Erreur lors de la mise à jour des préférences"
+    }
+  },
+  "licenses": {
+    "title": "Mes licences",
+    "subtitle": "Classées par date d'expiration, la plus proche en premier.",
+    "emptyTitle": "Aucune licence enregistrée",
+    "emptyDescription": "Vos licences apparaîtront ici une fois ajoutées à votre dossier par le club.",
+    "facts": {
+      "number": "Numéro",
+      "authority": "Autorité",
+      "issuedOn": "Délivrée le",
+      "expiresOn": "Expire le"
+    }
+  },
+  "licenseStatus": {
+    "expired": "Expirée",
+    "pending": "En attente",
+    "invalid": "Non valide",
+    "expiresSoon": "Expire bientôt",
+    "valid": "Valide"
+  },
+  "account": {
+    "title": "Mon compte",
+    "description": "Votre solde, le rechargement de votre compte et l'historique de vos transactions.",
+    "overview": {
+      "loadError": "Le solde de votre compte n'a pas pu être chargé. Vérifiez votre connexion puis réessayez.",
+      "balance": "Solde disponible",
+      "overdrawn": "Votre compte est à découvert",
+      "totalToppedUp": "Total rechargé",
+      "totalSpent": "Total dépensé"
+    }
+  },
+  "topUp": {
+    "title": "Recharger mon compte",
+    "description": "Choisissez un montant, puis payez par carte bancaire ou avec PayPal.",
+    "amountLabel": "Montant à recharger (€)",
+    "quickAmounts": "Montants rapides",
+    "tabs": {
+      "card": "Carte bancaire",
+      "paypal": "PayPal"
+    },
+    "card": {
+      "summary": "Vous allez recharger votre compte de <strong>{{amount}}</strong> par carte bancaire.",
+      "preparing": "Préparation du paiement...",
+      "continue": "Continuer vers le paiement par carte",
+      "paying": "Paiement en cours...",
+      "pay": "Payer",
+      "payAmount": "Payer {{amount}}"
+    },
+    "paypal": {
+      "summary": "Vous allez recharger votre compte de <strong>{{amount}}</strong> avec PayPal.",
+      "processing": "Paiement en cours de traitement, ne fermez pas cette page.",
+      "amountNeeded": "Saisissez un montant pour payer avec PayPal."
+    },
+    "errors": {
+      "amountRequired": "Veuillez saisir un montant supérieur à 0",
+      "stripeSecretMissing": "Impossible de récupérer le client_secret Stripe",
+      "paypalIdMissing": "Impossible de récupérer external_payment_id PayPal",
+      "unknown": "Erreur inconnue",
+      "stripeUnknown": "Erreur Stripe inconnue"
+    },
+    "toast": {
+      "stripeErrorTitle": "Erreur Stripe",
+      "stripeConfirmed": "Paiement Stripe confirmé et solde mis à jour !",
+      "paypalErrorTitle": "Erreur PayPal",
+      "paypalOrderFailed": "Impossible de créer la commande PayPal",
+      "paypalCaptureFailed": "Le paiement n'a pas pu être capturé.",
+      "paypalConfirmed": "Paiement PayPal confirmé et solde mis à jour !"
+    }
+  },
+  "history": {
+    "title": "Historique des transactions",
+    "loadError": "L'historique de vos transactions n'a pas pu être chargé. Vérifiez votre connexion puis réessayez.",
+    "searchLabel": "Rechercher une transaction",
+    "searchPlaceholder": "Rechercher (montant, moyen de paiement…)",
+    "filterByType": "Filtrer par type",
+    "filterByStatus": "Filtrer par statut",
+    "allTypes": "Tous les types",
+    "allStatuses": "Tous les statuts",
+    "columns": {
+      "paymentMethod": "Moyen de paiement",
+      "amount": "Montant"
+    },
+    "noMatchTitle": "Aucune transaction ne correspond",
+    "noMatchDescription": "Modifiez votre recherche ou vos filtres.",
+    "resetFilters": "Réinitialiser les filtres",
+    "emptyTitle": "Aucune transaction pour le moment",
+    "emptyDescription": "Vos rechargements et vos dépenses apparaîtront ici.",
+    "range_one": "{{from}}–{{to}} sur {{count}} transaction",
+    "range_other": "{{from}}–{{to}} sur {{count}} transactions"
+  },
+  "paymentStatus": {
+    "paid": "Payé",
+    "pending": "En attente",
+    "partial": "Partiel",
+    "overdue": "En retard",
+    "failed": "Échoué",
+    "cancelled": "Annulé",
+    "refunded": "Remboursé",
+    "unknown": "Inconnu"
+  },
+  "paymentMethod": {
+    "card": "Carte bancaire",
+    "paypal": "PayPal",
+    "accountBalance": "Solde du compte",
+    "bankTransfer": "Virement bancaire"
+  },
+  "transactionType": {
+    "topup": {
+      "label": "Rechargement",
+      "plural": "Rechargements"
+    },
+    "spend": {
+      "label": "Dépense",
+      "plural": "Dépenses"
+    },
+    "payment": {
+      "label": "Paiement",
+      "plural": "Autres paiements"
+    }
+  },
+  "validation": {
+    "emailRequired": "L'adresse e-mail est requise",
+    "emailInvalid": "Adresse e-mail invalide",
+    "passwordRequired": "Le mot de passe est requis",
+    "passwordTooShort": "Le mot de passe doit contenir au moins 8 caractères",
+    "passwordUppercase": "Le mot de passe doit contenir au moins une majuscule",
+    "passwordLowercase": "Le mot de passe doit contenir au moins une minuscule",
+    "passwordDigit": "Le mot de passe doit contenir au moins un chiffre",
+    "confirmationRequired": "La confirmation est requise",
+    "passwordMismatch": "Les mots de passe ne correspondent pas",
+    "aircraftRequired": "Sélectionnez un avion",
+    "startDateRequired": "Date de début requise",
+    "endDateRequired": "Date de fin requise",
+    "endDateBeforeStart": "La date de fin doit être après la date de début",
+    "flightHoursNegative": "Les heures de vol doivent être positives",
+    "flightTypeRequired": "Le type de vol est requis",
+    "icaoLength": "Le code OACI doit contenir 4 caractères",
+    "firstNameRequired": "Le prénom est requis",
+    "lastNameRequired": "Le nom est requis",
+    "nameTooLong": "50 caractères maximum",
+    "phoneInvalid": "Numéro de téléphone invalide",
+    "registrationRequired": "L'immatriculation est requise",
+    "registrationFormat": "Format attendu : F-XXXX",
+    "modelRequired": "Le modèle est requis",
+    "hourlyCostNegative": "Le coût horaire doit être positif"
+  }
+}

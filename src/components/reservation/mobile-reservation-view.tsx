@@ -1,7 +1,7 @@
 "use client"
 
 import { format } from "date-fns"
-import { fr } from "date-fns/locale"
+import { useTranslation } from "react-i18next"
 import { CalendarCheck, ChevronRight } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/layout/EmptyState"
 import type { Reservation } from "@/interfaces/reservation"
 import { reservationStatus } from "@/lib/reservation-status"
 import { formatTime } from "@/lib/format"
+import { dateFnsLocale } from "@/lib/i18n"
 import { reservationPilotName } from "@/components/reservation/reservation-cell"
 
 interface Aircraft {
@@ -40,6 +41,7 @@ export function MobileReservationView({
   currentUserId,
   onViewReservation,
 }: MobileReservationViewProps) {
+  const { t } = useTranslation("reservations")
   const filteredReservations = selectedAircraft
     ? reservations.filter((r) => String(r.aircraft.id) === String(selectedAircraft))
     : reservations
@@ -51,16 +53,16 @@ export function MobileReservationView({
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="aircraft-select">Avion</Label>
+        <Label htmlFor="aircraft-select">{t("common:labels.aircraft")}</Label>
         <Select
           value={selectedAircraft?.toString() ?? ALL_AIRCRAFT}
           onValueChange={(value) => setSelectedAircraft(value === ALL_AIRCRAFT ? null : Number.parseInt(value, 10))}
         >
           <SelectTrigger id="aircraft-select">
-            <SelectValue placeholder="Tous les avions" />
+            <SelectValue placeholder={t("calendar.mobile.allAircraft")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL_AIRCRAFT}>Tous les avions</SelectItem>
+            <SelectItem value={ALL_AIRCRAFT}>{t("calendar.mobile.allAircraft")}</SelectItem>
             {aircrafts.map((aircraft) => (
               <SelectItem key={aircraft.id} value={aircraft.id.toString()}>
                 {aircraft.registration_number}
@@ -71,7 +73,9 @@ export function MobileReservationView({
         </Select>
       </div>
 
-      <h2 className="text-lg font-semibold">Réservations du {format(currentDate, "EEEE d MMMM yyyy", { locale: fr })}</h2>
+      <h2 className="text-lg font-semibold">
+        {t("calendar.mobile.heading", { date: format(currentDate, "EEEE d MMMM yyyy", { locale: dateFnsLocale() }) })}
+      </h2>
 
       {sortedReservations.length > 0 ? (
         <ul className="space-y-2">
@@ -79,7 +83,7 @@ export function MobileReservationView({
             const status = reservationStatus(reservation.status)
             const isMine =
               currentUserId != null && reservation.user?.id != null && String(currentUserId) === String(reservation.user.id)
-            const pilot = isMine ? "Vous" : reservationPilotName(reservation)
+            const pilot = isMine ? t("common:labels.you") : reservationPilotName(reservation)
 
             return (
               <li key={reservation.id}>
@@ -97,7 +101,7 @@ export function MobileReservationView({
                       <Badge variant={status.variant}>{status.label}</Badge>
                     </div>
                     <p className="truncate text-sm text-muted-foreground">
-                      {[reservation.purpose || "Réservation", pilot].filter(Boolean).join(" · ")}
+                      {[reservation.purpose || t("shared.untitled"), pilot].filter(Boolean).join(" · ")}
                     </p>
                   </div>
                   <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
@@ -109,8 +113,8 @@ export function MobileReservationView({
       ) : (
         <EmptyState
           icon={CalendarCheck}
-          title={selectedAircraft ? "Cet avion est libre toute la journée" : "Aucune réservation ce jour"}
-          description="Utilisez « Nouvelle réservation » pour réserver un créneau."
+          title={selectedAircraft ? t("calendar.mobile.aircraftFree") : t("calendar.mobile.noReservation")}
+          description={t("calendar.mobile.emptyDescription")}
         />
       )}
     </div>

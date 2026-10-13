@@ -3,6 +3,7 @@
 import type { ReactNode } from "react"
 import Link from "next/link"
 import { useQuery } from "@apollo/client"
+import { useTranslation } from "react-i18next"
 import { AlertTriangle, Calendar, CalendarClock, ChevronRight, Clock, Plane, Users, Wrench } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -21,30 +22,32 @@ import {
 } from "@/graphql/admin"
 import { formatDate, formatDateTime, formatFlightDuration, formatTime } from "@/lib/format"
 import { reservationStatus } from "@/lib/reservation-status"
+import { incidentSeverity, incidentStatus } from "@/lib/incident"
+import { roleLabel } from "@/lib/settings"
+import i18n from "@/lib/i18n"
 
-const FLIGHT_CATEGORIES: Record<string, string> = {
-  local: "Local",
-  cross_country: "Voyage",
-  instruction: "Instruction",
-  tourism: "Tourisme",
-  training: "Entraînement",
-  maintenance: "Maintenance",
-  private: "Privé",
-  corporate: "Entreprise",
+const FLIGHT_CATEGORIES = [
+  "local",
+  "cross_country",
+  "instruction",
+  "tourism",
+  "training",
+  "maintenance",
+  "private",
+  "corporate",
+]
+
+const flightCategoryLabel = (category: string | null | undefined) => {
+  const code = (category ?? "").toLowerCase()
+  return i18n.t(`administration:flightCategory.${FLIGHT_CATEGORIES.includes(code) ? code : "other"}`)
 }
 
-const flightCategoryLabel = (category: string | null | undefined) =>
-  FLIGHT_CATEGORIES[(category ?? "").toLowerCase()] ?? "Autre"
-
-type BadgeVariant = "success" | "warning" | "danger" | "neutral"
-
-const SEVERITIES: Record<string, { label: string; variant: BadgeVariant }> = {
-  low: { label: "Gravité faible", variant: "neutral" },
-  medium: { label: "Gravité moyenne", variant: "warning" },
-  high: { label: "Gravité élevée", variant: "danger" },
-}
-
-const incidentSeverity = (level: string | null | undefined) => SEVERITIES[(level ?? "").toLowerCase()] ?? null
+// The date of a flight: when it was planned, else when it left, else when it was closed.
+const flightDate = (flight: {
+  reservation?: { start_time?: string | null } | null
+  departure_time?: string | null
+  closed_at?: string | null
+}) => flight.reservation?.start_time ?? flight.departure_time ?? flight.closed_at
 
 // "12 oct. 2026, 14:30 – 16:00" when both ends are on the same day.
 const formatSlot = (start: string, end: string) => {
@@ -61,6 +64,7 @@ interface Distribution {
 
 // A share-of-total list: readable without a legend and without a chart library.
 function DistributionList({ items, unit }: { items: Distribution[]; unit: string }) {
+  const { t } = useTranslation("administration")
   const total = items.reduce((sum, item) => sum + item.value, 0)
   return (
     <ul className="space-y-3">
@@ -71,7 +75,7 @@ function DistributionList({ items, unit }: { items: Distribution[]; unit: string
             <div className="flex items-baseline justify-between gap-3 text-sm">
               <span className="truncate">{item.name}</span>
               <span className="shrink-0 tabular-nums text-muted-foreground">
-                {item.value} {unit} · {share} %
+                {t("home.distribution.share", { value: item.value, unit, share })}
               </span>
             </div>
             <div className="h-2 overflow-hidden rounded-full bg-muted" aria-hidden="true">
@@ -108,6 +112,7 @@ interface SectionProps {
 }
 
 function Section({ title, description, href, linkLabel, loading, failed, onRetry, children, className }: SectionProps) {
+  const { t } = useTranslation("administration")
   return (
     <Card className={className}>
       <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
@@ -118,7 +123,7 @@ function Section({ title, description, href, linkLabel, loading, failed, onRetry
         {href && (
           <Button variant="ghost" size="sm" className="shrink-0" asChild>
             <Link href={href}>
-              {linkLabel ?? "Tout voir"}
+              {linkLabel ?? t("common:actions.seeAll")}
               <ChevronRight className="h-4 w-4" />
             </Link>
           </Button>
@@ -139,6 +144,7 @@ interface AttentionItem {
 }
 
 export default function AdminHomePage() {
+  const { t } = useTranslation("administration")
   const statsQuery = useQuery(GET_ADMIN_DASHBOARD_STATS)
   const reservationsQuery = useQuery(GET_RECENT_RESERVATIONS, { variables: { limit: 5 } })
   const flightsQuery = useQuery(GET_RECENT_FLIGHTS, { variables: { limit: 5 } })
@@ -153,7 +159,7 @@ export default function AdminHomePage() {
   const recentIncidents: any[] = incidentsQuery.data?.recentIncidents ?? []
 
   const usersByRole: Distribution[] = (stats?.usersByRole ?? []).map((item: any) => ({
-    name: item.role_name || "Sans rôle",
+    name: roleLabel(item.role_name) || t("home.noRole"),
     value: item.count,
   }))
 
@@ -164,7 +170,11 @@ export default function AdminHomePage() {
 
   const pendingReservations: number = stats?.pendingReservations ?? 0
   const unavailableAircrafts = Math.max(0, (stats?.totalAircrafts ?? 0) - (stats?.availableAircrafts ?? 0))
-  const severeIncidents = recentIncidents.filter((incident) => (incident.severity_level ?? "").toLowerCase() === "high")
+  // A resolved incident no longer needs attention.
+  const severeIncidents = recentIncidents.filter(
+    (incident) =>
+      incidentSeverity(incident.severity_level).level === "high" && incidentStatus(incident.status).key !== "resolved",
+  )
 
   const attention: AttentionItem[] = []
   if (pendingReservations > 0) {
@@ -172,11 +182,8 @@ export default function AdminHomePage() {
       key: "reservations",
       icon: CalendarClock,
       tone: "bg-warning/15 text-warning",
-      title:
-        pendingReservations > 1
-          ? `${pendingReservations} réservations en attente`
-          : "1 réservation en attente",
-      description: "À confirmer ou à refuser dans le planning.",
+      title: t("home.attention.pendingBookings", { count: pendingReservations }),
+      description: t("home.attention.pendingBookingsHint"),
       href: "/reservations",
     })
   }
@@ -185,8 +192,8 @@ export default function AdminHomePage() {
       key: "aircrafts",
       icon: Wrench,
       tone: "bg-info/15 text-info",
-      title: unavailableAircrafts > 1 ? `${unavailableAircrafts} avions indisponibles` : "1 avion indisponible",
-      description: "En maintenance ou retirés du planning.",
+      title: t("home.attention.unavailableAircraft", { count: unavailableAircrafts }),
+      description: t("home.attention.unavailableAircraftHint"),
       href: "/administration/planes",
     })
   }
@@ -195,17 +202,15 @@ export default function AdminHomePage() {
       key: "incidents",
       icon: AlertTriangle,
       tone: "bg-destructive/15 text-destructive",
-      title:
-        severeIncidents.length > 1
-          ? `${severeIncidents.length} incidents récents de gravité élevée`
-          : "1 incident récent de gravité élevée",
+      title: t("home.attention.severeIncidents", { count: severeIncidents.length }),
       description: severeIncidents.map((incident) => incident.aircraft?.registration_number).filter(Boolean).join(", "),
+      href: "/administration/incidents",
     })
   }
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Administration" description="L'activité du club en un coup d'œil." className="mb-0" />
+      <PageHeader title={t("home.title")} description={t("home.description")} className="mb-0" />
 
       {statsFailed ? (
         <ErrorState onRetry={() => statsQuery.refetch()} />
@@ -217,23 +222,23 @@ export default function AdminHomePage() {
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <StatCard label="Membres" value={stats?.totalUsers ?? 0} icon={Users} tone="primary" />
+          <StatCard label={t("home.stats.members")} value={stats?.totalUsers ?? 0} icon={Users} tone="primary" />
           <StatCard
-            label="Avions"
+            label={t("home.stats.aircraft")}
             value={stats?.totalAircrafts ?? 0}
-            hint={`${stats?.availableAircrafts ?? 0} disponible${(stats?.availableAircrafts ?? 0) > 1 ? "s" : ""}`}
+            hint={t("home.stats.available", { count: stats?.availableAircrafts ?? 0 })}
             icon={Plane}
             tone="success"
           />
           <StatCard
-            label="Réservations"
+            label={t("home.stats.bookings")}
             value={stats?.totalReservations ?? 0}
-            hint={`${pendingReservations} en attente`}
+            hint={t("home.stats.pending", { count: pendingReservations })}
             icon={Calendar}
             tone="warning"
           />
           <StatCard
-            label="Heures de vol ce mois-ci"
+            label={t("home.stats.flightHoursThisMonth")}
             value={formatFlightDuration(stats?.flightHoursThisMonth ?? 0)}
             icon={Clock}
             tone="info"
@@ -244,13 +249,13 @@ export default function AdminHomePage() {
       {!statsFailed && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">À traiter</CardTitle>
+            <CardTitle className="text-base">{t("home.attention.title")}</CardTitle>
           </CardHeader>
           <CardContent>
             {statsLoading || incidentsQuery.loading ? (
               <ListSkeleton rows={2} />
             ) : attention.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Rien à signaler pour le moment.</p>
+              <p className="text-sm text-muted-foreground">{t("home.attention.empty")}</p>
             ) : (
               <ul className="divide-y">
                 {attention.map((item) => {
@@ -289,18 +294,18 @@ export default function AdminHomePage() {
         </Card>
       )}
 
-      <h2 className="text-lg font-semibold">Activité récente</h2>
+      <h2 className="text-lg font-semibold">{t("home.recentActivity")}</h2>
 
       <Section
-        title="Dernières réservations"
+        title={t("home.bookings.title")}
         href="/reservations"
-        linkLabel="Planning"
+        linkLabel={t("home.bookings.link")}
         loading={reservationsQuery.loading && recentReservations.length === 0}
         failed={Boolean(reservationsQuery.error) && recentReservations.length === 0}
         onRetry={() => reservationsQuery.refetch()}
       >
         {recentReservations.length === 0 ? (
-          <EmptyState icon={Calendar} title="Aucune réservation récente" />
+          <EmptyState icon={Calendar} title={t("home.bookings.empty")} />
         ) : (
           <ul className="divide-y">
             {recentReservations.map((reservation) => {
@@ -337,13 +342,13 @@ export default function AdminHomePage() {
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Section
-          title="Derniers vols"
+          title={t("home.flights.title")}
           loading={flightsQuery.loading && recentFlights.length === 0}
           failed={Boolean(flightsQuery.error) && recentFlights.length === 0}
           onRetry={() => flightsQuery.refetch()}
         >
           {recentFlights.length === 0 ? (
-            <EmptyState icon={Plane} title="Aucun vol récent" />
+            <EmptyState icon={Plane} title={t("home.flights.empty")} />
           ) : (
             <ul className="divide-y">
               {recentFlights.map((flight) => (
@@ -357,6 +362,8 @@ export default function AdminHomePage() {
                         {flight.origin_icao} → {flight.destination_icao}
                       </p>
                       <p className="truncate text-sm text-muted-foreground">
+                        {formatDate(flightDate(flight))}
+                        {" · "}
                         {flight.user?.first_name} {flight.user?.last_name}
                         {flight.flight_type ? ` · ${flight.flight_type}` : ""}
                       </p>
@@ -375,34 +382,42 @@ export default function AdminHomePage() {
         </Section>
 
         <Section
-          title="Derniers incidents"
+          title={t("home.incidents.title")}
+          href="/administration/incidents"
           loading={incidentsQuery.loading && recentIncidents.length === 0}
           failed={Boolean(incidentsQuery.error) && recentIncidents.length === 0}
           onRetry={() => incidentsQuery.refetch()}
         >
           {recentIncidents.length === 0 ? (
-            <EmptyState icon={AlertTriangle} title="Aucun incident récent" />
+            <EmptyState icon={AlertTriangle} title={t("home.incidents.empty")} />
           ) : (
             <ul className="divide-y">
               {recentIncidents.map((incident) => {
                 const severity = incidentSeverity(incident.severity_level)
+                const status = incidentStatus(incident.status)
                 return (
-                  <li key={incident.id} className="space-y-1 py-3 first:pt-0 last:pb-0">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="truncate text-sm font-medium">
-                        {incident.aircraft?.registration_number}
-                        <span className="font-normal text-muted-foreground">
-                          {" · "}
-                          {formatDate(incident.incident_date)}
-                        </span>
-                      </p>
-                      {severity && (
-                        <Badge variant={severity.variant} className="shrink-0">
-                          {severity.label}
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="line-clamp-2 text-sm text-muted-foreground">{incident.description}</p>
+                  <li key={incident.id} className="first:[&>a]:pt-0 last:[&>a]:pb-0">
+                    <Link
+                      href={`/administration/incidents?incident=${incident.id}`}
+                      className="group block space-y-1 py-3"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                        <p className="truncate text-sm font-medium transition-colors group-hover:text-primary">
+                          {incident.aircraft?.registration_number}
+                          <span className="font-normal text-muted-foreground">
+                            {" · "}
+                            {formatDate(incident.incident_date)}
+                          </span>
+                        </p>
+                        <div className="flex shrink-0 items-center gap-2">
+                          <Badge variant={severity.variant}>
+                            {t(`incidentSeverityBadge.${severity.level ?? "unknown"}`)}
+                          </Badge>
+                          <Badge variant={status.variant}>{status.label}</Badge>
+                        </div>
+                      </div>
+                      <p className="line-clamp-2 text-sm text-muted-foreground">{incident.description}</p>
+                    </Link>
                   </li>
                 )
               })}
@@ -414,28 +429,28 @@ export default function AdminHomePage() {
       {!statsFailed && (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <Section
-            title="Membres par rôle"
+            title={t("home.membersByRole.title")}
             href="/administration/users"
-            linkLabel="Membres"
+            linkLabel={t("home.membersByRole.link")}
             loading={statsLoading}
             failed={false}
             onRetry={() => statsQuery.refetch()}
           >
             {usersByRole.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Aucun membre pour le moment.</p>
+              <p className="text-sm text-muted-foreground">{t("home.membersByRole.empty")}</p>
             ) : (
               <DistributionList items={usersByRole} unit="" />
             )}
           </Section>
 
           <Section
-            title="Réservations par type de vol"
+            title={t("home.bookingsByFlightType.title")}
             loading={statsLoading}
             failed={false}
             onRetry={() => statsQuery.refetch()}
           >
             {reservationsByCategory.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Aucune réservation pour le moment.</p>
+              <p className="text-sm text-muted-foreground">{t("home.bookingsByFlightType.empty")}</p>
             ) : (
               <DistributionList items={reservationsByCategory} unit="" />
             )}

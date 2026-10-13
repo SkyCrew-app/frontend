@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useQuery, useMutation } from "@apollo/client"
+import { useTranslation } from "react-i18next"
 import {
   ChevronDown,
   ChevronUp,
@@ -59,6 +60,7 @@ import { useToast } from "@/components/hooks/use-toast"
 import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
 
 export function TemplateManagement() {
+  const { t } = useTranslation("administration")
   const { toast } = useToast()
   const [templates, setTemplates] = useState<any[]>([])
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
@@ -75,45 +77,45 @@ export function TemplateManagement() {
 
   const [createTemplate, { loading: createLoading }] = useMutation(CREATE_AUDIT_TEMPLATE, {
     onCompleted: () => {
-      toast({ title: "Modèle créé" })
+      toast({ title: t("audits.templates.toast.created") })
       refetch()
       setIsCreateDialogOpen(false)
     },
     onError: () => {
       toast({
         variant: "destructive",
-        title: "Création impossible",
-        description: "Le modèle n'a pas pu être créé. Vérifiez les informations puis réessayez.",
+        title: t("audits.templates.toast.createFailed.title"),
+        description: t("audits.templates.toast.createFailed.description"),
       })
     },
   })
 
   const [updateTemplate, { loading: updateLoading }] = useMutation(UPDATE_AUDIT_TEMPLATE, {
     onCompleted: () => {
-      toast({ title: "Modèle mis à jour" })
+      toast({ title: t("audits.templates.toast.updated") })
       refetch()
       setIsEditDialogOpen(false)
     },
     onError: () => {
       toast({
         variant: "destructive",
-        title: "Enregistrement impossible",
-        description: "Le modèle n'a pas pu être mis à jour. Réessayez dans un instant.",
+        title: t("audits.templates.toast.updateFailed.title"),
+        description: t("audits.templates.toast.updateFailed.description"),
       })
     },
   })
 
   const [deleteTemplate, { loading: deleteLoading }] = useMutation(DELETE_AUDIT_TEMPLATE, {
     onCompleted: () => {
-      toast({ title: "Modèle supprimé" })
+      toast({ title: t("audits.templates.toast.deleted") })
       refetch()
       setIsDeleteDialogOpen(false)
     },
     onError: () => {
       toast({
         variant: "destructive",
-        title: "Suppression impossible",
-        description: "Le modèle n'a pas pu être supprimé. Réessayez dans un instant.",
+        title: t("audits.templates.toast.deleteFailed.title"),
+        description: t("audits.templates.toast.deleteFailed.description"),
       })
     },
   })
@@ -142,7 +144,7 @@ export function TemplateManagement() {
   const handleDuplicateTemplate = (template: any) => {
     const duplicatedTemplate = {
       ...template,
-      name: `${template.name} (copie)`,
+      name: t("audits.templates.copyName", { name: template.name }),
       id: undefined,
     }
     setSelectedTemplate(duplicatedTemplate)
@@ -166,7 +168,7 @@ export function TemplateManagement() {
   const newTemplateButton = (
     <Button onClick={handleCreateTemplate}>
       <Plus className="h-4 w-4" />
-      Nouveau modèle
+      {t("audits.templates.new")}
     </Button>
   )
 
@@ -174,10 +176,8 @@ export function TemplateManagement() {
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold">Modèles d'audit</h2>
-          <p className="text-sm text-muted-foreground">
-            Un modèle fournit la liste des éléments à vérifier lors d'un audit.
-          </p>
+          <h2 className="text-lg font-semibold">{t("audits.tabs.templates")}</h2>
+          <p className="text-sm text-muted-foreground">{t("audits.templates.intro")}</p>
         </div>
         {newTemplateButton}
       </div>
@@ -193,8 +193,8 @@ export function TemplateManagement() {
       ) : templates.length === 0 ? (
         <EmptyState
           icon={FileText}
-          title="Aucun modèle d'audit"
-          description="Créez un premier modèle pour préparer la liste des éléments à vérifier."
+          title={t("audits.templates.empty.title")}
+          description={t("audits.templates.empty.description")}
           action={newTemplateButton}
         />
       ) : (
@@ -212,7 +212,7 @@ export function TemplateManagement() {
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
                       <Badge variant={template.is_active ? "success" : "neutral"}>
-                        {template.is_active ? "Actif" : "Inactif"}
+                        {template.is_active ? t("audits.templates.active") : t("audits.templates.inactive")}
                       </Badge>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -220,8 +220,8 @@ export function TemplateManagement() {
                             variant="ghost"
                             size="icon"
                             className="h-9 w-9"
-                            aria-label={`Actions pour le modèle ${template.name}`}
-                            title="Actions"
+                            aria-label={t("audits.templates.actionsFor", { name: template.name })}
+                            title={t("common:labels.actions")}
                           >
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
@@ -229,11 +229,11 @@ export function TemplateManagement() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem className="gap-2" onSelect={() => handleEditTemplate(template)}>
                             <Pencil className="h-4 w-4" />
-                            Modifier
+                            {t("common:actions.edit")}
                           </DropdownMenuItem>
                           <DropdownMenuItem className="gap-2" onSelect={() => handleDuplicateTemplate(template)}>
                             <Copy className="h-4 w-4" />
-                            Dupliquer
+                            {t("audits.templates.duplicate")}
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
@@ -241,7 +241,7 @@ export function TemplateManagement() {
                             onSelect={() => handleDeleteTemplate(template)}
                           >
                             <Trash2 className="h-4 w-4" />
-                            Supprimer
+                            {t("common:actions.delete")}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -251,13 +251,13 @@ export function TemplateManagement() {
                 <CardContent className="pb-3">
                   <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
-                      <dt className="text-xs text-muted-foreground">Fréquence recommandée</dt>
+                      <dt className="text-xs text-muted-foreground">{t("audits.templates.recommendedFrequency")}</dt>
                       <dd className="text-sm font-medium">{auditFrequencyLabel(template.recommended_frequency)}</dd>
                     </div>
                     <div>
-                      <dt className="text-xs text-muted-foreground">Types d'aéronefs</dt>
+                      <dt className="text-xs text-muted-foreground">{t("audits.templates.aircraftTypes")}</dt>
                       <dd className="text-sm font-medium">
-                        {template.applicable_aircraft_types?.join(", ") || "Tous"}
+                        {template.applicable_aircraft_types?.join(", ") || t("audits.templates.allTypes")}
                       </dd>
                     </div>
                   </dl>
@@ -269,9 +269,7 @@ export function TemplateManagement() {
                     aria-expanded={expanded}
                     onClick={() => toggleTemplateExpand(template.id)}
                   >
-                    <span>
-                      {itemCount} élément{itemCount !== 1 ? "s" : ""} à vérifier
-                    </span>
+                    <span>{t("audits.templates.itemsToCheck", { count: itemCount })}</span>
                     {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                   </Button>
                   {expanded &&
@@ -291,7 +289,7 @@ export function TemplateManagement() {
                         ))}
                       </ul>
                     ) : (
-                      <p className="px-4 text-sm text-muted-foreground">Aucun élément dans ce modèle.</p>
+                      <p className="px-4 text-sm text-muted-foreground">{t("audits.templates.noItems")}</p>
                     ))}
                 </CardFooter>
               </Card>
@@ -309,7 +307,7 @@ export function TemplateManagement() {
           if (!userId) {
             toast({
               variant: "destructive",
-              description: "Utilisateur non identifié, veuillez réessayer dans un instant.",
+              description: t("audits.templates.toast.noUser"),
             })
             return
           }
@@ -360,14 +358,13 @@ export function TemplateManagement() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer ce modèle ?</AlertDialogTitle>
+            <AlertDialogTitle>{t("audits.templates.deleteConfirm.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Le modèle « {selectedTemplate?.name} » et ses éléments seront définitivement supprimés. Les audits déjà
-              réalisés ne sont pas modifiés.
+              {t("audits.templates.deleteConfirm.description", { name: selectedTemplate?.name })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteLoading}>Annuler</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteLoading}>{t("common:actions.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               // Keep the dialog open until the mutation answers.
               onClick={(e) => {
@@ -378,7 +375,7 @@ export function TemplateManagement() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {deleteLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-              Supprimer
+              {t("common:actions.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -406,6 +403,7 @@ function TemplateFormDialog({
   isLoading,
   mode,
 }: TemplateFormDialogProps) {
+  const { t } = useTranslation("administration")
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -521,7 +519,7 @@ function TemplateFormDialog({
   const removeAircraftType = (type: string) => {
     handleInputChange(
       "applicable_aircraft_types",
-      formData.applicable_aircraft_types.filter((t) => t !== type),
+      formData.applicable_aircraft_types.filter((existing) => existing !== type),
     )
   }
 
@@ -550,7 +548,7 @@ function TemplateFormDialog({
 
   const validateItemTitle = () => {
     if (!itemFormData.title.trim()) {
-      setValidationErrors((prev) => ({ ...prev, itemTitle: "Indiquez le titre de l'élément." }))
+      setValidationErrors((prev) => ({ ...prev, itemTitle: t("audits.templates.item.errors.title") }))
       return false
     }
     return true
@@ -601,7 +599,7 @@ function TemplateFormDialog({
   // Checked when leaving the first step, where the field is.
   const validateName = () => {
     if (!formData.name.trim()) {
-      setValidationErrors((prev) => ({ ...prev, name: "Indiquez le nom du modèle." }))
+      setValidationErrors((prev) => ({ ...prev, name: t("audits.templates.form.errors.name") }))
       return false
     }
     return true
@@ -611,11 +609,11 @@ function TemplateFormDialog({
     const errors: Record<string, string> = {}
 
     if (!formData.name.trim()) {
-      errors.name = "Indiquez le nom du modèle."
+      errors.name = t("audits.templates.form.errors.name")
     }
 
     if (formData.items.length === 0) {
-      errors.items = "Ajoutez au moins un élément à vérifier."
+      errors.items = t("audits.templates.form.errors.items")
     }
 
     setValidationErrors(errors)
@@ -638,17 +636,17 @@ function TemplateFormDialog({
   const generalStep = (
     <>
       <fieldset className="space-y-4">
-        <legend className="sr-only">Informations générales</legend>
+        <legend className="sr-only">{t("audits.templates.form.steps.general")}</legend>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor={`${mode}-template-name`}>
-              Nom du modèle <span className="text-destructive">*</span>
+              {t("audits.templates.form.name")} <span className="text-destructive">*</span>
             </Label>
             <Input
               id={`${mode}-template-name`}
               value={formData.name}
               onChange={(e) => handleInputChange("name", e.target.value)}
-              placeholder="Ex. : Visite annuelle DR400"
+              placeholder={t("audits.templates.form.namePlaceholder")}
               aria-invalid={Boolean(validationErrors.name)}
               className={cn(validationErrors.name && "border-destructive")}
             />
@@ -657,14 +655,14 @@ function TemplateFormDialog({
 
           <div className="space-y-2">
             <Label htmlFor={`${mode}-template-frequency`}>
-              Fréquence recommandée <span className="text-destructive">*</span>
+              {t("audits.templates.recommendedFrequency")} <span className="text-destructive">*</span>
             </Label>
             <Select
               value={formData.recommended_frequency}
               onValueChange={(value) => handleInputChange("recommended_frequency", value)}
             >
               <SelectTrigger id={`${mode}-template-frequency`}>
-                <SelectValue placeholder="Sélectionner une fréquence" />
+                <SelectValue placeholder={t("audits.form.selectFrequency")} />
               </SelectTrigger>
               <SelectContent>
                 {enumsData?.auditFrequencyTypes?.map((frequency: string) => (
@@ -678,12 +676,12 @@ function TemplateFormDialog({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor={`${mode}-template-description`}>Description</Label>
+          <Label htmlFor={`${mode}-template-description`}>{t("common:labels.description")}</Label>
           <Textarea
             id={`${mode}-template-description`}
             value={formData.description}
             onChange={(e) => handleInputChange("description", e.target.value)}
-            placeholder="Ex. : contrôle complet de la cellule et du moteur avant la saison"
+            placeholder={t("audits.templates.form.descriptionPlaceholder")}
             rows={2}
           />
         </div>
@@ -697,25 +695,23 @@ function TemplateFormDialog({
               onCheckedChange={(checked) => handleInputChange("is_active", checked)}
             />
             <div>
-              <Label htmlFor="edit-template-active">Modèle actif</Label>
-              <p className="text-xs text-muted-foreground">
-                Un modèle inactif n'est plus proposé à la création d'un audit.
-              </p>
+              <Label htmlFor="edit-template-active">{t("audits.templates.form.active")}</Label>
+              <p className="text-xs text-muted-foreground">{t("audits.templates.form.activeHint")}</p>
             </div>
           </div>
         )}
       </fieldset>
 
       <fieldset className="space-y-3">
-        <legend className="text-sm font-semibold">Aéronefs concernés</legend>
+        <legend className="text-sm font-semibold">{t("audits.templates.form.aircraftConcerned")}</legend>
         <div className="space-y-2">
-          <Label htmlFor={`${mode}-template-aircraft-type`}>Type d'aéronef</Label>
+          <Label htmlFor={`${mode}-template-aircraft-type`}>{t("audits.templates.form.aircraftType")}</Label>
           <div className="flex items-center gap-2">
             <Input
               id={`${mode}-template-aircraft-type`}
               value={newAircraftType}
               onChange={(e) => setNewAircraftType(e.target.value)}
-              placeholder="Ex. : DR400"
+              placeholder={t("audits.templates.form.aircraftTypePlaceholder")}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault()
@@ -730,12 +726,12 @@ function TemplateFormDialog({
               disabled={!newAircraftType.trim()}
               className="shrink-0"
             >
-              Ajouter
+              {t("common:actions.add")}
             </Button>
           </div>
         </div>
         {formData.applicable_aircraft_types.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Aucun type précisé : le modèle vaut pour tous les aéronefs.</p>
+          <p className="text-sm text-muted-foreground">{t("audits.templates.form.noAircraftType")}</p>
         ) : (
           <div className="flex flex-wrap gap-2">
             {formData.applicable_aircraft_types.map((type) => (
@@ -744,8 +740,8 @@ function TemplateFormDialog({
                 <button
                   type="button"
                   onClick={() => removeAircraftType(type)}
-                  aria-label={`Retirer ${type}`}
-                  title={`Retirer ${type}`}
+                  aria-label={t("audits.templates.form.removeNamed", { name: type })}
+                  title={t("audits.templates.form.removeNamed", { name: type })}
                   className="rounded-full p-0.5 hover:bg-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <X className="h-3.5 w-3.5" />
@@ -760,19 +756,19 @@ function TemplateFormDialog({
 
   const itemsStep = (
     <fieldset className="space-y-3">
-      <legend className="sr-only">Éléments à vérifier</legend>
+      <legend className="sr-only">{t("audits.templates.form.steps.items")}</legend>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-sm font-semibold" aria-hidden="true">
-            Éléments à vérifier <span className="text-destructive">*</span>
+            {t("audits.templates.form.steps.items")} <span className="text-destructive">*</span>
           </p>
           {formData.items.length > 1 && (
-            <p className="text-xs text-muted-foreground">Faites glisser la poignée pour changer l'ordre.</p>
+            <p className="text-xs text-muted-foreground">{t("audits.templates.form.dragHint")}</p>
           )}
         </div>
         <Button type="button" variant="outline" size="sm" onClick={() => openItemForm()}>
           <Plus className="h-4 w-4" />
-          Ajouter un élément
+          {t("audits.templates.item.add")}
         </Button>
       </div>
 
@@ -780,7 +776,7 @@ function TemplateFormDialog({
 
       {formData.items.length === 0 ? (
         <p className="rounded-lg border border-dashed px-6 py-8 text-center text-sm text-muted-foreground">
-          Aucun élément pour le moment. Ajoutez les points à contrôler pendant l'audit.
+          {t("audits.templates.form.noItems")}
         </p>
       ) : (
         <DragDropContext onDragEnd={handleDragEnd}>
@@ -807,8 +803,8 @@ function TemplateFormDialog({
                       >
                         <div
                           {...provided.dragHandleProps}
-                          aria-label={`Déplacer ${item.title}`}
-                          title="Déplacer"
+                          aria-label={t("audits.templates.form.moveNamed", { name: item.title })}
+                          title={t("audits.templates.form.move")}
                           className="mt-0.5 cursor-grab rounded-sm text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
                           <GripVertical className="h-5 w-5" />
@@ -834,8 +830,8 @@ function TemplateFormDialog({
                             size="icon"
                             onClick={() => openItemForm(index)}
                             className="h-9 w-9"
-                            aria-label={`Modifier ${item.title}`}
-                            title="Modifier"
+                            aria-label={t("audits.templates.form.editNamed", { name: item.title })}
+                            title={t("common:actions.edit")}
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
@@ -845,8 +841,8 @@ function TemplateFormDialog({
                             size="icon"
                             onClick={() => removeItem(index)}
                             className="h-9 w-9 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                            aria-label={`Retirer ${item.title}`}
-                            title="Retirer du modèle"
+                            aria-label={t("audits.templates.form.removeNamed", { name: item.title })}
+                            title={t("audits.templates.form.removeFromTemplate")}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -866,16 +862,16 @@ function TemplateFormDialog({
 
   const itemMainStep = (
     <fieldset className="space-y-4">
-      <legend className="sr-only">Élément</legend>
+      <legend className="sr-only">{t("audits.templates.item.steps.item")}</legend>
       <div className="space-y-2">
         <Label htmlFor={`${mode}-item-title`}>
-          Titre <span className="text-destructive">*</span>
+          {t("audits.templates.item.title")} <span className="text-destructive">*</span>
         </Label>
         <Input
           id={`${mode}-item-title`}
           value={itemFormData.title}
           onChange={(e) => handleItemInputChange("title", e.target.value)}
-          placeholder="Ex. : Niveau d'huile moteur"
+          placeholder={t("audits.templates.item.titlePlaceholder")}
           aria-invalid={Boolean(validationErrors.itemTitle)}
           className={cn(validationErrors.itemTitle && "border-destructive")}
         />
@@ -885,25 +881,25 @@ function TemplateFormDialog({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor={`${mode}-item-description`}>Description</Label>
+        <Label htmlFor={`${mode}-item-description`}>{t("common:labels.description")}</Label>
         <Textarea
           id={`${mode}-item-description`}
           value={itemFormData.description}
           onChange={(e) => handleItemInputChange("description", e.target.value)}
-          placeholder="Ex. : vérifier le niveau à la jauge, moteur froid"
+          placeholder={t("audits.templates.item.descriptionPlaceholder")}
           rows={2}
         />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor={`${mode}-item-category`}>Catégorie</Label>
+          <Label htmlFor={`${mode}-item-category`}>{t("common:labels.category")}</Label>
           <Select
             value={itemFormData.category}
             onValueChange={(value) => handleItemInputChange("category", value)}
           >
             <SelectTrigger id={`${mode}-item-category`}>
-              <SelectValue placeholder="Sélectionner une catégorie" />
+              <SelectValue placeholder={t("audits.form.selectCategory")} />
             </SelectTrigger>
             <SelectContent>
               {enumsData?.auditCategoryTypes?.map((category: string) => (
@@ -916,13 +912,13 @@ function TemplateFormDialog({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor={`${mode}-item-criticality`}>Criticité</Label>
+          <Label htmlFor={`${mode}-item-criticality`}>{t("audits.templates.item.criticality")}</Label>
           <Select
             value={itemFormData.criticality}
             onValueChange={(value) => handleItemInputChange("criticality", value)}
           >
             <SelectTrigger id={`${mode}-item-criticality`}>
-              <SelectValue placeholder="Sélectionner un niveau" />
+              <SelectValue placeholder={t("audits.templates.item.selectLevel")} />
             </SelectTrigger>
             <SelectContent>
               {enumsData?.criticalityLevels?.map((level: string) => (
@@ -940,40 +936,40 @@ function TemplateFormDialog({
   const itemInspectionStep = (
     <>
       <fieldset className="space-y-4">
-        <legend className="sr-only">Inspection</legend>
+        <legend className="sr-only">{t("audits.templates.item.steps.inspection")}</legend>
         <div className="space-y-2">
-          <Label htmlFor={`${mode}-item-inspection-method`}>Méthode d'inspection</Label>
+          <Label htmlFor={`${mode}-item-inspection-method`}>{t("audits.templates.item.inspectionMethod")}</Label>
           <Input
             id={`${mode}-item-inspection-method`}
             value={itemFormData.inspection_method}
             onChange={(e) => handleItemInputChange("inspection_method", e.target.value)}
-            placeholder="Ex. : contrôle visuel"
+            placeholder={t("audits.templates.item.inspectionMethodPlaceholder")}
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor={`${mode}-item-expected-result`}>Résultat attendu</Label>
+          <Label htmlFor={`${mode}-item-expected-result`}>{t("audits.templates.item.expectedResult")}</Label>
           <Input
             id={`${mode}-item-expected-result`}
             value={itemFormData.expected_result}
             onChange={(e) => handleItemInputChange("expected_result", e.target.value)}
-            placeholder="Ex. : niveau entre mini et maxi"
+            placeholder={t("audits.templates.item.expectedResultPlaceholder")}
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor={`${mode}-item-reference`}>Documentation de référence</Label>
+          <Label htmlFor={`${mode}-item-reference`}>{t("audits.templates.item.reference")}</Label>
           <Input
             id={`${mode}-item-reference`}
             value={itemFormData.reference_documentation}
             onChange={(e) => handleItemInputChange("reference_documentation", e.target.value)}
-            placeholder="Ex. : manuel de maintenance, chapitre 12"
+            placeholder={t("audits.templates.item.referencePlaceholder")}
           />
         </div>
       </fieldset>
 
       <fieldset className="space-y-3">
-        <legend className="text-sm font-semibold">Options</legend>
+        <legend className="text-sm font-semibold">{t("audits.templates.item.options")}</legend>
         <div className="flex items-center gap-3">
           <Switch
             id={`${mode}-item-mandatory`}
@@ -981,7 +977,7 @@ function TemplateFormDialog({
             onCheckedChange={(checked) => handleItemInputChange("is_mandatory", checked)}
           />
           <Label htmlFor={`${mode}-item-mandatory`} className="font-normal">
-            Élément obligatoire
+            {t("audits.templates.item.mandatory")}
           </Label>
         </div>
         <div className="flex items-center gap-3">
@@ -991,7 +987,7 @@ function TemplateFormDialog({
             onCheckedChange={(checked) => handleItemInputChange("requires_photo_evidence", checked)}
           />
           <Label htmlFor={`${mode}-item-photo`} className="font-normal">
-            Photo à joindre comme preuve
+            {t("audits.templates.item.photo")}
           </Label>
         </div>
       </fieldset>
@@ -1003,14 +999,14 @@ function TemplateFormDialog({
       <SidePanel
         open={isOpen}
         onOpenChange={(open) => !open && onClose()}
-        title={mode === "create" ? "Créer un modèle d'audit" : "Modifier le modèle d'audit"}
-        description="Décrivez le modèle puis listez les éléments à vérifier, dans l'ordre de l'inspection."
+        title={mode === "create" ? t("audits.templates.form.createTitle") : t("audits.templates.form.editTitle")}
+        description={t("audits.templates.form.description")}
         onSubmit={handleSubmit}
-        submitLabel={mode === "create" ? "Créer le modèle" : "Enregistrer"}
+        submitLabel={mode === "create" ? t("audits.templates.form.createSubmit") : t("common:actions.save")}
         submitting={isLoading}
         steps={[
-          { title: "Informations générales", content: generalStep, validate: validateName },
-          { title: "Éléments à vérifier", content: itemsStep },
+          { title: t("audits.templates.form.steps.general"), content: generalStep, validate: validateName },
+          { title: t("audits.templates.form.steps.items"), content: itemsStep },
         ]}
       />
 
@@ -1018,14 +1014,14 @@ function TemplateFormDialog({
       <SidePanel
         open={isItemFormOpen}
         onOpenChange={setIsItemFormOpen}
-        title={currentItemIndex !== null ? "Modifier l'élément" : "Ajouter un élément"}
-        description="Un point à contrôler pendant l'audit."
+        title={currentItemIndex !== null ? t("audits.templates.item.edit") : t("audits.templates.item.add")}
+        description={t("audits.templates.item.description")}
         onSubmit={saveItem}
-        submitLabel={currentItemIndex !== null ? "Enregistrer l'élément" : "Ajouter l'élément"}
+        submitLabel={currentItemIndex !== null ? t("audits.templates.item.save") : t("audits.templates.item.addSubmit")}
         size="md"
         steps={[
-          { title: "Élément", content: itemMainStep, validate: validateItemTitle },
-          { title: "Inspection", content: itemInspectionStep },
+          { title: t("audits.templates.item.steps.item"), content: itemMainStep, validate: validateItemTitle },
+          { title: t("audits.templates.item.steps.inspection"), content: itemInspectionStep },
         ]}
       />
     </>

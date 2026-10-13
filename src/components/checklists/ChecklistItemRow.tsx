@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { MessageSquare } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useTranslation } from "react-i18next"
 
 interface ChecklistItemRowProps {
   itemId: number | string
@@ -30,6 +31,7 @@ export function ChecklistItemRow({
   onNoteChange,
   disabled = false,
 }: ChecklistItemRowProps) {
+  const { t } = useTranslation("checklists")
   const [showNote, setShowNote] = useState(!!note)
   const noteVisible = showNote || (disabled && !!note)
 
@@ -59,7 +61,7 @@ export function ChecklistItemRow({
           <span className="min-w-0 flex-1">
             <span className={cn("block text-sm font-medium", checked && "text-muted-foreground")}>{label}</span>
             {description && <span className="mt-0.5 block text-xs text-muted-foreground">{description}</span>}
-            {isRequired && !checked && <span className="mt-0.5 block text-xs text-muted-foreground">Obligatoire</span>}
+            {isRequired && !checked && <span className="mt-0.5 block text-xs text-muted-foreground">{t("common:labels.required")}</span>}
           </span>
         </label>
         {(!disabled || !!note) && (
@@ -70,9 +72,9 @@ export function ChecklistItemRow({
             onClick={() => setShowNote(!showNote)}
             disabled={disabled}
             className={cn("m-2 h-10 w-10 shrink-0", note ? "text-primary" : "text-muted-foreground")}
-            aria-label={note ? `Voir la note de « ${label} »` : `Ajouter une note à « ${label} »`}
+            aria-label={note ? t("item.viewNoteLabel", { label }) : t("item.addNoteLabel", { label })}
             aria-expanded={noteVisible}
-            title={note ? "Note" : "Ajouter une note"}
+            title={note ? t("item.note") : t("item.addNote")}
           >
             <MessageSquare className="h-4 w-4" />
           </Button>
@@ -81,8 +83,8 @@ export function ChecklistItemRow({
       {noteVisible && (
         <div className="px-3 pb-3">
           <Textarea
-            aria-label={`Note pour « ${label} »`}
-            placeholder="Ex. : pneu avant légèrement usé, à surveiller"
+            aria-label={t("item.noteLabel", { label })}
+            placeholder={t("item.notePlaceholder")}
             value={note}
             onChange={(e) => onNoteChange(e.target.value)}
             className="min-h-[72px] bg-background text-sm"

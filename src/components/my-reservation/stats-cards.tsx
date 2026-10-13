@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslation } from "react-i18next"
 import { StatCard, type StatTone } from "@/components/layout/StatCard"
 import { CalendarCheck, CalendarClock, CalendarX, Calendar } from "lucide-react"
 import type { Reservation } from "@/interfaces/reservation"
@@ -9,6 +10,7 @@ interface StatsCardsProps {
 }
 
 export function StatsCards({ reservations }: StatsCardsProps) {
+  const { t } = useTranslation("reservations")
   const totalReservations = reservations.length
   const confirmedReservations = reservations.filter((r) => r.status === "CONFIRMED").length
   const pendingReservations = reservations.filter((r) => r.status === "PENDING").length
@@ -16,25 +18,25 @@ export function StatsCards({ reservations }: StatsCardsProps) {
 
   const stats = [
     {
-      title: "Total",
+      title: t("common:labels.total"),
       value: totalReservations,
       icon: Calendar,
       tone: "info" as StatTone,
     },
     {
-      title: "Confirmées",
+      title: t("my.stats.confirmed"),
       value: confirmedReservations,
       icon: CalendarCheck,
       tone: "success" as StatTone,
     },
     {
-      title: "En attente",
+      title: t("my.stats.pending"),
       value: pendingReservations,
       icon: CalendarClock,
       tone: "warning" as StatTone,
     },
     {
-      title: "Annulées",
+      title: t("my.stats.cancelled"),
       value: cancelledReservations,
       icon: CalendarX,
       tone: "danger" as StatTone,

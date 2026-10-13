@@ -2,6 +2,7 @@
 
 import { format, parseISO } from "date-fns"
 import { X } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { DatePicker } from "@/components/ui/date-picker"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -27,25 +28,26 @@ const toFilterDate = (date: Date | undefined) => (date ? format(date, "yyyy-MM-d
 
 /** One-row toolbar of the logbook: period, aircraft, flight type. */
 export default function LogbookFilters({ filter, onFilterChange, aircraftList, flightTypes }: LogbookFiltersProps) {
+  const { t } = useTranslation("flights")
   const hasActiveFilters = Boolean(filter.startDate || filter.endDate || filter.aircraftId || filter.flightType)
 
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-      <div className="sm:w-[200px]" role="group" aria-label="Date de début">
+      <div className="sm:w-[200px]" role="group" aria-label={t("logbook.filters.startDateAria")}>
         <DatePicker
           date={toDate(filter.startDate)}
           onSelect={(date) => onFilterChange({ ...filter, startDate: toFilterDate(date) })}
-          placeholder="Du"
+          placeholder={t("logbook.filters.from")}
           toDate={toDate(filter.endDate)}
           clearable
         />
       </div>
 
-      <div className="sm:w-[200px]" role="group" aria-label="Date de fin">
+      <div className="sm:w-[200px]" role="group" aria-label={t("logbook.filters.endDateAria")}>
         <DatePicker
           date={toDate(filter.endDate)}
           onSelect={(date) => onFilterChange({ ...filter, endDate: toFilterDate(date) })}
-          placeholder="Au"
+          placeholder={t("logbook.filters.to")}
           fromDate={toDate(filter.startDate)}
           clearable
         />
@@ -60,11 +62,11 @@ export default function LogbookFilters({ filter, onFilterChange, aircraftList, f
           })
         }
       >
-        <SelectTrigger aria-label="Filtrer par avion" className="sm:w-[210px]">
+        <SelectTrigger aria-label={t("logbook.filters.aircraftAria")} className="sm:w-[210px]">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">Tous les avions</SelectItem>
+          <SelectItem value="all">{t("logbook.filters.allAircraft")}</SelectItem>
           {aircraftList.map((aircraft) => (
             <SelectItem key={aircraft.id} value={aircraft.id.toString()}>
               {aircraft.registration_number} — {aircraft.model}
@@ -82,11 +84,11 @@ export default function LogbookFilters({ filter, onFilterChange, aircraftList, f
           })
         }
       >
-        <SelectTrigger aria-label="Filtrer par type de vol" className="sm:w-[180px]">
+        <SelectTrigger aria-label={t("logbook.filters.flightTypeAria")} className="sm:w-[180px]">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">Tous les types de vol</SelectItem>
+          <SelectItem value="all">{t("logbook.filters.allFlightTypes")}</SelectItem>
           {flightTypes.map((type) => (
             <SelectItem key={type} value={type}>
               {flightTypeLabel(type)}
@@ -103,7 +105,7 @@ export default function LogbookFilters({ filter, onFilterChange, aircraftList, f
           className="self-start text-muted-foreground sm:self-auto"
         >
           <X className="h-4 w-4" />
-          Réinitialiser
+          {t("common:actions.reset")}
         </Button>
       )}
     </div>

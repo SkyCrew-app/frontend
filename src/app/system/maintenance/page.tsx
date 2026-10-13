@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { RefreshCw, Wrench } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from "@/components/ui/button"
 import { useQuery } from '@apollo/client'
 import { MAINTENANCE_QUERY } from '@/graphql/system'
@@ -14,11 +15,10 @@ interface MaintenanceDetails {
   maintenanceMessage: string
 }
 
-const DEFAULT_MESSAGE = "Nous mettons le site à jour. Il sera de nouveau disponible très bientôt."
-
 const pad = (value: number) => String(value).padStart(2, '0')
 
 const CountdownTimer = ({ endTime }: { endTime: Date }) => {
+  const { t } = useTranslation('auth')
   const [remaining, setRemaining] = useState(() => endTime.getTime() - Date.now())
 
   useEffect(() => {
@@ -30,7 +30,7 @@ const CountdownTimer = ({ endTime }: { endTime: Date }) => {
   }, [endTime])
 
   if (remaining <= 0) {
-    return <p className="text-sm text-muted-foreground">La maintenance devrait être terminée. Réessayez.</p>
+    return <p className="text-sm text-muted-foreground">{t('system.maintenance.finished')}</p>
   }
 
   const hours = Math.floor(remaining / (1000 * 60 * 60))
@@ -39,11 +39,11 @@ const CountdownTimer = ({ endTime }: { endTime: Date }) => {
 
   return (
     <div className="rounded-lg bg-muted/50 p-4 text-center">
-      <p className="text-xs text-muted-foreground">Temps restant estimé</p>
+      <p className="text-xs text-muted-foreground">{t('system.maintenance.remaining')}</p>
       <p className="mt-1 text-2xl font-semibold tracking-tight tabular-nums" role="timer">
-        {pad(hours)} h {pad(minutes)} min {pad(seconds)} s
+        {t('system.maintenance.countdown', { hours: pad(hours), minutes: pad(minutes), seconds: pad(seconds) })}
       </p>
-      <p className="mt-1 text-xs text-muted-foreground">Retour prévu le {formatDateTime(endTime)}</p>
+      <p className="mt-1 text-xs text-muted-foreground">{t('system.maintenance.backAt', { date: formatDateTime(endTime) })}</p>
     </div>
   )
 }
@@ -59,6 +59,7 @@ const parseDetails = (raw: string | undefined): MaintenanceDetails | null => {
 }
 
 export default function MaintenancePage() {
+  const { t } = useTranslation('auth')
   const { data, loading } = useQuery<{ getMaintenanceDetails: string }>(MAINTENANCE_QUERY)
 
   if (loading) return <AuthCardSkeleton />
@@ -72,8 +73,8 @@ export default function MaintenancePage() {
     <AuthCard
       icon={Wrench}
       tone="warning"
-      title="Site en maintenance"
-      description={details?.maintenanceMessage || DEFAULT_MESSAGE}
+      title={t('system.maintenance.title')}
+      description={details?.maintenanceMessage || t('system.maintenance.defaultMessage')}
     >
       <div className="space-y-4">
         {hasEndTime && <CountdownTimer endTime={endTime} />}
@@ -85,7 +86,7 @@ export default function MaintenancePage() {
           }}
         >
           <RefreshCw className="h-4 w-4" />
-          Réessayer
+          {t('common:actions.retry')}
         </Button>
       </div>
     </AuthCard>

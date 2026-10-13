@@ -2,6 +2,7 @@
 
 import { REGEXP_ONLY_DIGITS } from "input-otp";
 import { Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import {
   InputOTP,
   InputOTPGroup,
@@ -19,6 +20,7 @@ import { AuthCard, AuthLink, FieldError } from "@/app/auth/_components/AuthCard"
 const CODE_LENGTH = 6;
 
 export default function TwoFactorAuthPage() {
+  const { t } = useTranslation("auth");
   const router = useRouter();
   const { toast } = useToast();
   const [otp, setOtp] = useState("");
@@ -31,14 +33,14 @@ export default function TwoFactorAuthPage() {
     if (!email) {
       toast({
         variant: "destructive",
-        title: "Session expirée",
-        description: "Veuillez vous reconnecter.",
+        title: t("twoFactor.sessionExpired.title"),
+        description: t("twoFactor.sessionExpired.description"),
       });
       router.push('/');
       return;
     }
     setPendingEmail(email);
-  }, [router, toast]);
+  }, [router, toast, t]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,15 +48,15 @@ export default function TwoFactorAuthPage() {
     if (!pendingEmail) {
       toast({
         variant: "destructive",
-        title: "Session expirée",
-        description: "Veuillez vous reconnecter.",
+        title: t("twoFactor.sessionExpired.title"),
+        description: t("twoFactor.sessionExpired.description"),
       });
       router.push('/');
       return;
     }
 
     if (otp.length < CODE_LENGTH) {
-      setCodeError(`Saisissez les ${CODE_LENGTH} chiffres du code.`);
+      setCodeError(t("twoFactor.incompleteCode", { count: CODE_LENGTH }));
       return;
     }
 
@@ -69,20 +71,20 @@ export default function TwoFactorAuthPage() {
       sessionStorage.removeItem('2fa_pending_email');
       router.push("/dashboard");
     } catch {
-      setCodeError("Ce code est invalide ou a expiré. Saisissez le code actuellement affiché par votre application.");
+      setCodeError(t("twoFactor.invalidCode"));
       setOtp("");
     }
   };
 
   return (
     <AuthCard
-      title="Double authentification"
-      description="Saisissez le code à 6 chiffres affiché par votre application d'authentification."
-      footer={<AuthLink href="/">Retour à la connexion</AuthLink>}
+      title={t("twoFactor.title")}
+      description={t("twoFactor.description")}
+      footer={<AuthLink href="/">{t("common.backToSignIn")}</AuthLink>}
     >
       <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         <div className="flex flex-col items-center gap-1.5">
-          <Label htmlFor="otp">Code de vérification</Label>
+          <Label htmlFor="otp">{t("twoFactor.codeLabel")}</Label>
           <InputOTP
             id="otp"
             maxLength={CODE_LENGTH}
@@ -109,7 +111,7 @@ export default function TwoFactorAuthPage() {
         </div>
         <Button type="submit" disabled={loading || !pendingEmail || otp.length < CODE_LENGTH} className="w-full">
           {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-          Vérifier le code
+          {t("twoFactor.submit")}
         </Button>
       </form>
     </AuthCard>

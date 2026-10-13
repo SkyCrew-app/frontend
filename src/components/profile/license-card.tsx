@@ -1,6 +1,7 @@
 import React from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { useTranslation } from "react-i18next"
 import { formatDate } from "@/lib/format"
 import { licenseStatus } from "./license-status"
 
@@ -20,13 +21,14 @@ interface LicenseCardProps {
 }
 
 export function LicenseCard({ license }: LicenseCardProps) {
+  const { t } = useTranslation("profile")
   const status = licenseStatus(license)
 
   const facts = [
-    { label: "Numéro", value: license.license_number || "—" },
-    { label: "Autorité", value: license.certification_authority || "—" },
-    { label: "Délivrée le", value: formatDate(license.issue_date) },
-    { label: "Expire le", value: formatDate(license.expiration_date) },
+    { label: t("licenses.facts.number"), value: license.license_number || "—" },
+    { label: t("licenses.facts.authority"), value: license.certification_authority || "—" },
+    { label: t("licenses.facts.issuedOn"), value: formatDate(license.issue_date) },
+    { label: t("licenses.facts.expiresOn"), value: formatDate(license.expiration_date) },
   ]
 
   return (

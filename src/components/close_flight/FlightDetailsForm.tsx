@@ -1,6 +1,7 @@
 "use client"
 
 import { useFormContext } from "react-hook-form"
+import { useTranslation } from "react-i18next"
 import { FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -22,6 +23,7 @@ const toNumber = (raw: string, parse: (value: string) => number) => {
 
 /** Flight time typed the way pilots log it (hours and minutes), stored as decimal hours. */
 function DurationInput({ value, onChange }: { value: number; onChange: (hours: number) => void }) {
+  const { t } = useTranslation("flights")
   const totalMinutes = Math.round((Number.isFinite(value) ? value : 0) * 60)
   const hours = Math.floor(totalMinutes / 60)
   const minutes = totalMinutes % 60
@@ -40,7 +42,7 @@ function DurationInput({ value, onChange }: { value: number; onChange: (hours: n
         min={0}
         max={24}
         step={1}
-        aria-label="Heures de vol"
+        aria-label={t("closeFlight.details.hoursAria")}
         className="w-20 tabular-nums"
         value={hours}
         onChange={(e) => update(Number.parseInt(e.target.value, 10), minutes)}
@@ -52,7 +54,7 @@ function DurationInput({ value, onChange }: { value: number; onChange: (hours: n
         min={0}
         max={59}
         step={1}
-        aria-label="Minutes de vol"
+        aria-label={t("closeFlight.details.minutesAria")}
         className="w-20 tabular-nums"
         value={minutes}
         onChange={(e) => update(hours, Number.parseInt(e.target.value, 10))}
@@ -64,12 +66,11 @@ function DurationInput({ value, onChange }: { value: number; onChange: (hours: n
 
 export default function FlightDetailsForm() {
   const { control } = useFormContext()
+  const { t } = useTranslation("flights")
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
-        Les valeurs viennent du plan de vol : corrigez ce qui a changé pendant le vol.
-      </p>
+      <p className="text-sm text-muted-foreground">{t("closeFlight.details.intro")}</p>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <FormField
           control={control}
@@ -77,13 +78,13 @@ export default function FlightDetailsForm() {
           render={({ field }) => (
             <FormItem>
               <FormLabel>
-                Temps de vol
+                {t("closeFlight.details.flightTime")}
                 <RequiredMark />
               </FormLabel>
               <FormControl>
                 <DurationInput value={field.value} onChange={field.onChange} />
               </FormControl>
-              <FormDescription>Ce temps est inscrit dans votre carnet de vol.</FormDescription>
+              <FormDescription>{t("closeFlight.details.flightTimeHint")}</FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -94,7 +95,7 @@ export default function FlightDetailsForm() {
           name="distance_km"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Distance parcourue (km)</FormLabel>
+              <FormLabel>{t("closeFlight.details.distance")}</FormLabel>
               <FormControl>
                 <Input
                   type="number"
@@ -120,7 +121,7 @@ export default function FlightDetailsForm() {
           render={({ field }) => (
             <FormItem>
               <FormLabel>
-                Aérodrome de départ (OACI)
+                {t("closeFlight.details.origin")}
                 <RequiredMark />
               </FormLabel>
               <FormControl>
@@ -143,7 +144,7 @@ export default function FlightDetailsForm() {
           render={({ field }) => (
             <FormItem>
               <FormLabel>
-                Aérodrome d&apos;arrivée (OACI)
+                {t("closeFlight.details.destination")}
                 <RequiredMark />
               </FormLabel>
               <FormControl>
@@ -175,13 +176,13 @@ export default function FlightDetailsForm() {
             return (
               <FormItem>
                 <FormLabel>
-                  Type de vol
+                  {t("closeFlight.details.flightType")}
                   <RequiredMark />
                 </FormLabel>
                 <Select onValueChange={field.onChange} value={field.value || undefined}>
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Sélectionner" />
+                      <SelectValue placeholder={t("closeFlight.details.flightTypePlaceholder")} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -203,7 +204,7 @@ export default function FlightDetailsForm() {
           name="number_of_passengers"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Nombre de passagers</FormLabel>
+              <FormLabel>{t("closeFlight.details.passengers")}</FormLabel>
               <FormControl>
                 <Input
                   type="number"
@@ -228,9 +229,9 @@ export default function FlightDetailsForm() {
         name="weather_conditions"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Conditions météo rencontrées</FormLabel>
+            <FormLabel>{t("closeFlight.details.weather")}</FormLabel>
             <FormControl>
-              <Textarea rows={2} placeholder="Ex. : CAVOK, vent 240/08, turbulences légères" {...field} />
+              <Textarea rows={2} placeholder={t("closeFlight.details.weatherPlaceholder")} {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>

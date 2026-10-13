@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslation } from "react-i18next"
 import { TableCell } from "@/components/ui/table"
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card"
 import { Badge } from "@/components/ui/badge"
@@ -26,8 +27,9 @@ export const reservationDurationHours = (reservation: Reservation) =>
   (new Date(reservation.end_time).getTime() - new Date(reservation.start_time).getTime()) / 3600000
 
 export function ReservationCell({ reservation, colSpan, isMine = false, onClick }: ReservationCellProps) {
+  const { t } = useTranslation("reservations")
   const status = reservationStatus(reservation.status)
-  const pilot = isMine ? "Vous" : reservationPilotName(reservation)
+  const pilot = isMine ? t("common:labels.you") : reservationPilotName(reservation)
   const timeRange = `${formatTime(reservation.start_time)} – ${formatTime(reservation.end_time)}`
 
   return (
@@ -42,13 +44,13 @@ export function ReservationCell({ reservation, colSpan, isMine = false, onClick 
             onClick={onClick}
             className="flex h-12 w-full flex-col items-start justify-center px-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
           >
-            <span className="w-full truncate text-sm leading-tight">{reservation.purpose || "Réservation"}</span>
+            <span className="w-full truncate text-sm leading-tight">{reservation.purpose || t("shared.untitled")}</span>
             {pilot && <span className="w-full truncate text-xs font-normal leading-tight opacity-80">{pilot}</span>}
           </button>
         </HoverCardTrigger>
         <HoverCardContent className="w-72 space-y-3">
           <div className="flex items-start justify-between gap-2">
-            <p className="text-sm font-semibold text-foreground">{reservation.purpose || "Réservation"}</p>
+            <p className="text-sm font-semibold text-foreground">{reservation.purpose || t("shared.untitled")}</p>
             <Badge variant={status.variant}>{status.label}</Badge>
           </div>
           <ul className="space-y-1.5 text-sm text-foreground">

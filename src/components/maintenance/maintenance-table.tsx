@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslation } from "react-i18next"
 import { Eye, MoreHorizontal, Pencil, Plus, Search, Trash2, Wrench } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
@@ -17,6 +18,7 @@ import { StatusBadge } from "./status-badge"
 import { MaintenanceTypeIcon } from "./maintenance-type-icon"
 import type { Maintenance } from "@/interfaces/maintenance"
 import { formatDate, formatMoney } from "@/lib/format"
+import { maintenanceTechnicianName } from "@/lib/maintenance"
 
 interface MaintenanceTableProps {
   /** Maintenances of the current page. */
@@ -47,20 +49,21 @@ export function MaintenanceTable({
   onResetFilters,
   onCreateMaintenance,
 }: MaintenanceTableProps) {
+  const { t } = useTranslation("fleet")
   return (
     <div className="space-y-4">
       <Card className="overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Aéronef</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Statut</TableHead>
-              <TableHead>Période</TableHead>
-              <TableHead>Technicien</TableHead>
-              <TableHead className="text-right">Coût</TableHead>
+              <TableHead>{t("shared.aircraft")}</TableHead>
+              <TableHead>{t("common:labels.type")}</TableHead>
+              <TableHead>{t("common:labels.status")}</TableHead>
+              <TableHead>{t("maintenance.table.period")}</TableHead>
+              <TableHead>{t("common:labels.technician")}</TableHead>
+              <TableHead className="text-right">{t("common:labels.cost")}</TableHead>
               <TableHead className="w-12">
-                <span className="sr-only">Actions</span>
+                <span className="sr-only">{t("common:labels.actions")}</span>
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -84,18 +87,20 @@ export function MaintenanceTable({
                   </TableCell>
                   <TableCell className="whitespace-nowrap">
                     <div>{formatDate(maintenance.start_date)}</div>
-                    <div className="text-xs text-muted-foreground">au {formatDate(maintenance.end_date)}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {t("maintenance.table.until", { date: formatDate(maintenance.end_date) })}
+                    </div>
                   </TableCell>
                   <TableCell>
                     {maintenance.technician ? (
                       <>
-                        <div>{maintenance.technician.first_name || maintenance.technician.email}</div>
-                        {maintenance.technician.first_name && (
+                        <div>{maintenanceTechnicianName(maintenance.technician)}</div>
+                        {(maintenance.technician.first_name || maintenance.technician.last_name) && (
                           <div className="text-xs text-muted-foreground">{maintenance.technician.email}</div>
                         )}
                       </>
                     ) : (
-                      <span className="text-muted-foreground">Non assigné</span>
+                      <span className="text-muted-foreground">{t("shared.unassigned")}</span>
                     )}
                   </TableCell>
                   <TableCell className="whitespace-nowrap text-right tabular-nums">
@@ -109,8 +114,10 @@ export function MaintenanceTable({
                           variant="ghost"
                           size="icon"
                           className="h-9 w-9"
-                          aria-label={`Actions pour la maintenance de ${maintenance.aircraft.registration_number}`}
-                          title="Actions"
+                          aria-label={t("maintenance.table.actionsFor", {
+                            registration: maintenance.aircraft.registration_number,
+                          })}
+                          title={t("common:labels.actions")}
                         >
                           <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
                         </Button>
@@ -118,11 +125,11 @@ export function MaintenanceTable({
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem className="gap-2" onSelect={() => onSelectMaintenance(maintenance)}>
                           <Eye className="h-4 w-4" aria-hidden="true" />
-                          Voir le détail
+                          {t("maintenance.table.viewDetail")}
                         </DropdownMenuItem>
                         <DropdownMenuItem className="gap-2" onSelect={() => onEditMaintenance(maintenance)}>
                           <Pencil className="h-4 w-4" aria-hidden="true" />
-                          Modifier
+                          {t("common:actions.edit")}
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
@@ -130,7 +137,7 @@ export function MaintenanceTable({
                           onSelect={() => onDeleteMaintenance(maintenance)}
                         >
                           <Trash2 className="h-4 w-4" aria-hidden="true" />
-                          Supprimer
+                          {t("common:actions.delete")}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -143,11 +150,11 @@ export function MaintenanceTable({
                   {hasFilters ? (
                     <EmptyState
                       icon={Search}
-                      title="Aucune maintenance ne correspond"
-                      description="Modifiez la recherche ou les filtres."
+                      title={t("maintenance.table.noMatchTitle")}
+                      description={t("maintenance.table.noMatchDescription")}
                       action={
                         <Button variant="outline" onClick={onResetFilters}>
-                          Réinitialiser les filtres
+                          {t("shared.resetFilters")}
                         </Button>
                       }
                       className="border-0"
@@ -155,12 +162,12 @@ export function MaintenanceTable({
                   ) : (
                     <EmptyState
                       icon={Wrench}
-                      title="Aucune maintenance"
-                      description="Planifiez la première intervention sur un aéronef de la flotte."
+                      title={t("maintenance.table.emptyTitle")}
+                      description={t("maintenance.table.emptyDescription")}
                       action={
                         <Button onClick={onCreateMaintenance}>
                           <Plus className="h-4 w-4" aria-hidden="true" />
-                          Nouvelle maintenance
+                          {t("shared.newMaintenance")}
                         </Button>
                       }
                       className="border-0"
@@ -178,7 +185,7 @@ export function MaintenanceTable({
         pageSize={itemsPerPage}
         totalItems={totalItems}
         onPageChange={onPageChange}
-        itemsLabel={totalItems > 1 ? "maintenances" : "maintenance"}
+        itemsLabel={t("pagination.items.maintenance", { count: totalItems })}
       />
     </div>
   )

@@ -1,6 +1,7 @@
 "use client"
 
 import { LayoutDashboard, Settings2 } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { EmptyState } from "@/components/layout/EmptyState"
 import { DashboardWidgetConfig, WIDGET_REGISTRY } from "@/interfaces/dashboard"
@@ -20,6 +21,7 @@ interface DashboardGridProps {
 }
 
 export default function DashboardGrid({ widgets, userId, preferredAerodrome, onCustomize }: DashboardGridProps) {
+  const { t } = useTranslation("dashboard")
   const visibleWidgets = widgets
     .filter((w) => w.visible && WIDGET_REGISTRY[w.widgetId])
     .sort((a, b) => a.order - b.order)
@@ -49,12 +51,12 @@ export default function DashboardGrid({ widgets, userId, preferredAerodrome, onC
     return (
       <EmptyState
         icon={LayoutDashboard}
-        title="Aucun widget affiché"
-        description="Choisissez les informations à afficher sur votre tableau de bord."
+        title={t("grid.emptyTitle")}
+        description={t("grid.emptyDescription")}
         action={
           <Button onClick={onCustomize}>
             <Settings2 className="h-4 w-4" />
-            Personnaliser
+            {t("page.customize")}
           </Button>
         }
       />

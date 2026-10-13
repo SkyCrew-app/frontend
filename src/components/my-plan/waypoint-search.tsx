@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useTranslation } from "react-i18next"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
@@ -17,10 +18,12 @@ interface WaypointSearchProps {
 }
 
 export function WaypointSearch({ id, waypoints, onChange }: WaypointSearchProps) {
+  const { t } = useTranslation("flights")
   const [open, setOpen] = useState(false)
   const [searchResults, setSearchResults] = useState<Waypoint[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [loading, setLoading] = useState(false)
+  // Holds a translation key, so the message follows the language.
   const [error, setError] = useState<string | null>(null)
   const [selectedWaypoints, setSelectedWaypoints] = useState<Waypoint[]>([])
 
@@ -33,10 +36,10 @@ export function WaypointSearch({ id, waypoints, onChange }: WaypointSearchProps)
           const results = await aviationAPI.searchWaypoints(searchQuery)
           setSearchResults(results)
           if (results.length === 0) {
-            setError("Aucun point trouvé pour cette recherche.")
+            setError("routeSearch.waypoint.noResult")
           }
         } catch (err) {
-          setError("La recherche de points est indisponible pour le moment.")
+          setError("routeSearch.waypoint.unavailable")
           console.error(err)
         } finally {
           setLoading(false)
@@ -75,7 +78,7 @@ export function WaypointSearch({ id, waypoints, onChange }: WaypointSearchProps)
         setError(null)
       } catch (err) {
         console.error("Erreur lors du chargement des waypoints:", err)
-        setError("Certains points de route n'ont pas pu être chargés.")
+        setError("routeSearch.waypoint.loadError")
       } finally {
         setLoading(false)
       }
@@ -117,7 +120,7 @@ export function WaypointSearch({ id, waypoints, onChange }: WaypointSearchProps)
           >
             <span className="flex items-center gap-2">
               <Navigation2 className="h-4 w-4 text-muted-foreground" />
-              Ajouter un point de route
+              {t("routeSearch.waypoint.add")}
             </span>
             <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
           </Button>
@@ -125,21 +128,21 @@ export function WaypointSearch({ id, waypoints, onChange }: WaypointSearchProps)
         <PopoverContent className="w-[min(400px,calc(100vw-2rem))] p-0" align="start">
           {/* Results are already filtered by the search API. */}
           <Command shouldFilter={false}>
-            <CommandInput placeholder="Identifiant ou nom (VOR, NDB, point…)" onValueChange={setSearchQuery} />
+            <CommandInput placeholder={t("routeSearch.waypoint.placeholder")} onValueChange={setSearchQuery} />
             <CommandList>
               <CommandEmpty>
                 {loading ? (
                   <div className="flex items-center justify-center gap-2 p-4">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Recherche en cours…
+                    {t("routeSearch.searching")}
                   </div>
                 ) : error ? (
                   <div className="flex items-center justify-center gap-2 p-4 text-warning">
                     <AlertTriangle className="h-4 w-4" />
-                    {error}
+                    {t(error)}
                   </div>
                 ) : (
-                  "Saisissez au moins deux caractères."
+                  t("routeSearch.minChars")
                 )}
               </CommandEmpty>
               <CommandGroup className="max-h-[300px] overflow-y-auto">
@@ -193,8 +196,8 @@ export function WaypointSearch({ id, waypoints, onChange }: WaypointSearchProps)
                 size="icon"
                 onClick={() => removeWaypoint(waypoint)}
                 className="h-9 w-9 shrink-0"
-                aria-label={`Retirer ${waypoint.ident} de la route`}
-                title="Retirer"
+                aria-label={t("routeSearch.waypoint.removeLabel", { ident: waypoint.ident })}
+                title={t("common:actions.remove")}
               >
                 <X className="h-4 w-4" />
               </Button>

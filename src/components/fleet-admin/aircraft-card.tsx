@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslation } from "react-i18next"
 import { Pencil, Plane, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -17,6 +18,7 @@ interface AircraftCardProps {
 }
 
 export function AircraftCard({ aircraft, onEdit, onDelete, onViewDetails }: AircraftCardProps) {
+  const { t } = useTranslation("fleet")
   // "Opérationnel" goes without saying: the maintenance state is only shown when it needs attention.
   const needsAttention = aircraftMaintenanceState(aircraft.maintenance_status).variant !== "success"
 
@@ -45,15 +47,15 @@ export function AircraftCard({ aircraft, onEdit, onDelete, onViewDetails }: Airc
 
       <dl className="grid grid-cols-3 gap-3 px-4 text-sm">
         <div>
-          <dt className="text-xs text-muted-foreground">Année</dt>
+          <dt className="text-xs text-muted-foreground">{t("shared.year")}</dt>
           <dd className="font-medium tabular-nums">{aircraft.year_of_manufacture ?? "—"}</dd>
         </div>
         <div>
-          <dt className="text-xs text-muted-foreground">Heures de vol</dt>
+          <dt className="text-xs text-muted-foreground">{t("shared.flightHours")}</dt>
           <dd className="font-medium tabular-nums">{formatFlightDuration(aircraft.total_flight_hours ?? 0)}</dd>
         </div>
         <div>
-          <dt className="text-xs text-muted-foreground">Coût horaire</dt>
+          <dt className="text-xs text-muted-foreground">{t("shared.hourlyCost")}</dt>
           <dd className="font-medium tabular-nums">{formatMoney(aircraft.hourly_cost)}</dd>
         </div>
       </dl>
@@ -66,19 +68,19 @@ export function AircraftCard({ aircraft, onEdit, onDelete, onViewDetails }: Airc
 
       <div className="mt-auto flex flex-wrap items-center justify-end gap-2 p-4">
         <Button variant="ghost" size="sm" onClick={() => onViewDetails(aircraft)}>
-          Détails
+          {t("common:actions.details")}
         </Button>
         <Button variant="outline" size="sm" onClick={() => onEdit(aircraft)}>
           <Pencil className="h-4 w-4" aria-hidden="true" />
-          Modifier
+          {t("common:actions.edit")}
         </Button>
         <Button
           variant="ghost"
           size="icon"
           className="h-9 w-9 text-destructive hover:text-destructive"
           onClick={() => onDelete(aircraft)}
-          aria-label={`Supprimer ${aircraft.registration_number}`}
-          title="Supprimer"
+          aria-label={t("admin.deleteLabel", { registration: aircraft.registration_number })}
+          title={t("common:actions.delete")}
         >
           <Trash2 className="h-4 w-4" aria-hidden="true" />
         </Button>

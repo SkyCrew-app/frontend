@@ -1,4 +1,7 @@
+"use client"
+
 import Link from "next/link"
+import { useTranslation } from "react-i18next"
 import { BookOpen, ChevronRight } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
 import { EmptyState } from "@/components/layout/EmptyState"
@@ -19,6 +22,7 @@ const resumeOrder = (course: ELearningCourse) => {
 }
 
 export function ELearningProgressCard({ courses }: ELearningProgressCardProps) {
+  const { t } = useTranslation("instruction")
   const shown = courses
     .filter((course) => course.totalLessons > 0)
     .sort((a, b) => resumeOrder(a) - resumeOrder(b))
@@ -26,16 +30,16 @@ export function ELearningProgressCard({ courses }: ELearningProgressCardProps) {
 
   return (
     <SectionCard
-      title="E-learning"
-      description="Votre avancement dans les cours en ligne."
+      title={t("home.eLearning.title")}
+      description={t("home.eLearning.description")}
       href={learningRoutes.eLearning}
-      linkLabel="Tous les cours"
+      linkLabel={t("home.eLearning.link")}
     >
       {shown.length === 0 ? (
         <EmptyState
           icon={BookOpen}
-          title="Aucun cours en ligne"
-          description="Les cours en ligne du club apparaîtront ici dès leur publication."
+          title={t("home.eLearning.emptyTitle")}
+          description={t("home.eLearning.emptyDescription")}
         />
       ) : (
         <ul className="divide-y">
@@ -51,10 +55,10 @@ export function ELearningProgressCard({ courses }: ELearningProgressCardProps) {
                     <div className="flex items-baseline justify-between gap-3">
                       <p className="truncate text-sm font-medium">{course.title}</p>
                       <p className="shrink-0 text-xs tabular-nums text-muted-foreground">
-                        {course.completedLessons} / {course.totalLessons} leçons
+                        {t("shared.lessonsRatio", { done: course.completedLessons, total: course.totalLessons })}
                       </p>
                     </div>
-                    <Progress value={done} className="h-2" aria-label={`Progression : ${done} %`} />
+                    <Progress value={done} className="h-2" aria-label={t("shared.progressAria", { percent: done })} />
                   </div>
                   <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
                 </Link>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useQuery } from "@apollo/client"
+import { useTranslation } from "react-i18next"
 import { ArrowDownLeft, ArrowUpRight, Wallet } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { StatCard } from "@/components/layout/StatCard"
@@ -13,6 +14,7 @@ import { formatMoney } from "@/lib/format"
 import { isBalanceSpend, isTopUp, paymentStatus } from "./payment-labels"
 
 export default function AccountOverview() {
+  const { t } = useTranslation("profile")
   const userEmail = useCurrentUser()
   const userData = useUserData(userEmail)
   const [userId, setUserId] = useState<string | null>(null)
@@ -39,7 +41,7 @@ export default function AccountOverview() {
   if (error) {
     return (
       <ErrorState
-        description="Le solde de votre compte n'a pas pu être chargé. Vérifiez votre connexion puis réessayez."
+        description={t("account.overview.loadError")}
         onRetry={() => refetch()}
       />
     )
@@ -75,14 +77,14 @@ export default function AccountOverview() {
     <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
       <StatCard
         className="col-span-2 lg:col-span-1"
-        label="Solde disponible"
+        label={t("account.overview.balance")}
         value={formatMoney(userBalance)}
-        hint={userBalance < 0 ? "Votre compte est à découvert" : undefined}
+        hint={userBalance < 0 ? t("account.overview.overdrawn") : undefined}
         icon={Wallet}
         tone={userBalance < 0 ? "danger" : "primary"}
       />
-      <StatCard label="Total rechargé" value={formatMoney(totalDeposits)} icon={ArrowDownLeft} tone="success" />
-      <StatCard label="Total dépensé" value={formatMoney(totalSpent)} icon={ArrowUpRight} tone="neutral" />
+      <StatCard label={t("account.overview.totalToppedUp")} value={formatMoney(totalDeposits)} icon={ArrowDownLeft} tone="success" />
+      <StatCard label={t("account.overview.totalSpent")} value={formatMoney(totalSpent)} icon={ArrowUpRight} tone="neutral" />
     </div>
   )
 }

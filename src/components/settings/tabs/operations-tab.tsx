@@ -1,14 +1,16 @@
 "use client"
 
 import { useFormContext } from "react-hook-form"
+import { useTranslation } from "react-i18next"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { TIME_SLOT_OPTIONS, WEEKDAYS, type SettingsFormValues } from "@/lib/settings"
+import { WEEKDAYS, timeSlotOptions, weekdayLabel, type SettingsFormValues } from "@/lib/settings"
 import { SettingsField, SettingsSection, UnitInput, errorMessage } from "../settings-field"
 
 export function OperationsTab() {
+  const { t } = useTranslation("administration")
   const {
     register,
     setValue,
@@ -32,13 +34,13 @@ export function OperationsTab() {
   return (
     <div className="space-y-6">
       <SettingsSection
-        title="Horaires de réservation"
-        description="La plage horaire ouverte aux réservations et la durée d'un créneau."
+        title={t("settings.bookings.hours.title")}
+        description={t("settings.bookings.hours.description")}
       >
         <div className="grid gap-4 md:grid-cols-3">
           <SettingsField
             id="reservation-start-time"
-            label="Début des réservations"
+            label={t("settings.bookings.hours.start")}
             required
             error={errorMessage(errors.reservationStartTime)}
           >
@@ -51,7 +53,7 @@ export function OperationsTab() {
           </SettingsField>
           <SettingsField
             id="reservation-end-time"
-            label="Fin des réservations"
+            label={t("settings.bookings.hours.end")}
             required
             error={errorMessage(errors.reservationEndTime)}
           >
@@ -64,7 +66,7 @@ export function OperationsTab() {
           </SettingsField>
           <SettingsField
             id="timeslot-duration"
-            label="Durée d'un créneau"
+            label={t("settings.bookings.hours.slot")}
             required
             error={errorMessage(errors.timeSlotDuration)}
           >
@@ -75,10 +77,10 @@ export function OperationsTab() {
               }
             >
               <SelectTrigger id="timeslot-duration" aria-invalid={errors.timeSlotDuration ? true : undefined}>
-                <SelectValue placeholder="Choisir une durée" />
+                <SelectValue placeholder={t("settings.bookings.hours.slotPlaceholder")} />
               </SelectTrigger>
               <SelectContent>
-                {TIME_SLOT_OPTIONS.map((option) => (
+                {timeSlotOptions().map((option) => (
                   <SelectItem key={option.value} value={String(option.value)}>
                     {option.label}
                   </SelectItem>
@@ -90,11 +92,11 @@ export function OperationsTab() {
       </SettingsSection>
 
       <SettingsSection
-        title="Jours de fermeture"
-        description="Cochez les jours de la semaine où le club est fermé."
+        title={t("settings.bookings.closure.title")}
+        description={t("settings.bookings.closure.description")}
       >
         <fieldset>
-          <legend className="sr-only">Jours de fermeture</legend>
+          <legend className="sr-only">{t("settings.bookings.closure.title")}</legend>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {WEEKDAYS.map((day) => (
               <div key={day} className="flex min-h-9 items-center gap-2">
@@ -104,7 +106,7 @@ export function OperationsTab() {
                   onCheckedChange={(checked) => toggleClosureDay(day, checked === true)}
                 />
                 <Label htmlFor={`closure-${day}`} className="font-normal">
-                  {day}
+                  {weekdayLabel(day)}
                 </Label>
               </div>
             ))}
@@ -113,22 +115,26 @@ export function OperationsTab() {
       </SettingsSection>
 
       <SettingsSection
-        title="Maintenance hebdomadaire"
-        description="Le jour et la durée de l'entretien hebdomadaire des avions."
+        title={t("settings.bookings.maintenance.title")}
+        description={t("settings.bookings.maintenance.description")}
       >
         <div className="grid gap-4 md:grid-cols-2">
-          <SettingsField id="maintenance-day" label="Jour de maintenance" error={errorMessage(errors.maintenanceDay)}>
+          <SettingsField
+            id="maintenance-day"
+            label={t("settings.bookings.maintenance.day")}
+            error={errorMessage(errors.maintenanceDay)}
+          >
             <Select
               value={maintenanceDay ?? ""}
               onValueChange={(value) => setValue("maintenanceDay", value, { shouldDirty: true })}
             >
               <SelectTrigger id="maintenance-day">
-                <SelectValue placeholder="Choisir un jour" />
+                <SelectValue placeholder={t("settings.bookings.maintenance.dayPlaceholder")} />
               </SelectTrigger>
               <SelectContent>
                 {WEEKDAYS.map((day) => (
                   <SelectItem key={day} value={day}>
-                    {day}
+                    {weekdayLabel(day)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -136,9 +142,9 @@ export function OperationsTab() {
           </SettingsField>
           <SettingsField
             id="maintenance-duration"
-            label="Durée de la maintenance"
+            label={t("settings.bookings.maintenance.duration")}
             required
-            hint="Nombre entier d'heures, de 1 à 24."
+            hint={t("settings.bookings.maintenance.durationHint")}
             error={errorMessage(errors.maintenanceDuration)}
           >
             <UnitInput

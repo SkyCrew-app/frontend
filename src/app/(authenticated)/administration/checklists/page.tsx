@@ -12,8 +12,19 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Skeleton } from "@/components/ui/skeleton"
-import { ClipboardCheck, Pencil, Plus } from "lucide-react"
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { ClipboardCheck, Loader2, Pencil, Plus, Trash2 } from "lucide-react"
 import { useToast } from "@/components/hooks/use-toast"
+import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
+import { isAdministrator } from "@/lib/roles"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { SidePanel } from "@/components/layout/SidePanel"
 import { EmptyState } from "@/components/layout/EmptyState"
@@ -22,8 +33,10 @@ import {
   GET_CHECKLIST_TEMPLATES,
   CREATE_CHECKLIST_TEMPLATE,
   UPDATE_CHECKLIST_TEMPLATE,
+  DELETE_CHECKLIST_TEMPLATE,
 } from "@/graphql/checklist"
 import type { ChecklistTemplate } from "@/interfaces/checklist"
+import { useTranslation } from "react-i18next"
 
 const Required = () => (
   <span className="text-destructive" aria-hidden="true">
@@ -32,6 +45,7 @@ const Required = () => (
 )
 
 export default function AdminChecklistsPage() {
+  const { t } = useTranslation("checklists")
   const router = useRouter()
   const { toast } = useToast()
   const [isCreateOpen, setIsCreateOpen] = useState(false)
@@ -41,6 +55,9 @@ export default function AdminChecklistsPage() {
     description: "",
   })
   const [togglingId, setTogglingId] = useState<number | string | null>(null)
+  const [templateToDelete, setTemplateToDelete] = useState<ChecklistTemplate | null>(null)
+  // Deleting a template is reserved to administrators by the API.
+  const canDelete = isAdministrator(useUserData(useCurrentUser()))
 
   const { data, loading, error, refetch } = useQuery(GET_CHECKLIST_TEMPLATES, {
     fetchPolicy: "network-only",
@@ -48,6 +65,7 @@ export default function AdminChecklistsPage() {
 
   const [createTemplate, { loading: creating }] = useMutation(CREATE_CHECKLIST_TEMPLATE)
   const [updateTemplate] = useMutation(UPDATE_CHECKLIST_TEMPLATE)
+  const [deleteTemplate, { loading: deleting }] = useMutation(DELETE_CHECKLIST_TEMPLATE)
 
   const templates: ChecklistTemplate[] = data?.checklistTemplates || []
   const canCreate = newTemplate.name.trim() !== "" && newTemplate.aircraft_model.trim() !== ""
@@ -69,8 +87,8 @@ export default function AdminChecklistsPage() {
       setNewTemplate({ name: "", aircraft_model: "", description: "" })
       setIsCreateOpen(false)
       toast({
-        title: "Modèle créé",
-        description: "Ajoutez maintenant ses points de contrôle.",
+        title: t("admin.toast.created.title"),
+        description: t("admin.toast.created.description"),
       })
       // A new template is empty: go straight to where its items are added.
       const createdId = result.data?.createChecklistTemplate?.id
@@ -78,8 +96,8 @@ export default function AdminChecklistsPage() {
     } catch {
       toast({
         variant: "destructive",
-        title: "Le modèle n'a pas pu être créé",
-        description: "Réessayez dans un instant.",
+        title: t("admin.toast.createFailed.title"),
+        description: t("toast.retryLater"),
       })
     }
   }
@@ -97,34 +115,67 @@ export default function AdminChecklistsPage() {
         refetchQueries: [{ query: GET_CHECKLIST_TEMPLATES }],
       })
       toast({
-        title: template.is_active ? "Modèle désactivé" : "Modèle activé",
+        title: template.is_active ? t("admin.toast.deactivated.title") : t("admin.toast.activated.title"),
         description: template.is_active
-          ? `« ${template.name} » n'est plus proposé aux pilotes.`
-          : `« ${template.name} » est maintenant proposé aux pilotes.`,
+          ? t("admin.toast.deactivated.description", { name: template.name })
+          : t("admin.toast.activated.description", { name: template.name }),
       })
     } catch {
       toast({
         variant: "destructive",
-        title: "Le statut du modèle n'a pas pu être modifié",
-        description: "Réessayez dans un instant.",
+        title: t("admin.toast.toggleFailed.title"),
+        description: t("toast.retryLater"),
       })
     } finally {
       setTogglingId(null)
     }
   }
 
+  const handleConfirmDelete = async () => {
+    if (!templateToDelete) return
+    try {
+      const result = await deleteTemplate({
+        variables: { id: Number(templateToDelete.id) },
+        refetchQueries: [{ query: GET_CHECKLIST_TEMPLATES }],
+        awaitRefetchQueries: true,
+      })
+      const removal = result.data?.deleteChecklistTemplate
+      // A template that filled-in checklists refer to is kept, only taken out of use.
+      toast(
+        removal?.deleted
+          ? {
+              title: t("admin.toast.deleted.title"),
+              description: t("admin.toast.deleted.description", { name: templateToDelete.name }),
+            }
+          : {
+              title: t("admin.toast.deactivatedNotDeleted.title"),
+              description:
+                removal?.message ??
+                t("admin.toast.deactivatedNotDeleted.description", { name: templateToDelete.name }),
+            },
+      )
+      setTemplateToDelete(null)
+    } catch {
+      toast({
+        variant: "destructive",
+        title: t("admin.toast.deleteFailed.title"),
+        description: t("toast.retryLater"),
+      })
+    }
+  }
+
   const createButton = (
     <Button onClick={() => setIsCreateOpen(true)}>
       <Plus className="h-4 w-4" />
-      Créer un modèle
+      {t("admin.list.create")}
     </Button>
   )
 
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Modèles de checklists"
-        description="Les checklists prévol proposées aux pilotes, par type d'avion."
+        title={t("admin.list.title")}
+        description={t("admin.list.description")}
         actions={createButton}
         className="mb-0"
       />
@@ -145,8 +196,8 @@ export default function AdminChecklistsPage() {
       ) : templates.length === 0 ? (
         <EmptyState
           icon={ClipboardCheck}
-          title="Aucun modèle de checklist"
-          description="Créez un modèle par type d'avion : les pilotes le rempliront avant chaque vol."
+          title={t("admin.list.empty.title")}
+          description={t("admin.list.empty.description")}
           action={createButton}
         />
       ) : (
@@ -154,12 +205,12 @@ export default function AdminChecklistsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Modèle</TableHead>
-                <TableHead>Avion</TableHead>
-                <TableHead className="text-right">Points</TableHead>
-                <TableHead>Proposé aux pilotes</TableHead>
-                <TableHead className="w-12">
-                  <span className="sr-only">Actions</span>
+                <TableHead>{t("admin.list.columns.template")}</TableHead>
+                <TableHead>{t("common:labels.aircraft")}</TableHead>
+                <TableHead className="text-right">{t("admin.list.columns.items")}</TableHead>
+                <TableHead>{t("admin.list.columns.offered")}</TableHead>
+                <TableHead className="w-24">
+                  <span className="sr-only">{t("common:labels.actions")}</span>
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -180,7 +231,7 @@ export default function AdminChecklistsPage() {
                     </TableCell>
                     <TableCell className="whitespace-nowrap">{template.aircraft_model}</TableCell>
                     <TableCell className="text-right tabular-nums">
-                      {itemCount === 0 ? <Badge variant="warning">Vide</Badge> : itemCount}
+                      {itemCount === 0 ? <Badge variant="warning">{t("admin.list.emptyTemplate")}</Badge> : itemCount}
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center gap-2">
@@ -189,24 +240,40 @@ export default function AdminChecklistsPage() {
                           disabled={togglingId === template.id}
                           onCheckedChange={() => handleToggleActive(template)}
                           aria-label={
-                            template.is_active ? `Désactiver le modèle ${template.name}` : `Activer le modèle ${template.name}`
+                            template.is_active
+                              ? t("admin.list.deactivateLabel", { name: template.name })
+                              : t("admin.list.activateLabel", { name: template.name })
                           }
                         />
                         <Badge variant={template.is_active ? "success" : "neutral"}>
-                          {template.is_active ? "Actif" : "Inactif"}
+                          {template.is_active ? t("admin.active") : t("admin.inactive")}
                         </Badge>
                       </div>
                     </TableCell>
                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => router.push(`/administration/checklists/${template.id}`)}
-                        aria-label={`Modifier le modèle ${template.name}`}
-                        title="Modifier"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => router.push(`/administration/checklists/${template.id}`)}
+                          aria-label={t("admin.list.editLabel", { name: template.name })}
+                          title={t("common:actions.edit")}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        {canDelete && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => setTemplateToDelete(template)}
+                            aria-label={t("admin.list.deleteLabel", { name: template.name })}
+                            title={t("common:actions.delete")}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 )
@@ -216,13 +283,34 @@ export default function AdminChecklistsPage() {
         </Card>
       )}
 
+      <AlertDialog
+        open={templateToDelete !== null}
+        onOpenChange={(open) => !open && !deleting && setTemplateToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("admin.list.deleteDialog.title", { name: templateToDelete?.name ?? "" })}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("admin.list.deleteDialog.description")}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>{t("common:actions.cancel")}</AlertDialogCancel>
+            <Button variant="destructive" onClick={handleConfirmDelete} disabled={deleting}>
+              {deleting && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+              {t("admin.list.deleteDialog.confirm")}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <SidePanel
         open={isCreateOpen}
         onOpenChange={(open) => !creating && setIsCreateOpen(open)}
-        title="Créer un modèle de checklist"
-        description="Vous ajouterez les points de contrôle juste après."
+        title={t("admin.list.createPanel.title")}
+        description={t("admin.list.createPanel.description")}
         onSubmit={handleCreate}
-        submitLabel="Créer le modèle"
+        submitLabel={t("admin.list.createPanel.submit")}
         submitting={creating}
         submitDisabled={!canCreate}
         size="md"
@@ -230,39 +318,39 @@ export default function AdminChecklistsPage() {
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="template-name">
-              Nom du modèle
+              {t("admin.fields.name")}
               <Required />
             </Label>
             <Input
               id="template-name"
               value={newTemplate.name}
               onChange={(e) => setNewTemplate({ ...newTemplate, name: e.target.value })}
-              placeholder="Prévol DR400"
+              placeholder={t("admin.fields.namePlaceholder")}
               required
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="template-model">
-              Modèle d&apos;avion
+              {t("admin.fields.aircraftModel")}
               <Required />
             </Label>
             <Input
               id="template-model"
               value={newTemplate.aircraft_model}
               onChange={(e) => setNewTemplate({ ...newTemplate, aircraft_model: e.target.value })}
-              placeholder="Robin DR400"
+              placeholder={t("admin.fields.aircraftModelPlaceholder")}
               required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="template-desc">Description</Label>
+            <Label htmlFor="template-desc">{t("common:labels.description")}</Label>
             <Textarea
               id="template-desc"
               value={newTemplate.description}
               onChange={(e) => setNewTemplate({ ...newTemplate, description: e.target.value })}
-              placeholder="Visite prévol complète, à faire avant chaque premier vol de la journée"
+              placeholder={t("admin.fields.descriptionPlaceholder")}
             />
-            <p className="text-xs text-muted-foreground">Facultatif. Affichée au pilote en tête de la checklist.</p>
+            <p className="text-xs text-muted-foreground">{t("admin.fields.descriptionHint")}</p>
           </div>
         </div>
       </SidePanel>

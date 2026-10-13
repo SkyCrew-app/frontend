@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { CheckCircle2, Loader2, RefreshCw, ServerOff, WifiOff } from "lucide-react"
+import { Trans, useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { getGraphqlUrl, withBasePath } from "@/lib/runtime-config"
 import { AuthCard, AuthCardSkeleton } from "@/app/auth/_components/AuthCard"
@@ -10,6 +11,7 @@ import { AuthCard, AuthCardSkeleton } from "@/app/auth/_components/AuthCard"
 type PageState = "loading" | "error" | "unavailable" | "available"
 
 export default function SiteDownPage() {
+  const { t } = useTranslation("auth")
   const [pageState, setPageState] = useState<PageState>("loading")
   const [countdown, setCountdown] = useState(30)
   const [isRefreshing, setIsRefreshing] = useState(false)
@@ -94,16 +96,16 @@ export default function SiteDownPage() {
       <AuthCard
         icon={WifiOff}
         tone="danger"
-        title="Connexion au serveur impossible"
-        description="L'état du service n'a pas pu être vérifié. Vérifiez votre connexion Internet puis réessayez."
+        title={t("system.siteDown.error.title")}
+        description={t("system.siteDown.error.description")}
       >
         <div className="flex flex-col gap-2 sm:flex-row">
           <Button variant="outline" className="w-full" asChild>
-            <Link href="/">Retour à la connexion</Link>
+            <Link href="/">{t("common.backToSignIn")}</Link>
           </Button>
           <Button className="w-full" onClick={handleRefresh} disabled={isRefreshing}>
             <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
-            Réessayer
+            {t("common:actions.retry")}
           </Button>
         </div>
       </AuthCard>
@@ -115,10 +117,10 @@ export default function SiteDownPage() {
       <AuthCard
         icon={CheckCircle2}
         tone="success"
-        title="Le service est de nouveau disponible"
-        description="Vous allez être redirigé vers la page de connexion."
+        title={t("system.siteDown.available.title")}
+        description={t("system.siteDown.available.description")}
       >
-        <div className="flex justify-center" role="status" aria-label="Redirection en cours">
+        <div className="flex justify-center" role="status" aria-label={t("system.siteDown.available.redirecting")}>
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
         </div>
       </AuthCard>
@@ -129,24 +131,26 @@ export default function SiteDownPage() {
     <AuthCard
       icon={ServerOff}
       tone="warning"
-      title="Service indisponible"
-      description="SkyCrew est momentanément inaccessible : maintenance ou incident technique."
-      footer="Si le problème persiste, contactez un administrateur du club."
+      title={t("system.siteDown.unavailable.title")}
+      description={t("system.siteDown.unavailable.description")}
+      footer={t("system.siteDown.unavailable.footer")}
     >
       <div className="space-y-4">
         <p className="text-center text-sm text-muted-foreground" aria-live="polite">
-          Nouvelle tentative automatique dans{" "}
-          <span className="font-medium text-foreground tabular-nums">
-            {countdown} seconde{countdown > 1 ? "s" : ""}
-          </span>
+          <Trans
+            t={t}
+            i18nKey="system.siteDown.unavailable.retryIn"
+            count={countdown}
+            components={{ strong: <span className="font-medium text-foreground tabular-nums" /> }}
+          />
         </p>
         <div className="flex flex-col gap-2 sm:flex-row">
           <Button variant="outline" className="w-full" asChild>
-            <Link href="/">Retour à la connexion</Link>
+            <Link href="/">{t("common.backToSignIn")}</Link>
           </Button>
           <Button className="w-full" onClick={handleRefresh} disabled={isRefreshing}>
             <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
-            Réessayer maintenant
+            {t("system.siteDown.unavailable.retryNow")}
           </Button>
         </div>
       </div>
