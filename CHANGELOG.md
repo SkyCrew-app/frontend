@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.12.0](https://github.com/SkyCrew-app/frontend/compare/2.11.0...2.12.0) (2026-10-13)
+
+
+### Features
+
+* **instruction:** :sparkles: bookings with an instructor, action log, invoices, enforced CSP ([#163](https://github.com/SkyCrew-app/frontend/issues/163)) ([7c6af90](https://github.com/SkyCrew-app/frontend/commit/7c6af90093345f6c5501e4e8e1dfe0561f87115f))
+
 ## [2.11.0](https://github.com/SkyCrew-app/frontend/compare/2.10.1...2.11.0) (2026-10-13)
 
 
