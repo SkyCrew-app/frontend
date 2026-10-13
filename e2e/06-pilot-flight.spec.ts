@@ -189,9 +189,7 @@ test("le pilote réserve un créneau, génère le plan de vol, clôture le vol e
   })
 })
 
-// Application bug: cancelling a reservation debits its price a second time instead of
-// refunding it (API, PaymentsService.refund passes a negative amount to updateUserBalance).
-// Remove test.fail() once the API is fixed: the journey then passes as written.
+// Guards a past defect: cancelling used to debit the price a second time instead of refunding it.
 test("annuler une réservation recrédite le solde du pilote", async ({ page }) => {
   const purpose = uniqueName("E2E remboursement")
 
@@ -200,7 +198,5 @@ test("annuler une réservation recrédite le solde du pilote", async ({ page }) 
   await expect.poll(() => balance(page)).toBeCloseTo(before - HOURLY_COST, 2)
 
   await cancelBooking(page, purpose, day)
-  // Only this last check is expected to fail: anything breaking earlier is a real failure.
-  test.fail()
   await expect.poll(() => balance(page), { timeout: 10_000 }).toBeCloseTo(before, 2)
 })

@@ -62,7 +62,6 @@ The pilot's balance drops by a few cents per run (see the known issues). Re-seed
 
 ## Known issues the suite documents
 
-- **Cancelling a reservation debits the pilot again instead of refunding** (API). The second test of `06-pilot-flight` asserts the refund and is marked `test.fail()`: it shows as an expected failure. When the API is fixed that test will "pass unexpectedly" — remove the marker. Because of this bug the flight journeys book an aircraft created for the run at 0,01 €/h instead of a club aircraft.
 - **A new member is created with the Administrateur role** (API). `04-admin-member` hands the member the Pilote role afterwards.
 - **The logbook lists flights that are not closed yet.** `06-pilot-flight` adds an `issue` annotation to the report when it sees it.
 
