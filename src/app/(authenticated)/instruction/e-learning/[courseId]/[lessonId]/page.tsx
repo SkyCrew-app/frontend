@@ -15,6 +15,7 @@ import { ErrorState } from "@/components/layout/ErrorState"
 import { toast } from "@/components/hooks/use-toast"
 import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
 import { lessonHtml, lessonSections } from "@/components/e-learning/lesson-content"
+import { RichText } from "@/components/ui/rich-text"
 import { COMPLETE_LESSON, GET_COURSE_DETAILS, GET_LESSON_CONTENT, GET_LESSON_PROGRESS } from "@/graphql/instruction"
 import { adjacentLessons, learningRoutes, videoEmbedUrl } from "@/lib/learning-navigation"
 
@@ -191,9 +192,9 @@ export default function LessonPage() {
             <Card>
               <CardContent className="p-6">
                 {/* Rich text written by an administrator in the lesson editor. */}
-                <div
+                <RichText
+                  html={html}
                   className="prose prose-sm max-w-none text-foreground prose-headings:text-foreground prose-strong:text-foreground prose-a:text-primary prose-blockquote:text-muted-foreground prose-code:text-foreground prose-img:rounded-lg"
-                  dangerouslySetInnerHTML={{ __html: html }}
                 />
               </CardContent>
             </Card>

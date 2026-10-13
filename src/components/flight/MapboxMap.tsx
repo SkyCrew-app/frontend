@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useCallback } from 'react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
+import { escapeHtml } from '@/lib/sanitize-html'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -137,10 +138,11 @@ function getSegmentPhase(segIdx: number, tocIdx: number, todIdx: number): Phase 
 /*  SVG aviation symbols                                               */
 /* ------------------------------------------------------------------ */
 
-function getWaypointMarkerHtml(wp: WaypointData): string {
+export function getWaypointMarkerHtml(wp: WaypointData): string {
   const type = wp.type?.toUpperCase() ?? ''
-  const ident = wp.ident ?? ''
-  const alt = formatAlt(wp.alt)
+  // Waypoint texts come from the flight plan: they are data, not markup.
+  const ident = escapeHtml(wp.ident)
+  const alt = escapeHtml(formatAlt(wp.alt))
 
   let svg: string
   let labelColor: string
@@ -628,7 +630,7 @@ const MapboxMap: React.FC<MapboxMapProps> = ({ waypoints, departure, arrival, fo
 /*  Popup builder                                                      */
 /* ------------------------------------------------------------------ */
 
-function buildPopupHtml(wp: WaypointData): string {
+export function buildPopupHtml(wp: WaypointData): string {
   const type = wp.type?.toUpperCase() ?? ''
   const lines: string[] = []
 
@@ -647,17 +649,17 @@ function buildPopupHtml(wp: WaypointData): string {
 
   lines.push(
     `<div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:6px;">
-      ${wp.ident}
-      <span style="font-size:10px;font-weight:400;color:#888;margin-left:6px;">${typeLabel}</span>
+      ${escapeHtml(wp.ident)}
+      <span style="font-size:10px;font-weight:400;color:#888;margin-left:6px;">${escapeHtml(typeLabel)}</span>
     </div>`,
   )
 
   if (wp.name) {
-    lines.push(`<div style="color:#aaa;margin-bottom:6px;">${wp.name}</div>`)
+    lines.push(`<div style="color:#aaa;margin-bottom:6px;">${escapeHtml(wp.name)}</div>`)
   }
 
   const details: string[] = []
-  if (wp.alt) details.push(`<span style="color:#E040FB;">ALT ${formatAlt(wp.alt)}</span>`)
+  if (wp.alt) details.push(`<span style="color:#E040FB;">ALT ${escapeHtml(formatAlt(wp.alt))}</span>`)
   if (wp.ground_speed_kts)
     details.push(`<span style="color:#80CBC4;">GS ${Math.round(wp.ground_speed_kts)}kt</span>`)
   if (wp.wind_correction_deg !== undefined && wp.wind_correction_deg !== 0)

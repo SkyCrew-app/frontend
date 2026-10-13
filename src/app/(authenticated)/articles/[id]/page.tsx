@@ -16,6 +16,7 @@ import { EmptyState } from "@/components/layout/EmptyState"
 import { ErrorState } from "@/components/layout/ErrorState"
 import { ArticleImage, articleFileName, articleFileUrl } from "@/components/articles/article-image"
 import { useToast } from "@/components/hooks/use-toast"
+import { RichText } from "@/components/ui/rich-text"
 import { GET_ARTICLE_BY_ID } from "@/graphql/articles"
 import { formatDate, formatDateTime } from "@/lib/format"
 
@@ -254,9 +255,9 @@ END:VCALENDAR`
 
       {article.description && <p className="text-base font-medium leading-relaxed">{article.description}</p>}
 
-      <div
+      <RichText
+        html={article.text}
         className="prose prose-sm max-w-none text-foreground sm:prose-base prose-headings:text-foreground prose-a:text-primary prose-strong:text-foreground prose-li:marker:text-muted-foreground prose-img:rounded-lg"
-        dangerouslySetInnerHTML={{ __html: article.text }}
       />
 
       {documents.length > 0 && (
