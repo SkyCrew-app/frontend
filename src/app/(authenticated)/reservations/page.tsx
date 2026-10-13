@@ -21,6 +21,7 @@ import {
 import { GET_AIRCRAFTS } from "@/graphql/planes"
 import { type Reservation, ReservationStatus } from "@/interfaces/reservation"
 import { GET_SETTINGS } from "@/graphql/settings"
+import { toWeekday } from "@/lib/settings"
 import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { EmptyState } from "@/components/layout/EmptyState"
@@ -171,9 +172,9 @@ export default function ReservationCalendar() {
   const aircrafts: Aircraft[] = aircraftData?.getAircrafts ?? []
   const dayReservations: Reservation[] = reservationData?.filteredReservations ?? []
 
-  // Closure days come from the API as French day names: compared in French whatever the language.
+  // Closure days come from the API as French or English day names: compared in French whatever the language.
   const isClosedDay = (date: Date) =>
-    disabledDays.map(normalizeDayName).includes(normalizeDayName(format(date, "EEEE", { locale: fr })))
+    disabledDays.map(toWeekday).map(normalizeDayName).includes(normalizeDayName(format(date, "EEEE", { locale: fr })))
   const dayClosed = isClosedDay(currentDate)
 
   const now = new Date()

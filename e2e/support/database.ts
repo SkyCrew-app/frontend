@@ -6,12 +6,14 @@ import { execFileSync } from "node:child_process"
 // ahead like any member and this fixture then moves that one booking into the past, straight
 // in the local database. It only ever runs against the Postgres container of the local stack.
 const CONTAINER = process.env.E2E_DB_CONTAINER ?? "backend-db-1"
+// A full path, so that the fixture never runs whatever "docker" comes first in the PATH.
+const DOCKER = process.env.E2E_DOCKER ?? "/usr/local/bin/docker"
 
 function sql(statement: string): string {
   try {
     // The container knows its own user and database: no credential lives in the tests.
     return execFileSync(
-      "docker",
+      DOCKER,
       ["exec", "-i", CONTAINER, "sh", "-c", 'psql -v ON_ERROR_STOP=1 -At -U "$POSTGRES_USER" -d "$POSTGRES_DB"'],
       { input: statement, encoding: "utf8", stdio: ["pipe", "pipe", "pipe"] },
     ).trim()

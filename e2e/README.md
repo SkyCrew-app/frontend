@@ -25,6 +25,7 @@ The suite does not start anything. It expects:
 | `E2E_DEMO_PASSWORD` | the demo seeder's password | Password of the three accounts |
 | `E2E_ALLOWED_HOSTS` | — | Extra hosts of the stack (comma-separated), e.g. the API when it is not on `localhost` |
 | `E2E_DB_CONTAINER` | `backend-db-1` | Docker container of the stack's PostgreSQL, used by the one database fixture (see below) |
+| `E2E_DOCKER` | `/usr/local/bin/docker` | Full path of the `docker` command used by that fixture |
 
 ## How the suite is built
 
