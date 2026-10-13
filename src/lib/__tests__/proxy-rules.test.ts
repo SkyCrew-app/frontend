@@ -1,4 +1,6 @@
-import { canOpenPage, isNextAsset, sessionCookieMaxAge } from '../proxy-rules';
+import fs from 'node:fs';
+import path from 'node:path';
+import { canOpenPage, isNextAsset, isPublicFile, secondsLeft } from '../proxy-rules';
 
 describe('isNextAsset', () => {
   it.each(['/_next/static/chunks/main.js', '/_next/image', '/_next/webpack-hmr'])('laisse passer %s', (pathname) => {
@@ -18,26 +20,85 @@ describe('isNextAsset', () => {
   });
 });
 
-describe('sessionCookieMaxAge', () => {
+const ROOT = path.join(__dirname, '..', '..', '..');
+
+const filesUnder = (dir: string, prefix = ''): string[] =>
+  fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) =>
+    entry.isDirectory() ? filesUnder(path.join(dir, entry.name), `${prefix}/${entry.name}`) : [`${prefix}/${entry.name}`],
+  );
+
+// Addresses of the pages of the app router; a parameter ("[id]") becomes 0.
+const pagesUnder = (dir: string, segments: string[] = []): string[] =>
+  fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    if (entry.isFile()) return /^page\.[jt]sx?$/.test(entry.name) ? [`/${segments.join('/')}`] : [];
+    if (entry.name.startsWith('_')) return [];
+    const segment = entry.name.replace(/^\[.+\]$/, '0');
+    return pagesUnder(path.join(dir, entry.name), /^\(.+\)$/.test(entry.name) ? segments : [...segments, segment]);
+  });
+
+describe('isPublicFile', () => {
+  const publicFiles = filesUnder(path.join(ROOT, 'public')).filter((file) => !file.endsWith('.DS_Store'));
+  const pages = pagesUnder(path.join(ROOT, 'src', 'app'));
+
+  it('lit bien le dossier public et les pages', () => {
+    expect(publicFiles).toEqual(expect.arrayContaining(['/manifest.json', '/images/icon-192.png', '/images/logo.svg']));
+    expect(pages).toEqual(expect.arrayContaining(['/', '/dashboard', '/administration/users', '/system/notconnected']));
+  });
+
+  it('sert sans session chaque fichier du dossier public', () => {
+    expect(publicFiles.filter((file) => !isPublicFile(file))).toEqual([]);
+  });
+
+  it.each(['/favicon.ico', '/robots.txt', '/sw.js', '/swe-worker-f61931bc2770d10b.js'])(
+    'sert sans session %s',
+    (pathname) => {
+      expect(isPublicFile(pathname)).toBe(true);
+    },
+  );
+
+  it("n'ouvre aucune page", () => {
+    expect(pages.filter((page) => isPublicFile(page))).toEqual([]);
+  });
+
+  it.each([
+    '/images',
+    '/images/',
+    '/images/../dashboard',
+    '/images/members/list',
+    '/images/logo.svg/edit',
+    '/dashboard/manifest.json',
+    '/administration/users.png',
+    '/sw.js/dashboard',
+    '/swe-worker-.js',
+    '/swe-worker-abc.js.map',
+    '/profile.svg',
+    '/dashboard.json',
+    '/api/export.ico',
+  ])('contrôle la session pour %s', (pathname) => {
+    expect(isPublicFile(pathname)).toBe(false);
+  });
+});
+
+describe('secondsLeft', () => {
   const now = 1_800_000_000_000;
   const nowSeconds = now / 1000;
 
-  it('donne au cookie la durée restante du jeton', () => {
-    expect(sessionCookieMaxAge(nowSeconds + 7200, now)).toBe(7200);
-    expect(sessionCookieMaxAge(nowSeconds + 90, now)).toBe(90);
+  it('donne la durée restante du jeton', () => {
+    expect(secondsLeft(nowSeconds + 7200, now)).toBe(7200);
+    expect(secondsLeft(nowSeconds + 90, now)).toBe(90);
   });
 
   it('ne prolonge jamais un jeton expiré', () => {
-    expect(sessionCookieMaxAge(nowSeconds - 1, now)).toBe(0);
-    expect(sessionCookieMaxAge(nowSeconds, now)).toBe(0);
+    expect(secondsLeft(nowSeconds - 1, now)).toBe(0);
+    expect(secondsLeft(nowSeconds, now)).toBe(0);
   });
 
   it('arrondit à la seconde inférieure', () => {
-    expect(sessionCookieMaxAge(nowSeconds + 10, now + 400)).toBe(9);
+    expect(secondsLeft(nowSeconds + 10, now + 400)).toBe(9);
   });
 
-  it.each([undefined, null, '1800000000', Number.NaN, Infinity])('ne garde pas de cookie quand l’expiration est %p', (exp) => {
-    expect(sessionCookieMaxAge(exp, now)).toBe(0);
+  it.each([undefined, null, '1800000000', Number.NaN, Infinity])('tient le jeton pour expiré quand l’expiration est %p', (exp) => {
+    expect(secondsLeft(exp, now)).toBe(0);
   });
 });
 
@@ -52,6 +113,7 @@ describe('canOpenPage', () => {
     '/administration/planes',
     '/administration/e-learning',
     '/administration/settings',
+    '/administration/actions',
     '/administration/unknown-page',
   ];
 

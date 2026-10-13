@@ -406,7 +406,8 @@
       "plannedDistance": "Distance prévue",
       "estimatedDuration": "Durée estimée",
       "passengers": "Passagers",
-      "waypoints": "Points de route"
+      "waypoints": "Points de route",
+      "dualHint": "Vol en double commande"
     },
     "confirm": {
       "title": "Clôturer ce vol ?",
@@ -553,7 +554,8 @@
       "tooltipFlightTime": "Temps de vol",
       "byModel": "Heures par modèle d'avion",
       "byType": "Heures par type de vol",
-      "empty": "Aucun vol sur la période."
+      "empty": "Aucun vol sur la période.",
+      "byRole": "Heures par fonction"
     },
     "table": {
       "departure": "Départ",
@@ -573,7 +575,15 @@
         "title": "Votre carnet de vol est vide",
         "description": "Un vol s'inscrit ici dès qu'il est clôturé depuis son plan de vol.",
         "action": "Voir mes plans de vol"
-      }
+      },
+      "role": "Fonction"
+    },
+    "role": {
+      "PILOT_IN_COMMAND": "Commandant de bord",
+      "DUAL": "Double commande",
+      "INSTRUCTOR": "Instructeur",
+      "instructor": "avec {{name}}",
+      "student": "élève : {{name}}"
     }
   }
 }

@@ -61,3 +61,14 @@ export const GENERATE_FINANCIAL_REPORT_EXCEL = gql`
     generateCsvFinancialReport(startDate: $startDate, endDate: $endDate)
   }
 `
+
+// Money actually received from members over a period (top-ups, cash, cheques,
+// transfers) and what the payment provider gave back: not the flights charged.
+export const GET_CASH_RECEIVED = gql`
+  query GetCashReceived($startDate: DateTime!, $endDate: DateTime!) {
+    generateBudgetForecast(startDate: $startDate, endDate: $endDate) {
+      cashReceived
+      cashRefunded
+    }
+  }
+`

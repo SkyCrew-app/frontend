@@ -120,7 +120,10 @@ export function AdjustBalancePanel({ open, onOpenChange, member, onAdjusted }: A
           <RadioGroup
             aria-labelledby="adjust-balance-operation"
             value={credit ? "credit" : "debit"}
-            onValueChange={(value) => setCredit(value === "credit")}
+            onValueChange={(value) => {
+              setCredit(value === "credit")
+              setErrors((current) => ({ ...current, amount: undefined }))
+            }}
             className="grid-cols-2"
           >
             {(["credit", "debit"] as const).map((operation) => (
@@ -143,7 +146,12 @@ export function AdjustBalancePanel({ open, onOpenChange, member, onAdjusted }: A
             inputMode="decimal"
             placeholder="50,00"
             value={amount}
-            onChange={(event) => setAmount(event.target.value)}
+            onChange={(event) => {
+              setAmount(event.target.value)
+              // A refusal answers what was typed then: it goes with the next keystroke,
+              // and the new balance shows again.
+              setErrors((current) => ({ ...current, amount: undefined }))
+            }}
             aria-invalid={Boolean(errors.amount)}
             aria-describedby={errors.amount ? "adjust-balance-amount-error" : undefined}
           />
@@ -189,7 +197,10 @@ export function AdjustBalancePanel({ open, onOpenChange, member, onAdjusted }: A
             maxLength={500}
             placeholder={t("users.balance.reasonPlaceholder")}
             value={reason}
-            onChange={(event) => setReason(event.target.value)}
+            onChange={(event) => {
+              setReason(event.target.value)
+              setErrors((current) => ({ ...current, reason: undefined }))
+            }}
             aria-invalid={Boolean(errors.reason)}
             aria-describedby={errors.reason ? "adjust-balance-reason-error" : "adjust-balance-reason-hint"}
           />

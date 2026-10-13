@@ -214,10 +214,11 @@ export function IncidentDetailPanel({ incident, onClose, canFollowUp }: Incident
           {incident.aircraft.availability_status && (
             <section className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3">
               <div className="min-w-0 space-y-1">
-                <p className="flex flex-wrap items-center gap-2 text-sm font-medium">
+                {/* Not a paragraph: the badge is a block, which a paragraph cannot hold. */}
+                <div className="flex flex-wrap items-center gap-2 text-sm font-medium">
                   {t("fleet:incidents.aircraftState")}
                   <Badge variant={availability.variant}>{availability.label}</Badge>
-                </p>
+                </div>
                 {isGrounded && severity.level === "high" && (
                   <p className="text-xs text-muted-foreground">{t("fleet:incidents.groundedHint")}</p>
                 )}
@@ -266,7 +267,10 @@ export function IncidentDetailPanel({ incident, onClose, canFollowUp }: Incident
                 </>
               ) : (
                 <Fact label={t("incidents.detail.flight")}>
-                  <span className="font-normal text-muted-foreground">{t("incidents.detail.noFlight")}</span>
+                  <span className="font-normal text-muted-foreground">
+                    {/* A flight the reader may not see is not the same as no flight. */}
+                    {t(incident.hasFlight ? "incidents.detail.flightRestricted" : "incidents.detail.noFlight")}
+                  </span>
                 </Fact>
               )}
             </dl>

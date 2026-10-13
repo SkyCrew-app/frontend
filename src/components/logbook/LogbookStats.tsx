@@ -89,6 +89,11 @@ export default function LogbookStats({ stats, loading }: LogbookStatsProps) {
   }))
 
   const totalFlights = stats?.totalFlights ?? 0
+  const hoursByRole = [
+    { label: t("logbook.role.PILOT_IN_COMMAND"), hours: stats?.pilotInCommandHours ?? 0 },
+    { label: t("logbook.role.DUAL"), hours: stats?.dualHours ?? 0 },
+    { label: t("logbook.role.INSTRUCTOR"), hours: stats?.instructionGivenHours ?? 0 },
+  ].filter((entry) => entry.hours > 0)
   const hoursByType = (stats?.hoursByCategory ?? []).map((entry) => ({ ...entry, label: flightTypeLabel(entry.label) }))
 
   return (
@@ -159,6 +164,8 @@ export default function LogbookStats({ stats, loading }: LogbookStatsProps) {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <HoursBreakdown data={stats?.hoursByModel ?? []} title={t("logbook.stats.byModel")} />
             <HoursBreakdown data={hoursByType} title={t("logbook.stats.byType")} />
+            {/* Only worth a card when the hours are not all of one kind. */}
+            {hoursByRole.length > 1 && <HoursBreakdown data={hoursByRole} title={t("logbook.stats.byRole")} />}
           </div>
         </div>
       )}

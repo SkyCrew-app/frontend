@@ -1,7 +1,7 @@
 import fs from "node:fs"
 import path from "node:path"
 import type { Page } from "@playwright/test"
-import { isLocalUrl } from "./test"
+import { isLocalUrl, POLICY_VIOLATION } from "./test"
 
 // Noise that is not a defect of the page under test.
 const KNOWN_NOISE = [
@@ -23,8 +23,10 @@ const aboutThirdParty = (text: string, location: string | undefined, baseURL?: s
 export function watchConsole(page: Page, baseURL?: string) {
   const errors: string[] = []
   const keep = (text: string, location?: string) => {
-    if (KNOWN_NOISE.some((pattern) => pattern.test(text))) return
-    if (aboutThirdParty(text, location, baseURL)) return
+    if (!POLICY_VIOLATION.test(text)) {
+      if (KNOWN_NOISE.some((pattern) => pattern.test(text))) return
+      if (aboutThirdParty(text, location, baseURL)) return
+    }
     errors.push(text)
   }
   page.on("console", (message) => {
@@ -32,6 +34,25 @@ export function watchConsole(page: Page, baseURL?: string) {
   })
   page.on("pageerror", (error) => keep(`Uncaught: ${error.message}`))
   return errors
+}
+
+/** Records only what the browser refused under the Content-Security-Policy of the page. */
+export function watchSecurityPolicy(page: Page) {
+  const violations: string[] = []
+  page.on("console", (message) => {
+    if (POLICY_VIOLATION.test(message.text())) violations.push(message.text())
+  })
+  return violations
+}
+
+/** The policy a page was served with, when it is enforced and ties scripts to a nonce; a description of the defect otherwise. */
+export function policyDefect(headers: Record<string, string>): string | null {
+  if (headers["content-security-policy-report-only"]) return "la politique est seulement signalée (Report-Only)"
+  const scripts = /script-src ([^;]*)/.exec(headers["content-security-policy"] ?? "")?.[1]
+  if (!scripts) return "pas d'en-tête Content-Security-Policy avec script-src"
+  if (!scripts.includes("'nonce-")) return `les scripts ne sont pas liés à un nonce : ${scripts}`
+  if (scripts.includes("'unsafe-inline'")) return `les scripts en ligne sont autorisés : ${scripts}`
+  return null
 }
 
 // First segments of the translation keys, per namespace: "pages", "sidebar", "admin"…

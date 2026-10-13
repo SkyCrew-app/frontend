@@ -1,4 +1,13 @@
-import { courseCounterpart, courseStatus, personInitials, personName, upcomingCourses } from "../course-helpers"
+import {
+  courseBookingHref,
+  courseCounterpart,
+  courseDisplayStatus,
+  courseStatus,
+  isAwaitingConfirmation,
+  personInitials,
+  personName,
+  upcomingCourses,
+} from "../course-helpers"
 
 describe("courseStatus", () => {
   it("donne le même libellé aux deux orthographes d'un cours annulé", () => {
@@ -54,5 +63,64 @@ describe("upcomingCourses", () => {
 
   it("accepte une liste absente", () => {
     expect(upcomingCourses(undefined, now)).toEqual([])
+  })
+})
+
+describe("un cours planifié dont l'heure est passée", () => {
+  const now = new Date("2026-10-13T12:00:00")
+  const course = (overrides = {}) => ({
+    status: "SCHEDULED",
+    startTime: "2026-10-12T09:00:00",
+    endTime: "2026-10-12T10:00:00",
+    ...overrides,
+  })
+
+  it("est « à confirmer » : ni terminé d'office, ni encore planifié", () => {
+    expect(isAwaitingConfirmation(course(), now)).toBe(true)
+    expect(courseDisplayStatus(course(), now)).toEqual({ label: "À confirmer", variant: "warning" })
+  })
+
+  it("garde son statut tant qu'il n'est pas fini, ou dès que l'instructeur a tranché", () => {
+    expect(courseDisplayStatus(course({ endTime: "2026-10-13T13:00:00" }), now).label).toBe("Planifié")
+    expect(courseDisplayStatus(course({ status: "COMPLETED" }), now).label).toBe("Terminé")
+    expect(courseDisplayStatus(course({ status: "CANCELED" }), now).label).toBe("Annulé")
+    expect(isAwaitingConfirmation(course({ status: "IN_PROGRESS" }), now)).toBe(false)
+  })
+})
+
+describe("courseBookingHref", () => {
+  it("préremplit la réservation avec le jour, l'horaire, l'élève et l'instructeur du cours", () => {
+    const href = courseBookingHref({
+      id: 12,
+      startTime: new Date(2026, 9, 16, 14, 0).toISOString(),
+      endTime: new Date(2026, 9, 16, 16, 0).toISOString(),
+      instructor: { id: 3, first_name: "Marie", last_name: "Laurent" },
+      student: { id: 9, first_name: "Emma", last_name: "Girard" },
+    })
+    const [path, query] = href.split("?")
+    const params = Object.fromEntries(new URLSearchParams(query))
+
+    expect(path).toBe("/reservations")
+    expect(params).toEqual({
+      course_id: "12",
+      date: "2026-10-16",
+      start_time: "14:00",
+      end_time: "16:00",
+      flight_category: "INSTRUCTION",
+      instructor_id: "3",
+      instructor: "Marie Laurent",
+      student: "Emma Girard",
+    })
+  })
+
+  it("propose une heure pour un cours sans fin", () => {
+    const href = courseBookingHref({
+      id: 1,
+      startTime: new Date(2026, 9, 16, 9, 30).toISOString(),
+      endTime: null,
+      instructor: { id: 3 },
+      student: { id: 9 },
+    })
+    expect(new URLSearchParams(href.split("?")[1]).get("end_time")).toBe("10:30")
   })
 })

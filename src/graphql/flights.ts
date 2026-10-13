@@ -86,6 +86,11 @@ export const GET_FLIGHT_PLAN_BY_ID = gql`
         last_name
         email
       }
+      instructor {
+        id
+        first_name
+        last_name
+      }
       reservation {
         id
         start_time
@@ -94,6 +99,11 @@ export const GET_FLIGHT_PLAN_BY_ID = gql`
         status
         notes
         flight_category
+        instructor {
+          id
+          first_name
+          last_name
+        }
         aircraft {
           id
           registration_number

@@ -28,6 +28,7 @@ const ROUTE_LABEL_KEYS: Record<string, string> = {
   incidents: "pages.incidents",
   articles: "pages.articles",
   settings: "pages.settings",
+  actions: "pages.actionLog",
   checklists: "pages.checklists",
   logbook: "pages.logbook",
   profile: "pages.profile",

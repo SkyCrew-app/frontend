@@ -17,6 +17,11 @@ export const GET_FILTERED_RESERVATIONS = gql`
         first_name
         last_name
       }
+      instructor {
+        id
+        first_name
+        last_name
+      }
       aircraft {
         id
         registration_number
@@ -84,11 +89,67 @@ export const GET_USER_RESERVATIONS = gql`
         first_name
         last_name
       }
+      instructor {
+        id
+        first_name
+        last_name
+      }
       flights {
         id
         closed_at
       }
     }
+  }
+`;
+
+// The bookings the signed-in member instructs.
+export const GET_MY_INSTRUCTION_RESERVATIONS = gql`
+  query GetMyInstructionReservations {
+    myInstructionReservations {
+      id
+      start_time
+      end_time
+      purpose
+      flight_category
+      status
+      notes
+      aircraft {
+        id
+        registration_number
+      }
+      user {
+        id
+        first_name
+        last_name
+      }
+      instructor {
+        id
+        first_name
+        last_name
+      }
+      flights {
+        id
+        closed_at
+      }
+    }
+  }
+`;
+
+// Who can be chosen as the instructor of a booking: the active instructors.
+export const GET_BOOKABLE_INSTRUCTORS = gql`
+  query GetBookableInstructors {
+    bookableInstructors {
+      id
+      first_name
+      last_name
+    }
+  }
+`;
+
+// False for a member without a valid licence: they book with an instructor.
+export const GET_MAY_BOOK_WITHOUT_INSTRUCTOR = gql`
+  query GetMayBookWithoutInstructor {
+    mayBookWithoutInstructor
   }
 `;
 

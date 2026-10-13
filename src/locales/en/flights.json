@@ -406,7 +406,8 @@
       "plannedDistance": "Planned distance",
       "estimatedDuration": "Estimated duration",
       "passengers": "Passengers",
-      "waypoints": "Waypoints"
+      "waypoints": "Waypoints",
+      "dualHint": "Dual instruction flight"
     },
     "confirm": {
       "title": "Close this flight?",
@@ -553,7 +554,8 @@
       "tooltipFlightTime": "Flight time",
       "byModel": "Hours by aircraft model",
       "byType": "Hours by flight type",
-      "empty": "No flights in this period."
+      "empty": "No flights in this period.",
+      "byRole": "Hours by role"
     },
     "table": {
       "departure": "Departure",
@@ -573,7 +575,15 @@
         "title": "Your logbook is empty",
         "description": "A flight appears here as soon as it is closed from its flight plan.",
         "action": "View my flight plans"
-      }
+      },
+      "role": "Role"
+    },
+    "role": {
+      "PILOT_IN_COMMAND": "Pilot in command",
+      "DUAL": "Dual",
+      "INSTRUCTOR": "Instructor",
+      "instructor": "with {{name}}",
+      "student": "student: {{name}}"
     }
   }
 }

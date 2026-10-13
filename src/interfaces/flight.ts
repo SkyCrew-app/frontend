@@ -1,3 +1,9 @@
+export interface FlightPerson {
+  id: number | string
+  first_name?: string | null
+  last_name?: string | null
+}
+
 export interface Flight {
   id: number | string
   flight_hours: number
@@ -28,6 +34,10 @@ export interface Flight {
     last_name?: string
     email?: string
   }
+  /** The instructor on board, recorded when the flight is closed. */
+  instructor?: FlightPerson | null
+  /** On logbook entries: the part the owner of the logbook took in the flight. */
+  logbook_role?: "PILOT_IN_COMMAND" | "DUAL" | "INSTRUCTOR" | null
   reservation?: {
     id: number | string
     start_time: string
@@ -36,6 +46,7 @@ export interface Flight {
     status: string
     notes?: string
     flight_category: string
+    instructor?: FlightPerson | null
     aircraft: {
       id: number | string
       registration_number: string

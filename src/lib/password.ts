@@ -1,7 +1,8 @@
 import i18n from "@/lib/i18n"
 
-// Shortest password the API accepts.
-export const PASSWORD_MIN_LENGTH = 8
+// Shortest password the API accepts when one is chosen (activation, reset,
+// change). Signing in never checks it: older, shorter passwords keep working.
+export const PASSWORD_MIN_LENGTH = 10
 
 // What is wrong with a new password typed twice, or null when it can be sent.
 export function newPasswordError(password: string, confirmation: string): string | null {

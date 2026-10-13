@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { EmptyState } from "@/components/layout/EmptyState"
 import type { Reservation } from "@/interfaces/reservation"
 import { reservationStatus } from "@/lib/reservation-status"
+import { instructorName } from "@/components/reservation/instructor-field"
 import { formatTime } from "@/lib/format"
 import { freeRanges, type TimeRange } from "@/lib/free-ranges"
 import { dateFnsLocale } from "@/lib/i18n"
@@ -163,6 +164,7 @@ export function MobileReservationView({
             const isMine =
               currentUserId != null && reservation.user?.id != null && String(currentUserId) === String(reservation.user.id)
             const pilot = isMine ? t("common:labels.you") : reservationPilotName(reservation)
+            const instructor = instructorName(reservation.instructor)
 
             return (
               <li key={reservation.id}>
@@ -180,7 +182,13 @@ export function MobileReservationView({
                       <Badge variant={status.variant}>{status.label}</Badge>
                     </div>
                     <p className="truncate text-sm text-muted-foreground">
-                      {[reservation.purpose || t("shared.untitled"), pilot].filter(Boolean).join(" · ")}
+                      {[
+                        reservation.purpose || t("shared.untitled"),
+                        pilot,
+                        instructor && t("shared.withInstructor", { name: instructor }),
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
                     </p>
                   </div>
                   <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />

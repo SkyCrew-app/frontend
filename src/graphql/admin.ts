@@ -85,3 +85,32 @@ export const GET_RECENT_INCIDENTS = gql`
     }
   }
 `
+
+// The trace of what administrators did: one page of it, newest first.
+export const GET_ADMIN_ACTIONS = gql`
+  query GetAdminActions($memberId: Int, $action: String, $page: Int, $pageSize: Int) {
+    adminActions(memberId: $memberId, action: $action, page: $page, pageSize: $pageSize) {
+      total
+      page
+      pageSize
+      items {
+        id
+        created_at
+        actor_id
+        actor_label
+        action
+        target_type
+        target_id
+        target_label
+        summary
+      }
+    }
+  }
+`
+
+// The action names the trace can hold, for the filter.
+export const GET_ADMIN_ACTION_NAMES = gql`
+  query GetAdminActionNames {
+    adminActionNames
+  }
+`

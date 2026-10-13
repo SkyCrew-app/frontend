@@ -13,6 +13,8 @@ import { Calendar } from "@/components/ui/calendar"
 import { CalendarIcon } from "lucide-react"
 import { SidePanel } from "@/components/layout/SidePanel"
 import { flightCategoryOptions, isFlightCategory } from "@/components/reservation/flight-category"
+import { InstructorField } from "@/components/reservation/instructor-field"
+import { INSTRUCTION_CATEGORY } from "@/components/reservation/reservation-form"
 import { dateFnsLocale } from "@/lib/i18n"
 
 interface Aircraft {
@@ -28,10 +30,25 @@ export interface NewReservationValues {
   purpose: string
   notes: string
   flightCategory: string
+  /** Id of the instructor on board, "" for a flight without one. */
+  instructorId?: string
+  /** The course this booking is made for: the API takes its student and its instructor. */
+  courseId?: number
+}
+
+/** The course a booking is made for, as sent by the course screen. */
+export interface CoursePrefill {
+  id: number
+  instructorName: string
+  studentName: string
 }
 
 /** Values a reservation template (or anything else) can pre-fill. */
 export interface NewReservationPrefill {
+  /** Day of the booking, "2026-10-16". */
+  date?: string
+  instructorId?: string
+  course?: CoursePrefill
   aircraftId?: string
   startTime?: string
   endTime?: string
@@ -49,6 +66,10 @@ interface NewReservationFormProps {
   isClosedDay: (date: Date) => boolean
   onSubmit: (values: NewReservationValues) => Promise<void>
   isSubmitting: boolean
+  /** The signed-in member has no valid licence: an instructor must be chosen. */
+  instructorRequired?: boolean
+  /** The signed-in member, who cannot be their own instructor. */
+  pilotId?: number | string | null
 }
 
 const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d/
@@ -90,14 +111,23 @@ export function NewReservationForm({
   isClosedDay,
   onSubmit,
   isSubmitting,
+  instructorRequired = false,
+  pilotId,
 }: NewReservationFormProps) {
   const { t } = useTranslation("reservations")
   const nextHour = addHours(startOfHour(new Date()), 1)
+  const course = prefill?.course
+  const [instructorId, setInstructorId] = useState(prefill?.instructorId ?? "")
+  // A booking made for a course is flown with the instructor of the course.
+  const withInstructor = !!course || instructorId !== ""
 
   const [aircraftId, setAircraftId] = useState(
     prefill?.aircraftId && aircrafts.some((a) => String(a.id) === prefill.aircraftId) ? prefill.aircraftId : "",
   )
-  const [selectedDate, setSelectedDate] = useState<Date>(currentDate)
+  const [selectedDate, setSelectedDate] = useState<Date>(() => {
+    const prefilled = prefill?.date ? new Date(`${prefill.date}T00:00:00`) : null
+    return prefilled && !Number.isNaN(prefilled.getTime()) ? prefilled : currentDate
+  })
   const [dateOpen, setDateOpen] = useState(false)
   const [startTime, setStartTime] = useState(toTimeValue(prefill?.startTime, nextHour))
   const [endTime, setEndTime] = useState(toTimeValue(prefill?.endTime, addHours(nextHour, 1)))
@@ -106,7 +136,13 @@ export function NewReservationForm({
   const [flightCategory, setFlightCategory] = useState(
     prefill?.flightCategory && isFlightCategory(prefill.flightCategory) ? prefill.flightCategory : "",
   )
-  const [errors, setErrors] = useState<{ aircraft?: string; date?: string; time?: string; category?: string }>({})
+  const [errors, setErrors] = useState<{
+    aircraft?: string
+    date?: string
+    time?: string
+    category?: string
+    instructor?: string
+  }>({})
 
   const handleSubmit = async () => {
     const nextErrors: typeof errors = {}
@@ -120,7 +156,8 @@ export function NewReservationForm({
       // The API refuses it too; saying so here spares a round trip.
       nextErrors.time = t("form.errors.past")
     }
-    if (!flightCategory) nextErrors.category = t("form.errors.category")
+    if (!flightCategory && !withInstructor) nextErrors.category = t("form.errors.category")
+    if (!course && instructorRequired && !instructorId) nextErrors.instructor = t("form.errors.instructor")
 
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length > 0) return
@@ -131,7 +168,9 @@ export function NewReservationForm({
       endTime: withTime(selectedDate, endTime),
       purpose,
       notes,
-      flightCategory,
+      flightCategory: withInstructor ? INSTRUCTION_CATEGORY : flightCategory,
+      instructorId: course ? undefined : instructorId,
+      courseId: course?.id,
     })
   }
 
@@ -149,6 +188,12 @@ export function NewReservationForm({
       submitting={isSubmitting}
     >
       <div className="space-y-4">
+        {course && (
+          <p className="rounded-lg bg-muted/50 p-3 text-sm" role="note">
+            {t("form.course.note", { student: course.studentName, instructor: course.instructorName })}
+          </p>
+        )}
+
         <div className="space-y-2">
           <Label htmlFor="new-reservation-aircraft">
             {t("common:labels.aircraft")} <RequiredMark />
@@ -259,16 +304,31 @@ export function NewReservationForm({
           />
         </div>
 
+        {!course && (
+          <InstructorField
+            id="new-reservation-instructor"
+            value={instructorId}
+            onChange={(value) => {
+              setInstructorId(value)
+              setErrors((prev) => ({ ...prev, instructor: undefined, category: value ? undefined : prev.category }))
+            }}
+            required={instructorRequired}
+            error={errors.instructor}
+            excludeId={pilotId}
+          />
+        )}
+
         <div className="space-y-2">
           <Label htmlFor="new-reservation-category">
             {t("shared.flightCategory")} <RequiredMark />
           </Label>
           <Select
-            value={flightCategory || undefined}
+            value={(withInstructor ? INSTRUCTION_CATEGORY : flightCategory) || undefined}
             onValueChange={(value) => {
               setFlightCategory(value)
               setErrors((prev) => ({ ...prev, category: undefined }))
             }}
+            disabled={withInstructor}
           >
             <SelectTrigger
               id="new-reservation-category"

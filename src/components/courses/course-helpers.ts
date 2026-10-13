@@ -18,6 +18,15 @@ export interface InstructionCourse {
   status: string
   rating: number | null
   competencies: { id: number; name: string; description: string; validated: boolean }[]
+  /** The aircraft booking made for the course, if any. */
+  reservation?: CourseBooking | null
+}
+
+export interface CourseBooking {
+  id: number | string
+  start_time: string
+  end_time: string
+  aircraft?: { id?: number | string; registration_number: string } | null
 }
 
 // The API spells the cancelled status both ways depending on the query.
@@ -35,6 +44,48 @@ export function courseStatus(status: string | null | undefined): { label: string
   const variant = STATUS_VARIANTS[code]
   if (!variant) return { label: i18n.t("instruction:status.unknown"), variant: "neutral" }
   return { label: i18n.t(`instruction:status.${code}`), variant }
+}
+
+// A course still "planned" once its time has passed was neither held nor cancelled as far as
+// the club knows: the API leaves it so, and its instructor says which it was.
+export function isAwaitingConfirmation(
+  course: Pick<InstructionCourse, "status" | "startTime" | "endTime">,
+  now: Date = new Date(),
+): boolean {
+  if ((course.status ?? "").toUpperCase() !== "SCHEDULED") return false
+  return new Date(course.endTime ?? course.startTime).getTime() < now.getTime()
+}
+
+// The status as shown on a course: its own, or "to confirm" for a planned course whose time passed.
+export function courseDisplayStatus(
+  course: Pick<InstructionCourse, "status" | "startTime" | "endTime">,
+  now: Date = new Date(),
+): { label: string; variant: BadgeVariant } {
+  return isAwaitingConfirmation(course, now)
+    ? { label: i18n.t("instruction:status.toConfirm"), variant: "warning" }
+    : courseStatus(course.status)
+}
+
+// The booking form, pre-filled for the aircraft of a course: its day, its hours, its student and
+// its instructor. The API checks all of it again when the booking is made.
+export function courseBookingHref(
+  course: Pick<InstructionCourse, "id" | "startTime" | "endTime" | "instructor" | "student">,
+): string {
+  const pad = (value: number) => String(value).padStart(2, "0")
+  const start = new Date(course.startTime)
+  const end = new Date(course.endTime ?? start.getTime() + 60 * 60 * 1000)
+  const time = (date: Date) => `${pad(date.getHours())}:${pad(date.getMinutes())}`
+  const params = new URLSearchParams({
+    course_id: String(course.id),
+    date: `${start.getFullYear()}-${pad(start.getMonth() + 1)}-${pad(start.getDate())}`,
+    start_time: time(start),
+    end_time: time(end),
+    flight_category: "INSTRUCTION",
+    instructor_id: String(course.instructor.id),
+    instructor: personName(course.instructor),
+    student: personName(course.student),
+  })
+  return `/reservations?${params.toString()}`
 }
 
 // The statuses an instructor can give a course, as the API names them.

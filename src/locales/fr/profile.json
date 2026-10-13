@@ -70,7 +70,7 @@
     "current": "Mot de passe actuel",
     "new": "Nouveau mot de passe",
     "confirm": "Confirmer le nouveau mot de passe",
-    "hint": "8 caractères au minimum.",
+    "hint": "{{min}} caractères au minimum.",
     "show": "Afficher le mot de passe",
     "hide": "Masquer le mot de passe",
     "submit": "Changer le mot de passe",
@@ -78,7 +78,7 @@
     "errors": {
       "currentRequired": "Le mot de passe actuel est requis.",
       "newRequired": "Le nouveau mot de passe est requis.",
-      "newTooShort": "Le nouveau mot de passe doit contenir au moins 8 caractères.",
+      "newTooShort": "Le nouveau mot de passe doit contenir au moins {{min}} caractères.",
       "confirmRequired": "La confirmation du mot de passe est requise.",
       "mismatch": "Les mots de passe ne correspondent pas."
     },
@@ -268,7 +268,7 @@
     "emailRequired": "L'adresse e-mail est requise",
     "emailInvalid": "Adresse e-mail invalide",
     "passwordRequired": "Le mot de passe est requis",
-    "passwordTooShort": "Le mot de passe doit contenir au moins 8 caractères",
+    "passwordTooShort": "Le mot de passe doit contenir au moins {{min}} caractères",
     "passwordUppercase": "Le mot de passe doit contenir au moins une majuscule",
     "passwordLowercase": "Le mot de passe doit contenir au moins une minuscule",
     "passwordDigit": "Le mot de passe doit contenir au moins un chiffre",
@@ -289,5 +289,27 @@
     "registrationFormat": "Format attendu : F-XXXX",
     "modelRequired": "Le modèle est requis",
     "hourlyCostNegative": "Le coût horaire doit être positif"
+  },
+  "invoices": {
+    "title": "Mes factures",
+    "description": "Une facture pour chaque rechargement et chaque réservation payée.",
+    "loading": "Chargement des factures",
+    "number": "Numéro",
+    "date": "Date",
+    "subject": "Objet",
+    "amount": "Montant",
+    "subjectBooking": "Réservation",
+    "subjectTopUp": "Rechargement du compte",
+    "subjectOther": "Facture",
+    "download": "Télécharger la facture {{number}}",
+    "empty": {
+      "title": "Aucune facture",
+      "description": "Vos factures apparaîtront ici après un rechargement ou une réservation."
+    },
+    "showMore": "Afficher les factures plus anciennes",
+    "downloadFailed": {
+      "title": "La facture n'a pas pu être téléchargée",
+      "description": "Réessayez dans un instant."
+    }
   }
 }

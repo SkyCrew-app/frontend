@@ -1,10 +1,12 @@
 import { z } from "zod"
 import i18n from "@/lib/i18n"
 import { isValidPhone } from "@/lib/phone"
+import { PASSWORD_MIN_LENGTH } from "@/lib/password"
 
 // The schemas are built once at module load, before the language is known:
 // every message is therefore resolved when a value is validated.
-const text = (key: string) => ({ message: i18n.t(`profile:validation.${key}`) })
+// `min` is the one value a message may quote: the shortest password accepted.
+const text = (key: string) => ({ message: i18n.t(`profile:validation.${key}`, { min: PASSWORD_MIN_LENGTH }) })
 
 // One message per kind of issue raised by the checks of a field.
 const messages =
@@ -49,7 +51,7 @@ export const resetPasswordSchema = z
     // them apart, so they are refinements, still all reported, in this order.
     password: z
       .string({ errorMap: messages({ too_small: "passwordTooShort" }) })
-      .min(8)
+      .min(PASSWORD_MIN_LENGTH)
       .refine((value) => /[A-Z]/.test(value), () => text("passwordUppercase"))
       .refine((value) => /[a-z]/.test(value), () => text("passwordLowercase"))
       .refine((value) => /[0-9]/.test(value), () => text("passwordDigit")),

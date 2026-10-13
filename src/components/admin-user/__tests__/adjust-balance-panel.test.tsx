@@ -80,6 +80,23 @@ describe("Créditer ou débiter le compte d'un membre", () => {
     expect(mockToast).not.toHaveBeenCalled()
   })
 
+  it("retire le refus dès que le champ est corrigé et montre de nouveau le futur solde", async () => {
+    renderPanel([])
+
+    fill("-20", "  ")
+    fireEvent.click(screen.getByRole("button", { name: "Créditer" }))
+    await screen.findByText("Indiquez un montant positif, avec deux décimales au plus.")
+
+    fireEvent.change(screen.getByLabelText(/Montant/), { target: { value: "20" } })
+    expect(screen.queryByText("Indiquez un montant positif, avec deux décimales au plus.")).not.toBeInTheDocument()
+    expect(screen.getByText(/Nouveau solde : 100,00\s€/)).toBeInTheDocument()
+    // The other field keeps its own refusal until it is corrected too.
+    expect(screen.getByText("Indiquez le motif de l'opération.")).toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText(/Motif/), { target: { value: "Chèque n° 1234" } })
+    expect(screen.queryByText("Indiquez le motif de l'opération.")).not.toBeInTheDocument()
+  })
+
   it("crédite le compte avec le mode de règlement et le motif", async () => {
     const { onAdjusted, onOpenChange } = renderPanel([
       adjustment(

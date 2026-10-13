@@ -5,7 +5,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useTranslation } from "react-i18next"
-import { BookmarkPlus, Loader2, Plus } from "lucide-react"
+import { BookmarkPlus, GraduationCap, Loader2, Plus } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -22,6 +22,7 @@ import {
 import { useToast } from "@/components/hooks/use-toast"
 import {
   GET_USER_RESERVATIONS,
+  GET_MY_INSTRUCTION_RESERVATIONS,
   UPDATE_RESERVATION,
   DELETE_RESERVATION,
   GET_MY_TEMPLATES,
@@ -35,6 +36,9 @@ import { PageHeader } from "@/components/layout/PageHeader"
 import { ErrorState } from "@/components/layout/ErrorState"
 import { EmptyState as SharedEmptyState } from "@/components/layout/EmptyState"
 import { ReservationCard } from "@/components/my-reservation/reservation-card"
+import { InstructionBookingCard } from "@/components/my-reservation/instruction-booking-card"
+import { useInstructorRequired } from "@/components/reservation/instructor-field"
+import { isInstructor } from "@/lib/roles"
 import { ReservationFilters, type ReservationSortOrder } from "@/components/my-reservation/reservation-filters"
 import { ReservationEditDialog } from "@/components/my-reservation/reservation-edit-dialog"
 import { EmptyState } from "@/components/my-reservation/empty-state"
@@ -73,6 +77,13 @@ export default function MyReservations() {
     variables: { userId },
     skip: !userId,
   })
+
+  // The bookings the member instructs: an instructor's own tab.
+  const { data: instructionData } = useQuery<{ myInstructionReservations: Reservation[] }>(
+    GET_MY_INSTRUCTION_RESERVATIONS,
+    { skip: !userId },
+  )
+  const instructorRequired = useInstructorRequired()
 
   const [updateReservation] = useMutation(UPDATE_RESERVATION)
   // Same mutation as the calendar: the API checks that the booking is the caller's.
@@ -129,7 +140,7 @@ export default function MyReservations() {
     setIsEditDialogOpen(true)
   }
 
-  const handleSaveEdit = async (purpose: string, notes: string, flightCategory: string) => {
+  const handleSaveEdit = async (purpose: string, notes: string, flightCategory: string, instructorId: string) => {
     if (!selectedReservation) return
 
     try {
@@ -140,6 +151,10 @@ export default function MyReservations() {
             purpose,
             notes,
             flight_category: flightCategory,
+            // Sent only when it changes: null takes the instructor off the booking.
+            ...(instructorId !== String(selectedReservation.instructor?.id ?? "")
+              ? { instructor_id: instructorId ? Number(instructorId) : null }
+              : {}),
           },
         },
         refetchQueries: [{ query: GET_USER_RESERVATIONS, variables: { userId } }],
@@ -169,7 +184,10 @@ export default function MyReservations() {
     try {
       await deleteReservation({
         variables: { id: Number(reservationToCancel.id) },
-        refetchQueries: [{ query: GET_USER_RESERVATIONS, variables: { userId } }],
+        refetchQueries: [
+          { query: GET_USER_RESERVATIONS, variables: { userId } },
+          ...(instructedReservations.length > 0 ? [{ query: GET_MY_INSTRUCTION_RESERVATIONS }] : []),
+        ],
         awaitRefetchQueries: true,
       })
       toast({
@@ -186,6 +204,21 @@ export default function MyReservations() {
       setReservationToCancel(null)
     }
   }
+
+  // Upcoming flights first (the nearest on top), then the past ones.
+  const now = Date.now()
+  const instructedReservations = [...(instructionData?.myInstructionReservations ?? [])].sort((a, b) => {
+    const [startA, startB] = [new Date(a.start_time).getTime(), new Date(b.start_time).getTime()]
+    const [pastA, pastB] = [new Date(a.end_time).getTime() < now, new Date(b.end_time).getTime() < now]
+    if (pastA !== pastB) return pastA ? 1 : -1
+    return pastA ? startB - startA : startA - startB
+  })
+  const showInstructionTab = isInstructor(userData) || instructedReservations.length > 0
+  const declining =
+    reservationToCancel !== null &&
+    userId != null &&
+    String(reservationToCancel.instructor?.id ?? "") === String(userId) &&
+    String(reservationToCancel.user?.id ?? "") !== String(userId)
 
   const templates: ReservationTemplate[] = templatesData?.myReservationTemplates ?? []
   const aircraftList = aircraftData?.getAircrafts ?? []
@@ -341,6 +374,13 @@ export default function MyReservations() {
       <Tabs defaultValue="reservations" className="space-y-6">
         <TabsList>
           <TabsTrigger value="reservations">{t("my.tabs.reservations")}</TabsTrigger>
+          {showInstructionTab && (
+            <TabsTrigger value="instruction">
+              {instructedReservations.length > 0
+                ? t("my.tabs.instructionWithTotal", { total: instructedReservations.length })
+                : t("my.tabs.instruction")}
+            </TabsTrigger>
+          )}
           <TabsTrigger value="templates">
             {templates.length > 0 ? t("my.tabs.templatesWithTotal", { total: templates.length }) : t("my.tabs.templates")}
           </TabsTrigger>
@@ -349,6 +389,31 @@ export default function MyReservations() {
         <TabsContent value="reservations" className="mt-0 space-y-6">
           {renderReservations()}
         </TabsContent>
+
+        {showInstructionTab && (
+          <TabsContent value="instruction" className="mt-0 space-y-6">
+            {instructedReservations.length > 0 ? (
+              <>
+                <p className="text-sm text-muted-foreground">{t("my.instruction.intro")}</p>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  {instructedReservations.map((reservation) => (
+                    <InstructionBookingCard
+                      key={reservation.id}
+                      reservation={reservation}
+                      onDecline={setReservationToCancel}
+                    />
+                  ))}
+                </div>
+              </>
+            ) : (
+              <SharedEmptyState
+                icon={GraduationCap}
+                title={t("my.instruction.empty.title")}
+                description={t("my.instruction.empty.description")}
+              />
+            )}
+          </TabsContent>
+        )}
 
         <TabsContent value="templates" className="mt-0 space-y-6">
           {templates.length > 0 ? (
@@ -396,6 +461,7 @@ export default function MyReservations() {
         reservation={selectedReservation}
         onSave={handleSaveEdit}
         onCancelReservation={handleAskCancel}
+        instructorRequired={instructorRequired}
       />
 
       <AlertDialog
@@ -404,10 +470,12 @@ export default function MyReservations() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("my.cancelConfirm.title")}</AlertDialogTitle>
+            <AlertDialogTitle>
+              {declining ? t("detail.declineConfirm.title") : t("my.cancelConfirm.title")}
+            </AlertDialogTitle>
             <AlertDialogDescription>
               {reservationToCancel &&
-                t("my.cancelConfirm.description", {
+                t(declining ? "detail.declineConfirm.description" : "my.cancelConfirm.description", {
                   aircraft: reservationToCancel.aircraft.registration_number,
                   date: formatDate(reservationToCancel.start_time),
                   start: formatTime(reservationToCancel.start_time),
@@ -426,7 +494,7 @@ export default function MyReservations() {
               }}
             >
               {cancellingReservation && <Loader2 className="h-4 w-4 animate-spin" />}
-              {t("my.cancelConfirm.action")}
+              {declining ? t("detail.declineConfirm.action") : t("my.cancelConfirm.action")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

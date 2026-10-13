@@ -1,5 +1,53 @@
-import { test, expect, signIn, toast } from "./support/test"
+import type { BrowserContext, Page } from "@playwright/test"
+import { test, expect, signIn, toast, asRole } from "./support/test"
 import { ACCOUNTS, sessionFile } from "./support/accounts"
+import { policyDefect, watchSecurityPolicy } from "./support/page-health"
+
+const hasSession = async (context: BrowserContext) => (await context.cookies()).some((cookie) => cookie.name === "token")
+
+/**
+ * Watches what the frontend answers: the session cookie belongs to the API alone (set at
+ * sign-in, cleared at sign-out). Returns the addresses of the frontend that wrote it anyway.
+ */
+function watchSessionCookieWrites(page: Page) {
+  const pending: Promise<void>[] = []
+  const written: string[] = []
+  page.on("response", (response) => {
+    // The API itself, at its own address or behind the address of the site.
+    if (new URL(response.url()).pathname.endsWith("/graphql")) return
+    pending.push(
+      response
+        .headerValue("set-cookie")
+        .then((header) => {
+          if (header && /(^|[\n,]\s*)token=/.test(header)) written.push(response.url())
+        })
+        .catch(() => undefined),
+    )
+  })
+  return async () => {
+    await Promise.all(pending)
+    return written
+  }
+}
+
+/** Signs out from the side bar and checks that the session is gone, and stays gone. */
+async function signOutForGood(page: Page) {
+  const cookieWrites = watchSessionCookieWrites(page)
+  await page.getByRole("button", { name: "Se déconnecter" }).click()
+  await expect(page).toHaveURL(/\/$/)
+  await expect(page.getByRole("button", { name: "Se connecter" })).toBeVisible()
+
+  // Answers still on their way when the member clicked (a production build prefetches the
+  // links of the menu) have all arrived: none of them brought the session back.
+  await page.waitForLoadState("networkidle")
+  expect(await hasSession(page.context()), "cookie de session après la déconnexion").toBe(false)
+
+  // A protected page sends back to the "not connected" page.
+  await page.goto("/dashboard")
+  await expect(page).toHaveURL(/\/system\/notconnected$/)
+  expect(await hasSession(page.context()), "cookie de session après une navigation").toBe(false)
+  expect(await cookieWrites(), "réponses du frontend qui écrivent le cookie de session").toEqual([])
+}
 
 test.describe("Connexion", () => {
   test("un membre se connecte puis se déconnecte", async ({ page }) => {
@@ -7,13 +55,51 @@ test.describe("Connexion", () => {
     await expect(page).toHaveURL(/\/dashboard$/)
     await expect(page.getByRole("heading", { level: 1, name: "Bienvenue, Jean" })).toBeVisible()
 
-    await page.getByRole("button", { name: "Se déconnecter" }).click()
-    await expect(page).toHaveURL(/\/$/)
-    await expect(page.getByRole("button", { name: "Se connecter" })).toBeVisible()
+    expect(await hasSession(page.context())).toBe(true)
 
-    // The session is really gone: a protected page sends back to the "not connected" page.
-    await page.goto("/dashboard")
-    await expect(page).toHaveURL(/\/system\/notconnected$/)
+    await signOutForGood(page)
+  })
+
+  // The frontend used to send the session cookie back with every page it served: the answer
+  // to a link prefetch, arriving after the API had cleared the cookie, signed the member in
+  // again. Seen on a production build only (a development server does not prefetch), and not
+  // every time: hence several sign-outs, each as soon as the page shows, links still loading.
+  // The API keeps no list of sessions, so the saved session opens a new one each time without
+  // signing in again (sign-ins are limited per minute).
+  test("la déconnexion tient, plusieurs fois de suite, pendant le préchargement des liens", async ({ browser }) => {
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      await test.step(`déconnexion ${attempt}`, () =>
+        asRole(browser, "pilot", async (page) => {
+          await page.goto("/dashboard", { waitUntil: "commit" })
+          await signOutForGood(page)
+        }),
+      )
+    }
+  })
+
+  // Ordinary navigation keeps the session as the API set it at sign-in.
+  test("un membre connecté le reste en naviguant", async ({ browser }) => {
+    await asRole(browser, "pilot", async (page) => {
+      const cookieWrites = watchSessionCookieWrites(page)
+      const sidebar = page.getByRole("navigation", { name: "Navigation principale" })
+      await page.goto("/dashboard")
+      const session = (await page.context().cookies()).find((cookie) => cookie.name === "token")
+      expect(session, "cookie de session").toBeTruthy()
+
+      for (const [link, url] of [["Carnet de vol", /\/logbook$/], ["Tableau de bord", /\/dashboard$/]] as const) {
+        await sidebar.getByRole("link", { name: link, exact: true }).click()
+        await expect(page).toHaveURL(url)
+        await expect(sidebar).toContainText(ACCOUNTS.pilot.name)
+      }
+      await page.reload()
+      await expect(sidebar).toContainText(ACCOUNTS.pilot.name)
+      await page.waitForLoadState("networkidle")
+
+      // Same cookie, same expiry: nothing rewrote it on the way.
+      const after = (await page.context().cookies()).find((cookie) => cookie.name === "token")
+      expect(after).toEqual(session)
+      expect(await cookieWrites(), "réponses du frontend qui écrivent le cookie de session").toEqual([])
+    })
   })
 
   test("un mot de passe erroné affiche l'erreur", async ({ page }) => {
@@ -22,6 +108,22 @@ test.describe("Connexion", () => {
     await expect(page.getByText("Identifiants incorrects.").first()).toBeVisible()
     await expect(page).toHaveURL(/\/$/)
   })
+})
+
+test.describe("Pages ouvertes sans session", () => {
+  for (const path of ["/", "/auth/forgot-password", "/system/notconnected"]) {
+    test(`${path} respecte la politique de sécurité du contenu`, async ({ page }) => {
+      const violations = watchSecurityPolicy(page)
+
+      const response = await page.goto(path)
+      expect(policyDefect(response?.headers() ?? {}), "politique de sécurité du contenu").toBeNull()
+      // The page runs its scripts: nothing would show without them.
+      await expect(page.getByRole("heading", { level: 1 })).toBeVisible()
+      await page.waitForLoadState("networkidle")
+
+      expect(violations, "refus du navigateur").toEqual([])
+    })
+  }
 })
 
 test.describe("Droits d'un pilote", () => {

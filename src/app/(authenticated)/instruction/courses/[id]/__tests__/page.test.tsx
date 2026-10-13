@@ -36,6 +36,7 @@ const course = (overrides = {}) => ({
   comments: [
     { id: 1, content: "Bonne séance.", creationDate: "2026-10-12T10:00:00.000Z", author: { id: 2, first_name: "Paul" } },
   ],
+  reservation: null,
   ...overrides,
 })
 
@@ -68,6 +69,55 @@ describe("Détail d'un cours — élève", () => {
     expect(screen.getByRole("link", { name: "Mes cours" })).toHaveAttribute("href", "/instruction/courses")
     expect(within(card("Informations")).getByText("Élève (vous)")).toBeInTheDocument()
     expect(within(card("Informations")).getByText("Paul Durand")).toBeInTheDocument()
+  })
+
+  it("montre l'avion réservé pour le cours", async () => {
+    renderPage([
+      courseMock({
+        reservation: {
+          id: 30,
+          start_time: "2026-10-12T08:00:00",
+          end_time: "2026-10-12T10:00:00",
+          aircraft: { id: 1, registration_number: "F-GAER" },
+        },
+      }),
+    ])
+    await screen.findByText("Informations")
+
+    expect(within(card("Informations")).getByText("F-GAER")).toBeInTheDocument()
+    expect(within(card("Informations")).getByText("08:00 – 10:00")).toBeInTheDocument()
+    expect(screen.queryByRole("link", { name: "Réserver un avion" })).not.toBeInTheDocument()
+  })
+
+  it("dit qu'un cours à venir n'a pas d'avion et propose de le réserver, prérempli", async () => {
+    renderPage([
+      courseMock({
+        status: "SCHEDULED",
+        startTime: "2031-05-20T08:00:00.000Z",
+        endTime: "2031-05-20T10:00:00.000Z",
+        reservation: null,
+      }),
+    ])
+    await screen.findByText("Informations")
+
+    expect(within(card("Informations")).getByText("Aucun avion réservé")).toBeInTheDocument()
+    const link = screen.getByRole("link", { name: "Réserver un avion" })
+    const params = new URLSearchParams(link.getAttribute("href")!.split("?")[1])
+    expect(link.getAttribute("href")).toMatch(/^\/reservations\?/)
+    expect(params.get("course_id")).toBe("7")
+    expect(params.get("student")).toBe("Léa Martin")
+    expect(params.get("instructor")).toBe("Paul Durand")
+  })
+
+  it("signale un cours planifié dont l'heure est passée, sans le dire terminé", async () => {
+    renderPage([courseMock({ status: "SCHEDULED", endTime: "2026-10-12T10:00:00.000Z", reservation: null })])
+    await screen.findByText("Informations")
+
+    expect(screen.getByText("À confirmer")).toBeInTheDocument()
+    expect(screen.queryByText("Terminé")).not.toBeInTheDocument()
+    expect(screen.getByText(/Votre instructeur doit encore indiquer s'il a eu lieu/)).toBeInTheDocument()
+    // Nothing to book for a course whose time has passed.
+    expect(screen.queryByRole("link", { name: "Réserver un avion" })).not.toBeInTheDocument()
   })
 
   it("laisse l'élève lire les compétences sans pouvoir les valider ni en ajouter", async () => {

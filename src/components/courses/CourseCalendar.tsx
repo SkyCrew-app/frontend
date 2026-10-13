@@ -16,7 +16,7 @@ import {
   counterpartRoleLabel,
   courseCounterpart,
   courseHours,
-  courseStatus,
+  courseDisplayStatus,
   personName,
   type InstructionCourse,
 } from "./course-helpers"
@@ -86,7 +86,7 @@ export default function CourseCalendar({ courses, userId }: CourseCalendarProps)
             <ul className="divide-y">
               {coursesOfDay.map((course) => {
                 const { person, role } = courseCounterpart(course, userId)
-                const status = courseStatus(course.status)
+                const status = courseDisplayStatus(course)
                 const validated = course.competencies.filter((competency) => competency.validated).length
                 return (
                   <li key={course.id}>
