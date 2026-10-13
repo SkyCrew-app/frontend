@@ -14,7 +14,10 @@ export default function Providers({ children }: { children: ReactNode }) {
   const [languageReady, setLanguageReady] = useState(false);
 
   useEffect(() => {
-    applyLanguage(preferredLanguage()).finally(() => setLanguageReady(true));
+    // Whatever happens, the page must show: French stays if the language cannot be applied.
+    applyLanguage(preferredLanguage())
+      .catch(() => undefined)
+      .then(() => setLanguageReady(true));
   }, []);
 
   return (
