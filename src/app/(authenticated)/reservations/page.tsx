@@ -39,6 +39,7 @@ import {
 import { LEGEND_STATUSES, reservationDotClass } from "@/components/reservation/status-style"
 import { reservationStatus } from "@/lib/reservation-status"
 import { formatDate, formatTime } from "@/lib/format"
+import type { TimeRange } from "@/lib/free-ranges"
 import i18n, { dateFnsLocale } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 import { useMediaQuery } from "@/hooks/use-media-query"
@@ -264,6 +265,20 @@ export default function ReservationCalendar() {
   const handleKeyboardSelect = (aircraftId: number, index: number) => {
     setDrag({ aircraftId, anchor: index, current: index })
     finishSelection(aircraftId, index, index)
+  }
+
+  // A free range tapped on a phone opens the full form on that aircraft, for the first
+  // hour of the range: booking the whole free day by mistake would be too easy.
+  const handleBookRange = (aircraftId: number, range: TimeRange) => {
+    const oneHourLater = new Date(range.start.getTime() + 60 * 60 * 1000)
+    const end = oneHourLater < range.end ? oneHourLater : range.end
+    setPrefill({
+      aircraftId: String(aircraftId),
+      startTime: format(range.start, "HH:mm"),
+      endTime: format(end, "HH:mm"),
+    })
+    setNewFormKey((key) => key + 1)
+    setIsNewDialogOpen(true)
   }
 
   const handleReservationClick = (reservation: Reservation) => {
@@ -545,6 +560,9 @@ export default function ReservationCalendar() {
           setSelectedAircraft={setMobileAircraftFilter}
           currentUserId={userId}
           onViewReservation={handleReservationClick}
+          opening={slots[0] ?? null}
+          closing={closingTime}
+          onBookRange={handleBookRange}
         />
       )
     }

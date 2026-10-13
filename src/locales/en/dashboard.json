@@ -69,7 +69,8 @@
     "wind": "Wind",
     "windDirection": "Direction {{value}}",
     "sun": "Sun",
-    "sunHint": "Sunrise – sunset (Paris time)",
+    "sunHintAerodrome": "Sunrise – sunset (aerodrome local time)",
+    "sunHintBrowser": "Sunrise – sunset (your local time)",
     "condition": {
       "sunny": "Sunny",
       "partlyCloudy": "Sunny spells",

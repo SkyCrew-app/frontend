@@ -7,13 +7,27 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { SidePanel } from "@/components/layout/SidePanel"
 import { UserPlus } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { roleLabel } from "@/lib/settings"
+import type { Role } from "@/interfaces/user"
 
 interface CreateUserFormProps {
   isOpen: boolean
   onOpenChange: (open: boolean) => void
   saving?: boolean
-  onSubmit: (userData: { first_name: string; last_name: string; email: string; date_of_birth: string }) => void
+  /** Roles the administrator can give; without them the API gives the default role (pilot). */
+  roles?: Role[]
+  onSubmit: (userData: {
+    first_name: string
+    last_name: string
+    email: string
+    date_of_birth: string
+    roleId?: number
+  }) => void
 }
+
+// The role a new member gets unless the administrator picks another one.
+const DEFAULT_ROLE = "Pilote"
 
 type Field = "first_name" | "last_name" | "email" | "date_of_birth"
 type Values = Record<Field, string>
@@ -30,17 +44,20 @@ const Required = () => (
 const FieldError = ({ message }: { message?: string }) =>
   message ? <p className="text-sm text-destructive">{message}</p> : null
 
-export function CreateUserForm({ isOpen, onOpenChange, saving = false, onSubmit }: CreateUserFormProps) {
+export function CreateUserForm({ isOpen, onOpenChange, saving = false, roles = [], onSubmit }: CreateUserFormProps) {
   const { t } = useTranslation("administration")
   const [values, setValues] = useState<Values>(EMPTY)
   const [errors, setErrors] = useState<Errors>({})
+  const [roleId, setRoleId] = useState("")
+  const defaultRoleId = roles.find((role) => role.role_name === DEFAULT_ROLE)?.id.toString() ?? ""
 
   // Start from a clean form each time the panel opens.
   useEffect(() => {
     if (!isOpen) return
     setValues(EMPTY)
     setErrors({})
-  }, [isOpen])
+    setRoleId(defaultRoleId)
+  }, [isOpen, defaultRoleId])
 
   const setField = (field: Field, value: string) => {
     setValues((current) => ({ ...current, [field]: value }))
@@ -64,7 +81,13 @@ export function CreateUserForm({ isOpen, onOpenChange, saving = false, onSubmit 
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length > 0) return
 
-    onSubmit({ first_name, last_name, email, date_of_birth: values.date_of_birth })
+    onSubmit({
+      first_name,
+      last_name,
+      email,
+      date_of_birth: values.date_of_birth,
+      roleId: roleId ? Number(roleId) : undefined,
+    })
   }
 
   return (
@@ -156,6 +179,24 @@ export function CreateUserForm({ isOpen, onOpenChange, saving = false, onSubmit 
             />
             <FieldError message={errors.date_of_birth} />
           </div>
+          {roles.length > 0 && (
+            <div className="space-y-2">
+              <Label htmlFor="create_role">{t("users.fields.role")}</Label>
+              <Select value={roleId} onValueChange={setRoleId}>
+                <SelectTrigger id="create_role">
+                  <SelectValue placeholder={t("users.edit.chooseRole")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {roles.map((role) => (
+                    <SelectItem key={role.id} value={role.id.toString()}>
+                      {roleLabel(role.role_name)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">{t("users.edit.roleHint")}</p>
+            </div>
+          )}
         </div>
       </SidePanel>
     </>

@@ -69,7 +69,8 @@
     "wind": "Vent",
     "windDirection": "Direction {{value}}",
     "sun": "Soleil",
-    "sunHint": "Lever – coucher (heure de Paris)",
+    "sunHintAerodrome": "Lever – coucher (heure locale de l'aérodrome)",
+    "sunHintBrowser": "Lever – coucher (votre heure locale)",
     "condition": {
       "sunny": "Ensoleillé",
       "partlyCloudy": "Éclaircies",

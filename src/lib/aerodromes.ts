@@ -7,6 +7,8 @@ export interface AerodromeSummary {
   name: string
   latitude?: number | null
   longitude?: number | null
+  /** IANA name ("Europe/Paris"), when the directory knows it. */
+  timezone?: string | null
 }
 
 const ICAO = /^[A-Za-z]{4}$/

@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
 import { getBackendBaseUrl } from "@/lib/runtime-config"
 import { getAge } from "@/lib/age"
+import { isValidPhone, normalisePhone } from "@/lib/phone"
 import { FormField } from "./form-field"
 
 const toFormData = (userData: any) => ({
@@ -171,7 +172,7 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
     if (!formData.phone_number) {
       newErrors.phone_number = t("personal.errors.phoneRequired")
       valid = false
-    } else if (!/^(?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4}$/.test(formData.phone_number)) {
+    } else if (!isValidPhone(formData.phone_number)) {
       valid = false
       newErrors.phone_number = t("personal.errors.phoneInvalid")
     }
@@ -224,7 +225,7 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
             first_name: formData.first_name,
             last_name: formData.last_name,
             email: formData.email,
-            phone_number: formData.phone_number,
+            phone_number: normalisePhone(formData.phone_number),
             address: formData.address,
             date_of_birth: formData.date_of_birth ? new Date(formData.date_of_birth) : null,
           },
@@ -321,7 +322,7 @@ export function ProfileForm({ userData, userId, refetch }: ProfileFormProps) {
                 ref={fileInputRef}
                 id="picture"
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp"
                 onChange={handleImageChange}
                 className="hidden"
                 aria-label={t("personal.photo.alt")}

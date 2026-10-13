@@ -82,6 +82,49 @@ describe("EditUserForm", () => {
     })
   })
 
+  const renderEdit = (onSubmit = jest.fn()) => {
+    render(
+      <EditUserForm
+        isOpen
+        onOpenChange={jest.fn()}
+        user={user}
+        roles={[{ id: 2, role_name: "Pilote" }]}
+        selectedRole="2"
+        onRoleChange={jest.fn()}
+        onSubmit={onSubmit}
+      />,
+    )
+    return onSubmit
+  }
+
+  it("accepts an international phone number and saves it without separators", () => {
+    const onSubmit = renderEdit()
+
+    fireEvent.change(screen.getByLabelText("Téléphone"), { target: { value: "+44 20 7946-0958" } })
+    fireEvent.click(screen.getByRole("button", { name: "Enregistrer" }))
+
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ phone_number: "+442079460958" }))
+  })
+
+  it("refuses a phone number that is not one, under the field", () => {
+    const onSubmit = renderEdit()
+
+    fireEvent.change(screen.getByLabelText("Téléphone"), { target: { value: "12 34" } })
+    fireEvent.click(screen.getByRole("button", { name: "Enregistrer" }))
+
+    expect(screen.getByText("Ce numéro de téléphone n'est pas valide.")).toBeInTheDocument()
+    expect(onSubmit).not.toHaveBeenCalled()
+  })
+
+  it("lets a member have no phone number", () => {
+    const onSubmit = renderEdit()
+
+    fireEvent.change(screen.getByLabelText("Téléphone"), { target: { value: "" } })
+    fireEvent.click(screen.getByRole("button", { name: "Enregistrer" }))
+
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ phone_number: "" }))
+  })
+
   it("does not crash on a member without a birth date", () => {
     render(
       <EditUserForm
@@ -182,6 +225,28 @@ describe("CreateUserForm", () => {
         date_of_birth: "1990-05-12",
       }),
     )
+  })
+
+  it("proposes the pilot role by default and sends the role chosen", async () => {
+    const onSubmit = jest.fn()
+    const roles = [
+      { id: 1, role_name: "Administrateur" },
+      { id: 2, role_name: "Pilote" },
+      { id: 3, role_name: "Instructeur" },
+    ]
+    render(<CreateUserForm isOpen onOpenChange={jest.fn()} roles={roles as never} onSubmit={onSubmit} />)
+
+    // Nobody becomes an administrator without the administrator choosing it.
+    expect(screen.getByLabelText("Rôle")).toHaveValue("2")
+
+    fireEvent.change(screen.getByLabelText(/^Prénom/), { target: { value: "Camille" } })
+    fireEvent.change(screen.getByLabelText(/^Nom/), { target: { value: "Martin" } })
+    fireEvent.change(screen.getByLabelText(/^Adresse e-mail/), { target: { value: "camille@exemple.fr" } })
+    fireEvent.change(screen.getByLabelText(/^Date de naissance/), { target: { value: "1990-05-12" } })
+    fireEvent.change(screen.getByLabelText("Rôle"), { target: { value: "3" } })
+    fireEvent.click(screen.getByRole("button", { name: "Ajouter le membre" }))
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ roleId: 3 })))
   })
 })
 

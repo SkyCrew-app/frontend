@@ -341,6 +341,34 @@ describe('ProfilePage Component', () => {
     expect(screen.getByLabelText('Numéro de téléphone')).toHaveValue('0611223344');
   });
 
+  test('accepte un numéro international et l\'enregistre sans séparateurs', async () => {
+    const variableMatcher = jest.fn(() => true);
+
+    renderPage([
+      meMock,
+      userMock(() => baseUser),
+      {
+        request: { query: UPDATE_USER },
+        variableMatcher,
+        result: { data: { updateUser: { ...baseUser, phone_number: '+442079460958' } } },
+      },
+      userMock(() => ({ ...baseUser, phone_number: '+442079460958' })),
+    ]);
+
+    await waitForProfile();
+
+    fireEvent.change(screen.getByLabelText('Numéro de téléphone'), { target: { value: '+44 20 7946-0958' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Enregistrer les modifications' }));
+
+    await waitFor(() => expect(variableMatcher).toHaveBeenCalledTimes(1));
+    expect(variableMatcher).toHaveBeenCalledWith(
+      expect.objectContaining({
+        updateUserInput: expect.objectContaining({ phone_number: '+442079460958' }),
+      }),
+    );
+    expect(screen.queryByText(/Le numéro de téléphone n'est pas valide\./)).not.toBeInTheDocument();
+  });
+
   test('affiche un toast d\'erreur si la mise à jour du profil échoue', async () => {
     // Le formulaire journalise l'erreur : on la capture pour ne pas polluer la sortie.
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});

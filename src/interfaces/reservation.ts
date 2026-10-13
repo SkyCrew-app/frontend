@@ -28,6 +28,7 @@ export interface Reservation {
   }
   flights?: {
     id: number | string
+    closed_at?: string | null
   }[]
 }
 

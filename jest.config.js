@@ -12,6 +12,8 @@ const customJestConfig = {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
   testEnvironment: 'jest-environment-jsdom',
+  // Browser journeys run with Playwright (npm run e2e).
+  testPathIgnorePatterns: ['<rootDir>/e2e/'],
 };
 
 module.exports = createJestConfig(customJestConfig);

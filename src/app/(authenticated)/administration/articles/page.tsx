@@ -690,7 +690,7 @@ export default function ArticlesAdminPage() {
           key={`photo-${fileInputKey}`}
           id="photo"
           type="file"
-          accept="image/*"
+          accept="image/jpeg,image/png,image/webp"
           onChange={(e) => {
             const file = e.target.files?.[0]
             if (file) setSelectedImage(file)
@@ -737,7 +737,7 @@ export default function ArticlesAdminPage() {
           key={`document-${fileInputKey}`}
           id="document"
           type="file"
-          accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+          accept=".pdf,.jpg,.jpeg,.png,.webp"
           onChange={(e) => {
             const file = e.target.files?.[0]
             if (file) setSelectedDocument(file)

@@ -2,7 +2,7 @@
 
 import { format } from "date-fns"
 import { useTranslation } from "react-i18next"
-import { CalendarCheck, ChevronRight } from "lucide-react"
+import { CalendarCheck, ChevronRight, Plus } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/layout/EmptyState"
 import type { Reservation } from "@/interfaces/reservation"
 import { reservationStatus } from "@/lib/reservation-status"
 import { formatTime } from "@/lib/format"
+import { freeRanges, type TimeRange } from "@/lib/free-ranges"
 import { dateFnsLocale } from "@/lib/i18n"
 import { reservationPilotName } from "@/components/reservation/reservation-cell"
 
@@ -17,6 +18,7 @@ interface Aircraft {
   id: number
   registration_number: string
   model?: string
+  availability_status?: string
 }
 
 interface MobileReservationViewProps {
@@ -27,11 +29,19 @@ interface MobileReservationViewProps {
   setSelectedAircraft: (id: number | null) => void
   currentUserId?: string | number | null
   onViewReservation: (reservation: Reservation) => void
+  /** Opening hours of the day, as the desktop grid uses them; null when they are unknown. */
+  opening?: Date | null
+  closing?: Date | null
+  /** A free range was tapped: open the booking form for it. */
+  onBookRange?: (aircraftId: number, range: TimeRange) => void
 }
 
 const ALL_AIRCRAFT = "all"
 
-/** Day agenda for phones: the reservations of the day, optionally for one aircraft. */
+/**
+ * Day agenda for phones: when each aircraft is free, then the reservations of
+ * the day, optionally for one aircraft.
+ */
 export function MobileReservationView({
   currentDate,
   aircrafts,
@@ -40,8 +50,28 @@ export function MobileReservationView({
   setSelectedAircraft,
   currentUserId,
   onViewReservation,
+  opening = null,
+  closing = null,
+  onBookRange,
 }: MobileReservationViewProps) {
   const { t } = useTranslation("reservations")
+  const shownAircrafts = selectedAircraft
+    ? aircrafts.filter((aircraft) => String(aircraft.id) === String(selectedAircraft))
+    : aircrafts
+  // Nothing is offered in the past: today starts now, an earlier day has no free range left.
+  const now = new Date()
+  const availability =
+    opening && closing
+      ? shownAircrafts.map((aircraft) => ({
+          aircraft,
+          ranges: freeRanges(
+            opening,
+            closing,
+            reservations.filter((reservation) => String(reservation.aircraft.id) === String(aircraft.id)),
+            { notBefore: now },
+          ),
+        }))
+      : []
   const filteredReservations = selectedAircraft
     ? reservations.filter((r) => String(r.aircraft.id) === String(selectedAircraft))
     : reservations
@@ -72,6 +102,55 @@ export function MobileReservationView({
           </SelectContent>
         </Select>
       </div>
+
+      {availability.length > 0 && (
+        <section className="space-y-2" aria-labelledby="free-ranges-heading">
+          <h2 id="free-ranges-heading" className="text-lg font-semibold">
+            {t("calendar.mobile.freeHeading")}
+          </h2>
+          <ul className="space-y-2">
+            {availability.map(({ aircraft, ranges }) => (
+              <li
+                key={aircraft.id}
+                role="group"
+                aria-label={t("calendar.mobile.freeFor", { aircraft: aircraft.registration_number })}
+                className="rounded-lg border bg-card p-3"
+              >
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <span className="text-sm font-semibold">{aircraft.registration_number}</span>
+                  {aircraft.model && <span className="truncate text-xs text-muted-foreground">{aircraft.model}</span>}
+                  {aircraft.availability_status === "UNAVAILABLE" && (
+                    <Badge variant="neutral">{t("calendar.aircraftUnavailable")}</Badge>
+                  )}
+                </div>
+                {ranges.length > 0 ? (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {ranges.map((range) => (
+                      <button
+                        key={range.start.getTime()}
+                        type="button"
+                        onClick={() => onBookRange?.(aircraft.id, range)}
+                        title={t("calendar.mobile.bookRange", {
+                          aircraft: aircraft.registration_number,
+                          start: formatTime(range.start),
+                          end: formatTime(range.end),
+                        })}
+                        className="inline-flex min-h-9 items-center gap-1 rounded-md border border-success/30 bg-success/15 px-3 text-sm font-medium tabular-nums text-success transition-colors hover:bg-success/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        <Plus className="h-4 w-4" aria-hidden="true" />
+                        {formatTime(range.start)} – {formatTime(range.end)}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-1 text-sm text-muted-foreground">{t("calendar.mobile.noFreeRange")}</p>
+                )}
+              </li>
+            ))}
+          </ul>
+          <p className="text-xs text-muted-foreground">{t("calendar.mobile.freeHint")}</p>
+        </section>
+      )}
 
       <h2 className="text-lg font-semibold">
         {t("calendar.mobile.heading", { date: format(currentDate, "EEEE d MMMM yyyy", { locale: dateFnsLocale() }) })}

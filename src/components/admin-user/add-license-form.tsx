@@ -301,7 +301,7 @@ export function AddLicenseForm({
 
       <div className="space-y-2">
         <Label htmlFor="documents">{t("users.licence.documents")}</Label>
-        <Input ref={documentsRef} id="documents" name="documents" type="file" multiple />
+        <Input ref={documentsRef} id="documents" name="documents" type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.webp" />
         <p className="text-xs text-muted-foreground">{t("users.licence.documentsHint")}</p>
       </div>
     </div>

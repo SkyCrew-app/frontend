@@ -161,7 +161,7 @@
       "previewAlt": "Photo preview",
       "choose": "Choose a photo",
       "replace": "Replace",
-      "hint": "PNG or JPG."
+      "hint": "JPG, PNG or WebP."
     },
     "document": {
       "label": "Document",
@@ -169,8 +169,8 @@
       "chooseAnother": "Choose another document",
       "removeLabel": "Remove the document {{name}}",
       "doNotSend": "Do not upload this document",
-      "hint": "Flight manual, certificate… PDF, DOC or DOCX.",
-      "hintReplace": "Flight manual, certificate… PDF, DOC or DOCX. The new document will replace those already stored."
+      "hint": "Flight manual, certificate… PDF, JPG, PNG or WebP.",
+      "hintReplace": "Flight manual, certificate… PDF, JPG, PNG or WebP. The new document will replace those already stored."
     },
     "toast": {
       "created": {
@@ -273,10 +273,10 @@
         "limits": "1 MB maximum per file, 10 files per upload (images and documents combined).",
         "images": "Images",
         "addImages": "Add images",
-        "imageFormats": "PNG or JPG",
+        "imageFormats": "JPG, PNG or WebP",
         "documents": "Documents",
         "addDocuments": "Add documents",
-        "documentFormats": "PDF, DOC, DOCX, XLS or XLSX",
+        "documentFormats": "PDF, JPG, PNG or WebP",
         "stored": "Stored",
         "toSend": "To upload",
         "removeImage": "Remove the image {{name}}",

@@ -53,7 +53,12 @@
       "heading": "Bookings for {{date}}",
       "aircraftFree": "This aircraft is free all day",
       "noReservation": "No bookings on this day",
-      "emptyDescription": "Use “New booking” to book a slot."
+      "emptyDescription": "Use “New booking” to book a slot.",
+      "freeHeading": "Free slots",
+      "freeFor": "Free slots for {{aircraft}}",
+      "freeHint": "Tap a slot to book it; you can adjust the times.",
+      "noFreeRange": "No free slot",
+      "bookRange": "Book {{aircraft}} from {{start}} to {{end}}"
     }
   },
   "form": {
@@ -122,6 +127,14 @@
       "title": "Could not delete",
       "description": "The booking could not be deleted. Try again in a moment."
     },
+    "cancelled": {
+      "title": "Booking cancelled",
+      "description": "The booking of {{aircraft}} has been cancelled."
+    },
+    "cancelFailed": {
+      "title": "Could not cancel",
+      "description": "The booking could not be cancelled. Try again in a moment."
+    },
     "templateCreated": {
       "title": "Template created"
     },
@@ -179,7 +192,14 @@
     "card": {
       "noPurpose": "No purpose given",
       "viewFlightPlan": "View the flight plan",
-      "createFlightPlan": "Create a flight plan"
+      "createFlightPlan": "Create a flight plan",
+      "cancel": "Cancel the booking"
+    },
+    "cancelConfirm": {
+      "title": "Cancel this booking?",
+      "description": "The booking of {{aircraft}} on {{date}}, from {{start}} to {{end}}, will be cancelled: it will disappear from your bookings and the slot will become free again.",
+      "keep": "Keep the booking",
+      "action": "Cancel the booking"
     }
   },
   "template": {
