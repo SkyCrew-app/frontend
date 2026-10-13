@@ -53,6 +53,7 @@ const existingReservation = {
   flight_category: 'TRAINING',
   user: { id: OTHER_USER_ID, first_name: 'Camille', last_name: null },
   aircraft: { id: 1, registration_number: 'F-ABCD' },
+  flights: [],
 };
 
 const createdReservation = {
@@ -66,6 +67,7 @@ const createdReservation = {
   flight_category: '',
   user: { id: USER_ID, first_name: 'Alex', last_name: null },
   aircraft: { id: 2, registration_number: 'F-EFGH' },
+  flights: [],
 };
 
 const meMock: MockedResponse = {

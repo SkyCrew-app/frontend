@@ -20,6 +20,10 @@ export const GET_FILTERED_RESERVATIONS = gql`
         id
         registration_number
       }
+      flights {
+        id
+        closed_at
+      }
     }
   }
 `;

@@ -4,7 +4,7 @@ import { useState } from "react"
 import { format } from "date-fns"
 import { useTranslation } from "react-i18next"
 import { Loader2, Pencil, Trash2 } from "lucide-react"
-import { reservationStatus } from "@/lib/reservation-status"
+import { canCancelReservation, reservationStatus } from "@/lib/reservation-status"
 import { formatDate, formatFlightDuration, formatTime } from "@/lib/format"
 import { dateFnsLocale } from "@/lib/i18n"
 import { Button } from "@/components/ui/button"
@@ -60,6 +60,9 @@ export function ReservationDetail({
     }
   }
 
+  // A booking whose flight is closed is in the logbook: it can no longer be changed or removed.
+  const canChange = canEdit && canCancelReservation(reservation)
+
   return (
     <SidePanel
       open={open}
@@ -67,7 +70,7 @@ export function ReservationDetail({
       title={t("detail.title")}
       size="md"
       footerStart={
-        canEdit ? (
+        canChange ? (
           <Button
             variant="ghost"
             className="text-destructive hover:text-destructive"
@@ -79,7 +82,7 @@ export function ReservationDetail({
         ) : undefined
       }
       footer={
-        canEdit ? (
+        canChange ? (
           <Button variant="outline" onClick={onEdit}>
             <Pencil className="h-4 w-4" />
             {t("common:actions.edit")}

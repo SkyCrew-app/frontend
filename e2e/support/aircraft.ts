@@ -44,6 +44,14 @@ export async function createAircraft(page: Page, aircraft: TestAircraft, hourlyC
 }
 
 /** Deletes the aircraft if it is still in the fleet. Returns false when it was already gone. */
+/** Creates the aircraft unless the fleet already has it (administrator). */
+export async function ensureAircraft(page: Page, aircraft: TestAircraft, hourlyCost: string) {
+  await page.goto("/administration/planes")
+  await expect(page.locator("[data-aircraft-card]").first()).toBeVisible()
+  if ((await aircraftCard(page, aircraft.registration).count()) > 0) return
+  await createAircraft(page, aircraft, hourlyCost)
+}
+
 export async function deleteAircraft(page: Page, registration: string) {
   await page.goto("/administration/planes")
   await expect(page.locator("[data-aircraft-card]").first()).toBeVisible()

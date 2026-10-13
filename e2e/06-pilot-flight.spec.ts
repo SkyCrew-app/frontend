@@ -1,19 +1,20 @@
 import type { Page } from "@playwright/test"
 import { test, expect, sidePanel, toast, confirmAlert, choose, asRole, uniqueName } from "./support/test"
 import { sessionFile } from "./support/accounts"
-import { createAircraft, deleteAircraft, newAircraft } from "./support/aircraft"
+import { ensureAircraft, type TestAircraft } from "./support/aircraft"
 import { stubAirportSearch } from "./support/airports"
 import { openCalendarAhead } from "./support/calendar"
 
 test.use({ storageState: sessionFile("pilot") })
 
-// Both journeys book an aircraft of their own, created by the administrator for the run:
-// its slots are always free, and at one cent an hour the pilot's balance barely moves.
+// Both journeys book an aircraft kept for the tests: at one cent an hour the pilot's balance
+// barely moves. It is never deleted, because a closed flight keeps its booking, and an
+// aircraft with bookings cannot be removed.
 const HOURLY_COST = 0.01
-const aircraft = newAircraft()
+const aircraft: TestAircraft = { registration: "F-EEEE", model: "E2E avion des tests" }
 
 test.beforeAll(async ({ browser }) => {
-  await asRole(browser, "admin", (page) => createAircraft(page, aircraft, String(HOURLY_COST)))
+  await asRole(browser, "admin", (page) => ensureAircraft(page, aircraft, String(HOURLY_COST)))
 })
 
 // What a journey still holds on the calendar if it stops before cancelling.
@@ -64,11 +65,9 @@ test.afterEach(async ({ page }) => {
   if (booked) await cancelBooking(page, booked.purpose, booked.day)
 })
 
-test.afterAll(async ({ browser }) => {
-  await asRole(browser, "admin", (page) => deleteAircraft(page, aircraft.registration))
-})
 
-// Flights cannot be deleted from the application: each run leaves one closed flight in the pilot's logbook.
+// Flights cannot be deleted from the application: each run leaves one closed flight in the pilot's
+// logbook, and its booking on the calendar.
 test("le pilote réserve un créneau, génère le plan de vol, clôture le vol et le retrouve dans son carnet", async ({
   page,
   context,
@@ -181,11 +180,15 @@ test("le pilote réserve un créneau, génère le plan de vol, clôture le vol e
     await expect(page.getByRole("link", { name: "Clôturer le vol" })).toHaveCount(0)
   })
 
-  await test.step("annulation de la réservation", async () => {
-    await cancelBooking(page, purpose, day)
-    await page.goto("/reservations/my")
-    await page.getByRole("searchbox", { name: "Rechercher une réservation" }).fill(purpose)
-    await expect(page.getByRole("tabpanel", { name: "Réservations" }).getByText(purpose)).toHaveCount(0)
+  await test.step("la réservation d'un vol clôturé ne peut plus être annulée", async () => {
+    await openCalendarAhead(page, day)
+    await page.getByRole("button", { name: new RegExp(`^${purpose}`) }).click()
+    const detail = sidePanel(page, "Détails de la réservation")
+    await expect(detail.getByRole("heading", { name: purpose })).toBeVisible()
+    await expect(detail.getByRole("button", { name: "Supprimer" })).toHaveCount(0)
+    await expect(detail.getByRole("button", { name: "Modifier" })).toHaveCount(0)
+    // Nothing left to cancel for the cleanup.
+    booked = null
   })
 })
 
