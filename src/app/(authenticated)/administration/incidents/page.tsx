@@ -3,6 +3,7 @@
 import { Suspense, useState } from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useQuery } from "@apollo/client"
+import { useTranslation } from "react-i18next"
 import { AlertTriangle, CheckCircle, CircleDot, Search, Wrench, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -24,20 +25,19 @@ import {
   incidentStatus,
   type Incident,
 } from "@/lib/incident"
+import { currentLocale } from "@/lib/i18n"
 
 const ITEMS_PER_PAGE = 10
 
-const header = (
-  <PageHeader
-    className="mb-0"
-    title="Incidents"
-    description="Suivez les incidents déclarés par les pilotes à la clôture de leurs vols."
-  />
-)
+function Header() {
+  const { t } = useTranslation("administration")
+  return <PageHeader className="mb-0" title={t("incidents.title")} description={t("incidents.description")} />
+}
 
 function ContentSkeleton() {
+  const { t } = useTranslation("administration")
   return (
-    <div className="space-y-6" aria-busy="true" aria-label="Chargement des incidents">
+    <div className="space-y-6" aria-busy="true" aria-label={t("incidents.loading")}>
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, index) => (
           <Skeleton key={index} className="h-24 w-full" />
@@ -50,6 +50,7 @@ function ContentSkeleton() {
 }
 
 function IncidentsContent() {
+  const { t } = useTranslation("administration")
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -99,7 +100,7 @@ function IncidentsContent() {
     if (aircraftOptions.some((option) => option.value === value)) continue
     aircraftOptions.push({ value, label: incident.aircraft.registration_number })
   }
-  aircraftOptions.sort((a, b) => a.label.localeCompare(b.label, "fr"))
+  aircraftOptions.sort((a, b) => a.label.localeCompare(b.label, currentLocale()))
 
   const search = searchTerm.trim().toLowerCase()
   const filteredIncidents = incidents.filter((incident) => {
@@ -135,13 +136,23 @@ function IncidentsContent() {
   return (
     <>
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard label="Ouverts" value={countByStatus("open")} icon={CircleDot} tone="warning" />
-        <StatCard label="En cours" value={countByStatus("in_progress")} icon={Wrench} tone="info" />
-        <StatCard label="Résolus" value={countByStatus("resolved")} icon={CheckCircle} tone="success" />
+        <StatCard label={t("incidents.stats.open")} value={countByStatus("open")} icon={CircleDot} tone="warning" />
         <StatCard
-          label="Gravité élevée"
+          label={t("incidents.stats.inProgress")}
+          value={countByStatus("in_progress")}
+          icon={Wrench}
+          tone="info"
+        />
+        <StatCard
+          label={t("incidents.stats.resolved")}
+          value={countByStatus("resolved")}
+          icon={CheckCircle}
+          tone="success"
+        />
+        <StatCard
+          label={t("incidents.stats.highSeverity")}
           value={severeUnresolved}
-          hint="Non résolus"
+          hint={t("incidents.stats.unresolved")}
           icon={AlertTriangle}
           tone="danger"
         />
@@ -154,20 +165,20 @@ function IncidentsContent() {
             aria-hidden="true"
           />
           <Input
-            placeholder="Description, aéronef ou pilote"
+            placeholder={t("incidents.filters.searchPlaceholder")}
             value={searchTerm}
             onChange={(event) => withFirstPage(setSearchTerm)(event.target.value)}
             className="pl-8"
-            aria-label="Rechercher des incidents"
+            aria-label={t("incidents.filters.search")}
           />
         </div>
 
         <Select value={filterSeverity} onValueChange={withFirstPage(setFilterSeverity)}>
-          <SelectTrigger className="w-full sm:w-[190px]" aria-label="Filtrer par gravité">
+          <SelectTrigger className="w-full sm:w-[190px]" aria-label={t("incidents.filters.bySeverity")}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Toutes les gravités</SelectItem>
+            <SelectItem value="all">{t("incidents.filters.allSeverities")}</SelectItem>
             {INCIDENT_LEVELS.map((level) => (
               <SelectItem key={level} value={level}>
                 {incidentSeverity(level).label}
@@ -177,11 +188,11 @@ function IncidentsContent() {
         </Select>
 
         <Select value={filterStatus} onValueChange={withFirstPage(setFilterStatus)}>
-          <SelectTrigger className="w-full sm:w-[170px]" aria-label="Filtrer par statut">
+          <SelectTrigger className="w-full sm:w-[170px]" aria-label={t("incidents.filters.byStatus")}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Tous les statuts</SelectItem>
+            <SelectItem value="all">{t("incidents.filters.allStatuses")}</SelectItem>
             {INCIDENT_STATUS_KEYS.map((key) => (
               <SelectItem key={key} value={key}>
                 {incidentStatus(key).label}
@@ -192,11 +203,11 @@ function IncidentsContent() {
 
         {aircraftOptions.length > 0 && (
           <Select value={filterAircraft} onValueChange={withFirstPage(setFilterAircraft)}>
-            <SelectTrigger className="w-full sm:w-[180px]" aria-label="Filtrer par aéronef">
+            <SelectTrigger className="w-full sm:w-[180px]" aria-label={t("incidents.filters.byAircraft")}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tous les aéronefs</SelectItem>
+              <SelectItem value="all">{t("incidents.filters.allAircraft")}</SelectItem>
               {aircraftOptions.map((aircraft) => (
                 <SelectItem key={aircraft.value} value={aircraft.value}>
                   {aircraft.label}
@@ -209,7 +220,7 @@ function IncidentsContent() {
         {hasFilters && (
           <Button variant="ghost" onClick={resetFilters}>
             <X className="h-4 w-4" aria-hidden="true" />
-            Réinitialiser
+            {t("common:actions.reset")}
           </Button>
         )}
       </div>
@@ -233,7 +244,7 @@ function IncidentsContent() {
 export default function IncidentsPage() {
   return (
     <div className="space-y-6">
-      {header}
+      <Header />
       {/* useSearchParams needs a Suspense boundary. */}
       <Suspense fallback={<ContentSkeleton />}>
         <IncidentsContent />

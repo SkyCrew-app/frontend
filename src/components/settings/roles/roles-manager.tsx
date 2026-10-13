@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useQuery, useMutation } from "@apollo/client"
+import { useTranslation } from "react-i18next"
 import { Plus, UserCog } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -11,6 +12,7 @@ import { ErrorState } from "@/components/layout/ErrorState"
 import { toast } from "@/components/hooks/use-toast"
 import { CREATE_ROLE, UPDATE_ROLE, DELETE_ROLE, GET_ROLES } from "@/graphql/roles"
 import { ROLE_ADMIN, ROLE_INSTRUCTOR } from "@/lib/roles"
+import { roleLabel } from "@/lib/settings"
 import { SettingsSection } from "../settings-field"
 import { DeleteItemDialog, ItemList, NameDialog } from "../item-list"
 
@@ -22,10 +24,9 @@ interface Role {
 // The application recognises these two roles by their name.
 const isBuiltInRole = (role: Role) => role.role_name === ROLE_ADMIN || role.role_name === ROLE_INSTRUCTOR
 
-const BUILT_IN_NOTICE =
-  "L'application reconnaît ce rôle à son nom : le renommer ou le supprimer peut retirer leurs accès aux membres concernés."
-
 export function RoleManager() {
+  const { t } = useTranslation("administration")
+  const builtInNotice = t("settings.roles.builtInNotice")
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [roleToEdit, setRoleToEdit] = useState<Role | null>(null)
   const [roleToDelete, setRoleToDelete] = useState<Role | null>(null)
@@ -45,13 +46,16 @@ export function RoleManager() {
     setMutationInProgress(true)
     try {
       await createRole({ variables: { createRoleInput: { role_name } } })
-      toast({ title: "Rôle créé", description: `Le rôle « ${role_name} » a été ajouté.` })
+      toast({
+        title: t("settings.roles.toast.created.title"),
+        description: t("settings.roles.toast.created.description", { name: role_name }),
+      })
       setIsCreateDialogOpen(false)
       await refetch()
     } catch {
       toast({
-        title: "Création impossible",
-        description: "Le rôle n'a pas pu être créé. Réessayez.",
+        title: t("settings.roles.toast.createFailed.title"),
+        description: t("settings.roles.toast.createFailed.description"),
         variant: "destructive",
       })
     }
@@ -66,13 +70,16 @@ export function RoleManager() {
       await updateRole({
         variables: { updateRoleInput: { id: roleToEdit.id, role_name } },
       })
-      toast({ title: "Rôle modifié", description: `Le rôle s'appelle maintenant « ${role_name} ».` })
+      toast({
+        title: t("settings.roles.toast.updated.title"),
+        description: t("settings.roles.toast.updated.description", { name: role_name }),
+      })
       setRoleToEdit(null)
       await refetch()
     } catch {
       toast({
-        title: "Modification impossible",
-        description: "Le rôle n'a pas pu être renommé. Réessayez.",
+        title: t("settings.roles.toast.updateFailed.title"),
+        description: t("settings.roles.toast.updateFailed.description"),
         variant: "destructive",
       })
     }
@@ -85,13 +92,16 @@ export function RoleManager() {
     setMutationInProgress(true)
     try {
       await deleteRole({ variables: { id: roleToDelete.id } })
-      toast({ title: "Rôle supprimé", description: `Le rôle « ${roleToDelete.role_name} » a été supprimé.` })
+      toast({
+        title: t("settings.roles.toast.deleted.title"),
+        description: t("settings.roles.toast.deleted.description", { name: roleLabel(roleToDelete.role_name) }),
+      })
       setRoleToDelete(null)
       await refetch()
     } catch {
       toast({
-        title: "Suppression impossible",
-        description: "Le rôle n'a pas pu être supprimé. Vérifiez qu'aucun membre ne l'utilise encore.",
+        title: t("settings.roles.toast.deleteFailed.title"),
+        description: t("settings.roles.toast.deleteFailed.description"),
         variant: "destructive",
       })
     }
@@ -101,14 +111,14 @@ export function RoleManager() {
   const addButton = (
     <Button type="button" variant="outline" size="sm" onClick={() => setIsCreateDialogOpen(true)}>
       <Plus className="h-4 w-4" />
-      Ajouter un rôle
+      {t("settings.roles.add")}
     </Button>
   )
 
   return (
     <SettingsSection
-      title="Rôles"
-      description="Les rôles que l'on peut attribuer aux membres. Chaque ajout, modification ou suppression est enregistré immédiatement."
+      title={t("settings.roles.title")}
+      description={t("settings.roles.description")}
       action={!error && !loading && roles.length > 0 ? addButton : undefined}
     >
       {error ? (
@@ -122,16 +132,16 @@ export function RoleManager() {
       ) : roles.length === 0 ? (
         <EmptyState
           icon={UserCog}
-          title="Aucun rôle"
-          description="Créez un premier rôle pour pouvoir l'attribuer aux membres."
+          title={t("settings.roles.empty.title")}
+          description={t("settings.roles.empty.description")}
           action={addButton}
         />
       ) : (
         <ItemList
           items={roles.map((role) => ({
             key: String(role.id),
-            name: role.role_name,
-            meta: isBuiltInRole(role) ? <Badge variant="neutral">Rôle de l'application</Badge> : undefined,
+            name: roleLabel(role.role_name),
+            meta: isBuiltInRole(role) ? <Badge variant="neutral">{t("settings.roles.builtIn")}</Badge> : undefined,
           }))}
           onEdit={(item) => setRoleToEdit(roles.find((role) => String(role.id) === item.key) ?? null)}
           onDelete={(item) => {
@@ -145,13 +155,13 @@ export function RoleManager() {
       <NameDialog
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
-        title="Ajouter un rôle"
-        description="Le rôle pourra ensuite être attribué aux membres."
-        label="Nom du rôle"
-        placeholder="Ex. Mécanicien"
-        submitLabel="Créer le rôle"
+        title={t("settings.roles.add")}
+        description={t("settings.roles.addDescription")}
+        label={t("settings.roles.name")}
+        placeholder={t("settings.roles.namePlaceholder")}
+        submitLabel={t("settings.roles.create")}
         existingNames={roleNames}
-        duplicateMessage="Un rôle porte déjà ce nom."
+        duplicateMessage={t("settings.roles.duplicate")}
         isSubmitting={mutationInProgress}
         onSubmit={handleCreateRole}
       />
@@ -159,18 +169,18 @@ export function RoleManager() {
       <NameDialog
         open={roleToEdit !== null}
         onOpenChange={(open) => !open && setRoleToEdit(null)}
-        title="Modifier le rôle"
-        description="Le nouveau nom s'applique à tous les membres qui ont ce rôle."
-        label="Nom du rôle"
-        placeholder="Ex. Mécanicien"
+        title={t("settings.roles.edit")}
+        description={t("settings.roles.editDescription")}
+        label={t("settings.roles.name")}
+        placeholder={t("settings.roles.namePlaceholder")}
         initialValue={roleToEdit?.role_name ?? ""}
-        submitLabel="Enregistrer"
+        submitLabel={t("common:actions.save")}
         existingNames={roleNames}
-        duplicateMessage="Un rôle porte déjà ce nom."
+        duplicateMessage={t("settings.roles.duplicate")}
         isSubmitting={mutationInProgress}
         notice={
           roleToEdit && isBuiltInRole(roleToEdit) ? (
-            <p className="rounded-md bg-warning/15 p-3 text-sm text-warning">{BUILT_IN_NOTICE}</p>
+            <p className="rounded-md bg-warning/15 p-3 text-sm text-warning">{builtInNotice}</p>
           ) : undefined
         }
         onSubmit={handleUpdateRole}
@@ -179,11 +189,11 @@ export function RoleManager() {
       <DeleteItemDialog
         open={roleToDelete !== null}
         onOpenChange={(open) => !open && setRoleToDelete(null)}
-        title="Supprimer ce rôle ?"
+        title={t("settings.roles.deleteTitle")}
         description={
           <>
-            Le rôle « {(roleToDelete ?? lastRoleToDelete)?.role_name} » sera supprimé définitivement.
-            {roleToDelete && isBuiltInRole(roleToDelete) && <> {BUILT_IN_NOTICE}</>}
+            {t("settings.roles.deleteDescription", { name: roleLabel((roleToDelete ?? lastRoleToDelete)?.role_name) })}
+            {roleToDelete && isBuiltInRole(roleToDelete) && <> {builtInNotice}</>}
           </>
         }
         isDeleting={mutationInProgress}

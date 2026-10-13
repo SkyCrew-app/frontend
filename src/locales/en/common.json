@@ -1,0 +1,176 @@
+{
+  "actions": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "close": "Close",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "add": "Add",
+    "previous": "Previous",
+    "next": "Next",
+    "retry": "Try again",
+    "reset": "Reset",
+    "search": "Search",
+    "back": "Back",
+    "confirm": "Confirm",
+    "view": "View",
+    "open": "Open",
+    "download": "Download",
+    "export": "Export",
+    "refresh": "Refresh",
+    "details": "Details",
+    "seeAll": "See all",
+    "remove": "Remove",
+    "continue": "Continue",
+    "send": "Send",
+    "print": "Print",
+    "copy": "Copy",
+    "choose": "Choose",
+    "apply": "Apply",
+    "more": "More actions",
+    "clearFilters": "Clear filters"
+  },
+  "states": {
+    "loading": "Loading…",
+    "saving": "Saving…",
+    "noResults": "No results",
+    "noData": "No data",
+    "errorTitle": "Could not load",
+    "errorDescription": "The data could not be loaded. Check your connection and try again.",
+    "genericError": "Something went wrong. Try again in a moment.",
+    "notFound": "Not found",
+    "offline": "You are offline",
+    "demoMode": "Demo mode — changes are not saved",
+    "offlineBanner": "Offline — the data shown may be out of date"
+  },
+  "labels": {
+    "yes": "Yes",
+    "no": "No",
+    "all": "All",
+    "none": "None",
+    "required": "Required",
+    "optional": "Optional",
+    "date": "Date",
+    "time": "Time",
+    "start": "Start",
+    "end": "End",
+    "status": "Status",
+    "type": "Type",
+    "description": "Description",
+    "notes": "Notes",
+    "actions": "Actions",
+    "name": "Name",
+    "email": "Email address",
+    "phone": "Phone",
+    "total": "Total",
+    "aircraft": "Aircraft",
+    "pilot": "Pilot",
+    "instructor": "Instructor",
+    "student": "Student",
+    "technician": "Technician",
+    "category": "Category",
+    "duration": "Duration",
+    "distance": "Distance",
+    "cost": "Cost",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "you": "You",
+    "missing": "—",
+    "requiredFieldsHint": "Fields marked with an asterisk are required."
+  },
+  "pagination": {
+    "previous": "Previous",
+    "next": "Next",
+    "previousPage": "Previous page",
+    "nextPage": "Next page",
+    "morePages": "More pages",
+    "pageOf": "Page {{page}} of {{total}}",
+    "range": "{{from}}–{{to}} of {{total}}",
+    "label": "Pagination"
+  },
+  "panel": {
+    "steps": "Steps"
+  },
+  "format": {
+    "dateTime": "{{date}} at {{time}}"
+  },
+  "language": {
+    "label": "Language",
+    "change": "Change language",
+    "current": "Current language"
+  },
+  "theme": {
+    "change": "Change theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System",
+    "current": "Current theme"
+  },
+  "reservationStatus": {
+    "CONFIRMED": "Confirmed",
+    "PENDING": "Pending",
+    "CANCELLED": "Cancelled",
+    "unknown": "Unknown"
+  },
+  "datePicker": {
+    "placeholder": "Select a date",
+    "rangePlaceholder": "Select a period",
+    "clear": "Clear the date",
+    "empty": "Select a date",
+    "rangeEmpty": "Select a period",
+    "clearRange": "Clear the period",
+    "from": "From {{date}}",
+    "until": "Until {{date}}",
+    "thisMonth": "This month",
+    "lastMonth": "Last month",
+    "last30Days": "Last 30 days"
+  },
+  "files": {
+    "add": "Add the attachment",
+    "openLink": "Open the link",
+    "remove": "Remove",
+    "empty": "No attachment",
+    "urlPlaceholder": "https://example.com/document.pdf"
+  },
+  "validation": {
+    "required": "This field is required.",
+    "email": "Enter a valid email address.",
+    "minLength": "At least {{count}} characters.",
+    "positiveNumber": "Enter a positive number."
+  },
+  "combobox": {
+    "searchWaypoint": "Search a waypoint...",
+    "noWaypoint": "No waypoint found.",
+    "searchAerodrome": "Search an aerodrome...",
+    "noAerodrome": "No aerodrome found.",
+    "loading": "Loading...",
+    "searchTimezone": "Search a time zone...",
+    "noTimezone": "No time zone found.",
+    "selectOptions": "Select options..."
+  },
+  "commandPalette": {
+    "title": "Quick search"
+  },
+  "sidebarRail": {
+    "toggle": "Show or hide the menu"
+  },
+  "editor": {
+    "placeholder": "Start writing...",
+    "bold": "Bold",
+    "italic": "Italic",
+    "bulletList": "Bulleted list",
+    "orderedList": "Numbered list",
+    "heading1": "Heading 1",
+    "heading2": "Heading 2",
+    "heading3": "Heading 3",
+    "quote": "Quote",
+    "codeBlock": "Code block",
+    "paragraph": "Paragraph",
+    "addLink": "Add the link",
+    "addImage": "Add the image",
+    "linkPlaceholder": "https://example.com",
+    "imagePlaceholder": "https://example.com/image.jpg",
+    "imageAlt": "Image"
+  }
+}

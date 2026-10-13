@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 import SkycrewLogo from "@/components/navigation/SkycrewLogo"
+import LanguageToggle from "@/components/theme/LanguageToggle"
 
 type Tone = "neutral" | "success" | "warning" | "danger"
 
@@ -31,7 +32,11 @@ interface AuthCardProps {
 /** The one layout of every page shown outside the app: sign-in, password pages, status pages. */
 export function AuthCard({ title, description, icon: Icon, tone = "neutral", children, footer }: AuthCardProps) {
   return (
-    <main id="main-content" className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
+    <main id="main-content" className="relative flex min-h-screen items-center justify-center bg-background px-4 py-10">
+      {/* A visitor can choose the language before signing in. */}
+      <div className="absolute right-4 top-4">
+        <LanguageToggle />
+      </div>
       <div className="w-full max-w-md">
         <SkycrewLogo className="mx-auto mb-6 h-14 text-foreground" />
         <Card>

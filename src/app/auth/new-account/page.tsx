@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useMutation } from '@apollo/client';
 import { CheckCircle2, Link2Off, Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,6 +15,7 @@ import { PASSWORD_MIN_LENGTH, newPasswordError } from '@/lib/password';
 import { AuthCard, AuthCardSkeleton, AuthLink, FieldError } from '@/app/auth/_components/AuthCard';
 
 function ConfirmEmailComponent() {
+  const { t } = useTranslation('auth');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
@@ -51,8 +53,8 @@ function ConfirmEmailComponent() {
     } catch {
       toast({
         variant: "destructive",
-        title: "Activation impossible",
-        description: "Ce lien est invalide ou a expiré. Demandez une nouvelle invitation à votre club.",
+        title: t('newAccount.toast.failed.title'),
+        description: t('newAccount.toast.failed.description'),
       });
     }
   };
@@ -62,11 +64,11 @@ function ConfirmEmailComponent() {
       <AuthCard
         icon={CheckCircle2}
         tone="success"
-        title="Compte activé"
-        description="Votre mot de passe est enregistré. La page de connexion va s'ouvrir."
+        title={t('newAccount.done.title')}
+        description={t('newAccount.done.description')}
       >
         <Button asChild className="w-full">
-          <Link href="/">Se connecter</Link>
+          <Link href="/">{t('common.signIn')}</Link>
         </Button>
       </AuthCard>
     );
@@ -77,22 +79,22 @@ function ConfirmEmailComponent() {
       <AuthCard
         icon={Link2Off}
         tone="warning"
-        title="Lien incomplet"
-        description="Ce lien d'activation est incomplet. Ouvrez-le depuis l'e-mail d'invitation ou demandez-en un nouveau à votre club."
-        footer={<AuthLink href="/">Retour à la connexion</AuthLink>}
+        title={t('common.incompleteLink')}
+        description={t('newAccount.incomplete.description')}
+        footer={<AuthLink href="/">{t('common.backToSignIn')}</AuthLink>}
       />
     );
   }
 
   return (
     <AuthCard
-      title="Activer votre compte"
-      description="Choisissez votre mot de passe pour terminer la création de votre compte."
-      footer={<AuthLink href="/">Retour à la connexion</AuthLink>}
+      title={t('newAccount.title')}
+      description={t('newAccount.description')}
+      footer={<AuthLink href="/">{t('common.backToSignIn')}</AuthLink>}
     >
       <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         <div className="space-y-1.5">
-          <Label htmlFor="password">Mot de passe</Label>
+          <Label htmlFor="password">{t('common.password')}</Label>
           <Input
             id="password"
             type="password"
@@ -103,11 +105,11 @@ function ConfirmEmailComponent() {
             aria-describedby="password-hint"
           />
           <p id="password-hint" className="text-xs text-muted-foreground">
-            Au moins {PASSWORD_MIN_LENGTH} caractères.
+            {t('common.passwordHint', { count: PASSWORD_MIN_LENGTH })}
           </p>
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
+          <Label htmlFor="confirmPassword">{t('common.confirmPassword')}</Label>
           <Input
             id="confirmPassword"
             type="password"
@@ -121,7 +123,7 @@ function ConfirmEmailComponent() {
         </div>
         <Button type="submit" className="w-full" disabled={loading}>
           {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-          Activer mon compte
+          {t('newAccount.submit')}
         </Button>
       </form>
     </AuthCard>

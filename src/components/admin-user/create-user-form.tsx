@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -30,6 +31,7 @@ const FieldError = ({ message }: { message?: string }) =>
   message ? <p className="text-sm text-destructive">{message}</p> : null
 
 export function CreateUserForm({ isOpen, onOpenChange, saving = false, onSubmit }: CreateUserFormProps) {
+  const { t } = useTranslation("administration")
   const [values, setValues] = useState<Values>(EMPTY)
   const [errors, setErrors] = useState<Errors>({})
 
@@ -53,12 +55,12 @@ export function CreateUserForm({ isOpen, onOpenChange, saving = false, onSubmit 
     const email = values.email.trim()
 
     const nextErrors: Errors = {}
-    if (!first_name) nextErrors.first_name = "Indiquez le prénom."
-    if (!last_name) nextErrors.last_name = "Indiquez le nom."
-    if (!email) nextErrors.email = "Indiquez l'adresse e-mail."
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) nextErrors.email = "Cette adresse e-mail n'est pas valide."
-    if (!values.date_of_birth) nextErrors.date_of_birth = "Indiquez la date de naissance."
-    else if (values.date_of_birth > today) nextErrors.date_of_birth = "La date de naissance ne peut pas être dans le futur."
+    if (!first_name) nextErrors.first_name = t("users.form.errors.firstName")
+    if (!last_name) nextErrors.last_name = t("users.form.errors.lastName")
+    if (!email) nextErrors.email = t("users.form.errors.email")
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) nextErrors.email = t("users.form.errors.emailInvalid")
+    if (!values.date_of_birth) nextErrors.date_of_birth = t("users.form.errors.dateOfBirth")
+    else if (values.date_of_birth > today) nextErrors.date_of_birth = t("users.form.errors.dateOfBirthFuture")
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length > 0) return
 
@@ -69,15 +71,15 @@ export function CreateUserForm({ isOpen, onOpenChange, saving = false, onSubmit 
     <>
       <Button onClick={() => onOpenChange(true)}>
         <UserPlus className="h-4 w-4" />
-        Ajouter un membre
+        {t("users.create.title")}
       </Button>
       <SidePanel
         open={isOpen}
         onOpenChange={(next) => (next || !saving) && onOpenChange(next)}
-        title="Ajouter un membre"
-        description="Le membre recevra un e-mail pour activer son compte et choisir son mot de passe."
+        title={t("users.create.title")}
+        description={t("users.create.description")}
         onSubmit={handleSubmit}
-        submitLabel="Ajouter le membre"
+        submitLabel={t("users.create.submit")}
         submitting={saving}
         size="md"
       >
@@ -85,7 +87,7 @@ export function CreateUserForm({ isOpen, onOpenChange, saving = false, onSubmit 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="first_name">
-                Prénom
+                {t("users.fields.firstName")}
                 <Required />
               </Label>
               <Input
@@ -96,13 +98,13 @@ export function CreateUserForm({ isOpen, onOpenChange, saving = false, onSubmit 
                 aria-required="true"
                 aria-invalid={errors.first_name ? true : undefined}
                 autoComplete="off"
-                placeholder="Camille"
+                placeholder={t("users.create.firstNamePlaceholder")}
               />
               <FieldError message={errors.first_name} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="last_name">
-                Nom
+                {t("users.fields.lastName")}
                 <Required />
               </Label>
               <Input
@@ -113,14 +115,14 @@ export function CreateUserForm({ isOpen, onOpenChange, saving = false, onSubmit 
                 aria-required="true"
                 aria-invalid={errors.last_name ? true : undefined}
                 autoComplete="off"
-                placeholder="Martin"
+                placeholder={t("users.create.lastNamePlaceholder")}
               />
               <FieldError message={errors.last_name} />
             </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">
-              Adresse e-mail
+              {t("common:labels.email")}
               <Required />
             </Label>
             <Input
@@ -132,13 +134,13 @@ export function CreateUserForm({ isOpen, onOpenChange, saving = false, onSubmit 
               aria-required="true"
               aria-invalid={errors.email ? true : undefined}
               autoComplete="off"
-              placeholder="camille.martin@exemple.fr"
+              placeholder={t("users.create.emailPlaceholder")}
             />
             <FieldError message={errors.email} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="date_of_birth">
-              Date de naissance
+              {t("users.fields.dateOfBirth")}
               <Required />
             </Label>
             <Input

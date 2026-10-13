@@ -2,6 +2,7 @@
 
 import { useQuery } from "@apollo/client"
 import { useEffect, useMemo, useState } from "react"
+import { useTranslation } from "react-i18next"
 import { GET_LOGBOOK_ENTRIES, GET_LOGBOOK_STATS } from "@/graphql/logbook"
 import { GET_AIRCRAFTS } from "@/graphql/planes"
 import type { LogbookFilter, HoursEntry } from "@/interfaces/logbook"
@@ -18,6 +19,7 @@ import { FLIGHT_RULE_OPTIONS } from "@/components/flight/flight-type"
 const UNKNOWN_TYPE = "Inconnu"
 
 export default function LogbookPage() {
+  const { t } = useTranslation("flights")
   const [filter, setFilter] = useState<LogbookFilter>({})
   // Types met in the logbook so far, kept when a filter narrows the statistics.
   const [knownTypes, setKnownTypes] = useState<string[]>(FLIGHT_RULE_OPTIONS.map((option) => option.value))
@@ -83,8 +85,8 @@ export default function LogbookPage() {
     <div className="space-y-6">
       <PageHeader
         className="mb-0"
-        title="Carnet de vol"
-        description="Vos vols clôturés, vos heures et leur répartition."
+        title={t("logbook.title")}
+        description={t("logbook.description")}
         actions={<ExportPDFButton filter={filter} disabled={flights.length === 0} />}
       />
 
@@ -100,7 +102,7 @@ export default function LogbookPage() {
           <LogbookStats stats={statsData?.logbookStats} loading={loadingStats} />
 
           <section className="space-y-4">
-            <h2 className="text-lg font-semibold">Vols</h2>
+            <h2 className="text-lg font-semibold">{t("logbook.flightsHeading")}</h2>
             <LogbookFilters
               filter={filter}
               onFilterChange={setFilter}

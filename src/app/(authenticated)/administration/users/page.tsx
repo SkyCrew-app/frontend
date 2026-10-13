@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useQuery, useMutation, useLazyQuery } from "@apollo/client"
+import { useTranslation } from "react-i18next"
 import { useToast } from "@/components/hooks/use-toast"
 import { CREATE_USER, GET_USERS, UPDATE_USER, GET_USER_DETAILS } from "@/graphql/user"
 import { CREATE_LICENSE } from "@/graphql/licences"
@@ -21,6 +22,7 @@ import { calendarDayToISOString } from "@/lib/datetime"
 const USERS_PER_PAGE = 10
 
 export default function AdministrationPage() {
+  const { t } = useTranslation("administration")
   const [selectedRole, setSelectedRole] = useState<string | null>(null)
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
@@ -63,15 +65,15 @@ export default function AdministrationPage() {
     try {
       await createUser({ variables: userData })
       toast({
-        title: "Membre ajouté",
-        description: "Il va recevoir un e-mail pour activer son compte.",
+        title: t("users.toast.created.title"),
+        description: t("users.toast.created.description"),
       })
       setIsCreateDialogOpen(false)
       refetch()
     } catch {
       toast({
-        title: "Le membre n'a pas pu être ajouté",
-        description: "Vérifiez que cette adresse e-mail n'est pas déjà utilisée, puis réessayez.",
+        title: t("users.toast.createFailed.title"),
+        description: t("users.toast.createFailed.description"),
         variant: "destructive",
       })
     }
@@ -95,13 +97,13 @@ export default function AdministrationPage() {
           },
         },
       })
-      toast({ title: "Membre mis à jour" })
+      toast({ title: t("users.toast.updated.title") })
       setIsEditDialogOpen(false)
       refetch()
     } catch {
       toast({
-        title: "Les modifications n'ont pas pu être enregistrées",
-        description: "Réessayez dans un instant.",
+        title: t("users.toast.updateFailed.title"),
+        description: t("users.toast.retryLater"),
         variant: "destructive",
       })
     }
@@ -115,8 +117,8 @@ export default function AdministrationPage() {
     }
     setIsDetailsDialogOpen(false)
     toast({
-      title: "La fiche du membre n'a pas pu être chargée",
-      description: "Réessayez dans un instant.",
+      title: t("users.toast.detailsFailed.title"),
+      description: t("users.toast.retryLater"),
       variant: "destructive",
     })
   }
@@ -144,13 +146,13 @@ export default function AdministrationPage() {
           documents: values.documents.length > 0 ? values.documents : null,
         },
       })
-      toast({ title: "Licence ajoutée" })
+      toast({ title: t("users.toast.licenceAdded.title") })
       setIsLicenseDialogOpen(false)
       if (returnToDetails) handleViewDetails(values.userId)
     } catch {
       toast({
-        title: "La licence n'a pas pu être ajoutée",
-        description: "Vérifiez les informations saisies, puis réessayez.",
+        title: t("users.toast.licenceFailed.title"),
+        description: t("users.toast.licenceFailed.description"),
         variant: "destructive",
       })
     }
@@ -225,8 +227,8 @@ export default function AdministrationPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Membres"
-        description="Les membres du club, leurs rôles et leurs licences."
+        title={t("users.title")}
+        description={t("users.description")}
         className="mb-0"
         actions={
           <>
@@ -281,7 +283,7 @@ export default function AdministrationPage() {
             totalItems={filteredUsers.length}
             itemsPerPage={USERS_PER_PAGE}
             onPageChange={setCurrentPage}
-            itemLabel={filteredUsers.length > 1 ? "membres" : "membre"}
+            itemLabel={t("users.pagination.members", { count: filteredUsers.length })}
           />
         </>
       )}

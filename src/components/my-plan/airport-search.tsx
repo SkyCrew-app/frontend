@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useTranslation } from "react-i18next"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
@@ -19,10 +20,12 @@ interface AirportSearchProps {
 }
 
 export function AirportSearch({ id, invalid = false, value, onChange, label, placeholder }: AirportSearchProps) {
+  const { t } = useTranslation("flights")
   const [open, setOpen] = useState(false)
   const [airports, setAirports] = useState<Airport[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [loading, setLoading] = useState(false)
+  // Holds a translation key, so the message follows the language.
   const [error, setError] = useState<string | null>(null)
   const [selectedAirport, setSelectedAirport] = useState<Airport | null>(null)
 
@@ -36,7 +39,7 @@ export function AirportSearch({ id, invalid = false, value, onChange, label, pla
           setError(null)
         } catch (err) {
           console.error("Erreur lors du chargement de l'aéroport:", err)
-          setError("Les détails de l'aérodrome n'ont pas pu être chargés.")
+          setError("routeSearch.airport.loadError")
         } finally {
           setLoading(false)
         }
@@ -56,10 +59,10 @@ export function AirportSearch({ id, invalid = false, value, onChange, label, pla
           const results = await aviationAPI.searchAirports(searchQuery)
           setAirports(results)
           if (results.length === 0) {
-            setError("Aucun aérodrome trouvé pour cette recherche.")
+            setError("routeSearch.airport.noResult")
           }
         } catch (err) {
-          setError("La recherche d'aérodromes est indisponible pour le moment.")
+          setError("routeSearch.airport.unavailable")
           console.error(err)
         } finally {
           setLoading(false)
@@ -103,21 +106,21 @@ export function AirportSearch({ id, invalid = false, value, onChange, label, pla
       <PopoverContent className="w-[min(400px,calc(100vw-2rem))] p-0" align="start">
         {/* Results are already filtered by the search API (by code, name or city). */}
         <Command shouldFilter={false}>
-          <CommandInput placeholder={placeholder || "Code OACI, nom ou ville"} onValueChange={setSearchQuery} />
+          <CommandInput placeholder={placeholder || t("routeSearch.airport.placeholder")} onValueChange={setSearchQuery} />
           <CommandList>
             <CommandEmpty>
               {loading ? (
                 <div className="flex items-center justify-center gap-2 p-4">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Recherche en cours…
+                  {t("routeSearch.searching")}
                 </div>
               ) : error ? (
                 <div className="flex items-center justify-center gap-2 p-4 text-warning">
                   <AlertTriangle className="h-4 w-4" />
-                  {error}
+                  {t(error)}
                 </div>
               ) : (
-                "Saisissez au moins deux caractères."
+                t("routeSearch.minChars")
               )}
             </CommandEmpty>
             <CommandGroup className="max-h-[300px] overflow-y-auto">

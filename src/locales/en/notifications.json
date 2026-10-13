@@ -1,0 +1,94 @@
+{
+  "title": "Notifications",
+  "summary": {
+    "unreadOf_one": "{{count}} unread of {{total}}",
+    "unreadOf_other": "{{count}} unread of {{total}}",
+    "allRead": "All read."
+  },
+  "actions": {
+    "deleteAll": "Delete all",
+    "markAllRead": "Mark all as read"
+  },
+  "search": {
+    "label": "Search notifications",
+    "placeholder": "Search, e.g. booking"
+  },
+  "tabs": {
+    "all": "All",
+    "unread": "Unread",
+    "high": "Priority"
+  },
+  "empty": {
+    "title": "No notifications",
+    "description": "Alerts about your bookings, your courses and your account will appear here.",
+    "filteredTitle": "No matching notifications",
+    "filteredDescription": "Change your search or switch tab.",
+    "showAll": "Show all notifications"
+  },
+  "day": {
+    "unknown": "Unknown date"
+  },
+  "item": {
+    "unread": "(unread)",
+    "priority": "Priority",
+    "markRead": "Mark as read",
+    "markReadNamed": "Mark as read: {{type}}",
+    "deleteNamed": "Delete: {{type}}"
+  },
+  "deleteDialog": {
+    "titleOne": "Delete this notification?",
+    "titleMany_one": "Delete {{count}} notification?",
+    "titleMany_other": "Delete {{count}} notifications?",
+    "descriptionOne": "“{{type}}” will be permanently deleted.",
+    "descriptionFiltered": "Only the notifications in the filtered list will be deleted. This cannot be undone.",
+    "descriptionAll": "All your notifications will be deleted. This cannot be undone."
+  },
+  "toast": {
+    "markedRead_one": "{{count}} notification marked as read",
+    "markedRead_other": "{{count}} notifications marked as read",
+    "deleted_one": "{{count}} notification deleted",
+    "deleted_other": "{{count}} notifications deleted",
+    "readFailed": {
+      "title": "Action failed",
+      "description": "The notification could not be marked as read."
+    },
+    "deleteFailed": {
+      "title": "Could not delete",
+      "description": "The notification could not be deleted."
+    },
+    "markAllFailed": {
+      "title": "Action interrupted",
+      "description": "Not all notifications could be marked as read."
+    },
+    "deleteAllFailed": {
+      "title": "Deletion interrupted",
+      "description": "Not all notifications could be deleted."
+    }
+  },
+  "type": {
+    "COURSE_COMPLETED": "Course completed",
+    "COURSE_STARTED": "Course started",
+    "COURSE_CANCELED": "Course cancelled",
+    "COURSE_CREATED": "Course created",
+    "COURSE_COMMENT": "Course comment",
+    "COMPETENCY_VALIDATED": "Competency validated",
+    "LICENSE_EXPIRED": "Licence expired",
+    "LICENSE_EXPIRING_SOON": "Licence expiring soon",
+    "RESERVATION_PENDING": "Booking pending",
+    "RESERVATION_CONFIRMED": "Booking confirmed",
+    "RESERVATION_CANCELED": "Booking cancelled",
+    "RESERVATION_CANCELLED": "Booking cancelled",
+    "RESERVATION_MODIFIED": "Booking changed",
+    "RESERVATION_FINISHED": "Booking ended",
+    "MISSING_FLIGHT_PLAN": "Flight plan missing",
+    "INCOMPLETE_FLIGHT_PLAN": "Flight plan incomplete",
+    "MISSING_PASSENGER_COUNT": "Passenger count missing",
+    "FLIGHT_CREATED": "Flight plan created",
+    "WITHDRAWAL": "Withdrawal",
+    "INVOICE_CREATED": "Invoice created",
+    "PAYMENT_RECEIVED": "Payment received",
+    "PAYMENT_REFUNDED": "Payment refunded",
+    "2FA_ENABLED": "Two-factor authentication enabled",
+    "USER_UPDATED": "Profile updated"
+  }
+}

@@ -3,6 +3,7 @@
 import { useState } from "react"
 import type { ReactNode } from "react"
 import { useMutation } from "@apollo/client"
+import { useTranslation } from "react-i18next"
 import { CheckSquare, Loader2, Pencil } from "lucide-react"
 import { CLOSE_AUDIT } from "@/graphql/audit"
 import {
@@ -49,6 +50,7 @@ function Fact({ label, children }: { label: string; children: ReactNode }) {
 }
 
 export function AuditDetails({ isOpen, onClose, audit, onEdit, onClosed }: AuditDetailsProps) {
+  const { t } = useTranslation("administration")
   const { toast } = useToast()
   const [isCloseConfirmOpen, setIsCloseConfirmOpen] = useState(false)
   const userEmail = useCurrentUser()
@@ -57,7 +59,7 @@ export function AuditDetails({ isOpen, onClose, audit, onEdit, onClosed }: Audit
 
   const [closeAudit, { loading: closeLoading }] = useMutation(CLOSE_AUDIT, {
     onCompleted: () => {
-      toast({ title: "Audit clôturé" })
+      toast({ title: t("audits.details.toast.closed") })
       setIsCloseConfirmOpen(false)
       onClosed?.()
       onClose()
@@ -65,8 +67,8 @@ export function AuditDetails({ isOpen, onClose, audit, onEdit, onClosed }: Audit
     onError: () => {
       toast({
         variant: "destructive",
-        title: "Clôture impossible",
-        description: "L'audit n'a pas pu être clôturé. Réessayez dans un instant.",
+        title: t("audits.details.toast.closeFailed.title"),
+        description: t("audits.details.toast.closeFailed.description"),
       })
       setIsCloseConfirmOpen(false)
     },
@@ -102,7 +104,7 @@ export function AuditDetails({ isOpen, onClose, audit, onEdit, onClosed }: Audit
       <SidePanel
         open={isOpen}
         onOpenChange={(open) => !open && onClose()}
-        title={`Audit du ${formatDate(audit?.audit_date)}`}
+        title={t("audits.auditOf", { date: formatDate(audit?.audit_date) })}
         description={
           [audit?.aircraft?.registration_number, audit?.aircraft?.model].filter(Boolean).join(" · ") || "—"
         }
@@ -110,12 +112,12 @@ export function AuditDetails({ isOpen, onClose, audit, onEdit, onClosed }: Audit
           <>
             <Button variant="outline" onClick={onEdit}>
               <Pencil className="h-4 w-4" />
-              Modifier
+              {t("common:actions.edit")}
             </Button>
             {!audit?.is_closed && (
               <Button onClick={() => setIsCloseConfirmOpen(true)} disabled={!userId}>
                 <CheckSquare className="h-4 w-4" />
-                Clôturer l'audit
+                {t("audits.details.close")}
               </Button>
             )}
           </>
@@ -128,37 +130,40 @@ export function AuditDetails({ isOpen, onClose, audit, onEdit, onClosed }: Audit
           </div>
 
           <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-            <Fact label="Auditeur">{auditor || "—"}</Fact>
-            <Fact label="Fréquence">{auditFrequencyLabel(audit?.audit_frequency)}</Fact>
-            <Fact label="Prochain audit">
+            <Fact label={t("audits.fields.auditor")}>{auditor || "—"}</Fact>
+            <Fact label={t("audits.fields.frequency")}>{auditFrequencyLabel(audit?.audit_frequency)}</Fact>
+            <Fact label={t("audits.fields.nextAudit")}>
               <span className={overdue ? "text-destructive" : undefined}>{formatDate(audit?.next_audit_date)}</span>
             </Fact>
             {/* Only shown when the API returned them with the audit. */}
-            {audit?.is_closed && audit?.closed_date && <Fact label="Clôturé le">{formatDate(audit.closed_date)}</Fact>}
-            {audit?.is_closed && closedBy && <Fact label="Clôturé par">{closedBy}</Fact>}
+            {audit?.is_closed && audit?.closed_date && (
+              <Fact label={t("audits.details.closedOn")}>{formatDate(audit.closed_date)}</Fact>
+            )}
+            {audit?.is_closed && closedBy && <Fact label={t("audits.details.closedBy")}>{closedBy}</Fact>}
           </dl>
 
           <section className="grid gap-4 sm:grid-cols-2">
             <div>
-              <h3 className="text-sm font-semibold">Notes</h3>
+              <h3 className="text-sm font-semibold">{t("common:labels.notes")}</h3>
               <p className="mt-1 whitespace-pre-line text-sm text-muted-foreground">
-                {audit?.audit_notes || "Aucune note."}
+                {audit?.audit_notes || t("audits.details.noNotes")}
               </p>
             </div>
             <div>
-              <h3 className="text-sm font-semibold">Actions correctives</h3>
+              <h3 className="text-sm font-semibold">{t("audits.fields.correctiveActions")}</h3>
               <p className="mt-1 whitespace-pre-line text-sm text-muted-foreground">
-                {audit?.corrective_actions || "Aucune action corrective."}
+                {audit?.corrective_actions || t("audits.details.noCorrectiveActions")}
               </p>
             </div>
           </section>
 
           <section className="space-y-3">
             <h3 className="text-sm font-semibold">
-              Éléments vérifiés <span className="font-normal text-muted-foreground">({items.length})</span>
+              {t("audits.fields.checkedItems")}{" "}
+              <span className="font-normal text-muted-foreground">({items.length})</span>
             </h3>
             {items.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Cet audit ne contient aucun élément vérifié.</p>
+              <p className="text-sm text-muted-foreground">{t("audits.details.noItems")}</p>
             ) : (
               Object.entries(groupedItems).map(([category, categoryItems]) => (
                 <div key={category} className="space-y-2">
@@ -186,27 +191,31 @@ export function AuditDetails({ isOpen, onClose, audit, onEdit, onClosed }: Audit
                                   {auditCriticality(item.criticality).label}
                                 </Badge>
                               )}
-                              {item.requires_action && <Badge variant="warning">Action corrective requise</Badge>}
-                              {item.requires_photo_evidence && <Badge variant="info">Photo requise</Badge>}
+                              {item.requires_action && (
+                                <Badge variant="warning">{t("audits.details.actionRequired")}</Badge>
+                              )}
+                              {item.requires_photo_evidence && (
+                                <Badge variant="info">{t("audits.details.photoRequired")}</Badge>
+                              )}
                             </div>
                           )}
                           {(item.inspection_method || item.expected_result || item.reference_documentation) && (
                             <dl className="space-y-0.5 text-xs text-muted-foreground">
                               {item.inspection_method && (
                                 <div>
-                                  <dt className="inline font-medium">Méthode d'inspection : </dt>
+                                  <dt className="inline font-medium">{t("audits.details.inspectionMethod")}</dt>
                                   <dd className="inline">{item.inspection_method}</dd>
                                 </div>
                               )}
                               {item.expected_result && (
                                 <div>
-                                  <dt className="inline font-medium">Résultat attendu : </dt>
+                                  <dt className="inline font-medium">{t("audits.details.expectedResult")}</dt>
                                   <dd className="inline">{item.expected_result}</dd>
                                 </div>
                               )}
                               {item.reference_documentation && (
                                 <div>
-                                  <dt className="inline font-medium">Documentation : </dt>
+                                  <dt className="inline font-medium">{t("audits.details.documentation")}</dt>
                                   <dd className="inline">{item.reference_documentation}</dd>
                                 </div>
                               )}
@@ -227,14 +236,16 @@ export function AuditDetails({ isOpen, onClose, audit, onEdit, onClosed }: Audit
       <AlertDialog open={isCloseConfirmOpen} onOpenChange={(open) => !open && !closeLoading && setIsCloseConfirmOpen(false)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Clôturer cet audit ?</AlertDialogTitle>
+            <AlertDialogTitle>{t("audits.details.closeConfirm.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              L'audit du {formatDate(audit?.audit_date)} de l'aéronef {audit?.aircraft?.registration_number ?? "—"} sera
-              marqué comme clôturé à votre nom.
+              {t("audits.details.closeConfirm.description", {
+                date: formatDate(audit?.audit_date),
+                registration: audit?.aircraft?.registration_number ?? "—",
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={closeLoading}>Annuler</AlertDialogCancel>
+            <AlertDialogCancel disabled={closeLoading}>{t("common:actions.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               // Keep the dialog open until the mutation answers.
               onClick={(e) => {
@@ -244,7 +255,7 @@ export function AuditDetails({ isOpen, onClose, audit, onEdit, onClosed }: Audit
               disabled={closeLoading}
             >
               {closeLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-              Clôturer l'audit
+              {t("audits.details.close")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

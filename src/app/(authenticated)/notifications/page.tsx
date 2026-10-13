@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react"
 import { useQuery, useMutation } from "@apollo/client"
 import { useRouter } from "next/navigation"
+import { useTranslation } from "react-i18next"
 import { Bell, Check, CheckCheck, ChevronLeft, ChevronRight, Loader2, Search, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { formatTime } from "@/lib/format"
@@ -36,9 +37,9 @@ import {
 } from "@/graphql/notifications"
 import {
   type AppNotification,
-  getNotificationTypeInFrench,
   groupNotificationsByDay,
   isHighPriority,
+  notificationTypeLabel,
 } from "@/interfaces/notification"
 
 const PAGE_SIZE = 20
@@ -46,9 +47,8 @@ const PAGE_SIZE = 20
 type TabValue = "all" | "unread" | "high"
 type DeleteTarget = { kind: "one"; notification: AppNotification } | { kind: "all" }
 
-const plural = (count: number) => (count > 1 ? "s" : "")
-
 export default function NotificationsPage() {
+  const { t } = useTranslation("notifications")
   const router = useRouter()
   const { toast } = useToast()
   const userEmail = useCurrentUser()
@@ -102,7 +102,7 @@ export default function NotificationsPage() {
       filtered = filtered.filter(
         (n) =>
           (n.message ?? "").toLowerCase().includes(query) ||
-          getNotificationTypeInFrench(n.notification_type).toLowerCase().includes(query),
+          notificationTypeLabel(n.notification_type).toLowerCase().includes(query),
       )
     }
     return filtered
@@ -140,8 +140,8 @@ export default function NotificationsPage() {
       console.error("Erreur lors du marquage de la notification comme vue:", error)
       toast({
         variant: "destructive",
-        title: "Action impossible",
-        description: "La notification n'a pas pu être marquée comme lue.",
+        title: t("toast.readFailed.title"),
+        description: t("toast.readFailed.description"),
       })
     } finally {
       setBusyId(null)
@@ -157,8 +157,8 @@ export default function NotificationsPage() {
       console.error("Erreur lors de la suppression de la notification:", error)
       toast({
         variant: "destructive",
-        title: "Suppression impossible",
-        description: "La notification n'a pas pu être supprimée.",
+        title: t("toast.deleteFailed.title"),
+        description: t("toast.deleteFailed.description"),
       })
     } finally {
       setBusyId(null)
@@ -177,13 +177,13 @@ export default function NotificationsPage() {
       } else {
         await markAllNotificationsRead()
       }
-      toast({ title: `${count} notification${plural(count)} marquée${plural(count)} comme lue${plural(count)}` })
+      toast({ title: t("toast.markedRead", { count }) })
     } catch (error) {
       console.error("Erreur lors du marquage des notifications comme lues:", error)
       toast({
         variant: "destructive",
-        title: "Action interrompue",
-        description: "Toutes les notifications n'ont pas pu être marquées comme lues.",
+        title: t("toast.markAllFailed.title"),
+        description: t("toast.markAllFailed.description"),
       })
     } finally {
       await refetchNotifications().catch(() => undefined)
@@ -202,13 +202,13 @@ export default function NotificationsPage() {
       } else {
         await deleteAllNotifications()
       }
-      toast({ title: `${targets.length} notification${plural(targets.length)} supprimée${plural(targets.length)}` })
+      toast({ title: t("toast.deleted", { count: targets.length }) })
     } catch (error) {
       console.error("Erreur lors de la suppression des notifications:", error)
       toast({
         variant: "destructive",
-        title: "Suppression interrompue",
-        description: "Toutes les notifications n'ont pas pu être supprimées.",
+        title: t("toast.deleteAllFailed.title"),
+        description: t("toast.deleteAllFailed.description"),
       })
     } finally {
       await refetchNotifications().catch(() => undefined)
@@ -258,11 +258,9 @@ export default function NotificationsPage() {
       return (
         <EmptyState
           icon={Bell}
-          title={isFiltered ? "Aucune notification ne correspond" : "Aucune notification"}
+          title={isFiltered ? t("empty.filteredTitle") : t("empty.title")}
           description={
-            isFiltered
-              ? "Modifiez votre recherche ou changez d'onglet."
-              : "Les alertes sur vos réservations, vos cours et votre compte s'afficheront ici."
+            isFiltered ? t("empty.filteredDescription") : t("empty.description")
           }
           action={
             isFiltered ? (
@@ -273,7 +271,7 @@ export default function NotificationsPage() {
                   setSelectedTab("all")
                 }}
               >
-                Afficher toutes les notifications
+                {t("empty.showAll")}
               </Button>
             ) : undefined
           }
@@ -291,7 +289,7 @@ export default function NotificationsPage() {
                 {group.items.map((notification) => {
                   const unread = !notification.is_read
                   const busy = busyId === notification.id
-                  const type = getNotificationTypeInFrench(notification.notification_type)
+                  const type = notificationTypeLabel(notification.notification_type)
 
                   return (
                     <li
@@ -309,8 +307,8 @@ export default function NotificationsPage() {
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                             <p className={cn("text-sm", unread ? "font-semibold" : "font-medium")}>{type}</p>
-                            {unread && <span className="sr-only">(non lue)</span>}
-                            {isHighPriority(notification) && <Badge variant="danger">Prioritaire</Badge>}
+                            {unread && <span className="sr-only">{t("item.unread")}</span>}
+                            {isHighPriority(notification) && <Badge variant="danger">{t("item.priority")}</Badge>}
                             <span className="text-xs text-muted-foreground tabular-nums">
                               {formatTime(notification.notification_date)}
                             </span>
@@ -327,7 +325,7 @@ export default function NotificationsPage() {
                             disabled={busy || bulkBusy}
                             onClick={() => handleNotificationAction(notification, notification.action_url)}
                           >
-                            Voir
+                            {t("common:actions.view")}
                           </Button>
                         )}
                         {unread && (
@@ -337,8 +335,8 @@ export default function NotificationsPage() {
                             className="h-9 w-9"
                             disabled={busy || bulkBusy}
                             onClick={() => handleNotificationAction(notification)}
-                            aria-label={`Marquer comme lue : ${type}`}
-                            title="Marquer comme lue"
+                            aria-label={t("item.markReadNamed", { type })}
+                            title={t("item.markRead")}
                           >
                             <Check className="h-4 w-4" />
                           </Button>
@@ -349,8 +347,8 @@ export default function NotificationsPage() {
                           className="h-9 w-9 text-destructive hover:bg-destructive/10 hover:text-destructive"
                           disabled={busy || bulkBusy}
                           onClick={() => askDelete({ kind: "one", notification })}
-                          aria-label={`Supprimer : ${type}`}
-                          title="Supprimer"
+                          aria-label={t("item.deleteNamed", { type })}
+                          title={t("common:actions.delete")}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -364,16 +362,16 @@ export default function NotificationsPage() {
         ))}
 
         {totalPages > 1 && (
-          <nav aria-label="Pagination" className="flex items-center justify-between gap-3">
+          <nav aria-label={t("common:pagination.label")} className="flex items-center justify-between gap-3">
             <Button variant="outline" size="sm" onClick={() => setCurrentPage(page - 1)} disabled={page === 1}>
               <ChevronLeft className="h-4 w-4" />
-              Précédent
+              {t("common:pagination.previous")}
             </Button>
             <p className="text-sm text-muted-foreground tabular-nums" aria-live="polite">
-              Page {page} sur {totalPages}
+              {t("common:pagination.pageOf", { page, total: totalPages })}
             </p>
             <Button variant="outline" size="sm" onClick={() => setCurrentPage(page + 1)} disabled={page === totalPages}>
-              Suivant
+              {t("common:pagination.next")}
               <ChevronRight className="h-4 w-4" />
             </Button>
           </nav>
@@ -386,13 +384,13 @@ export default function NotificationsPage() {
     <div className="mx-auto max-w-4xl space-y-6">
       <PageHeader
         className="mb-0"
-        title="Notifications"
+        title={t("title")}
         description={
           isLoading || notifications.length === 0
             ? undefined
             : unreadCount > 0
-              ? `${unreadCount} non lue${plural(unreadCount)} sur ${notifications.length}`
-              : "Tout est lu."
+              ? t("summary.unreadOf", { count: unreadCount, total: notifications.length })
+              : t("summary.allRead")
         }
         actions={
           filteredNotifications.length > 0 ? (
@@ -404,7 +402,7 @@ export default function NotificationsPage() {
                 disabled={bulkBusy}
               >
                 {isDeletingAll ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                Tout supprimer
+                {t("actions.deleteAll")}
               </Button>
               <Button onClick={handleMarkAllAsRead} disabled={bulkBusy || filteredUnread.length === 0}>
                 {isMarkingAllAsRead ? (
@@ -412,7 +410,7 @@ export default function NotificationsPage() {
                 ) : (
                   <CheckCheck className="h-4 w-4" />
                 )}
-                Tout marquer comme lu
+                {t("actions.markAllRead")}
               </Button>
             </>
           ) : undefined
@@ -427,8 +425,8 @@ export default function NotificationsPage() {
           />
           <Input
             type="search"
-            aria-label="Rechercher dans les notifications"
-            placeholder="Rechercher, ex. : réservation"
+            aria-label={t("search.label")}
+            placeholder={t("search.placeholder")}
             className="pl-9"
             value={searchQuery}
             onChange={(e) => handleSearchChange(e.target.value)}
@@ -437,15 +435,15 @@ export default function NotificationsPage() {
         <Tabs value={selectedTab} onValueChange={handleTabChange}>
           <TabsList>
             <TabsTrigger value="all">
-              Toutes
+              {t("tabs.all")}
               <span className="ml-1.5 text-xs text-muted-foreground tabular-nums">{notifications.length}</span>
             </TabsTrigger>
             <TabsTrigger value="unread">
-              Non lues
+              {t("tabs.unread")}
               <span className="ml-1.5 text-xs text-muted-foreground tabular-nums">{unreadCount}</span>
             </TabsTrigger>
             <TabsTrigger value="high">
-              Prioritaires
+              {t("tabs.high")}
               <span className="ml-1.5 text-xs text-muted-foreground tabular-nums">{highCount}</span>
             </TabsTrigger>
           </TabsList>
@@ -459,21 +457,23 @@ export default function NotificationsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>
               {deleteTarget.kind === "one"
-                ? "Supprimer cette notification ?"
-                : `Supprimer ${deleteCount} notification${plural(deleteCount)} ?`}
+                ? t("deleteDialog.titleOne")
+                : t("deleteDialog.titleMany", { count: deleteCount })}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {deleteTarget.kind === "one"
-                ? `« ${getNotificationTypeInFrench(deleteTarget.notification.notification_type)} » sera supprimée définitivement.`
+                ? t("deleteDialog.descriptionOne", {
+                    type: notificationTypeLabel(deleteTarget.notification.notification_type),
+                  })
                 : isFiltered
-                  ? "Seules les notifications de la liste filtrée seront supprimées. Cette action est définitive."
-                  : "Toutes vos notifications seront supprimées. Cette action est définitive."}
+                  ? t("deleteDialog.descriptionFiltered")
+                  : t("deleteDialog.descriptionAll")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogCancel>{t("common:actions.cancel")}</AlertDialogCancel>
             <AlertDialogAction className={buttonVariants({ variant: "destructive" })} onClick={confirmDelete}>
-              Supprimer
+              {t("common:actions.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -2,6 +2,7 @@
 
 import { useEffect } from "react"
 import { AlertTriangle, RefreshCw } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { AuthCard } from "@/app/auth/_components/AuthCard"
 
@@ -12,6 +13,8 @@ export default function RootError({
   error: Error & { digest?: string }
   reset: () => void
 }) {
+  const { t } = useTranslation("auth")
+
   useEffect(() => {
     console.error("Root error:", error)
   }, [error])
@@ -20,13 +23,13 @@ export default function RootError({
     <AuthCard
       icon={AlertTriangle}
       tone="danger"
-      title="Une erreur est survenue"
-      description="La page n'a pas pu s'afficher. Réessayez ; si le problème persiste, contactez un administrateur du club."
-      footer={error.digest ? `Référence de l'erreur : ${error.digest}` : undefined}
+      title={t("error.page.title")}
+      description={t("error.page.description")}
+      footer={error.digest ? t("error.reference", { digest: error.digest }) : undefined}
     >
       <Button onClick={reset} className="w-full">
         <RefreshCw className="h-4 w-4" />
-        Réessayer
+        {t("common:actions.retry")}
       </Button>
     </AuthCard>
   )

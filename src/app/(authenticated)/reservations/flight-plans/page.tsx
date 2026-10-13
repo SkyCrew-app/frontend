@@ -3,6 +3,7 @@
 import { useMutation, useQuery } from "@apollo/client"
 import { useMemo, useState } from "react"
 import Link from "next/link"
+import { useTranslation } from "react-i18next"
 import { Plus } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
@@ -24,6 +25,7 @@ const ITEMS_PER_PAGE = 6
 const startTimeOf = (flight: Flight) => new Date(flight.reservation?.start_time || 0).getTime()
 
 export default function MyFlightPlans() {
+  const { t } = useTranslation("flights")
   const userEmail = useCurrentUser()
   const userData = useUserData(userEmail)
   const userId: string | number | null = userData?.id ?? null
@@ -110,14 +112,17 @@ export default function MyFlightPlans() {
 
       setIsEditDialogOpen(false)
       toast({
-        title: "Plan de vol mis à jour",
-        description: `Le plan de vol ${selectedFlight.origin_icao} → ${selectedFlight.destination_icao} a été modifié.`,
+        title: t("plans.toast.updated.title"),
+        description: t("plans.toast.updated.description", {
+          origin: selectedFlight.origin_icao,
+          destination: selectedFlight.destination_icao,
+        }),
       })
     } catch {
       toast({
         variant: "destructive",
-        title: "Modification impossible",
-        description: "Le plan de vol n'a pas pu être modifié. Réessayez dans un instant.",
+        title: t("plans.toast.updateFailed.title"),
+        description: t("plans.toast.updateFailed.description"),
       })
     }
   }
@@ -172,7 +177,7 @@ export default function MyFlightPlans() {
               pageCount={totalPages}
               onPageChange={setCurrentPage}
               total={filteredFlightPlans.length}
-              noun={["plan de vol", "plans de vol"]}
+              noun={[t("plans.pagerNoun.one"), t("plans.pagerNoun.other")]}
             />
           </>
         ) : (
@@ -186,13 +191,13 @@ export default function MyFlightPlans() {
     <div className="space-y-6">
       <PageHeader
         className="mb-0"
-        title="Mes plans de vol"
-        description="Les plans de vol préparés à partir de vos réservations."
+        title={t("plans.title")}
+        description={t("plans.description")}
         actions={
           <Button asChild>
             <Link href="/reservations/my">
               <Plus className="h-4 w-4" />
-              Nouveau plan de vol
+              {t("plans.new")}
             </Link>
           </Button>
         }

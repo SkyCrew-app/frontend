@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react"
 import { useQuery } from "@apollo/client"
+import { useTranslation } from "react-i18next"
 import {
   LineChart,
   Line,
@@ -15,13 +16,13 @@ import {
 } from "recharts"
 import { PiggyBank, Receipt, TrendingUp } from "lucide-react"
 import { addMonths, format, startOfMonth, endOfMonth } from "date-fns"
-import { fr } from "date-fns/locale"
 import { GET_BUDGET_FORECAST } from "@/graphql/finance"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { StatCard } from "@/components/layout/StatCard"
 import { ErrorState } from "@/components/layout/ErrorState"
 import { formatMoney } from "@/lib/format"
+import { dateFnsLocale } from "@/lib/i18n"
 import type { BudgetForecastResponse, ChartDataItem } from "@/interfaces/finance"
 import {
   CHART_GRID,
@@ -39,6 +40,7 @@ const MONTHS = 6
 const profitClass = (value: number) => (value >= 0 ? "text-success" : "text-destructive")
 
 export default function BudgetForecast() {
+  const { t } = useTranslation("administration")
   // Fixed for the life of the component, so the six queries keep the same variables.
   const [currentDate] = useState(() => new Date())
 
@@ -78,7 +80,7 @@ export default function BudgetForecast() {
   if (queryResults.some((query) => query.error)) {
     return (
       <ErrorState
-        description="Les prévisions n'ont pas pu être calculées. Vérifiez votre connexion puis réessayez."
+        description={t("finance.forecast.error")}
         onRetry={() => queryResults.forEach((query) => query.refetch())}
       />
     )
@@ -86,7 +88,7 @@ export default function BudgetForecast() {
 
   const chartData: ChartDataItem[] = queryResults.map((query, index) => {
     const forecast = query.data?.generateBudgetForecast
-    const month = format(periods[index].startDate, "MMM yyyy", { locale: fr })
+    const month = format(periods[index].startDate, "MMM yyyy", { locale: dateFnsLocale() })
 
     return {
       month,
@@ -105,29 +107,34 @@ export default function BudgetForecast() {
     { revenus: 0, depenses: 0, resultatNet: 0 },
   )
 
-  const monthlyAverage = (value: number) => `Moyenne mensuelle : ${formatMoney(value / MONTHS)}`
+  const monthlyAverage = (value: number) =>
+    t("finance.forecast.monthlyAverage", { amount: formatMoney(value / MONTHS) })
 
   return (
     <div className="space-y-6">
       <StatGrid className="lg:grid-cols-3">
         <StatCard
-          label="Revenus prévus"
+          label={t("finance.forecast.revenue")}
           value={formatMoney(totals.revenus)}
           hint={monthlyAverage(totals.revenus)}
           icon={TrendingUp}
           tone="primary"
         />
         <StatCard
-          label="Dépenses prévues"
+          label={t("finance.forecast.expenses")}
           value={formatMoney(totals.depenses)}
           hint={monthlyAverage(totals.depenses)}
           icon={Receipt}
           tone="warning"
         />
         <StatCard
-          label="Résultat net prévu"
+          label={t("finance.forecast.netResult")}
           value={formatMoney(totals.resultatNet)}
-          hint={totals.resultatNet >= 0 ? "Excédent sur 6 mois" : "Déficit sur 6 mois"}
+          hint={
+            totals.resultatNet >= 0
+              ? t("finance.forecast.surplus", { months: MONTHS })
+              : t("finance.forecast.deficit", { months: MONTHS })
+          }
           icon={PiggyBank}
           tone={totals.resultatNet >= 0 ? "success" : "danger"}
           className="sm:col-span-2 lg:col-span-1"
@@ -136,8 +143,8 @@ export default function BudgetForecast() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Prévisions sur 6 mois</CardTitle>
-          <CardDescription>Estimation mois par mois, à partir du mois en cours.</CardDescription>
+          <CardTitle>{t("finance.forecast.title", { months: MONTHS })}</CardTitle>
+          <CardDescription>{t("finance.forecast.description")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="h-72 sm:h-80">
@@ -152,7 +159,7 @@ export default function BudgetForecast() {
                 <Line
                   type="monotone"
                   dataKey="revenus"
-                  name="Revenus"
+                  name={t("finance.labels.revenue")}
                   stroke={FINANCE_COLORS.revenue}
                   strokeWidth={2}
                   dot={{ r: 3 }}
@@ -160,7 +167,7 @@ export default function BudgetForecast() {
                 <Line
                   type="monotone"
                   dataKey="depenses"
-                  name="Dépenses"
+                  name={t("finance.labels.expenses")}
                   stroke={FINANCE_COLORS.expense}
                   strokeWidth={2}
                   dot={{ r: 3 }}
@@ -168,7 +175,7 @@ export default function BudgetForecast() {
                 <Line
                   type="monotone"
                   dataKey="resultatNet"
-                  name="Résultat net"
+                  name={t("finance.labels.netResult")}
                   stroke={FINANCE_COLORS.result}
                   strokeWidth={2}
                   strokeDasharray="5 5"
@@ -182,16 +189,16 @@ export default function BudgetForecast() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Détail par mois</CardTitle>
+          <CardTitle>{t("finance.forecast.byMonth")}</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Mois</TableHead>
-                <TableHead className="text-right">Revenus</TableHead>
-                <TableHead className="text-right">Dépenses</TableHead>
-                <TableHead className="text-right">Résultat net</TableHead>
+                <TableHead>{t("finance.period.month")}</TableHead>
+                <TableHead className="text-right">{t("finance.labels.revenue")}</TableHead>
+                <TableHead className="text-right">{t("finance.labels.expenses")}</TableHead>
+                <TableHead className="text-right">{t("finance.labels.netResult")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -214,7 +221,7 @@ export default function BudgetForecast() {
             </TableBody>
             <TableFooter>
               <TableRow>
-                <TableCell>Total</TableCell>
+                <TableCell>{t("common:labels.total")}</TableCell>
                 <TableCell className="whitespace-nowrap text-right tabular-nums">
                   {formatMoney(totals.revenus)}
                 </TableCell>

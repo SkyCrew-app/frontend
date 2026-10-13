@@ -1,3 +1,5 @@
+import i18n from "@/lib/i18n"
+
 // Champs `Int` de CreateAircraftInput / UpdateAircraftInput.
 const INTEGER_FIELDS = ["year_of_manufacture", "maxAltitude", "cruiseSpeed", "consumption"] as const
 
@@ -39,25 +41,31 @@ export const manufactureYearBounds = () => ({ min: FIRST_MANUFACTURE_YEAR, max: 
 
 type StatusVariant = "success" | "warning" | "info" | "danger" | "neutral"
 
-// One wording and one colour per availability status, wherever it is shown.
-const AVAILABILITIES: Record<string, { label: string; variant: StatusVariant }> = {
-  AVAILABLE: { label: "Disponible", variant: "success" },
-  RESERVATED: { label: "Réservé", variant: "info" },
-  UNAVAILABLE: { label: "Indisponible", variant: "danger" },
+// One wording (fleet:availability.<code>) and one colour per availability status, wherever it is shown.
+const AVAILABILITY_VARIANTS: Record<string, StatusVariant> = {
+  AVAILABLE: "success",
+  RESERVATED: "info",
+  UNAVAILABLE: "danger",
 }
 
 // Order used by the filters, the forms and the charts.
 export const AIRCRAFT_AVAILABILITY_VALUES = ["AVAILABLE", "RESERVATED", "UNAVAILABLE"] as const
 
-export const aircraftAvailability = (status: string | null | undefined) =>
-  AVAILABILITIES[(status ?? "").toUpperCase()] ?? { label: status || "—", variant: "neutral" as StatusVariant }
+export const aircraftAvailability = (status: string | null | undefined): { label: string; variant: StatusVariant } => {
+  const code = (status ?? "").toUpperCase()
+  const variant = AVAILABILITY_VARIANTS[code]
+  return variant
+    ? { label: i18n.t(`fleet:availability.${code}`), variant }
+    : { label: status || "—", variant: "neutral" }
+}
 
 // The maintenance state of an aircraft is free text in the API. The forms
 // write the first value of each line; the others are older spellings.
-const MAINTENANCE_STATES: { values: string[]; label: string; variant: StatusVariant }[] = [
-  { values: ["OK", "OPERATIONAL"], label: "Opérationnel", variant: "success" },
-  { values: ["Maintenance requise", "NEEDS_MAINTENANCE"], label: "Maintenance requise", variant: "warning" },
-  { values: ["En maintenance", "IN_MAINTENANCE"], label: "En maintenance", variant: "danger" },
+// The label of a state is fleet:maintenanceState.<code>.
+const MAINTENANCE_STATES: { values: string[]; code: string; variant: StatusVariant }[] = [
+  { values: ["OK", "OPERATIONAL"], code: "OPERATIONAL", variant: "success" },
+  { values: ["Maintenance requise", "NEEDS_MAINTENANCE"], code: "NEEDS_MAINTENANCE", variant: "warning" },
+  { values: ["En maintenance", "IN_MAINTENANCE"], code: "IN_MAINTENANCE", variant: "danger" },
 ]
 
 // Values offered by the aircraft forms.
@@ -68,7 +76,7 @@ export const aircraftMaintenanceState = (status: string | null | undefined) => {
   const value = (status ?? "").trim().toLowerCase()
   const known = MAINTENANCE_STATES.find((state) => state.values.some((candidate) => candidate.toLowerCase() === value))
   return known
-    ? { label: known.label, variant: known.variant }
+    ? { label: i18n.t(`fleet:maintenanceState.${known.code}`), variant: known.variant }
     : { label: status?.trim() || "—", variant: "neutral" as StatusVariant }
 }
 

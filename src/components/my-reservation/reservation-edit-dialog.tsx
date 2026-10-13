@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react"
 import { format } from "date-fns"
-import { fr } from "date-fns/locale"
+import { useTranslation } from "react-i18next"
 import type { Reservation } from "@/interfaces/reservation"
 import { ReservationForm } from "@/components/reservation/reservation-form"
+import { dateFnsLocale } from "@/lib/i18n"
 
 interface ReservationEditDialogProps {
   isOpen: boolean
@@ -15,6 +16,7 @@ interface ReservationEditDialogProps {
 
 /** Same panel as the calendar's edit form: purpose, category and notes of a reservation. */
 export function ReservationEditDialog({ isOpen, onOpenChange, reservation, onSave }: ReservationEditDialogProps) {
+  const { t } = useTranslation("reservations")
   const [purpose, setPurpose] = useState("")
   const [notes, setNotes] = useState("")
   const [flightCategory, setFlightCategory] = useState("")
@@ -45,12 +47,12 @@ export function ReservationEditDialog({ isOpen, onOpenChange, reservation, onSav
     <ReservationForm
       open={isOpen}
       onOpenChange={onOpenChange}
-      title="Modifier la réservation"
-      description="L'avion et l'horaire ne sont pas modifiables."
+      title={t("form.editTitle")}
+      description={t("form.editDescription")}
       isEdit
       summary={{
         aircraft: reservation.aircraft.registration_number,
-        date: format(new Date(reservation.start_time), "EEEE d MMMM yyyy", { locale: fr }),
+        date: format(new Date(reservation.start_time), "EEEE d MMMM yyyy", { locale: dateFnsLocale() }),
         start: format(new Date(reservation.start_time), "HH:mm"),
         end: format(new Date(reservation.end_time), "HH:mm"),
       }}

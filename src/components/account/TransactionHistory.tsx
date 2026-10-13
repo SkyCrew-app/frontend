@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useQuery } from "@apollo/client"
+import { useTranslation } from "react-i18next"
 import { Receipt, Search, SearchX } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -46,6 +47,7 @@ function signedAmount(transaction: Transaction) {
 }
 
 export default function TransactionHistory() {
+  const { t } = useTranslation("profile")
   const [searchTerm, setSearchTerm] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [filterStatus, setFilterStatus] = useState(ALL)
@@ -121,12 +123,12 @@ export default function TransactionHistory() {
   return (
     <section className="space-y-4" aria-labelledby="transactions-title">
       <h2 id="transactions-title" className="text-lg font-semibold">
-        Historique des transactions
+        {t("history.title")}
       </h2>
 
       {error ? (
         <ErrorState
-          description="L'historique de vos transactions n'a pas pu être chargé. Vérifiez votre connexion puis réessayez."
+          description={t("history.loadError")}
           onRetry={() => refetch()}
         />
       ) : (
@@ -139,8 +141,8 @@ export default function TransactionHistory() {
               />
               <Input
                 type="search"
-                aria-label="Rechercher une transaction"
-                placeholder="Rechercher (montant, moyen de paiement…)"
+                aria-label={t("history.searchLabel")}
+                placeholder={t("history.searchPlaceholder")}
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value)
@@ -157,11 +159,11 @@ export default function TransactionHistory() {
                 setCurrentPage(1)
               }}
             >
-              <SelectTrigger className="w-full sm:w-48" aria-label="Filtrer par type">
+              <SelectTrigger className="w-full sm:w-48" aria-label={t("history.filterByType")}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={ALL}>Tous les types</SelectItem>
+                <SelectItem value={ALL}>{t("history.allTypes")}</SelectItem>
                 {(Object.keys(TRANSACTION_TYPES) as TransactionType[]).map((type) => (
                   <SelectItem key={type} value={type}>
                     {TRANSACTION_TYPES[type].plural}
@@ -177,11 +179,11 @@ export default function TransactionHistory() {
                 setCurrentPage(1)
               }}
             >
-              <SelectTrigger className="w-full sm:w-44" aria-label="Filtrer par statut">
+              <SelectTrigger className="w-full sm:w-44" aria-label={t("history.filterByStatus")}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={ALL}>Tous les statuts</SelectItem>
+                <SelectItem value={ALL}>{t("history.allStatuses")}</SelectItem>
                 {PAYMENT_STATUS_FILTERS.map((status) => (
                   <SelectItem key={status.key} value={status.key}>
                     {status.label}
@@ -192,7 +194,7 @@ export default function TransactionHistory() {
 
             {hasFilters && (
               <Button variant="ghost" onClick={clearFilters} className="sm:ml-auto">
-                Réinitialiser
+                {t("common:actions.reset")}
               </Button>
             )}
           </div>
@@ -201,11 +203,11 @@ export default function TransactionHistory() {
             <Table className="min-w-[640px]">
               <TableHeader>
                 <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Moyen de paiement</TableHead>
-                  <TableHead>Statut</TableHead>
-                  <TableHead className="text-right">Montant</TableHead>
+                  <TableHead>{t("common:labels.date")}</TableHead>
+                  <TableHead>{t("common:labels.type")}</TableHead>
+                  <TableHead>{t("history.columns.paymentMethod")}</TableHead>
+                  <TableHead>{t("common:labels.status")}</TableHead>
+                  <TableHead className="text-right">{t("history.columns.amount")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -249,11 +251,11 @@ export default function TransactionHistory() {
                       {hasFilters ? (
                         <EmptyState
                           icon={SearchX}
-                          title="Aucune transaction ne correspond"
-                          description="Modifiez votre recherche ou vos filtres."
+                          title={t("history.noMatchTitle")}
+                          description={t("history.noMatchDescription")}
                           action={
                             <Button variant="outline" onClick={clearFilters}>
-                              Réinitialiser les filtres
+                              {t("history.resetFilters")}
                             </Button>
                           }
                           className="border-0"
@@ -261,8 +263,8 @@ export default function TransactionHistory() {
                       ) : (
                         <EmptyState
                           icon={Receipt}
-                          title="Aucune transaction pour le moment"
-                          description="Vos rechargements et vos dépenses apparaîtront ici."
+                          title={t("history.emptyTitle")}
+                          description={t("history.emptyDescription")}
                           className="border-0"
                         />
                       )}
@@ -276,8 +278,11 @@ export default function TransactionHistory() {
           {!isLoading && filteredTransactions.length > 0 && (
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-muted-foreground tabular-nums">
-                {firstIndex + 1}–{firstIndex + paginatedTransactions.length} sur {filteredTransactions.length}{" "}
-                {filteredTransactions.length > 1 ? "transactions" : "transaction"}
+                {t("history.range", {
+                  from: firstIndex + 1,
+                  to: firstIndex + paginatedTransactions.length,
+                  count: filteredTransactions.length,
+                })}
               </p>
               {totalPages > 1 && (
                 <div className="flex items-center gap-2">
@@ -287,10 +292,10 @@ export default function TransactionHistory() {
                     onClick={() => setCurrentPage(Math.max(page - 1, 1))}
                     disabled={page === 1}
                   >
-                    Précédent
+                    {t("common:pagination.previous")}
                   </Button>
                   <span className="text-sm text-muted-foreground tabular-nums">
-                    Page {page} sur {totalPages}
+                    {t("common:pagination.pageOf", { page, total: totalPages })}
                   </span>
                   <Button
                     variant="outline"
@@ -298,7 +303,7 @@ export default function TransactionHistory() {
                     onClick={() => setCurrentPage(Math.min(page + 1, totalPages))}
                     disabled={page === totalPages}
                   >
-                    Suivant
+                    {t("common:pagination.next")}
                   </Button>
                 </div>
               )}

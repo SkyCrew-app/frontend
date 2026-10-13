@@ -1,0 +1,342 @@
+{
+  "availability": {
+    "AVAILABLE": "Disponible",
+    "RESERVATED": "Réservé",
+    "UNAVAILABLE": "Indisponible"
+  },
+  "maintenanceState": {
+    "OPERATIONAL": "Opérationnel",
+    "NEEDS_MAINTENANCE": "Maintenance requise",
+    "IN_MAINTENANCE": "En maintenance"
+  },
+  "maintenanceType": {
+    "INSPECTION": "Inspection",
+    "REPAIR": "Réparation",
+    "OVERHAUL": "Révision",
+    "SOFTWARE_UPDATE": "Mise à jour logicielle",
+    "CLEANING": "Nettoyage",
+    "OTHER": "Autre"
+  },
+  "maintenanceStatus": {
+    "PLANNED": "Planifiée",
+    "IN_PROGRESS": "En cours",
+    "COMPLETED": "Terminée",
+    "CANCELLED": "Annulée"
+  },
+  "shared": {
+    "aircraft": "Aéronef",
+    "aircraftPlural": "Aéronefs",
+    "registration": "Immatriculation",
+    "model": "Modèle",
+    "availability": "Disponibilité",
+    "year": "Année",
+    "flightHours": "Heures de vol",
+    "hourlyCost": "Coût horaire",
+    "characteristics": "Caractéristiques",
+    "maxAltitude": "Altitude maximale",
+    "cruiseSpeed": "Vitesse de croisière",
+    "consumption": "Consommation",
+    "fuelCapacity": "Capacité du réservoir",
+    "emptyWeight": "Masse à vide",
+    "maxTakeoffWeight": "Masse maximale au décollage",
+    "unassigned": "Non assigné",
+    "allDates": "Toutes les dates",
+    "resetFilters": "Réinitialiser les filtres",
+    "newTab": "(nouvel onglet)",
+    "refreshed": "Données actualisées",
+    "refreshFailed": "Actualisation impossible",
+    "searchPlaceholder": "Immatriculation ou modèle",
+    "searchLabel": "Rechercher un aéronef",
+    "filterByAvailability": "Filtrer par disponibilité",
+    "allAvailabilities": "Toutes les disponibilités",
+    "noAircraft": "Aucun aéronef",
+    "noMatchTitle": "Aucun aéronef ne correspond",
+    "noMatchDescription": "Modifiez la recherche ou le filtre de disponibilité.",
+    "addAircraft": "Ajouter un aéronef",
+    "newMaintenance": "Nouvelle maintenance",
+    "attachments": "Pièces jointes",
+    "changesSaved": "Les modifications ont été enregistrées.",
+    "saveFailed": "Enregistrement impossible",
+    "deleteFailed": "Suppression impossible"
+  },
+  "pagination": {
+    "label": "Pagination",
+    "rangeOf": "{{from}}–{{to}} sur {{total}} {{items}}",
+    "items": {
+      "aircraft_one": "aéronef",
+      "aircraft_other": "aéronefs",
+      "maintenance_one": "maintenance",
+      "maintenance_other": "maintenances",
+      "reservation_one": "réservation",
+      "reservation_other": "réservations"
+    }
+  },
+  "overview": {
+    "title": "Flotte",
+    "description": "Disponibilité et état des aéronefs du club.",
+    "refreshFailedDescription": "Les données de la flotte n'ont pas pu être rechargées.",
+    "stats": {
+      "available": "Disponibles",
+      "reserved": "Réservés",
+      "unavailable": "Indisponibles",
+      "shareOfFleet": "{{percent}} % de la flotte"
+    },
+    "availabilityChart": {
+      "description": "Répartition actuelle de la flotte.",
+      "empty": "Aucun aéronef dans la flotte."
+    },
+    "maintenanceChart": {
+      "title": "Maintenances par type",
+      "description": "Nombre de maintenances enregistrées pour la flotte.",
+      "empty": "Aucune maintenance enregistrée.",
+      "series": "Maintenances"
+    },
+    "table": {
+      "maintenance": "Maintenance",
+      "viewDetails": "Voir les détails",
+      "viewDetailsOf": "Voir les détails de {{registration}}"
+    },
+    "emptyDescription": "La flotte du club ne contient encore aucun aéronef."
+  },
+  "detail": {
+    "generalInformation": "Informations générales",
+    "fuel": "Carburant",
+    "documents": "Documents",
+    "noDocuments": "Aucun document pour cet aéronef."
+  },
+  "admin": {
+    "title": "Gestion de la flotte",
+    "description": "Ajoutez, modifiez ou retirez les aéronefs du club.",
+    "loading": "Chargement des aéronefs",
+    "emptyDescription": "Ajoutez le premier aéronef de la flotte pour pouvoir le réserver et suivre sa maintenance.",
+    "deleteLabel": "Supprimer {{registration}}",
+    "deleteDialog": {
+      "title": "Supprimer {{registration}} ?",
+      "description": "L'aéronef {{registration}} ({{model}}) sera définitivement retiré de la flotte, avec sa photo et ses documents. Cette action est irréversible."
+    },
+    "toast": {
+      "deleted": {
+        "title": "Aéronef supprimé",
+        "description": "{{registration}} a été retiré de la flotte."
+      },
+      "deleteFailed": {
+        "description": "L'aéronef n'a pas pu être supprimé. Il est peut-être encore lié à des réservations ou à des maintenances."
+      }
+    }
+  },
+  "aircraftForm": {
+    "title": {
+      "edit": "Modifier {{registration}}"
+    },
+    "description": {
+      "create": "Seules les informations marquées d'un astérisque sont obligatoires.",
+      "edit": "Mettez à jour les informations de l'aéronef."
+    },
+    "submit": {
+      "create": "Ajouter l'aéronef"
+    },
+    "steps": {
+      "identification": "Identification",
+      "files": "Photo et document"
+    },
+    "sections": {
+      "state": "État",
+      "performance": "Performances",
+      "fuelAndWeights": "Carburant et masses"
+    },
+    "fields": {
+      "registrationPlaceholder": "F-GABC",
+      "yearOfManufacture": "Année de fabrication",
+      "maintenanceState": "État de maintenance",
+      "fuelType": "Type de carburant"
+    },
+    "validation": {
+      "registration": "Indiquez l'immatriculation.",
+      "model": "Indiquez le modèle.",
+      "year": "Indiquez une année entre {{min}} et {{max}}.",
+      "hourlyCost": "Indiquez le coût d'une heure de vol, en euros."
+    },
+    "photo": {
+      "label": "Photo",
+      "previewAlt": "Aperçu de la photo",
+      "choose": "Choisir une photo",
+      "replace": "Remplacer",
+      "hint": "PNG ou JPG."
+    },
+    "document": {
+      "label": "Document",
+      "choose": "Choisir un document",
+      "chooseAnother": "Choisir un autre document",
+      "removeLabel": "Retirer le document {{name}}",
+      "doNotSend": "Ne pas envoyer ce document",
+      "hint": "Manuel de vol, certificat… PDF, DOC ou DOCX.",
+      "hintReplace": "Manuel de vol, certificat… PDF, DOC ou DOCX. Le nouveau document remplacera ceux déjà enregistrés."
+    },
+    "toast": {
+      "created": {
+        "title": "Aéronef ajouté",
+        "description": "{{registration}} fait maintenant partie de la flotte."
+      },
+      "createFailed": {
+        "title": "Création impossible",
+        "description": "L'aéronef n'a pas pu être créé. Vérifiez que l'immatriculation n'est pas déjà utilisée."
+      },
+      "updated": {
+        "title": "Aéronef mis à jour"
+      },
+      "updateFailed": {
+        "description": "Les modifications n'ont pas pu être enregistrées. Vérifiez que l'immatriculation n'est pas déjà utilisée."
+      }
+    }
+  },
+  "maintenance": {
+    "title": "Maintenances",
+    "description": "Planifiez et suivez les interventions sur les aéronefs de la flotte.",
+    "loading": "Chargement des données de maintenance",
+    "refreshFailedDescription": "Les maintenances n'ont pas pu être rechargées.",
+    "invalidId": "Identifiant de maintenance invalide.",
+    "stats": {
+      "planned": "Planifiées",
+      "inProgress": "En cours",
+      "completed": "Terminées",
+      "totalCost": "Coût total",
+      "totalCostHint": "Hors maintenances annulées"
+    },
+    "filters": {
+      "searchPlaceholder": "Aéronef ou description",
+      "searchLabel": "Rechercher des maintenances",
+      "byStatus": "Filtrer par statut",
+      "allStatuses": "Tous les statuts",
+      "byType": "Filtrer par type",
+      "allTypes": "Tous les types",
+      "byTechnician": "Filtrer par technicien",
+      "allTechnicians": "Tous les techniciens"
+    },
+    "table": {
+      "period": "Période",
+      "until": "au {{date}}",
+      "actionsFor": "Actions pour la maintenance de {{registration}}",
+      "viewDetail": "Voir le détail",
+      "noMatchTitle": "Aucune maintenance ne correspond",
+      "noMatchDescription": "Modifiez la recherche ou les filtres.",
+      "emptyTitle": "Aucune maintenance",
+      "emptyDescription": "Planifiez la première intervention sur un aéronef de la flotte."
+    },
+    "detail": {
+      "title": "Maintenance de {{registration}}",
+      "noDescription": "Aucune description.",
+      "noAttachments": "Aucune pièce jointe.",
+      "photoAlt": "Photo {{index}} de la maintenance de {{registration}}",
+      "previousImage": "Image précédente",
+      "nextImage": "Image suivante",
+      "imageOf": "Image {{current}} sur {{total}}"
+    },
+    "deleteDialog": {
+      "title": "Supprimer cette maintenance ?",
+      "description": "La maintenance « {{type}} » de {{registration}} du {{date}} sera définitivement supprimée, avec ses pièces jointes."
+    },
+    "form": {
+      "title": {
+        "edit": "Modifier la maintenance"
+      },
+      "description": {
+        "create": "Planifiez une intervention sur un aéronef de la flotte.",
+        "edit": "Intervention sur {{registration}} ({{model}})."
+      },
+      "submit": {
+        "create": "Créer la maintenance"
+      },
+      "steps": {
+        "intervention": "Intervention",
+        "planning": "Planification"
+      },
+      "fields": {
+        "aircraftPlaceholder": "Sélectionner un aéronef",
+        "typePlaceholder": "Sélectionner un type",
+        "statusPlaceholder": "Sélectionner un statut",
+        "technicianRemovedHint": "{{name}} ne sera plus affecté à cette maintenance après l'enregistrement.",
+        "startDate": "Date de début",
+        "endDate": "Date de fin",
+        "descriptionPlaceholder": "Ex. : visite des 50 heures, remplacement des bougies",
+        "costHint": "En euros. Laissez vide si le coût n'est pas encore connu."
+      },
+      "validation": {
+        "aircraft": "Sélectionnez un aéronef.",
+        "type": "Sélectionnez un type de maintenance.",
+        "status": "Sélectionnez un statut.",
+        "startDate": "Sélectionnez une date de début.",
+        "endDate": "Sélectionnez une date de fin.",
+        "endBeforeStart": "La date de fin doit être postérieure à la date de début.",
+        "cost": "Le coût doit être un nombre positif, par exemple 450 ou 450.50."
+      },
+      "files": {
+        "limits": "1 Mo maximum par fichier, 10 fichiers par envoi (images et documents confondus).",
+        "images": "Images",
+        "addImages": "Ajouter des images",
+        "imageFormats": "PNG ou JPG",
+        "documents": "Documents",
+        "addDocuments": "Ajouter des documents",
+        "documentFormats": "PDF, DOC, DOCX, XLS ou XLSX",
+        "stored": "Enregistré",
+        "toSend": "À envoyer",
+        "removeImage": "Retirer l'image {{name}}",
+        "removeDocument": "Retirer le document {{name}}",
+        "removeStored": "Retirer ce fichier de la maintenance",
+        "discardImage": "Supprimer l'image {{name}}",
+        "discardDocument": "Supprimer le document {{name}}",
+        "doNotSend": "Ne pas envoyer ce fichier",
+        "refused": "Fichier refusé",
+        "tooLarge": "Le fichier « {{name}} » dépasse la taille maximale de 1 Mo.",
+        "duplicateName": "Deux fichiers portent le nom « {{name}} ». Renommez-en un avant de l'ajouter.",
+        "tooMany": "Vous pouvez joindre au maximum {{max}} fichiers (images et documents confondus)."
+      },
+      "toast": {
+        "created": {
+          "title": "Maintenance créée",
+          "description": "La nouvelle maintenance a été ajoutée à la liste."
+        },
+        "updated": {
+          "title": "Maintenance mise à jour"
+        },
+        "saveFailed": {
+          "description": "La maintenance n'a pas pu être enregistrée. Vérifiez les informations puis réessayez."
+        },
+        "removeFailed": {
+          "title": "Retrait impossible",
+          "description": "Le fichier « {{name}} » n'a pas pu être retiré. Réessayez."
+        }
+      }
+    },
+    "toast": {
+      "deleted": {
+        "title": "Maintenance supprimée",
+        "description": "La maintenance de {{registration}} a été supprimée."
+      },
+      "deleteFailed": {
+        "description": "La maintenance n'a pas pu être supprimée. Réessayez."
+      }
+    }
+  },
+  "history": {
+    "title": "Historique de la flotte",
+    "description": "Réservations et maintenances de chaque aéronef, des plus récentes aux plus anciennes.",
+    "emptyDescription": "L'historique apparaîtra ici dès qu'un aéronef aura été ajouté à la flotte.",
+    "searchPlaceholder": "Pilote, technicien ou type",
+    "searchLabel": "Rechercher dans l'historique",
+    "filterByAircraft": "Filtrer par aéronef",
+    "allAircraft": "Tous les aéronefs",
+    "noMatchDescription": "Aucune réservation ni maintenance ne correspond à ces filtres.",
+    "durationDays_one": "{{count}} jour",
+    "durationDays_other": "{{count}} jours",
+    "reservations": {
+      "tab": "Réservations ({{total}})",
+      "empty": "Aucune réservation pour cet aéronef.",
+      "noMatch": "Aucune réservation ne correspond à ces filtres."
+    },
+    "maintenances": {
+      "tab": "Maintenances ({{total}})",
+      "empty": "Aucune maintenance pour cet aéronef.",
+      "noMatch": "Aucune maintenance ne correspond à ces filtres."
+    }
+  }
+}

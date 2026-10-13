@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { CheckCircle2, ChevronRight, Circle, ClipboardCheck } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -26,29 +27,35 @@ function EvaluationRow({
   label: string
   attempt: EvaluationAttempt | undefined
 }) {
+  const { t } = useTranslation("instruction")
   const passed = attempt?.passed === true
+  const required = t("shared.percent", { value: Math.round(evaluation.pass_score) })
   return (
     <li className="flex flex-wrap items-center gap-3 px-2 py-3">
       <ClipboardCheck className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium">{label}</p>
         <p className="text-sm text-muted-foreground">
-          Score requis : {Math.round(evaluation.pass_score)} %
-          {attempt && attempt.score !== null && ` · Votre score : ${Math.round(attempt.score)} %`}
+          {attempt && attempt.score !== null
+            ? t("eLearning.outline.requiredAndYourScore", {
+                required,
+                score: t("shared.percent", { value: Math.round(attempt.score) }),
+              })
+            : t("shared.requiredScore", { score: required })}
         </p>
       </div>
       {passed ? (
-        <Badge variant="success">Réussie</Badge>
+        <Badge variant="success">{t("shared.passed")}</Badge>
       ) : attempt ? (
-        <Badge variant="danger">Non réussie</Badge>
+        <Badge variant="danger">{t("shared.failed")}</Badge>
       ) : (
-        <Badge variant="neutral">À passer</Badge>
+        <Badge variant="neutral">{t("shared.toTake")}</Badge>
       )}
       <Button variant="outline" size="sm" asChild>
         {passed ? (
-          <Link href={learningRoutes.evaluations}>Mes résultats</Link>
+          <Link href={learningRoutes.evaluations}>{t("shared.myResults")}</Link>
         ) : (
-          <Link href={learningRoutes.evaluation(evaluation.id)}>{attempt ? "Repasser" : "Passer"}</Link>
+          <Link href={learningRoutes.evaluation(evaluation.id)}>{attempt ? t("shared.retake") : t("shared.take")}</Link>
         )}
       </Button>
     </li>
@@ -57,6 +64,7 @@ function EvaluationRow({
 
 // The programme of a course: its modules, their lessons and their evaluations.
 export function CourseOutline({ course, completedLessonIds, resumeLessonId, latestAttempts }: CourseOutlineProps) {
+  const { t } = useTranslation("instruction")
   // Opens on the module to resume, so the next lesson is one click away.
   const resumeModule =
     course.modules.find((module) => module.lessons.some((lesson) => Number(lesson.id) === resumeLessonId)) ??
@@ -74,14 +82,16 @@ export function CourseOutline({ course, completedLessonIds, resumeLessonId, late
             <AccordionTrigger className="gap-3 text-left hover:no-underline">
               <div className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-x-4 gap-y-1">
                 <div className="min-w-0">
-                  <p className="text-xs font-normal text-muted-foreground">Module {moduleIndex + 1}</p>
+                  <p className="text-xs font-normal text-muted-foreground">
+                    {t("eLearning.outline.module", { number: moduleIndex + 1 })}
+                  </p>
                   <p className="text-base font-semibold">{module.title}</p>
                 </div>
                 {total > 0 && done === total ? (
-                  <Badge variant="success">Terminé</Badge>
+                  <Badge variant="success">{t("eLearning.outline.moduleDone")}</Badge>
                 ) : (
                   <span className="text-sm font-normal tabular-nums text-muted-foreground">
-                    {done} / {total} leçon{total > 1 ? "s" : ""}
+                    {t("eLearning.outline.lessonsRatio", { done, count: total })}
                   </span>
                 )}
               </div>
@@ -89,7 +99,7 @@ export function CourseOutline({ course, completedLessonIds, resumeLessonId, late
             <AccordionContent>
               {module.description && <p className="mb-2 text-sm text-muted-foreground">{module.description}</p>}
               {total === 0 && evaluations.length === 0 ? (
-                <p className="px-2 py-3 text-sm text-muted-foreground">Ce module n'a pas encore de leçon.</p>
+                <p className="px-2 py-3 text-sm text-muted-foreground">{t("eLearning.outline.noLessons")}</p>
               ) : (
                 <ul className="divide-y">
                   {module.lessons.map((lesson, lessonIndex) => {
@@ -102,9 +112,9 @@ export function CourseOutline({ course, completedLessonIds, resumeLessonId, late
                           className="flex min-h-[3rem] items-center gap-3 rounded-md px-2 py-3 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
                           {completed ? (
-                            <CheckCircle2 className="h-5 w-5 shrink-0 text-success" aria-label="Leçon terminée" />
+                            <CheckCircle2 className="h-5 w-5 shrink-0 text-success" aria-label={t("eLearning.outline.lessonDoneAria")} />
                           ) : (
-                            <Circle className="h-5 w-5 shrink-0 text-muted-foreground" aria-label="Leçon à suivre" />
+                            <Circle className="h-5 w-5 shrink-0 text-muted-foreground" aria-label={t("eLearning.outline.lessonTodoAria")} />
                           )}
                           <div className="min-w-0 flex-1">
                             <p className="text-sm font-medium">
@@ -114,7 +124,7 @@ export function CourseOutline({ course, completedLessonIds, resumeLessonId, late
                               <p className="line-clamp-1 text-sm text-muted-foreground">{lesson.description}</p>
                             )}
                           </div>
-                          {isNext && <Badge variant="info">À suivre</Badge>}
+                          {isNext && <Badge variant="info">{t("eLearning.outline.next")}</Badge>}
                           <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
                         </Link>
                       </li>
@@ -124,7 +134,11 @@ export function CourseOutline({ course, completedLessonIds, resumeLessonId, late
                     <EvaluationRow
                       key={`evaluation-${evaluation.id}`}
                       evaluation={evaluation}
-                      label={evaluations.length > 1 ? `Évaluation ${evaluationIndex + 1} du module` : "Évaluation du module"}
+                      label={
+                        evaluations.length > 1
+                          ? t("eLearning.outline.evaluationNumbered", { number: evaluationIndex + 1 })
+                          : t("eLearning.outline.evaluationSingle")
+                      }
                       attempt={latestAttempts.get(Number(evaluation.id))}
                     />
                   ))}

@@ -1,6 +1,7 @@
 "use client"
 import { useEffect, useState } from "react"
 import type { ReactNode } from "react"
+import { useTranslation } from "react-i18next"
 import { SidePanel } from "@/components/layout/SidePanel"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -13,6 +14,7 @@ import { PaginationControls } from "@/components/admin-user/pagination-controls"
 import { formatDate, formatDateTime, formatFlightDuration, formatMoney, formatTime } from "@/lib/format"
 import type { UserDetails } from "@/interfaces/user"
 import { getBackendBaseUrl } from "@/lib/runtime-config"
+import { roleLabel } from "@/lib/settings"
 
 interface UserDetailsProps {
   isOpen: boolean
@@ -48,6 +50,7 @@ export function UserDetailsDialog({
   onEdit,
   onAddLicense,
 }: UserDetailsProps) {
+  const { t } = useTranslation("administration")
   const [reservationPage, setReservationPage] = useState(1)
   const [licensePage, setLicensePage] = useState(1)
 
@@ -79,29 +82,29 @@ export function UserDetailsDialog({
         userDetails ? (
           <span className="flex flex-wrap items-center gap-2">
             {userDetails.first_name} {userDetails.last_name}
-            <Badge variant="outline">{userDetails.role?.role_name ?? "Aucun rôle"}</Badge>
+            <Badge variant="outline">{roleLabel(userDetails.role?.role_name) ?? t("users.noRole")}</Badge>
           </span>
         ) : (
-          "Fiche du membre"
+          t("users.details.title")
         )
       }
-      description={userDetails ? userDetails.email : "Informations, réservations et licences."}
+      description={userDetails ? userDetails.email : t("users.details.description")}
       footer={
         userDetails && (onEdit || onAddLicense) ? (
           <>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Fermer
+              {t("common:actions.close")}
             </Button>
             {onAddLicense && (
               <Button type="button" variant="outline" onClick={() => onAddLicense(userDetails.id)}>
                 <BadgeCheck className="h-4 w-4" />
-                Ajouter une licence
+                {t("users.licence.add")}
               </Button>
             )}
             {onEdit && (
               <Button type="button" onClick={() => onEdit(userDetails.id)}>
                 <Pencil className="h-4 w-4" />
-                Modifier
+                {t("common:actions.edit")}
               </Button>
             )}
           </>
@@ -111,21 +114,23 @@ export function UserDetailsDialog({
       {userDetails ? (
         <Tabs defaultValue="personal-info">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="personal-info">Informations</TabsTrigger>
-            <TabsTrigger value="reservations">Réservations ({reservations.length})</TabsTrigger>
-            <TabsTrigger value="licenses">Licences ({licenses.length})</TabsTrigger>
+            <TabsTrigger value="personal-info">{t("users.details.tabs.info")}</TabsTrigger>
+            <TabsTrigger value="reservations">
+              {t("users.details.tabs.bookings", { total: reservations.length })}
+            </TabsTrigger>
+            <TabsTrigger value="licenses">{t("users.details.tabs.licences", { total: licenses.length })}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="personal-info" className="space-y-6 pt-4">
             <section className="space-y-3">
-              <h3 className="text-sm font-semibold">Coordonnées</h3>
+              <h3 className="text-sm font-semibold">{t("users.details.contact")}</h3>
               <dl className="grid gap-4 sm:grid-cols-2">
-                <Fact label="Adresse e-mail">
+                <Fact label={t("common:labels.email")}>
                   <a href={`mailto:${userDetails.email}`} className="hover:underline">
                     {userDetails.email}
                   </a>
                 </Fact>
-                <Fact label="Téléphone">
+                <Fact label={t("common:labels.phone")}>
                   {userDetails.phone_number ? (
                     <a href={`tel:${userDetails.phone_number}`} className="hover:underline">
                       {userDetails.phone_number}
@@ -134,7 +139,7 @@ export function UserDetailsDialog({
                     "—"
                   )}
                 </Fact>
-                <Fact label="Adresse postale">
+                <Fact label={t("users.details.postalAddress")}>
                   {userDetails.address ? (
                     <a
                       href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(userDetails.address)}`}
@@ -148,17 +153,17 @@ export function UserDetailsDialog({
                     "—"
                   )}
                 </Fact>
-                <Fact label="Date de naissance">{formatDate(userDetails.date_of_birth)}</Fact>
+                <Fact label={t("users.fields.dateOfBirth")}>{formatDate(userDetails.date_of_birth)}</Fact>
               </dl>
             </section>
 
             <section className="space-y-3">
-              <h3 className="text-sm font-semibold">Activité</h3>
+              <h3 className="text-sm font-semibold">{t("users.details.activity")}</h3>
               <dl className="grid grid-cols-2 gap-4">
-                <Fact label="Heures de vol">
+                <Fact label={t("users.details.flightHours")}>
                   <span className="tabular-nums">{formatFlightDuration(userDetails.total_flight_hours ?? 0)}</span>
                 </Fact>
-                <Fact label="Solde du compte">
+                <Fact label={t("users.details.accountBalance")}>
                   <span className="tabular-nums">{formatMoney(userDetails.user_account_balance ?? 0)}</span>
                 </Fact>
               </dl>
@@ -172,8 +177,8 @@ export function UserDetailsDialog({
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Créneau</TableHead>
-                        <TableHead>Avion</TableHead>
+                        <TableHead>{t("users.details.slot")}</TableHead>
+                        <TableHead>{t("common:labels.aircraft")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -196,11 +201,15 @@ export function UserDetailsDialog({
                   totalItems={reservations.length}
                   itemsPerPage={itemsPerPage}
                   onPageChange={setReservationPage}
-                  itemLabel={reservations.length > 1 ? "réservations" : "réservation"}
+                  itemLabel={t("users.pagination.bookings", { count: reservations.length })}
                 />
               </>
             ) : (
-              <EmptyState icon={Plane} title="Aucune réservation" description="Ce membre n'a encore réservé aucun avion." />
+              <EmptyState
+                icon={Plane}
+                title={t("users.details.noBookings.title")}
+                description={t("users.details.noBookings.description")}
+              />
             )}
           </TabsContent>
 
@@ -211,12 +220,12 @@ export function UserDetailsDialog({
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Licence</TableHead>
-                        <TableHead>Autorité</TableHead>
-                        <TableHead>Délivrance</TableHead>
-                        <TableHead>Expiration</TableHead>
-                        <TableHead>Statut</TableHead>
-                        <TableHead>Justificatifs</TableHead>
+                        <TableHead>{t("users.details.licence")}</TableHead>
+                        <TableHead>{t("users.details.authority")}</TableHead>
+                        <TableHead>{t("users.details.issued")}</TableHead>
+                        <TableHead>{t("users.details.expiry")}</TableHead>
+                        <TableHead>{t("common:labels.status")}</TableHead>
+                        <TableHead>{t("users.licence.documents")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -233,9 +242,9 @@ export function UserDetailsDialog({
                           <TableCell className="whitespace-nowrap">{formatDate(license.expiration_date)}</TableCell>
                           <TableCell>
                             {isExpired(license.expiration_date) ? (
-                              <Badge variant="danger">Expirée</Badge>
+                              <Badge variant="danger">{t("users.details.licenceExpired")}</Badge>
                             ) : (
-                              <Badge variant="success">Valide</Badge>
+                              <Badge variant="success">{t("users.details.licenceValid")}</Badge>
                             )}
                           </TableCell>
                           <TableCell>
@@ -250,7 +259,7 @@ export function UserDetailsDialog({
                                     className="flex items-center gap-2 whitespace-nowrap text-primary hover:underline"
                                   >
                                     <FileText className="h-4 w-4" />
-                                    Document {index + 1}
+                                    {t("users.details.document", { number: index + 1 })}
                                   </a>
                                 ))}
                               </div>
@@ -268,18 +277,18 @@ export function UserDetailsDialog({
                   totalItems={licenses.length}
                   itemsPerPage={itemsPerPage}
                   onPageChange={setLicensePage}
-                  itemLabel={licenses.length > 1 ? "licences" : "licence"}
+                  itemLabel={t("users.pagination.licences", { count: licenses.length })}
                 />
               </>
             ) : (
               <EmptyState
                 icon={Shield}
-                title="Aucune licence enregistrée"
+                title={t("users.details.noLicences")}
                 action={
                   onAddLicense && (
                     <Button variant="outline" onClick={() => onAddLicense(userDetails.id)}>
                       <BadgeCheck className="h-4 w-4" />
-                      Ajouter une licence
+                      {t("users.licence.add")}
                     </Button>
                   )
                 }

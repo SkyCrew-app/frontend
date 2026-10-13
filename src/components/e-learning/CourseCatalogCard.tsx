@@ -1,6 +1,10 @@
+"use client"
+
 import Link from "next/link"
+import { useTranslation } from "react-i18next"
 import { ArrowRight } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import i18n from "@/lib/i18n"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { learningRoutes } from "@/lib/learning-navigation"
@@ -28,9 +32,25 @@ export function courseProgressStatus(progress: CourseProgress): {
   action: string
 } {
   const done = percentage(progress.completedLessons, progress.totalLessons)
-  if (done >= 100) return { label: "Terminé", variant: "success", action: "Revoir" }
-  if (done > 0) return { label: "En cours", variant: "info", action: "Continuer" }
-  return { label: "Non commencé", variant: "neutral", action: "Commencer" }
+  if (done >= 100) {
+    return {
+      label: i18n.t("instruction:eLearning.progress.done"),
+      variant: "success",
+      action: i18n.t("instruction:eLearning.progress.review"),
+    }
+  }
+  if (done > 0) {
+    return {
+      label: i18n.t("instruction:eLearning.progress.inProgress"),
+      variant: "info",
+      action: i18n.t("common:actions.continue"),
+    }
+  }
+  return {
+    label: i18n.t("instruction:eLearning.progress.notStarted"),
+    variant: "neutral",
+    action: i18n.t("instruction:eLearning.progress.start"),
+  }
 }
 
 interface CourseCatalogCardProps {
@@ -41,9 +61,10 @@ interface CourseCatalogCardProps {
 
 // One course of the catalogue: the whole card opens the course.
 export function CourseCatalogCard({ course, progress }: CourseCatalogCardProps) {
+  const { t } = useTranslation("instruction")
   const status = progress && progress.totalLessons > 0 ? courseProgressStatus(progress) : null
   const done = progress ? percentage(progress.completedLessons, progress.totalLessons) : 0
-  const facts = [course.category, course.required_license ? `Licence ${course.required_license}` : null].filter(Boolean)
+  const facts = [course.category, course.required_license ? t("eLearning.card.licence", { licence: course.required_license }) : null].filter(Boolean)
 
   return (
     <Link
@@ -64,26 +85,26 @@ export function CourseCatalogCard({ course, progress }: CourseCatalogCardProps) 
         </CardHeader>
         <CardContent className="flex-1 space-y-4 pb-4">
           <p className="line-clamp-2 text-sm text-muted-foreground">
-            {course.description || "Ce cours n'a pas encore de description."}
+            {course.description || t("eLearning.card.noDescription")}
           </p>
           {progress && progress.totalLessons > 0 && (
             <div className="space-y-1.5">
               <div className="flex items-baseline justify-between text-xs text-muted-foreground">
                 <span className="tabular-nums">
-                  {progress.completedLessons} / {progress.totalLessons} leçons
+                  {t("shared.lessonsRatio", { done: progress.completedLessons, total: progress.totalLessons })}
                 </span>
-                <span className="tabular-nums">{done} %</span>
+                <span className="tabular-nums">{t("shared.percent", { value: done })}</span>
               </div>
-              <Progress value={done} className="h-2" aria-label={`Progression : ${done} %`} />
+              <Progress value={done} className="h-2" aria-label={t("shared.progressAria", { percent: done })} />
             </div>
           )}
           {progress && progress.totalLessons === 0 && (
-            <p className="text-xs text-muted-foreground">Aucune leçon publiée pour le moment.</p>
+            <p className="text-xs text-muted-foreground">{t("eLearning.card.noLessons")}</p>
           )}
         </CardContent>
         <CardFooter className="justify-end">
           <span className="inline-flex items-center gap-2 text-sm font-medium text-primary">
-            {status?.action ?? "Ouvrir le cours"}
+            {status?.action ?? t("eLearning.card.open")}
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
           </span>
         </CardFooter>

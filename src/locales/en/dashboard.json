@@ -1,0 +1,133 @@
+{
+  "page": {
+    "title": "Dashboard",
+    "welcome": "Welcome, {{name}}",
+    "description": "Your activity and the club's at a glance.",
+    "customize": "Customise"
+  },
+  "grid": {
+    "emptyTitle": "No widgets shown",
+    "emptyDescription": "Choose what to show on your dashboard."
+  },
+  "settings": {
+    "title": "Customise the dashboard",
+    "description": "Choose which widgets are shown and in what order.",
+    "reset": "Restore the default layout",
+    "moveUp": "Move up",
+    "moveUpNamed": "Move “{{name}}” up",
+    "moveDown": "Move down",
+    "moveDownNamed": "Move “{{name}}” down",
+    "toast": {
+      "saved": {
+        "title": "Dashboard saved",
+        "description": "Your widget selection has been updated."
+      },
+      "failed": {
+        "title": "Could not save",
+        "description": "Your dashboard could not be saved. Try again in a moment."
+      }
+    }
+  },
+  "widgets": {
+    "weather": {
+      "label": "Weather",
+      "description": "Weather conditions at your aerodrome"
+    },
+    "quick-actions": {
+      "label": "Quick actions",
+      "description": "Shortcuts to frequent actions"
+    },
+    "upcoming-reservations": {
+      "label": "Upcoming bookings",
+      "description": "Your next bookings"
+    },
+    "recent-flights": {
+      "label": "Recent flights",
+      "description": "History of your latest flights"
+    },
+    "flight-hours-stats": {
+      "label": "Flight hours",
+      "description": "Statistics on your flight hours"
+    },
+    "fleet-availability": {
+      "label": "Fleet availability",
+      "description": "Status of the club's fleet"
+    },
+    "articles": {
+      "label": "Articles",
+      "description": "Latest news from the flying club"
+    }
+  },
+  "widgetError": "This information could not be loaded.",
+  "weather": {
+    "aerodrome": "{{code}} aerodrome",
+    "refresh": "Refresh the weather",
+    "temperature": "Temperature",
+    "feelsLike": "Feels like {{value}}",
+    "sky": "Sky",
+    "skyHint": "Cloud {{clouds}} · Humidity {{humidity}}",
+    "wind": "Wind",
+    "windDirection": "Direction {{value}}",
+    "sun": "Sun",
+    "sunHint": "Sunrise – sunset (Paris time)",
+    "condition": {
+      "sunny": "Sunny",
+      "partlyCloudy": "Sunny spells",
+      "cloudy": "Cloudy"
+    },
+    "empty": {
+      "title": "No preferred aerodrome",
+      "description": "Set your aerodrome in your profile to see its weather here.",
+      "action": "Complete my profile"
+    },
+    "toast": {
+      "refreshed": {
+        "title": "Weather refreshed",
+        "description": "Conditions up to date for {{aerodrome}}."
+      },
+      "failed": {
+        "title": "Could not refresh",
+        "description": "The weather could not be retrieved. Try again in a moment."
+      }
+    }
+  },
+  "quickActions": {
+    "book": "Book an aircraft",
+    "flightPlan": "Prepare a flight plan",
+    "logbook": "Open my logbook",
+    "profile": "View my profile"
+  },
+  "upcomingReservations": {
+    "empty": "No upcoming bookings",
+    "unknownAircraft": "Aircraft not specified"
+  },
+  "recentFlights": {
+    "empty": "No recent flights",
+    "create": "Create a flight plan",
+    "to": "to"
+  },
+  "flightHours": {
+    "empty": "No flight hours recorded",
+    "total": "in total",
+    "series": "Flight hours",
+    "description": "Per month, over the last months flown"
+  },
+  "fleet": {
+    "empty": "No aircraft in the fleet",
+    "summary_one": "{{count}} of {{total}} available",
+    "summary_other": "{{count}} of {{total}} available",
+    "more_one": "and {{count}} more aircraft",
+    "more_other": "and {{count}} more aircraft",
+    "link": "View the fleet"
+  },
+  "availability": {
+    "AVAILABLE": "Available",
+    "UNAVAILABLE": "In maintenance",
+    "RESERVATED": "Booked",
+    "unknown": "Unknown status"
+  },
+  "articles": {
+    "emptyTitle": "No articles yet",
+    "emptyDescription": "News from the flying club will appear here."
+  }
+}

@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useTranslation } from "react-i18next"
 import { useMutation, useQuery } from "@apollo/client"
 import { Layers, Plus, Search } from "lucide-react"
 import {
@@ -48,6 +49,7 @@ interface ModuleForm {
 }
 
 export function ModuleManagement() {
+  const { t } = useTranslation("instruction")
   const [selectedCourseId, setSelectedCourseId] = useState("")
   const [searchTerm, setSearchTerm] = useState("")
   const [form, setForm] = useState<ModuleForm>({ id: null, courseId: "", title: "", description: "" })
@@ -96,8 +98,8 @@ export function ModuleManagement() {
   }
 
   const errors = {
-    courseId: form.courseId ? null : "Choisissez le cours du module.",
-    title: form.title.trim() ? null : "Donnez un titre au module.",
+    courseId: form.courseId ? null : t("admin.modules.form.courseError"),
+    title: form.title.trim() ? null : t("admin.modules.form.titleError"),
   }
 
   const handleSubmit = async () => {
@@ -116,7 +118,7 @@ export function ModuleManagement() {
             },
           },
         })
-        toast({ title: "Module modifié", description: "Les changements ont été enregistrés." })
+        toast({ title: t("admin.modules.toast.updated.title"), description: t("shared.changesSaved") })
         refetch()
       } else {
         await createModule({
@@ -128,7 +130,10 @@ export function ModuleManagement() {
             },
           },
         })
-        toast({ title: "Module créé", description: "Ajoutez-lui maintenant des leçons dans l'onglet Leçons." })
+        toast({
+          title: t("admin.modules.toast.created.title"),
+          description: t("admin.modules.toast.created.description"),
+        })
         // Show the course the module was added to.
         if (form.courseId === selectedCourseId) refetch()
         else setSelectedCourseId(form.courseId)
@@ -136,8 +141,8 @@ export function ModuleManagement() {
       setIsFormOpen(false)
     } catch {
       toast({
-        title: isEdit ? "Module non modifié" : "Module non créé",
-        description: "L'enregistrement a échoué. Vérifiez les informations puis réessayez.",
+        title: isEdit ? t("admin.modules.toast.updateFailed.title") : t("admin.modules.toast.createFailed.title"),
+        description: t("shared.saveFailed"),
         variant: "destructive",
       })
     }
@@ -149,11 +154,14 @@ export function ModuleManagement() {
       await deleteModule({ variables: { id: Number(moduleToDelete.id) } })
       setModuleToDelete(null)
       refetch()
-      toast({ title: "Module supprimé", description: "Le module a été retiré du cours." })
+      toast({
+        title: t("admin.modules.toast.deleted.title"),
+        description: t("admin.modules.toast.deleted.description"),
+      })
     } catch {
       toast({
-        title: "Module non supprimé",
-        description: "La suppression a échoué. Réessayez dans un instant.",
+        title: t("admin.modules.toast.deleteFailed.title"),
+        description: t("shared.deleteFailed"),
         variant: "destructive",
       })
     }
@@ -172,7 +180,7 @@ export function ModuleManagement() {
   const createButton = (
     <Button onClick={openCreate} disabled={!hasCourses}>
       <Plus className="h-4 w-4" />
-      Créer un module
+      {t("admin.modules.create")}
     </Button>
   )
 
@@ -180,8 +188,8 @@ export function ModuleManagement() {
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <Select value={selectedCourseId} onValueChange={setSelectedCourseId} disabled={!hasCourses}>
-          <SelectTrigger className="w-full sm:w-64" aria-label="Cours dont afficher les modules">
-            <SelectValue placeholder="Choisir un cours" />
+          <SelectTrigger className="w-full sm:w-64" aria-label={t("admin.modules.courseFilterAria")}>
+            <SelectValue placeholder={t("admin.shared.chooseCourse")} />
           </SelectTrigger>
           <SelectContent>
             {(courses ?? []).map((course) => (
@@ -195,8 +203,8 @@ export function ModuleManagement() {
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="search"
-            aria-label="Rechercher un module"
-            placeholder="Rechercher un module, ex. circulation aérienne"
+            aria-label={t("admin.modules.searchAria")}
+            placeholder={t("admin.modules.searchPlaceholder")}
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
             className="pl-9"
@@ -216,20 +224,20 @@ export function ModuleManagement() {
       ) : !hasCourses ? (
         <EmptyState
           icon={Layers}
-          title="Créez d'abord un cours"
-          description="Un module appartient à un cours : ajoutez un cours dans l'onglet Cours, puis revenez ici."
+          title={t("admin.shared.createCourseFirst")}
+          description={t("admin.modules.empty.noCourseDescription")}
         />
       ) : error && !modules ? (
         <ErrorState onRetry={() => refetch()} />
       ) : filteredModules.length === 0 ? (
         <EmptyState
           icon={Layers}
-          title={search ? "Aucun module ne correspond" : "Ce cours n'a pas encore de module"}
-          description={search ? "Modifiez la recherche." : "Les modules découpent le cours en chapitres."}
+          title={search ? t("admin.modules.empty.filteredTitle") : t("admin.shared.noModuleYet")}
+          description={search ? t("admin.shared.changeSearch") : t("admin.modules.empty.description")}
           action={
             search ? (
               <Button variant="outline" onClick={() => setSearchTerm("")}>
-                Effacer la recherche
+                {t("admin.shared.clearSearch")}
               </Button>
             ) : (
               createButton
@@ -241,10 +249,10 @@ export function ModuleManagement() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-12 text-right">N°</TableHead>
-                <TableHead>Module</TableHead>
+                <TableHead className="w-12 text-right">{t("admin.shared.number")}</TableHead>
+                <TableHead>{t("admin.shared.module")}</TableHead>
                 <TableHead className="w-24">
-                  <span className="sr-only">Actions</span>
+                  <span className="sr-only">{t("common:labels.actions")}</span>
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -262,7 +270,7 @@ export function ModuleManagement() {
                   </TableCell>
                   <TableCell>
                     <RowActions
-                      name={`le module ${module.title}`}
+                      name={t("admin.modules.rowName", { title: module.title })}
                       onEdit={() => openEdit(module)}
                       onDelete={() => setModuleToDelete(module)}
                     />
@@ -277,18 +285,20 @@ export function ModuleManagement() {
       <SidePanel
         open={isFormOpen}
         onOpenChange={(open) => !saving && setIsFormOpen(open)}
-        title={isEdit ? "Modifier le module" : "Créer un module"}
-        description={"Un module est un chapitre du cours : il regroupe des leçons."}
+        title={isEdit ? t("admin.modules.form.editTitle") : t("admin.modules.create")}
+        description={t("admin.modules.form.description")}
         onSubmit={handleSubmit}
-        submitLabel={isEdit ? "Enregistrer" : "Créer le module"}
+        submitLabel={isEdit ? t("common:actions.save") : t("admin.modules.form.submitCreate")}
         submitting={saving}
       >
         <div className="space-y-4">
           {!isEdit && (
-            <FormField label="Cours" htmlFor="module-course" required error={submitted ? errors.courseId : null}>
+            <FormField
+              label={t("admin.shared.course")}
+              htmlFor="module-course" required error={submitted ? errors.courseId : null}>
               <Select value={form.courseId} onValueChange={(value) => setForm({ ...form, courseId: value })}>
                 <SelectTrigger id="module-course">
-                  <SelectValue placeholder="Choisir un cours" />
+                  <SelectValue placeholder={t("admin.shared.chooseCourse")} />
                 </SelectTrigger>
                 <SelectContent>
                   {(courses ?? []).map((course) => (
@@ -301,20 +311,24 @@ export function ModuleManagement() {
             </FormField>
           )}
 
-          <FormField label="Titre" htmlFor="module-title" required error={submitted ? errors.title : null}>
+          <FormField label={t("admin.shared.title")} htmlFor="module-title" required error={submitted ? errors.title : null}>
             <Input
               id="module-title"
-              placeholder="Ex. Les masses d'air et les fronts"
+              placeholder={t("admin.modules.form.titlePlaceholder")}
               value={form.title}
               onChange={(event) => setForm({ ...form, title: event.target.value })}
               aria-invalid={submitted && !!errors.title}
             />
           </FormField>
 
-          <FormField label="Description" htmlFor="module-description" hint="Une phrase sur ce que couvre le module.">
+          <FormField
+            label={t("common:labels.description")}
+            htmlFor="module-description"
+            hint={t("admin.modules.form.descriptionHint")}
+          >
             <Textarea
               id="module-description"
-              placeholder="Ex. Reconnaître les fronts et anticiper leurs effets sur le vol."
+              placeholder={t("admin.modules.form.descriptionPlaceholder")}
               value={form.description}
               onChange={(event) => setForm({ ...form, description: event.target.value })}
               rows={3}
@@ -326,8 +340,8 @@ export function ModuleManagement() {
       <ConfirmDeleteDialog
         open={moduleToDelete !== null}
         onOpenChange={(open) => !open && setModuleToDelete(null)}
-        title="Supprimer ce module ?"
-        description={`Le module « ${moduleToDelete?.title ?? ""} » sera définitivement supprimé, avec ses leçons.`}
+        title={t("admin.modules.deleteConfirm.title")}
+        description={t("admin.modules.deleteConfirm.description", { title: moduleToDelete?.title ?? "" })}
         onConfirm={handleDelete}
         loading={deleting}
       />

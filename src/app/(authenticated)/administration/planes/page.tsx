@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslation } from "react-i18next"
 import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/layout/PageHeader"
@@ -8,18 +9,19 @@ import { AircraftList } from "@/components/fleet-admin/aircraft-list"
 import { AircraftFormDialog } from "@/components/fleet-admin/aircraft-form-dialog"
 
 export default function FleetManagementPage() {
+  const { t } = useTranslation("fleet")
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
 
   return (
     <div className="space-y-6">
       <PageHeader
         className="mb-0"
-        title="Gestion de la flotte"
-        description="Ajoutez, modifiez ou retirez les aéronefs du club."
+        title={t("admin.title")}
+        description={t("admin.description")}
         actions={
           <Button onClick={() => setIsCreateModalOpen(true)}>
             <Plus className="h-4 w-4" aria-hidden="true" />
-            Ajouter un aéronef
+            {t("shared.addAircraft")}
           </Button>
         }
       />

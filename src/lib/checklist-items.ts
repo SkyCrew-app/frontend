@@ -6,6 +6,7 @@ import {
   type ChecklistSubmission,
 } from "@/interfaces/checklist"
 import { toIntId } from "@/lib/graphql-inputs"
+import i18n from "@/lib/i18n"
 
 export interface ChecklistItemDraft {
   item_name: string
@@ -153,15 +154,26 @@ export function buildUpdateChecklistItemInput(
 
 type StatusVariant = "success" | "info" | "danger" | "neutral"
 
-const SUBMISSION_STATUSES: Record<string, { label: string; variant: StatusVariant }> = {
-  [ChecklistSubmissionStatus.IN_PROGRESS]: { label: "En cours", variant: "info" },
-  [ChecklistSubmissionStatus.COMPLETED]: { label: "Terminée", variant: "success" },
-  [ChecklistSubmissionStatus.CANCELLED]: { label: "Annulée", variant: "danger" },
+const SUBMISSION_STATUS_VARIANTS: Record<string, StatusVariant> = {
+  [ChecklistSubmissionStatus.IN_PROGRESS]: "info",
+  [ChecklistSubmissionStatus.COMPLETED]: "success",
+  [ChecklistSubmissionStatus.CANCELLED]: "danger",
 }
 
 // One wording and one colour per checklist status, wherever it is shown.
-export const checklistStatus = (status: string | null | undefined) =>
-  SUBMISSION_STATUSES[(status ?? "").toUpperCase()] ?? { label: "Statut inconnu", variant: "neutral" as StatusVariant }
+export const checklistStatus = (status: string | null | undefined): { label: string; variant: StatusVariant } => {
+  const code = (status ?? "").toUpperCase()
+  const variant = SUBMISSION_STATUS_VARIANTS[code]
+  return variant
+    ? { label: i18n.t(`checklists:status.${code}`), variant }
+    : { label: i18n.t("checklists:status.unknown"), variant: "neutral" }
+}
+
+const KNOWN_CATEGORIES = new Set<string>(CATEGORY_ORDER)
+
+// The name of a category; anything the app does not know is filed under "other".
+export const checklistCategoryLabel = (category: string): string =>
+  i18n.t(KNOWN_CATEGORIES.has(category) ? `checklists:category.${category}` : "checklists:category.other")
 
 // How far a checklist is: only answers to items still in the template count.
 export function submissionProgress(submission: Pick<ChecklistSubmission, "responses" | "template">) {

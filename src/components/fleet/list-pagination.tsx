@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -6,12 +7,13 @@ interface ListPaginationProps {
   pageSize: number
   totalItems: number
   onPageChange: (page: number) => void
-  /** Plural noun of what is listed, e.g. "maintenances". */
+  /** Noun of what is listed, already translated and in the right number, e.g. "maintenances". */
   itemsLabel?: string
 }
 
 /** Footer of a paginated list: range shown, then previous / next. */
 export function ListPagination({ page, pageSize, totalItems, onPageChange, itemsLabel }: ListPaginationProps) {
+  const { t } = useTranslation("fleet")
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize))
   if (totalItems === 0) return null
 
@@ -21,20 +23,21 @@ export function ListPagination({ page, pageSize, totalItems, onPageChange, items
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <p className="text-sm text-muted-foreground tabular-nums">
-        {first}–{last} sur {totalItems}
-        {itemsLabel ? ` ${itemsLabel}` : ""}
+        {itemsLabel
+          ? t("pagination.rangeOf", { from: first, to: last, total: totalItems, items: itemsLabel })
+          : t("common:pagination.range", { from: first, to: last, total: totalItems })}
       </p>
       {totalPages > 1 && (
-        <nav className="flex items-center gap-2" aria-label="Pagination">
+        <nav className="flex items-center gap-2" aria-label={t("pagination.label")}>
           <Button variant="outline" size="sm" onClick={() => onPageChange(page - 1)} disabled={page <= 1}>
             <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-            Précédent
+            {t("common:pagination.previous")}
           </Button>
           <span className="text-sm text-muted-foreground tabular-nums">
-            Page {page} sur {totalPages}
+            {t("common:pagination.pageOf", { page, total: totalPages })}
           </span>
           <Button variant="outline" size="sm" onClick={() => onPageChange(page + 1)} disabled={page >= totalPages}>
-            Suivant
+            {t("common:pagination.next")}
             <ChevronRight className="h-4 w-4" aria-hidden="true" />
           </Button>
         </nav>

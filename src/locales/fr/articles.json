@@ -1,0 +1,183 @@
+{
+  "shared": {
+    "publishedOn": "Publié le {{date}}",
+    "searchLabel": "Rechercher un article",
+    "removeTheme": "Retirer le thème {{tag}}",
+    "loading": "Chargement des articles",
+    "emptyTitle": "Aucun article pour le moment",
+    "noMatchTitle": "Aucun article ne correspond",
+    "clearSearch": "Effacer la recherche",
+    "themes": "Thèmes",
+    "event": "Événement"
+  },
+  "tags": {
+    "news": "Actualités",
+    "events": "Événements",
+    "training": "Formation",
+    "regulation": "Réglementation",
+    "safety": "Sécurité",
+    "technical": "Technique",
+    "information": "Information"
+  },
+  "card": {
+    "eventOn": "Événement du {{date}}",
+    "read": "Lire l'article"
+  },
+  "list": {
+    "title": "Actualités",
+    "description": "Les nouvelles et les événements de l'aéroclub.",
+    "searchPlaceholder": "Rechercher un article…",
+    "sortLabel": "Ordre d'affichage",
+    "sort": {
+      "newest": "Plus récents d'abord",
+      "oldest": "Plus anciens d'abord"
+    },
+    "viewLabel": "Affichage",
+    "view": {
+      "grid": "Afficher en grille",
+      "list": "Afficher en liste"
+    },
+    "selectedThemes": "Thèmes choisis :",
+    "clearAll": "Tout effacer",
+    "emptyDescription": "Les actualités de l'aéroclub s'afficheront ici dès leur publication.",
+    "noMatchDescription": "Modifiez votre recherche ou retirez des thèmes."
+  },
+  "reader": {
+    "backToList": "Toutes les actualités",
+    "loading": "Chargement de l'article",
+    "notFound": {
+      "title": "Article introuvable",
+      "description": "Cet article a peut-être été supprimé ou déplacé.",
+      "action": "Voir toutes les actualités"
+    },
+    "readingTime": "{{minutes}} min de lecture",
+    "imageAlt": "Illustration de l'article « {{title}} »",
+    "event": {
+      "upcoming": "À venir",
+      "past": "Passé",
+      "addToCalendar": "Ajouter à mon agenda",
+      "googleCalendar": "Google Agenda",
+      "icsFile": "Apple, Outlook ou autre (fichier .ics)"
+    },
+    "documents": "Documents joints",
+    "share": "Partager",
+    "copyLink": "Copier le lien",
+    "toast": {
+      "linkCopied": {
+        "title": "Lien copié",
+        "description": "Le lien de l'article est dans le presse-papiers."
+      },
+      "copyFailed": {
+        "title": "Copie impossible",
+        "description": "Le lien n'a pas pu être copié. Copiez l'adresse depuis la barre du navigateur."
+      }
+    }
+  },
+  "admin": {
+    "title": "Articles",
+    "description": "Rédigez et gérez les actualités visibles par les membres.",
+    "newArticle": "Nouvel article",
+    "searchPlaceholder": "Rechercher par titre ou thème…",
+    "count_one": "{{count}} article",
+    "count_other": "{{count}} articles",
+    "filteredCount": "{{count}} sur {{total}}",
+    "emptyDescription": "Publiez une première actualité : elle apparaîtra sur le tableau de bord des membres.",
+    "noMatchDescription": "Essayez un autre mot ou effacez la recherche.",
+    "table": {
+      "article": "Article",
+      "publishedOn": "Publié le",
+      "viewAsMember": "Voir l'article tel que les membres le lisent",
+      "editLabel": "Modifier l'article « {{title}} »",
+      "deleteLabel": "Supprimer l'article « {{title}} »"
+    },
+    "panel": {
+      "editTitle": "Modifier l'article",
+      "editDescription": "Les modifications sont visibles par les membres dès l'enregistrement.",
+      "createDescription": "L'article est visible par les membres dès sa publication.",
+      "publish": "Publier l'article",
+      "steps": {
+        "presentation": "Présentation",
+        "content": "Contenu",
+        "files": "Illustration et pièces jointes",
+        "filesDescription": "Facultatif. L'image illustre l'article dans la liste des actualités."
+      }
+    },
+    "form": {
+      "title": "Titre",
+      "titlePlaceholder": "Ex. : Journée portes ouvertes du 14 juin",
+      "summary": "Résumé",
+      "summaryPlaceholder": "Une ou deux phrases affichées dans la liste des actualités",
+      "themesAllAdded": "Tous les thèmes sont ajoutés",
+      "addTheme": "Ajouter un thème",
+      "themesHint": "Les thèmes permettent aux membres de filtrer les actualités.",
+      "eventDate": "Date de l'événement",
+      "noDate": "Aucune date",
+      "removeEventDate": "Retirer la date de l'événement",
+      "removeDate": "Retirer la date",
+      "eventDateHint": "Facultatif. À renseigner si l'article annonce un événement.",
+      "content": "Contenu de l'article",
+      "errors": {
+        "title": "Donnez un titre à l'article.",
+        "summary": "Ajoutez un résumé : il est affiché dans la liste des actualités.",
+        "content": "Rédigez le contenu de l'article."
+      }
+    },
+    "editor": {
+      "toolbar": "Mise en forme",
+      "underline": "Souligné",
+      "editLink": "Modifier le lien",
+      "addLink": "Ajouter un lien",
+      "linkUrl": "Adresse du lien",
+      "linkPlaceholder": "https://www.exemple.fr",
+      "removeLink": "Retirer le lien",
+      "fontSizeLabel": "Taille du texte",
+      "fontSize": {
+        "xs": "Très petit",
+        "sm": "Petit",
+        "md": "Normal",
+        "lg": "Grand",
+        "xl": "Très grand",
+        "xxl": "Énorme"
+      }
+    },
+    "files": {
+      "image": "Image principale",
+      "imagePreviewAlt": "Aperçu de l'image principale",
+      "size": "{{size}} Mo",
+      "removeFile": "Retirer ce fichier",
+      "currentImage": "Image actuelle. Choisissez un fichier pour la remplacer.",
+      "imageHint": "JPG ou PNG, 2 Mo maximum conseillé.",
+      "document": "Document joint",
+      "existingDocuments_one": "{{count}} document déjà joint. Choisissez un fichier pour le remplacer.",
+      "existingDocuments_other": "{{count}} documents déjà joints. Choisissez un fichier pour les remplacer.",
+      "documentHint": "PDF, Word, Excel ou PowerPoint."
+    },
+    "deleteDialog": {
+      "title": "Supprimer cet article ?",
+      "description": "L'article « {{title}} » sera définitivement supprimé. Cette action est irréversible."
+    },
+    "toast": {
+      "updated": {
+        "title": "Article mis à jour",
+        "description": "« {{title}} » a été enregistré."
+      },
+      "published": {
+        "title": "Article publié",
+        "description": "« {{title}} » est visible dans les actualités."
+      },
+      "saveFailed": {
+        "title": "Enregistrement impossible",
+        "publishTitle": "Publication impossible",
+        "description": "L'article n'a pas pu être enregistré. Vérifiez les champs et les fichiers, puis réessayez."
+      },
+      "deleted": {
+        "title": "Article supprimé",
+        "description": "« {{title}} » a été supprimé."
+      },
+      "deleteFailed": {
+        "title": "Suppression impossible",
+        "description": "L'article n'a pas pu être supprimé. Réessayez dans un instant."
+      }
+    }
+  }
+}

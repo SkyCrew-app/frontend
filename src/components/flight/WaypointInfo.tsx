@@ -1,8 +1,10 @@
 "use client"
 
+import { useTranslation } from "react-i18next"
 import { MapPin } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import i18n from "@/lib/i18n"
 
 interface Waypoint {
   ident: string
@@ -27,19 +29,21 @@ const TYPE_VARIANTS: Record<string, BadgeVariant> = {
 }
 
 // Standard abbreviations stay as they are; the airport one gets a readable label.
-const typeLabel = (type: string) => (type?.toUpperCase() === "APT" ? "Aérodrome" : type || "Point")
+const typeLabel = (type: string) => 
+  type?.toUpperCase() === "APT" ? i18n.t("flights:waypointInfo.type.aerodrome") : type || i18n.t("flights:waypointInfo.type.point")
 
 export function WaypointInfo({ waypoints: rawWaypoints, onFocusWaypoint }: WaypointInfoProps) {
+  const { t } = useTranslation("flights")
   const waypoints = rawWaypoints || []
 
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-base">Points de route</CardTitle>
+        <CardTitle className="text-base">{t("waypointInfo.title")}</CardTitle>
         <CardDescription>
           {waypoints.length > 0
-            ? `${waypoints.length} point${waypoints.length > 1 ? "s" : ""}. Sélectionnez un point pour le situer sur la carte.`
-            : "Ce plan de vol ne contient pas de point de route détaillé."}
+            ? t("waypointInfo.description", { count: waypoints.length })
+            : t("waypointInfo.empty")}
         </CardDescription>
       </CardHeader>
       {waypoints.length > 0 && (

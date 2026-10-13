@@ -1,6 +1,8 @@
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatDecimal } from "@/lib/format"
+import i18n, { currentLocale } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 
 // One colour per meaning, the same in every finance chart.
@@ -33,29 +35,22 @@ export const chartTooltipStyle = {
   fontSize: "12px",
 }
 
-const compactMoney = new Intl.NumberFormat("fr-FR", {
-  style: "currency",
-  currency: "EUR",
-  notation: "compact",
-  maximumFractionDigits: 1,
-})
-
 // Axis ticks: "1,5 k €" takes less room than the full amount.
-export const formatAxisMoney = (value: number) => compactMoney.format(value)
+export const formatAxisMoney = (value: number) =>
+  new Intl.NumberFormat(currentLocale(), {
+    style: "currency",
+    currency: "EUR",
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(value)
 
-// The categories an expense can be saved with, and their French label.
-export const EXPENSE_CATEGORIES = [
-  { value: "maintenance", label: "Maintenance" },
-  { value: "carburant", label: "Carburant" },
-  { value: "assurance", label: "Assurance" },
-  { value: "salaires", label: "Salaires" },
-  { value: "autres", label: "Autres" },
-] as const
+// The categories an expense can be saved with (codes stored by the API).
+export const EXPENSE_CATEGORIES = ["maintenance", "carburant", "assurance", "salaires", "autres"] as const
 
 export const expenseCategoryLabel = (category: string | null | undefined): string => {
-  if (!category) return "Sans catégorie"
-  const known = EXPENSE_CATEGORIES.find((item) => item.value === category.toLowerCase())
-  if (known) return known.label
+  if (!category) return i18n.t("administration:expenseCategory.none")
+  const known = EXPENSE_CATEGORIES.find((item) => item === category.toLowerCase())
+  if (known) return i18n.t(`administration:expenseCategory.${known}`)
   // A category the app does not know: show it as readable text, not as a code.
   const text = category.replace(/[_-]+/g, " ").trim().toLowerCase()
   return text.charAt(0).toUpperCase() + text.slice(1)
@@ -67,15 +62,18 @@ export const percentChange = (previous: number | undefined, current: number | un
   return ((current - previous) / Math.abs(previous)) * 100
 }
 
+// "12,5 %" in French, "12.5%" in English.
+export const formatPercent = (value: string | number): string => i18n.t("administration:finance.percent", { value })
+
 // "+12,5 %"
 export const formatPercentChange = (value: number | null): string => {
   if (value === null || !Number.isFinite(value)) return "—"
-  return `${value > 0 ? "+" : ""}${formatDecimal(value, 1)} %`
+  return formatPercent(`${value > 0 ? "+" : ""}${formatDecimal(value, 1)}`)
 }
 
 // "42,5 %"
 export const formatShare = (value: number, total: number): string =>
-  total > 0 ? `${formatDecimal((value / total) * 100, 1)} %` : "—"
+  total > 0 ? formatPercent(formatDecimal((value / total) * 100, 1)) : "—"
 
 // Money figures need the full width on a phone.
 export const STAT_GRID = "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
@@ -86,8 +84,9 @@ export function StatGrid({ children, className }: { children: React.ReactNode; c
 
 /** Loading shape shared by the finance tabs: figures, then a chart, then a table. */
 export function FinanceTabSkeleton({ stats = 4 }: { stats?: number }) {
+  const { t } = useTranslation("administration")
   return (
-    <div className="space-y-6" role="status" aria-label="Chargement des données">
+    <div className="space-y-6" role="status" aria-label={t("finance.loading")}>
       <StatGrid>
         {Array.from({ length: stats }, (_, index) => (
           <Skeleton key={index} className="h-[104px] rounded-xl" />

@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { useQuery } from "@apollo/client"
 import { Newspaper } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { formatDate } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { getBackendBaseUrl } from "@/lib/runtime-config"
@@ -19,6 +20,7 @@ interface ArticlesWidgetProps {
 }
 
 export default function ArticlesWidget({ wide = false }: ArticlesWidgetProps) {
+  const { t } = useTranslation("dashboard")
   const { data, loading, error, refetch } = useQuery(GET_ARTICLES)
 
   const articles: any[] = data?.articles || []
@@ -48,8 +50,8 @@ export default function ArticlesWidget({ wide = false }: ArticlesWidgetProps) {
       return (
         <WidgetEmpty
           icon={Newspaper}
-          title="Aucun article pour le moment"
-          description="Les actualités de l'aéroclub s'afficheront ici."
+          title={t("articles.emptyTitle")}
+          description={t("articles.emptyDescription")}
         />
       )
     }
@@ -100,7 +102,7 @@ export default function ArticlesWidget({ wide = false }: ArticlesWidgetProps) {
   return (
     <WidgetContainer
       title={WIDGET_REGISTRY["articles"].label}
-      action={<WidgetLink href="/articles">Tout voir</WidgetLink>}
+      action={<WidgetLink href="/articles">{t("common:actions.seeAll")}</WidgetLink>}
     >
       {renderContent()}
     </WidgetContainer>

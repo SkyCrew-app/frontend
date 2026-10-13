@@ -1,9 +1,11 @@
 import { useFormContext } from "react-hook-form"
+import { useTranslation } from "react-i18next"
 import { FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
 
 export default function FlightNotesForm() {
   const { control } = useFormContext()
+  const { t } = useTranslation("flights")
 
   return (
     <FormField
@@ -11,10 +13,10 @@ export default function FlightNotesForm() {
       name="flightNotes"
       render={({ field }) => (
         <FormItem>
-          <FormLabel>Remarques sur le vol</FormLabel>
+          <FormLabel>{t("closeFlight.notes.label")}</FormLabel>
           <FormControl>
             <Textarea
-              placeholder="Ex. : trois tours de piste à Pontoise, exercice de panne en campagne"
+              placeholder={t("closeFlight.notes.placeholder")}
               className="resize-none"
               rows={6}
               maxLength={2000}
@@ -22,7 +24,7 @@ export default function FlightNotesForm() {
               value={field.value ?? ""}
             />
           </FormControl>
-          <FormDescription>Elles sont reprises dans la colonne « Remarques » de votre carnet de vol.</FormDescription>
+          <FormDescription>{t("closeFlight.notes.hint")}</FormDescription>
           <FormMessage />
         </FormItem>
       )}

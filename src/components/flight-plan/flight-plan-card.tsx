@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { useTranslation } from "react-i18next"
 import { CalendarClock, Pencil, Plane, Route } from "lucide-react"
 import { formatDate, formatDecimal, formatFlightDuration, formatTime } from "@/lib/format"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -16,6 +17,7 @@ interface FlightPlanCardProps {
 }
 
 export function FlightPlanCard({ flight, onEdit }: FlightPlanCardProps) {
+  const { t } = useTranslation("flights")
   const state = flightPlanState(flight)
   const reservation = flight.reservation
   const passengers = flight.number_of_passengers ?? 0
@@ -23,7 +25,7 @@ export function FlightPlanCard({ flight, onEdit }: FlightPlanCardProps) {
   const routeFacts = [
     flight.distance_km ? `${formatDecimal(flight.distance_km, 0)} km` : null,
     flight.flight_hours ? formatFlightDuration(flight.flight_hours) : null,
-    `${passengers} passager${passengers > 1 ? "s" : ""}`,
+    t("plans.card.passengers", { count: passengers }),
   ].filter(Boolean)
 
   return (
@@ -57,7 +59,7 @@ export function FlightPlanCard({ flight, onEdit }: FlightPlanCardProps) {
         ) : (
           <p className="flex items-start gap-2 text-muted-foreground">
             <CalendarClock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-            Sans réservation associée
+            {t("plans.card.noReservation")}
           </p>
         )}
         <p className="flex items-start gap-2">
@@ -73,18 +75,18 @@ export function FlightPlanCard({ flight, onEdit }: FlightPlanCardProps) {
               variant="ghost"
               className="h-9 w-9"
               onClick={() => onEdit(flight)}
-              aria-label={`Modifier le plan de vol ${flight.origin_icao} → ${flight.destination_icao}`}
-              title="Modifier"
+              aria-label={t("plans.card.editLabel", { origin: flight.origin_icao, destination: flight.destination_icao })}
+              title={t("common:actions.edit")}
             >
               <Pencil className="h-4 w-4" />
             </Button>
             <Button size="sm" variant="outline" asChild>
-              <Link href={`/close_flight/${flight.id}`}>Clôturer le vol</Link>
+              <Link href={`/close_flight/${flight.id}`}>{t("plans.actions.closeFlight")}</Link>
             </Button>
           </>
         )}
         <Button size="sm" asChild>
-          <Link href={`/reservations/flight-plans/${flight.id}`}>Ouvrir</Link>
+          <Link href={`/reservations/flight-plans/${flight.id}`}>{t("common:actions.open")}</Link>
         </Button>
       </CardFooter>
     </Card>

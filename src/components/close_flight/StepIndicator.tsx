@@ -1,4 +1,5 @@
 import { Check } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { cn } from "@/lib/utils"
 
 interface StepIndicatorProps {
@@ -11,8 +12,9 @@ interface StepIndicatorProps {
 
 /** Numbered pills of a form in steps, same look as the steps of a SidePanel. */
 export function StepIndicator({ steps, current, onStepClick, className }: StepIndicatorProps) {
+  const { t } = useTranslation("flights")
   return (
-    <ol className={cn("flex items-center gap-2", className)} aria-label="Étapes">
+    <ol className={cn("flex items-center gap-2", className)} aria-label={t("common:panel.steps")}>
       {steps.map((title, index) => {
         const done = index < current
         const active = index === current

@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo } from "react"
+import { useTranslation } from "react-i18next"
 import { useQuery } from "@apollo/client"
 import { Award, BookOpen, CalendarClock, ClipboardList } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
@@ -54,6 +55,7 @@ function OverviewSkeleton() {
 }
 
 export default function InstructionHome() {
+  const { t } = useTranslation("instruction")
   const userEmail = useCurrentUser()
   const userData = useUserData(userEmail)
   const userId: number | null = userData ? Number(userData.id) : null
@@ -107,8 +109,8 @@ export default function InstructionHome() {
     <div className="space-y-6">
       <PageHeader
         className="mb-0"
-        title="Centre d'instruction"
-        description="Vos prochains cours, votre progression en ligne et vos évaluations."
+        title={t("home.title")}
+        description={t("home.description")}
       />
 
       {loading ? (
@@ -119,30 +121,38 @@ export default function InstructionHome() {
         <>
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             <StatCard
-              label="Leçons terminées"
+              label={t("home.stats.lessonsDone.label")}
               value={`${lessons.completed} / ${lessons.total}`}
-              hint={lessons.total > 0 ? `${percentage(lessons.completed, lessons.total)} % des cours en ligne` : "Aucune leçon publiée"}
+              hint={
+                lessons.total > 0
+                  ? t("home.stats.lessonsDone.hint", { percent: percentage(lessons.completed, lessons.total) })
+                  : t("home.stats.lessonsDone.hintEmpty")
+              }
               icon={BookOpen}
               tone="primary"
             />
             <StatCard
-              label="Cours à venir"
+              label={t("home.stats.upcoming.label")}
               value={coursesQuery.error ? "—" : nextCourses.length}
-              hint={nextCourses[0] ? `Prochain le ${formatDate(nextCourses[0].startTime)}` : "Aucun cours planifié"}
+              hint={
+                nextCourses[0]
+                  ? t("home.stats.upcoming.hint", { date: formatDate(nextCourses[0].startTime) })
+                  : t("home.stats.upcoming.hintEmpty")
+              }
               icon={CalendarClock}
               tone="info"
             />
             <StatCard
-              label="Évaluations à passer"
+              label={t("home.stats.toTake.label")}
               value={evaluationsError ? "—" : toTake.length}
-              hint={`${passedCount} réussie${passedCount > 1 ? "s" : ""}`}
+              hint={t("home.stats.toTake.hint", { count: passedCount })}
               icon={ClipboardList}
               tone="warning"
             />
             <StatCard
-              label="Score moyen"
-              value={average === null ? "—" : `${average} %`}
-              hint="Sur vos évaluations passées"
+              label={t("home.stats.average.label")}
+              value={average === null ? "—" : t("shared.percent", { value: average })}
+              hint={t("home.stats.average.hint")}
               icon={Award}
               tone="success"
             />

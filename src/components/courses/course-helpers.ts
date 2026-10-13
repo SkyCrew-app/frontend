@@ -1,4 +1,5 @@
 import { formatDate, formatTime } from "@/lib/format"
+import i18n from "@/lib/i18n"
 
 type BadgeVariant = "info" | "warning" | "success" | "danger" | "neutral"
 
@@ -20,24 +21,29 @@ export interface InstructionCourse {
 }
 
 // The API spells the cancelled status both ways depending on the query.
-const STATUSES: Record<string, { label: string; variant: BadgeVariant }> = {
-  SCHEDULED: { label: "Planifié", variant: "info" },
-  IN_PROGRESS: { label: "En cours", variant: "warning" },
-  COMPLETED: { label: "Terminé", variant: "success" },
-  CANCELED: { label: "Annulé", variant: "danger" },
-  CANCELLED: { label: "Annulé", variant: "danger" },
+const STATUS_VARIANTS: Record<string, BadgeVariant> = {
+  SCHEDULED: "info",
+  IN_PROGRESS: "warning",
+  COMPLETED: "success",
+  CANCELED: "danger",
+  CANCELLED: "danger",
 }
 
 // Label and badge colour of a course status, the same on every screen.
 export function courseStatus(status: string | null | undefined): { label: string; variant: BadgeVariant } {
-  return STATUSES[(status ?? "").toUpperCase()] ?? { label: "Statut inconnu", variant: "neutral" }
+  const code = (status ?? "").toUpperCase()
+  const variant = STATUS_VARIANTS[code]
+  if (!variant) return { label: i18n.t("instruction:status.unknown"), variant: "neutral" }
+  return { label: i18n.t(`instruction:status.${code}`), variant }
 }
 
 // The statuses an instructor can give a course, as the API names them.
-export const COURSE_STATUS_OPTIONS = ["SCHEDULED", "IN_PROGRESS", "COMPLETED", "CANCELED"].map((value) => ({
-  value,
-  label: courseStatus(value).label,
-}))
+// Built on demand: the labels follow the language.
+export const courseStatusOptions = () =>
+  ["SCHEDULED", "IN_PROGRESS", "COMPLETED", "CANCELED"].map((value) => ({
+    value,
+    label: courseStatus(value).label,
+  }))
 
 export function personName(person: CoursePerson | null | undefined): string {
   const name = [person?.first_name, person?.last_name].filter(Boolean).join(" ").trim()
@@ -59,6 +65,11 @@ export function courseCounterpart(
 ): { person: CoursePerson; role: "Élève" | "Instructeur" } {
   const givesIt = userId != null && String(course.instructor?.id) === String(userId)
   return givesIt ? { person: course.student, role: "Élève" } : { person: course.instructor, role: "Instructeur" }
+}
+
+// The part as shown to the user; `role` keeps the French value used in comparisons.
+export function counterpartRoleLabel(role: "Élève" | "Instructeur"): string {
+  return role === "Élève" ? i18n.t("common:labels.student") : i18n.t("common:labels.instructor")
 }
 
 // "14:00 – 15:30", or the start alone while the course has no end.

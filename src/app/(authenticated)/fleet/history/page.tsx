@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from 'react';
 import { useQuery } from '@apollo/client';
+import { useTranslation } from 'react-i18next';
 import { endOfDay, startOfDay } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
 import { History, Search, X } from 'lucide-react';
@@ -20,6 +21,7 @@ import { ListPagination } from '@/components/fleet/list-pagination';
 import { GET_FLIGHT_HISTORY } from '@/graphql/planes';
 import { maintenanceTypeLabel } from '@/lib/maintenance';
 import { formatDate, formatDateTime, formatFlightDuration } from '@/lib/format';
+import i18n from '@/lib/i18n';
 
 interface Person {
   first_name?: string | null;
@@ -68,10 +70,11 @@ const byStartDesc = (a: string, b: string) => time(b) - time(a);
 
 const maintenanceDuration = (start: string, end: string) => {
   const days = Math.max(1, Math.round((time(end) - time(start)) / DAY));
-  return `${days} ${days > 1 ? 'jours' : 'jour'}`;
+  return i18n.t('fleet:history.durationDays', { count: days });
 };
 
 export default function AircraftHistory() {
+  const { t } = useTranslation('fleet');
   const { data, loading, error, refetch } = useQuery<HistoryData>(GET_FLIGHT_HISTORY);
 
   const [search, setSearch] = useState('');
@@ -149,8 +152,8 @@ export default function AircraftHistory() {
       return (
         <EmptyState
           icon={History}
-          title="Aucun aéronef"
-          description="L'historique apparaîtra ici dès qu'un aéronef aura été ajouté à la flotte."
+          title={t('shared.noAircraft')}
+          description={t('history.emptyDescription')}
         />
       );
     }
@@ -164,19 +167,19 @@ export default function AircraftHistory() {
               aria-hidden="true"
             />
             <Input
-              placeholder="Pilote, technicien ou type"
-              aria-label="Rechercher dans l'historique"
+              placeholder={t('history.searchPlaceholder')}
+              aria-label={t('history.searchLabel')}
               value={search}
               onChange={(event) => updateFilters(() => setSearch(event.target.value))}
               className="pl-8"
             />
           </div>
           <Select value={aircraftId} onValueChange={(value) => updateFilters(() => setAircraftId(value))}>
-            <SelectTrigger className="w-full sm:w-[220px]" aria-label="Filtrer par aéronef">
+            <SelectTrigger className="w-full sm:w-[220px]" aria-label={t('history.filterByAircraft')}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Tous les aéronefs</SelectItem>
+              <SelectItem value="all">{t('history.allAircraft')}</SelectItem>
               {aircrafts.map((aircraft) => (
                 <SelectItem key={aircraft.id} value={String(aircraft.id)}>
                   {aircraft.registration_number} · {aircraft.model}
@@ -187,13 +190,13 @@ export default function AircraftHistory() {
           <DateRangePicker
             dateRange={period}
             onSelect={(range) => updateFilters(() => setPeriod(range))}
-            placeholder="Toutes les dates"
+            placeholder={t('shared.allDates')}
             className="sm:w-[260px]"
           />
           {hasFilters && (
             <Button variant="ghost" onClick={resetFilters}>
               <X className="h-4 w-4" aria-hidden="true" />
-              Réinitialiser
+              {t('common:actions.reset')}
             </Button>
           )}
         </div>
@@ -201,11 +204,11 @@ export default function AircraftHistory() {
         {visibleAircrafts.length === 0 ? (
           <EmptyState
             icon={Search}
-            title="Aucun résultat"
-            description="Aucune réservation ni maintenance ne correspond à ces filtres."
+            title={t('common:states.noResults')}
+            description={t('history.noMatchDescription')}
             action={
               <Button variant="outline" onClick={resetFilters}>
-                Réinitialiser les filtres
+                {t('shared.resetFilters')}
               </Button>
             }
           />
@@ -224,26 +227,30 @@ export default function AircraftHistory() {
                 <CardContent>
                   <Tabs defaultValue="reservations">
                     <TabsList>
-                      <TabsTrigger value="reservations">Réservations ({aircraft.reservations.length})</TabsTrigger>
-                      <TabsTrigger value="maintenances">Maintenances ({aircraft.maintenances.length})</TabsTrigger>
+                      <TabsTrigger value="reservations">
+                        {t('history.reservations.tab', { total: aircraft.reservations.length })}
+                      </TabsTrigger>
+                      <TabsTrigger value="maintenances">
+                        {t('history.maintenances.tab', { total: aircraft.maintenances.length })}
+                      </TabsTrigger>
                     </TabsList>
                     <TabsContent value="reservations">
                       <HistoryTable
                         items={aircraft.reservations}
                         page={pageOf('reservations')}
                         onPageChange={setPageOf('reservations')}
-                        itemsLabel={['réservation', 'réservations']}
+                        itemsLabel={(count) => t('pagination.items.reservation', { count })}
                         emptyMessage={
                           hasItemFilters
-                            ? 'Aucune réservation ne correspond à ces filtres.'
-                            : 'Aucune réservation pour cet aéronef.'
+                            ? t('history.reservations.noMatch')
+                            : t('history.reservations.empty')
                         }
                         head={
                           <>
-                            <TableHead>Début</TableHead>
-                            <TableHead>Fin</TableHead>
-                            <TableHead className="text-right">Durée</TableHead>
-                            <TableHead>Pilote</TableHead>
+                            <TableHead>{t('common:labels.start')}</TableHead>
+                            <TableHead>{t('common:labels.end')}</TableHead>
+                            <TableHead className="text-right">{t('common:labels.duration')}</TableHead>
+                            <TableHead>{t('common:labels.pilot')}</TableHead>
                           </>
                         }
                         renderRow={(reservation) => (
@@ -263,19 +270,19 @@ export default function AircraftHistory() {
                         items={aircraft.maintenances}
                         page={pageOf('maintenances')}
                         onPageChange={setPageOf('maintenances')}
-                        itemsLabel={['maintenance', 'maintenances']}
+                        itemsLabel={(count) => t('pagination.items.maintenance', { count })}
                         emptyMessage={
                           hasItemFilters
-                            ? 'Aucune maintenance ne correspond à ces filtres.'
-                            : 'Aucune maintenance pour cet aéronef.'
+                            ? t('history.maintenances.noMatch')
+                            : t('history.maintenances.empty')
                         }
                         head={
                           <>
-                            <TableHead>Type</TableHead>
-                            <TableHead>Début</TableHead>
-                            <TableHead>Fin</TableHead>
-                            <TableHead className="text-right">Durée</TableHead>
-                            <TableHead>Technicien</TableHead>
+                            <TableHead>{t('common:labels.type')}</TableHead>
+                            <TableHead>{t('common:labels.start')}</TableHead>
+                            <TableHead>{t('common:labels.end')}</TableHead>
+                            <TableHead className="text-right">{t('common:labels.duration')}</TableHead>
+                            <TableHead>{t('common:labels.technician')}</TableHead>
                           </>
                         }
                         renderRow={(maintenance) => (
@@ -290,7 +297,7 @@ export default function AircraftHistory() {
                             </TableCell>
                             <TableCell>
                               {fullName(maintenance.technician) || (
-                                <span className="text-muted-foreground">Non assigné</span>
+                                <span className="text-muted-foreground">{t('shared.unassigned')}</span>
                               )}
                             </TableCell>
                           </>
@@ -311,8 +318,8 @@ export default function AircraftHistory() {
     <div className="space-y-6">
       <PageHeader
         className="mb-0"
-        title="Historique de la flotte"
-        description="Réservations et maintenances de chaque aéronef, des plus récentes aux plus anciennes."
+        title={t('history.title')}
+        description={t('history.description')}
       />
       {renderContent()}
     </div>
@@ -323,8 +330,8 @@ interface HistoryTableProps<T extends { id: string | number }> {
   items: T[];
   page: number;
   onPageChange: (page: number) => void;
-  /** Singular and plural of what is listed. */
-  itemsLabel: [string, string];
+  /** Noun of what is listed, for a given number of items. */
+  itemsLabel: (count: number) => string;
   emptyMessage: string;
   head: ReactNode;
   renderRow: (item: T) => ReactNode;
@@ -366,7 +373,7 @@ function HistoryTable<T extends { id: string | number }>({
         pageSize={ITEMS_PER_PAGE}
         totalItems={items.length}
         onPageChange={onPageChange}
-        itemsLabel={items.length > 1 ? itemsLabel[1] : itemsLabel[0]}
+        itemsLabel={itemsLabel(items.length)}
       />
     </div>
   );

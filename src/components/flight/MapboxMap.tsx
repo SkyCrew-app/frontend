@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useCallback } from 'react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { escapeHtml } from '@/lib/sanitize-html'
+import i18n from '@/lib/i18n'
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -281,6 +282,8 @@ function createLegLabelHtml(bearing: number, distNm: number, gs?: number): strin
 /* ------------------------------------------------------------------ */
 
 function createLegendHtml(): string {
+  // Built outside React: read the language when the legend is drawn.
+  const phase = (key: Phase) => escapeHtml(i18n.t(`flights:map.legend.${key}`))
   return `
     <div style="
       position:absolute;
@@ -300,15 +303,15 @@ function createLegendHtml(): string {
       <div style="font-weight:700;color:#fff;margin-bottom:4px;font-size:11px;">ROUTE</div>
       <div style="display:flex;align-items:center;gap:6px;">
         <span style="width:18px;height:3px;background:#22C55E;border-radius:1px;display:inline-block;"></span>
-        <span>Montée</span>
+        <span>${phase('climb')}</span>
       </div>
       <div style="display:flex;align-items:center;gap:6px;">
         <span style="width:18px;height:3px;background:#E040FB;border-radius:1px;display:inline-block;"></span>
-        <span>Croisière</span>
+        <span>${phase('cruise')}</span>
       </div>
       <div style="display:flex;align-items:center;gap:6px;">
         <span style="width:18px;height:3px;background:#F59E0B;border-radius:1px;display:inline-block;"></span>
-        <span>Descente</span>
+        <span>${phase('descent')}</span>
       </div>
       <div style="margin-top:6px;font-weight:700;color:#fff;margin-bottom:4px;font-size:11px;">NAVAIDS</div>
       <div style="display:flex;align-items:center;gap:6px;">

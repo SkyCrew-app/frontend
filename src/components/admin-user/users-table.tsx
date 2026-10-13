@@ -1,4 +1,5 @@
 "use client"
+import { useTranslation } from "react-i18next"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -14,6 +15,7 @@ import {
 import { BadgeCheck, Eye, MoreHorizontal, Pencil, Users } from "lucide-react"
 import { EmptyState } from "@/components/layout/EmptyState"
 import { formatDate } from "@/lib/format"
+import { roleLabel } from "@/lib/settings"
 import type { User } from "@/interfaces/user"
 
 interface UsersTableProps {
@@ -39,6 +41,7 @@ export function UsersTable({
   onAddLicense,
   onResetFilters,
 }: UsersTableProps) {
+  const { t } = useTranslation("administration")
   if (loading) {
     return (
       <Card className="divide-y overflow-hidden">
@@ -61,12 +64,12 @@ export function UsersTable({
     return filtered ? (
       <EmptyState
         icon={Users}
-        title="Aucun membre ne correspond"
-        description="Modifiez la recherche ou les filtres pour élargir la liste."
+        title={t("users.table.noMatch.title")}
+        description={t("users.table.noMatch.description")}
         action={
           onResetFilters && (
             <Button variant="outline" onClick={onResetFilters}>
-              Réinitialiser les filtres
+              {t("users.table.resetFilters")}
             </Button>
           )
         }
@@ -74,8 +77,8 @@ export function UsersTable({
     ) : (
       <EmptyState
         icon={Users}
-        title="Aucun membre pour le moment"
-        description="Ajoutez un premier membre : il recevra un e-mail pour activer son compte."
+        title={t("users.table.empty.title")}
+        description={t("users.table.empty.description")}
       />
     )
   }
@@ -85,13 +88,13 @@ export function UsersTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Membre</TableHead>
-            <TableHead className="hidden lg:table-cell">Date de naissance</TableHead>
-            <TableHead className="hidden md:table-cell">Rôle</TableHead>
-            <TableHead className="hidden md:table-cell">Compte</TableHead>
-            <TableHead className="hidden lg:table-cell">2FA</TableHead>
+            <TableHead>{t("users.table.member")}</TableHead>
+            <TableHead className="hidden lg:table-cell">{t("users.fields.dateOfBirth")}</TableHead>
+            <TableHead className="hidden md:table-cell">{t("users.fields.role")}</TableHead>
+            <TableHead className="hidden md:table-cell">{t("users.table.account")}</TableHead>
+            <TableHead className="hidden lg:table-cell">{t("users.table.twoFactor")}</TableHead>
             <TableHead className="w-12">
-              <span className="sr-only">Actions</span>
+              <span className="sr-only">{t("common:labels.actions")}</span>
             </TableHead>
           </TableRow>
         </TableHeader>
@@ -115,8 +118,8 @@ export function UsersTable({
                       <p className="truncate font-medium">{fullName}</p>
                       <p className="truncate text-xs text-muted-foreground">{user.email}</p>
                       <div className="mt-1 flex flex-wrap gap-1 md:hidden">
-                        <Badge variant="neutral">{user.role?.role_name ?? "Aucun rôle"}</Badge>
-                        {!user.isEmailConfirmed && <Badge variant="warning">Invitation en attente</Badge>}
+                        <Badge variant="neutral">{roleLabel(user.role?.role_name) ?? t("users.noRole")}</Badge>
+                        {!user.isEmailConfirmed && <Badge variant="warning">{t("users.account.pending")}</Badge>}
                       </div>
                     </div>
                   </div>
@@ -126,45 +129,50 @@ export function UsersTable({
                 </TableCell>
                 <TableCell className="hidden md:table-cell">
                   {user.role ? (
-                    <Badge variant="outline">{user.role.role_name}</Badge>
+                    <Badge variant="outline">{roleLabel(user.role.role_name)}</Badge>
                   ) : (
-                    <span className="text-muted-foreground">Aucun rôle</span>
+                    <span className="text-muted-foreground">{t("users.noRole")}</span>
                   )}
                 </TableCell>
                 <TableCell className="hidden md:table-cell">
                   {user.isEmailConfirmed ? (
-                    <Badge variant="success">Activé</Badge>
+                    <Badge variant="success">{t("users.account.active")}</Badge>
                   ) : (
-                    <Badge variant="warning">Invitation en attente</Badge>
+                    <Badge variant="warning">{t("users.account.pending")}</Badge>
                   )}
                 </TableCell>
                 <TableCell className="hidden lg:table-cell">
                   {user.is2FAEnabled ? (
-                    <Badge variant="success">Activée</Badge>
+                    <Badge variant="success">{t("users.twoFactor.enabled")}</Badge>
                   ) : (
-                    <Badge variant="neutral">Désactivée</Badge>
+                    <Badge variant="neutral">{t("users.twoFactor.disabled")}</Badge>
                   )}
                 </TableCell>
                 <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" aria-label={`Actions pour ${fullName}`} title="Actions">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={t("users.table.actionsFor", { name: fullName })}
+                        title={t("common:labels.actions")}
+                      >
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => onViewDetails(user.id)}>
                         <Eye className="h-4 w-4" />
-                        Voir la fiche
+                        {t("users.table.viewDetails")}
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => onEdit(user)}>
                         <Pencil className="h-4 w-4" />
-                        Modifier
+                        {t("common:actions.edit")}
                       </DropdownMenuItem>
                       {onAddLicense && (
                         <DropdownMenuItem onClick={() => onAddLicense(user.id)}>
                           <BadgeCheck className="h-4 w-4" />
-                          Ajouter une licence
+                          {t("users.licence.add")}
                         </DropdownMenuItem>
                       )}
                     </DropdownMenuContent>

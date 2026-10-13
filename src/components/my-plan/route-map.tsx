@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { useTranslation } from "react-i18next"
 import mapboxgl from "mapbox-gl"
 import "mapbox-gl/dist/mapbox-gl.css"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -15,8 +16,10 @@ interface RouteMapProps {
 }
 
 export function RouteMap({ departure, arrival, waypoints = [], className = "" }: RouteMapProps) {
+  const { t } = useTranslation("flights")
   const mapContainer = useRef<HTMLDivElement>(null)
   const map = useRef<mapboxgl.Map | null>(null)
+  // Holds a translation key, so the message follows the language.
   const [mapError, setMapError] = useState<string | null>(null)
   const [mapLoaded, setMapLoaded] = useState(false)
   const markersRef = useRef<mapboxgl.Marker[]>([])
@@ -25,7 +28,7 @@ export function RouteMap({ departure, arrival, waypoints = [], className = "" }:
     if (!mapContainer.current) return
 
     if (!process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN) {
-      setMapError("Clé d'API Mapbox manquante. Veuillez configurer NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN.")
+      setMapError("routeSearch.map.missingToken")
       return
     }
 
@@ -47,11 +50,11 @@ export function RouteMap({ departure, arrival, waypoints = [], className = "" }:
 
       map.current.on("error", (e) => {
         console.error("Mapbox error:", e)
-        setMapError("Erreur lors du chargement de la carte. Vérifiez votre clé API Mapbox et votre connexion internet.")
+        setMapError("routeSearch.map.loadError")
       })
     } catch (error) {
       console.error("Error initializing map:", error)
-      setMapError("Impossible d'initialiser la carte. Veuillez vérifier votre connexion internet.")
+      setMapError("routeSearch.map.initError")
     }
 
     return () => {
@@ -140,7 +143,7 @@ export function RouteMap({ departure, arrival, waypoints = [], className = "" }:
       }
     } catch (error) {
       console.error("Error updating map:", error)
-      setMapError("Erreur lors de la mise à jour de la carte.")
+      setMapError("routeSearch.map.updateError")
     }
   }, [departure, arrival, waypoints, mapLoaded, mapError])
 
@@ -148,7 +151,7 @@ export function RouteMap({ departure, arrival, waypoints = [], className = "" }:
     return (
       <Alert variant="destructive" className={`${className}`}>
         <AlertTriangle className="h-4 w-4" />
-        <AlertDescription>{mapError}</AlertDescription>
+        <AlertDescription>{t(mapError)}</AlertDescription>
       </Alert>
     )
   }

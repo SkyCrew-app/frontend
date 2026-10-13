@@ -24,14 +24,16 @@ import { ClipboardList, GripVertical, Pencil, Plus, Trash2 } from "lucide-react"
 import { EmptyState } from "@/components/layout/EmptyState"
 import { SidePanel } from "@/components/layout/SidePanel"
 import { cn } from "@/lib/utils"
-import { ChecklistItem, ChecklistTemplate, CATEGORY_LABELS, CATEGORY_ORDER } from "@/interfaces/checklist"
+import { ChecklistItem, ChecklistTemplate, CATEGORY_ORDER } from "@/interfaces/checklist"
 import {
+  checklistCategoryLabel,
   emptyChecklistItemDraft,
   groupItemsByCategory,
   reorderItemIds,
   toChecklistItemDraft,
   type ChecklistItemDraft,
 } from "@/lib/checklist-items"
+import { useTranslation } from "react-i18next"
 
 interface ChecklistTemplateEditorProps {
   template: ChecklistTemplate
@@ -51,6 +53,7 @@ export function ChecklistTemplateEditor({
   onDeleteItem,
   onReorder,
 }: ChecklistTemplateEditorProps) {
+  const { t } = useTranslation("checklists")
   const [showItemForm, setShowItemForm] = useState(false)
   const [editingItem, setEditingItem] = useState<ChecklistItem | null>(null)
   const [draft, setDraft] = useState<ChecklistItemDraft>(emptyChecklistItemDraft)
@@ -101,17 +104,17 @@ export function ChecklistTemplateEditor({
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold">Points de contrôle ({items.length})</h2>
+          <h2 className="text-lg font-semibold">{t("editor.title", { total: items.length })}</h2>
           {items.length > 1 && (
             <p className="text-sm text-muted-foreground">
-              Faites glisser un point par sa poignée pour changer l&apos;ordre dans sa catégorie.
+              {t("editor.dragHint")}
             </p>
           )}
         </div>
         {items.length > 0 && (
           <Button onClick={openAddForm} className="shrink-0">
             <Plus className="h-4 w-4" />
-            Ajouter un point
+            {t("editor.addItem")}
           </Button>
         )}
       </div>
@@ -119,12 +122,12 @@ export function ChecklistTemplateEditor({
       {items.length === 0 && (
         <EmptyState
           icon={ClipboardList}
-          title="Aucun point de contrôle"
-          description="Ajoutez les vérifications que le pilote devra cocher avant le vol."
+          title={t("editor.empty.title")}
+          description={t("editor.empty.description")}
           action={
             <Button onClick={openAddForm}>
               <Plus className="h-4 w-4" />
-              Ajouter le premier point
+              {t("editor.empty.action")}
             </Button>
           }
         />
@@ -135,7 +138,7 @@ export function ChecklistTemplateEditor({
           <Card key={category}>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
-                {CATEGORY_LABELS[category] || "Autres points"}
+                {checklistCategoryLabel(category)}
                 <span className="text-sm font-normal tabular-nums text-muted-foreground">{catItems.length}</span>
               </CardTitle>
             </CardHeader>
@@ -157,8 +160,8 @@ export function ChecklistTemplateEditor({
                             <div
                               {...provided.dragHandleProps}
                               className="flex h-9 w-8 shrink-0 cursor-grab items-center justify-center rounded-md text-muted-foreground hover:bg-muted"
-                              aria-label={`Déplacer le point ${item.item_name}`}
-                              title="Déplacer"
+                              aria-label={t("editor.moveLabel", { name: item.item_name })}
+                              title={t("editor.move")}
                             >
                               <GripVertical className="h-4 w-4" />
                             </div>
@@ -169,15 +172,15 @@ export function ChecklistTemplateEditor({
                               )}
                             </div>
                             <Badge variant={item.is_required ? "outline" : "neutral"} className="hidden shrink-0 sm:inline-flex">
-                              {item.is_required ? "Obligatoire" : "Facultatif"}
+                              {item.is_required ? t("common:labels.required") : t("common:labels.optional")}
                             </Badge>
                             <Button
                               variant="ghost"
                               size="icon"
                               className="h-9 w-9 shrink-0"
                               onClick={() => openEditForm(item)}
-                              aria-label={`Modifier le point ${item.item_name}`}
-                              title="Modifier"
+                              aria-label={t("editor.editLabel", { name: item.item_name })}
+                              title={t("common:actions.edit")}
                             >
                               <Pencil className="h-4 w-4" />
                             </Button>
@@ -186,8 +189,8 @@ export function ChecklistTemplateEditor({
                               size="icon"
                               className="h-9 w-9 shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
                               onClick={() => setItemToDelete(item)}
-                              aria-label={`Supprimer le point ${item.item_name}`}
-                              title="Supprimer"
+                              aria-label={t("editor.deleteLabel", { name: item.item_name })}
+                              title={t("common:actions.delete")}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -208,14 +211,14 @@ export function ChecklistTemplateEditor({
       <SidePanel
         open={showItemForm}
         onOpenChange={(open) => !saving && setShowItemForm(open)}
-        title={editingItem ? "Modifier le point" : "Ajouter un point"}
+        title={editingItem ? t("editor.panel.editTitle") : t("editor.addItem")}
         description={
           editingItem
-            ? "Les checklists déjà commencées afficheront la nouvelle version."
-            : "Une vérification que le pilote cochera avant le vol."
+            ? t("editor.panel.editDescription")
+            : t("editor.panel.addDescription")
         }
         onSubmit={handleSubmitItem}
-        submitLabel={editingItem ? "Enregistrer" : "Ajouter"}
+        submitLabel={editingItem ? t("common:actions.save") : t("common:actions.add")}
         submitting={saving}
         submitDisabled={!draft.item_name.trim()}
         size="md"
@@ -223,7 +226,7 @@ export function ChecklistTemplateEditor({
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="item-name">
-              Intitulé
+              {t("editor.panel.name")}
               <span className="text-destructive" aria-hidden="true">
                 {" *"}
               </span>
@@ -232,22 +235,22 @@ export function ChecklistTemplateEditor({
               id="item-name"
               value={draft.item_name}
               onChange={(e) => setDraft({ ...draft, item_name: e.target.value })}
-              placeholder="Vérifier le niveau d'huile"
+              placeholder={t("editor.panel.namePlaceholder")}
               required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="item-desc">Précisions</Label>
+            <Label htmlFor="item-desc">{t("editor.panel.details")}</Label>
             <Textarea
               id="item-desc"
               value={draft.description}
               onChange={(e) => setDraft({ ...draft, description: e.target.value })}
-              placeholder="Entre 6 et 8 quarts sur la jauge"
+              placeholder={t("editor.panel.detailsPlaceholder")}
             />
-            <p className="text-xs text-muted-foreground">Facultatif. Affiché sous l&apos;intitulé pendant la visite prévol.</p>
+            <p className="text-xs text-muted-foreground">{t("editor.panel.detailsHint")}</p>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="item-category">Catégorie</Label>
+            <Label htmlFor="item-category">{t("common:labels.category")}</Label>
             <Select value={draft.category} onValueChange={(val) => setDraft({ ...draft, category: val })}>
               <SelectTrigger id="item-category">
                 <SelectValue />
@@ -255,7 +258,7 @@ export function ChecklistTemplateEditor({
               <SelectContent>
                 {CATEGORY_ORDER.map((cat) => (
                   <SelectItem key={cat} value={cat}>
-                    {CATEGORY_LABELS[cat]}
+                    {checklistCategoryLabel(cat)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -270,10 +273,10 @@ export function ChecklistTemplateEditor({
             />
             <div className="space-y-0.5">
               <Label htmlFor="item-required" className="cursor-pointer">
-                Obligatoire
+                {t("common:labels.required")}
               </Label>
               <p className="text-xs text-muted-foreground">
-                La checklist ne peut pas être terminée tant que ce point n&apos;est pas coché.
+                {t("editor.panel.requiredHint")}
               </p>
             </div>
           </div>
@@ -283,15 +286,15 @@ export function ChecklistTemplateEditor({
       <AlertDialog open={itemToDelete !== null} onOpenChange={(open) => !open && setItemToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer ce point ?</AlertDialogTitle>
+            <AlertDialogTitle>{t("editor.deleteDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              « {itemToDelete?.item_name} » sera retiré du modèle. Cette action est définitive.
+              {t("editor.deleteDialog.description", { name: itemToDelete?.item_name ?? "" })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogCancel>{t("common:actions.cancel")}</AlertDialogCancel>
             <AlertDialogAction className={buttonVariants({ variant: "destructive" })} onClick={handleConfirmDelete}>
-              Supprimer
+              {t("common:actions.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

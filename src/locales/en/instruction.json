@@ -1,0 +1,740 @@
+{
+  "status": {
+    "SCHEDULED": "Scheduled",
+    "IN_PROGRESS": "In progress",
+    "COMPLETED": "Completed",
+    "CANCELED": "Cancelled",
+    "CANCELLED": "Cancelled",
+    "unknown": "Unknown status"
+  },
+  "shared": {
+    "percent": "{{value}}%",
+    "requiredScore": "Pass mark: {{score}}",
+    "lessonsRatio": "{{done}} / {{total}} lessons",
+    "progressAria": "Progress: {{percent}}%",
+    "roleWithName": "{{role}}: {{name}}",
+    "evaluationFallback": "Assessment",
+    "take": "Take",
+    "retake": "Retake",
+    "toTake": "To take",
+    "toRetake": "To retake",
+    "passed": "Passed",
+    "failed": "Not passed",
+    "myResults": "My results",
+    "optional": "Optional.",
+    "changesSaved": "Your changes have been saved.",
+    "saveFailed": "Saving failed. Check the details and try again.",
+    "deleteFailed": "Deletion failed. Try again in a moment.",
+    "retryLater": "Try again in a moment."
+  },
+  "home": {
+    "title": "Training centre",
+    "description": "Your upcoming sessions, your online progress and your assessments.",
+    "stats": {
+      "lessonsDone": {
+        "label": "Lessons completed",
+        "hint": "{{percent}}% of the online courses",
+        "hintEmpty": "No lessons published"
+      },
+      "upcoming": {
+        "label": "Upcoming sessions",
+        "hint": "Next on {{date}}",
+        "hintEmpty": "No session scheduled"
+      },
+      "toTake": {
+        "label": "Assessments to take",
+        "hint_one": "{{count}} passed",
+        "hint_other": "{{count}} passed"
+      },
+      "average": {
+        "label": "Average score",
+        "hint": "Across the assessments you have taken"
+      }
+    },
+    "upcoming": {
+      "title": "Upcoming sessions",
+      "description": "Your sessions scheduled with an instructor or a student.",
+      "link": "All my sessions",
+      "emptyTitle": "No upcoming sessions",
+      "emptyDescription": "Your next sessions will appear here."
+    },
+    "eLearning": {
+      "title": "E-learning",
+      "description": "Your progress through the online courses.",
+      "link": "All courses",
+      "emptyTitle": "No online courses",
+      "emptyDescription": "The club's online courses will appear here as soon as they are published."
+    },
+    "evaluations": {
+      "title": "Assessments to take",
+      "description": "The assessments you have not passed yet.",
+      "link": "My assessments",
+      "emptyTitle": "No assessments to take",
+      "emptyDescription": "You are up to date: every available assessment is passed.",
+      "more_one": "And {{count}} more.",
+      "more_other": "And {{count}} more."
+    }
+  },
+  "courses": {
+    "title": "My sessions",
+    "schedule": "Time",
+    "open": "Open the session",
+    "page": {
+      "description": {
+        "instructor": "The sessions you give your students, and the ones you attend.",
+        "admin": "The sessions you take part in. You can schedule one for an instructor.",
+        "student": "Your sessions with your instructors: dates, competencies covered and ratings."
+      },
+      "plan": "Schedule a session",
+      "searchAria": "Search sessions by person",
+      "searchPlaceholder": "Search for a person, e.g. {{name}}",
+      "filterStatusAria": "Filter by status",
+      "allStatuses": "All statuses",
+      "viewAria": "Session view",
+      "viewList": "List",
+      "viewCalendar": "Calendar",
+      "empty": {
+        "title": "No sessions yet",
+        "filteredTitle": "No matching sessions",
+        "filteredDescription": "Change the search or the status filter.",
+        "planDescription": "Schedule a first session with a student.",
+        "studentDescription": "Your sessions will appear here as soon as an instructor schedules one with you."
+      }
+    },
+    "list": {
+      "with": "With",
+      "validatedCompetencies": "Competencies validated",
+      "rating": "Rating",
+      "actionsAria": "Session actions",
+      "toast": {
+        "deleted": {
+          "title": "Session deleted",
+          "description": "The session has been removed from the list."
+        },
+        "deleteFailed": {
+          "title": "Session not deleted"
+        }
+      },
+      "deleteConfirm": {
+        "title": "Delete this session?",
+        "description": "The session on {{date}} with {{name}} will be permanently deleted."
+      }
+    },
+    "pagination": {
+      "label": "Pagination"
+    },
+    "calendar": {
+      "hint": "Underlined days have a session.",
+      "emptyTitle": "No session on that day",
+      "emptyDescription": "Choose an underlined day in the calendar.",
+      "roleWithCompetencies": "{{role}} · {{validated}} / {{total}} competencies validated"
+    },
+    "form": {
+      "title": {
+        "create": "Schedule a session",
+        "edit": "Edit the session"
+      },
+      "description": {
+        "create": "Choose the student and the time of the session.",
+        "edit": "Change the student, the time or the status of the session."
+      },
+      "submitCreate": "Schedule the session",
+      "instructorPlaceholder": "Choose an instructor",
+      "noInstructor": "No instructor in the club",
+      "studentPlaceholder": "Choose a student",
+      "noMember": "No member available",
+      "loadingMembers": "Loading members",
+      "errors": {
+        "instructor": "Choose the instructor.",
+        "student": "Choose the student.",
+        "start": "Enter the start of the session.",
+        "end": "The end must be after the start."
+      },
+      "toast": {
+        "created": {
+          "title": "Session scheduled",
+          "description": "The session has been added to your list."
+        },
+        "updated": {
+          "title": "Session updated"
+        },
+        "createFailed": {
+          "title": "Session not scheduled"
+        },
+        "updateFailed": {
+          "title": "Session not updated"
+        }
+      }
+    },
+    "detail": {
+      "title": "Session on {{date}}",
+      "titleFallback": "Session",
+      "description": "{{hours}} · {{role}}: {{name}}",
+      "notFound": {
+        "title": "Session not found",
+        "error": "This session could not be loaded. It may no longer exist, or you may not be part of it.",
+        "missing": "This session does not exist or no longer exists."
+      },
+      "info": "Details",
+      "instructorYou": "Instructor (you)",
+      "studentYou": "Student (you)",
+      "toast": {
+        "commentPublished": "Comment posted",
+        "commentFailed": "The comment could not be posted",
+        "competencyAdded": "Competency added",
+        "competencyAddFailed": "The competency could not be added",
+        "competencyValidated": "Competency validated",
+        "competencyValidateFailed": "The competency could not be validated",
+        "ratingSaved": "Review saved",
+        "ratingFailed": "The review could not be saved"
+      }
+    },
+    "competencies": {
+      "title": "Competencies",
+      "description": "What is worked on during the session.",
+      "summary_one": "{{count}} of {{total}} validated",
+      "summary_other": "{{count}} of {{total}} validated",
+      "progressAria": "{{validated}} of {{total}} competencies validated",
+      "empty": {
+        "title": "No competencies",
+        "manage": "Add the competencies worked on during this session to track the student's progress.",
+        "readOnly": "The instructor has not added any competency to this session yet."
+      },
+      "addOne": "Add a competency",
+      "validated": "Validated",
+      "validate": "Validate",
+      "toValidate": "To validate",
+      "nameLabel": "Competency name",
+      "namePlaceholder": "E.g. Crosswind landing",
+      "descriptionPlaceholder": "E.g. Hold the centreline and correct for drift until touchdown.",
+      "submit": "Add the competency",
+      "confirm": {
+        "title": "Validate this competency?",
+        "description": "“{{name}}” will be marked as acquired and the student will be notified. A validation cannot be undone.",
+        "submit": "Validate the competency"
+      }
+    },
+    "comments": {
+      "title": "Comments",
+      "description": "The exchanges between the instructor and the student about this session.",
+      "empty": "No comments yet.",
+      "label": "Add a comment",
+      "placeholder": "E.g. Good session; to work on: holding altitude in turns.",
+      "submit": "Post the comment"
+    },
+    "rating": {
+      "title": {
+        "own": "Your review",
+        "student": "Student's review"
+      },
+      "description": {
+        "own": "Rate this session and say what you took away from it.",
+        "student": "The student's rating and feedback on this session."
+      },
+      "starsAria": "Rating: {{value}} out of 5",
+      "starAria": "{{value}} out of 5",
+      "edit": "Edit the review",
+      "none": "The student has not given a review yet.",
+      "label": "Rating",
+      "errorRating": "Choose a rating.",
+      "feedbackLabel": "Your feedback",
+      "feedbackPlaceholder": "E.g. Clear explanations, I would like to fly more circuits.",
+      "errorFeedback": "Write a few words about the session.",
+      "submit": "Send the review"
+    }
+  },
+  "eLearning": {
+    "title": "E-learning",
+    "progress": {
+      "done": "Completed",
+      "inProgress": "In progress",
+      "notStarted": "Not started",
+      "review": "Review",
+      "start": "Start"
+    },
+    "catalogue": {
+      "description": "The club's online courses, to follow at your own pace.",
+      "manage": "Manage courses",
+      "searchAria": "Search online courses",
+      "searchPlaceholder": "Search for a course, e.g. meteorology",
+      "filterCategoryAria": "Filter by category",
+      "allCategories": "All categories",
+      "empty": {
+        "title": "No online courses yet",
+        "description": "Courses will appear here as soon as the club publishes some.",
+        "filteredTitle": "No matching courses",
+        "filteredDescription": "Change the search or the category."
+      }
+    },
+    "card": {
+      "licence": "{{licence}} licence",
+      "noDescription": "This course has no description yet.",
+      "noLessons": "No lessons published yet.",
+      "open": "Open the course"
+    },
+    "course": {
+      "titleFallback": "Online course",
+      "notFound": {
+        "title": "Course not found",
+        "error": "This course could not be loaded. Check your connection and try again.",
+        "missing": "This course does not exist or is no longer published."
+      },
+      "requiredLicence": "Licence required: {{licence}}",
+      "modulesCount_one": "{{count}} module",
+      "modulesCount_other": "{{count}} modules",
+      "lessonsCount_one": "{{count}} lesson",
+      "lessonsCount_other": "{{count}} lessons",
+      "evaluationsCount_one": "{{count}} assessment",
+      "evaluationsCount_other": "{{count}} assessments",
+      "resumeStart": "Start the course",
+      "resumeReview": "Review the course",
+      "progressTitle": "Your progress",
+      "progressUnavailable": "Unavailable for now",
+      "lessonsDone": "{{done}} of {{total}} lessons completed",
+      "progressAria": "Course progress",
+      "outlineTitle": "Syllabus",
+      "emptyTitle": "This course has no content yet",
+      "emptyDescription": "Modules and lessons will appear here as soon as they are published."
+    },
+    "outline": {
+      "requiredAndYourScore": "Pass mark: {{required}} · Your score: {{score}}",
+      "module": "Module {{number}}",
+      "moduleDone": "Completed",
+      "lessonsRatio_one": "{{done}} / {{count}} lesson",
+      "lessonsRatio_other": "{{done}} / {{count}} lessons",
+      "noLessons": "This module has no lessons yet.",
+      "lessonDoneAria": "Lesson completed",
+      "lessonTodoAria": "Lesson to do",
+      "next": "Up next",
+      "evaluationSingle": "Module assessment",
+      "evaluationNumbered": "Module assessment {{number}}"
+    },
+    "lesson": {
+      "backFallback": "Back to the course",
+      "titleFallback": "Lesson",
+      "completed": "Completed",
+      "position": "Lesson {{position}} of {{total}}",
+      "notFound": {
+        "title": "Lesson not found",
+        "error": "This lesson could not be loaded. Check your connection and try again.",
+        "missing": "This lesson does not exist or is no longer published."
+      },
+      "videoTitle": "Video: {{title}}",
+      "emptyTitle": "This lesson has no content yet",
+      "emptyDescription": "The lesson text will appear here as soon as it is published.",
+      "resources": "Resources",
+      "document": "Document {{number}}",
+      "newTabAria": "Opens in a new tab",
+      "navAria": "Lesson navigation",
+      "previous": "Previous lesson",
+      "next": "Next lesson",
+      "markDone": "Mark as completed",
+      "backToCourse": "Back to the course",
+      "toast": {
+        "completed": {
+          "title": "Lesson completed",
+          "description": "Your progress has been saved."
+        },
+        "failed": {
+          "title": "Lesson not saved",
+          "description": "The lesson could not be marked as completed. Try again in a moment."
+        }
+      }
+    }
+  },
+  "evaluations": {
+    "title": "My assessments",
+    "page": {
+      "description": "The assessments to take and the results of those you have already taken.",
+      "stats": {
+        "passed": "Passed",
+        "average": "Average score",
+        "lastAttempt": "Last attempt"
+      },
+      "toTake": {
+        "emptyTitle": "No assessments to take",
+        "emptyDescription": "Every available assessment is passed. New ones will appear here.",
+        "lastScore": "Last score: {{score}}",
+        "lastScoreOn": "Last score: {{score}}, on {{date}}",
+        "take": "Take the assessment",
+        "retake": "Retake the assessment"
+      },
+      "results": {
+        "emptyTitle": "No results yet",
+        "emptyDescription": "Your scores will appear here after your first assessment.",
+        "searchAria": "Search results by module",
+        "searchPlaceholder": "Search for a module, e.g. navigation",
+        "filterAria": "Filter by result",
+        "filterAll": "All results",
+        "filterPassed": "Passed",
+        "filterFailed": "Not passed",
+        "columns": {
+          "module": "Module",
+          "score": "Score",
+          "requiredScore": "Pass mark",
+          "result": "Result"
+        },
+        "noMatchTitle": "No matching results",
+        "noMatchFiltered": "Change the search or the filter.",
+        "noMatchEmpty": "No attempt recorded."
+      }
+    },
+    "take": {
+      "title": "Assessment: {{module}}",
+      "description_one": "Pass mark: {{score}} · {{count}} question",
+      "description_other": "Pass mark: {{score}} · {{count}} questions",
+      "notFound": {
+        "title": "Assessment not found",
+        "error": "This assessment could not be loaded. Check your connection and try again.",
+        "missing": "This assessment does not exist or is no longer available."
+      },
+      "noQuestions": {
+        "title": "This assessment has no questions yet",
+        "description": "It can be taken as soon as its questions have been added.",
+        "back": "Back to my assessments"
+      },
+      "position": "Question {{number}} of {{total}}",
+      "hintAria": "Show the hint",
+      "imageAlt": "Illustration for the question",
+      "previous": "Previous",
+      "next": "Next",
+      "finish": "Finish the assessment",
+      "missing": {
+        "title_one": "One question is still unanswered",
+        "title_other": "{{count}} questions are still unanswered",
+        "description": "Answer every question before finishing the assessment.",
+        "question": "Question {{number}}"
+      },
+      "confirm": {
+        "title": "Send your answers?",
+        "description_one": "You have answered the question. Once sent, your answers can no longer be changed and your score is recorded.",
+        "description_other": "You have answered all {{count}} questions. Once sent, your answers can no longer be changed and your score is recorded.",
+        "submit": "Send my answers"
+      },
+      "toast": {
+        "failed": {
+          "title": "Answers not sent",
+          "description": "Sending failed. Your answers have been kept, you can try again."
+        }
+      }
+    },
+    "stepper": {
+      "navAria": "Assessment questions",
+      "answeredAria": "Question {{number}}, answered",
+      "unansweredAria": "Question {{number}}, not answered",
+      "summary": "Answers given: {{answered}} of {{total}}"
+    },
+    "result": {
+      "passedTitle": "Assessment passed",
+      "failedTitle": "Assessment not passed",
+      "passedDescription": "Well done, you reached the pass mark. The result is saved in your assessments.",
+      "failedDescription": "You did not reach the pass mark. Go over the lessons of the module, then try again whenever you like.",
+      "scoreAria": "Your score: {{score}}%",
+      "viewAll": "View my assessments"
+    }
+  },
+  "admin": {
+    "title": "E-learning management",
+    "description": "A course is made up of modules, and a module of lessons and assessments.",
+    "viewCatalogue": "View the catalogue",
+    "tabs": {
+      "courses": "Courses",
+      "modules": "Modules",
+      "lessons": "Lessons",
+      "evaluations": "Assessments"
+    },
+    "shared": {
+      "course": "Course",
+      "module": "Module",
+      "title": "Title",
+      "number": "No.",
+      "chooseCourse": "Choose a course",
+      "chooseModule": "Choose a module",
+      "clearSearch": "Clear the search",
+      "changeSearch": "Change the search.",
+      "createCourseFirst": "Create a course first",
+      "noModuleYet": "This course has no modules yet",
+      "editRow": "Edit {{name}}",
+      "deleteRow": "Delete {{name}}"
+    },
+    "courses": {
+      "create": "Create a course",
+      "searchAria": "Search courses",
+      "searchPlaceholder": "Search for a course, e.g. navigation",
+      "filterLicenceAria": "Filter by licence required",
+      "allLicences": "All licences",
+      "withoutLicence": "No licence required",
+      "requiredLicence": "Licence required",
+      "noLicence": "None",
+      "rowName": "the course {{title}}",
+      "empty": {
+        "title": "No courses yet",
+        "description": "Create a first course, then add modules and lessons to it.",
+        "filteredTitle": "No matching courses",
+        "filteredDescription": "Change the search or the licence filter."
+      },
+      "form": {
+        "editTitle": "Edit the course",
+        "editDescription": "This information is shown in the members' catalogue.",
+        "createDescription": "The course appears in the catalogue; its modules and lessons are added afterwards.",
+        "submitCreate": "Create the course",
+        "titlePlaceholder": "E.g. Meteorology for the PPL",
+        "titleError": "Give the course a title.",
+        "descriptionHint": "Two or three sentences on what the course teaches.",
+        "descriptionPlaceholder": "E.g. Read a significant weather chart, understand fronts and prepare a safe flight.",
+        "categoryPlaceholder": "E.g. Navigation"
+      },
+      "toast": {
+        "created": {
+          "title": "Course created",
+          "description": "Now add modules to it in the Modules tab."
+        },
+        "updated": {
+          "title": "Course updated"
+        },
+        "createFailed": {
+          "title": "Course not created"
+        },
+        "updateFailed": {
+          "title": "Course not updated"
+        },
+        "deleted": {
+          "title": "Course deleted",
+          "description": "The course has been removed from the catalogue."
+        },
+        "deleteFailed": {
+          "title": "Course not deleted"
+        }
+      },
+      "deleteConfirm": {
+        "title": "Delete this course?",
+        "description": "The course “{{title}}” will be permanently deleted, along with its modules and lessons."
+      }
+    },
+    "modules": {
+      "create": "Create a module",
+      "courseFilterAria": "Course whose modules are shown",
+      "searchAria": "Search modules",
+      "searchPlaceholder": "Search for a module, e.g. air traffic",
+      "rowName": "the module {{title}}",
+      "empty": {
+        "noCourseDescription": "A module belongs to a course: add a course in the Courses tab, then come back here.",
+        "description": "Modules split the course into chapters.",
+        "filteredTitle": "No matching modules"
+      },
+      "form": {
+        "editTitle": "Edit the module",
+        "description": "A module is a chapter of the course: it groups lessons together.",
+        "submitCreate": "Create the module",
+        "courseError": "Choose the course of the module.",
+        "titlePlaceholder": "E.g. Air masses and fronts",
+        "titleError": "Give the module a title.",
+        "descriptionHint": "One sentence on what the module covers.",
+        "descriptionPlaceholder": "E.g. Recognise fronts and anticipate their effects on the flight."
+      },
+      "toast": {
+        "created": {
+          "title": "Module created",
+          "description": "Now add lessons to it in the Lessons tab."
+        },
+        "updated": {
+          "title": "Module updated"
+        },
+        "createFailed": {
+          "title": "Module not created"
+        },
+        "updateFailed": {
+          "title": "Module not updated"
+        },
+        "deleted": {
+          "title": "Module deleted",
+          "description": "The module has been removed from the course."
+        },
+        "deleteFailed": {
+          "title": "Module not deleted"
+        }
+      },
+      "deleteConfirm": {
+        "title": "Delete this module?",
+        "description": "The module “{{title}}” will be permanently deleted, along with its lessons."
+      }
+    },
+    "lessons": {
+      "create": "Create a lesson",
+      "moduleFilterAria": "Module whose lessons are shown",
+      "noModule": "No modules",
+      "searchAria": "Search lessons",
+      "searchPlaceholder": "Search for a lesson, e.g. altimetry",
+      "rowName": "the lesson {{title}}",
+      "columns": {
+        "lesson": "Lesson",
+        "video": "Video",
+        "attachments": "Attachments"
+      },
+      "empty": {
+        "noCourseDescription": "A lesson belongs to a module, which itself sits in a course. Start with the Courses tab.",
+        "noModuleDescription": "Add a module to this course in the Modules tab, then come back to create its lessons.",
+        "title": "This module has no lessons yet",
+        "description": "A lesson brings together a text, a video and documents.",
+        "filteredTitle": "No matching lessons"
+      },
+      "form": {
+        "editTitle": "Edit the lesson",
+        "description": "The text is required; the video and the attachments are optional.",
+        "submitCreate": "Create the lesson",
+        "stepPresentation": "Overview",
+        "stepContent": "Content",
+        "stepResources": "Resources",
+        "moduleError": "Choose the module of the lesson.",
+        "titlePlaceholder": "E.g. Reading a METAR",
+        "titleError": "Give the lesson a title.",
+        "descriptionHint": "One sentence shown under the lesson title.",
+        "descriptionPlaceholder": "E.g. Decode a weather report, group by group.",
+        "videoHint": "Optional. Paste the link to a YouTube video.",
+        "videoError": "Paste the full address of the video, starting with https://.",
+        "contentPlaceholder": "Write the lesson text…",
+        "contentError": "Write the content of the lesson.",
+        "attachmentsHint": "Optional. Links to documents to read or download."
+      },
+      "toast": {
+        "created": {
+          "title": "Lesson created",
+          "description": "It is now visible in the course."
+        },
+        "updated": {
+          "title": "Lesson updated"
+        },
+        "createFailed": {
+          "title": "Lesson not created"
+        },
+        "updateFailed": {
+          "title": "Lesson not updated"
+        },
+        "deleted": {
+          "title": "Lesson deleted",
+          "description": "The lesson has been removed from the module."
+        },
+        "deleteFailed": {
+          "title": "Lesson not deleted"
+        }
+      },
+      "deleteConfirm": {
+        "title": "Delete this lesson?",
+        "description": "The lesson “{{title}}” will be permanently deleted, along with the members' progress on this lesson."
+      }
+    },
+    "evaluations": {
+      "create": "Create an assessment",
+      "searchAria": "Search assessments by module",
+      "searchPlaceholder": "Search for a module, e.g. air law",
+      "columns": {
+        "module": "Module assessed",
+        "passScore": "Pass mark",
+        "questions": "Questions"
+      },
+      "noQuestion": "No questions",
+      "actionsAria": "Actions for the assessment {{module}}",
+      "manageQuestions": "Manage the questions",
+      "editPassScore": "Edit the pass mark",
+      "empty": {
+        "title": "No assessments yet",
+        "description": "An assessment checks what was learnt in a module with a quiz.",
+        "filteredTitle": "No matching assessments"
+      },
+      "form": {
+        "editTitle": "Edit the assessment",
+        "editDescription": "Assessment of the module “{{module}}”.",
+        "createDescription": "Choose the module assessed; the questions are added straight after.",
+        "submitCreate": "Create the assessment",
+        "moduleError": "Choose the module assessed.",
+        "loadingModules": "Loading modules",
+        "noModules": "No modules: create one in the Modules tab.",
+        "passScoreHint": "Share of correct answers needed to pass.",
+        "passScoreError": "Enter a score between 1 and 100."
+      },
+      "toast": {
+        "created": {
+          "title": "Assessment created",
+          "description": "Now add its questions."
+        },
+        "updated": {
+          "title": "Assessment updated",
+          "description": "The pass mark has been saved."
+        },
+        "createFailed": {
+          "title": "Assessment not created"
+        },
+        "updateFailed": {
+          "title": "Assessment not updated"
+        },
+        "deleted": {
+          "title": "Assessment deleted",
+          "description": "It is no longer offered to members."
+        },
+        "deleteFailed": {
+          "title": "Assessment not deleted"
+        }
+      },
+      "deleteConfirm": {
+        "title": "Delete this assessment?",
+        "description": "The assessment of the module “{{module}}” will be permanently deleted, along with all its questions."
+      }
+    },
+    "questions": {
+      "title": "Assessment questions",
+      "editTitle": "Edit the question",
+      "add": "Add a question",
+      "listDescription_one": "{{module}} · pass mark: {{score}}% · {{count}} question",
+      "listDescription_other": "{{module}} · pass mark: {{score}}% · {{count}} questions",
+      "formDescription": "{{module}} · only one correct answer per question.",
+      "submitCreate": "Add the question",
+      "emptyTitle": "No questions",
+      "emptyDescription": "Until it has a question, the assessment cannot be taken.",
+      "rowName": "question {{number}}",
+      "correctAnswer": "Correct answer",
+      "form": {
+        "question": "Question",
+        "questionPlaceholder": "E.g. What does the group “CAVOK” mean in a METAR?",
+        "questionError": "Write the question.",
+        "options": "Answer choices",
+        "optionsHint": "Tick the circle of the correct answer. At least two answers.",
+        "option": "Answer {{number}}",
+        "optionIsCorrectAria": "Answer {{number}} is the correct one",
+        "removeOptionAria": "Delete answer {{number}}",
+        "removeOption": "Delete the answer",
+        "minOptions": "At least two answers",
+        "addOption": "Add an answer",
+        "errorEmptyOption": "Fill in every answer, or delete the empty ones.",
+        "errorDuplicateOption": "Two answers are identical: each answer must be different.",
+        "errorNoCorrect": "Tick the correct answer."
+      },
+      "toast": {
+        "created": {
+          "title": "Question added",
+          "description": "It is now part of the assessment."
+        },
+        "updated": {
+          "title": "Question updated"
+        },
+        "createFailed": {
+          "title": "Question not added"
+        },
+        "updateFailed": {
+          "title": "Question not updated"
+        },
+        "saveFailed": "Saving failed. Check the question and try again.",
+        "deleted": {
+          "title": "Question deleted",
+          "description": "It has been removed from the assessment."
+        },
+        "deleteFailed": {
+          "title": "Question not deleted"
+        }
+      },
+      "deleteConfirm": {
+        "title": "Delete this question?",
+        "description": "The question “{{question}}” will be permanently deleted from the assessment."
+      }
+    }
+  }
+}

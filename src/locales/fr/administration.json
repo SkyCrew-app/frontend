@@ -1,0 +1,1175 @@
+{
+  "home": {
+    "title": "Administration",
+    "description": "L'activité du club en un coup d'œil.",
+    "noRole": "Sans rôle",
+    "stats": {
+      "members": "Membres",
+      "aircraft": "Avions",
+      "available_one": "{{count}} disponible",
+      "available_other": "{{count}} disponibles",
+      "bookings": "Réservations",
+      "pending": "{{count}} en attente",
+      "flightHoursThisMonth": "Heures de vol ce mois-ci"
+    },
+    "attention": {
+      "title": "À traiter",
+      "empty": "Rien à signaler pour le moment.",
+      "pendingBookings_one": "{{count}} réservation en attente",
+      "pendingBookings_other": "{{count}} réservations en attente",
+      "pendingBookingsHint": "À confirmer ou à refuser dans le planning.",
+      "unavailableAircraft_one": "{{count}} avion indisponible",
+      "unavailableAircraft_other": "{{count}} avions indisponibles",
+      "unavailableAircraftHint": "En maintenance ou retirés du planning.",
+      "severeIncidents_one": "{{count}} incident récent de gravité élevée",
+      "severeIncidents_other": "{{count}} incidents récents de gravité élevée"
+    },
+    "recentActivity": "Activité récente",
+    "bookings": {
+      "title": "Dernières réservations",
+      "link": "Planning",
+      "empty": "Aucune réservation récente"
+    },
+    "flights": {
+      "title": "Derniers vols",
+      "empty": "Aucun vol récent"
+    },
+    "incidents": {
+      "title": "Derniers incidents",
+      "empty": "Aucun incident récent"
+    },
+    "membersByRole": {
+      "title": "Membres par rôle",
+      "link": "Membres",
+      "empty": "Aucun membre pour le moment."
+    },
+    "bookingsByFlightType": {
+      "title": "Réservations par type de vol",
+      "empty": "Aucune réservation pour le moment."
+    },
+    "distribution": {
+      "share": "{{value}} {{unit}} · {{share}} %"
+    }
+  },
+  "users": {
+    "title": "Membres",
+    "description": "Les membres du club, leurs rôles et leurs licences.",
+    "noRole": "Aucun rôle",
+    "searchMember": "Rechercher un membre",
+    "fields": {
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "dateOfBirth": "Date de naissance",
+      "role": "Rôle"
+    },
+    "account": {
+      "active": "Activé",
+      "pending": "Invitation en attente"
+    },
+    "twoFactor": {
+      "enabled": "Activée",
+      "disabled": "Désactivée"
+    },
+    "filters": {
+      "searchPlaceholder": "Nom ou adresse e-mail",
+      "byRole": "Filtrer par rôle",
+      "allRoles": "Tous les rôles",
+      "byAccount": "Filtrer par état du compte",
+      "allAccounts": "Tous les comptes",
+      "accountActive": "Compte activé",
+      "byTwoFactor": "Filtrer par double authentification",
+      "twoFactorAll": "2FA : tous",
+      "twoFactorEnabled": "2FA activée",
+      "twoFactorDisabled": "2FA désactivée"
+    },
+    "table": {
+      "member": "Membre",
+      "account": "Compte",
+      "twoFactor": "2FA",
+      "actionsFor": "Actions pour {{name}}",
+      "viewDetails": "Voir la fiche",
+      "resetFilters": "Réinitialiser les filtres",
+      "noMatch": {
+        "title": "Aucun membre ne correspond",
+        "description": "Modifiez la recherche ou les filtres pour élargir la liste."
+      },
+      "empty": {
+        "title": "Aucun membre pour le moment",
+        "description": "Ajoutez un premier membre : il recevra un e-mail pour activer son compte."
+      }
+    },
+    "pagination": {
+      "range": "{{from}}–{{to}} sur {{total}} {{label}}",
+      "members_one": "membre",
+      "members_other": "membres",
+      "bookings_one": "réservation",
+      "bookings_other": "réservations",
+      "licences_one": "licence",
+      "licences_other": "licences"
+    },
+    "form": {
+      "errors": {
+        "firstName": "Indiquez le prénom.",
+        "lastName": "Indiquez le nom.",
+        "email": "Indiquez l'adresse e-mail.",
+        "emailInvalid": "Cette adresse e-mail n'est pas valide.",
+        "dateOfBirth": "Indiquez la date de naissance.",
+        "dateOfBirthFuture": "La date de naissance ne peut pas être dans le futur."
+      }
+    },
+    "create": {
+      "title": "Ajouter un membre",
+      "description": "Le membre recevra un e-mail pour activer son compte et choisir son mot de passe.",
+      "submit": "Ajouter le membre",
+      "firstNamePlaceholder": "Camille",
+      "lastNamePlaceholder": "Martin",
+      "emailPlaceholder": "camille.martin@exemple.fr"
+    },
+    "edit": {
+      "title": "Modifier le membre",
+      "emailHint": "L'adresse e-mail identifie le compte et ne peut pas être modifiée ici.",
+      "phonePlaceholder": "06 12 34 56 78",
+      "chooseRole": "Choisir un rôle",
+      "roleHint": "Le rôle détermine ce que le membre peut voir et modifier."
+    },
+    "licence": {
+      "add": "Ajouter une licence",
+      "description": "Enregistrez la licence ou la qualification d'un membre.",
+      "submit": "Ajouter la licence",
+      "steps": {
+        "licence": "Licence",
+        "validity": "Validité et justificatifs"
+      },
+      "member": "Membre",
+      "chooseMember": "Choisir un membre",
+      "noMemberFound": "Aucun membre trouvé.",
+      "type": "Type de licence",
+      "chooseType": "Choisir un type",
+      "types": {
+        "PPL": "PPL – pilote privé",
+        "CPL": "CPL – pilote professionnel",
+        "ATPL": "ATPL – pilote de ligne",
+        "FI": "FI – instructeur"
+      },
+      "number": "Numéro de licence",
+      "authority": "Autorité de délivrance",
+      "issueDate": "Date de délivrance",
+      "chooseDate": "Choisir une date",
+      "expirationDate": "Date d'expiration",
+      "noExpiration": "Sans expiration",
+      "documents": "Justificatifs",
+      "documentsHint": "Facultatif. Scan ou photo de la licence, plusieurs fichiers possibles.",
+      "errors": {
+        "member": "Choisissez le membre concerné.",
+        "type": "Choisissez le type de licence.",
+        "number": "Indiquez le numéro de la licence.",
+        "issueDate": "Indiquez la date de délivrance.",
+        "expirationBeforeIssue": "La date d'expiration ne peut pas précéder la date de délivrance."
+      }
+    },
+    "details": {
+      "title": "Fiche du membre",
+      "description": "Informations, réservations et licences.",
+      "tabs": {
+        "info": "Informations",
+        "bookings": "Réservations ({{total}})",
+        "licences": "Licences ({{total}})"
+      },
+      "contact": "Coordonnées",
+      "postalAddress": "Adresse postale",
+      "activity": "Activité",
+      "flightHours": "Heures de vol",
+      "accountBalance": "Solde du compte",
+      "slot": "Créneau",
+      "noBookings": {
+        "title": "Aucune réservation",
+        "description": "Ce membre n'a encore réservé aucun avion."
+      },
+      "licence": "Licence",
+      "authority": "Autorité",
+      "issued": "Délivrance",
+      "expiry": "Expiration",
+      "licenceExpired": "Expirée",
+      "licenceValid": "Valide",
+      "document": "Document {{number}}",
+      "noLicences": "Aucune licence enregistrée"
+    },
+    "toast": {
+      "retryLater": "Réessayez dans un instant.",
+      "created": {
+        "title": "Membre ajouté",
+        "description": "Il va recevoir un e-mail pour activer son compte."
+      },
+      "createFailed": {
+        "title": "Le membre n'a pas pu être ajouté",
+        "description": "Vérifiez que cette adresse e-mail n'est pas déjà utilisée, puis réessayez."
+      },
+      "updated": {
+        "title": "Membre mis à jour"
+      },
+      "updateFailed": {
+        "title": "Les modifications n'ont pas pu être enregistrées"
+      },
+      "detailsFailed": {
+        "title": "La fiche du membre n'a pas pu être chargée"
+      },
+      "licenceAdded": {
+        "title": "Licence ajoutée"
+      },
+      "licenceFailed": {
+        "title": "La licence n'a pas pu être ajoutée",
+        "description": "Vérifiez les informations saisies, puis réessayez."
+      }
+    }
+  },
+  "finance": {
+    "title": "Finances",
+    "description": "Revenus, dépenses et prévisions de l'aéroclub.",
+    "loading": "Chargement des données",
+    "percent": "{{value}} %",
+    "tabs": {
+      "summary": "Synthèse",
+      "expenses": "Dépenses",
+      "operating": "Coûts par avion",
+      "forecast": "Prévisions"
+    },
+    "labels": {
+      "revenue": "Revenus",
+      "expenses": "Dépenses",
+      "netResult": "Résultat net",
+      "result": "Résultat",
+      "averageRevenuePerMember": "Revenu moyen par membre",
+      "fuel": "Carburant",
+      "maintenance": "Maintenance",
+      "amount": "Montant"
+    },
+    "period": {
+      "type": "Type de période",
+      "monthly": "Par mois",
+      "annual": "Par année",
+      "month": "Mois",
+      "year": "Année",
+      "range": "Du {{from}} au {{to}}"
+    },
+    "export": {
+      "title": "Exporter le rapport financier",
+      "description": "Choisissez le format et la période à inclure dans le rapport.",
+      "exporting": "Export en cours…",
+      "format": "Format",
+      "spreadsheet": "Tableur (Excel)",
+      "from": "Du",
+      "to": "Au",
+      "chooseDate": "Choisir une date",
+      "invalidRange": "La date de fin doit être postérieure à la date de début.",
+      "toast": {
+        "done": {
+          "title": "Rapport généré",
+          "description": "Le fichier s'ouvre dans un nouvel onglet."
+        },
+        "failed": {
+          "title": "Export impossible",
+          "description": "Le rapport n'a pas pu être généré. Réessayez dans un instant."
+        }
+      }
+    },
+    "summary": {
+      "noPreviousReport": "Pas de rapport précédent",
+      "lastReport": "Dernier rapport : {{change}}",
+      "reportOf": "Rapport du {{date}}",
+      "empty": {
+        "title": "Aucun rapport financier",
+        "description": "La synthèse s'affichera ici dès qu'un premier rapport aura été généré."
+      },
+      "trend": {
+        "title": "Évolution",
+        "description_one": "Revenus, dépenses et résultat net des rapports enregistrés.",
+        "description_other": "Revenus, dépenses et résultat net des {{count}} rapports enregistrés."
+      },
+      "reports": {
+        "title": "Rapports",
+        "description": "Du plus récent au plus ancien.",
+        "resultChange": "Évolution du résultat"
+      },
+      "recommendations": {
+        "title": "Recommandations",
+        "description": "Issues du rapport du {{date}}."
+      }
+    },
+    "expenses": {
+      "empty": {
+        "title": "Aucune dépense sur cette période",
+        "description": "Du {{from}} au {{to}}. Changez de période ou ajoutez une dépense."
+      },
+      "total": "Total des dépenses",
+      "count": "Nombre de dépenses",
+      "average": "Dépense moyenne",
+      "topCategory": "Premier poste",
+      "byCategory": "Répartition par catégorie",
+      "share": "Part",
+      "detail": {
+        "title": "Détail des dépenses",
+        "description": "Les plus récentes en premier.",
+        "shown": "{{shown}} dépenses affichées sur {{total}}",
+        "showMore": "Afficher les suivantes"
+      }
+    },
+    "operating": {
+      "empty": {
+        "title": "Aucun avion dans la flotte",
+        "description": "Les coûts par avion s'afficheront ici dès qu'un avion aura été ajouté."
+      },
+      "flightRevenue": "Revenus des vols",
+      "confirmedBookings": "Réservations confirmées",
+      "fuelEstimate": "Estimé à {{price}} le litre",
+      "profitable": "Flotte rentable sur la période",
+      "unprofitable": "Coûts supérieurs aux revenus",
+      "chartTitle": "Coûts et revenus par avion",
+      "tableTitle": "Détail par avion",
+      "tableDescription": "Revenus calculés sur les heures réservées, carburant sur la consommation horaire de chaque avion."
+    },
+    "forecast": {
+      "error": "Les prévisions n'ont pas pu être calculées. Vérifiez votre connexion puis réessayez.",
+      "monthlyAverage": "Moyenne mensuelle : {{amount}}",
+      "revenue": "Revenus prévus",
+      "expenses": "Dépenses prévues",
+      "netResult": "Résultat net prévu",
+      "surplus": "Excédent sur {{months}} mois",
+      "deficit": "Déficit sur {{months}} mois",
+      "title": "Prévisions sur {{months}} mois",
+      "description": "Estimation mois par mois, à partir du mois en cours.",
+      "byMonth": "Détail par mois"
+    },
+    "expenseForm": {
+      "title": "Ajouter une dépense",
+      "description": "Elle sera comptée dans les dépenses de la période correspondante.",
+      "submit": "Enregistrer la dépense",
+      "amountPlaceholder": "120,50",
+      "chooseCategory": "Choisir une catégorie",
+      "descriptionPlaceholder": "Ex. : visite des 50 heures du F-GABC",
+      "error": "La dépense n'a pas pu être enregistrée. Réessayez dans un instant.",
+      "errors": {
+        "amount": "Indiquez le montant de la dépense.",
+        "amountPositive": "Le montant doit être supérieur à 0 €.",
+        "category": "Choisissez une catégorie."
+      },
+      "toast": {
+        "title": "Dépense enregistrée",
+        "description": "{{amount}} le {{date}}."
+      }
+    }
+  },
+  "audits": {
+    "title": "Audits de sécurité",
+    "description": "Suivez les audits de sécurité des aéronefs et les modèles qui servent à les réaliser.",
+    "newAudit": "Nouvel audit",
+    "search": "Rechercher un audit",
+    "searchPlaceholder": "Immatriculation, auditeur, note…",
+    "allAircraft": "Tous les aéronefs",
+    "auditOf": "Audit du {{date}}",
+    "tabs": {
+      "audits": "Audits",
+      "templates": "Modèles d'audit"
+    },
+    "stats": {
+      "total": "Audits",
+      "open": "En cours",
+      "closed": "Clôturés",
+      "overdue": "En retard"
+    },
+    "statusTabs": {
+      "all": "Tous",
+      "open": "En cours",
+      "closed": "Clôturés",
+      "nonconform": "Non conformes",
+      "overdue": "En retard"
+    },
+    "fields": {
+      "aircraft": "Aéronef",
+      "auditor": "Auditeur",
+      "auditDate": "Date de l'audit",
+      "result": "Résultat",
+      "frequency": "Fréquence",
+      "nextAudit": "Prochain audit",
+      "correctiveActions": "Actions correctives",
+      "checkedItems": "Éléments vérifiés"
+    },
+    "form": {
+      "steps": {
+        "audit": "Audit"
+      },
+      "selectDate": "Sélectionner une date",
+      "selectResult": "Sélectionner un résultat",
+      "selectFrequency": "Sélectionner une fréquence",
+      "selectCategory": "Sélectionner une catégorie",
+      "notPlanned": "Non planifié",
+      "nextAuditHint": "Le prochain audit est calculé à partir de la date et de la fréquence ; vous pouvez le modifier."
+    },
+    "list": {
+      "columns": {
+        "audit_date": "Date",
+        "aircraft": "Aéronef",
+        "auditor": "Auditeur",
+        "audit_result": "Résultat",
+        "next_audit_date": "Prochain audit"
+      },
+      "actionsFor": "Actions pour l'audit du {{date}}",
+      "viewDetails": "Voir le détail",
+      "noMatch": {
+        "title": "Aucun audit ne correspond",
+        "description": "Modifiez la recherche, les filtres ou l'onglet sélectionné."
+      },
+      "empty": {
+        "title": "Aucun audit pour le moment",
+        "description": "Enregistrez le premier audit de sécurité d'un aéronef."
+      },
+      "deleteConfirm": {
+        "title": "Supprimer cet audit ?",
+        "description": "L'audit du {{date}} de l'aéronef {{registration}} et ses éléments vérifiés seront définitivement supprimés."
+      },
+      "toast": {
+        "deleted": "Audit supprimé",
+        "deleteFailed": {
+          "title": "Suppression impossible",
+          "description": "L'audit n'a pas pu être supprimé. Réessayez dans un instant."
+        }
+      }
+    },
+    "filters": {
+      "button": "Filtres",
+      "title": "Filtrer les audits",
+      "description": "Les filtres s'appliquent dès que vous les choisissez.",
+      "allResults": "Tous les résultats",
+      "allFrequencies": "Toutes les fréquences",
+      "from": "Audités à partir du",
+      "startDate": "Date de début",
+      "until": "Jusqu'au",
+      "endDate": "Date de fin",
+      "show": "Voir les audits",
+      "chips": {
+        "aircraft": "Aéronef : {{value}}",
+        "removeAircraft": "Retirer le filtre d'aéronef",
+        "result": "Résultat : {{value}}",
+        "removeResult": "Retirer le filtre de résultat",
+        "frequency": "Fréquence : {{value}}",
+        "removeFrequency": "Retirer le filtre de fréquence",
+        "range": "Du {{from}} au {{to}}",
+        "removePeriod": "Retirer le filtre de période"
+      }
+    },
+    "statistics": {
+      "title": "Statistiques",
+      "periodLabel": "Période des statistiques",
+      "period": "Période",
+      "lastMonths": "{{months}} derniers mois",
+      "empty": "Aucun audit sur cette période.",
+      "tooltipLabel": "{{name}} :",
+      "byMonth": "Audits par mois",
+      "byAircraft": "Audits par aéronef",
+      "byResult": "Répartition par résultat",
+      "byStatus": "Répartition par statut",
+      "results": {
+        "conform": "Conforme",
+        "withRemarks": "Avec remarques",
+        "nonConform": "Non conforme"
+      }
+    },
+    "details": {
+      "close": "Clôturer l'audit",
+      "closedOn": "Clôturé le",
+      "closedBy": "Clôturé par",
+      "noNotes": "Aucune note.",
+      "noCorrectiveActions": "Aucune action corrective.",
+      "noItems": "Cet audit ne contient aucun élément vérifié.",
+      "actionRequired": "Action corrective requise",
+      "photoRequired": "Photo requise",
+      "inspectionMethod": "Méthode d'inspection : ",
+      "expectedResult": "Résultat attendu : ",
+      "documentation": "Documentation : ",
+      "closeConfirm": {
+        "title": "Clôturer cet audit ?",
+        "description": "L'audit du {{date}} de l'aéronef {{registration}} sera marqué comme clôturé à votre nom."
+      },
+      "toast": {
+        "closed": "Audit clôturé",
+        "closeFailed": {
+          "title": "Clôture impossible",
+          "description": "L'audit n'a pas pu être clôturé. Réessayez dans un instant."
+        }
+      }
+    },
+    "create": {
+      "title": "Créer un audit",
+      "description": "Enregistrez l'audit de sécurité d'un aéronef, avec ou sans modèle.",
+      "submit": "Créer l'audit",
+      "steps": {
+        "template": "Modèle",
+        "planning": "Planification"
+      },
+      "selectAircraft": "Sélectionner un aéronef",
+      "selectAuditor": "Sélectionner un auditeur",
+      "notesPlaceholder": "Ex. : audit réalisé après la visite des 100 heures",
+      "errors": {
+        "aircraft": "Choisissez l'aéronef audité.",
+        "auditor": "Choisissez l'auditeur."
+      },
+      "template": {
+        "change": "Changer",
+        "choose": "Choisir un modèle",
+        "hint": "Facultatif : un modèle ajoute à l'audit la liste des éléments à vérifier.",
+        "itemsCreated_one": "{{count}} élément à vérifier sera créé avec l'audit.",
+        "itemsCreated_other": "{{count}} éléments à vérifier seront créés avec l'audit.",
+        "fillLater": "Vous renseignerez leur résultat en modifiant l'audit.",
+        "moreItems_one": "et {{count}} autre élément.",
+        "moreItems_other": "et {{count}} autres éléments.",
+        "noItems": "Ce modèle ne contient aucun élément à vérifier."
+      },
+      "toast": {
+        "created": "Audit créé",
+        "failed": {
+          "title": "Création impossible",
+          "description": "L'audit n'a pas pu être créé. Vérifiez les informations puis réessayez."
+        }
+      }
+    },
+    "edit": {
+      "title": "Modifier l'audit",
+      "steps": {
+        "findings": "Constats"
+      },
+      "notesPlaceholder": "Ex. : légère corrosion sur le capot moteur, à surveiller",
+      "correctiveActionsPlaceholder": "Ex. : remplacer la durite carburant avant le prochain vol",
+      "itemNotesPlaceholder": "Ex. : niveau d'huile complété, 0,5 L",
+      "requiresAction": "Nécessite une action corrective",
+      "itemsToFill_one": "{{count}} élément à renseigner.",
+      "itemsToFill_other": "{{count}} éléments à renseigner.",
+      "toast": {
+        "updated": "Audit mis à jour",
+        "failed": {
+          "title": "Enregistrement impossible",
+          "description": "L'audit n'a pas pu être mis à jour. Réessayez dans un instant."
+        },
+        "partial": {
+          "title": "Enregistrement incomplet",
+          "description_one": "L'audit est mis à jour, mais {{count}} élément sur {{total}} n'a pas pu être enregistré. Réessayez.",
+          "description_other": "L'audit est mis à jour, mais {{count}} éléments sur {{total}} n'ont pas pu être enregistrés. Réessayez."
+        }
+      }
+    },
+    "templateSelector": {
+      "title": "Choisir un modèle d'audit",
+      "description": "Le modèle ajoute à l'audit la liste des éléments à vérifier.",
+      "descriptionForType": "Les modèles prévus pour le {{type}} apparaissent en premier.",
+      "submit": "Utiliser ce modèle",
+      "search": "Rechercher un modèle",
+      "searchPlaceholder": "Nom du modèle ou type d'aéronef…",
+      "recommended": "Recommandé",
+      "itemCount_zero": "{{count}} éléments",
+      "itemCount_one": "{{count}} élément",
+      "itemCount_other": "{{count}} éléments",
+      "empty": {
+        "title": "Aucun modèle trouvé",
+        "search": "Modifiez votre recherche.",
+        "none": "Aucun modèle actif n'est disponible. Créez-en un dans l'onglet « Modèles d'audit »."
+      }
+    },
+    "templates": {
+      "intro": "Un modèle fournit la liste des éléments à vérifier lors d'un audit.",
+      "new": "Nouveau modèle",
+      "active": "Actif",
+      "inactive": "Inactif",
+      "actionsFor": "Actions pour le modèle {{name}}",
+      "duplicate": "Dupliquer",
+      "copyName": "{{name}} (copie)",
+      "recommendedFrequency": "Fréquence recommandée",
+      "aircraftTypes": "Types d'aéronefs",
+      "allTypes": "Tous",
+      "itemsToCheck_zero": "{{count}} éléments à vérifier",
+      "itemsToCheck_one": "{{count}} élément à vérifier",
+      "itemsToCheck_other": "{{count}} éléments à vérifier",
+      "noItems": "Aucun élément dans ce modèle.",
+      "empty": {
+        "title": "Aucun modèle d'audit",
+        "description": "Créez un premier modèle pour préparer la liste des éléments à vérifier."
+      },
+      "deleteConfirm": {
+        "title": "Supprimer ce modèle ?",
+        "description": "Le modèle « {{name}} » et ses éléments seront définitivement supprimés. Les audits déjà réalisés ne sont pas modifiés."
+      },
+      "toast": {
+        "created": "Modèle créé",
+        "createFailed": {
+          "title": "Création impossible",
+          "description": "Le modèle n'a pas pu être créé. Vérifiez les informations puis réessayez."
+        },
+        "updated": "Modèle mis à jour",
+        "updateFailed": {
+          "title": "Enregistrement impossible",
+          "description": "Le modèle n'a pas pu être mis à jour. Réessayez dans un instant."
+        },
+        "deleted": "Modèle supprimé",
+        "deleteFailed": {
+          "title": "Suppression impossible",
+          "description": "Le modèle n'a pas pu être supprimé. Réessayez dans un instant."
+        },
+        "noUser": "Utilisateur non identifié, veuillez réessayer dans un instant."
+      },
+      "form": {
+        "createTitle": "Créer un modèle d'audit",
+        "editTitle": "Modifier le modèle d'audit",
+        "description": "Décrivez le modèle puis listez les éléments à vérifier, dans l'ordre de l'inspection.",
+        "createSubmit": "Créer le modèle",
+        "steps": {
+          "general": "Informations générales",
+          "items": "Éléments à vérifier"
+        },
+        "name": "Nom du modèle",
+        "namePlaceholder": "Ex. : Visite annuelle DR400",
+        "descriptionPlaceholder": "Ex. : contrôle complet de la cellule et du moteur avant la saison",
+        "active": "Modèle actif",
+        "activeHint": "Un modèle inactif n'est plus proposé à la création d'un audit.",
+        "aircraftConcerned": "Aéronefs concernés",
+        "aircraftType": "Type d'aéronef",
+        "aircraftTypePlaceholder": "Ex. : DR400",
+        "noAircraftType": "Aucun type précisé : le modèle vaut pour tous les aéronefs.",
+        "dragHint": "Faites glisser la poignée pour changer l'ordre.",
+        "noItems": "Aucun élément pour le moment. Ajoutez les points à contrôler pendant l'audit.",
+        "move": "Déplacer",
+        "moveNamed": "Déplacer {{name}}",
+        "editNamed": "Modifier {{name}}",
+        "removeNamed": "Retirer {{name}}",
+        "removeFromTemplate": "Retirer du modèle",
+        "errors": {
+          "name": "Indiquez le nom du modèle.",
+          "items": "Ajoutez au moins un élément à vérifier."
+        }
+      },
+      "item": {
+        "add": "Ajouter un élément",
+        "edit": "Modifier l'élément",
+        "description": "Un point à contrôler pendant l'audit.",
+        "save": "Enregistrer l'élément",
+        "addSubmit": "Ajouter l'élément",
+        "steps": {
+          "item": "Élément",
+          "inspection": "Inspection"
+        },
+        "title": "Titre",
+        "titlePlaceholder": "Ex. : Niveau d'huile moteur",
+        "descriptionPlaceholder": "Ex. : vérifier le niveau à la jauge, moteur froid",
+        "criticality": "Criticité",
+        "selectLevel": "Sélectionner un niveau",
+        "inspectionMethod": "Méthode d'inspection",
+        "inspectionMethodPlaceholder": "Ex. : contrôle visuel",
+        "expectedResult": "Résultat attendu",
+        "expectedResultPlaceholder": "Ex. : niveau entre mini et maxi",
+        "reference": "Documentation de référence",
+        "referencePlaceholder": "Ex. : manuel de maintenance, chapitre 12",
+        "options": "Options",
+        "mandatory": "Élément obligatoire",
+        "photo": "Photo à joindre comme preuve",
+        "errors": {
+          "title": "Indiquez le titre de l'élément."
+        }
+      }
+    }
+  },
+  "incidents": {
+    "title": "Incidents",
+    "description": "Suivez les incidents déclarés par les pilotes à la clôture de leurs vols.",
+    "loading": "Chargement des incidents",
+    "stats": {
+      "open": "Ouverts",
+      "inProgress": "En cours",
+      "resolved": "Résolus",
+      "highSeverity": "Gravité élevée",
+      "unresolved": "Non résolus"
+    },
+    "filters": {
+      "search": "Rechercher des incidents",
+      "searchPlaceholder": "Description, aéronef ou pilote",
+      "bySeverity": "Filtrer par gravité",
+      "allSeverities": "Toutes les gravités",
+      "byStatus": "Filtrer par statut",
+      "allStatuses": "Tous les statuts",
+      "byAircraft": "Filtrer par aéronef",
+      "allAircraft": "Tous les aéronefs"
+    },
+    "fields": {
+      "aircraft": "Aéronef",
+      "severity": "Gravité",
+      "priority": "Priorité"
+    },
+    "table": {
+      "rowLabel": "Incident du {{date}} sur {{registration}} : voir le détail",
+      "itemsLabel_one": "incident",
+      "itemsLabel_other": "incidents",
+      "resetFilters": "Réinitialiser les filtres",
+      "noMatch": {
+        "title": "Aucun incident ne correspond",
+        "description": "Modifiez la recherche ou les filtres."
+      },
+      "empty": {
+        "title": "Aucun incident déclaré",
+        "description": "Les incidents sont déclarés par les pilotes au moment de clôturer un vol. Ils apparaîtront ici."
+      }
+    },
+    "actions": {
+      "take": "Prendre en charge",
+      "resolve": "Marquer comme résolu",
+      "reopen": "Rouvrir",
+      "saveNote": "Enregistrer la note"
+    },
+    "detail": {
+      "title": "Incident du {{date}} sur {{registration}}",
+      "dateTime": "Date et heure",
+      "damage": "Dommages constatés",
+      "correctiveActions": "Actions correctives du pilote",
+      "pilotAndFlight": "Pilote et vol",
+      "reportedBy": "Déclaré par",
+      "flight": "Vol",
+      "flightTime": "Temps de vol",
+      "noFlight": "Aucun vol associé",
+      "viewFlightPlan": "Voir le plan de vol",
+      "followUp": "Suivi",
+      "resolvedAt": "Résolu le",
+      "resolvedBy": "Résolu par",
+      "resolutionNote": "Note de résolution",
+      "notePlaceholder": "Ex. : pneu remplacé le 14 octobre, essai au sol concluant."
+    },
+    "confirm": {
+      "reopenTitle": "Rouvrir cet incident ?",
+      "resolveTitle": "Marquer cet incident comme résolu ?",
+      "reopenDescription": "L'incident du {{date}} sur {{registration}} repassera au statut « Ouvert ». La note de résolution est conservée.",
+      "resolveDescription": "L'incident du {{date}} sur {{registration}} sera clôturé. Il pourra être rouvert si nécessaire.",
+      "notePlaceholder": "Ce qui a été fait pour résoudre l'incident."
+    },
+    "toast": {
+      "failed": "Action impossible",
+      "take": {
+        "title": "Incident pris en charge",
+        "description": "Son statut est maintenant « En cours ».",
+        "failure": "L'incident n'a pas pu être pris en charge. Réessayez."
+      },
+      "resolve": {
+        "title": "Incident résolu",
+        "description": "L'incident est clôturé.",
+        "failure": "L'incident n'a pas pu être marqué comme résolu. Réessayez."
+      },
+      "reopen": {
+        "title": "Incident rouvert",
+        "description": "Son statut est de nouveau « Ouvert ».",
+        "failure": "L'incident n'a pas pu être rouvert. Réessayez."
+      },
+      "note": {
+        "title": "Note enregistrée",
+        "description": "La note de résolution a été mise à jour.",
+        "failure": "La note de résolution n'a pas pu être enregistrée. Réessayez."
+      }
+    }
+  },
+  "settings": {
+    "title": "Paramètres de l'aéroclub",
+    "description": "Coordonnées, réservations, tarifs, rôles et listes de choix du club.",
+    "notFound": {
+      "title": "Paramètres introuvables",
+      "description": "Aucun paramètre n'est encore défini pour cet aéroclub."
+    },
+    "tabs": {
+      "general": "Général",
+      "reservations": "Réservations",
+      "aircraft": "Avions et carburant",
+      "members": "Membres",
+      "lists": "Listes de choix",
+      "roles": "Rôles",
+      "invalid": "(champs à corriger)"
+    },
+    "unsaved": "Modifications non enregistrées",
+    "nothingToSave": "Aucune modification à enregistrer",
+    "discard": "Annuler les modifications",
+    "maintenanceConfirm": {
+      "title": "Activer le mode maintenance ?",
+      "description": "Dès l'enregistrement, les visiteurs seront redirigés vers la page de maintenance, jusqu'à ce que vous désactiviez ce mode.",
+      "confirm": "Activer et enregistrer"
+    },
+    "toast": {
+      "saveFailed": "Enregistrement impossible",
+      "notLoaded": "Les paramètres n'ont pas pu être chargés. Rechargez la page puis réessayez.",
+      "notSaved": "Les paramètres n'ont pas pu être enregistrés. Réessayez dans un instant.",
+      "invalid": "Certains champs sont à corriger : ils sont signalés en rouge.",
+      "saved": {
+        "title": "Paramètres enregistrés",
+        "description": "Vos modifications ont été enregistrées."
+      }
+    },
+    "general": {
+      "contact": {
+        "title": "Coordonnées du club",
+        "description": "Le nom et les moyens de contact de l'aéroclub.",
+        "clubName": "Nom de l'aéroclub",
+        "clubNamePlaceholder": "Ex. Aéroclub du Val de Loire",
+        "email": "E-mail de contact",
+        "emailPlaceholder": "contact@aeroclub.fr",
+        "phone": "Téléphone de contact",
+        "phoneHint": "10 à 14 chiffres, sans espaces. L'indicatif international (+33…) est accepté.",
+        "address": "Adresse",
+        "addressPlaceholder": "Aérodrome de Tours-Sorigny\n37250 Sorigny"
+      },
+      "maintenance": {
+        "title": "Mode maintenance du site",
+        "description": "Tant qu'il est actif, les visiteurs sont redirigés vers une page de maintenance.",
+        "enable": "Activer le mode maintenance",
+        "enableHint": "Prend effet à l'enregistrement des paramètres.",
+        "message": "Message affiché",
+        "messageHint": "Laissez vide pour afficher le message par défaut.",
+        "messagePlaceholder": "Ex. Le site est en cours de mise à jour, il sera de nouveau disponible dans la soirée.",
+        "end": "Fin prévue de la maintenance",
+        "endHint": "Sert au compte à rebours de la page de maintenance."
+      }
+    },
+    "bookings": {
+      "hours": {
+        "title": "Horaires de réservation",
+        "description": "La plage horaire ouverte aux réservations et la durée d'un créneau.",
+        "start": "Début des réservations",
+        "end": "Fin des réservations",
+        "slot": "Durée d'un créneau",
+        "slotPlaceholder": "Choisir une durée"
+      },
+      "closure": {
+        "title": "Jours de fermeture",
+        "description": "Cochez les jours de la semaine où le club est fermé."
+      },
+      "maintenance": {
+        "title": "Maintenance hebdomadaire",
+        "description": "Le jour et la durée de l'entretien hebdomadaire des avions.",
+        "day": "Jour de maintenance",
+        "dayPlaceholder": "Choisir un jour",
+        "duration": "Durée de la maintenance",
+        "durationHint": "Nombre entier d'heures, de 1 à 24."
+      }
+    },
+    "timeSlot": {
+      "30": "30 minutes",
+      "60": "1 heure",
+      "90": "1 heure 30",
+      "120": "2 heures"
+    },
+    "aircraft": {
+      "manage": "Gérer les avions",
+      "fuel": {
+        "title": "Carburant",
+        "description": "Qui fait le plein, et le prix du litre utilisé pour estimer les coûts d'exploitation.",
+        "management": "Gestion du carburant",
+        "price": "Prix du carburant",
+        "pricePlaceholder": "2,35"
+      },
+      "rates": {
+        "title": "Tarifs horaires des avions",
+        "description": "Le tarif de chaque avion se modifie dans sa fiche, depuis la gestion des avions.",
+        "empty": {
+          "title": "Aucun avion",
+          "description": "Ajoutez les avions du club depuis la gestion des avions."
+        },
+        "registration": "Immatriculation",
+        "model": "Modèle",
+        "hourlyRate": "Tarif horaire",
+        "perHour": "{{amount}} / h"
+      }
+    },
+    "fuelManagement": {
+      "self-service": {
+        "label": "Libre-service",
+        "hint": "Les pilotes font le plein eux-mêmes."
+      },
+      "staff-only": {
+        "label": "Personnel uniquement",
+        "hint": "Le plein est fait par le personnel du club."
+      },
+      "external": {
+        "label": "Fournisseur externe",
+        "hint": "Le plein est assuré par un prestataire."
+      }
+    },
+    "members": {
+      "fees": {
+        "title": "Cotisation et pilotes invités",
+        "description": "Les montants demandés aux membres et aux invités.",
+        "membershipFee": "Cotisation annuelle",
+        "allowGuests": "Autoriser les pilotes invités",
+        "allowGuestsHint": "Des pilotes extérieurs au club peuvent voler sur ses avions.",
+        "guestFee": "Frais pour un pilote invité"
+      },
+      "licences": {
+        "title": "Licences de pilote acceptées",
+        "description": "Cochez les licences reconnues par le club."
+      },
+      "rules": {
+        "title": "Règlement intérieur",
+        "description": "Le texte du règlement intérieur de l'aéroclub.",
+        "label": "Texte du règlement",
+        "placeholder": "Ex. Article 1 – Tout pilote doit être à jour de sa cotisation avant de réserver un avion."
+      }
+    },
+    "items": {
+      "edit": "Modifier {{name}}",
+      "delete": "Supprimer {{name}}",
+      "nameRequired": "Indiquez un nom."
+    },
+    "lists": {
+      "intro": "Les valeurs proposées dans les listes de choix du club. Vos changements sont pris en compte quand vous enregistrez les paramètres.",
+      "editTitle": "Modifier « {{name}} »",
+      "listName": "Liste « {{list}} ».",
+      "examplePlaceholder": "Ex. {{example}}",
+      "duplicate": "Cette valeur est déjà dans la liste.",
+      "deleteDescription": "« {{name}} » sera retiré de la liste « {{list}} » au prochain enregistrement des paramètres.",
+      "aircraftCategories": {
+        "title": "Catégories d'aéronefs",
+        "addTitle": "Ajouter une catégorie d'aéronef",
+        "deleteTitle": "Supprimer cette catégorie d'aéronef ?",
+        "emptyText": "Aucune catégorie d'aéronef pour le moment.",
+        "example": "Monomoteur"
+      },
+      "flightTypes": {
+        "title": "Types de vols",
+        "addTitle": "Ajouter un type de vol",
+        "deleteTitle": "Supprimer ce type de vol ?",
+        "emptyText": "Aucun type de vol pour le moment.",
+        "example": "Vol local"
+      },
+      "licenseTypes": {
+        "title": "Types de licences",
+        "addTitle": "Ajouter un type de licence",
+        "deleteTitle": "Supprimer ce type de licence ?",
+        "emptyText": "Aucun type de licence pour le moment.",
+        "example": "PPL"
+      },
+      "maintenanceTypes": {
+        "title": "Types de maintenance",
+        "addTitle": "Ajouter un type de maintenance",
+        "deleteTitle": "Supprimer ce type de maintenance ?",
+        "emptyText": "Aucun type de maintenance pour le moment.",
+        "example": "Visite 50 heures"
+      }
+    },
+    "roles": {
+      "title": "Rôles",
+      "description": "Les rôles que l'on peut attribuer aux membres. Chaque ajout, modification ou suppression est enregistré immédiatement.",
+      "add": "Ajouter un rôle",
+      "addDescription": "Le rôle pourra ensuite être attribué aux membres.",
+      "edit": "Modifier le rôle",
+      "editDescription": "Le nouveau nom s'applique à tous les membres qui ont ce rôle.",
+      "name": "Nom du rôle",
+      "namePlaceholder": "Ex. Mécanicien",
+      "create": "Créer le rôle",
+      "duplicate": "Un rôle porte déjà ce nom.",
+      "builtIn": "Rôle de l'application",
+      "builtInNotice": "L'application reconnaît ce rôle à son nom : le renommer ou le supprimer peut retirer leurs accès aux membres concernés.",
+      "empty": {
+        "title": "Aucun rôle",
+        "description": "Créez un premier rôle pour pouvoir l'attribuer aux membres."
+      },
+      "deleteTitle": "Supprimer ce rôle ?",
+      "deleteDescription": "Le rôle « {{name}} » sera supprimé définitivement.",
+      "toast": {
+        "created": {
+          "title": "Rôle créé",
+          "description": "Le rôle « {{name}} » a été ajouté."
+        },
+        "createFailed": {
+          "title": "Création impossible",
+          "description": "Le rôle n'a pas pu être créé. Réessayez."
+        },
+        "updated": {
+          "title": "Rôle modifié",
+          "description": "Le rôle s'appelle maintenant « {{name}} »."
+        },
+        "updateFailed": {
+          "title": "Modification impossible",
+          "description": "Le rôle n'a pas pu être renommé. Réessayez."
+        },
+        "deleted": {
+          "title": "Rôle supprimé",
+          "description": "Le rôle « {{name}} » a été supprimé."
+        },
+        "deleteFailed": {
+          "title": "Suppression impossible",
+          "description": "Le rôle n'a pas pu être supprimé. Vérifiez qu'aucun membre ne l'utilise encore."
+        }
+      }
+    },
+    "validation": {
+      "amount": "Indiquez un montant",
+      "amountNegative": "Le montant ne peut pas être négatif",
+      "clubName": "Le nom de l'aéroclub doit contenir au moins 2 caractères",
+      "contactEmail": "Indiquez une adresse e-mail valide",
+      "contactPhone": "Indiquez 10 à 14 chiffres, sans espaces (ex. 0478123456)",
+      "address": "L'adresse doit contenir au moins 5 caractères",
+      "timeSlotRequired": "Choisissez une durée de créneau",
+      "timeSlotMin": "Le créneau dure au moins 30 minutes",
+      "timeSlotMax": "Le créneau dure au plus 2 heures",
+      "maintenanceDurationRequired": "Indiquez une durée en heures",
+      "maintenanceDurationInteger": "La durée de la maintenance doit être un nombre entier d'heures",
+      "maintenanceDurationMin": "La maintenance dure au moins 1 heure",
+      "maintenanceDurationMax": "La maintenance dure au plus 24 heures",
+      "fuelPrice": "Indiquez un prix",
+      "fuelPriceNegative": "Le prix du carburant ne peut pas être négatif",
+      "endAfterStart": "L'heure de fin doit être après l'heure de début"
+    }
+  },
+  "twoFactor": {
+    "title": "Authentification à deux facteurs",
+    "description": "Protégez votre compte : en plus du mot de passe, un code à 6 chiffres vous sera demandé à chaque connexion.",
+    "backToProfile": "Retour au profil",
+    "statusError": "L'état de la double authentification n'a pas pu être vérifié. Vérifiez votre connexion puis réessayez.",
+    "active": {
+      "title": "Votre compte est protégé",
+      "badge": "Activée",
+      "description": "L'authentification à deux facteurs est active. Un code de votre application d'authentification vous sera demandé à chaque connexion.",
+      "disable": "Désactiver la double authentification"
+    },
+    "scan": {
+      "title": "1. Scanner le QR code",
+      "waitingForCode": "En attente du code",
+      "toGenerate": "QR code à générer",
+      "description": "Installez une application d'authentification sur votre téléphone (Google Authenticator, Microsoft Authenticator, Authy…), puis générez un QR code et scannez-le avec cette application.",
+      "qrAlt": "QR code à scanner avec votre application d'authentification",
+      "generate": "Générer le QR code",
+      "regenerate": "Générer un nouveau QR code"
+    },
+    "confirm": {
+      "title": "2. Saisir le code affiché",
+      "description": "Saisissez le code à 6 chiffres affiché par l'application pour activer la double authentification.",
+      "code": "Code de vérification",
+      "submit": "Activer la double authentification"
+    },
+    "toast": {
+      "generated": {
+        "title": "QR code généré",
+        "description": "Scannez-le avec votre application d'authentification."
+      },
+      "generateFailed": {
+        "title": "Génération impossible",
+        "description": "Le QR code n'a pas pu être généré. Réessayez dans un instant."
+      },
+      "enabled": {
+        "title": "Double authentification activée",
+        "description": "Un code vous sera demandé à chaque connexion."
+      },
+      "wrongCode": {
+        "title": "Code incorrect",
+        "description": "Le code saisi n'est pas valide. Vérifiez votre application et réessayez."
+      }
+    }
+  },
+  "roleName": {
+    "Administrateur": "Administrateur",
+    "Pilote": "Pilote",
+    "Instructeur": "Instructeur",
+    "Technicien": "Technicien"
+  },
+  "weekday": {
+    "Lundi": "Lundi",
+    "Mardi": "Mardi",
+    "Mercredi": "Mercredi",
+    "Jeudi": "Jeudi",
+    "Vendredi": "Vendredi",
+    "Samedi": "Samedi",
+    "Dimanche": "Dimanche"
+  },
+  "licenceStatus": {
+    "active": "Active",
+    "expired": "Expirée",
+    "pending": "En attente"
+  },
+  "flightCategory": {
+    "local": "Local",
+    "cross_country": "Voyage",
+    "instruction": "Instruction",
+    "tourism": "Tourisme",
+    "training": "Entraînement",
+    "maintenance": "Maintenance",
+    "private": "Privé",
+    "corporate": "Entreprise",
+    "other": "Autre"
+  },
+  "expenseCategory": {
+    "maintenance": "Maintenance",
+    "carburant": "Carburant",
+    "assurance": "Assurance",
+    "salaires": "Salaires",
+    "autres": "Autres",
+    "none": "Sans catégorie"
+  },
+  "auditUnknown": "Non renseigné",
+  "auditResult": {
+    "CONFORME": "Conforme",
+    "NON_CONFORME": "Non conforme",
+    "CONFORME_AVEC_REMARQUES": "Conforme avec remarques",
+    "NON_APPLICABLE": "Non applicable"
+  },
+  "auditStatus": {
+    "closed": "Clôturé",
+    "overdue": "En retard",
+    "inProgress": "En cours"
+  },
+  "auditCriticality": {
+    "CRITIQUE": "Critique",
+    "MAJEUR": "Majeur",
+    "MINEUR": "Mineur",
+    "INFO": "Information"
+  },
+  "auditFrequency": {
+    "QUOTIDIEN": "Quotidien",
+    "HEBDOMADAIRE": "Hebdomadaire",
+    "MENSUEL": "Mensuel",
+    "TRIMESTRIEL": "Trimestriel",
+    "SEMESTRIEL": "Semestriel",
+    "ANNUEL": "Annuel",
+    "BIANNUEL": "Tous les 2 ans",
+    "HEURES_DE_VOL": "Selon les heures de vol",
+    "APRES_INCIDENT": "Après incident",
+    "AUTRE": "Autre"
+  },
+  "auditCategory": {
+    "CELLULE": "Cellule",
+    "MOTEUR": "Moteur",
+    "AVIONIQUE": "Avionique",
+    "TRAIN_ATTERRISSAGE": "Train d'atterrissage",
+    "SYSTEME_CARBURANT": "Système carburant",
+    "SYSTEME_ELECTRIQUE": "Système électrique",
+    "DOCUMENTATION": "Documentation",
+    "EQUIPEMENT_SECURITE": "Équipement de sécurité",
+    "AUTRE": "Autre"
+  },
+  "incidentSeverity": {
+    "low": "Faible",
+    "medium": "Moyenne",
+    "high": "Élevée",
+    "unknown": "Non précisée"
+  },
+  "incidentSeverityBadge": {
+    "low": "Gravité faible",
+    "medium": "Gravité moyenne",
+    "high": "Gravité élevée",
+    "unknown": "Gravité non précisée"
+  },
+  "incidentPriority": {
+    "low": "Basse",
+    "medium": "Moyenne",
+    "high": "Haute",
+    "unknown": "Non précisée"
+  },
+  "incidentStatus": {
+    "open": "Ouvert",
+    "in_progress": "En cours",
+    "resolved": "Résolu",
+    "unknown": "Non précisé"
+  },
+  "incidentCategory": {
+    "mechanical": "Mécanique",
+    "electrical": "Électrique",
+    "weather": "Météorologique",
+    "human_error": "Erreur humaine",
+    "other": "Autre"
+  }
+}

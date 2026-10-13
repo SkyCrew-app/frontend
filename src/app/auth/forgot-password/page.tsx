@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { Loader2, MailCheck } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,8 +12,10 @@ import { useMutation } from '@apollo/client';
 import { REQUEST_PASSWORD_RESET } from '@/graphql/user';
 import { forgotPasswordSchema } from '@/lib/validations';
 import { AuthCard, AuthLink, FieldError } from '@/app/auth/_components/AuthCard';
+import { authIssueMessage } from '@/app/auth/_components/validation-message';
 
 export default function ForgotPasswordPage() {
+  const { t } = useTranslation('auth');
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -23,7 +26,7 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
     const result = forgotPasswordSchema.safeParse({ email: email.trim() });
     if (!result.success) {
-      setEmailError(result.error.issues[0].message);
+      setEmailError(authIssueMessage(result.error.issues[0]));
       return;
     }
     setEmailError(null);
@@ -35,8 +38,8 @@ export default function ForgotPasswordPage() {
     } catch {
       toast({
         variant: "destructive",
-        title: "Envoi impossible",
-        description: "La demande n'a pas pu être envoyée. Réessayez dans un instant.",
+        title: t('forgotPassword.toast.failed.title'),
+        description: t('forgotPassword.toast.failed.description'),
       });
     }
   };
@@ -46,11 +49,11 @@ export default function ForgotPasswordPage() {
       <AuthCard
         icon={MailCheck}
         tone="success"
-        title="Consultez votre messagerie"
-        description={`Si un compte existe pour ${email.trim()}, un e-mail de réinitialisation vient d'être envoyé. Son lien est valable une heure.`}
+        title={t('forgotPassword.sent.title')}
+        description={t('forgotPassword.sent.description', { email: email.trim() })}
       >
         <Button asChild className="w-full">
-          <Link href="/">Retour à la connexion</Link>
+          <Link href="/">{t('common.backToSignIn')}</Link>
         </Button>
       </AuthCard>
     );
@@ -58,18 +61,18 @@ export default function ForgotPasswordPage() {
 
   return (
     <AuthCard
-      title="Mot de passe oublié"
-      description="Indiquez votre adresse e-mail pour recevoir un lien de réinitialisation."
-      footer={<AuthLink href="/">Retour à la connexion</AuthLink>}
+      title={t('forgotPassword.title')}
+      description={t('forgotPassword.description')}
+      footer={<AuthLink href="/">{t('common.backToSignIn')}</AuthLink>}
     >
       <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         <div className="space-y-1.5">
-          <Label htmlFor="email">Adresse e-mail</Label>
+          <Label htmlFor="email">{t('common:labels.email')}</Label>
           <Input
             id="email"
             type="email"
             autoComplete="email"
-            placeholder="prenom.nom@exemple.fr"
+            placeholder={t('common.emailPlaceholder')}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             aria-invalid={!!emailError}
@@ -79,7 +82,7 @@ export default function ForgotPasswordPage() {
         </div>
         <Button type="submit" className="w-full" disabled={loading}>
           {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-          Envoyer le lien
+          {t('forgotPassword.submit')}
         </Button>
       </form>
     </AuthCard>

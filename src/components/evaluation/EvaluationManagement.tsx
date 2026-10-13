@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslation } from "react-i18next"
 import { useMutation, useQuery } from "@apollo/client"
 import { ClipboardList, HelpCircle, Loader2, MoreHorizontal, Pencil, Plus, Search, Trash2 } from "lucide-react"
 import {
@@ -47,6 +48,7 @@ interface EvaluationForm {
 const emptyForm: EvaluationForm = { id: null, moduleId: "", moduleTitle: "", passScore: "70" }
 
 export function EvaluationManagement() {
+  const { t } = useTranslation("instruction")
   const [searchTerm, setSearchTerm] = useState("")
   const [form, setForm] = useState<EvaluationForm>(emptyForm)
   const [isFormOpen, setIsFormOpen] = useState(false)
@@ -89,11 +91,11 @@ export function EvaluationManagement() {
 
   const passScore = Number.parseInt(form.passScore, 10)
   const errors = {
-    moduleId: isEdit || form.moduleId ? null : "Choisissez le module évalué.",
+    moduleId: isEdit || form.moduleId ? null : t("admin.evaluations.form.moduleError"),
     passScore:
       Number.isInteger(passScore) && passScore >= 1 && passScore <= 100
         ? null
-        : "Indiquez un score entre 1 et 100.",
+        : t("admin.evaluations.form.passScoreError"),
   }
 
   const handleSubmit = async () => {
@@ -106,7 +108,10 @@ export function EvaluationManagement() {
           variables: { id: Number(form.id), updateEvaluationInput: { pass_score: passScore } },
         })
         await refetch()
-        toast({ title: "Évaluation modifiée", description: "Le score de réussite a été enregistré." })
+        toast({
+          title: t("admin.evaluations.toast.updated.title"),
+          description: t("admin.evaluations.toast.updated.description"),
+        })
         setIsFormOpen(false)
       } else {
         const { data: created } = await createEvaluation({
@@ -115,15 +120,20 @@ export function EvaluationManagement() {
           },
         })
         await refetch()
-        toast({ title: "Évaluation créée", description: "Ajoutez maintenant ses questions." })
+        toast({
+          title: t("admin.evaluations.toast.created.title"),
+          description: t("admin.evaluations.toast.created.description"),
+        })
         setIsFormOpen(false)
         // A new evaluation is empty: go straight to its questions.
         if (created?.createEvaluation?.id != null) setQuestionsOf(String(created.createEvaluation.id))
       }
     } catch {
       toast({
-        title: isEdit ? "Évaluation non modifiée" : "Évaluation non créée",
-        description: "L'enregistrement a échoué. Vérifiez les informations puis réessayez.",
+        title: isEdit
+          ? t("admin.evaluations.toast.updateFailed.title")
+          : t("admin.evaluations.toast.createFailed.title"),
+        description: t("shared.saveFailed"),
         variant: "destructive",
       })
     }
@@ -135,11 +145,14 @@ export function EvaluationManagement() {
       await deleteEvaluation({ variables: { id: Number(evaluationToDelete.id) } })
       setEvaluationToDelete(null)
       refetch()
-      toast({ title: "Évaluation supprimée", description: "Elle n'est plus proposée aux membres." })
+      toast({
+        title: t("admin.evaluations.toast.deleted.title"),
+        description: t("admin.evaluations.toast.deleted.description"),
+      })
     } catch {
       toast({
-        title: "Évaluation non supprimée",
-        description: "La suppression a échoué. Réessayez dans un instant.",
+        title: t("admin.evaluations.toast.deleteFailed.title"),
+        description: t("shared.deleteFailed"),
         variant: "destructive",
       })
     }
@@ -153,7 +166,7 @@ export function EvaluationManagement() {
   const createButton = (
     <Button onClick={openCreate}>
       <Plus className="h-4 w-4" />
-      Créer une évaluation
+      {t("admin.evaluations.create")}
     </Button>
   )
 
@@ -164,8 +177,8 @@ export function EvaluationManagement() {
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="search"
-            aria-label="Rechercher une évaluation par module"
-            placeholder="Rechercher un module, ex. réglementation"
+            aria-label={t("admin.evaluations.searchAria")}
+            placeholder={t("admin.evaluations.searchPlaceholder")}
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
             className="pl-9"
@@ -185,14 +198,14 @@ export function EvaluationManagement() {
       ) : filteredEvaluations.length === 0 ? (
         <EmptyState
           icon={ClipboardList}
-          title={search ? "Aucune évaluation ne correspond" : "Aucune évaluation pour le moment"}
+          title={search ? t("admin.evaluations.empty.filteredTitle") : t("admin.evaluations.empty.title")}
           description={
-            search ? "Modifiez la recherche." : "Une évaluation vérifie les acquis d'un module par un questionnaire."
+            search ? t("admin.shared.changeSearch") : t("admin.evaluations.empty.description")
           }
           action={
             search ? (
               <Button variant="outline" onClick={() => setSearchTerm("")}>
-                Effacer la recherche
+                {t("admin.shared.clearSearch")}
               </Button>
             ) : (
               createButton
@@ -204,11 +217,11 @@ export function EvaluationManagement() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Module évalué</TableHead>
-                <TableHead className="text-right">Score de réussite</TableHead>
-                <TableHead className="text-right">Questions</TableHead>
+                <TableHead>{t("admin.evaluations.columns.module")}</TableHead>
+                <TableHead className="text-right">{t("admin.evaluations.columns.passScore")}</TableHead>
+                <TableHead className="text-right">{t("admin.evaluations.columns.questions")}</TableHead>
                 <TableHead className="w-12">
-                  <span className="sr-only">Actions</span>
+                  <span className="sr-only">{t("common:labels.actions")}</span>
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -230,10 +243,12 @@ export function EvaluationManagement() {
                         {evaluation.module?.title ?? "—"}
                       </button>
                     </TableCell>
-                    <TableCell className="text-right tabular-nums">{Math.round(evaluation.pass_score)} %</TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {t("shared.percent", { value: Math.round(evaluation.pass_score) })}
+                    </TableCell>
                     <TableCell className="text-right tabular-nums">
                       {evaluation.questions.length === 0 ? (
-                        <Badge variant="warning">Aucune question</Badge>
+                        <Badge variant="warning">{t("admin.evaluations.noQuestion")}</Badge>
                       ) : (
                         evaluation.questions.length
                       )}
@@ -245,8 +260,8 @@ export function EvaluationManagement() {
                             variant="ghost"
                             size="icon"
                             className="h-9 w-9"
-                            aria-label={`Actions de l'évaluation ${evaluation.module?.title ?? ""}`}
-                            title="Actions"
+                            aria-label={t("admin.evaluations.actionsAria", { module: evaluation.module?.title ?? "" })}
+                            title={t("common:labels.actions")}
                           >
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
@@ -254,11 +269,11 @@ export function EvaluationManagement() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onSelect={openQuestions}>
                             <HelpCircle className="h-4 w-4" />
-                            Gérer les questions
+                            {t("admin.evaluations.manageQuestions")}
                           </DropdownMenuItem>
                           <DropdownMenuItem onSelect={() => openEdit(evaluation)}>
                             <Pencil className="h-4 w-4" />
-                            Modifier le score de réussite
+                            {t("admin.evaluations.editPassScore")}
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
@@ -266,7 +281,7 @@ export function EvaluationManagement() {
                             onSelect={() => setEvaluationToDelete(evaluation)}
                           >
                             <Trash2 className="h-4 w-4" />
-                            Supprimer
+                            {t("common:actions.delete")}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -282,33 +297,38 @@ export function EvaluationManagement() {
       <SidePanel
         open={isFormOpen}
         onOpenChange={(open) => !saving && setIsFormOpen(open)}
-        title={isEdit ? "Modifier l'évaluation" : "Créer une évaluation"}
+        title={isEdit ? t("admin.evaluations.form.editTitle") : t("admin.evaluations.create")}
         description={
           isEdit
-            ? `Évaluation du module « ${form.moduleTitle} ».`
-            : "Choisissez le module évalué ; les questions s'ajoutent juste après."
+            ? t("admin.evaluations.form.editDescription", { module: form.moduleTitle })
+            : t("admin.evaluations.form.createDescription")
         }
         onSubmit={handleSubmit}
-        submitLabel={isEdit ? "Enregistrer" : "Créer l'évaluation"}
+        submitLabel={isEdit ? t("common:actions.save") : t("admin.evaluations.form.submitCreate")}
         submitting={saving}
         size="md"
       >
         <div className="space-y-4">
           {!isEdit && (
-            <FormField label="Module" htmlFor="evaluation-module" required error={submitted ? errors.moduleId : null}>
+            <FormField
+              label={t("admin.shared.module")}
+              htmlFor="evaluation-module"
+              required
+              error={submitted ? errors.moduleId : null}
+            >
               <Select value={form.moduleId} onValueChange={(value) => setForm({ ...form, moduleId: value })}>
                 <SelectTrigger id="evaluation-module">
-                  <SelectValue placeholder="Choisir un module" />
+                  <SelectValue placeholder={t("admin.shared.chooseModule")} />
                 </SelectTrigger>
                 <SelectContent>
                   {modulesQuery.loading && modules.length === 0 ? (
                     <div className="flex items-center justify-center gap-2 p-3 text-sm text-muted-foreground">
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      Chargement des modules
+                      {t("admin.evaluations.form.loadingModules")}
                     </div>
                   ) : modules.length === 0 ? (
                     <div className="p-3 text-center text-sm text-muted-foreground">
-                      Aucun module : créez-en un dans l'onglet Modules.
+                      {t("admin.evaluations.form.noModules")}
                     </div>
                   ) : (
                     modules.map((module) => (
@@ -323,11 +343,11 @@ export function EvaluationManagement() {
           )}
 
           <FormField
-            label="Score de réussite"
+            label={t("admin.evaluations.columns.passScore")}
             htmlFor="evaluation-pass-score"
             required
             error={submitted ? errors.passScore : null}
-            hint="Part de bonnes réponses à atteindre pour réussir."
+            hint={t("admin.evaluations.form.passScoreHint")}
           >
             <div className="flex items-center gap-2">
               <Input
@@ -353,8 +373,10 @@ export function EvaluationManagement() {
       <ConfirmDeleteDialog
         open={evaluationToDelete !== null}
         onOpenChange={(open) => !open && setEvaluationToDelete(null)}
-        title="Supprimer cette évaluation ?"
-        description={`L'évaluation du module « ${evaluationToDelete?.module?.title ?? ""} » sera définitivement supprimée, avec toutes ses questions.`}
+        title={t("admin.evaluations.deleteConfirm.title")}
+        description={t("admin.evaluations.deleteConfirm.description", {
+          module: evaluationToDelete?.module?.title ?? "",
+        })}
         onConfirm={handleDelete}
         loading={deleting}
       />

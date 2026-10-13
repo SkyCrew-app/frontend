@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useTranslation } from "react-i18next"
 import { useMutation, useQuery } from "@apollo/client"
 import { format, parseISO } from "date-fns"
 import { Loader2 } from "lucide-react"
@@ -12,7 +13,7 @@ import { useToast } from "@/components/hooks/use-toast"
 import { CREATE_COURSE, GET_MEMBERS_DIRECTORY, UPDATE_COURSE } from "@/graphql/course"
 import { datetimeLocalToISOString } from "@/lib/datetime"
 import { courseParticipants } from "@/lib/roles"
-import { COURSE_STATUS_OPTIONS, personName, type InstructionCourse } from "./course-helpers"
+import { courseStatusOptions, personName, type InstructionCourse } from "./course-helpers"
 
 type Member = {
   id: number
@@ -50,6 +51,7 @@ const RequiredMark = () => (
 
 // Plans a course or modifies one: who, when and, for an existing course, its status.
 export default function CourseFormDialog({ open, onClose, onSaved, course = null, instructorId = null }: CourseFormDialogProps) {
+  const { t } = useTranslation("instruction")
   const { toast } = useToast()
   const isEdit = course !== null
   const ownInstructorId = instructorId === null ? "" : String(instructorId)
@@ -85,12 +87,12 @@ export default function CourseFormDialog({ open, onClose, onSaved, course = null
   const askInstructor = !ownInstructorId
 
   const errors = {
-    instructorId: form.instructorId ? null : "Choisissez l'instructeur.",
-    studentId: form.studentId ? null : "Choisissez l'élève.",
-    startTime: form.startTime ? null : "Indiquez le début du cours.",
+    instructorId: form.instructorId ? null : t("courses.form.errors.instructor"),
+    studentId: form.studentId ? null : t("courses.form.errors.student"),
+    startTime: form.startTime ? null : t("courses.form.errors.start"),
     endTime:
       form.endTime && form.startTime && new Date(form.endTime) <= new Date(form.startTime)
-        ? "La fin doit être après le début."
+        ? t("courses.form.errors.end")
         : null,
   }
   const hasErrors = Object.values(errors).some(Boolean)
@@ -115,7 +117,7 @@ export default function CourseFormDialog({ open, onClose, onSaved, course = null
             },
           },
         })
-        toast({ title: "Cours modifié", description: "Les changements ont été enregistrés." })
+        toast({ title: t("courses.form.toast.updated.title"), description: t("shared.changesSaved") })
       } else {
         await createCourse({
           variables: {
@@ -127,15 +129,18 @@ export default function CourseFormDialog({ open, onClose, onSaved, course = null
             },
           },
         })
-        toast({ title: "Cours planifié", description: "Le cours a été ajouté à votre liste." })
+        toast({
+          title: t("courses.form.toast.created.title"),
+          description: t("courses.form.toast.created.description"),
+        })
       }
       onSaved()
       onClose()
     } catch {
       toast({
         variant: "destructive",
-        title: isEdit ? "Cours non modifié" : "Cours non planifié",
-        description: "L'enregistrement a échoué. Vérifiez les informations puis réessayez.",
+        title: isEdit ? t("courses.form.toast.updateFailed.title") : t("courses.form.toast.createFailed.title"),
+        description: t("shared.saveFailed"),
       })
     }
   }
@@ -144,7 +149,7 @@ export default function CourseFormDialog({ open, onClose, onSaved, course = null
     membersLoading ? (
       <div className="flex items-center justify-center gap-2 p-3 text-sm text-muted-foreground">
         <Loader2 className="h-4 w-4 animate-spin" />
-        Chargement des membres
+        {t("courses.form.loadingMembers")}
       </div>
     ) : members.length === 0 ? (
       <div className="p-3 text-center text-sm text-muted-foreground">{emptyLabel}</div>
@@ -160,26 +165,26 @@ export default function CourseFormDialog({ open, onClose, onSaved, course = null
     <SidePanel
       open={open}
       onOpenChange={(next) => !next && !saving && onClose()}
-      title={isEdit ? "Modifier le cours" : "Planifier un cours"}
+      title={isEdit ? t("courses.form.title.edit") : t("courses.form.title.create")}
       description={
-        isEdit ? "Changez l'élève, l'horaire ou le statut du cours." : "Choisissez l'élève et l'horaire du cours."
+        isEdit ? t("courses.form.description.edit") : t("courses.form.description.create")
       }
       onSubmit={handleSubmit}
-      submitLabel={isEdit ? "Enregistrer" : "Planifier le cours"}
+      submitLabel={isEdit ? t("common:actions.save") : t("courses.form.submitCreate")}
       submitting={saving}
     >
       <div className="space-y-4">
         {askInstructor && (
           <div className="space-y-2">
             <Label htmlFor="course-instructor">
-              Instructeur
+              {t("common:labels.instructor")}
               <RequiredMark />
             </Label>
             <Select value={form.instructorId} onValueChange={(value) => setField("instructorId", value)}>
               <SelectTrigger id="course-instructor">
-                <SelectValue placeholder="Choisir un instructeur" />
+                <SelectValue placeholder={t("courses.form.instructorPlaceholder")} />
               </SelectTrigger>
-              <SelectContent>{memberOptions(instructors, "Aucun instructeur dans le club")}</SelectContent>
+              <SelectContent>{memberOptions(instructors, t("courses.form.noInstructor"))}</SelectContent>
             </Select>
             {fieldError("instructorId")}
           </div>
@@ -187,14 +192,14 @@ export default function CourseFormDialog({ open, onClose, onSaved, course = null
 
         <div className="space-y-2">
           <Label htmlFor="course-student">
-            Élève
+            {t("common:labels.student")}
             <RequiredMark />
           </Label>
           <Select value={form.studentId} onValueChange={(value) => setField("studentId", value)}>
             <SelectTrigger id="course-student">
-              <SelectValue placeholder="Choisir un élève" />
+              <SelectValue placeholder={t("courses.form.studentPlaceholder")} />
             </SelectTrigger>
-            <SelectContent>{memberOptions(students, "Aucun membre disponible")}</SelectContent>
+            <SelectContent>{memberOptions(students, t("courses.form.noMember"))}</SelectContent>
           </Select>
           {fieldError("studentId")}
         </div>
@@ -202,7 +207,7 @@ export default function CourseFormDialog({ open, onClose, onSaved, course = null
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="course-start">
-              Début
+              {t("common:labels.start")}
               <RequiredMark />
             </Label>
             <Input
@@ -215,7 +220,7 @@ export default function CourseFormDialog({ open, onClose, onSaved, course = null
             {fieldError("startTime")}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="course-end">Fin</Label>
+            <Label htmlFor="course-end">{t("common:labels.end")}</Label>
             <Input
               id="course-end"
               type="datetime-local"
@@ -224,19 +229,19 @@ export default function CourseFormDialog({ open, onClose, onSaved, course = null
               onChange={(event) => setField("endTime", event.target.value)}
               aria-invalid={submitted && !!errors.endTime}
             />
-            {fieldError("endTime") ?? <p className="text-xs text-muted-foreground">Facultatif.</p>}
+            {fieldError("endTime") ?? <p className="text-xs text-muted-foreground">{t("shared.optional")}</p>}
           </div>
         </div>
 
         {isEdit && (
           <div className="space-y-2">
-            <Label htmlFor="course-status">Statut</Label>
+            <Label htmlFor="course-status">{t("common:labels.status")}</Label>
             <Select value={form.status} onValueChange={(value) => setField("status", value)}>
               <SelectTrigger id="course-status">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {COURSE_STATUS_OPTIONS.map((option) => (
+                {courseStatusOptions().map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>

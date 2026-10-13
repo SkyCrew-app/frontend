@@ -15,7 +15,7 @@ interface MaintenanceTypeIconProps {
   className?: string
 }
 
-/** Type of a maintenance: its icon and its French label. */
+/** Type of a maintenance: its icon and its label. */
 export function MaintenanceTypeIcon({ type, className }: MaintenanceTypeIconProps) {
   const Icon = ICONS[(type ?? "").toUpperCase()] ?? Wrench
 

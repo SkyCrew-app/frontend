@@ -8,13 +8,13 @@ import {
   ChecklistResponse,
   ChecklistSubmission,
   ChecklistSubmissionStatus,
-  CATEGORY_LABELS,
 } from "@/interfaces/checklist"
 import { EmptyState } from "@/components/layout/EmptyState"
-import { groupItemsByCategory } from "@/lib/checklist-items"
+import { checklistCategoryLabel, groupItemsByCategory } from "@/lib/checklist-items"
 import { ChecklistCategorySection } from "./ChecklistCategorySection"
 import { ChecklistItemRow } from "./ChecklistItemRow"
 import { ChecklistProgress } from "./ChecklistProgress"
+import { useTranslation } from "react-i18next"
 
 interface ChecklistFormProps {
   submission: ChecklistSubmission
@@ -30,6 +30,7 @@ type SaveState = "idle" | "pending" | "saving" | "saved" | "error"
 const AUTO_SAVE_DELAY_MS = 1000
 
 export function ChecklistForm({ submission, items, onUpdate, onComplete }: ChecklistFormProps) {
+  const { t } = useTranslation("checklists")
   // Only what the pilot changed on this screen; the rest comes from the submission.
   // Answers typed while a save is in flight are therefore never overwritten by its result.
   const [edits, setEdits] = useState<Record<string, Answer>>({})
@@ -135,8 +136,8 @@ export function ChecklistForm({ submission, items, onUpdate, onComplete }: Check
     return (
       <EmptyState
         icon={ClipboardCheck}
-        title="Cette checklist ne contient aucun point"
-        description="Le modèle utilisé est vide. Signalez-le à un administrateur du club."
+        title={t("form.empty.title")}
+        description={t("form.empty.description")}
       />
     )
   }
@@ -157,7 +158,7 @@ export function ChecklistForm({ submission, items, onUpdate, onComplete }: Check
           return (
             <ChecklistCategorySection
               key={category}
-              category={CATEGORY_LABELS[category] || "Autres points"}
+              category={checklistCategoryLabel(category)}
               checkedCount={catChecked}
               totalCount={catItems.length}
             >
@@ -190,9 +191,7 @@ export function ChecklistForm({ submission, items, onUpdate, onComplete }: Check
             <SaveIndicator state={saveState} onRetry={() => void save(edits)} />
             {!allRequiredChecked && (
               <p className="text-xs text-muted-foreground">
-                {missingRequired > 1
-                  ? `Cochez les ${missingRequired} points obligatoires restants pour terminer.`
-                  : "Cochez le dernier point obligatoire pour terminer."}
+                {t("form.requiredMissing", { count: missingRequired })}
               </p>
             )}
           </div>
@@ -203,7 +202,7 @@ export function ChecklistForm({ submission, items, onUpdate, onComplete }: Check
             className="w-full shrink-0 sm:w-auto"
           >
             {completing ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-            Terminer la checklist
+            {t("form.complete")}
           </Button>
         </div>
       )}
@@ -212,13 +211,14 @@ export function ChecklistForm({ submission, items, onUpdate, onComplete }: Check
 }
 
 function SaveIndicator({ state, onRetry }: { state: SaveState; onRetry: () => void }) {
+  const { t } = useTranslation("checklists")
   if (state === "error") {
     return (
       <p className="flex flex-wrap items-center gap-x-2 text-sm text-destructive">
         <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
-        Dernières réponses non enregistrées.
+        {t("form.save.error")}
         <button type="button" onClick={onRetry} className="font-medium underline underline-offset-2">
-          Réessayer
+          {t("common:actions.retry")}
         </button>
       </p>
     )
@@ -227,7 +227,7 @@ function SaveIndicator({ state, onRetry }: { state: SaveState; onRetry: () => vo
     return (
       <p className="flex items-center gap-2 text-sm text-muted-foreground">
         <Loader2 className="h-4 w-4 shrink-0 animate-spin" aria-hidden="true" />
-        Enregistrement…
+        {t("common:states.saving")}
       </p>
     )
   }
@@ -235,9 +235,9 @@ function SaveIndicator({ state, onRetry }: { state: SaveState; onRetry: () => vo
     return (
       <p className="flex items-center gap-2 text-sm text-muted-foreground">
         <Check className="h-4 w-4 shrink-0 text-success" aria-hidden="true" />
-        Réponses enregistrées
+        {t("form.save.saved")}
       </p>
     )
   }
-  return <p className="text-sm text-muted-foreground">Vos réponses s'enregistrent automatiquement.</p>
+  return <p className="text-sm text-muted-foreground">{t("form.save.auto")}</p>
 }

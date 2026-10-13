@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { fr } from "date-fns/locale"
+import { useTranslation } from "react-i18next"
 import { CalendarIcon, Download } from "lucide-react"
 import { SidePanel } from "@/components/layout/SidePanel"
 import { Button } from "@/components/ui/button"
@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { formatDate } from "@/lib/format"
+import { dateFnsLocale } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 
 type ExportFormat = "pdf" | "excel"
@@ -29,6 +30,7 @@ interface DateFieldProps {
 }
 
 function DateField({ id, label, value, onChange, disabledDays }: DateFieldProps) {
+  const { t } = useTranslation("administration")
   const [open, setOpen] = useState(false)
 
   return (
@@ -49,7 +51,7 @@ function DateField({ id, label, value, onChange, disabledDays }: DateFieldProps)
             className={cn("w-full justify-start font-normal", !value && "text-muted-foreground")}
           >
             <CalendarIcon className="h-4 w-4" />
-            {value ? formatDate(value) : "Choisir une date"}
+            {value ? formatDate(value) : t("finance.export.chooseDate")}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
@@ -62,7 +64,7 @@ function DateField({ id, label, value, onChange, disabledDays }: DateFieldProps)
             }}
             disabled={disabledDays}
             initialFocus
-            locale={fr}
+            locale={dateFnsLocale()}
           />
         </PopoverContent>
       </Popover>
@@ -71,6 +73,7 @@ function DateField({ id, label, value, onChange, disabledDays }: DateFieldProps)
 }
 
 export function ExportDialog({ onExport, isLoading }: ExportDialogProps) {
+  const { t } = useTranslation("administration")
   const [open, setOpen] = useState(false)
   const [startDate, setStartDate] = useState<Date>()
   const [endDate, setEndDate] = useState<Date>()
@@ -89,29 +92,29 @@ export function ExportDialog({ onExport, isLoading }: ExportDialogProps) {
     <>
       <Button variant="outline" onClick={() => setOpen(true)}>
         <Download className="h-4 w-4" />
-        Exporter
+        {t("common:actions.export")}
       </Button>
       <SidePanel
         open={open}
         onOpenChange={(next) => (next || !isLoading) && setOpen(next)}
-        title="Exporter le rapport financier"
-        description="Choisissez le format et la période à inclure dans le rapport."
+        title={t("finance.export.title")}
+        description={t("finance.export.description")}
         onSubmit={handleExport}
-        submitLabel={isLoading ? "Export en cours…" : "Exporter"}
+        submitLabel={isLoading ? t("finance.export.exporting") : t("common:actions.export")}
         submitting={isLoading}
         submitDisabled={!startDate || !endDate || invalidRange}
         size="md"
       >
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="export-format">Format</Label>
+            <Label htmlFor="export-format">{t("finance.export.format")}</Label>
             <Select value={exportFormat} onValueChange={(value: ExportFormat) => setExportFormat(value)}>
               <SelectTrigger id="export-format">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="pdf">PDF</SelectItem>
-                <SelectItem value="excel">Tableur (Excel)</SelectItem>
+                <SelectItem value="excel">{t("finance.export.spreadsheet")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -119,21 +122,21 @@ export function ExportDialog({ onExport, isLoading }: ExportDialogProps) {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <DateField
               id="export-start-date"
-              label="Du"
+              label={t("finance.export.from")}
               value={startDate}
               onChange={setStartDate}
               disabledDays={(date) => (endDate ? date > endDate : false)}
             />
             <DateField
               id="export-end-date"
-              label="Au"
+              label={t("finance.export.to")}
               value={endDate}
               onChange={setEndDate}
               disabledDays={(date) => (startDate ? date < startDate : false)}
             />
           </div>
           {invalidRange && (
-            <p className="text-sm text-destructive">La date de fin doit être postérieure à la date de début.</p>
+            <p className="text-sm text-destructive">{t("finance.export.invalidRange")}</p>
           )}
         </div>
       </SidePanel>

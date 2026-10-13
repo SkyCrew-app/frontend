@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { useQuery } from "@apollo/client"
 import { CalendarClock, CalendarPlus } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { formatDateTime } from "@/lib/format"
 import { reservationStatus } from "@/lib/reservation-status"
 import { GET_USER_RESERVATIONS } from "@/graphql/reservation"
@@ -18,6 +19,7 @@ interface UpcomingReservationsWidgetProps {
 }
 
 export default function UpcomingReservationsWidget({ userId }: UpcomingReservationsWidgetProps) {
+  const { t } = useTranslation("dashboard")
   const { data, loading, error, refetch } = useQuery(GET_USER_RESERVATIONS, {
     variables: { userId: userId ? Number(userId) : 0 },
     skip: !userId,
@@ -37,12 +39,12 @@ export default function UpcomingReservationsWidget({ userId }: UpcomingReservati
       return (
         <WidgetEmpty
           icon={CalendarClock}
-          title="Aucune réservation à venir"
+          title={t("upcomingReservations.empty")}
           action={
             <Button asChild variant="outline" size="sm">
               <Link href="/reservations">
                 <CalendarPlus className="h-4 w-4" />
-                Réserver un avion
+                {t("quickActions.book")}
               </Link>
             </Button>
           }
@@ -59,7 +61,7 @@ export default function UpcomingReservationsWidget({ userId }: UpcomingReservati
               key={reservation.id}
               href="/reservations/my"
               icon={CalendarClock}
-              title={reservation.aircraft?.registration_number || "Avion non précisé"}
+              title={reservation.aircraft?.registration_number || t("upcomingReservations.unknownAircraft")}
               meta={formatDateTime(reservation.start_time)}
               trailing={<Badge variant={status.variant}>{status.label}</Badge>}
             />
@@ -72,7 +74,7 @@ export default function UpcomingReservationsWidget({ userId }: UpcomingReservati
   return (
     <WidgetContainer
       title={WIDGET_REGISTRY["upcoming-reservations"].label}
-      action={<WidgetLink href="/reservations/my">Tout voir</WidgetLink>}
+      action={<WidgetLink href="/reservations/my">{t("common:actions.seeAll")}</WidgetLink>}
     >
       {renderContent()}
     </WidgetContainer>

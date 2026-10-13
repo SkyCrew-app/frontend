@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useTranslation } from "react-i18next"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -21,6 +22,7 @@ interface FlightPlanEditDialogProps {
 }
 
 export function FlightPlanEditDialog({ isOpen, onOpenChange, flight, onSave }: FlightPlanEditDialogProps) {
+  const { t } = useTranslation("flights")
   const [flightType, setFlightType] = useState("")
   const [weatherConditions, setWeatherConditions] = useState("")
   const [numberOfPassengers, setNumberOfPassengers] = useState<number | undefined>(undefined)
@@ -59,8 +61,8 @@ export function FlightPlanEditDialog({ isOpen, onOpenChange, flight, onSave }: F
         if (!next && isSubmitting) return
         onOpenChange(next)
       }}
-      title="Modifier le plan de vol"
-      description={`${flight.origin_icao} → ${flight.destination_icao}. La route se modifie en créant un nouveau plan.`}
+      title={t("planEdit.title")}
+      description={t("planEdit.description", { origin: flight.origin_icao, destination: flight.destination_icao })}
       size="md"
       onSubmit={handleSubmit}
       submitting={isSubmitting}
@@ -68,10 +70,10 @@ export function FlightPlanEditDialog({ isOpen, onOpenChange, flight, onSave }: F
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="flight-type">Type de vol</Label>
+            <Label htmlFor="flight-type">{t("plans.labels.flightType")}</Label>
             <Select value={flightType} onValueChange={setFlightType}>
               <SelectTrigger id="flight-type">
-                <SelectValue placeholder="Sélectionner" />
+                <SelectValue placeholder={t("planEdit.typePlaceholder")} />
               </SelectTrigger>
               <SelectContent>
                 {typeOptions.map((option) => (
@@ -84,7 +86,7 @@ export function FlightPlanEditDialog({ isOpen, onOpenChange, flight, onSave }: F
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="number-of-passengers">Passagers</Label>
+            <Label htmlFor="number-of-passengers">{t("plans.labels.passengers")}</Label>
             <Input
               id="number-of-passengers"
               type="number"
@@ -104,12 +106,12 @@ export function FlightPlanEditDialog({ isOpen, onOpenChange, flight, onSave }: F
 
         {weatherKnown && (
           <div className="space-y-2">
-            <Label htmlFor="weather-conditions">Conditions météo</Label>
+            <Label htmlFor="weather-conditions">{t("planEdit.weather")}</Label>
             <Input
               id="weather-conditions"
               value={weatherConditions}
               onChange={(e) => setWeatherConditions(e.target.value)}
-              placeholder="Ex. : CAVOK, vent 240/08"
+              placeholder={t("planEdit.weatherPlaceholder")}
             />
           </div>
         )}

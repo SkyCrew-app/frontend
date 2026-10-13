@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import { useTranslation } from "react-i18next"
 import Link from "next/link"
 import { useQuery } from "@apollo/client"
 import { Award, CheckCircle2, ClipboardCheck, ClipboardList, History, Search } from "lucide-react"
@@ -19,6 +20,7 @@ import { ListPagination, paginate } from "@/components/courses/ListPagination"
 import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
 import { GET_EVALUATIONS, GET_USER_EVALUATION_RESULTS } from "@/graphql/evaluation"
 import { formatDate } from "@/lib/format"
+import i18n from "@/lib/i18n"
 import { learningRoutes } from "@/lib/learning-navigation"
 import { averageScore, evaluationsToTake, latestEvaluationAttempts } from "@/lib/learning-progress"
 
@@ -39,9 +41,11 @@ interface AttemptResult {
 const PAGE_SIZE = 10
 
 const attemptTime = (attempt: AttemptResult) => (attempt.completed_at ? new Date(attempt.completed_at).getTime() || 0 : 0)
-const formatScore = (score: number | null | undefined) => (score == null ? "—" : `${Math.round(score)} %`)
+const formatScore = (score: number | null | undefined) =>
+  (score == null ? "—" : i18n.t("instruction:shared.percent", { value: Math.round(score) }))
 
 export default function EvaluationsPage() {
+  const { t } = useTranslation("instruction")
   const [searchTerm, setSearchTerm] = useState("")
   const [resultFilter, setResultFilter] = useState("all")
   const [page, setPage] = useState(1)
@@ -97,8 +101,8 @@ export default function EvaluationsPage() {
     <div className="space-y-6">
       <PageHeader
         className="mb-0"
-        title="Mes évaluations"
-        description="Les évaluations à passer et les résultats de celles que vous avez déjà passées."
+        title={t("evaluations.title")}
+        description={t("evaluations.page.description")}
       />
 
       {loading ? (
@@ -125,11 +129,16 @@ export default function EvaluationsPage() {
       ) : (
         <>
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            <StatCard label="À passer" value={toTake.length} icon={ClipboardList} tone="warning" />
-            <StatCard label="Réussies" value={passedCount} icon={CheckCircle2} tone="success" />
-            <StatCard label="Score moyen" value={average === null ? "—" : `${average} %`} icon={Award} tone="primary" />
+            <StatCard label={t("shared.toTake")} value={toTake.length} icon={ClipboardList} tone="warning" />
+            <StatCard label={t("evaluations.page.stats.passed")} value={passedCount} icon={CheckCircle2} tone="success" />
             <StatCard
-              label="Dernière tentative"
+              label={t("evaluations.page.stats.average")}
+              value={average === null ? "—" : t("shared.percent", { value: average })}
+              icon={Award}
+              tone="primary"
+            />
+            <StatCard
+              label={t("evaluations.page.stats.lastAttempt")}
               value={lastAttempt?.completed_at ? formatDate(lastAttempt.completed_at) : "—"}
               hint={lastAttempt?.evaluation?.module?.title}
               icon={History}
@@ -138,12 +147,12 @@ export default function EvaluationsPage() {
           </div>
 
           <section className="space-y-3">
-            <h2 className="text-lg font-semibold">À passer</h2>
+            <h2 className="text-lg font-semibold">{t("shared.toTake")}</h2>
             {toTake.length === 0 ? (
               <EmptyState
                 icon={ClipboardCheck}
-                title="Aucune évaluation à passer"
-                description="Toutes les évaluations disponibles sont réussies. Les nouvelles apparaîtront ici."
+                title={t("evaluations.page.toTake.emptyTitle")}
+                description={t("evaluations.page.toTake.emptyDescription")}
               />
             ) : (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -154,26 +163,30 @@ export default function EvaluationsPage() {
                       <CardHeader className="pb-3">
                         <div className="flex items-start justify-between gap-3">
                           <CardTitle className="text-base leading-snug">
-                            {evaluation.module?.title ?? "Évaluation"}
+                            {evaluation.module?.title ?? t("shared.evaluationFallback")}
                           </CardTitle>
                           <Badge variant={lastTry ? "warning" : "neutral"} className="shrink-0">
-                            {lastTry ? "À repasser" : "À passer"}
+                            {lastTry ? t("shared.toRetake") : t("shared.toTake")}
                           </Badge>
                         </div>
                       </CardHeader>
                       <CardContent className="flex-1 space-y-1 pb-4 text-sm text-muted-foreground">
-                        <p>Score requis : {formatScore(evaluation.pass_score)}</p>
+                        <p>{t("shared.requiredScore", { score: formatScore(evaluation.pass_score) })}</p>
                         {lastTry && (
                           <p>
-                            Dernier score : {formatScore(lastTry.score)}
-                            {lastTry.completed_at && `, le ${formatDate(lastTry.completed_at)}`}
+                            {lastTry.completed_at
+                              ? t("evaluations.page.toTake.lastScoreOn", {
+                                  score: formatScore(lastTry.score),
+                                  date: formatDate(lastTry.completed_at),
+                                })
+                              : t("evaluations.page.toTake.lastScore", { score: formatScore(lastTry.score) })}
                           </p>
                         )}
                       </CardContent>
                       <CardFooter className="justify-end">
                         <Button size="sm" asChild>
                           <Link href={learningRoutes.evaluation(evaluation.id)}>
-                            {lastTry ? "Repasser l'évaluation" : "Passer l'évaluation"}
+                            {lastTry ? t("evaluations.page.toTake.retake") : t("evaluations.page.toTake.take")}
                           </Link>
                         </Button>
                       </CardFooter>
@@ -185,13 +198,13 @@ export default function EvaluationsPage() {
           </section>
 
           <section className="space-y-3">
-            <h2 className="text-lg font-semibold">Mes résultats</h2>
+            <h2 className="text-lg font-semibold">{t("shared.myResults")}</h2>
 
             {(attempts ?? []).length === 0 ? (
               <EmptyState
                 icon={History}
-                title="Aucun résultat pour le moment"
-                description="Vos scores apparaîtront ici après votre première évaluation."
+                title={t("evaluations.page.results.emptyTitle")}
+                description={t("evaluations.page.results.emptyDescription")}
               />
             ) : (
               <>
@@ -200,8 +213,8 @@ export default function EvaluationsPage() {
                     <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       type="search"
-                      aria-label="Rechercher un résultat par module"
-                      placeholder="Rechercher un module, ex. navigation"
+                      aria-label={t("evaluations.page.results.searchAria")}
+                      placeholder={t("evaluations.page.results.searchPlaceholder")}
                       className="pl-9"
                       value={searchTerm}
                       onChange={(event) => {
@@ -217,13 +230,13 @@ export default function EvaluationsPage() {
                       setPage(1)
                     }}
                   >
-                    <SelectTrigger className="w-full sm:w-48" aria-label="Filtrer par résultat">
+                    <SelectTrigger className="w-full sm:w-48" aria-label={t("evaluations.page.results.filterAria")}>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Tous les résultats</SelectItem>
-                      <SelectItem value="passed">Réussies</SelectItem>
-                      <SelectItem value="failed">Non réussies</SelectItem>
+                      <SelectItem value="all">{t("evaluations.page.results.filterAll")}</SelectItem>
+                      <SelectItem value="passed">{t("evaluations.page.results.filterPassed")}</SelectItem>
+                      <SelectItem value="failed">{t("evaluations.page.results.filterFailed")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -232,11 +245,13 @@ export default function EvaluationsPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Module</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead className="text-right">Score</TableHead>
-                        <TableHead className="text-right">Score requis</TableHead>
-                        <TableHead>Résultat</TableHead>
+                        <TableHead>{t("evaluations.page.results.columns.module")}</TableHead>
+                        <TableHead>{t("common:labels.date")}</TableHead>
+                        <TableHead className="text-right">{t("evaluations.page.results.columns.score")}</TableHead>
+                        <TableHead className="text-right">
+                          {t("evaluations.page.results.columns.requiredScore")}
+                        </TableHead>
+                        <TableHead>{t("evaluations.page.results.columns.result")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -245,9 +260,11 @@ export default function EvaluationsPage() {
                           <TableCell colSpan={5} className="p-4">
                             <EmptyState
                               icon={Search}
-                              title="Aucun résultat ne correspond"
+                              title={t("evaluations.page.results.noMatchTitle")}
                               description={
-                                isFiltered ? "Modifiez la recherche ou le filtre." : "Aucune tentative enregistrée."
+                                isFiltered
+                                  ? t("evaluations.page.results.noMatchFiltered")
+                                  : t("evaluations.page.results.noMatchEmpty")
                               }
                               className="border-0"
                             />
@@ -266,7 +283,7 @@ export default function EvaluationsPage() {
                             </TableCell>
                             <TableCell>
                               <Badge variant={attempt.passed ? "success" : "danger"}>
-                                {attempt.passed ? "Réussie" : "Non réussie"}
+                                {attempt.passed ? t("shared.passed") : t("shared.failed")}
                               </Badge>
                             </TableCell>
                           </TableRow>

@@ -2,6 +2,8 @@
 // an incident is shown. The API stores free strings (codes of the close-flight form, French
 // words in older data): everything is brought back to the same few values here.
 
+import i18n from "@/lib/i18n"
+
 export interface IncidentPerson {
   id: number
   first_name?: string | null
@@ -68,11 +70,8 @@ const lookup = <K extends string>(aliases: Record<K, string[]>, value: string | 
 
 export const incidentLevel = (value: string | null | undefined): IncidentLevel | null => lookup(LEVEL_ALIASES, value)
 
-const SEVERITIES: Record<IncidentLevel, { label: string; variant: Variant }> = {
-  low: { label: "Faible", variant: "neutral" },
-  medium: { label: "Moyenne", variant: "warning" },
-  high: { label: "Élevée", variant: "danger" },
-}
+// Labels are read when they are shown, so that they follow the language.
+const SEVERITY_VARIANTS: Record<IncidentLevel, Variant> = { low: "neutral", medium: "warning", high: "danger" }
 
 export const INCIDENT_LEVELS: IncidentLevel[] = ["low", "medium", "high"]
 
@@ -80,20 +79,18 @@ export const incidentSeverity = (
   value: string | null | undefined,
 ): { level: IncidentLevel | null; label: string; variant: Variant } => {
   const level = incidentLevel(value)
-  return level ? { level, ...SEVERITIES[level] } : { level: null, label: "Non précisée", variant: "neutral" }
+  return level
+    ? { level, label: i18n.t(`administration:incidentSeverity.${level}`), variant: SEVERITY_VARIANTS[level] }
+    : { level: null, label: i18n.t("administration:incidentSeverity.unknown"), variant: "neutral" }
 }
 
-const PRIORITIES: Record<IncidentLevel, string> = { low: "Basse", medium: "Moyenne", high: "Haute" }
+export const incidentPriorityLabel = (value: string | null | undefined): string =>
+  i18n.t(`administration:incidentPriority.${incidentLevel(value) ?? "unknown"}`)
 
-export const incidentPriorityLabel = (value: string | null | undefined): string => {
-  const level = incidentLevel(value)
-  return level ? PRIORITIES[level] : "Non précisée"
-}
-
-const STATUSES: Record<IncidentStatusKey, { label: string; variant: Variant }> = {
-  open: { label: "Ouvert", variant: "warning" },
-  in_progress: { label: "En cours", variant: "info" },
-  resolved: { label: "Résolu", variant: "success" },
+const STATUS_VARIANTS: Record<IncidentStatusKey, Variant> = {
+  open: "warning",
+  in_progress: "info",
+  resolved: "success",
 }
 
 export const INCIDENT_STATUS_KEYS: IncidentStatusKey[] = ["open", "in_progress", "resolved"]
@@ -112,22 +109,19 @@ export const incidentStatus = (
   value: string | null | undefined,
 ): { key: IncidentStatusKey | null; label: string; variant: Variant } => {
   const key = incidentStatusKey(value)
-  return key ? { key, ...STATUSES[key] } : { key: null, label: "Non précisé", variant: "neutral" }
+  return key
+    ? { key, label: i18n.t(`administration:incidentStatus.${key}`), variant: STATUS_VARIANTS[key] }
+    : { key: null, label: i18n.t("administration:incidentStatus.unknown"), variant: "neutral" }
 }
 
-const CATEGORIES: Record<string, string> = {
-  mechanical: "Mécanique",
-  electrical: "Électrique",
-  weather: "Météorologique",
-  human_error: "Erreur humaine",
-  other: "Autre",
-}
+const CATEGORIES = ["mechanical", "electrical", "weather", "human_error", "other"]
 
 // Known codes get their label; anything else is text typed by someone and is shown as typed.
 export const incidentCategoryLabel = (value: string | null | undefined): string => {
   const text = (value ?? "").trim()
   if (!text) return "—"
-  return CATEGORIES[normalise(text)] ?? text
+  const code = normalise(text)
+  return CATEGORIES.includes(code) ? i18n.t(`administration:incidentCategory.${code}`) : text
 }
 
 export const incidentPersonName = (person: IncidentPerson | null | undefined): string =>

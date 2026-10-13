@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from "react"
 import Link from "next/link"
 import { useQuery, useMutation } from "@apollo/client"
-import { fr } from "date-fns/locale"
+import { useTranslation } from "react-i18next"
 import { useEditor, EditorContent } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
 import { TextStyle } from "@tiptap/extension-text-style"
@@ -52,10 +52,12 @@ import { PageHeader } from "@/components/layout/PageHeader"
 import { EmptyState } from "@/components/layout/EmptyState"
 import { ErrorState } from "@/components/layout/ErrorState"
 import { SidePanel } from "@/components/layout/SidePanel"
+import { articleTagLabel } from "@/components/articles/article-card"
 import { ArticleImage } from "@/components/articles/article-image"
 import { useToast } from "@/components/hooks/use-toast"
 import { GET_ARTICLES, CREATE_ARTICLE, UPDATE_ARTICLE, DELETE_ARTICLE } from "@/graphql/articles"
 import { formatDate } from "@/lib/format"
+import i18n, { currentLocale, dateFnsLocale } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 import FontSize from "./setFontSize"
 
@@ -85,17 +87,18 @@ interface FormErrors {
   text?: string
 }
 
+// Stored as they are by the API; shown through articleTagLabel.
 const TAGS = ["Actualités", "Événements", "Formation", "Réglementation", "Sécurité", "Technique", "Information"]
 
 const EMPTY_FORM: ArticleFormData = { title: "", description: "", tags: "", text: "", eventDate: null }
 
 const FONT_SIZES = [
-  { value: "12px", label: "Très petit" },
-  { value: "14px", label: "Petit" },
-  { value: "16px", label: "Normal" },
-  { value: "18px", label: "Grand" },
-  { value: "20px", label: "Très grand" },
-  { value: "24px", label: "Énorme" },
+  { value: "12px", key: "xs" },
+  { value: "14px", key: "sm" },
+  { value: "16px", key: "md" },
+  { value: "18px", key: "lg" },
+  { value: "20px", key: "xl" },
+  { value: "24px", key: "xxl" },
 ]
 
 const parseTags = (tags: string) =>
@@ -109,7 +112,9 @@ const isEmptyHtml = (html: string) =>
   (new DOMParser().parseFromString(html, "text/html").body.textContent ?? "").trim() === ""
 
 const formatFileSize = (bytes: number) =>
-  `${new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 2 }).format(bytes / 1024 / 1024)} Mo`
+  i18n.t("articles:admin.files.size", {
+    size: new Intl.NumberFormat(currentLocale(), { maximumFractionDigits: 2 }).format(bytes / 1024 / 1024),
+  })
 
 const RequiredMark = () => (
   <span className="text-destructive" aria-hidden="true">
@@ -168,6 +173,7 @@ const RichTextEditor = ({
   labelledBy?: string
   describedBy?: string
 }) => {
+  const { t } = useTranslation("articles")
   const [isLinkOpen, setIsLinkOpen] = useState(false)
   const [linkUrl, setLinkUrl] = useState("")
 
@@ -228,37 +234,37 @@ const RichTextEditor = ({
 
   return (
     <div className={cn("overflow-hidden rounded-md border", invalid && "border-destructive")}>
-      <div className="flex flex-wrap items-center gap-2 border-b bg-muted/50 p-2" role="toolbar" aria-label="Mise en forme">
+      <div className="flex flex-wrap items-center gap-2 border-b bg-muted/50 p-2" role="toolbar" aria-label={t("admin.editor.toolbar")}>
         <MenuButton
           onClick={() => editor.chain().focus().toggleBold().run()}
           isActive={editor.isActive("bold")}
           icon={<Bold className="h-4 w-4" />}
-          label="Gras"
+          label={t("common:editor.bold")}
         />
         <MenuButton
           onClick={() => editor.chain().focus().toggleItalic().run()}
           isActive={editor.isActive("italic")}
           icon={<Italic className="h-4 w-4" />}
-          label="Italique"
+          label={t("common:editor.italic")}
         />
         <MenuButton
           onClick={() => editor.chain().focus().toggleUnderline().run()}
           isActive={editor.isActive("underline")}
           icon={<UnderlineIcon className="h-4 w-4" />}
-          label="Souligné"
+          label={t("admin.editor.underline")}
         />
         <ToolbarSeparator />
         <MenuButton
           onClick={() => editor.chain().focus().toggleBulletList().run()}
           isActive={editor.isActive("bulletList")}
           icon={<List className="h-4 w-4" />}
-          label="Liste à puces"
+          label={t("common:editor.bulletList")}
         />
         <MenuButton
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
           isActive={editor.isActive("orderedList")}
           icon={<ListOrdered className="h-4 w-4" />}
-          label="Liste numérotée"
+          label={t("common:editor.orderedList")}
         />
         <ToolbarSeparator />
         <Popover open={isLinkOpen} onOpenChange={openLinkPopover}>
@@ -268,21 +274,21 @@ const RichTextEditor = ({
               variant={isLinkActive ? "secondary" : "ghost"}
               size="icon"
               className="h-9 w-9"
-              aria-label={isLinkActive ? "Modifier le lien" : "Ajouter un lien"}
+              aria-label={isLinkActive ? t("admin.editor.editLink") : t("admin.editor.addLink")}
               aria-pressed={isLinkActive}
-              title={isLinkActive ? "Modifier le lien" : "Ajouter un lien"}
+              title={isLinkActive ? t("admin.editor.editLink") : t("admin.editor.addLink")}
             >
               <LinkIcon className="h-4 w-4" />
             </Button>
           </PopoverTrigger>
           <PopoverContent align="start" className="w-80 space-y-3">
             <div className="space-y-2">
-              <Label htmlFor="editor-link-url">Adresse du lien</Label>
+              <Label htmlFor="editor-link-url">{t("admin.editor.linkUrl")}</Label>
               <Input
                 id="editor-link-url"
                 type="url"
                 inputMode="url"
-                placeholder="https://www.exemple.fr"
+                placeholder={t("admin.editor.linkPlaceholder")}
                 value={linkUrl}
                 onChange={(e) => setLinkUrl(e.target.value)}
                 onKeyDown={(e) => {
@@ -296,10 +302,10 @@ const RichTextEditor = ({
             </div>
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" size="sm" onClick={() => setIsLinkOpen(false)}>
-                Annuler
+                {t("common:actions.cancel")}
               </Button>
               <Button type="button" size="sm" onClick={applyLink} disabled={!linkUrl.trim()}>
-                Appliquer
+                {t("common:actions.apply")}
               </Button>
             </div>
           </PopoverContent>
@@ -309,17 +315,17 @@ const RichTextEditor = ({
           isActive={false}
           disabled={!isLinkActive}
           icon={<Unlink className="h-4 w-4" />}
-          label="Retirer le lien"
+          label={t("admin.editor.removeLink")}
         />
         <ToolbarSeparator />
         <Select onValueChange={setFontSize}>
-          <SelectTrigger className="h-9 w-[150px]" aria-label="Taille du texte">
-            <SelectValue placeholder="Taille du texte" />
+          <SelectTrigger className="h-9 w-[150px]" aria-label={t("admin.editor.fontSizeLabel")}>
+            <SelectValue placeholder={t("admin.editor.fontSizeLabel")} />
           </SelectTrigger>
           <SelectContent>
             {FONT_SIZES.map((size) => (
               <SelectItem key={size.value} value={size.value}>
-                {size.label}
+                {t(`admin.editor.fontSize.${size.key}`)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -337,6 +343,7 @@ const RichTextEditor = ({
 }
 
 export default function ArticlesAdminPage() {
+  const { t } = useTranslation("articles")
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [articleToDelete, setArticleToDelete] = useState<Article | null>(null)
@@ -390,9 +397,9 @@ export default function ArticlesAdminPage() {
 
   const validate = (): FormErrors => {
     const next: FormErrors = {}
-    if (!formData.title.trim()) next.title = "Donnez un titre à l'article."
-    if (!formData.description.trim()) next.description = "Ajoutez un résumé : il est affiché dans la liste des actualités."
-    if (isEmptyHtml(formData.text)) next.text = "Rédigez le contenu de l'article."
+    if (!formData.title.trim()) next.title = t("admin.form.errors.title")
+    if (!formData.description.trim()) next.description = t("admin.form.errors.summary")
+    if (isEmptyHtml(formData.text)) next.text = t("admin.form.errors.content")
     return next
   }
 
@@ -439,22 +446,22 @@ export default function ArticlesAdminPage() {
           },
         })
         toast({
-          title: "Article mis à jour",
-          description: `« ${formData.title} » a été enregistré.`,
+          title: t("admin.toast.updated.title"),
+          description: t("admin.toast.updated.description", { title: formData.title }),
         })
       } else {
         await createArticle({ variables })
         toast({
-          title: "Article publié",
-          description: `« ${formData.title} » est visible dans les actualités.`,
+          title: t("admin.toast.published.title"),
+          description: t("admin.toast.published.description", { title: formData.title }),
         })
       }
       setIsDialogOpen(false)
       refetch()
     } catch {
       toast({
-        title: isEditing ? "Enregistrement impossible" : "Publication impossible",
-        description: "L'article n'a pas pu être enregistré. Vérifiez les champs et les fichiers, puis réessayez.",
+        title: isEditing ? t("admin.toast.saveFailed.title") : t("admin.toast.saveFailed.publishTitle"),
+        description: t("admin.toast.saveFailed.description"),
         variant: "destructive",
       })
     } finally {
@@ -469,15 +476,15 @@ export default function ArticlesAdminPage() {
     try {
       await deleteArticle({ variables: { id: articleToDelete.id } })
       toast({
-        title: "Article supprimé",
-        description: `« ${articleToDelete.title} » a été supprimé.`,
+        title: t("admin.toast.deleted.title"),
+        description: t("admin.toast.deleted.description", { title: articleToDelete.title }),
       })
       setIsDeleteOpen(false)
       refetch()
     } catch {
       toast({
-        title: "Suppression impossible",
-        description: "L'article n'a pas pu être supprimé. Réessayez dans un instant.",
+        title: t("admin.toast.deleteFailed.title"),
+        description: t("admin.toast.deleteFailed.description"),
         variant: "destructive",
       })
     } finally {
@@ -492,7 +499,10 @@ export default function ArticlesAdminPage() {
       (article) =>
         article.title.toLowerCase().includes(term) ||
         article.description.toLowerCase().includes(term) ||
-        (article.tags ?? []).some((tag) => tag.toLowerCase().includes(term)),
+        (article.tags ?? []).some(
+          // The theme as stored, and as it is shown in the current language.
+          (tag) => tag.toLowerCase().includes(term) || articleTagLabel(tag).toLowerCase().includes(term),
+        ),
     )
   }, [articles, searchTerm])
 
@@ -521,7 +531,7 @@ export default function ArticlesAdminPage() {
     <div className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="title">
-          Titre
+          {t("admin.form.title")}
           <RequiredMark />
         </Label>
         <Input
@@ -533,7 +543,7 @@ export default function ArticlesAdminPage() {
             if (errors.title) setErrors((current) => ({ ...current, title: undefined }))
           }}
           required
-          placeholder="Ex. : Journée portes ouvertes du 14 juin"
+          placeholder={t("admin.form.titlePlaceholder")}
           aria-invalid={Boolean(errors.title)}
           aria-describedby={errors.title ? "title-error" : undefined}
         />
@@ -541,7 +551,7 @@ export default function ArticlesAdminPage() {
       </div>
       <div className="space-y-2">
         <Label htmlFor="description">
-          Résumé
+          {t("admin.form.summary")}
           <RequiredMark />
         </Label>
         <Textarea
@@ -553,7 +563,7 @@ export default function ArticlesAdminPage() {
             if (errors.description) setErrors((current) => ({ ...current, description: undefined }))
           }}
           required
-          placeholder="Une ou deux phrases affichées dans la liste des actualités"
+          placeholder={t("admin.form.summaryPlaceholder")}
           className="resize-none"
           rows={3}
           aria-invalid={Boolean(errors.description)}
@@ -563,17 +573,17 @@ export default function ArticlesAdminPage() {
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="tags">Thèmes</Label>
+          <Label htmlFor="tags">{t("shared.themes")}</Label>
           <Select value="" onValueChange={addTag} disabled={availableTags.length === 0}>
             <SelectTrigger id="tags">
               <SelectValue
-                placeholder={availableTags.length === 0 ? "Tous les thèmes sont ajoutés" : "Ajouter un thème"}
+                placeholder={availableTags.length === 0 ? t("admin.form.themesAllAdded") : t("admin.form.addTheme")}
               />
             </SelectTrigger>
             <SelectContent>
               {availableTags.map((tag) => (
                 <SelectItem key={tag} value={tag}>
-                  {tag}
+                  {articleTagLabel(tag)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -582,12 +592,12 @@ export default function ArticlesAdminPage() {
             <div className="flex flex-wrap gap-1">
               {formTags.map((tag) => (
                 <Badge key={tag} variant="secondary" className="gap-1 pr-1">
-                  {tag}
+                  {articleTagLabel(tag)}
                   <button
                     type="button"
                     onClick={() => removeTag(tag)}
                     className="rounded-full p-0.5 hover:bg-background/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    aria-label={`Retirer le thème ${tag}`}
+                    aria-label={t("shared.removeTheme", { tag: articleTagLabel(tag) })}
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -596,12 +606,12 @@ export default function ArticlesAdminPage() {
             </div>
           ) : (
             <p className="text-xs text-muted-foreground">
-              Les thèmes permettent aux membres de filtrer les actualités.
+              {t("admin.form.themesHint")}
             </p>
           )}
         </div>
         <div className="space-y-2">
-          <Label htmlFor="event-date">Date de l'événement</Label>
+          <Label htmlFor="event-date">{t("admin.form.eventDate")}</Label>
           <div className="flex gap-2">
             <Popover open={isEventDateOpen} onOpenChange={setIsEventDateOpen}>
               <PopoverTrigger asChild>
@@ -615,7 +625,7 @@ export default function ArticlesAdminPage() {
                   )}
                 >
                   <CalendarIcon className="h-4 w-4" />
-                  {formData.eventDate ? formatDate(formData.eventDate) : "Aucune date"}
+                  {formData.eventDate ? formatDate(formData.eventDate) : t("admin.form.noDate")}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -627,7 +637,7 @@ export default function ArticlesAdminPage() {
                     if (date) setIsEventDateOpen(false)
                   }}
                   initialFocus
-                  locale={fr}
+                  locale={dateFnsLocale()}
                 />
               </PopoverContent>
             </Popover>
@@ -637,15 +647,15 @@ export default function ArticlesAdminPage() {
                 variant="ghost"
                 size="icon"
                 onClick={() => setFormData((current) => ({ ...current, eventDate: null }))}
-                aria-label="Retirer la date de l'événement"
-                title="Retirer la date"
+                aria-label={t("admin.form.removeEventDate")}
+                title={t("admin.form.removeDate")}
               >
                 <X className="h-4 w-4" />
               </Button>
             )}
           </div>
           <p className="text-xs text-muted-foreground">
-            Facultatif. À renseigner si l'article annonce un événement.
+            {t("admin.form.eventDateHint")}
           </p>
         </div>
       </div>
@@ -655,7 +665,7 @@ export default function ArticlesAdminPage() {
   const contentStep = (
     <div className="space-y-2">
       <p id="article-content-label" className="text-sm font-medium">
-        Contenu de l'article
+        {t("admin.form.content")}
         <RequiredMark />
       </p>
       <RichTextEditor
@@ -675,7 +685,7 @@ export default function ArticlesAdminPage() {
   const filesStep = (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <div className="space-y-2">
-        <Label htmlFor="photo">Image principale</Label>
+        <Label htmlFor="photo">{t("admin.files.image")}</Label>
         <Input
           key={`photo-${fileInputKey}`}
           id="photo"
@@ -690,7 +700,7 @@ export default function ArticlesAdminPage() {
         <div className="flex items-center gap-3">
           <ArticleImage
             src={selectedImage ? null : isEditing ? selectedArticle?.photo_url : null}
-            alt="Aperçu de l'image principale"
+            alt={t("admin.files.imagePreviewAlt")}
             className="aspect-video w-24 shrink-0 rounded-md"
             iconClassName="h-5 w-5"
           />
@@ -709,20 +719,20 @@ export default function ArticlesAdminPage() {
                     setFileInputKey((key) => key + 1)
                   }}
                 >
-                  Retirer ce fichier
+                  {t("admin.files.removeFile")}
                 </Button>
               </>
             ) : isEditing && selectedArticle?.photo_url ? (
-              <p>Image actuelle. Choisissez un fichier pour la remplacer.</p>
+              <p>{t("admin.files.currentImage")}</p>
             ) : (
-              <p>JPG ou PNG, 2 Mo maximum conseillé.</p>
+              <p>{t("admin.files.imageHint")}</p>
             )}
           </div>
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="document">Document joint</Label>
+        <Label htmlFor="document">{t("admin.files.document")}</Label>
         <Input
           key={`document-${fileInputKey}`}
           id="document"
@@ -756,17 +766,13 @@ export default function ArticlesAdminPage() {
                     setFileInputKey((key) => key + 1)
                   }}
                 >
-                  Retirer ce fichier
+                  {t("admin.files.removeFile")}
                 </Button>
               </>
             ) : existingDocuments > 0 ? (
-              <p>
-                {existingDocuments} document{existingDocuments > 1 ? "s" : ""} déjà joint
-                {existingDocuments > 1 ? "s" : ""}. Choisissez un fichier pour le
-                {existingDocuments > 1 ? "s" : ""} remplacer.
-              </p>
+              <p>{t("admin.files.existingDocuments", { count: existingDocuments })}</p>
             ) : (
-              <p>PDF, Word, Excel ou PowerPoint.</p>
+              <p>{t("admin.files.documentHint")}</p>
             )}
           </div>
         </div>
@@ -777,13 +783,13 @@ export default function ArticlesAdminPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Articles"
-        description="Rédigez et gérez les actualités visibles par les membres."
+        title={t("admin.title")}
+        description={t("admin.description")}
         className="mb-0"
         actions={
           <Button onClick={openCreate}>
             <Plus className="h-4 w-4" />
-            Nouvel article
+            {t("admin.newArticle")}
           </Button>
         }
       />
@@ -796,8 +802,8 @@ export default function ArticlesAdminPage() {
           />
           <Input
             type="search"
-            aria-label="Rechercher un article"
-            placeholder="Rechercher par titre ou thème…"
+            aria-label={t("shared.searchLabel")}
+            placeholder={t("admin.searchPlaceholder")}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-9"
@@ -806,14 +812,14 @@ export default function ArticlesAdminPage() {
         {!loading && !error && articles.length > 0 && (
           <p className="text-sm text-muted-foreground sm:ml-auto">
             {filteredArticles.length === articles.length
-              ? `${articles.length} article${articles.length > 1 ? "s" : ""}`
-              : `${filteredArticles.length} sur ${articles.length}`}
+              ? t("admin.count", { count: articles.length })
+              : t("admin.filteredCount", { count: filteredArticles.length, total: articles.length })}
           </p>
         )}
       </div>
 
       {loading && !data ? (
-        <Card role="status" aria-label="Chargement des articles">
+        <Card role="status" aria-label={t("shared.loading")}>
           <CardContent className="space-y-3 p-6">
             {Array.from({ length: 5 }, (_, index) => (
               <div key={index} className="flex items-center gap-4">
@@ -832,23 +838,23 @@ export default function ArticlesAdminPage() {
       ) : articles.length === 0 ? (
         <EmptyState
           icon={Newspaper}
-          title="Aucun article pour le moment"
-          description="Publiez une première actualité : elle apparaîtra sur le tableau de bord des membres."
+          title={t("shared.emptyTitle")}
+          description={t("admin.emptyDescription")}
           action={
             <Button onClick={openCreate}>
               <Plus className="h-4 w-4" />
-              Nouvel article
+              {t("admin.newArticle")}
             </Button>
           }
         />
       ) : filteredArticles.length === 0 ? (
         <EmptyState
           icon={SearchX}
-          title="Aucun article ne correspond"
-          description="Essayez un autre mot ou effacez la recherche."
+          title={t("shared.noMatchTitle")}
+          description={t("admin.noMatchDescription")}
           action={
             <Button variant="outline" onClick={() => setSearchTerm("")}>
-              Effacer la recherche
+              {t("shared.clearSearch")}
             </Button>
           }
         />
@@ -858,11 +864,11 @@ export default function ArticlesAdminPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Article</TableHead>
-                  <TableHead>Thèmes</TableHead>
-                  <TableHead>Publié le</TableHead>
-                  <TableHead>Événement</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{t("admin.table.article")}</TableHead>
+                  <TableHead>{t("shared.themes")}</TableHead>
+                  <TableHead>{t("admin.table.publishedOn")}</TableHead>
+                  <TableHead>{t("shared.event")}</TableHead>
+                  <TableHead className="text-right">{t("common:labels.actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -880,7 +886,7 @@ export default function ArticlesAdminPage() {
                           <Link
                             href={`/articles/${article.id}`}
                             className="line-clamp-1 font-medium hover:underline focus-visible:underline focus-visible:outline-none"
-                            title="Voir l'article tel que les membres le lisent"
+                            title={t("admin.table.viewAsMember")}
                           >
                             {article.title}
                           </Link>
@@ -893,12 +899,12 @@ export default function ArticlesAdminPage() {
                         <div className="flex min-w-[8rem] flex-wrap gap-1">
                           {article.tags.map((tag) => (
                             <Badge key={tag} variant="secondary">
-                              {tag}
+                              {articleTagLabel(tag)}
                             </Badge>
                           ))}
                         </div>
                       ) : (
-                        <span className="text-muted-foreground">—</span>
+                        <span className="text-muted-foreground">{t("common:labels.missing")}</span>
                       )}
                     </TableCell>
                     <TableCell className="whitespace-nowrap">{formatDate(article.createdAt)}</TableCell>
@@ -910,8 +916,8 @@ export default function ArticlesAdminPage() {
                           size="icon"
                           className="h-9 w-9"
                           onClick={() => openEdit(article)}
-                          aria-label={`Modifier l'article « ${article.title} »`}
-                          title="Modifier"
+                          aria-label={t("admin.table.editLabel", { title: article.title })}
+                          title={t("common:actions.edit")}
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -923,8 +929,8 @@ export default function ArticlesAdminPage() {
                             setArticleToDelete(article)
                             setIsDeleteOpen(true)
                           }}
-                          aria-label={`Supprimer l'article « ${article.title} »`}
-                          title="Supprimer"
+                          aria-label={t("admin.table.deleteLabel", { title: article.title })}
+                          title={t("common:actions.delete")}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -941,26 +947,26 @@ export default function ArticlesAdminPage() {
       <SidePanel
         open={isDialogOpen}
         onOpenChange={(open) => !isSubmitting && setIsDialogOpen(open)}
-        title={isEditing ? "Modifier l'article" : "Nouvel article"}
+        title={isEditing ? t("admin.panel.editTitle") : t("admin.newArticle")}
         description={
           isEditing
-            ? "Les modifications sont visibles par les membres dès l'enregistrement."
-            : "L'article est visible par les membres dès sa publication."
+            ? t("admin.panel.editDescription")
+            : t("admin.panel.createDescription")
         }
         onSubmit={handleSubmit}
-        submitLabel={isEditing ? "Enregistrer" : "Publier l'article"}
+        submitLabel={isEditing ? t("common:actions.save") : t("admin.panel.publish")}
         submitting={isSubmitting}
         size="xl"
         steps={[
           {
-            title: "Présentation",
+            title: t("admin.panel.steps.presentation"),
             content: presentationStep,
             validate: () => validateStep(["title", "description"]),
           },
-          { title: "Contenu", content: contentStep, validate: () => validateStep(["text"]) },
+          { title: t("admin.panel.steps.content"), content: contentStep, validate: () => validateStep(["text"]) },
           {
-            title: "Illustration et pièces jointes",
-            description: "Facultatif. L'image illustre l'article dans la liste des actualités.",
+            title: t("admin.panel.steps.files"),
+            description: t("admin.panel.steps.filesDescription"),
             content: filesStep,
           },
         ]}
@@ -975,14 +981,13 @@ export default function ArticlesAdminPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer cet article ?</AlertDialogTitle>
+            <AlertDialogTitle>{t("admin.deleteDialog.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              L'article « {articleToDelete?.title} » sera définitivement supprimé. Cette action est
-              irréversible.
+              {t("admin.deleteDialog.description", { title: articleToDelete?.title ?? "" })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Annuler</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>{t("common:actions.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               className={buttonVariants({ variant: "destructive" })}
               disabled={isDeleting}
@@ -993,7 +998,7 @@ export default function ArticlesAdminPage() {
               }}
             >
               {isDeleting && <Loader2 className="h-4 w-4 animate-spin" />}
-              Supprimer
+              {t("common:actions.delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

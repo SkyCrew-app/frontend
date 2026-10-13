@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslation } from "react-i18next"
 import { StatCard } from "@/components/layout/StatCard"
 import { Plane, MapPin, Route, Clock } from "lucide-react"
 import { formatDecimal, formatFlightDuration } from "@/lib/format"
@@ -10,6 +11,7 @@ interface StatsCardsProps {
 }
 
 export function StatsCards({ flights }: StatsCardsProps) {
+  const { t } = useTranslation("flights")
   const totalDistance = flights.reduce((sum, flight) => sum + (flight.distance_km || 0), 0)
   const totalHours = flights.reduce((sum, flight) => sum + (flight.flight_hours || 0), 0)
 
@@ -21,10 +23,10 @@ export function StatsCards({ flights }: StatsCardsProps) {
 
   return (
     <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-      <StatCard label="Plans de vol" value={flights.length} icon={Plane} tone="info" />
-      <StatCard label="Temps de vol prévu" value={formatFlightDuration(totalHours)} icon={Clock} tone="success" />
-      <StatCard label="Distance totale" value={`${formatDecimal(totalDistance, 0)} km`} icon={Route} tone="warning" />
-      <StatCard label="Aérodromes" value={aerodromes.size} icon={MapPin} tone="primary" />
+      <StatCard label={t("plans.stats.count")} value={flights.length} icon={Plane} tone="info" />
+      <StatCard label={t("plans.stats.plannedTime")} value={formatFlightDuration(totalHours)} icon={Clock} tone="success" />
+      <StatCard label={t("plans.labels.totalDistance")} value={`${formatDecimal(totalDistance, 0)} km`} icon={Route} tone="warning" />
+      <StatCard label={t("plans.stats.aerodromes")} value={aerodromes.size} icon={MapPin} tone="primary" />
     </div>
   )
 }

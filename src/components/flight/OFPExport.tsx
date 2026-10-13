@@ -1,6 +1,7 @@
 "use client"
 
 import { useRef, useCallback } from "react"
+import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { Printer } from "lucide-react"
 import { escapeHtml } from "@/lib/sanitize-html"
@@ -116,6 +117,7 @@ function formatTime(min: number): string {
 /* ------------------------------------------------------------------ */
 
 export function OFPExport(props: OFPExportProps) {
+  const { t } = useTranslation("flights")
   const printRef = useRef<HTMLDivElement>(null)
 
   const handlePrint = useCallback(() => {
@@ -280,9 +282,9 @@ export function OFPExport(props: OFPExportProps) {
 
   return (
     <>
-      <Button onClick={handlePrint} variant="outline" title="Ouvre le plan de vol opérationnel (OFP) prêt à imprimer">
+      <Button onClick={handlePrint} variant="outline" title={t("ofp.printHint")}>
         <Printer className="h-4 w-4" />
-        Imprimer l&apos;OFP
+        {t("ofp.print")}
       </Button>
 
       {/* Hidden printable content */}

@@ -2,6 +2,7 @@
 
 import { useEffect } from "react"
 import { useFormContext } from "react-hook-form"
+import { useTranslation } from "react-i18next"
 import { format } from "date-fns"
 import { FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from "@/components/ui/form"
 import { Switch } from "@/components/ui/switch"
@@ -17,11 +18,10 @@ const RequiredMark = () => (
   </span>
 )
 
-const SEVERITIES = [
-  { value: "low", label: "Faible" },
-  { value: "medium", label: "Moyenne" },
-  { value: "high", label: "Élevée" },
-]
+// Codes the API expects; their labels are read from the translations.
+const SEVERITIES = ["low", "medium", "high"] as const
+const PRIORITIES = ["low", "medium", "high"] as const
+const CATEGORIES = ["mechanical", "electrical", "weather", "human_error", "other"] as const
 
 // Value of a datetime-local input in local time (toISOString would shift it to UTC).
 const toDateTimeLocal = (value: unknown) => {
@@ -32,6 +32,7 @@ const toDateTimeLocal = (value: unknown) => {
 
 export default function IncidentForm() {
   const { control, watch, setValue, getValues } = useFormContext()
+  const { t } = useTranslation("flights")
   const incidentOccurred = watch("incidentOccurred")
 
   useEffect(() => {
@@ -52,10 +53,8 @@ export default function IncidentForm() {
         render={({ field }) => (
           <FormItem className="flex flex-row items-center justify-between gap-4 rounded-lg border p-4">
             <div className="space-y-0.5">
-              <FormLabel>Un incident est survenu pendant ce vol</FormLabel>
-              <FormDescription>
-              Panne, anomalie, dommage ou événement de sécurité. Le signalement est transmis au club avec la clôture.
-            </FormDescription>
+              <FormLabel>{t("closeFlight.incident.occurred")}</FormLabel>
+              <FormDescription>{t("closeFlight.incident.occurredHint")}</FormDescription>
             </div>
             <FormControl>
               <Switch
@@ -91,7 +90,7 @@ export default function IncidentForm() {
               name="incident_date"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Date et heure de l&apos;incident</FormLabel>
+                  <FormLabel>{t("closeFlight.incident.dateTime")}</FormLabel>
                   <FormControl>
                     <Input
                       type="datetime-local"
@@ -113,21 +112,21 @@ export default function IncidentForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    Catégorie
+                    {t("common:labels.category")}
                     <RequiredMark />
                   </FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Sélectionner une catégorie" />
+                        <SelectValue placeholder={t("closeFlight.incident.categoryPlaceholder")} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="mechanical">Mécanique</SelectItem>
-                      <SelectItem value="electrical">Électrique</SelectItem>
-                      <SelectItem value="weather">Météorologique</SelectItem>
-                      <SelectItem value="human_error">Erreur humaine</SelectItem>
-                      <SelectItem value="other">Autre</SelectItem>
+                      {CATEGORIES.map((category) => (
+                        <SelectItem key={category} value={category}>
+                          {t(`closeFlight.incident.category.${category}`)}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -143,7 +142,7 @@ export default function IncidentForm() {
               render={({ field }) => (
                 <FormItem className="space-y-3">
                   <FormLabel>
-                    Gravité
+                    {t("closeFlight.incident.severityLabel")}
                     <RequiredMark />
                   </FormLabel>
                   <FormControl>
@@ -153,11 +152,13 @@ export default function IncidentForm() {
                       className="flex flex-wrap gap-x-6 gap-y-2"
                     >
                       {SEVERITIES.map((severity) => (
-                        <FormItem key={severity.value} className="flex items-center gap-2 space-y-0">
+                        <FormItem key={severity} className="flex items-center gap-2 space-y-0">
                           <FormControl>
-                            <RadioGroupItem value={severity.value} />
+                            <RadioGroupItem value={severity} />
                           </FormControl>
-                          <FormLabel className="font-normal">{severity.label}</FormLabel>
+                          <FormLabel className="font-normal">
+                            {t(`closeFlight.incident.severity.${severity}`)}
+                          </FormLabel>
                         </FormItem>
                       ))}
                     </RadioGroup>
@@ -173,19 +174,21 @@ export default function IncidentForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    Priorité de traitement
+                    {t("closeFlight.incident.priorityLabel")}
                     <RequiredMark />
                   </FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Sélectionner une priorité" />
+                        <SelectValue placeholder={t("closeFlight.incident.priorityPlaceholder")} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="low">Basse</SelectItem>
-                      <SelectItem value="medium">Moyenne</SelectItem>
-                      <SelectItem value="high">Haute</SelectItem>
+                      {PRIORITIES.map((priority) => (
+                        <SelectItem key={priority} value={priority}>
+                          {t(`closeFlight.incident.priority.${priority}`)}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -200,12 +203,12 @@ export default function IncidentForm() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>
-                  Description
+                  {t("common:labels.description")}
                   <RequiredMark />
                 </FormLabel>
                 <FormControl>
                   <Textarea
-                    placeholder="Que s'est-il passé, à quel moment du vol, dans quelles conditions ?"
+                    placeholder={t("closeFlight.incident.descriptionPlaceholder")}
                     className="resize-none"
                     rows={3}
                     {...field}
@@ -223,10 +226,10 @@ export default function IncidentForm() {
               name="damage_report"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Dommages constatés</FormLabel>
+                  <FormLabel>{t("closeFlight.incident.damage")}</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Ex. : pneu avant gauche à plat, aucune autre trace"
+                      placeholder={t("closeFlight.incident.damagePlaceholder")}
                       className="resize-none"
                       rows={2}
                       {...field}
@@ -243,10 +246,10 @@ export default function IncidentForm() {
               name="corrective_actions"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Actions correctives</FormLabel>
+                  <FormLabel>{t("closeFlight.incident.correctiveActions")}</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Ce qui a été fait, ou ce qu'il reste à faire avant le prochain vol"
+                      placeholder={t("closeFlight.incident.correctiveActionsPlaceholder")}
                       className="resize-none"
                       rows={2}
                       {...field}

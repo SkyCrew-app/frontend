@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTranslation } from "react-i18next"
 import { useMutation, useQuery } from "@apollo/client"
 import { BookOpen, Plus, Search } from "lucide-react"
 import { CREATE_COURSE, DELETE_COURSE, GET_COURSES, UPDATE_COURSE } from "@/graphql/learningAdmin"
@@ -42,6 +43,7 @@ interface CourseForm {
 const emptyForm: CourseForm = { id: null, title: "", description: "", category: "", license: NO_LICENSE }
 
 export function CourseManagement() {
+  const { t } = useTranslation("instruction")
   const [searchTerm, setSearchTerm] = useState("")
   const [filterLicense, setFilterLicense] = useState("all")
   const [form, setForm] = useState<CourseForm>(emptyForm)
@@ -76,7 +78,7 @@ export function CourseManagement() {
     setIsFormOpen(true)
   }
 
-  const titleError = form.title.trim() ? null : "Donnez un titre au cours."
+  const titleError = form.title.trim() ? null : t("admin.courses.form.titleError")
 
   const handleSubmit = async () => {
     setSubmitted(true)
@@ -92,17 +94,20 @@ export function CourseManagement() {
     try {
       if (form.id !== null) {
         await updateCourse({ variables: { id: Number(form.id), updateCourseInput: input } })
-        toast({ title: "Cours modifié", description: "Les changements ont été enregistrés." })
+        toast({ title: t("admin.courses.toast.updated.title"), description: t("shared.changesSaved") })
       } else {
         await createCourse({ variables: { createCourseInput: input } })
-        toast({ title: "Cours créé", description: "Ajoutez-lui maintenant des modules dans l'onglet Modules." })
+        toast({
+          title: t("admin.courses.toast.created.title"),
+          description: t("admin.courses.toast.created.description"),
+        })
       }
       setIsFormOpen(false)
       refetch()
     } catch {
       toast({
-        title: isEdit ? "Cours non modifié" : "Cours non créé",
-        description: "L'enregistrement a échoué. Vérifiez les informations puis réessayez.",
+        title: isEdit ? t("admin.courses.toast.updateFailed.title") : t("admin.courses.toast.createFailed.title"),
+        description: t("shared.saveFailed"),
         variant: "destructive",
       })
     }
@@ -114,11 +119,14 @@ export function CourseManagement() {
       await deleteCourse({ variables: { id: Number(courseToDelete.id) } })
       setCourseToDelete(null)
       refetch()
-      toast({ title: "Cours supprimé", description: "Le cours a été retiré du catalogue." })
+      toast({
+        title: t("admin.courses.toast.deleted.title"),
+        description: t("admin.courses.toast.deleted.description"),
+      })
     } catch {
       toast({
-        title: "Cours non supprimé",
-        description: "La suppression a échoué. Réessayez dans un instant.",
+        title: t("admin.courses.toast.deleteFailed.title"),
+        description: t("shared.deleteFailed"),
         variant: "destructive",
       })
     }
@@ -142,7 +150,7 @@ export function CourseManagement() {
   const createButton = (
     <Button onClick={openCreate}>
       <Plus className="h-4 w-4" />
-      Créer un cours
+      {t("admin.courses.create")}
     </Button>
   )
 
@@ -153,20 +161,20 @@ export function CourseManagement() {
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="search"
-            aria-label="Rechercher un cours"
-            placeholder="Rechercher un cours, ex. navigation"
+            aria-label={t("admin.courses.searchAria")}
+            placeholder={t("admin.courses.searchPlaceholder")}
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
             className="pl-9"
           />
         </div>
         <Select value={filterLicense} onValueChange={setFilterLicense}>
-          <SelectTrigger className="w-full sm:w-52" aria-label="Filtrer par licence requise">
+          <SelectTrigger className="w-full sm:w-52" aria-label={t("admin.courses.filterLicenceAria")}>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Toutes les licences</SelectItem>
-            <SelectItem value={NO_LICENSE}>Sans licence requise</SelectItem>
+            <SelectItem value="all">{t("admin.courses.allLicences")}</SelectItem>
+            <SelectItem value={NO_LICENSE}>{t("admin.courses.withoutLicence")}</SelectItem>
             {LICENSES.map((license) => (
               <SelectItem key={license} value={license}>
                 {license}
@@ -188,11 +196,11 @@ export function CourseManagement() {
       ) : filteredCourses.length === 0 ? (
         <EmptyState
           icon={BookOpen}
-          title={isFiltered ? "Aucun cours ne correspond" : "Aucun cours pour le moment"}
+          title={isFiltered ? t("admin.courses.empty.filteredTitle") : t("admin.courses.empty.title")}
           description={
             isFiltered
-              ? "Modifiez la recherche ou le filtre de licence."
-              : "Créez un premier cours, puis ajoutez-lui des modules et des leçons."
+              ? t("admin.courses.empty.filteredDescription")
+              : t("admin.courses.empty.description")
           }
           action={
             isFiltered ? (
@@ -203,7 +211,7 @@ export function CourseManagement() {
                   setFilterLicense("all")
                 }}
               >
-                Effacer les filtres
+                {t("common:actions.clearFilters")}
               </Button>
             ) : (
               createButton
@@ -215,11 +223,11 @@ export function CourseManagement() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Cours</TableHead>
-                <TableHead>Catégorie</TableHead>
-                <TableHead>Licence requise</TableHead>
+                <TableHead>{t("admin.shared.course")}</TableHead>
+                <TableHead>{t("common:labels.category")}</TableHead>
+                <TableHead>{t("admin.courses.requiredLicence")}</TableHead>
                 <TableHead className="w-24">
-                  <span className="sr-only">Actions</span>
+                  <span className="sr-only">{t("common:labels.actions")}</span>
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -236,7 +244,7 @@ export function CourseManagement() {
                   <TableCell>{course.required_license || "—"}</TableCell>
                   <TableCell>
                     <RowActions
-                      name={`le cours ${course.title}`}
+                      name={t("admin.courses.rowName", { title: course.title })}
                       onEdit={() => openEdit(course)}
                       onDelete={() => setCourseToDelete(course)}
                     />
@@ -251,31 +259,35 @@ export function CourseManagement() {
       <SidePanel
         open={isFormOpen}
         onOpenChange={(open) => !saving && setIsFormOpen(open)}
-        title={isEdit ? "Modifier le cours" : "Créer un cours"}
+        title={isEdit ? t("admin.courses.form.editTitle") : t("admin.courses.create")}
         description={
           isEdit
-            ? "Ces informations sont visibles dans le catalogue des membres."
-            : "Le cours apparaît dans le catalogue ; ses modules et ses leçons s'ajoutent ensuite."
+            ? t("admin.courses.form.editDescription")
+            : t("admin.courses.form.createDescription")
         }
         onSubmit={handleSubmit}
-        submitLabel={isEdit ? "Enregistrer" : "Créer le cours"}
+        submitLabel={isEdit ? t("common:actions.save") : t("admin.courses.form.submitCreate")}
         submitting={saving}
       >
         <div className="space-y-4">
-          <FormField label="Titre" htmlFor="course-title" required error={submitted ? titleError : null}>
+          <FormField label={t("admin.shared.title")} htmlFor="course-title" required error={submitted ? titleError : null}>
             <Input
               id="course-title"
-              placeholder="Ex. Météorologie pour le PPL"
+              placeholder={t("admin.courses.form.titlePlaceholder")}
               value={form.title}
               onChange={(event) => setForm({ ...form, title: event.target.value })}
               aria-invalid={submitted && !!titleError}
             />
           </FormField>
 
-          <FormField label="Description" htmlFor="course-description" hint="Deux ou trois phrases sur ce que le cours apprend.">
+          <FormField
+            label={t("common:labels.description")}
+            htmlFor="course-description"
+            hint={t("admin.courses.form.descriptionHint")}
+          >
             <Textarea
               id="course-description"
-              placeholder="Ex. Lire une carte TEMSI, comprendre les fronts et préparer un vol en sécurité."
+              placeholder={t("admin.courses.form.descriptionPlaceholder")}
               value={form.description}
               onChange={(event) => setForm({ ...form, description: event.target.value })}
               rows={4}
@@ -283,22 +295,22 @@ export function CourseManagement() {
           </FormField>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <FormField label="Catégorie" htmlFor="course-category">
+            <FormField label={t("common:labels.category")} htmlFor="course-category">
               <Input
                 id="course-category"
-                placeholder="Ex. Navigation"
+                placeholder={t("admin.courses.form.categoryPlaceholder")}
                 value={form.category}
                 onChange={(event) => setForm({ ...form, category: event.target.value })}
               />
             </FormField>
 
-            <FormField label="Licence requise" htmlFor="course-license">
+            <FormField label={t("admin.courses.requiredLicence")} htmlFor="course-license">
               <Select value={form.license} onValueChange={(value) => setForm({ ...form, license: value })}>
                 <SelectTrigger id="course-license">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={NO_LICENSE}>Aucune</SelectItem>
+                  <SelectItem value={NO_LICENSE}>{t("admin.courses.noLicence")}</SelectItem>
                   {LICENSES.map((license) => (
                     <SelectItem key={license} value={license}>
                       {license}
@@ -314,8 +326,8 @@ export function CourseManagement() {
       <ConfirmDeleteDialog
         open={courseToDelete !== null}
         onOpenChange={(open) => !open && setCourseToDelete(null)}
-        title="Supprimer ce cours ?"
-        description={`Le cours « ${courseToDelete?.title ?? ""} » sera définitivement supprimé, avec ses modules et ses leçons.`}
+        title={t("admin.courses.deleteConfirm.title")}
+        description={t("admin.courses.deleteConfirm.description", { title: courseToDelete?.title ?? "" })}
         onConfirm={handleDelete}
         loading={deleting}
       />

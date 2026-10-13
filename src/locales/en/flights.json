@@ -1,0 +1,557 @@
+{
+  "flightType": {
+    "generated": "Generated automatically"
+  },
+  "planState": {
+    "closed": "Closed",
+    "reservationCancelled": "Booking cancelled",
+    "toClose": "To close",
+    "planned": "Planned"
+  },
+  "plans": {
+    "title": "My flight plans",
+    "description": "Flight plans prepared from your bookings.",
+    "new": "New flight plan",
+    "pagerNoun": {
+      "one": "flight plan",
+      "other": "flight plans"
+    },
+    "labels": {
+      "flightType": "Flight type",
+      "passengers": "Passengers",
+      "estimatedFuel": "Estimated fuel",
+      "totalDistance": "Total distance",
+      "departure": "Departure",
+      "arrival": "Arrival",
+      "cruiseSpeed": "Cruise speed"
+    },
+    "actions": {
+      "closeFlight": "Close the flight"
+    },
+    "card": {
+      "passengers_one": "{{count}} passenger",
+      "passengers_other": "{{count}} passengers",
+      "noReservation": "No linked booking",
+      "editLabel": "Edit the flight plan {{origin}} → {{destination}}"
+    },
+    "filters": {
+      "searchLabel": "Search for a flight plan",
+      "searchPlaceholder": "ICAO code or registration",
+      "typeLabel": "Filter by flight type",
+      "allTypes": "All types",
+      "sortLabel": "Sort flight plans",
+      "newest": "Newest first",
+      "oldest": "Oldest first"
+    },
+    "stats": {
+      "count": "Flight plans",
+      "plannedTime": "Planned flight time",
+      "aerodromes": "Aerodromes"
+    },
+    "empty": {
+      "title": "No flight plans yet",
+      "description": "A flight plan is prepared from a booking: open your bookings and choose “Create a flight plan”.",
+      "chooseReservation": "Choose a booking",
+      "filteredTitle": "No flight plan matches",
+      "filteredDescription": "Change the search or the filters to find your flight plans.",
+      "resetFilters": "Reset filters"
+    },
+    "toast": {
+      "updated": {
+        "title": "Flight plan updated",
+        "description": "The flight plan {{origin}} → {{destination}} has been updated."
+      },
+      "updateFailed": {
+        "title": "Could not update",
+        "description": "The flight plan could not be updated. Try again in a moment."
+      }
+    }
+  },
+  "planDetail": {
+    "title": "Flight plan",
+    "description": "{{type}} flight plan",
+    "descriptionWithReservation": "{{type}} flight plan · booking no. {{id}}",
+    "loadError": "The flight plan could not be loaded. Check your connection and try again.",
+    "notFound": {
+      "title": "Flight plan not found",
+      "description": "This flight plan does not exist or you do not have access to it."
+    },
+    "beforeDeparture": {
+      "title": "Before departure",
+      "description": "Check the NOTAMs and the weather, and make sure all the documents required for the flight are on board."
+    },
+    "tabs": {
+      "route": "Route and aerodromes",
+      "navigation": "Navigation",
+      "fuel": "Fuel and wind"
+    },
+    "routeTabs": {
+      "overview": "Flight",
+      "waypoints": "Waypoints"
+    },
+    "flightDetails": {
+      "title": "Flight details",
+      "estimatedDuration": "Estimated duration",
+      "performanceProfile": "Performance profile"
+    },
+    "aircraftAndPilot": {
+      "title": "Aircraft and pilot",
+      "noAircraft": "No aircraft is linked to this flight plan.",
+      "registration": "Registration",
+      "model": "Model",
+      "consumption": "Fuel consumption",
+      "ceiling": "Ceiling",
+      "pilotInCommand": "Pilot in command"
+    },
+    "weather": {
+      "title": "Reported weather (METAR)"
+    },
+    "map": {
+      "unavailableTitle": "Map unavailable",
+      "unavailableDescription": "The aerodrome coordinates are not recorded for this flight plan."
+    },
+    "navigation": {
+      "emptyTitle": "No navigation log",
+      "emptyDescription": "The vertical profile and the navigation log are computed for flight plans generated automatically from a booking."
+    }
+  },
+  "planCreate": {
+    "title": "Create a flight plan",
+    "descriptionForReservation": "For the booking of {{aircraft}} on {{date}}, {{start}} – {{end}}.",
+    "descriptionDefault": "The flight plan will be linked to your booking.",
+    "backToReservations": "My bookings",
+    "steps": {
+      "journey": "Trip",
+      "route": "Route",
+      "summary": "Summary"
+    },
+    "airports": {
+      "departure": "Departure aerodrome",
+      "chooseDeparture": "Choose the departure",
+      "departureRequired": "Choose the departure aerodrome.",
+      "arrival": "Arrival aerodrome",
+      "chooseArrival": "Choose the arrival",
+      "arrivalRequired": "Choose the arrival aerodrome."
+    },
+    "auto": {
+      "title": "Automatic generation",
+      "description": "Enter the departure and the arrival: the route, navigation log, fuel and wind are computed for the aircraft of the booking.",
+      "generate": "Generate the flight plan",
+      "generating": "Generating…"
+    },
+    "manual": {
+      "title": "Manual preparation",
+      "description": "Choose the waypoints and the cruise settings yourself.",
+      "flightRules": "Flight rules",
+      "rules": {
+        "VFR": "VFR — visual flight rules",
+        "IFR": "IFR — instrument flight rules",
+        "SVFR": "SVFR — special VFR"
+      },
+      "passengerCount": "Number of passengers",
+      "waypoints": "Waypoints",
+      "waypointsHint": "Optional: without waypoints, the flight is direct between the two aerodromes.",
+      "cruiseSpeedKt": "Cruise speed (kt)",
+      "cruiseAltitudeFt": "Cruise altitude (ft)",
+      "cruiseAltitude": "Cruise altitude",
+      "estimatedFlightTime": "Estimated flight time",
+      "create": "Create the flight plan",
+      "creating": "Creating…"
+    },
+    "toast": {
+      "created": {
+        "title": "Flight plan created"
+      },
+      "createFailed": {
+        "title": "Could not create",
+        "description": "The flight plan could not be created. Try again in a moment.",
+        "accountNotLoaded": "Your account is not loaded yet. Try again in a moment."
+      },
+      "generated": {
+        "title": "Flight plan generated"
+      },
+      "generateFailed": {
+        "title": "Could not generate",
+        "description": "The flight plan could not be generated. Try again, or prepare it manually."
+      }
+    }
+  },
+  "planEdit": {
+    "title": "Edit the flight plan",
+    "description": "{{origin}} → {{destination}}. To change the route, create a new plan.",
+    "typePlaceholder": "Select",
+    "weather": "Weather conditions",
+    "weatherPlaceholder": "E.g. CAVOK, wind 240/08"
+  },
+  "routeSearch": {
+    "searching": "Searching…",
+    "minChars": "Enter at least two characters.",
+    "airport": {
+      "placeholder": "ICAO code, name or city",
+      "loadError": "The aerodrome details could not be loaded.",
+      "noResult": "No aerodrome found for this search.",
+      "unavailable": "Aerodrome search is unavailable at the moment."
+    },
+    "waypoint": {
+      "add": "Add a waypoint",
+      "placeholder": "Identifier or name (VOR, NDB, fix…)",
+      "loadError": "Some waypoints could not be loaded.",
+      "noResult": "No waypoint found for this search.",
+      "unavailable": "Waypoint search is unavailable at the moment.",
+      "removeLabel": "Remove {{ident}} from the route"
+    },
+    "map": {
+      "missingToken": "Mapbox API key missing. Please set NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN.",
+      "loadError": "The map could not be loaded. Check your Mapbox API key and your internet connection.",
+      "initError": "The map could not be initialised. Please check your internet connection.",
+      "updateError": "The map could not be updated."
+    }
+  },
+  "navLog": {
+    "title": "Navigation log",
+    "pilotInCommand": "pilot in command: {{name}}",
+    "performance": {
+      "cruiseSpeed": "Cruise speed:",
+      "consumption": "Fuel consumption:",
+      "ceiling": "Ceiling:"
+    },
+    "columns": {
+      "from": "From",
+      "to": "To",
+      "trackHint": "Track",
+      "wcaHint": "Wind correction angle",
+      "headingHint": "Heading to steer",
+      "distance": "Dist.",
+      "distanceHint": "Leg distance",
+      "cumulativeDistance": "Cum.",
+      "cumulativeDistanceHint": "Cumulative distance (NM)",
+      "altitude": "Alt.",
+      "altitudeHint": "Altitude (ft) or flight level",
+      "groundSpeedHint": "Ground speed",
+      "eteHint": "Leg flight time",
+      "elapsed": "Elapsed",
+      "elapsedHint": "Time elapsed since departure",
+      "fuel": "Fuel",
+      "fuelHint": "Fuel remaining"
+    }
+  },
+  "verticalProfile": {
+    "title": "Vertical profile",
+    "description": "{{distance}} NM · maximum altitude {{altitude}}",
+    "axis": {
+      "altitude": "Altitude (ft)",
+      "distance": "Distance (NM)"
+    },
+    "legend": {
+      "climb": "Climb",
+      "cruise": "Cruise",
+      "descent": "Descent"
+    }
+  },
+  "map": {
+    "legend": {
+      "climb": "Climb",
+      "cruise": "Cruise",
+      "descent": "Descent"
+    }
+  },
+  "airportInfo": {
+    "departure": "Departure aerodrome",
+    "arrival": "Arrival aerodrome",
+    "tabs": {
+      "general": "General",
+      "runways": "Runways",
+      "frequencies": "Frequencies",
+      "weather": "Weather"
+    },
+    "general": {
+      "elevation": "Aerodrome elevation",
+      "sunrise": "Sunrise",
+      "sunset": "Sunset",
+      "timezone": "Time zone",
+      "coordinates": "Coordinates"
+    },
+    "types": {
+      "large_airport": "Large airport",
+      "medium_airport": "Medium airport",
+      "small_airport": "Small aerodrome",
+      "heliport": "Heliport",
+      "seaplane_base": "Seaplane base",
+      "closed": "Closed"
+    },
+    "cardinal": {
+      "north": "N",
+      "south": "S",
+      "east": "E",
+      "west": "W"
+    },
+    "runways": {
+      "name": "Runway {{ident}}",
+      "lighted": "Lit",
+      "empty": "No runway information available"
+    },
+    "frequencies": {
+      "fallbackName": "Frequency",
+      "empty": "No frequency available"
+    },
+    "weather": {
+      "flightConditions": "Flight conditions",
+      "temperature": "Temperature",
+      "dewPoint": "Dew point",
+      "wind": "Wind",
+      "gusts": "(gusting {{speed}} kt)",
+      "visibility": "Visibility",
+      "cloudLayers": "Cloud layers",
+      "conditions": "Conditions",
+      "pressure": "Pressure",
+      "empty": "No weather information available"
+    }
+  },
+  "waypointInfo": {
+    "title": "Waypoints",
+    "description_one": "{{count}} waypoint. Select a waypoint to locate it on the map.",
+    "description_other": "{{count}} waypoints. Select a waypoint to locate it on the map.",
+    "empty": "This flight plan has no detailed waypoints.",
+    "type": {
+      "aerodrome": "Aerodrome",
+      "point": "Point"
+    }
+  },
+  "fuel": {
+    "title": "Fuel",
+    "description": "Calculated to ICAO rules, final reserve of {{minutes}} min.",
+    "descriptionWithProfile": "Calculated to ICAO rules, final reserve of {{minutes}} min · {{profile}} profile.",
+    "taxi": "Taxi",
+    "trip": "Trip",
+    "contingency": "Contingency (5%)",
+    "alternate": "Alternate",
+    "finalReserve": "Final reserve",
+    "totalRequired": "Total required",
+    "checkBeforeDeparture": "Before departure, check that the fuel on board covers at least {{liters}} L.",
+    "wind": {
+      "title": "En-route wind",
+      "description": "Mean wind used to calculate the route.",
+      "wind": "Wind",
+      "headwind": "Headwind",
+      "tailwind": "Tailwind",
+      "crosswind": "Crosswind",
+      "wca": "Wind correction angle",
+      "groundSpeed": "Ground speed"
+    }
+  },
+  "summary": {
+    "departure": "Departure",
+    "arrival": "Arrival"
+  },
+  "ofp": {
+    "print": "Print the OFP",
+    "printHint": "Opens the operational flight plan (OFP) ready to print"
+  },
+  "actionPlans": {
+    "more": "Other actions",
+    "printPage": "Print the page",
+    "share": "Share",
+    "copyLink": "Copy the link",
+    "shareTitle": "Skycrew flight plan",
+    "shareText": "Flight plan {{departure}} → {{arrival}} ({{date}})",
+    "shareTextFallback": "Flight plan no. {{id}}",
+    "toast": {
+      "copied": {
+        "title": "Link copied",
+        "description": "The flight plan link is on the clipboard."
+      },
+      "copyFailed": {
+        "title": "Could not copy",
+        "description": "The link could not be copied. Copy the page address from your browser."
+      }
+    }
+  },
+  "closeFlight": {
+    "title": "Close the flight",
+    "description": "Confirm what was actually flown: the flight will be entered in your logbook.",
+    "submit": "Close the flight",
+    "backToPlan": "Flight plan",
+    "recapPdf": "PDF summary",
+    "recapFileName": "flight-{{id}}.pdf",
+    "viewLogbook": "View the logbook",
+    "dashboard": "Dashboard",
+    "loadError": "The flight could not be loaded. Check your connection and try again.",
+    "notFound": {
+      "title": "Flight not found",
+      "description": "This flight does not exist or you do not have access to it.",
+      "action": "My flight plans"
+    },
+    "alreadyClosed": {
+      "title": "Flight already closed",
+      "description": "This flight was closed on {{date}}. It is in your logbook; only an administrator can still amend it."
+    },
+    "done": {
+      "title": "Flight closed",
+      "description": "The flight is recorded in your logbook.",
+      "flightTime": "Flight time",
+      "distance": "Distance flown",
+      "incidentReported": "Incident reported to the club"
+    },
+    "steps": {
+      "flight": "Flight flown",
+      "incident": "Incident",
+      "remarks": "Remarks"
+    },
+    "plan": {
+      "title": "Planned flight",
+      "plannedDeparture": "Planned departure",
+      "flightType": "Flight type",
+      "plannedDistance": "Planned distance",
+      "estimatedDuration": "Estimated duration",
+      "passengers": "Passengers",
+      "waypoints": "Waypoints"
+    },
+    "confirm": {
+      "title": "Close this flight?",
+      "description": "The flight {{route}} will be entered in your logbook with {{duration}} of flight time. Once it is closed, only an administrator can amend it.",
+      "descriptionWithIncident": "The flight {{route}} will be entered in your logbook with {{duration}} of flight time, and the incident will be reported to the club. Once it is closed, only an administrator can amend it."
+    },
+    "toast": {
+      "noAircraft": {
+        "title": "The incident cannot be recorded",
+        "description": "This flight is not linked to any aircraft, so the incident cannot be attached to one. The flight has not been closed."
+      },
+      "closeError": {
+        "title": "The flight was not closed",
+        "description": "Something went wrong while closing the flight. Try again in a moment."
+      },
+      "exportError": {
+        "title": "Export failed",
+        "description": "The PDF could not be generated. Try again in a moment."
+      }
+    },
+    "details": {
+      "intro": "The values come from the flight plan: correct whatever changed during the flight.",
+      "flightTime": "Flight time",
+      "flightTimeHint": "This time is entered in your logbook.",
+      "hoursAria": "Flight hours",
+      "minutesAria": "Flight minutes",
+      "distance": "Distance flown (km)",
+      "origin": "Departure aerodrome (ICAO)",
+      "destination": "Arrival aerodrome (ICAO)",
+      "flightType": "Flight type",
+      "flightTypePlaceholder": "Select",
+      "passengers": "Number of passengers",
+      "weather": "Weather conditions encountered",
+      "weatherPlaceholder": "E.g. CAVOK, wind 240/08, light turbulence"
+    },
+    "notes": {
+      "label": "Remarks on the flight",
+      "placeholder": "E.g. three circuits at Pontoise, practice forced landing",
+      "hint": "They appear in the “Remarks” column of your logbook."
+    },
+    "incident": {
+      "occurred": "An incident occurred during this flight",
+      "occurredHint": "Failure, defect, damage or safety occurrence. The report is sent to the club when the flight is closed.",
+      "dateTime": "Date and time of the incident",
+      "categoryPlaceholder": "Select a category",
+      "severityLabel": "Severity",
+      "priorityLabel": "Handling priority",
+      "priorityPlaceholder": "Select a priority",
+      "descriptionPlaceholder": "What happened, at what stage of the flight, in what conditions?",
+      "damage": "Damage observed",
+      "damagePlaceholder": "E.g. front left tyre flat, no other damage",
+      "correctiveActions": "Corrective actions",
+      "correctiveActionsPlaceholder": "What has been done, or what remains to be done before the next flight",
+      "severity": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High"
+      },
+      "priority": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High"
+      },
+      "category": {
+        "mechanical": "Mechanical",
+        "electrical": "Electrical",
+        "weather": "Weather",
+        "human_error": "Human error",
+        "other": "Other"
+      }
+    },
+    "waypoints": {
+      "unreadable": "The waypoints of this plan cannot be read.",
+      "direct": "Direct flight, no waypoints.",
+      "point": "Point",
+      "latitude": "Latitude",
+      "longitude": "Longitude",
+      "altitude": "Altitude",
+      "ground": "Ground"
+    }
+  },
+  "recapValidation": {
+    "flightHoursNegative": "Flight hours cannot be negative",
+    "flightTypeRequired": "The flight type is required",
+    "icaoLength": "The ICAO code must be 4 characters long",
+    "distanceNegative": "The distance cannot be negative",
+    "notesTooLong": "Notes cannot exceed 2000 characters",
+    "severityRequired": "The severity of the incident is required",
+    "descriptionRequired": "The description of the incident is required",
+    "priorityRequired": "The priority of the incident is required",
+    "categoryRequired": "The category of the incident is required"
+  },
+  "logbook": {
+    "title": "Logbook",
+    "description": "Your closed flights, your hours and how they break down.",
+    "flightsHeading": "Flights",
+    "export": {
+      "button": "Export as PDF",
+      "inProgress": "Exporting…",
+      "fileName": "logbook.pdf",
+      "successTitle": "Logbook exported",
+      "successDescription": "The file {{fileName}} has been downloaded.",
+      "errorTitle": "Export failed",
+      "errorDescription": "The logbook PDF could not be generated. Try again in a moment."
+    },
+    "filters": {
+      "startDateAria": "Start date",
+      "endDateAria": "End date",
+      "from": "From",
+      "to": "To",
+      "aircraftAria": "Filter by aircraft",
+      "allAircraft": "All aircraft",
+      "flightTypeAria": "Filter by flight type",
+      "allFlightTypes": "All flight types"
+    },
+    "stats": {
+      "flightHours": "Flight hours",
+      "longestFlight": "Longest flight: {{duration}}",
+      "flights": "Flights",
+      "average": "{{duration}} on average",
+      "last30Days": "Last 30 days",
+      "last90Days": "Last 90 days",
+      "monthlyTitle": "Flight hours per month",
+      "tooltipFlightTime": "Flight time",
+      "byModel": "Hours by aircraft model",
+      "byType": "Hours by flight type",
+      "empty": "No flights in this period."
+    },
+    "table": {
+      "departure": "Departure",
+      "arrival": "Arrival",
+      "flightType": "Flight type",
+      "remarks": "Remarks",
+      "flightNoun": {
+        "singular": "flight",
+        "plural": "flights"
+      },
+      "noMatch": {
+        "title": "No matching flights",
+        "description": "No closed flight matches this period or these filters.",
+        "reset": "Reset filters"
+      },
+      "empty": {
+        "title": "Your logbook is empty",
+        "description": "A flight appears here as soon as it is closed from its flight plan.",
+        "action": "View my flight plans"
+      }
+    }
+  }
+}

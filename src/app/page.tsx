@@ -4,6 +4,7 @@ import { useMutation } from '@apollo/client';
 import { useQuery } from '@apollo/client';
 import React, { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,14 +15,16 @@ import { useToast } from "@/components/hooks/use-toast";
 import { loginSchema } from '@/lib/validations';
 import { clearSessionCache } from '@/lib/apollo-client';
 import { AuthCard, AuthLink, FieldError } from '@/app/auth/_components/AuthCard';
+import { authIssueMessage } from '@/app/auth/_components/validation-message';
 
 const DEMO_ACCOUNTS = [
-  { label: 'Admin démo', email: 'demo@skycrew.fr', password: 'demo1234' },
-  { label: 'Pilote démo', email: 'jean.dupont@skycrew.fr', password: 'demo1234' },
-  { label: 'Instructeur démo', email: 'marie.laurent@skycrew.fr', password: 'demo1234' },
+  { labelKey: 'login.demo.admin', email: 'demo@skycrew.fr', password: 'demo1234' },
+  { labelKey: 'login.demo.pilot', email: 'jean.dupont@skycrew.fr', password: 'demo1234' },
+  { labelKey: 'login.demo.instructor', email: 'marie.laurent@skycrew.fr', password: 'demo1234' },
 ];
 
 export default function LoginPage() {
+  const { t } = useTranslation('auth');
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -49,7 +52,7 @@ export default function LoginPage() {
       result.error.issues.forEach((issue) => {
         const field = issue.path[0] as string;
         // Keep the first issue of a field: "required" comes before "invalid".
-        errors[field] ??= issue.message;
+        errors[field] ??= authIssueMessage(issue);
       });
       setFieldErrors(errors);
       return;
@@ -63,8 +66,8 @@ export default function LoginPage() {
 
       toast(
         is2FAEnabled
-          ? { title: "Code de vérification requis", description: "Saisissez le code de votre application d'authentification." }
-          : { title: "Connexion réussie", description: "Ouverture du tableau de bord…" },
+          ? { title: t('login.toast.twoFactor.title'), description: t('login.toast.twoFactor.description') }
+          : { title: t('login.toast.success.title'), description: t('login.toast.success.description') },
       );
 
       if (is2FAEnabled) {
@@ -76,8 +79,8 @@ export default function LoginPage() {
     } catch {
       toast({
         variant: "destructive",
-        title: "Erreur de connexion",
-        description: "Identifiants incorrects.",
+        title: t('login.toast.failed.title'),
+        description: t('login.toast.failed.description'),
       });
     }
   };
@@ -90,19 +93,19 @@ export default function LoginPage() {
 
   return (
     <AuthCard
-      title="Connexion"
-      description="Connectez-vous à votre espace SkyCrew."
-      footer={<AuthLink href="/auth/forgot-password">Mot de passe oublié ?</AuthLink>}
+      title={t('login.title')}
+      description={t('login.description')}
+      footer={<AuthLink href="/auth/forgot-password">{t('login.forgotPassword')}</AuthLink>}
     >
-      {/* Validation is done here, with messages in French under each field. */}
+      {/* Validation is done here, with our own messages under each field. */}
       <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         <div className="space-y-1.5">
-          <Label htmlFor="email">Adresse e-mail</Label>
+          <Label htmlFor="email">{t('common:labels.email')}</Label>
           <Input
             id="email"
             type="email"
             autoComplete="email"
-            placeholder="prenom.nom@exemple.fr"
+            placeholder={t('common.emailPlaceholder')}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             aria-invalid={!!fieldErrors.email}
@@ -111,7 +114,7 @@ export default function LoginPage() {
           <FieldError id="email-error">{fieldErrors.email}</FieldError>
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="password">Mot de passe</Label>
+          <Label htmlFor="password">{t('common.password')}</Label>
           <Input
             id="password"
             type="password"
@@ -125,15 +128,15 @@ export default function LoginPage() {
         </div>
         <Button type="submit" className="w-full" disabled={loading}>
           {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-          Se connecter
+          {t('common.signIn')}
         </Button>
       </form>
       {isDemoMode && (
         <div className="mt-6 space-y-3 rounded-lg border border-border bg-muted/40 p-4">
           <div>
-            <p className="text-sm font-medium">Accès démo</p>
+            <p className="text-sm font-medium">{t('login.demo.title')}</p>
             <p className="text-xs text-muted-foreground">
-              Choisissez un compte pour remplir le formulaire et explorer le site en lecture seule.
+              {t('login.demo.description')}
             </p>
           </div>
           <div className="space-y-2">
@@ -144,9 +147,9 @@ export default function LoginPage() {
                 onClick={() => applyDemoCredentials(account.email, account.password)}
                 className="w-full rounded-md border border-border bg-background px-3 py-2 text-left transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <p className="text-sm font-medium">{account.label}</p>
+                <p className="text-sm font-medium">{t(account.labelKey)}</p>
                 <p className="text-xs text-muted-foreground">{account.email}</p>
-                <p className="text-xs text-muted-foreground">Mot de passe : {account.password}</p>
+                <p className="text-xs text-muted-foreground">{t('login.demo.password', { password: account.password })}</p>
               </button>
             ))}
           </div>

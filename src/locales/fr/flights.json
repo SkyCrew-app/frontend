@@ -1,0 +1,557 @@
+{
+  "flightType": {
+    "generated": "Généré automatiquement"
+  },
+  "planState": {
+    "closed": "Clôturé",
+    "reservationCancelled": "Réservation annulée",
+    "toClose": "À clôturer",
+    "planned": "Prévu"
+  },
+  "plans": {
+    "title": "Mes plans de vol",
+    "description": "Les plans de vol préparés à partir de vos réservations.",
+    "new": "Nouveau plan de vol",
+    "pagerNoun": {
+      "one": "plan de vol",
+      "other": "plans de vol"
+    },
+    "labels": {
+      "flightType": "Type de vol",
+      "passengers": "Passagers",
+      "estimatedFuel": "Carburant estimé",
+      "totalDistance": "Distance totale",
+      "departure": "Départ",
+      "arrival": "Arrivée",
+      "cruiseSpeed": "Vitesse de croisière"
+    },
+    "actions": {
+      "closeFlight": "Clôturer le vol"
+    },
+    "card": {
+      "passengers_one": "{{count}} passager",
+      "passengers_other": "{{count}} passagers",
+      "noReservation": "Sans réservation associée",
+      "editLabel": "Modifier le plan de vol {{origin}} → {{destination}}"
+    },
+    "filters": {
+      "searchLabel": "Rechercher un plan de vol",
+      "searchPlaceholder": "Code OACI ou immatriculation",
+      "typeLabel": "Filtrer par type de vol",
+      "allTypes": "Tous les types",
+      "sortLabel": "Trier les plans de vol",
+      "newest": "Plus récents d'abord",
+      "oldest": "Plus anciens d'abord"
+    },
+    "stats": {
+      "count": "Plans de vol",
+      "plannedTime": "Temps de vol prévu",
+      "aerodromes": "Aérodromes"
+    },
+    "empty": {
+      "title": "Aucun plan de vol pour le moment",
+      "description": "Un plan de vol se prépare à partir d'une réservation : ouvrez vos réservations et choisissez « Créer un plan de vol ».",
+      "chooseReservation": "Choisir une réservation",
+      "filteredTitle": "Aucun plan de vol ne correspond",
+      "filteredDescription": "Modifiez la recherche ou les filtres pour retrouver vos plans de vol.",
+      "resetFilters": "Réinitialiser les filtres"
+    },
+    "toast": {
+      "updated": {
+        "title": "Plan de vol mis à jour",
+        "description": "Le plan de vol {{origin}} → {{destination}} a été modifié."
+      },
+      "updateFailed": {
+        "title": "Modification impossible",
+        "description": "Le plan de vol n'a pas pu être modifié. Réessayez dans un instant."
+      }
+    }
+  },
+  "planDetail": {
+    "title": "Plan de vol",
+    "description": "Plan de vol {{type}}",
+    "descriptionWithReservation": "Plan de vol {{type}} · réservation n° {{id}}",
+    "loadError": "Le plan de vol n'a pas pu être chargé. Vérifiez votre connexion puis réessayez.",
+    "notFound": {
+      "title": "Plan de vol introuvable",
+      "description": "Ce plan de vol n'existe pas ou vous n'y avez pas accès."
+    },
+    "beforeDeparture": {
+      "title": "Avant le départ",
+      "description": "Vérifiez les NOTAM et la météo, et assurez-vous d'avoir à bord tous les documents nécessaires au vol."
+    },
+    "tabs": {
+      "route": "Route et aérodromes",
+      "navigation": "Navigation",
+      "fuel": "Carburant et vent"
+    },
+    "routeTabs": {
+      "overview": "Vol",
+      "waypoints": "Points"
+    },
+    "flightDetails": {
+      "title": "Détails du vol",
+      "estimatedDuration": "Durée estimée",
+      "performanceProfile": "Profil de performance"
+    },
+    "aircraftAndPilot": {
+      "title": "Avion et pilote",
+      "noAircraft": "Aucun avion n'est associé à ce plan de vol.",
+      "registration": "Immatriculation",
+      "model": "Modèle",
+      "consumption": "Consommation",
+      "ceiling": "Plafond",
+      "pilotInCommand": "Commandant de bord"
+    },
+    "weather": {
+      "title": "Météo relevée (METAR)"
+    },
+    "map": {
+      "unavailableTitle": "Carte indisponible",
+      "unavailableDescription": "Les coordonnées des aérodromes ne sont pas enregistrées pour ce plan de vol."
+    },
+    "navigation": {
+      "emptyTitle": "Pas de journal de navigation",
+      "emptyDescription": "Le profil vertical et le journal de navigation sont calculés pour les plans de vol générés automatiquement à partir d'une réservation."
+    }
+  },
+  "planCreate": {
+    "title": "Créer un plan de vol",
+    "descriptionForReservation": "Pour la réservation de {{aircraft}} du {{date}}, {{start}} – {{end}}.",
+    "descriptionDefault": "Le plan de vol sera rattaché à votre réservation.",
+    "backToReservations": "Mes réservations",
+    "steps": {
+      "journey": "Trajet",
+      "route": "Route",
+      "summary": "Récapitulatif"
+    },
+    "airports": {
+      "departure": "Aérodrome de départ",
+      "chooseDeparture": "Choisir le départ",
+      "departureRequired": "Choisissez l'aérodrome de départ.",
+      "arrival": "Aérodrome d'arrivée",
+      "chooseArrival": "Choisir l'arrivée",
+      "arrivalRequired": "Choisissez l'aérodrome d'arrivée."
+    },
+    "auto": {
+      "title": "Génération automatique",
+      "description": "Indiquez le départ et l'arrivée : la route, le journal de navigation, le carburant et le vent sont calculés pour l'avion de la réservation.",
+      "generate": "Générer le plan de vol",
+      "generating": "Génération en cours…"
+    },
+    "manual": {
+      "title": "Préparation manuelle",
+      "description": "Choisissez vous-même les points de route et les paramètres de croisière.",
+      "flightRules": "Régime de vol",
+      "rules": {
+        "VFR": "VFR — vol à vue",
+        "IFR": "IFR — vol aux instruments",
+        "SVFR": "SVFR — VFR spécial"
+      },
+      "passengerCount": "Nombre de passagers",
+      "waypoints": "Points de route",
+      "waypointsHint": "Facultatif : sans point de route, le vol est direct entre les deux aérodromes.",
+      "cruiseSpeedKt": "Vitesse de croisière (kt)",
+      "cruiseAltitudeFt": "Altitude de croisière (ft)",
+      "cruiseAltitude": "Altitude de croisière",
+      "estimatedFlightTime": "Temps de vol estimé",
+      "create": "Créer le plan de vol",
+      "creating": "Création en cours…"
+    },
+    "toast": {
+      "created": {
+        "title": "Plan de vol créé"
+      },
+      "createFailed": {
+        "title": "Création impossible",
+        "description": "Le plan de vol n'a pas pu être créé. Réessayez dans un instant.",
+        "accountNotLoaded": "Votre compte n'est pas encore chargé. Réessayez dans un instant."
+      },
+      "generated": {
+        "title": "Plan de vol généré"
+      },
+      "generateFailed": {
+        "title": "Génération impossible",
+        "description": "Le plan de vol n'a pas pu être généré. Réessayez, ou préparez-le manuellement."
+      }
+    }
+  },
+  "planEdit": {
+    "title": "Modifier le plan de vol",
+    "description": "{{origin}} → {{destination}}. La route se modifie en créant un nouveau plan.",
+    "typePlaceholder": "Sélectionner",
+    "weather": "Conditions météo",
+    "weatherPlaceholder": "Ex. : CAVOK, vent 240/08"
+  },
+  "routeSearch": {
+    "searching": "Recherche en cours…",
+    "minChars": "Saisissez au moins deux caractères.",
+    "airport": {
+      "placeholder": "Code OACI, nom ou ville",
+      "loadError": "Les détails de l'aérodrome n'ont pas pu être chargés.",
+      "noResult": "Aucun aérodrome trouvé pour cette recherche.",
+      "unavailable": "La recherche d'aérodromes est indisponible pour le moment."
+    },
+    "waypoint": {
+      "add": "Ajouter un point de route",
+      "placeholder": "Identifiant ou nom (VOR, NDB, point…)",
+      "loadError": "Certains points de route n'ont pas pu être chargés.",
+      "noResult": "Aucun point trouvé pour cette recherche.",
+      "unavailable": "La recherche de points est indisponible pour le moment.",
+      "removeLabel": "Retirer {{ident}} de la route"
+    },
+    "map": {
+      "missingToken": "Clé d'API Mapbox manquante. Veuillez configurer NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN.",
+      "loadError": "Erreur lors du chargement de la carte. Vérifiez votre clé API Mapbox et votre connexion internet.",
+      "initError": "Impossible d'initialiser la carte. Veuillez vérifier votre connexion internet.",
+      "updateError": "Erreur lors de la mise à jour de la carte."
+    }
+  },
+  "navLog": {
+    "title": "Journal de navigation",
+    "pilotInCommand": "commandant de bord : {{name}}",
+    "performance": {
+      "cruiseSpeed": "Vitesse de croisière :",
+      "consumption": "Consommation :",
+      "ceiling": "Plafond :"
+    },
+    "columns": {
+      "from": "De",
+      "to": "Vers",
+      "trackHint": "Route (track)",
+      "wcaHint": "Correction de dérive",
+      "headingHint": "Cap à suivre",
+      "distance": "Dist.",
+      "distanceHint": "Distance du tronçon",
+      "cumulativeDistance": "Cumul",
+      "cumulativeDistanceHint": "Distance cumulée (NM)",
+      "altitude": "Alt.",
+      "altitudeHint": "Altitude (ft) ou niveau de vol",
+      "groundSpeedHint": "Vitesse sol",
+      "eteHint": "Temps de vol du tronçon",
+      "elapsed": "Cumul t.",
+      "elapsedHint": "Temps écoulé depuis le départ",
+      "fuel": "Carb.",
+      "fuelHint": "Carburant restant"
+    }
+  },
+  "verticalProfile": {
+    "title": "Profil vertical",
+    "description": "{{distance}} NM · altitude maximale {{altitude}}",
+    "axis": {
+      "altitude": "Altitude (ft)",
+      "distance": "Distance (NM)"
+    },
+    "legend": {
+      "climb": "Montée",
+      "cruise": "Croisière",
+      "descent": "Descente"
+    }
+  },
+  "map": {
+    "legend": {
+      "climb": "Montée",
+      "cruise": "Croisière",
+      "descent": "Descente"
+    }
+  },
+  "airportInfo": {
+    "departure": "Aérodrome de départ",
+    "arrival": "Aérodrome d'arrivée",
+    "tabs": {
+      "general": "Général",
+      "runways": "Pistes",
+      "frequencies": "Fréquences",
+      "weather": "Météo"
+    },
+    "general": {
+      "elevation": "Altitude du terrain",
+      "sunrise": "Lever du soleil",
+      "sunset": "Coucher du soleil",
+      "timezone": "Fuseau horaire",
+      "coordinates": "Coordonnées"
+    },
+    "types": {
+      "large_airport": "Grand aéroport",
+      "medium_airport": "Aéroport moyen",
+      "small_airport": "Petit aérodrome",
+      "heliport": "Héliport",
+      "seaplane_base": "Hydrobase",
+      "closed": "Fermé"
+    },
+    "cardinal": {
+      "north": "N",
+      "south": "S",
+      "east": "E",
+      "west": "O"
+    },
+    "runways": {
+      "name": "Piste {{ident}}",
+      "lighted": "Éclairée",
+      "empty": "Aucune information de piste disponible"
+    },
+    "frequencies": {
+      "fallbackName": "Fréquence",
+      "empty": "Aucune fréquence disponible"
+    },
+    "weather": {
+      "flightConditions": "Conditions de vol",
+      "temperature": "Température",
+      "dewPoint": "Point de rosée",
+      "wind": "Vent",
+      "gusts": "(rafales {{speed}} kt)",
+      "visibility": "Visibilité",
+      "cloudLayers": "Couches nuageuses",
+      "conditions": "Conditions",
+      "pressure": "Pression",
+      "empty": "Aucune information météo disponible"
+    }
+  },
+  "waypointInfo": {
+    "title": "Points de route",
+    "description_one": "{{count}} point. Sélectionnez un point pour le situer sur la carte.",
+    "description_other": "{{count}} points. Sélectionnez un point pour le situer sur la carte.",
+    "empty": "Ce plan de vol ne contient pas de point de route détaillé.",
+    "type": {
+      "aerodrome": "Aérodrome",
+      "point": "Point"
+    }
+  },
+  "fuel": {
+    "title": "Carburant",
+    "description": "Calcul selon les règles OACI, réserve finale de {{minutes}} min.",
+    "descriptionWithProfile": "Calcul selon les règles OACI, réserve finale de {{minutes}} min · profil {{profile}}.",
+    "taxi": "Roulage",
+    "trip": "Étape",
+    "contingency": "Réserve de route (5 %)",
+    "alternate": "Dégagement",
+    "finalReserve": "Réserve finale",
+    "totalRequired": "Total requis",
+    "checkBeforeDeparture": "Vérifiez avant le départ que le carburant embarqué couvre au moins {{liters}} L.",
+    "wind": {
+      "title": "Vent en route",
+      "description": "Vent moyen retenu pour le calcul de la route.",
+      "wind": "Vent",
+      "headwind": "Vent de face",
+      "tailwind": "Vent arrière",
+      "crosswind": "Vent de travers",
+      "wca": "Correction de dérive",
+      "groundSpeed": "Vitesse sol"
+    }
+  },
+  "summary": {
+    "departure": "Départ",
+    "arrival": "Arrivée"
+  },
+  "ofp": {
+    "print": "Imprimer l'OFP",
+    "printHint": "Ouvre le plan de vol opérationnel (OFP) prêt à imprimer"
+  },
+  "actionPlans": {
+    "more": "Autres actions",
+    "printPage": "Imprimer la page",
+    "share": "Partager",
+    "copyLink": "Copier le lien",
+    "shareTitle": "Plan de vol Skycrew",
+    "shareText": "Plan de vol {{departure}} → {{arrival}} ({{date}})",
+    "shareTextFallback": "Plan de vol n° {{id}}",
+    "toast": {
+      "copied": {
+        "title": "Lien copié",
+        "description": "Le lien du plan de vol est dans le presse-papiers."
+      },
+      "copyFailed": {
+        "title": "Copie impossible",
+        "description": "Le lien n'a pas pu être copié. Copiez l'adresse de la page depuis votre navigateur."
+      }
+    }
+  },
+  "closeFlight": {
+    "title": "Clôturer le vol",
+    "description": "Confirmez ce qui a réellement été volé : le vol sera inscrit dans votre carnet de vol.",
+    "submit": "Clôturer le vol",
+    "backToPlan": "Plan de vol",
+    "recapPdf": "Récapitulatif PDF",
+    "recapFileName": "vol-{{id}}.pdf",
+    "viewLogbook": "Voir le carnet de vol",
+    "dashboard": "Tableau de bord",
+    "loadError": "Le vol n'a pas pu être chargé. Vérifiez votre connexion puis réessayez.",
+    "notFound": {
+      "title": "Vol introuvable",
+      "description": "Ce vol n'existe pas ou vous n'y avez pas accès.",
+      "action": "Mes plans de vol"
+    },
+    "alreadyClosed": {
+      "title": "Vol déjà clôturé",
+      "description": "Ce vol a été clôturé le {{date}}. Il figure dans votre carnet de vol ; seul un administrateur peut encore le modifier."
+    },
+    "done": {
+      "title": "Vol clôturé",
+      "description": "Le vol est enregistré dans votre carnet de vol.",
+      "flightTime": "Temps de vol",
+      "distance": "Distance parcourue",
+      "incidentReported": "Incident signalé au club"
+    },
+    "steps": {
+      "flight": "Vol réalisé",
+      "incident": "Incident",
+      "remarks": "Remarques"
+    },
+    "plan": {
+      "title": "Plan de vol prévu",
+      "plannedDeparture": "Départ prévu",
+      "flightType": "Type de vol",
+      "plannedDistance": "Distance prévue",
+      "estimatedDuration": "Durée estimée",
+      "passengers": "Passagers",
+      "waypoints": "Points de route"
+    },
+    "confirm": {
+      "title": "Clôturer ce vol ?",
+      "description": "Le vol {{route}} sera inscrit dans votre carnet avec {{duration}} de vol. Après la clôture, seul un administrateur pourra le modifier.",
+      "descriptionWithIncident": "Le vol {{route}} sera inscrit dans votre carnet avec {{duration}} de vol, et l'incident sera signalé au club. Après la clôture, seul un administrateur pourra le modifier."
+    },
+    "toast": {
+      "noAircraft": {
+        "title": "Incident impossible à enregistrer",
+        "description": "Ce vol n'est rattaché à aucun aéronef : l'incident ne peut pas être associé à un aéronef. Le vol n'a pas été clôturé."
+      },
+      "closeError": {
+        "title": "Le vol n'a pas été clôturé",
+        "description": "Une erreur est survenue pendant la clôture. Réessayez dans un instant."
+      },
+      "exportError": {
+        "title": "Export impossible",
+        "description": "Le PDF n'a pas pu être généré. Réessayez dans un instant."
+      }
+    },
+    "details": {
+      "intro": "Les valeurs viennent du plan de vol : corrigez ce qui a changé pendant le vol.",
+      "flightTime": "Temps de vol",
+      "flightTimeHint": "Ce temps est inscrit dans votre carnet de vol.",
+      "hoursAria": "Heures de vol",
+      "minutesAria": "Minutes de vol",
+      "distance": "Distance parcourue (km)",
+      "origin": "Aérodrome de départ (OACI)",
+      "destination": "Aérodrome d'arrivée (OACI)",
+      "flightType": "Type de vol",
+      "flightTypePlaceholder": "Sélectionner",
+      "passengers": "Nombre de passagers",
+      "weather": "Conditions météo rencontrées",
+      "weatherPlaceholder": "Ex. : CAVOK, vent 240/08, turbulences légères"
+    },
+    "notes": {
+      "label": "Remarques sur le vol",
+      "placeholder": "Ex. : trois tours de piste à Pontoise, exercice de panne en campagne",
+      "hint": "Elles sont reprises dans la colonne « Remarques » de votre carnet de vol."
+    },
+    "incident": {
+      "occurred": "Un incident est survenu pendant ce vol",
+      "occurredHint": "Panne, anomalie, dommage ou événement de sécurité. Le signalement est transmis au club avec la clôture.",
+      "dateTime": "Date et heure de l'incident",
+      "categoryPlaceholder": "Sélectionner une catégorie",
+      "severityLabel": "Gravité",
+      "priorityLabel": "Priorité de traitement",
+      "priorityPlaceholder": "Sélectionner une priorité",
+      "descriptionPlaceholder": "Que s'est-il passé, à quel moment du vol, dans quelles conditions ?",
+      "damage": "Dommages constatés",
+      "damagePlaceholder": "Ex. : pneu avant gauche à plat, aucune autre trace",
+      "correctiveActions": "Actions correctives",
+      "correctiveActionsPlaceholder": "Ce qui a été fait, ou ce qu'il reste à faire avant le prochain vol",
+      "severity": {
+        "low": "Faible",
+        "medium": "Moyenne",
+        "high": "Élevée"
+      },
+      "priority": {
+        "low": "Basse",
+        "medium": "Moyenne",
+        "high": "Haute"
+      },
+      "category": {
+        "mechanical": "Mécanique",
+        "electrical": "Électrique",
+        "weather": "Météorologique",
+        "human_error": "Erreur humaine",
+        "other": "Autre"
+      }
+    },
+    "waypoints": {
+      "unreadable": "Les points de route de ce plan ne sont pas lisibles.",
+      "direct": "Vol direct, sans point de route.",
+      "point": "Point",
+      "latitude": "Latitude",
+      "longitude": "Longitude",
+      "altitude": "Altitude",
+      "ground": "Sol"
+    }
+  },
+  "recapValidation": {
+    "flightHoursNegative": "Les heures de vol ne peuvent pas être négatives",
+    "flightTypeRequired": "Le type de vol est requis",
+    "icaoLength": "Le code ICAO doit avoir 4 caractères",
+    "distanceNegative": "La distance ne peut pas être négative",
+    "notesTooLong": "Les notes ne peuvent pas dépasser 2000 caractères",
+    "severityRequired": "La gravité de l'incident est requise",
+    "descriptionRequired": "La description de l'incident est requise",
+    "priorityRequired": "La priorité de l'incident est requise",
+    "categoryRequired": "La catégorie de l'incident est requise"
+  },
+  "logbook": {
+    "title": "Carnet de vol",
+    "description": "Vos vols clôturés, vos heures et leur répartition.",
+    "flightsHeading": "Vols",
+    "export": {
+      "button": "Exporter en PDF",
+      "inProgress": "Export en cours…",
+      "fileName": "carnet-de-vol.pdf",
+      "successTitle": "Carnet de vol exporté",
+      "successDescription": "Le fichier {{fileName}} a été téléchargé.",
+      "errorTitle": "Export impossible",
+      "errorDescription": "Le PDF du carnet de vol n'a pas pu être généré. Réessayez dans un instant."
+    },
+    "filters": {
+      "startDateAria": "Date de début",
+      "endDateAria": "Date de fin",
+      "from": "Du",
+      "to": "Au",
+      "aircraftAria": "Filtrer par avion",
+      "allAircraft": "Tous les avions",
+      "flightTypeAria": "Filtrer par type de vol",
+      "allFlightTypes": "Tous les types de vol"
+    },
+    "stats": {
+      "flightHours": "Heures de vol",
+      "longestFlight": "Vol le plus long : {{duration}}",
+      "flights": "Vols",
+      "average": "{{duration}} en moyenne",
+      "last30Days": "30 derniers jours",
+      "last90Days": "90 derniers jours",
+      "monthlyTitle": "Heures de vol par mois",
+      "tooltipFlightTime": "Temps de vol",
+      "byModel": "Heures par modèle d'avion",
+      "byType": "Heures par type de vol",
+      "empty": "Aucun vol sur la période."
+    },
+    "table": {
+      "departure": "Départ",
+      "arrival": "Arrivée",
+      "flightType": "Type de vol",
+      "remarks": "Remarques",
+      "flightNoun": {
+        "singular": "vol",
+        "plural": "vols"
+      },
+      "noMatch": {
+        "title": "Aucun vol ne correspond",
+        "description": "Aucun vol clôturé ne correspond à cette période ou à ces filtres.",
+        "reset": "Réinitialiser les filtres"
+      },
+      "empty": {
+        "title": "Votre carnet de vol est vide",
+        "description": "Un vol s'inscrit ici dès qu'il est clôturé depuis son plan de vol.",
+        "action": "Voir mes plans de vol"
+      }
+    }
+  }
+}

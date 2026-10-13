@@ -1,0 +1,133 @@
+{
+  "page": {
+    "title": "Tableau de bord",
+    "welcome": "Bienvenue, {{name}}",
+    "description": "Votre activité et celle du club en un coup d'œil.",
+    "customize": "Personnaliser"
+  },
+  "grid": {
+    "emptyTitle": "Aucun widget affiché",
+    "emptyDescription": "Choisissez les informations à afficher sur votre tableau de bord."
+  },
+  "settings": {
+    "title": "Personnaliser le tableau de bord",
+    "description": "Choisissez les widgets affichés et leur ordre.",
+    "reset": "Rétablir la disposition par défaut",
+    "moveUp": "Monter",
+    "moveUpNamed": "Monter « {{name}} »",
+    "moveDown": "Descendre",
+    "moveDownNamed": "Descendre « {{name}} »",
+    "toast": {
+      "saved": {
+        "title": "Tableau de bord enregistré",
+        "description": "Votre sélection de widgets a été mise à jour."
+      },
+      "failed": {
+        "title": "Enregistrement impossible",
+        "description": "Votre tableau de bord n'a pas pu être enregistré. Réessayez dans un instant."
+      }
+    }
+  },
+  "widgets": {
+    "weather": {
+      "label": "Météo",
+      "description": "Conditions météo de votre aérodrome"
+    },
+    "quick-actions": {
+      "label": "Actions rapides",
+      "description": "Raccourcis vers les actions fréquentes"
+    },
+    "upcoming-reservations": {
+      "label": "Prochaines réservations",
+      "description": "Vos réservations à venir"
+    },
+    "recent-flights": {
+      "label": "Vols récents",
+      "description": "Historique de vos derniers vols"
+    },
+    "flight-hours-stats": {
+      "label": "Heures de vol",
+      "description": "Statistiques de vos heures de vol"
+    },
+    "fleet-availability": {
+      "label": "Disponibilité flotte",
+      "description": "État de la flotte aérienne"
+    },
+    "articles": {
+      "label": "Articles",
+      "description": "Dernières actualités de l'aéroclub"
+    }
+  },
+  "widgetError": "Ces informations n'ont pas pu être chargées.",
+  "weather": {
+    "aerodrome": "Aérodrome {{code}}",
+    "refresh": "Actualiser la météo",
+    "temperature": "Température",
+    "feelsLike": "Ressenti {{value}}",
+    "sky": "Ciel",
+    "skyHint": "Nuages {{clouds}} · Humidité {{humidity}}",
+    "wind": "Vent",
+    "windDirection": "Direction {{value}}",
+    "sun": "Soleil",
+    "sunHint": "Lever – coucher (heure de Paris)",
+    "condition": {
+      "sunny": "Ensoleillé",
+      "partlyCloudy": "Éclaircies",
+      "cloudy": "Nuageux"
+    },
+    "empty": {
+      "title": "Aucun aérodrome préféré",
+      "description": "Indiquez votre aérodrome dans votre profil pour voir sa météo ici.",
+      "action": "Compléter mon profil"
+    },
+    "toast": {
+      "refreshed": {
+        "title": "Météo actualisée",
+        "description": "Conditions à jour pour {{aerodrome}}."
+      },
+      "failed": {
+        "title": "Actualisation impossible",
+        "description": "La météo n'a pas pu être récupérée. Réessayez dans un instant."
+      }
+    }
+  },
+  "quickActions": {
+    "book": "Réserver un avion",
+    "flightPlan": "Préparer un plan de vol",
+    "logbook": "Ouvrir mon carnet de vol",
+    "profile": "Voir mon profil"
+  },
+  "upcomingReservations": {
+    "empty": "Aucune réservation à venir",
+    "unknownAircraft": "Avion non précisé"
+  },
+  "recentFlights": {
+    "empty": "Aucun vol récent",
+    "create": "Créer un plan de vol",
+    "to": "vers"
+  },
+  "flightHours": {
+    "empty": "Aucune heure de vol enregistrée",
+    "total": "au total",
+    "series": "Heures de vol",
+    "description": "Par mois, sur les derniers mois volés"
+  },
+  "fleet": {
+    "empty": "Aucun avion dans la flotte",
+    "summary_one": "{{count}} disponible sur {{total}}",
+    "summary_other": "{{count}} disponibles sur {{total}}",
+    "more_one": "et {{count}} autre avion",
+    "more_other": "et {{count}} autres avions",
+    "link": "Voir la flotte"
+  },
+  "availability": {
+    "AVAILABLE": "Disponible",
+    "UNAVAILABLE": "En maintenance",
+    "RESERVATED": "Réservé",
+    "unknown": "Statut inconnu"
+  },
+  "articles": {
+    "emptyTitle": "Aucun article pour le moment",
+    "emptyDescription": "Les actualités de l'aéroclub s'afficheront ici."
+  }
+}

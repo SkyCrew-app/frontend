@@ -1,3 +1,4 @@
+import i18n from "@/lib/i18n"
 import * as React from "react"
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react"
 
@@ -7,7 +8,7 @@ import { ButtonProps, buttonVariants } from "@/components/ui/button"
 const Pagination = ({ className, ...props }: React.ComponentProps<"nav">) => (
   <nav
     role="navigation"
-    aria-label="pagination"
+    aria-label={i18n.t("common:pagination.label")}
     className={cn("mx-auto flex w-full justify-center", className)}
     {...props}
   />
@@ -64,13 +65,13 @@ const PaginationPrevious = ({
   ...props
 }: React.ComponentProps<typeof PaginationLink>) => (
   <PaginationLink
-    aria-label="Page précédente"
+    aria-label={i18n.t("common:pagination.previousPage")}
     size="default"
     className={cn("gap-1 pl-2.5", className)}
     {...props}
   >
     <ChevronLeft className="h-4 w-4" />
-    <span>Précédent</span>
+    <span>{i18n.t("common:pagination.previous")}</span>
   </PaginationLink>
 )
 PaginationPrevious.displayName = "PaginationPrevious"
@@ -80,12 +81,12 @@ const PaginationNext = ({
   ...props
 }: React.ComponentProps<typeof PaginationLink>) => (
   <PaginationLink
-    aria-label="Page suivante"
+    aria-label={i18n.t("common:pagination.nextPage")}
     size="default"
     className={cn("gap-1 pr-2.5", className)}
     {...props}
   >
-    <span>Suivant</span>
+    <span>{i18n.t("common:pagination.next")}</span>
     <ChevronRight className="h-4 w-4" />
   </PaginationLink>
 )
@@ -101,7 +102,7 @@ const PaginationEllipsis = ({
     {...props}
   >
     <MoreHorizontal className="h-4 w-4" />
-    <span className="sr-only">Autres pages</span>
+    <span className="sr-only">{i18n.t("common:pagination.morePages")}</span>
   </span>
 )
 PaginationEllipsis.displayName = "PaginationEllipsis"

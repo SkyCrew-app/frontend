@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useTranslation } from "react-i18next"
 import { gql, useMutation, useQuery } from "@apollo/client"
 import { FileText, Plus, Search } from "lucide-react"
 import {
@@ -85,6 +86,7 @@ const emptyForm = (moduleId: string): LessonForm => ({
 const isBlankHtml = (html: string) => html.replace(/<[^>]*>/g, "").trim() === "" && !/<img\b/i.test(html)
 
 export function LessonManagement() {
+  const { t } = useTranslation("instruction")
   const [selectedCourseId, setSelectedCourseId] = useState("")
   const [selectedModuleId, setSelectedModuleId] = useState("")
   const [searchTerm, setSearchTerm] = useState("")
@@ -152,12 +154,12 @@ export function LessonManagement() {
   }
 
   const errors = {
-    moduleId: form.moduleId ? null : "Choisissez le module de la leçon.",
-    title: form.title.trim() ? null : "Donnez un titre à la leçon.",
-    content: isBlankHtml(form.content) ? "Rédigez le contenu de la leçon." : null,
+    moduleId: form.moduleId ? null : t("admin.lessons.form.moduleError"),
+    title: form.title.trim() ? null : t("admin.lessons.form.titleError"),
+    content: isBlankHtml(form.content) ? t("admin.lessons.form.contentError") : null,
     videoUrl:
       form.videoUrl.trim() && !/^https?:\/\//i.test(form.videoUrl.trim())
-        ? "Collez l'adresse complète de la vidéo, en commençant par https://."
+        ? t("admin.lessons.form.videoError")
         : null,
   }
   const hasErrors = Object.values(errors).some(Boolean)
@@ -191,7 +193,7 @@ export function LessonManagement() {
             },
           },
         })
-        toast({ title: "Leçon modifiée", description: "Les changements ont été enregistrés." })
+        toast({ title: t("admin.lessons.toast.updated.title"), description: t("shared.changesSaved") })
       } else {
         await createLesson({
           variables: {
@@ -205,7 +207,10 @@ export function LessonManagement() {
             },
           },
         })
-        toast({ title: "Leçon créée", description: "Elle est visible dès maintenant dans le cours." })
+        toast({
+          title: t("admin.lessons.toast.created.title"),
+          description: t("admin.lessons.toast.created.description"),
+        })
       }
       setIsFormOpen(false)
       // Show the module the lesson belongs to.
@@ -213,8 +218,8 @@ export function LessonManagement() {
       else setSelectedModuleId(form.moduleId)
     } catch {
       toast({
-        title: isEdit ? "Leçon non modifiée" : "Leçon non créée",
-        description: "L'enregistrement a échoué. Vérifiez les informations puis réessayez.",
+        title: isEdit ? t("admin.lessons.toast.updateFailed.title") : t("admin.lessons.toast.createFailed.title"),
+        description: t("shared.saveFailed"),
         variant: "destructive",
       })
     }
@@ -226,11 +231,14 @@ export function LessonManagement() {
       await deleteLesson({ variables: { id: Number(lessonToDelete.id) } })
       setLessonToDelete(null)
       refetch()
-      toast({ title: "Leçon supprimée", description: "La leçon a été retirée du module." })
+      toast({
+        title: t("admin.lessons.toast.deleted.title"),
+        description: t("admin.lessons.toast.deleted.description"),
+      })
     } catch {
       toast({
-        title: "Leçon non supprimée",
-        description: "La suppression a échoué. Réessayez dans un instant.",
+        title: t("admin.lessons.toast.deleteFailed.title"),
+        description: t("shared.deleteFailed"),
         variant: "destructive",
       })
     }
@@ -249,7 +257,7 @@ export function LessonManagement() {
   const createButton = (
     <Button onClick={openCreate} disabled={!hasModules}>
       <Plus className="h-4 w-4" />
-      Créer une leçon
+      {t("admin.lessons.create")}
     </Button>
   )
 
@@ -265,8 +273,8 @@ export function LessonManagement() {
           }}
           disabled={!hasCourses}
         >
-          <SelectTrigger className="w-full lg:w-56" aria-label="Cours">
-            <SelectValue placeholder="Choisir un cours" />
+          <SelectTrigger className="w-full lg:w-56" aria-label={t("admin.shared.course")}>
+            <SelectValue placeholder={t("admin.shared.chooseCourse")} />
           </SelectTrigger>
           <SelectContent>
             {(courses ?? []).map((course) => (
@@ -277,8 +285,12 @@ export function LessonManagement() {
           </SelectContent>
         </Select>
         <Select value={selectedModuleId} onValueChange={setSelectedModuleId} disabled={!hasModules}>
-          <SelectTrigger className="w-full lg:w-56" aria-label="Module dont afficher les leçons">
-            <SelectValue placeholder={hasCourses && modules && !hasModules ? "Aucun module" : "Choisir un module"} />
+          <SelectTrigger className="w-full lg:w-56" aria-label={t("admin.lessons.moduleFilterAria")}>
+            <SelectValue
+              placeholder={
+                hasCourses && modules && !hasModules ? t("admin.lessons.noModule") : t("admin.shared.chooseModule")
+              }
+            />
           </SelectTrigger>
           <SelectContent>
             {(modules ?? []).map((module) => (
@@ -292,8 +304,8 @@ export function LessonManagement() {
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="search"
-            aria-label="Rechercher une leçon"
-            placeholder="Rechercher une leçon, ex. altimétrie"
+            aria-label={t("admin.lessons.searchAria")}
+            placeholder={t("admin.lessons.searchPlaceholder")}
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
             className="pl-9"
@@ -315,28 +327,28 @@ export function LessonManagement() {
       ) : !hasCourses ? (
         <EmptyState
           icon={FileText}
-          title="Créez d'abord un cours"
-          description="Une leçon appartient à un module, lui-même rangé dans un cours. Commencez par l'onglet Cours."
+          title={t("admin.shared.createCourseFirst")}
+          description={t("admin.lessons.empty.noCourseDescription")}
         />
       ) : modulesQuery.error && !modules ? (
         <ErrorState onRetry={() => modulesQuery.refetch()} />
       ) : !hasModules ? (
         <EmptyState
           icon={FileText}
-          title="Ce cours n'a pas encore de module"
-          description="Ajoutez un module à ce cours dans l'onglet Modules, puis revenez créer ses leçons."
+          title={t("admin.shared.noModuleYet")}
+          description={t("admin.lessons.empty.noModuleDescription")}
         />
       ) : error && !lessons ? (
         <ErrorState onRetry={() => refetch()} />
       ) : filteredLessons.length === 0 ? (
         <EmptyState
           icon={FileText}
-          title={search ? "Aucune leçon ne correspond" : "Ce module n'a pas encore de leçon"}
-          description={search ? "Modifiez la recherche." : "Une leçon réunit un texte, une vidéo et des documents."}
+          title={search ? t("admin.lessons.empty.filteredTitle") : t("admin.lessons.empty.title")}
+          description={search ? t("admin.shared.changeSearch") : t("admin.lessons.empty.description")}
           action={
             search ? (
               <Button variant="outline" onClick={() => setSearchTerm("")}>
-                Effacer la recherche
+                {t("admin.shared.clearSearch")}
               </Button>
             ) : (
               createButton
@@ -348,12 +360,12 @@ export function LessonManagement() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-12 text-right">N°</TableHead>
-                <TableHead>Leçon</TableHead>
-                <TableHead>Vidéo</TableHead>
-                <TableHead className="text-right">Pièces jointes</TableHead>
+                <TableHead className="w-12 text-right">{t("admin.shared.number")}</TableHead>
+                <TableHead>{t("admin.lessons.columns.lesson")}</TableHead>
+                <TableHead>{t("admin.lessons.columns.video")}</TableHead>
+                <TableHead className="text-right">{t("admin.lessons.columns.attachments")}</TableHead>
                 <TableHead className="w-24">
-                  <span className="sr-only">Actions</span>
+                  <span className="sr-only">{t("common:labels.actions")}</span>
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -369,11 +381,11 @@ export function LessonManagement() {
                       <p className="line-clamp-1 max-w-xl text-sm text-muted-foreground">{lesson.description}</p>
                     )}
                   </TableCell>
-                  <TableCell>{lesson.video_url ? <Badge variant="info">Vidéo</Badge> : "—"}</TableCell>
+                  <TableCell>{lesson.video_url ? <Badge variant="info">{t("admin.lessons.columns.video")}</Badge> : "—"}</TableCell>
                   <TableCell className="text-right tabular-nums">{lesson.attachments?.length || "—"}</TableCell>
                   <TableCell>
                     <RowActions
-                      name={`la leçon ${lesson.title}`}
+                      name={t("admin.lessons.rowName", { title: lesson.title })}
                       onEdit={() => openEdit(lesson)}
                       onDelete={() => setLessonToDelete(lesson)}
                     />
@@ -388,29 +400,29 @@ export function LessonManagement() {
       <SidePanel
         open={isFormOpen}
         onOpenChange={(open) => !saving && setIsFormOpen(open)}
-        title={isEdit ? "Modifier la leçon" : "Créer une leçon"}
-        description="Le texte est obligatoire ; la vidéo et les pièces jointes sont facultatives."
+        title={isEdit ? t("admin.lessons.form.editTitle") : t("admin.lessons.create")}
+        description={t("admin.lessons.form.description")}
         onSubmit={handleSubmit}
-        submitLabel={isEdit ? "Enregistrer" : "Créer la leçon"}
+        submitLabel={isEdit ? t("common:actions.save") : t("admin.lessons.form.submitCreate")}
         submitting={saving}
         size="xl"
         steps={[
           {
-            title: "Présentation",
+            title: t("admin.lessons.form.stepPresentation"),
             validate: validatePresentation,
             content: (
               <>
                 <div className="grid gap-4 sm:grid-cols-2">
                   {!isEdit && (
                     <FormField
-                      label="Module"
+                      label={t("admin.shared.module")}
                       htmlFor="lesson-module"
                       required
                       error={checked.presentation ? errors.moduleId : null}
                     >
                       <Select value={form.moduleId} onValueChange={(value) => setForm({ ...form, moduleId: value })}>
                         <SelectTrigger id="lesson-module">
-                          <SelectValue placeholder="Choisir un module" />
+                          <SelectValue placeholder={t("admin.shared.chooseModule")} />
                         </SelectTrigger>
                         <SelectContent>
                           {(modules ?? []).map((module) => (
@@ -424,14 +436,14 @@ export function LessonManagement() {
                   )}
                   <div className={isEdit ? "sm:col-span-2" : undefined}>
                     <FormField
-                      label="Titre"
+                      label={t("admin.shared.title")}
                       htmlFor="lesson-title"
                       required
                       error={checked.presentation ? errors.title : null}
                     >
                       <Input
                         id="lesson-title"
-                        placeholder="Ex. Lire un METAR"
+                        placeholder={t("admin.lessons.form.titlePlaceholder")}
                         value={form.title}
                         onChange={(event) => setForm({ ...form, title: event.target.value })}
                         aria-invalid={checked.presentation && !!errors.title}
@@ -441,13 +453,13 @@ export function LessonManagement() {
                 </div>
 
                 <FormField
-                  label="Description"
+                  label={t("common:labels.description")}
                   htmlFor="lesson-description"
-                  hint="Une phrase affichée sous le titre de la leçon."
+                  hint={t("admin.lessons.form.descriptionHint")}
                 >
                   <Textarea
                     id="lesson-description"
-                    placeholder="Ex. Décoder un message d'observation, groupe par groupe."
+                    placeholder={t("admin.lessons.form.descriptionPlaceholder")}
                     value={form.description}
                     onChange={(event) => setForm({ ...form, description: event.target.value })}
                     rows={2}
@@ -455,10 +467,10 @@ export function LessonManagement() {
                 </FormField>
 
                 <FormField
-                  label="Vidéo"
+                  label={t("admin.lessons.columns.video")}
                   htmlFor="lesson-video"
                   error={checked.presentation ? errors.videoUrl : null}
-                  hint="Facultatif. Collez le lien d'une vidéo YouTube."
+                  hint={t("admin.lessons.form.videoHint")}
                 >
                   <Input
                     id="lesson-video"
@@ -474,26 +486,26 @@ export function LessonManagement() {
             ),
           },
           {
-            title: "Contenu",
+            title: t("admin.lessons.form.stepContent"),
             validate: validateContent,
             content: (
-              <FormField label="Contenu" required error={checked.content ? errors.content : null}>
+              <FormField label={t("admin.lessons.form.stepContent")} required error={checked.content ? errors.content : null}>
                 {/* A long text scrolls inside the editor, so the panel itself does not. */}
                 <WysiwygEditor
                   value={form.content}
                   onChange={(content) => setForm((previous) => ({ ...previous, content }))}
-                  placeholder="Rédigez le texte de la leçon…"
+                  placeholder={t("admin.lessons.form.contentPlaceholder")}
                   className="flex max-h-[26rem] flex-col [&>.prose]:overflow-y-auto"
                 />
               </FormField>
             ),
           },
           {
-            title: "Ressources",
+            title: t("admin.lessons.form.stepResources"),
             content: (
               <FormField
-                label="Pièces jointes"
-                hint="Facultatif. Des liens vers des documents à consulter ou à télécharger."
+                label={t("admin.lessons.columns.attachments")}
+                hint={t("admin.lessons.form.attachmentsHint")}
               >
                 <AttachmentsInput
                   className=""
@@ -509,8 +521,8 @@ export function LessonManagement() {
       <ConfirmDeleteDialog
         open={lessonToDelete !== null}
         onOpenChange={(open) => !open && setLessonToDelete(null)}
-        title="Supprimer cette leçon ?"
-        description={`La leçon « ${lessonToDelete?.title ?? ""} » sera définitivement supprimée, avec la progression des membres sur cette leçon.`}
+        title={t("admin.lessons.deleteConfirm.title")}
+        description={t("admin.lessons.deleteConfirm.description", { title: lessonToDelete?.title ?? "" })}
         onConfirm={handleDelete}
         loading={deleting}
       />

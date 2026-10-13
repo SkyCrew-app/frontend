@@ -1,3 +1,4 @@
+import i18n from "@/lib/i18n"
 import type { ReactNode } from "react"
 import { AlertCircle, RefreshCw } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -11,8 +12,8 @@ interface ErrorStateProps {
 
 /** What a page or section shows when its data could not be loaded. */
 export function ErrorState({
-  title = "Chargement impossible",
-  description = "Les données n'ont pas pu être chargées. Vérifiez votre connexion puis réessayez.",
+  title = i18n.t("common:states.errorTitle"),
+  description = i18n.t("common:states.errorDescription"),
   onRetry,
 }: ErrorStateProps) {
   return (
@@ -24,7 +25,7 @@ export function ErrorState({
         {onRetry && (
           <Button variant="outline" size="sm" onClick={onRetry}>
             <RefreshCw className="h-4 w-4" />
-            Réessayer
+            {i18n.t("common:actions.retry")}
           </Button>
         )}
       </AlertDescription>

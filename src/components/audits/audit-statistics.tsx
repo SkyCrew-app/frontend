@@ -3,8 +3,8 @@
 import { useState, useMemo } from "react"
 import type { ReactNode } from "react"
 import { useQuery } from "@apollo/client"
+import { useTranslation } from "react-i18next"
 import { format } from "date-fns"
-import { fr } from "date-fns/locale"
 import {
   BarChart,
   Bar,
@@ -23,11 +23,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { GET_AUDIT_STATISTICS } from "@/graphql/audit"
+import { dateFnsLocale } from "@/lib/i18n"
 
 const AXIS_TICK = { fontSize: 12, fill: "hsl(var(--muted-foreground))" }
 const AXIS_LINE = { stroke: "hsl(var(--border))" }
 
 function ChartTooltip({ active, payload, label }: any) {
+  const { t } = useTranslation("administration")
   if (!active || !payload?.length) return null
   return (
     <div className="rounded-md border bg-card p-2 text-xs shadow-sm">
@@ -39,7 +41,8 @@ function ChartTooltip({ active, payload, label }: any) {
             style={{ backgroundColor: entry.payload?.color || entry.fill || entry.color }}
           />
           <span>
-            {entry.name} : <span className="font-medium tabular-nums">{entry.value}</span>
+            {t("audits.statistics.tooltipLabel", { name: entry.name })}{" "}
+            <span className="font-medium tabular-nums">{entry.value}</span>
           </span>
         </div>
       ))}
@@ -71,6 +74,7 @@ interface ChartCardProps {
 }
 
 function ChartCard({ title, loading, empty, children }: ChartCardProps) {
+  const { t } = useTranslation("administration")
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -81,7 +85,7 @@ function ChartCard({ title, loading, empty, children }: ChartCardProps) {
           <Skeleton className="h-64 w-full" />
         ) : empty ? (
           <p className="flex h-64 items-center justify-center text-center text-sm text-muted-foreground">
-            Aucun audit sur cette période.
+            {t("audits.statistics.empty")}
           </p>
         ) : (
           <div className="h-64 w-full">{children}</div>
@@ -92,6 +96,7 @@ function ChartCard({ title, loading, empty, children }: ChartCardProps) {
 }
 
 export function AuditStatistics() {
+  const { t } = useTranslation("administration")
   const [timeRange, setTimeRange] = useState("6")
 
   const dateVariables = useMemo(() => {
@@ -116,7 +121,7 @@ export function AuditStatistics() {
     ? [...(stats.auditsByMonth ?? [])]
         .sort((a: any, b: any) => (a.year !== b.year ? a.year - b.year : a.month - b.month))
         .map((item: any) => ({
-          month: format(new Date(item.year, item.month - 1, 1), "MMM yyyy", { locale: fr }),
+          month: format(new Date(item.year, item.month - 1, 1), "MMM yyyy", { locale: dateFnsLocale() }),
           count: item.count,
         }))
     : []
@@ -131,16 +136,24 @@ export function AuditStatistics() {
 
   const resultsData = hasData
     ? [
-        { name: "Conforme", value: stats.conformCount, color: "hsl(var(--chart-4))" },
-        { name: "Avec remarques", value: stats.conformWithRemarksCount, color: "hsl(var(--chart-5))" },
-        { name: "Non conforme", value: stats.nonConformCount, color: "hsl(var(--destructive))" },
+        { name: t("audits.statistics.results.conform"), value: stats.conformCount, color: "hsl(var(--chart-4))" },
+        {
+          name: t("audits.statistics.results.withRemarks"),
+          value: stats.conformWithRemarksCount,
+          color: "hsl(var(--chart-5))",
+        },
+        {
+          name: t("audits.statistics.results.nonConform"),
+          value: stats.nonConformCount,
+          color: "hsl(var(--destructive))",
+        },
       ]
     : []
 
   const statusData = hasData
     ? [
-        { name: "En cours", value: stats.openAudits, color: "hsl(var(--chart-2))" },
-        { name: "Clôturés", value: stats.closedAudits, color: "hsl(var(--chart-6))" },
+        { name: t("audits.stats.open"), value: stats.openAudits, color: "hsl(var(--chart-2))" },
+        { name: t("audits.stats.closed"), value: stats.closedAudits, color: "hsl(var(--chart-6))" },
       ]
     : []
 
@@ -149,16 +162,16 @@ export function AuditStatistics() {
   return (
     <section className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-lg font-semibold">Statistiques</h2>
+        <h2 className="text-lg font-semibold">{t("audits.statistics.title")}</h2>
         <Select value={timeRange} onValueChange={setTimeRange}>
-          <SelectTrigger className="w-full sm:w-48" aria-label="Période des statistiques">
-            <SelectValue placeholder="Période" />
+          <SelectTrigger className="w-full sm:w-48" aria-label={t("audits.statistics.periodLabel")}>
+            <SelectValue placeholder={t("audits.statistics.period")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="3">3 derniers mois</SelectItem>
-            <SelectItem value="6">6 derniers mois</SelectItem>
-            <SelectItem value="12">12 derniers mois</SelectItem>
-            <SelectItem value="24">24 derniers mois</SelectItem>
+            <SelectItem value="3">{t("audits.statistics.lastMonths", { months: 3 })}</SelectItem>
+            <SelectItem value="6">{t("audits.statistics.lastMonths", { months: 6 })}</SelectItem>
+            <SelectItem value="12">{t("audits.statistics.lastMonths", { months: 12 })}</SelectItem>
+            <SelectItem value="24">{t("audits.statistics.lastMonths", { months: 24 })}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -167,19 +180,19 @@ export function AuditStatistics() {
         <ErrorState onRetry={() => refetch()} />
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
-          <ChartCard title="Audits par mois" loading={loading} empty={monthlyData.length === 0}>
+          <ChartCard title={t("audits.statistics.byMonth")} loading={loading} empty={monthlyData.length === 0}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={monthlyData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                 <XAxis dataKey="month" tick={AXIS_TICK} tickLine={false} axisLine={AXIS_LINE} tickMargin={8} />
                 <YAxis allowDecimals={false} tick={AXIS_TICK} tickLine={false} axisLine={AXIS_LINE} tickMargin={8} />
                 <Tooltip content={<ChartTooltip />} cursor={{ fill: "hsl(var(--muted))" }} />
-                <Bar dataKey="count" name="Audits" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="count" name={t("audits.stats.total")} fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </ChartCard>
 
-          <ChartCard title="Audits par aéronef" loading={loading} empty={aircraftData.length === 0}>
+          <ChartCard title={t("audits.statistics.byAircraft")} loading={loading} empty={aircraftData.length === 0}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={aircraftData} layout="vertical" margin={{ top: 8, right: 16, left: 8, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
@@ -194,13 +207,18 @@ export function AuditStatistics() {
                 />
                 <Tooltip content={<ChartTooltip />} cursor={{ fill: "hsl(var(--muted))" }} />
                 <Legend content={<ChartLegend />} />
-                <Bar dataKey="value" name="Audits" fill="hsl(var(--chart-2))" radius={[0, 4, 4, 0]} />
-                <Bar dataKey="nonConform" name="Non conformes" fill="hsl(var(--destructive))" radius={[0, 4, 4, 0]} />
+                <Bar dataKey="value" name={t("audits.stats.total")} fill="hsl(var(--chart-2))" radius={[0, 4, 4, 0]} />
+                <Bar
+                  dataKey="nonConform"
+                  name={t("audits.statusTabs.nonconform")}
+                  fill="hsl(var(--destructive))"
+                  radius={[0, 4, 4, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           </ChartCard>
 
-          <ChartCard title="Répartition par résultat" loading={loading} empty={total(resultsData) === 0}>
+          <ChartCard title={t("audits.statistics.byResult")} loading={loading} empty={total(resultsData) === 0}>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie data={resultsData} dataKey="value" cx="50%" cy="50%" outerRadius={80} labelLine={false}>
@@ -214,7 +232,7 @@ export function AuditStatistics() {
             </ResponsiveContainer>
           </ChartCard>
 
-          <ChartCard title="Répartition par statut" loading={loading} empty={total(statusData) === 0}>
+          <ChartCard title={t("audits.statistics.byStatus")} loading={loading} empty={total(statusData) === 0}>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie data={statusData} dataKey="value" cx="50%" cy="50%" outerRadius={80} labelLine={false}>

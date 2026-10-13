@@ -1,5 +1,6 @@
 "use client";
 
+import i18n from "@/lib/i18n"
 import * as React from "react";
 import { X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +25,7 @@ export const MultiSelect: React.FC<MultiSelectProps> = ({
   options,
   selectedOptions = [],
   onChange,
-  placeholder = "Select options...",
+  placeholder = i18n.t("common:combobox.selectOptions"),
 }) => {
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [open, setOpen] = React.useState(false);

@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslation } from "react-i18next"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
@@ -33,14 +34,16 @@ export function FlightPlanFilters({
   resetFilters,
   hasActiveFilters,
 }: FlightPlanFiltersProps) {
+  const { t } = useTranslation("flights")
+
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
       <div className="relative sm:w-full sm:max-w-xs">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           type="search"
-          aria-label="Rechercher un plan de vol"
-          placeholder="Code OACI ou immatriculation"
+          aria-label={t("plans.filters.searchLabel")}
+          placeholder={t("plans.filters.searchPlaceholder")}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="pl-9"
@@ -49,11 +52,11 @@ export function FlightPlanFilters({
 
       {flightTypes.length > 1 && (
         <Select value={flightTypeFilter} onValueChange={setFlightTypeFilter}>
-          <SelectTrigger aria-label="Filtrer par type de vol" className="sm:w-[190px]">
+          <SelectTrigger aria-label={t("plans.filters.typeLabel")} className="sm:w-[190px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="ALL">Tous les types</SelectItem>
+            <SelectItem value="ALL">{t("plans.filters.allTypes")}</SelectItem>
             {flightTypes.map((type) => (
               <SelectItem key={type} value={type}>
                 {flightTypeLabel(type)}
@@ -64,19 +67,19 @@ export function FlightPlanFilters({
       )}
 
       <Select value={sortOrder} onValueChange={(value) => setSortOrder(value as FlightPlanSortOrder)}>
-        <SelectTrigger aria-label="Trier les plans de vol" className="sm:w-[200px]">
+        <SelectTrigger aria-label={t("plans.filters.sortLabel")} className="sm:w-[200px]">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="newest">Plus récents d&apos;abord</SelectItem>
-          <SelectItem value="oldest">Plus anciens d&apos;abord</SelectItem>
+          <SelectItem value="newest">{t("plans.filters.newest")}</SelectItem>
+          <SelectItem value="oldest">{t("plans.filters.oldest")}</SelectItem>
         </SelectContent>
       </Select>
 
       {hasActiveFilters && (
         <Button variant="ghost" size="sm" onClick={resetFilters} className="self-start text-muted-foreground sm:self-auto">
           <X className="h-4 w-4" />
-          Réinitialiser
+          {t("common:actions.reset")}
         </Button>
       )}
     </div>

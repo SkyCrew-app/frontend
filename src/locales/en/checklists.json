@@ -1,0 +1,241 @@
+{
+  "status": {
+    "IN_PROGRESS": "In progress",
+    "COMPLETED": "Completed",
+    "CANCELLED": "Cancelled",
+    "unknown": "Unknown status"
+  },
+  "category": {
+    "EXTERIOR": "Exterior",
+    "COCKPIT": "Cockpit",
+    "ENGINE": "Engine",
+    "EMERGENCY": "Emergencies",
+    "DOCUMENTS": "Documents",
+    "other": "Other items"
+  },
+  "submission": {
+    "completedOn": "Completed on {{date}}",
+    "startedOn": "Started on {{date}}"
+  },
+  "progress": {
+    "checked_one": "<figures>{{checked}} / {{total}}</figures> item checked",
+    "checked_other": "<figures>{{checked}} / {{total}}</figures> items checked",
+    "percentage": "{{value}}%",
+    "ariaLabel": "Checklist progress",
+    "requiredRemaining_one": "{{count}} required item remaining",
+    "requiredRemaining_other": "{{count}} required items remaining"
+  },
+  "list": {
+    "title": "Checklists",
+    "description": "Your pre-flight checks, item by item.",
+    "new": "New checklist",
+    "empty": {
+      "title": "No checklists yet",
+      "description": "Start a checklist before your next flight: your answers are saved as you go."
+    },
+    "sections": {
+      "inProgress": "In progress",
+      "history": "History"
+    },
+    "card": {
+      "itemsChecked_one": "{{checked}} / {{total}} item checked",
+      "itemsChecked_other": "{{checked}} / {{total}} items checked",
+      "resume": "Resume",
+      "view": "View"
+    },
+    "showLess": "Show fewer",
+    "showAll": "Show all {{total}} checklists",
+    "start": {
+      "title": "Start a checklist",
+      "description": "Choose the template for the aircraft you are preparing.",
+      "submit": "Start the checklist",
+      "templateLabel": "Checklist template",
+      "noTemplate": "No checklist template is available. Ask a club administrator to activate one.",
+      "placeholder": "Choose a template"
+    }
+  },
+  "detail": {
+    "back": "My checklists",
+    "title": "Checklist",
+    "loadError": "This checklist could not be loaded. It may no longer exist."
+  },
+  "form": {
+    "empty": {
+      "title": "This checklist has no items",
+      "description": "The template used is empty. Please report it to a club administrator."
+    },
+    "requiredMissing_one": "Tick the last required item to finish.",
+    "requiredMissing_other": "Tick the {{count}} remaining required items to finish.",
+    "complete": "Complete the checklist",
+    "save": {
+      "error": "Latest answers not saved.",
+      "saved": "Answers saved",
+      "auto": "Your answers are saved automatically."
+    }
+  },
+  "item": {
+    "viewNoteLabel": "View the note for “{{label}}”",
+    "addNoteLabel": "Add a note to “{{label}}”",
+    "note": "Note",
+    "addNote": "Add a note",
+    "noteLabel": "Note for “{{label}}”",
+    "notePlaceholder": "E.g. nose tyre slightly worn, keep an eye on it"
+  },
+  "toast": {
+    "retryLater": "Try again in a moment.",
+    "startFailed": {
+      "title": "The checklist could not be started"
+    },
+    "answersNotSaved": {
+      "title": "Answers not saved",
+      "description": "Check your connection: your latest answers could not be saved."
+    },
+    "completed": {
+      "title": "Checklist completed"
+    },
+    "completeFailed": {
+      "title": "The checklist could not be completed",
+      "description": "Check that every required item is ticked, then try again."
+    }
+  },
+  "admin": {
+    "active": "Active",
+    "inactive": "Inactive",
+    "fields": {
+      "name": "Template name",
+      "namePlaceholder": "DR400 pre-flight",
+      "aircraftModel": "Aircraft model",
+      "aircraftModelPlaceholder": "Robin DR400",
+      "descriptionPlaceholder": "Full pre-flight check, to be done before the first flight of each day",
+      "descriptionHint": "Optional. Shown to the pilot at the top of the checklist."
+    },
+    "list": {
+      "title": "Checklist templates",
+      "description": "The pre-flight checklists offered to pilots, by aircraft type.",
+      "create": "Create a template",
+      "empty": {
+        "title": "No checklist templates",
+        "description": "Create one template per aircraft type: pilots will fill it in before each flight."
+      },
+      "columns": {
+        "template": "Template",
+        "items": "Items",
+        "offered": "Offered to pilots"
+      },
+      "emptyTemplate": "Empty",
+      "deactivateLabel": "Deactivate the template {{name}}",
+      "activateLabel": "Activate the template {{name}}",
+      "editLabel": "Edit the template {{name}}",
+      "deleteLabel": "Delete the template {{name}}",
+      "deleteDialog": {
+        "title": "Delete the template “{{name}}”?",
+        "description": "The template and its items will be permanently deleted. If pilots have already filled it in, it will only be deactivated so that their checklist history is kept.",
+        "confirm": "Delete the template"
+      },
+      "createPanel": {
+        "title": "Create a checklist template",
+        "description": "You will add its items straight afterwards.",
+        "submit": "Create the template"
+      }
+    },
+    "detail": {
+      "back": "All templates",
+      "title": "Checklist template",
+      "loadError": "This template could not be loaded. It may no longer exist.",
+      "subtitle": "Checklist template · {{model}}",
+      "info": {
+        "title": "Information",
+        "description": "What the pilot sees before starting the checklist."
+      },
+      "unsavedChanges": "Unsaved changes"
+    },
+    "toast": {
+      "created": {
+        "title": "Template created",
+        "description": "Now add its items."
+      },
+      "createFailed": {
+        "title": "The template could not be created"
+      },
+      "deactivated": {
+        "title": "Template deactivated",
+        "description": "“{{name}}” is no longer offered to pilots."
+      },
+      "activated": {
+        "title": "Template activated",
+        "description": "“{{name}}” is now offered to pilots."
+      },
+      "toggleFailed": {
+        "title": "The template status could not be changed"
+      },
+      "deleted": {
+        "title": "Template deleted",
+        "description": "“{{name}}” has been deleted."
+      },
+      "deactivatedNotDeleted": {
+        "title": "Template deactivated, not deleted",
+        "description": "“{{name}}” is used by checklists that have already been filled in: it has been deactivated to keep the history."
+      },
+      "deleteFailed": {
+        "title": "The template could not be deleted"
+      },
+      "saved": {
+        "title": "Template saved"
+      },
+      "saveFailed": {
+        "title": "The changes could not be saved"
+      },
+      "itemAdded": {
+        "title": "Item added"
+      },
+      "itemAddFailed": {
+        "title": "The item could not be added"
+      },
+      "itemSaved": {
+        "title": "Item saved"
+      },
+      "itemSaveFailed": {
+        "title": "The item could not be saved"
+      },
+      "itemDeleted": {
+        "title": "Item deleted"
+      },
+      "itemDeleteFailed": {
+        "title": "The item could not be deleted"
+      },
+      "reorderFailed": {
+        "title": "The new order could not be saved",
+        "description": "The items are back in their previous order."
+      }
+    }
+  },
+  "editor": {
+    "title": "Checklist items ({{total}})",
+    "dragHint": "Drag an item by its handle to change its order within its category.",
+    "addItem": "Add an item",
+    "empty": {
+      "title": "No checklist items",
+      "description": "Add the checks the pilot will have to tick before the flight.",
+      "action": "Add the first item"
+    },
+    "moveLabel": "Move the item {{name}}",
+    "move": "Move",
+    "editLabel": "Edit the item {{name}}",
+    "deleteLabel": "Delete the item {{name}}",
+    "panel": {
+      "editTitle": "Edit the item",
+      "editDescription": "Checklists already started will show the new version.",
+      "addDescription": "A check the pilot will tick before the flight.",
+      "name": "Label",
+      "namePlaceholder": "Check the oil level",
+      "details": "Details",
+      "detailsPlaceholder": "Between 6 and 8 quarts on the dipstick",
+      "detailsHint": "Optional. Shown under the label during the pre-flight check.",
+      "requiredHint": "The checklist cannot be completed until this item is ticked."
+    },
+    "deleteDialog": {
+      "title": "Delete this item?",
+      "description": "“{{name}}” will be removed from the template. This cannot be undone."
+    }
+  }
+}

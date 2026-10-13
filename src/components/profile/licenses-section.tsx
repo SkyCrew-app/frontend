@@ -1,6 +1,7 @@
 "use client"
 
 import React from "react"
+import { useTranslation } from "react-i18next"
 import { Award } from "lucide-react"
 import { EmptyState } from "@/components/layout/EmptyState"
 import { LicenseCard, type License } from "./license-card"
@@ -15,6 +16,7 @@ const expirationTime = (license: License) => {
 }
 
 export function LicensesSection({ licenses = [] }: LicensesSectionProps) {
+  const { t } = useTranslation("profile")
   // The licence to renew first comes first.
   const sortedLicenses = [...(licenses ?? [])].sort((a, b) => expirationTime(a) - expirationTime(b))
 
@@ -22,9 +24,9 @@ export function LicensesSection({ licenses = [] }: LicensesSectionProps) {
     <section className="space-y-4" aria-labelledby="licenses-title">
       <div>
         <h2 id="licenses-title" className="text-lg font-semibold">
-          Mes licences
+          {t("licenses.title")}
         </h2>
-        <p className="text-sm text-muted-foreground">Classées par date d'expiration, la plus proche en premier.</p>
+        <p className="text-sm text-muted-foreground">{t("licenses.subtitle")}</p>
       </div>
 
       {sortedLicenses.length > 0 ? (
@@ -36,8 +38,8 @@ export function LicensesSection({ licenses = [] }: LicensesSectionProps) {
       ) : (
         <EmptyState
           icon={Award}
-          title="Aucune licence enregistrée"
-          description="Vos licences apparaîtront ici une fois ajoutées à votre dossier par le club."
+          title={t("licenses.emptyTitle")}
+          description={t("licenses.emptyDescription")}
         />
       )}
     </section>
