@@ -3,8 +3,10 @@ import { expect } from "./test"
 
 // A booking whose flight is closed stays on the calendar for good. Each run therefore
 // works on a month and a day drawn at random, far enough ahead, so runs do not collide.
-const MONTHS_AHEAD = 2 + Math.floor(Math.random() * 10)
-const DAY_DRAW = Math.random()
+// Drawn from the clock: any spread will do, this is not a secret.
+const STARTED = Date.now()
+const MONTHS_AHEAD = 2 + (STARTED % 10)
+const DAY_DRAW = (Math.floor(STARTED / 10) % 100) / 100
 
 /**
  * Opens the reservation calendar on a day several months ahead and returns its label
