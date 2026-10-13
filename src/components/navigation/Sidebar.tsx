@@ -1,5 +1,6 @@
 "use client"
 
+import { isAdministrator } from "@/lib/roles"
 import React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -120,6 +121,8 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
   const userName = `${firstName} ${lastName}`.trim()
   const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
   const userRole: string | null = profile?.role?.role_name || null
+  // The administration section is for administrators only; the API refuses the others anyway.
+  const visibleItems = menuItems.filter((item) => item.path !== "/administration" || isAdministrator(profile))
   const profilePicture: string | null = profile?.profile_picture || null
 
   // Arriving in a section opens it. Only on navigation, so the member can still fold it afterwards.
@@ -240,7 +243,7 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
           </button>
 
           <ul className="space-y-1">
-            {menuItems.map((item) => {
+            {visibleItems.map((item) => {
               const isExact = pathname === item.path
               const inSection = isWithin(pathname, item.path)
               const isOpen = openMenus.includes(item.path)
