@@ -3,6 +3,7 @@
 import { useRef, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Printer } from "lucide-react"
+import { escapeHtml } from "@/lib/sanitize-html"
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -129,7 +130,7 @@ export function OFPExport(props: OFPExportProps) {
       <!DOCTYPE html>
       <html>
       <head>
-        <title>OFP - ${props.departureInfo.ICAO} to ${props.arrivalInfo.ICAO}</title>
+        <title>OFP - ${escapeHtml(props.departureInfo.ICAO)} to ${escapeHtml(props.arrivalInfo.ICAO)}</title>
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
           body {

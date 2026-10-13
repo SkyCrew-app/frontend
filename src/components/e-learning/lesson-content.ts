@@ -1,10 +1,9 @@
+import { escapeHtml } from "@/lib/sanitize-html"
+
 export interface LessonSection {
   heading: string
   body: string
 }
-
-const escapeHtml = (text: string) =>
-  text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
 
 // A lesson is stored either as rich text (HTML) or as a list of titled
 // sections; the API may also hand the sections over as a JSON string.

@@ -5,7 +5,12 @@ import { Check, ChevronsUpDown, Loader2 } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { useApolloClient } from "@apollo/client"
 import { cn } from "@/lib/utils"
+import { SEARCH_AERODROMES } from "@/graphql/aviation"
+import { aerodromeLabel, findAerodromeByCode, isAerodromeQuery, type AerodromeSummary } from "@/lib/aerodromes"
+
+const SEARCH_DELAY_MS = 300
 
 interface AerodromeComboboxProps {
   onAerodromeChange: (aerodromeId: string) => void
@@ -18,99 +23,83 @@ export function AerodromeCombobox({ onAerodromeChange, defaultValue }: Aerodrome
   const [aerodromes, setAerodromes] = React.useState<{ id: string; name: string }[]>([])
   const [loading, setLoading] = React.useState(false)
   const [displayValue, setDisplayValue] = React.useState("")
+  const client = useApolloClient()
 
-  // Fetch the aerodrome name for the default value on component mount
+  // Only the answer to the last search is shown.
+  const lastSearch = React.useRef(0)
+  const searchTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Show the name of the aerodrome already chosen.
   React.useEffect(() => {
-    if (defaultValue && defaultValue.length > 0 && !displayValue) {
-      console.log("Fetching aerodrome name for default value:", defaultValue);
-      fetchAerodromeName(defaultValue);
+    if (!defaultValue) return
+    let cancelled = false
+
+    findAerodromeByCode(client, defaultValue)
+      .then((aerodrome) => {
+        if (!cancelled) setDisplayValue(aerodrome ? aerodromeLabel(aerodrome) : defaultValue)
+      })
+      .catch(() => {
+        if (!cancelled) setDisplayValue(defaultValue)
+      })
+
+    return () => {
+      cancelled = true
     }
-  }, [defaultValue]);
+  }, [client, defaultValue])
 
   // Update value when defaultValue changes
   React.useEffect(() => {
-    if (defaultValue !== value) {
-      setValue(defaultValue || "");
-    }
-  }, [defaultValue]);
+    setValue(defaultValue || "")
+  }, [defaultValue])
 
-  const fetchAerodromeName = async (aerodromeId: string) => {
-    if (!aerodromeId) return;
+  React.useEffect(
+    () => () => {
+      if (searchTimer.current) clearTimeout(searchTimer.current)
+    },
+    [],
+  )
 
-    try {
-      // Try to fetch the specific aerodrome by ID or code
-      const response = await fetch(`https://api.api-ninjas.com/v1/airports?icao=${aerodromeId}`, {
-        headers: {
-          "X-Api-Key": "KX6n/kOCJpKDEl+/mF+5/g==p9iHRQBed2N8KbiU",
-        },
-      });
+  const fetchAerodromes = React.useCallback(
+    async (query: string) => {
+      const search = ++lastSearch.current
+      try {
+        const { data } = await client.query<{ searchAerodromes: AerodromeSummary[] }>({
+          query: SEARCH_AERODROMES,
+          variables: { query },
+        })
+        if (search !== lastSearch.current) return
 
-      if (!response.ok) {
-        throw new Error("Erreur lors de la récupération de l'aérodrome");
+        setAerodromes(
+          (data?.searchAerodromes ?? [])
+            .map((aerodrome) => ({
+              id: aerodrome.icao || aerodrome.iata || "",
+              name: aerodromeLabel(aerodrome),
+            }))
+            .filter((aerodrome) => aerodrome.id !== ""),
+        )
+      } catch {
+        if (search === lastSearch.current) setAerodromes([])
+      } finally {
+        if (search === lastSearch.current) setLoading(false)
       }
+    },
+    [client],
+  )
 
-      const data = await response.json();
-      if (data && data.length > 0) {
-        setDisplayValue(`${data[0].name} (${data[0].iata || data[0].icao})`);
-      } else {
-        // If not found by ICAO, try by IATA
-        const iataResponse = await fetch(`https://api.api-ninjas.com/v1/airports?iata=${aerodromeId}`, {
-          headers: {
-            "X-Api-Key": "KX6n/kOCJpKDEl+/mF+5/g==p9iHRQBed2N8KbiU",
-          },
-        });
+  const handleInputChange = (input: string) => {
+    const query = input.trim()
+    if (searchTimer.current) clearTimeout(searchTimer.current)
 
-        if (iataResponse.ok) {
-          const iataData = await iataResponse.json();
-          if (iataData && iataData.length > 0) {
-            setDisplayValue(`${iataData[0].name} (${iataData[0].iata || iataData[0].icao})`);
-          } else {
-            setDisplayValue(aerodromeId); // Fallback to ID if not found
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Erreur lors de la récupération du nom de l'aérodrome:", error);
-      setDisplayValue(aerodromeId); // Fallback to ID if error
-    }
-  };
-
-  const fetchAerodromes = React.useCallback(async (query: string) => {
-    if (query.length < 2) return
-
-    setLoading(true)
-    try {
-      const response = await fetch(`https://api.api-ninjas.com/v1/airports?icao=${query}`, {
-        headers: {
-          "X-Api-Key": "KX6n/kOCJpKDEl+/mF+5/g==p9iHRQBed2N8KbiU",
-        },
-      })
-
-      if (!response.ok) {
-        throw new Error("Erreur lors de la récupération des aérodromes")
-      }
-
-      const data = await response.json()
-      const formattedData = data.map((aerodrome: any) => ({
-        id: aerodrome.icao || aerodrome.iata || aerodrome.id,
-        name: `${aerodrome.name} (${aerodrome.iata || aerodrome.icao})`,
-      }))
-
-      setAerodromes(formattedData)
-    } catch (error) {
-      console.error("Erreur:", error)
+    if (!isAerodromeQuery(query)) {
+      lastSearch.current++
       setAerodromes([])
-    } finally {
       setLoading(false)
-    }
-  }, [])
-
-  const handleInputChange = (query: string) => {
-    if (query.length < 2) {
-      setAerodromes([])
       return
     }
-    fetchAerodromes(query)
+
+    // Wait for a pause in the typing before asking the API.
+    setLoading(true)
+    searchTimer.current = setTimeout(() => fetchAerodromes(query), SEARCH_DELAY_MS)
   }
 
   const handleSelect = (currentValue: string) => {
@@ -130,7 +119,8 @@ export function AerodromeCombobox({ onAerodromeChange, defaultValue }: Aerodrome
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[300px] p-0" align="start">
-        <Command>
+        {/* The API has already filtered the list: a name does not contain its code. */}
+        <Command shouldFilter={false}>
           <CommandInput placeholder="Rechercher un aérodrome..." onValueChange={handleInputChange} />
           <CommandList className="max-h-[300px]">
             {loading ? (
