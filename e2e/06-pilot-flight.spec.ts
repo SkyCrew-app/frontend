@@ -18,34 +18,35 @@ test.beforeAll(async ({ browser }) => {
 })
 
 // What a journey still holds on the calendar if it stops before cancelling.
-let booked: { purpose: string; day: string } | null = null
+let booked: { purpose: string; day: string; hour: string } | null = null
 
-async function cancelBooking(page: Page, purpose: string, day: string) {
+async function cancelBooking(page: Page, purpose: string, day: string, hour = "08:00") {
   await openCalendarAhead(page, day)
   await page.getByRole("button", { name: new RegExp(`^${purpose}`) }).click()
   await sidePanel(page, "Détails de la réservation").getByRole("button", { name: "Supprimer" }).click()
   await expect(page.getByRole("alertdialog")).toContainText(`La réservation de ${aircraft.registration}`)
   await confirmAlert(page, "Supprimer la réservation")
   await expect(toast(page, "Réservation supprimée")).toBeVisible()
-  await expect(page.getByRole("cell", { name: `Réserver ${aircraft.registration} à 08:00` })).toBeVisible()
+  await expect(page.getByRole("cell", { name: `Réserver ${aircraft.registration} à ${hour}` })).toBeVisible()
   booked = null
 }
 
-/** Books the 08:00 slot of the test aircraft by clicking its free cell. */
-async function bookSlot(page: Page, purpose: string) {
+/** Books a one-hour slot of the test aircraft by clicking its free cell. */
+async function bookSlot(page: Page, purpose: string, hour = "08:00") {
+  const end = `${String(Number(hour.slice(0, 2)) + 1).padStart(2, "0")}:00`
   const dayLabel = await openCalendarAhead(page)
   const day = dayLabel.match(/\d+/)![0]
 
-  await page.getByRole("cell", { name: `Réserver ${aircraft.registration} à 08:00` }).click()
+  await page.getByRole("cell", { name: `Réserver ${aircraft.registration} à ${hour}` }).click()
   const panel = sidePanel(page, "Créer une réservation")
   await expect(panel).toContainText(aircraft.registration)
   await expect(panel).toContainText(dayLabel)
-  await expect(panel).toContainText("08:00")
-  await expect(panel).toContainText("09:00")
+  await expect(panel).toContainText(hour)
+  await expect(panel).toContainText(end)
   await panel.getByLabel("But de la réservation").fill(purpose)
   await choose(page, panel.getByRole("combobox", { name: "Catégorie de vol" }), "Local")
   await panel.getByRole("button", { name: "Créer la réservation" }).click()
-  booked = { purpose, day }
+  booked = { purpose, day, hour }
 
   await expect(toast(page, "Réservation créée")).toBeVisible()
   await expect(panel).toBeHidden()
@@ -62,7 +63,7 @@ async function balance(page: Page) {
 }
 
 test.afterEach(async ({ page }) => {
-  if (booked) await cancelBooking(page, booked.purpose, booked.day)
+  if (booked) await cancelBooking(page, booked.purpose, booked.day, booked.hour)
 })
 
 
@@ -197,9 +198,10 @@ test("annuler une réservation recrédite le solde du pilote", async ({ page }) 
   const purpose = uniqueName("E2E remboursement")
 
   const before = await balance(page)
-  const { day } = await bookSlot(page, purpose)
+  // Its own hour: the closing journey keeps the 08:00 slot of the day for good.
+  const { day } = await bookSlot(page, purpose, "10:00")
   await expect.poll(() => balance(page)).toBeCloseTo(before - HOURLY_COST, 2)
 
-  await cancelBooking(page, purpose, day)
+  await cancelBooking(page, purpose, day, "10:00")
   await expect.poll(() => balance(page), { timeout: 10_000 }).toBeCloseTo(before, 2)
 })
