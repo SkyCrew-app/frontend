@@ -95,6 +95,7 @@ export const GET_COURSE_BY_USER_ID = gql`
         id
         start_time
         end_time
+        charged_amount
         aircraft {
           id
           registration_number
@@ -216,8 +217,9 @@ export const UPDATE_COURSE = gql`
 `
 
 
+// With cancelBooking, the aircraft booking of the course is cancelled too (refunded to the student).
 export const DELETE_COURSE = gql`
-  mutation DeleteCourseInstruction($id: Int!) {
-    deleteCourseInstruction(id: $id)
+  mutation DeleteCourseInstruction($id: Int!, $cancelBooking: Boolean) {
+    deleteCourseInstruction(id: $id, cancelBooking: $cancelBooking)
   }
 `

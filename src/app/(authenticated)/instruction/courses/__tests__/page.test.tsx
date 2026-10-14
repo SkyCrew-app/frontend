@@ -3,7 +3,7 @@ import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { MockedProvider, type MockedResponse } from "@apollo/client/testing"
 import InstructionDashboard from "../page"
-import { DELETE_COURSE, GET_COURSE_BY_USER_ID, GET_MEMBERS_DIRECTORY } from "@/graphql/course"
+import { DELETE_COURSE, GET_COURSE_BY_USER_ID, GET_MEMBERS_DIRECTORY, UPDATE_COURSE } from "@/graphql/course"
 
 const mockPush = jest.fn()
 jest.mock("next/navigation", () => ({
@@ -165,6 +165,112 @@ describe("Mes cours — instructeur", () => {
     await waitFor(() => expect(rows()).toHaveLength(2))
     expect(remove).toHaveBeenCalledTimes(1)
     expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: "Cours supprimé" }))
+  })
+
+  describe("un cours dont l'avion est réservé", () => {
+    const booking = {
+      id: 70,
+      start_time: "2026-11-20T08:00:00.000Z",
+      end_time: "2026-11-20T09:00:00.000Z",
+      charged_amount: 165,
+      aircraft: { id: 4, registration_number: "F-GBOK" },
+    }
+    const booked = { ...courses[1], reservation: booking }
+    const directory = { request: { query: GET_MEMBERS_DIRECTORY }, result: { data: { membersDirectory: [] } } }
+
+    const openRemoval = async (menuItem: string) => {
+      await screen.findByRole("table")
+      await userEvent.click(within(rows()[0]).getByRole("button", { name: "Actions du cours" }))
+      await userEvent.click(await screen.findByRole("menuitem", { name: menuItem }))
+      return within(await screen.findByRole("alertdialog"))
+    }
+
+    it("montre la réservation et l'annule avec le cours, remboursée, si la case reste cochée", async () => {
+      const remove = jest.fn(() => ({ data: { deleteCourseInstruction: true } }))
+      renderPage([
+        coursesMock(2, [booked, courses[0]]),
+        directory,
+        { request: { query: DELETE_COURSE, variables: { id: 2, cancelBooking: true } }, result: remove },
+        coursesMock(2, [courses[0]]),
+      ])
+      const dialog = await openRemoval("Supprimer")
+
+      expect(dialog.getByText("Réservation de l'avion du cours")).toBeInTheDocument()
+      expect(dialog.getByText(/F-GBOK · 20 nov\. 2026 ·/)).toBeInTheDocument()
+      expect(dialog.getByText(/Payée par l'élève : 165,00\s€/)).toBeInTheDocument()
+      const choice = dialog.getByRole("checkbox", {
+        name: "Annuler aussi la réservation de l'avion et rembourser l'élève",
+      })
+      expect(choice).toBeChecked()
+
+      await userEvent.click(dialog.getByRole("button", { name: "Supprimer" }))
+
+      await waitFor(() => expect(remove).toHaveBeenCalledTimes(1))
+      await waitFor(() =>
+        expect(mockToast).toHaveBeenCalledWith({
+          title: "Cours supprimé",
+          description: "La réservation de F-GBOK est annulée et l'élève a été remboursé.",
+        }),
+      )
+    })
+
+    it("laisse la réservation en place, et le dit, quand la case est décochée", async () => {
+      const remove = jest.fn(() => ({ data: { deleteCourseInstruction: true } }))
+      renderPage([
+        coursesMock(2, [booked, courses[0]]),
+        directory,
+        { request: { query: DELETE_COURSE, variables: { id: 2 } }, result: remove },
+        coursesMock(2, [courses[0]]),
+      ])
+      const dialog = await openRemoval("Supprimer")
+
+      await userEvent.click(dialog.getByRole("checkbox"))
+      expect(dialog.getByText(/La réservation reste en place : l'élève la garde et reste débité/)).toBeInTheDocument()
+      await userEvent.click(dialog.getByRole("button", { name: "Supprimer" }))
+
+      await waitFor(() => expect(remove).toHaveBeenCalledTimes(1))
+    })
+
+    it("annule un cours du dossier de formation avec sa réservation", async () => {
+      const withRecord = { ...booked, competencies: [{ id: 9, name: "Virages", description: "", validated: false }] }
+      const update = jest.fn(() => ({
+        data: {
+          updateCourseInstruction: {
+            id: 2,
+            startTime: withRecord.startTime,
+            endTime: null,
+            instructor: { id: 2, first_name: "Paul" },
+          },
+        },
+      }))
+      renderPage([
+        coursesMock(2, [withRecord, courses[0]]),
+        directory,
+        {
+          request: { query: UPDATE_COURSE, variables: { input: { id: 2, status: "CANCELED", cancelBooking: true } } },
+          result: update,
+        },
+        coursesMock(2, [courses[0]]),
+      ])
+      const dialog = await openRemoval("Annuler le cours")
+      expect(dialog.getByRole("checkbox")).toBeChecked()
+
+      await userEvent.click(dialog.getByRole("button", { name: "Annuler le cours" }))
+
+      await waitFor(() => expect(update).toHaveBeenCalledTimes(1))
+    })
+
+    it("ne propose pas d'annuler une réservation dont le vol a commencé, et dit pourquoi", async () => {
+      const started = {
+        ...booked,
+        reservation: { ...booking, start_time: "2026-01-05T08:00:00.000Z", end_time: "2026-01-05T09:00:00.000Z" },
+      }
+      renderPage([coursesMock(2, [started, courses[0]]), directory])
+      const dialog = await openRemoval("Supprimer")
+
+      expect(dialog.queryByRole("checkbox")).not.toBeInTheDocument()
+      expect(dialog.getByText(/Le vol a commencé : seul un administrateur peut encore annuler la réservation/)).toBeInTheDocument()
+    })
   })
 
   it("propose de planifier un cours", async () => {

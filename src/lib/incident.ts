@@ -134,3 +134,17 @@ const FOLLOW_UP_ROLES = ["Administrateur", "Technicien"]
 
 export const canFollowUpIncidents = (user: { role?: { role_name?: string | null } | null } | null | undefined) =>
   FOLLOW_UP_ROLES.includes(user?.role?.role_name ?? "")
+
+// As the API (incidents.service.ts, deleteIncident and isUntouched): the author of a report
+// withdraws it while it is open and nobody of the staff has acted on it (no resolution, no note).
+export const canWithdrawIncident = (
+  incident: Pick<Incident, "status" | "resolved_at" | "resolved_by" | "resolution_note" | "user">,
+  viewerId: number | string | null | undefined,
+) =>
+  viewerId != null &&
+  incident.user?.id != null &&
+  Number(incident.user.id) === Number(viewerId) &&
+  incident.status === INCIDENT_STATUS_VALUES.open &&
+  !incident.resolved_by &&
+  !incident.resolved_at &&
+  !incident.resolution_note

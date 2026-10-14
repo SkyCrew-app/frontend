@@ -912,7 +912,8 @@
       "take": "Prendre en charge",
       "resolve": "Marquer comme résolu",
       "reopen": "Rouvrir",
-      "saveNote": "Enregistrer la note"
+      "saveNote": "Enregistrer la note",
+      "withdraw": "Supprimer mon signalement"
     },
     "detail": {
       "title": "Incident du {{date}} sur {{registration}}",
@@ -930,14 +931,18 @@
       "resolvedAt": "Résolu le",
       "resolvedBy": "Résolu par",
       "resolutionNote": "Note de résolution",
-      "notePlaceholder": "Ex. : pneu remplacé le 14 octobre, essai au sol concluant."
+      "notePlaceholder": "Ex. : pneu remplacé le 14 octobre, essai au sol concluant.",
+      "withdrawHint": "Vous avez signalé cet incident et personne ne l'a encore pris en charge : vous pouvez supprimer votre signalement."
     },
     "confirm": {
       "reopenTitle": "Rouvrir cet incident ?",
       "resolveTitle": "Marquer cet incident comme résolu ?",
       "reopenDescription": "L'incident du {{date}} sur {{registration}} repassera au statut « Ouvert ». La note de résolution est conservée.",
       "resolveDescription": "L'incident du {{date}} sur {{registration}} sera clôturé. Il pourra être rouvert si nécessaire.",
-      "notePlaceholder": "Ce qui a été fait pour résoudre l'incident."
+      "notePlaceholder": "Ce qui a été fait pour résoudre l'incident.",
+      "withdrawTitle": "Supprimer votre signalement ?",
+      "withdrawDescription": "L'incident du {{date}} sur {{registration}} sera supprimé définitivement.",
+      "withdrawGrounded": "L'avion reste indisponible jusqu'à ce qu'un technicien ou un administrateur le remette en service."
     },
     "toast": {
       "failed": "Action impossible",
@@ -960,6 +965,11 @@
         "title": "Note enregistrée",
         "description": "La note de résolution a été mise à jour.",
         "failure": "La note de résolution n'a pas pu être enregistrée. Réessayez."
+      },
+      "withdraw": {
+        "title": "Signalement supprimé",
+        "description": "L'incident a été retiré de la liste.",
+        "failure": "Le signalement n'a pas pu être supprimé."
       }
     }
   },
@@ -1026,11 +1036,9 @@
     "bookings": {
       "hours": {
         "title": "Horaires de réservation",
-        "description": "La plage horaire ouverte aux réservations et la durée d'un créneau.",
+        "description": "La plage horaire ouverte aux réservations.",
         "start": "Début des réservations",
-        "end": "Fin des réservations",
-        "slot": "Durée d'un créneau",
-        "slotPlaceholder": "Choisir une durée"
+        "end": "Fin des réservations"
       },
       "closure": {
         "title": "Jours de fermeture",
@@ -1042,14 +1050,11 @@
         "day": "Jour de maintenance",
         "dayPlaceholder": "Choisir un jour",
         "duration": "Durée de la maintenance",
-        "durationHint": "Nombre entier d'heures, de 1 à 24."
+        "durationHint": "Nombre entier d'heures, de 1 à 24.",
+        "startsAt": "Elle commence à l'heure d'ouverture des réservations, soit {{start}}.",
+        "startsAtUntil": "Elle commence à l'heure d'ouverture des réservations, soit {{start}}, et se termine à {{end}}.",
+        "startsAtUnknown": "Elle commence à l'heure d'ouverture des réservations."
       }
-    },
-    "timeSlot": {
-      "30": "30 minutes",
-      "60": "1 heure",
-      "90": "1 heure 30",
-      "120": "2 heures"
     },
     "aircraft": {
       "manage": "Gérer les avions",
@@ -1461,6 +1466,9 @@
         "returned_to_service": "Avion remis en service",
         "deleted": "Avion supprimé",
         "retired": "Avion retiré de la flotte"
+      },
+      "licence": {
+        "validated": "Licence validée"
       }
     },
     "targets": {
@@ -1471,7 +1479,8 @@
       "role": "Rôle",
       "reservation": "Réservation",
       "flight": "Vol",
-      "aircraft": "Avion"
+      "aircraft": "Avion",
+      "licence": "Licence"
     },
     "fields": {
       "amount": "Montant",
@@ -1544,7 +1553,12 @@
       "thursday": "jeudi",
       "friday": "vendredi",
       "saturday": "samedi",
-      "sunday": "dimanche"
+      "sunday": "dimanche",
+      "active": "active",
+      "expired": "expirée",
+      "Ouvert": "ouvert",
+      "En cours": "en cours",
+      "Résolu": "résolu"
     },
     "targetNamed": "{{type}} : {{name}}",
     "targetNumbered": "{{type}} n° {{id}}",

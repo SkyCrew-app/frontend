@@ -1,4 +1,4 @@
-import { test, expect, sidePanel, toast, choose, asRole } from "./support/test"
+import { test, expect, sidePanel, toast, choose, asRole, confirmAlert } from "./support/test"
 import { sessionFile } from "./support/accounts"
 
 test.use({ storageState: sessionFile("pilot") })
@@ -61,4 +61,45 @@ test("le pilote signale un incident en dehors d'un vol, le club le suit", async 
       await expect(detail.getByRole("button", { name: "Rouvrir" })).toBeVisible()
     })
   })
+})
+
+// The author withdraws a report nobody has taken up; the detail offers it only then.
+test("le pilote supprime son propre signalement tant que personne ne l'a pris en charge", async ({ page }) => {
+  const description = `E2E incident ${Date.now()} : signalé par erreur`
+
+  await test.step("il signale l'incident", async () => {
+    await page.goto("/fleet/incidents")
+    await page.getByRole("button", { name: "Signaler un incident" }).click()
+    const report = sidePanel(page, "Signaler un incident")
+    await choose(page, report.getByRole("combobox", { name: /Avion/ }), new RegExp(`^${AIRCRAFT}`))
+    await report.getByRole("radio", { name: "Faible" }).click()
+    await report.getByRole("textbox", { name: /Description/ }).fill(description)
+    await report.getByRole("button", { name: "Signaler l'incident" }).click()
+    await expect(toast(page, "Incident signalé")).toBeVisible()
+    await expect(report).toBeHidden()
+  })
+
+  await test.step("le détail lui propose de le supprimer, après confirmation", async () => {
+    await page.getByRole("textbox", { name: "Rechercher des incidents" }).fill(description.slice(0, 22))
+    await page.getByRole("row").filter({ hasText: AIRCRAFT }).first().click()
+    const detail = page.getByRole("dialog", { name: /^Incident du / })
+    await expect(detail).toContainText(description)
+    await expect(detail).toContainText("personne ne l'a encore pris en charge")
+    await detail.getByRole("button", { name: "Supprimer mon signalement" }).click()
+    await expect(page.getByRole("alertdialog")).toContainText("Supprimer votre signalement ?")
+    await confirmAlert(page, "Supprimer mon signalement")
+    await expect(toast(page, "Signalement supprimé")).toBeVisible()
+    await expect(detail).toBeHidden()
+    await expect(page.getByRole("row").filter({ hasText: description.slice(0, 22) })).toHaveCount(0)
+  })
+})
+
+test("le détail d'un incident signalé par un autre membre ne propose pas de le supprimer", async ({ page }) => {
+  await page.goto("/fleet/incidents")
+  // The demo incidents are reported by other members than the pilot.
+  const row = page.getByRole("row").filter({ hasNotText: "Jean Dupont" }).nth(1)
+  await row.click()
+  const detail = page.getByRole("dialog", { name: /^Incident du / })
+  await expect(detail).toBeVisible()
+  await expect(detail.getByRole("button", { name: "Supprimer mon signalement" })).toHaveCount(0)
 })

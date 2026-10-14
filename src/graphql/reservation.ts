@@ -219,3 +219,18 @@ export const DELETE_RESERVATION_TEMPLATE = gql`
     deleteReservationTemplate(id: $id)
   }
 `
+
+// The course a booking is the aircraft of (for its holder, its instructor or an administrator):
+// changing the instructor of the booking detaches it from that course.
+export const GET_RESERVATION_COURSE = gql`
+  query GetReservationCourse($id: Int!) {
+    reservation(id: $id) {
+      id
+      course {
+        id
+        startTime
+        endTime
+      }
+    }
+  }
+`

@@ -4,7 +4,7 @@ import { useEffect, useState, type ReactNode } from "react"
 import Link from "next/link"
 import { useMutation } from "@apollo/client"
 import { useTranslation } from "react-i18next"
-import { CheckCircle, ExternalLink, Loader2, PlaneTakeoff, RotateCcw, Wrench } from "lucide-react"
+import { CheckCircle, ExternalLink, Loader2, PlaneTakeoff, RotateCcw, Trash2, Wrench } from "lucide-react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,19 +16,20 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { SidePanel } from "@/components/layout/SidePanel"
 import { useToast } from "@/components/hooks/use-toast"
 import { flightTypeLabel } from "@/components/flight/flight-type"
-import { GET_ALL_INCIDENTS, UPDATE_INCIDENT_STATUS } from "@/graphql/incident"
+import { DELETE_INCIDENT, GET_ALL_INCIDENTS, UPDATE_INCIDENT_STATUS } from "@/graphql/incident"
 import { GET_AIRCRAFTS, SET_AIRCRAFT_AVAILABILITY } from "@/graphql/planes"
 import { aircraftAvailability } from "@/lib/aircraft"
 import { apiRefusal } from "@/lib/api-refusal"
 import { formatDate, formatDateTime, formatFlightDuration } from "@/lib/format"
 import {
   INCIDENT_STATUS_VALUES,
+  canWithdrawIncident,
   incidentCategoryLabel,
   incidentPersonName,
   incidentPriorityLabel,
@@ -43,6 +44,8 @@ interface IncidentDetailPanelProps {
   onClose: () => void
   /** Administrators and technicians follow incidents up; everyone else only reads. */
   canFollowUp: boolean
+  /** The signed-in member: the author of a report nobody has taken up may delete it. */
+  viewerId?: number | string | null
 }
 
 type Action = "take" | "resolve" | "reopen" | "note"
@@ -70,7 +73,7 @@ function TextSection({ title, text }: { title: string; text: string | null | und
   )
 }
 
-export function IncidentDetailPanel({ incident, onClose, canFollowUp }: IncidentDetailPanelProps) {
+export function IncidentDetailPanel({ incident, onClose, canFollowUp, viewerId }: IncidentDetailPanelProps) {
   const { t } = useTranslation("administration")
   const { toast } = useToast()
   const [updateIncidentStatus] = useMutation(UPDATE_INCIDENT_STATUS)
@@ -79,6 +82,8 @@ export function IncidentDetailPanel({ incident, onClose, canFollowUp }: Incident
   const [confirm, setConfirm] = useState<"resolve" | "reopen" | null>(null)
   const [setAircraftAvailability, { loading: returning }] = useMutation(SET_AIRCRAFT_AVAILABILITY)
   const [confirmReturn, setConfirmReturn] = useState(false)
+  const [deleteIncident, { loading: withdrawing }] = useMutation(DELETE_INCIDENT)
+  const [confirmWithdraw, setConfirmWithdraw] = useState(false)
 
   const storedNote = incident?.resolution_note ?? ""
 
@@ -153,6 +158,28 @@ export function IncidentDetailPanel({ incident, onClose, canFollowUp }: Incident
     }
   }
 
+  // Offered only when the API accepts it: to its author, while nobody has acted on it.
+  const canWithdraw = canWithdrawIncident(incident, viewerId)
+
+  const withdraw = async () => {
+    try {
+      await deleteIncident({
+        variables: { id: String(incident.id) },
+        refetchQueries: ["GetAllIncidents", "GetIncidentsForMembers"],
+        awaitRefetchQueries: true,
+      })
+      toast({ title: t("incidents.toast.withdraw.title"), description: t("incidents.toast.withdraw.description") })
+      setConfirmWithdraw(false)
+      onClose()
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: t("incidents.toast.failed"),
+        description: apiRefusal(error, t("incidents.toast.withdraw.failure")),
+      })
+    }
+  }
+
   const spinner = (action: Action) =>
     saving === action ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null
 
@@ -187,7 +214,7 @@ export function IncidentDetailPanel({ incident, onClose, canFollowUp }: Incident
     <>
       <SidePanel
         open
-        onOpenChange={(next) => !next && !busy && !confirm && !confirmReturn && onClose()}
+        onOpenChange={(next) => !next && !busy && !confirm && !confirmReturn && !confirmWithdraw && onClose()}
         title={t("incidents.detail.title", naming)}
         description={incident.aircraft.model || undefined}
         footer={footer}
@@ -320,8 +347,55 @@ export function IncidentDetailPanel({ incident, onClose, canFollowUp }: Incident
               <TextSection title={t("incidents.detail.resolutionNote")} text={incident.resolution_note} />
             )}
           </section>
+
+          {canWithdraw && (
+            <section className="flex flex-col gap-3 rounded-lg border border-destructive/30 p-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-muted-foreground">{t("incidents.detail.withdrawHint")}</p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="shrink-0 text-destructive hover:text-destructive"
+                onClick={() => setConfirmWithdraw(true)}
+                disabled={busy || withdrawing}
+              >
+                <Trash2 className="h-4 w-4" aria-hidden="true" />
+                {t("incidents.actions.withdraw")}
+              </Button>
+            </section>
+          )}
         </div>
       </SidePanel>
+
+      <AlertDialog open={confirmWithdraw} onOpenChange={(open) => !open && !withdrawing && setConfirmWithdraw(false)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("incidents.confirm.withdrawTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("incidents.confirm.withdrawDescription", naming)}
+              {isGrounded && ` ${t("incidents.confirm.withdrawGrounded")}`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={withdrawing}>{t("common:actions.cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              className={buttonVariants({ variant: "destructive" })}
+              // Stays open until the report is deleted.
+              onClick={(event) => {
+                event.preventDefault()
+                void withdraw()
+              }}
+              disabled={withdrawing}
+            >
+              {withdrawing ? (
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+              ) : (
+                <Trash2 className="h-4 w-4" aria-hidden="true" />
+              )}
+              {t("incidents.actions.withdraw")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={confirm !== null} onOpenChange={(open) => !open && !busy && setConfirm(null)}>
         <AlertDialogContent>

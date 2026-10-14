@@ -3,7 +3,7 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MockedProvider, type MockedResponse } from '@apollo/client/testing';
 import FleetIncidentsPage from '../page';
-import { CREATE_INCIDENT, GET_INCIDENTS_FOR_MEMBERS } from '@/graphql/incident';
+import { CREATE_INCIDENT, DELETE_INCIDENT, GET_INCIDENTS_FOR_MEMBERS } from '@/graphql/incident';
 import { GET_AIRCRAFTS } from '@/graphql/planes';
 import type { Incident } from '@/lib/incident';
 
@@ -194,5 +194,70 @@ describe('Incidents de la flotte', () => {
     // No flight and no author: the API takes the member signed in.
     expect(sent).not.toHaveProperty('flight_id');
     expect(sent).not.toHaveProperty('user_id');
+  });
+
+  describe('le signalement de son auteur', () => {
+    // The signed-in member is 5 (see the mock of userHooks).
+    const mine = (overrides: Partial<Incident> = {}) => ({
+      ...incident(1, 'Ouvert', '2026-09-01T10:00:00', 'F-ABCD', 'Radio muette'),
+      user: { id: 5, first_name: 'Paul', last_name: 'Roy', email: 'paul@club.fr' },
+      ...overrides,
+    });
+    const listOf = (open: Incident[], inProgress: Incident[] = []): MockedResponse => ({
+      request: { query: GET_INCIDENTS_FOR_MEMBERS },
+      result: { data: { open, inProgress, resolved: [] } },
+    });
+
+    it('propose de le supprimer tant que personne ne l’a pris en charge, après confirmation', async () => {
+      mockToast.mockClear();
+      const user = userEvent.setup();
+      const deleted = jest.fn(() => ({ data: { deleteIncident: true } }));
+      render(
+        <MockedProvider
+          mocks={[
+            listOf([mine()]),
+            { request: { query: DELETE_INCIDENT, variables: { id: '1' } }, result: deleted },
+            listOf([]),
+          ]}
+          addTypename={false}
+        >
+          <FleetIncidentsPage />
+        </MockedProvider>,
+      );
+      await user.click(await screen.findByText('Radio muette'));
+      const panel = within(await screen.findByRole('dialog'));
+      expect(panel.getByText(/personne ne l'a encore pris en charge/)).toBeInTheDocument();
+      await user.click(panel.getByRole('button', { name: 'Supprimer mon signalement' }));
+
+      const confirm = within(await screen.findByRole('alertdialog'));
+      expect(confirm.getByText('Supprimer votre signalement ?')).toBeInTheDocument();
+      expect(confirm.getByText(/sur F-ABCD sera supprimé définitivement/)).toBeInTheDocument();
+      expect(deleted).not.toHaveBeenCalled();
+      await user.click(confirm.getByRole('button', { name: 'Supprimer mon signalement' }));
+
+      await screen.findByText(/Aucun incident/);
+      expect(deleted).toHaveBeenCalledTimes(1);
+      expect(mockToast).toHaveBeenCalledWith({
+        title: 'Signalement supprimé',
+        description: "L'incident a été retiré de la liste.",
+      });
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
+
+    it.each([
+      ['un incident signalé par un autre membre', mine({ user: { id: 9, first_name: 'Léa', last_name: 'Martin' } })],
+      ['un incident pris en charge', mine({ status: 'En cours' })],
+      ['un incident qui porte une note du suivi', mine({ resolution_note: 'Vu par le technicien' })],
+    ])('ne le propose pas pour %s', async (_label, shown) => {
+      const user = userEvent.setup();
+      render(
+        <MockedProvider mocks={[listOf([shown])]} addTypename={false}>
+          <FleetIncidentsPage />
+        </MockedProvider>,
+      );
+      await user.click(await screen.findByText('Radio muette'));
+      const panel = within(await screen.findByRole('dialog'));
+      expect(panel.queryByRole('button', { name: 'Supprimer mon signalement' })).not.toBeInTheDocument();
+    });
   });
 });

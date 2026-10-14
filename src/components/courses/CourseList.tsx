@@ -5,10 +5,12 @@ import { useTranslation } from "react-i18next"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useMutation } from "@apollo/client"
-import { Ban, ChevronRight, MoreHorizontal, Pencil, Star, Trash2 } from "lucide-react"
+import { Ban, CalendarClock, ChevronRight, MoreHorizontal, Pencil, Star, Trash2 } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,7 +22,8 @@ import { useToast } from "@/components/hooks/use-toast"
 import { ConfirmDeleteDialog } from "@/components/e-learning/ConfirmDeleteDialog"
 import { DELETE_COURSE, UPDATE_COURSE } from "@/graphql/course"
 import { apiRefusal } from "@/lib/api-refusal"
-import { formatDate } from "@/lib/format"
+import { formatDate, formatMoney, formatTime } from "@/lib/format"
+import { canCancelReservation } from "@/lib/reservation-status"
 import { learningRoutes } from "@/lib/learning-navigation"
 import CourseFormDialog from "./CourseFormDialog"
 import {
@@ -53,6 +56,20 @@ export default function CourseList({ courses, userId, isAdministrator = false, o
   const [cancelCourse, { loading: cancelling }] = useMutation(UPDATE_COURSE)
   // A course in the student's record is cancelled rather than deleted (the API refuses it).
   const removal = courseToDelete ? courseRemoval(courseToDelete) : null
+  // The aircraft booking of the course stays unless it is cancelled with it (the API refunds it
+  // then). Once the flight has started only an administrator cancels a booking.
+  const booking = courseToDelete?.reservation ?? null
+  const bookingCancellable = !!booking && canCancelReservation(booking, { isAdmin: isAdministrator })
+  const [cancelBooking, setCancelBooking] = useState(true)
+  const withBooking = bookingCancellable && cancelBooking
+  const askToRemove = (course: InstructionCourse) => {
+    setCancelBooking(true)
+    setCourseToDelete(course)
+  }
+  const bookingCancelledToast = () =>
+    booking?.aircraft
+      ? t("courses.list.toast.bookingCancelled", { registration: booking.aircraft.registration_number })
+      : undefined
 
   const givesCourse = (course: InstructionCourse) => userId !== null && Number(course.instructor.id) === userId
   const canEdit = (course: InstructionCourse) => isAdministrator || givesCourse(course)
@@ -60,10 +77,17 @@ export default function CourseList({ courses, userId, isAdministrator = false, o
   const handleCancel = async () => {
     if (!courseToDelete) return
     try {
-      await cancelCourse({ variables: { input: { id: courseToDelete.id, status: "CANCELED" } } })
+      await cancelCourse({
+        variables: {
+          input: { id: courseToDelete.id, status: "CANCELED", ...(withBooking && { cancelBooking: true }) },
+        },
+      })
       setCourseToDelete(null)
       onChanged()
-      toast({ title: t("courses.list.toast.cancelled.title") })
+      toast({
+        title: t("courses.list.toast.cancelled.title"),
+        ...(withBooking && { description: bookingCancelledToast() }),
+      })
     } catch (error) {
       toast({
         variant: "destructive",
@@ -77,12 +101,12 @@ export default function CourseList({ courses, userId, isAdministrator = false, o
     if (!courseToDelete) return
     if (removal === "cancel") return handleCancel()
     try {
-      await deleteCourse({ variables: { id: courseToDelete.id } })
+      await deleteCourse({ variables: { id: courseToDelete.id, ...(withBooking && { cancelBooking: true }) } })
       setCourseToDelete(null)
       onChanged()
       toast({
         title: t("courses.list.toast.deleted.title"),
-        description: t("courses.list.toast.deleted.description"),
+        description: withBooking ? bookingCancelledToast() : t("courses.list.toast.deleted.description"),
       })
     } catch (error) {
       // A course that is part of a training record is refused by the API, which says why.
@@ -184,7 +208,7 @@ export default function CourseList({ courses, userId, isAdministrator = false, o
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 className="text-destructive focus:text-destructive"
-                                onSelect={() => setCourseToDelete(course)}
+                                onSelect={() => askToRemove(course)}
                               >
                                 {courseRemoval(course) === "delete" ? (
                                   <>
@@ -244,7 +268,51 @@ export default function CourseList({ courses, userId, isAdministrator = false, o
         dismissLabel={removal === "cancel" ? t("courses.list.cancelConfirm.keep") : undefined}
         onConfirm={handleDelete}
         loading={deleting || cancelling}
-      />
+      >
+        {booking && (
+          <div className="space-y-3 rounded-lg border p-3 text-sm">
+            <div className="space-y-1">
+              <p className="font-medium">{t("courses.list.booking.title")}</p>
+              <p className="flex items-start gap-2 text-muted-foreground">
+                <CalendarClock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                <span className="tabular-nums">
+                  {[
+                    booking.aircraft?.registration_number,
+                    formatDate(booking.start_time),
+                    `${formatTime(booking.start_time)} – ${formatTime(booking.end_time)}`,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </span>
+              </p>
+              {booking.charged_amount != null && (
+                <p className="tabular-nums text-muted-foreground">
+                  {t("courses.list.booking.paid", { amount: formatMoney(Number(booking.charged_amount)) })}
+                </p>
+              )}
+            </div>
+            {bookingCancellable ? (
+              <>
+                <div className="flex items-start gap-2">
+                  <Checkbox
+                    id="cancel-course-booking"
+                    checked={cancelBooking}
+                    onCheckedChange={(checked) => setCancelBooking(checked === true)}
+                    disabled={deleting || cancelling}
+                    className="mt-0.5"
+                  />
+                  <Label htmlFor="cancel-course-booking" className="font-normal leading-snug">
+                    {t("courses.list.booking.cancelToo")}
+                  </Label>
+                </div>
+                {!cancelBooking && <p className="text-muted-foreground">{t("courses.list.booking.kept")}</p>}
+              </>
+            ) : (
+              <p className="text-muted-foreground">{t("courses.list.booking.started")}</p>
+            )}
+          </div>
+        )}
+      </ConfirmDeleteDialog>
     </>
   )
 }

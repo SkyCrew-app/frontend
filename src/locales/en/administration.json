@@ -912,7 +912,8 @@
       "take": "Take charge",
       "resolve": "Mark as resolved",
       "reopen": "Reopen",
-      "saveNote": "Save note"
+      "saveNote": "Save note",
+      "withdraw": "Delete my report"
     },
     "detail": {
       "title": "Incident of {{date}} on {{registration}}",
@@ -930,14 +931,18 @@
       "resolvedAt": "Resolved on",
       "resolvedBy": "Resolved by",
       "resolutionNote": "Resolution note",
-      "notePlaceholder": "E.g. tyre replaced on 14 October, ground test satisfactory."
+      "notePlaceholder": "E.g. tyre replaced on 14 October, ground test satisfactory.",
+      "withdrawHint": "You reported this incident and nobody has taken it up yet: you can delete your report."
     },
     "confirm": {
       "reopenTitle": "Reopen this incident?",
       "resolveTitle": "Mark this incident as resolved?",
       "reopenDescription": "The incident of {{date}} on {{registration}} will go back to “Open”. The resolution note is kept.",
       "resolveDescription": "The incident of {{date}} on {{registration}} will be closed. It can be reopened if necessary.",
-      "notePlaceholder": "What was done to resolve the incident."
+      "notePlaceholder": "What was done to resolve the incident.",
+      "withdrawTitle": "Delete your report?",
+      "withdrawDescription": "The incident of {{date}} on {{registration}} will be deleted for good.",
+      "withdrawGrounded": "The aircraft stays unavailable until a technician or an administrator puts it back into service."
     },
     "toast": {
       "failed": "Action failed",
@@ -960,6 +965,11 @@
         "title": "Note saved",
         "description": "The resolution note has been updated.",
         "failure": "The resolution note could not be saved. Try again."
+      },
+      "withdraw": {
+        "title": "Report deleted",
+        "description": "The incident has been removed from the list.",
+        "failure": "The report could not be deleted."
       }
     }
   },
@@ -1026,11 +1036,9 @@
     "bookings": {
       "hours": {
         "title": "Booking hours",
-        "description": "The hours open to bookings and the length of a slot.",
+        "description": "The hours open to bookings.",
         "start": "Bookings start",
-        "end": "Bookings end",
-        "slot": "Slot length",
-        "slotPlaceholder": "Choose a length"
+        "end": "Bookings end"
       },
       "closure": {
         "title": "Closing days",
@@ -1042,14 +1050,11 @@
         "day": "Maintenance day",
         "dayPlaceholder": "Choose a day",
         "duration": "Maintenance duration",
-        "durationHint": "Whole number of hours, from 1 to 24."
+        "durationHint": "Whole number of hours, from 1 to 24.",
+        "startsAt": "It starts when bookings open, at {{start}}.",
+        "startsAtUntil": "It starts when bookings open, at {{start}}, and ends at {{end}}.",
+        "startsAtUnknown": "It starts when bookings open."
       }
-    },
-    "timeSlot": {
-      "30": "30 minutes",
-      "60": "1 hour",
-      "90": "1 hour 30",
-      "120": "2 hours"
     },
     "aircraft": {
       "manage": "Manage aircraft",
@@ -1461,6 +1466,9 @@
         "returned_to_service": "Aircraft put back in service",
         "deleted": "Aircraft deleted",
         "retired": "Aircraft retired from the fleet"
+      },
+      "licence": {
+        "validated": "Licence validated"
       }
     },
     "targets": {
@@ -1471,7 +1479,8 @@
       "role": "Role",
       "reservation": "Booking",
       "flight": "Flight",
-      "aircraft": "Aircraft"
+      "aircraft": "Aircraft",
+      "licence": "Licence"
     },
     "fields": {
       "amount": "Amount",
@@ -1544,7 +1553,12 @@
       "thursday": "Thursday",
       "friday": "Friday",
       "saturday": "Saturday",
-      "sunday": "Sunday"
+      "sunday": "Sunday",
+      "active": "active",
+      "expired": "expired",
+      "Ouvert": "open",
+      "En cours": "in progress",
+      "Résolu": "resolved"
     },
     "targetNamed": "{{type}}: {{name}}",
     "targetNumbered": "{{type}} No. {{id}}",

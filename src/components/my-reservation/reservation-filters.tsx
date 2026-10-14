@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Search, X } from "lucide-react"
-import { reservationStatus } from "@/lib/reservation-status"
 import { flightCategoryOptions } from "@/components/reservation/flight-category"
 
 export type ReservationSortOrder = "newest" | "oldest"
@@ -13,8 +12,6 @@ export type ReservationSortOrder = "newest" | "oldest"
 interface ReservationFiltersProps {
   searchTerm: string
   setSearchTerm: (value: string) => void
-  statusFilter: string
-  setStatusFilter: (value: string) => void
   categoryFilter: string
   setCategoryFilter: (value: string) => void
   sortOrder: ReservationSortOrder
@@ -23,15 +20,12 @@ interface ReservationFiltersProps {
   hasActiveFilters: boolean
 }
 
-// No "pending": every booking is confirmed when it is made.
-const STATUSES = ["CONFIRMED", "CANCELLED"]
-
-/** One-row toolbar of "Mes réservations": search, status, category, sort. */
+// No status filter: a booking is confirmed when it is made and deleted when it is cancelled,
+// so every booking listed has the same status.
+/** One-row toolbar of "Mes réservations": search, category, sort. */
 export function ReservationFilters({
   searchTerm,
   setSearchTerm,
-  statusFilter,
-  setStatusFilter,
   categoryFilter,
   setCategoryFilter,
   sortOrder,
@@ -53,20 +47,6 @@ export function ReservationFilters({
           className="pl-9"
         />
       </div>
-
-      <Select value={statusFilter} onValueChange={setStatusFilter}>
-        <SelectTrigger aria-label={t("my.filters.statusLabel")} className="sm:w-[170px]">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="ALL">{t("my.filters.allStatuses")}</SelectItem>
-          {STATUSES.map((status) => (
-            <SelectItem key={status} value={status}>
-              {reservationStatus(status).label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
 
       <Select value={categoryFilter} onValueChange={setCategoryFilter}>
         <SelectTrigger aria-label={t("my.filters.categoryLabel")} className="sm:w-[190px]">
