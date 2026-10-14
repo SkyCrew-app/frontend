@@ -46,6 +46,14 @@ test("le pilote ajoute une licence, l'administrateur la valide", async ({ browse
       // The sheet stays open (its toast is then outside what is announced): the licence itself says it.
       await expect(sheet).not.toContainText(`n° ${number} en attente`)
       await expect(sheet.getByRole("row").filter({ hasText: number })).toContainText("Valide")
+
+      // The validation is in the action log, in words: no raw code.
+      await page.goto("/administration/actions")
+      const line = page.getByRole("row").filter({ hasText: number })
+      await expect(line).toContainText("Licence validée")
+      await expect(line).toContainText(`Licence : CPL ${number}`)
+      await expect(line).toContainText("en attente → active")
+      await expect(page.getByRole("main")).not.toContainText("licence.validated")
     })
   })
 

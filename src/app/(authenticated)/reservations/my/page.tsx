@@ -69,7 +69,6 @@ export default function MyReservations() {
   const { toast } = useToast()
 
   const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState("ALL")
   const [categoryFilter, setCategoryFilter] = useState("ALL")
   const [sortOrder, setSortOrder] = useState<ReservationSortOrder>("newest")
   const [currentPage, setCurrentPage] = useState(1)
@@ -105,12 +104,11 @@ export default function MyReservations() {
 
   const resetFilters = () => {
     setSearchTerm("")
-    setStatusFilter("ALL")
     setCategoryFilter("ALL")
     setCurrentPage(1)
   }
 
-  const hasActiveFilters = searchTerm !== "" || statusFilter !== "ALL" || categoryFilter !== "ALL"
+  const hasActiveFilters = searchTerm !== "" || categoryFilter !== "ALL"
 
   const allReservations: Reservation[] = data?.userReservations ?? []
 
@@ -122,7 +120,6 @@ export default function MyReservations() {
 
       return (
         (purposeLower.includes(searchTermLower) || registrationLower.includes(searchTermLower)) &&
-        (statusFilter === "ALL" || reservation.status === statusFilter) &&
         (categoryFilter === "ALL" || reservation.flight_category === categoryFilter)
       )
     })
@@ -305,8 +302,6 @@ export default function MyReservations() {
         <ReservationFilters
           searchTerm={searchTerm}
           setSearchTerm={onFilterChange(setSearchTerm)}
-          statusFilter={statusFilter}
-          setStatusFilter={onFilterChange(setStatusFilter)}
           categoryFilter={categoryFilter}
           setCategoryFilter={onFilterChange(setCategoryFilter)}
           sortOrder={sortOrder}

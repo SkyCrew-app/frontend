@@ -172,6 +172,28 @@ describe("CourseFormDialog", () => {
     await waitFor(() => expect(onSaved).toHaveBeenCalled())
   })
 
+  it("dit qu'un cours annulé ici garde sa réservation d'avion, et où l'annuler avec", async () => {
+    const booked = {
+      ...existingCourse,
+      reservation: {
+        id: 70,
+        start_time: existingCourse.startTime,
+        end_time: "2026-10-12T09:00:00.000Z",
+        aircraft: { id: 4, registration_number: "F-GBOK" },
+      },
+    }
+    renderDialog([], { instructorId: 2, course: booked })
+    await screen.findByRole("heading", { name: "Modifier le cours" })
+    expect(screen.queryByText(/reste en place/)).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole("combobox", { name: /Statut/ }))
+    await userEvent.click(await screen.findByRole("option", { name: "Annulé" }))
+
+    expect(screen.getByRole("note")).toHaveTextContent(
+      "La réservation de l'avion F-GBOK reste en place et reste payée par l'élève. Pour l'annuler avec le cours et rembourser l'élève, utilisez « Supprimer » dans le menu du cours, dans la liste.",
+    )
+  })
+
   it("laisse un administrateur changer l'élève d'un cours", async () => {
     const update = jest.fn(() => ({
       data: {

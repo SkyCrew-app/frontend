@@ -21,6 +21,28 @@ const minutesOf = (time: string | null | undefined): number | null => {
   return match ? Number(match[1]) * 60 + Number(match[2]) : null
 }
 
+const maintenanceMinutes = (openingTime: string | null | undefined, hours: number) => {
+  const from = minutesOf(openingTime) ?? 0
+  return { from, to: Math.min(from + Math.round(hours * 60), 24 * 60) }
+}
+
+const clock = (minutes: number) =>
+  `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`
+
+/**
+ * When the weekly maintenance starts and ends, as "HH:MM", for the settings being edited: it starts
+ * when bookings open. `start` is null while no opening time is set, `end` while the length is not valid.
+ */
+export function maintenanceHours(
+  openingTime: string | null | undefined,
+  duration: number | null | undefined,
+): { start: string | null; end: string | null } {
+  if (minutesOf(openingTime) === null) return { start: null, end: null }
+  const hours = Number(duration)
+  const { from, to } = maintenanceMinutes(openingTime, Number.isFinite(hours) && hours > 0 ? hours : 0)
+  return { start: clock(from), end: Number.isFinite(hours) && hours > 0 ? clock(to) : null }
+}
+
 /**
  * The club's weekly maintenance on a given day, or null on other days. As the API reads it
  * (booking-rules.ts, weeklyMaintenanceWindow): the settings give a day and a length in hours,
@@ -30,8 +52,7 @@ export function maintenanceOn(settings: MaintenanceSettings | null | undefined, 
   const hours = Number(settings?.maintenanceDuration)
   if (!settings?.maintenanceDay || !Number.isFinite(hours) || hours <= 0) return null
   if (plain(toWeekday(settings.maintenanceDay)) !== plain(format(date, "EEEE", { locale: fr }))) return null
-  const from = minutesOf(settings.reservationStartTime) ?? 0
-  const to = Math.min(from + Math.round(hours * 60), 24 * 60)
+  const { from, to } = maintenanceMinutes(settings.reservationStartTime, hours)
   const midnight = new Date(date.getFullYear(), date.getMonth(), date.getDate())
   return {
     start: new Date(midnight.getTime() + from * 60_000),

@@ -28,6 +28,8 @@ export interface CourseBooking {
   id: number | string
   start_time: string
   end_time: string
+  /** What the student paid for it, refunded if it is cancelled. */
+  charged_amount?: number | null
   aircraft?: { id?: number | string; registration_number: string } | null
 }
 

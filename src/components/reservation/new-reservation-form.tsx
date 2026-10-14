@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react"
 import { format, addHours, startOfHour } from "date-fns"
 import { useTranslation } from "react-i18next"
+import { useQuery } from "@apollo/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -10,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
-import { CalendarIcon } from "lucide-react"
+import { CalendarIcon, TriangleAlert } from "lucide-react"
 import { SidePanel } from "@/components/layout/SidePanel"
 import { flightCategoryOptions, isFlightCategory } from "@/components/reservation/flight-category"
 import { InstructorField, useInstructorRequired } from "@/components/reservation/instructor-field"
@@ -18,6 +19,8 @@ import { PriceEstimate } from "@/components/reservation/price-estimate"
 import type { Reservation } from "@/interfaces/reservation"
 import { INSTRUCTION_CATEGORY } from "@/components/reservation/reservation-form"
 import { dateFnsLocale } from "@/lib/i18n"
+import { GET_RESERVATION_COURSE } from "@/graphql/reservation"
+import { formatDate, formatTime } from "@/lib/format"
 
 interface Aircraft {
   id: number
@@ -157,6 +160,14 @@ export function NewReservationForm({
   const [instructorId, setInstructorId] = useState(prefill?.instructorId ?? "")
   // A booking made for a course is flown with the instructor of the course.
   const withInstructor = !!course || instructorId !== ""
+  // The course a booking being changed is the aircraft of: a new instructor detaches it (the API
+  // leaves the course without an aircraft), so the panel says so before saving.
+  const { data: courseData } = useQuery<{
+    reservation: { id: number; course: { id: number; startTime: string; endTime?: string | null } | null } | null
+  }>(GET_RESERVATION_COURSE, { variables: { id: Number(editing?.id) }, skip: !editing || !open })
+  const linkedCourse = courseData?.reservation?.course ?? null
+  const leavesCourse =
+    !!linkedCourse && instructorId !== (editing?.instructor?.id != null ? String(editing.instructor.id) : "")
 
   // An aircraft the API refuses to book is not offered, except the one the booking already has.
   const isBookable = (aircraft: Aircraft) =>
@@ -395,6 +406,20 @@ export function NewReservationForm({
             error={errors.instructor}
             excludeId={pilotId}
           />
+        )}
+        {leavesCourse && linkedCourse && (
+          <p
+            role="status"
+            className="flex items-start gap-2 rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm"
+          >
+            <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-warning" aria-hidden="true" />
+            <span>
+              {t("form.course.leaves", {
+                date: formatDate(linkedCourse.startTime),
+                time: formatTime(linkedCourse.startTime),
+              })}
+            </span>
+          </p>
         )}
 
         <div className="space-y-2">

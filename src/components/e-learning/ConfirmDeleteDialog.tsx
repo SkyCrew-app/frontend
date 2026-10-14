@@ -25,6 +25,8 @@ interface ConfirmDeleteDialogProps {
   /** Wording of the two buttons when the action is not a deletion (e.g. cancelling a course). */
   confirmLabel?: ReactNode
   dismissLabel?: ReactNode
+  /** What goes with the action, between the description and the buttons (e.g. a choice). */
+  children?: ReactNode
 }
 
 // The confirmation asked before every deletion of the learning area.
@@ -37,6 +39,7 @@ export function ConfirmDeleteDialog({
   loading = false,
   confirmLabel,
   dismissLabel,
+  children,
 }: ConfirmDeleteDialogProps) {
   const { t } = useTranslation()
   return (
@@ -46,6 +49,7 @@ export function ConfirmDeleteDialog({
           <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
+        {children}
         <AlertDialogFooter>
           <AlertDialogCancel disabled={loading}>{dismissLabel ?? t("common:actions.cancel")}</AlertDialogCancel>
           {/* A plain button: the dialog closes once the deletion has succeeded. */}

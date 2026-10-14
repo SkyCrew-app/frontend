@@ -248,7 +248,12 @@ export function IncidentsContent({ readOnly = false }: IncidentsContentProps) {
         onResetFilters={resetFilters}
       />
 
-      <IncidentDetailPanel incident={shownIncident} onClose={closeDetail} canFollowUp={canFollowUp} />
+      <IncidentDetailPanel
+        incident={shownIncident}
+        onClose={closeDetail}
+        canFollowUp={canFollowUp}
+        viewerId={viewer?.id}
+      />
     </>
   )
 }

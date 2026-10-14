@@ -1134,7 +1134,7 @@ type Mutation {
   deleteChecklistItem(id: Int!): Boolean!
   deleteChecklistTemplate(id: Int!): ChecklistTemplateRemoval!
   deleteCourse(id: Float!): Boolean!
-  deleteCourseInstruction(id: Int!): Boolean!
+  deleteCourseInstruction(cancelBooking: Boolean, id: Int!): Boolean!
   deleteEvaluation(id: Float!): Boolean!
   deleteIncident(id: String!): Boolean!
   deleteLesson(id: Float!): Boolean!
@@ -1388,6 +1388,7 @@ type Reservation {
   aircraft: Aircraft!
   calendar_integration_url: String
   charged_amount: Float
+  course: ReservationCourse
   end_time: DateTime!
   estimated_flight_hours: Float
   flight_category: FlightCategory!
@@ -1401,6 +1402,12 @@ type Reservation {
   start_time: DateTime!
   status: ReservationStatus!
   user: User!
+}
+
+type ReservationCourse {
+  endTime: DateTime
+  id: Int!
+  startTime: DateTime!
 }
 
 enum ReservationStatus {
@@ -1584,6 +1591,7 @@ input UpdateCourseDTO {
 }
 
 input UpdateCourseInstructionInput {
+  cancelBooking: Boolean
   endTime: DateTime
   feedback: String
   id: Int!

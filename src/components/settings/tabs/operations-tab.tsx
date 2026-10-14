@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { WEEKDAYS, weekdayLabel, type SettingsFormValues } from "@/lib/settings"
+import { maintenanceHours } from "@/lib/weekly-maintenance"
 import { SettingsField, SettingsSection, UnitInput, errorMessage } from "../settings-field"
 
 export function OperationsTab() {
@@ -19,6 +20,13 @@ export function OperationsTab() {
   } = useFormContext<SettingsFormValues>()
   const closureDays = watch("closureDays") ?? []
   const maintenanceDay = watch("maintenanceDay")
+  // The settings give the day and the length; the maintenance starts when bookings open (as the API reads it).
+  const maintenance = maintenanceHours(watch("reservationStartTime"), watch("maintenanceDuration"))
+  const maintenanceStart = !maintenance.start
+    ? t("settings.bookings.maintenance.startsAtUnknown")
+    : maintenance.end
+      ? t("settings.bookings.maintenance.startsAtUntil", { start: maintenance.start, end: maintenance.end })
+      : t("settings.bookings.maintenance.startsAt", { start: maintenance.start })
 
   const toggleClosureDay = (day: string, checked: boolean) => {
     // Keep the days in week order whatever the order of the clicks.
@@ -136,6 +144,11 @@ export function OperationsTab() {
             />
           </SettingsField>
         </div>
+        {maintenanceDay && (
+          <p className="mt-4 text-sm text-muted-foreground" aria-live="polite">
+            {maintenanceStart}
+          </p>
+        )}
       </SettingsSection>
     </div>
   )

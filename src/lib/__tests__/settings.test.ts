@@ -90,6 +90,13 @@ describe('formulaire des paramètres', () => {
     expect(settingsFormSchema.safeParse(values).success).toBe(true);
   });
 
+  it("montre le jour de maintenance enregistré en anglais à la création du club, comme les jours de fermeture", () => {
+    const values = settingsFormValuesFromRecord({ ...record, maintenanceDay: 'Monday', closureDays: ['Sunday'] });
+
+    expect(values.maintenanceDay).toBe('Lundi');
+    expect(values.closureDays).toEqual(['Dimanche']);
+  });
+
   it("renvoie la fin de maintenance au format ISO, ou null quand elle est vide", () => {
     const values = settingsFormValuesFromRecord(record);
 

@@ -1,4 +1,13 @@
-import { adminActionDetails, adminActionLabel, adminTargetLabel } from "../admin-actions"
+import {
+  ADMIN_ACTION_CODES,
+  ADMIN_TARGET_TYPES,
+  adminActionDetails,
+  adminActionLabel,
+  adminTargetLabel,
+} from "../admin-actions"
+import i18n from "@/lib/i18n"
+import frAdministration from "@/locales/fr/administration.json"
+import enAdministration from "@/locales/en/administration.json"
 import { formatDateTime, formatMoney } from "../format"
 
 describe("action log wording", () => {
@@ -89,5 +98,51 @@ describe("action log wording", () => {
         paymentId: 50,
       }),
     ).toEqual(["Cours planifiés : 1", "Réservations gardées au planning : 2"])
+  })
+})
+
+// The API records these codes (its own test holds the same lists): none may reach the screen raw.
+describe("every code the API records has its wording", () => {
+  const at = (tree: unknown, path: string[]) =>
+    path.reduce<unknown>((node, key) => (node as Record<string, unknown> | undefined)?.[key], tree)
+
+  it.each([
+    ["fr", frAdministration],
+    ["en", enAdministration],
+  ])("in %s", (_, locale) => {
+    const missing = [
+      ...ADMIN_ACTION_CODES.filter(
+        (code) => typeof at(locale, ["actionLog", "actions", ...code.split(".")]) !== "string",
+      ),
+      ...ADMIN_TARGET_TYPES.filter((type) => typeof at(locale, ["actionLog", "targets", type]) !== "string").map(
+        (type) => `target ${type}`,
+      ),
+    ]
+    expect(missing).toEqual([])
+  })
+
+  it("names a licence validation and its licence in French and English", async () => {
+    expect(adminActionLabel("licence.validated")).toBe("Licence validée")
+    expect(
+      adminTargetLabel({ target_type: "licence", target_id: "3", target_label: "PPL 12345" }),
+    ).toBe("Licence : PPL 12345")
+    expect(adminActionDetails({ memberId: "9", from: "pending", to: "active" })).toEqual(["en attente → active"])
+    await i18n.changeLanguage("en")
+    try {
+      expect(adminActionLabel("licence.validated")).toBe("Licence validated")
+      expect(adminTargetLabel({ target_type: "licence", target_id: "3", target_label: null })).toBe("Licence No. 3")
+    } finally {
+      await i18n.changeLanguage("fr")
+    }
+  })
+
+  it("writes the status of an incident in the language of the reader", async () => {
+    expect(adminActionDetails({ from: "Ouvert", to: "Résolu" })).toEqual(["ouvert → résolu"])
+    await i18n.changeLanguage("en")
+    try {
+      expect(adminActionDetails({ from: "Ouvert", to: "En cours" })).toEqual(["open → in progress"])
+    } finally {
+      await i18n.changeLanguage("fr")
+    }
   })
 })
