@@ -14,6 +14,48 @@ export interface AdminAction {
   summary?: Record<string, unknown> | null
 }
 
+// Every action and target the API writes to the log (ADMIN_ACTION and ADMIN_TARGET_TYPES in the
+// backend's common/admin-actions/admin-actions.ts, whose test holds the same lists). Each one has
+// its wording in French and English: a test checks it.
+export const ADMIN_ACTION_CODES = [
+  "balance.adjusted",
+  "payment.status_changed",
+  "payment.refund_recorded",
+  "member.role_changed",
+  "member.deactivated",
+  "member.reactivated",
+  "member.deleted",
+  "member.invitation_resent",
+  "settings.changed",
+  "settings.maintenance_toggled",
+  "incident.status_changed",
+  "incident.deleted",
+  "role.created",
+  "role.renamed",
+  "role.deleted",
+  "reservation.changed_for_member",
+  "reservation.cancelled_for_member",
+  "flight.record_amended",
+  "flight.record_deleted",
+  "aircraft.grounded",
+  "aircraft.returned_to_service",
+  "aircraft.deleted",
+  "aircraft.retired",
+  "licence.validated",
+] as const
+
+export const ADMIN_TARGET_TYPES = [
+  "member",
+  "payment",
+  "settings",
+  "incident",
+  "role",
+  "reservation",
+  "flight",
+  "aircraft",
+  "licence",
+] as const
+
 // "member.role_changed" → its wording; an action this version does not know keeps its code.
 export const adminActionLabel = (action: string) =>
   i18n.t(`administration:actionLog.actions.${action}`, { defaultValue: action })

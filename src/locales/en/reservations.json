@@ -66,7 +66,7 @@
     "unavailableHint": "Cannot be booked for now",
     "maintenance": {
       "title": "Weekly maintenance",
-      "description": "From {{from}} to {{to}} the club's aircraft are in maintenance: this time cannot be booked.",
+      "description": "The maintenance starts when bookings open: from {{from}} to {{to}} the club's aircraft are in maintenance and cannot be booked.",
       "cell": "Weekly maintenance"
     }
   },
@@ -100,7 +100,8 @@
       "optionalHint": "Optional. With an instructor the flight becomes an instruction flight; the instructor is notified and may decline."
     },
     "course": {
-      "note": "Booking the aircraft for {{student}}'s course with {{instructor}}. The student is the pilot of the flight: they pay for the aircraft and receive the confirmation."
+      "note": "Booking the aircraft for {{student}}'s course with {{instructor}}. The student is the pilot of the flight: they pay for the aircraft and receive the confirmation.",
+      "leaves": "This flight will no longer belong to the course of {{date}} at {{time}}: the course will be left without an aircraft, and its instructor will be told."
     }
   },
   "detail": {
@@ -196,8 +197,6 @@
     "filters": {
       "searchLabel": "Search a booking",
       "searchPlaceholder": "Purpose or registration",
-      "statusLabel": "Filter by status",
-      "allStatuses": "All statuses",
       "categoryLabel": "Filter by flight category",
       "allCategories": "All categories",
       "sortLabel": "Sort the bookings",

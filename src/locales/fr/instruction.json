@@ -120,7 +120,8 @@
         },
         "cancelFailed": {
           "title": "Cours non annulé"
-        }
+        },
+        "bookingCancelled": "La réservation de {{registration}} est annulée et l'élève a été remboursé."
       },
       "deleteConfirm": {
         "title": "Supprimer ce cours ?",
@@ -131,6 +132,13 @@
         "title": "Annuler ce cours ?",
         "description": "Le cours du {{date}} avec {{name}} fait partie du suivi de formation (compétences, commentaires ou note) : il ne peut pas être supprimé. Il restera dans l'historique, marqué comme annulé.",
         "keep": "Conserver le cours"
+      },
+      "booking": {
+        "title": "Réservation de l'avion du cours",
+        "paid": "Payée par l'élève : {{amount}}",
+        "cancelToo": "Annuler aussi la réservation de l'avion et rembourser l'élève",
+        "kept": "La réservation reste en place : l'élève la garde et reste débité.",
+        "started": "Le vol a commencé : seul un administrateur peut encore annuler la réservation. Elle reste en place."
       }
     },
     "pagination": {
@@ -178,7 +186,8 @@
         "updateFailed": {
           "title": "Cours non modifié"
         }
-      }
+      },
+      "cancelKeepsBooking": "La réservation de l'avion {{registration}} reste en place et reste payée par l'élève. Pour l'annuler avec le cours et rembourser l'élève, utilisez « {{action}} » dans le menu du cours, dans la liste."
     },
     "detail": {
       "title": "Cours du {{date}}",

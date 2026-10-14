@@ -92,3 +92,10 @@ export const UPDATE_INCIDENT_STATUS = gql`
     }
   }
 `
+
+// Administrators, or the author of a report nobody has taken up yet (the API decides).
+export const DELETE_INCIDENT = gql`
+  mutation DeleteIncident($id: String!) {
+    deleteIncident(id: $id)
+  }
+`

@@ -120,7 +120,8 @@
         },
         "cancelFailed": {
           "title": "Course not cancelled"
-        }
+        },
+        "bookingCancelled": "The booking of {{registration}} is cancelled and the student has been refunded."
       },
       "deleteConfirm": {
         "title": "Delete this session?",
@@ -131,6 +132,13 @@
         "title": "Cancel this course?",
         "description": "The course on {{date}} with {{name}} is part of the training record (competencies, comments or rating): it cannot be deleted. It will stay in the history, marked as cancelled.",
         "keep": "Keep the course"
+      },
+      "booking": {
+        "title": "Aircraft booking of the course",
+        "paid": "Paid by the student: {{amount}}",
+        "cancelToo": "Also cancel the aircraft booking and refund the student",
+        "kept": "The booking stays: the student keeps it and remains charged.",
+        "started": "The flight has started: only an administrator can still cancel the booking. It stays."
       }
     },
     "pagination": {
@@ -178,7 +186,8 @@
         "updateFailed": {
           "title": "Session not updated"
         }
-      }
+      },
+      "cancelKeepsBooking": "The booking of aircraft {{registration}} stays and remains paid by the student. To cancel it with the course and refund the student, use \"{{action}}\" in the menu of the course, in the list."
     },
     "detail": {
       "title": "Session on {{date}}",

@@ -181,7 +181,8 @@ export function settingsFormValuesFromRecord(record: AdministrationRecord): Sett
     closureDays: (record.closureDays ?? []).map(toWeekday),
     reservationStartTime: record.reservationStartTime ?? "",
     reservationEndTime: record.reservationEndTime ?? "",
-    maintenanceDay: record.maintenanceDay ?? "",
+    // Like the closure days: the club is created with "Monday", which the list names "Lundi".
+    maintenanceDay: record.maintenanceDay ? toWeekday(record.maintenanceDay) : "",
     // A missing duration stays empty: the form asks for it instead of inventing a value.
     maintenanceDuration: record.maintenanceDuration as number,
     pilotLicenses: [...(record.pilotLicenses ?? [])],

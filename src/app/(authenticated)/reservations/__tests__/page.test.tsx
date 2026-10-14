@@ -290,9 +290,10 @@ describe('ReservationCalendar', () => {
     // La légende reprend les libellés des statuts.
     const legend = within(screen.getByRole('list', { name: 'Légende' }));
     expect(legend.getByText('Confirmée')).toBeInTheDocument();
-    // A booking is confirmed when it is made: "pending" never happens and is not in the legend.
+    // A booking is confirmed when it is made and deleted when it is cancelled: neither
+    // "pending" nor "cancelled" ever shows, so neither is in the legend.
     expect(legend.queryByText('En attente')).not.toBeInTheDocument();
-    expect(legend.getByText('Annulée')).toBeInTheDocument();
+    expect(legend.queryByText('Annulée')).not.toBeInTheDocument();
   });
 
   it("doit afficher un message d'erreur si le chargement des réservations échoue", async () => {
@@ -980,7 +981,10 @@ describe('ReservationCalendar', () => {
       // The notice above the grid, then one cell per aircraft.
       expect(screen.getAllByText('Maintenance hebdomadaire')).toHaveLength(3);
       expect(
-        screen.getByText(/De 08:00 à 10:00, les avions du club sont en maintenance/),
+        // It starts when bookings open (08:00 in these settings): the notice says so.
+        screen.getByText(
+          "La maintenance commence à l'ouverture des réservations : de 08:00 à 10:00, les avions du club sont en maintenance et ne peuvent pas être réservés.",
+        ),
       ).toBeInTheDocument();
       for (const registration of ['F-ABCD', 'F-EFGH']) {
         const row = within(getRowFor(registration));

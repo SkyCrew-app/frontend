@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event"
 import { MockedProvider, type MockedResponse } from "@apollo/client/testing"
 import { NewReservationForm, type NewReservationPrefill } from "../new-reservation-form"
 import { InstructorField, useInstructorRequired } from "../instructor-field"
-import { GET_BOOKABLE_INSTRUCTORS, GET_MAY_BOOK_WITHOUT_INSTRUCTOR } from "@/graphql/reservation"
+import { GET_BOOKABLE_INSTRUCTORS, GET_MAY_BOOK_WITHOUT_INSTRUCTOR, GET_RESERVATION_COURSE } from "@/graphql/reservation"
 import type { Reservation } from "@/interfaces/reservation"
 
 // jsdom lacks these APIs, used by the Radix select.
@@ -44,12 +44,16 @@ const renderForm = (
     editing?: Reservation
     // End of the slot the licence is checked for (the API's `until`).
     until?: Date
+    mocks?: MockedResponse[]
   } = {},
   onSubmit = jest.fn().mockResolvedValue(undefined),
 ) => {
   const until = props.until ?? new Date(2031, 4, 14, 11, 0)
   render(
-    <MockedProvider mocks={[instructorsMock, rightsMock(!props.instructorRequired, until)]} addTypename={false}>
+    <MockedProvider
+      mocks={[instructorsMock, rightsMock(!props.instructorRequired, until), ...(props.mocks ?? [])]}
+      addTypename={false}
+    >
       <NewReservationForm
         open
         onOpenChange={jest.fn()}
@@ -181,7 +185,15 @@ describe("Modifier une réservation", () => {
   } as unknown as Reservation
 
   it("part de la réservation, et annonce la différence de prix quand l'horaire change", async () => {
-    const onSubmit = renderForm({ editing: booking })
+    const onSubmit = renderForm({
+      editing: booking,
+      mocks: [
+        {
+          request: { query: GET_RESERVATION_COURSE, variables: { id: 5 } },
+          result: { data: { reservation: { id: 5, course: null } } },
+        },
+      ],
+    })
 
     expect(screen.getByRole("dialog", { name: "Modifier la réservation" })).toBeInTheDocument()
     expect(screen.getByLabelText("But de la réservation")).toHaveValue("Tours de piste")
@@ -197,6 +209,53 @@ describe("Modifier une réservation", () => {
     await userEvent.click(screen.getByRole("button", { name: "Enregistrer" }))
     await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1))
     expect(onSubmit.mock.calls[0][0].endTime).toEqual(new Date(2031, 4, 14, 12, 0))
+  })
+})
+
+describe("Changer l'instructeur d'un vol réservé pour un cours", () => {
+  const booking = {
+    id: 8,
+    start_time: new Date(2031, 4, 14, 10, 0).toISOString(),
+    end_time: new Date(2031, 4, 14, 11, 0).toISOString(),
+    purpose: "Leçon 13",
+    status: "CONFIRMED",
+    flight_category: "INSTRUCTION",
+    charged_amount: 165,
+    aircraft: { id: 1, registration_number: "F-ABCD" },
+    user: { id: 42 },
+    instructor: { id: 3, first_name: "Marie", last_name: "Laurent" },
+  } as unknown as Reservation
+  const courseOf = (course: object | null): MockedResponse => ({
+    request: { query: GET_RESERVATION_COURSE, variables: { id: 8 } },
+    result: { data: { reservation: { id: 8, course } } },
+  })
+
+  it("prévient, avant d'enregistrer, que le vol ne sera plus rattaché au cours", async () => {
+    renderForm({
+      editing: booking,
+      mocks: [courseOf({ id: 12, startTime: new Date(2031, 4, 14, 10, 0).toISOString(), endTime: null })],
+    })
+    await screen.findByRole("dialog", { name: "Modifier la réservation" })
+    // Same instructor: nothing to say.
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    expect(screen.queryByText(/ne sera plus rattaché au cours/)).not.toBeInTheDocument()
+
+    await userEvent.click(instructorList())
+    await userEvent.click(await screen.findByRole("option", { name: "Camille Petit" }))
+
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      /Ce vol ne sera plus rattaché au cours du 14 mai 2031 à 10:00 : le cours restera sans avion/,
+    )
+  })
+
+  it("ne dit rien pour un vol qui n'est rattaché à aucun cours", async () => {
+    renderForm({ editing: booking, mocks: [courseOf(null)] })
+
+    await userEvent.click(instructorList())
+    await userEvent.click(await screen.findByRole("option", { name: "Camille Petit" }))
+    await new Promise((resolve) => setTimeout(resolve, 20))
+
+    expect(screen.queryByText(/ne sera plus rattaché au cours/)).not.toBeInTheDocument()
   })
 })
 

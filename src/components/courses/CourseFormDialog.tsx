@@ -14,7 +14,7 @@ import { CREATE_COURSE, GET_MEMBERS_DIRECTORY, UPDATE_COURSE } from "@/graphql/c
 import { apiRefusal } from "@/lib/api-refusal"
 import { datetimeLocalToISOString } from "@/lib/datetime"
 import { courseParticipants } from "@/lib/roles"
-import { courseStatusOptions, personName, type InstructionCourse } from "./course-helpers"
+import { courseRemoval, courseStatusOptions, personName, type InstructionCourse } from "./course-helpers"
 
 type Member = {
   id: number
@@ -284,6 +284,15 @@ export default function CourseFormDialog({
                 ))}
               </SelectContent>
             </Select>
+            {/* Cancelled from here, the course keeps its aircraft booking (the list offers to cancel both). */}
+            {course?.reservation && form.status === "CANCELED" && course.status !== "CANCELED" && (
+              <p className="text-sm text-muted-foreground" role="note">
+                {t("courses.form.cancelKeepsBooking", {
+                  registration: course.reservation.aircraft?.registration_number ?? "",
+                  action: courseRemoval(course) === "delete" ? t("common:actions.delete") : t("courses.list.cancel"),
+                })}
+              </p>
+            )}
           </div>
         )}
       </div>

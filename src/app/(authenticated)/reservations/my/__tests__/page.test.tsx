@@ -130,6 +130,18 @@ describe('règles de modification et d’annulation, les mêmes que celles de l�
   });
 });
 
+describe('Mes réservations — filtres', () => {
+  it('ne propose pas de filtre par statut : une réservation est confirmée à sa création et supprimée à son annulation', async () => {
+    renderPage([reservationsMock([OPEN, WITH_PLAN])]);
+    await screen.findByText('F-OPEN');
+
+    expect(screen.getByRole('combobox', { name: 'Filtrer par catégorie de vol' })).toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: 'Filtrer par statut' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Tous les statuts')).not.toBeInTheDocument();
+    expect(screen.queryByText('Annulée')).not.toBeInTheDocument();
+  });
+});
+
 describe('Mes réservations — annulation', () => {
   beforeEach(() => jest.clearAllMocks());
 

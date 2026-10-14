@@ -66,7 +66,7 @@
     "unavailableHint": "Réservation impossible pour le moment",
     "maintenance": {
       "title": "Maintenance hebdomadaire",
-      "description": "De {{from}} à {{to}}, les avions du club sont en maintenance : ce créneau ne peut pas être réservé.",
+      "description": "La maintenance commence à l'ouverture des réservations : de {{from}} à {{to}}, les avions du club sont en maintenance et ne peuvent pas être réservés.",
       "cell": "Maintenance hebdomadaire"
     }
   },
@@ -100,7 +100,8 @@
       "optionalHint": "Facultatif. Avec un instructeur, le vol devient un vol d'instruction ; l'instructeur est prévenu et peut décliner."
     },
     "course": {
-      "note": "Réservation de l'avion du cours de {{student}} avec {{instructor}}. L'élève est le pilote du vol : il paie l'avion et reçoit la confirmation."
+      "note": "Réservation de l'avion du cours de {{student}} avec {{instructor}}. L'élève est le pilote du vol : il paie l'avion et reçoit la confirmation.",
+      "leaves": "Ce vol ne sera plus rattaché au cours du {{date}} à {{time}} : le cours restera sans avion, et son instructeur en sera informé."
     }
   },
   "detail": {
@@ -196,8 +197,6 @@
     "filters": {
       "searchLabel": "Rechercher une réservation",
       "searchPlaceholder": "But ou immatriculation",
-      "statusLabel": "Filtrer par statut",
-      "allStatuses": "Tous les statuts",
       "categoryLabel": "Filtrer par catégorie de vol",
       "allCategories": "Toutes les catégories",
       "sortLabel": "Trier les réservations",

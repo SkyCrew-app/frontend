@@ -159,6 +159,33 @@ describe('SettingsPage', () => {
     expect(saveButton()).toBeDisabled();
   });
 
+  it("dit que la maintenance hebdomadaire commence à l'ouverture des réservations, d'après le formulaire", async () => {
+    const user = userEvent.setup();
+    renderPage([administrationMock()]);
+    await screen.findByLabelText(/Nom de l'aéroclub/);
+    await openTab(user, /Réservations/);
+
+    // The slot length is gone from the settings: not mentioned any more.
+    expect(screen.getByText('La plage horaire ouverte aux réservations.')).toBeInTheDocument();
+    expect(screen.queryByText(/durée d'un créneau/)).not.toBeInTheDocument();
+    expect(
+      screen.getByText("Elle commence à l'heure d'ouverture des réservations, soit 08:00, et se termine à 12:00."),
+    ).toBeInTheDocument();
+
+    const opening = screen.getByLabelText(/Début des réservations/);
+    await user.clear(opening);
+    await user.type(opening, '09:30');
+    const duration = screen.getByLabelText(/Durée de la maintenance/);
+    await user.clear(duration);
+    await user.type(duration, '2');
+    expect(
+      screen.getByText("Elle commence à l'heure d'ouverture des réservations, soit 09:30, et se termine à 11:30."),
+    ).toBeInTheDocument();
+
+    await user.clear(duration);
+    expect(screen.getByText("Elle commence à l'heure d'ouverture des réservations, soit 09:30.")).toBeInTheDocument();
+  });
+
   it('annule les modifications non enregistrées', async () => {
     const user = userEvent.setup();
     renderPage([administrationMock()]);
