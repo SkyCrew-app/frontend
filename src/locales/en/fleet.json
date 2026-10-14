@@ -102,7 +102,8 @@
     "generalInformation": "General information",
     "fuel": "Fuel",
     "documents": "Documents",
-    "noDocuments": "No documents for this aircraft."
+    "noDocuments": "No documents for this aircraft.",
+    "groundedHint": "Grounded: it cannot be booked. A severe incident, a failed audit or a maintenance keeps it on the ground; a technician or an administrator puts it back in service once checked."
   },
   "admin": {
     "title": "Fleet management",
@@ -322,7 +323,8 @@
       "deleteFailed": {
         "description": "The maintenance task could not be deleted. Try again."
       }
-    }
+    },
+    "descriptionReadOnly": "The work on the fleet's aircraft, past and planned."
   },
   "history": {
     "title": "Fleet history",
@@ -362,6 +364,39 @@
       "returnFailed": {
         "title": "Could not put the aircraft back in service",
         "description": "The aircraft state could not be changed. Please try again."
+      }
+    },
+    "list": {
+      "title": "Incidents",
+      "description": "The incidents reported on the club's aircraft, when a flight is closed or at any time.",
+      "followUp": "Follow up the incidents"
+    },
+    "report": {
+      "action": "Report an incident",
+      "title": "Report an incident",
+      "description": "A fault, a failure or damage found on an aircraft, outside the closing of a flight. The club is told and follows the incident up.",
+      "aircraftPlaceholder": "Select an aircraft",
+      "when": "Found on",
+      "groundingHint": "A high severity grounds the aircraft as soon as it is reported: it can no longer be booked until the club returns it to service.",
+      "descriptionPlaceholder": "What you found, where and when (pre-flight check, on the apron…)",
+      "submit": "Report the incident",
+      "errors": {
+        "aircraft": "Choose the aircraft concerned.",
+        "severity": "Give the severity.",
+        "description": "Describe the incident.",
+        "date": "Give the date and time.",
+        "future": "The date cannot be in the future."
+      },
+      "toast": {
+        "done": {
+          "title": "Incident reported",
+          "description": "The club has been told and will follow it up.",
+          "grounded": "{{registration}} is grounded until it is returned to service. The club has been told."
+        },
+        "failed": {
+          "title": "Report failed",
+          "description": "The incident could not be recorded. Try again."
+        }
       }
     }
   }

@@ -137,17 +137,17 @@ describe('Mes réservations — annulation', () => {
     renderPage([reservationsMock([OPEN, WITH_PLAN, CANCELLED, FLOWN])]);
     await screen.findByText('F-OPEN');
 
-    expect(cardOf('F-OPEN').getByRole('button', { name: 'Annuler la réservation' })).toBeInTheDocument();
-    expect(cardOf('F-PLAN').getByRole('button', { name: 'Annuler la réservation' })).toBeInTheDocument();
-    expect(cardOf('F-CANC').queryByRole('button', { name: 'Annuler la réservation' })).not.toBeInTheDocument();
-    expect(cardOf('F-DONE').queryByRole('button', { name: 'Annuler la réservation' })).not.toBeInTheDocument();
+    expect(cardOf('F-OPEN').getByRole('button', { name: 'Annuler la réservation de F-OPEN' })).toBeInTheDocument();
+    expect(cardOf('F-PLAN').getByRole('button', { name: 'Annuler la réservation de F-PLAN' })).toBeInTheDocument();
+    expect(cardOf('F-CANC').queryByRole('button', { name: 'Annuler la réservation de F-CANC' })).not.toBeInTheDocument();
+    expect(cardOf('F-DONE').queryByRole('button', { name: 'Annuler la réservation de F-DONE' })).not.toBeInTheDocument();
   });
 
   it('ne propose ni modification ni annulation pour une réservation commencée', async () => {
     renderPage([reservationsMock([OPEN, STARTED])]);
     await screen.findByText('F-PAST');
 
-    expect(cardOf('F-PAST').queryByRole('button', { name: 'Annuler la réservation' })).not.toBeInTheDocument();
+    expect(cardOf('F-PAST').queryByRole('button', { name: 'Annuler la réservation de F-PAST' })).not.toBeInTheDocument();
     expect(cardOf('F-PAST').queryByRole('button', { name: 'Modifier' })).not.toBeInTheDocument();
     expect(cardOf('F-OPEN').getByRole('button', { name: 'Modifier' })).toBeInTheDocument();
   });
@@ -170,7 +170,7 @@ describe('Mes réservations — annulation', () => {
     ]);
     await screen.findByText('F-OPEN');
 
-    fireEvent.click(cardOf('F-OPEN').getByRole('button', { name: 'Annuler la réservation' }));
+    fireEvent.click(cardOf('F-OPEN').getByRole('button', { name: 'Annuler la réservation de F-OPEN' }));
     fireEvent.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Annuler la réservation' }));
 
     await waitFor(() =>
@@ -191,11 +191,13 @@ describe('Mes réservations — annulation', () => {
     ]);
     await screen.findByText('F-OPEN');
 
-    fireEvent.click(cardOf('F-OPEN').getByRole('button', { name: 'Annuler la réservation' }));
+    fireEvent.click(cardOf('F-OPEN').getByRole('button', { name: 'Annuler la réservation de F-OPEN' }));
 
     const dialog = await screen.findByRole('alertdialog');
     expect(within(dialog).getByText('Annuler cette réservation ?')).toBeInTheDocument();
     expect(within(dialog).getByText(/La réservation de F-OPEN du 20 oct\. 2026, de 09:00 à 11:00, sera annulée/)).toBeInTheDocument();
+    // The refund is the amount charged for the booking, said before confirming.
+    expect(within(dialog).getByText(/300,00\s€ vous seront remboursés sur votre solde/)).toBeInTheDocument();
     // Nothing is sent before the confirmation.
     expect(deleteResult).not.toHaveBeenCalled();
 
@@ -219,7 +221,7 @@ describe('Mes réservations — annulation', () => {
     ]);
     await screen.findByText('F-OPEN');
 
-    fireEvent.click(cardOf('F-OPEN').getByRole('button', { name: 'Annuler la réservation' }));
+    fireEvent.click(cardOf('F-OPEN').getByRole('button', { name: 'Annuler la réservation de F-OPEN' }));
     fireEvent.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Conserver la réservation' }));
 
     await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
@@ -235,7 +237,7 @@ describe('Mes réservations — annulation', () => {
     ]);
     await screen.findByText('F-OPEN');
 
-    fireEvent.click(cardOf('F-OPEN').getByRole('button', { name: 'Annuler la réservation' }));
+    fireEvent.click(cardOf('F-OPEN').getByRole('button', { name: 'Annuler la réservation de F-OPEN' }));
     fireEvent.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Annuler la réservation' }));
 
     await waitFor(() =>

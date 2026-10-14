@@ -74,8 +74,9 @@ function Tile({ label, icon: Icon, value, hint }: { label: string; icon: LucideI
         {label}
         <Icon className="h-4 w-4" aria-hidden="true" />
       </p>
-      <p className="mt-1 truncate text-xl font-semibold tracking-tight tabular-nums">{value}</p>
-      <p className="mt-0.5 truncate text-xs text-muted-foreground">{hint}</p>
+      {/* Wrapped rather than cut: "Nuages 100 % · Humidité 80 %" must stay readable on a phone. */}
+      <p className="mt-1 text-lg font-semibold tracking-tight tabular-nums sm:text-xl">{value}</p>
+      <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>
     </div>
   )
 }

@@ -20,7 +20,7 @@ import {
 } from "@/interfaces/aircraft"
 import { toast } from "@/components/hooks/use-toast"
 import {
-  AIRCRAFT_AVAILABILITY_VALUES,
+  offeredAvailabilities,
   AIRCRAFT_MAINTENANCE_STATE_VALUES,
   aircraftAvailability,
   aircraftFileName,
@@ -381,7 +381,7 @@ export function AircraftFormDialog({ aircraft, isOpen, onClose, onSuccess }: Air
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {AIRCRAFT_AVAILABILITY_VALUES.map((status) => (
+                {offeredAvailabilities([aircraft?.availability_status]).map((status) => (
                   <SelectItem key={status} value={status}>
                     {aircraftAvailability(status).label}
                   </SelectItem>

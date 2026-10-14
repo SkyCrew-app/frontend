@@ -25,7 +25,8 @@ test("le pilote télécharge une de ses factures", async ({ page }) => {
   const first = page.getByRole("button", { name: /^Télécharger la facture / }).first()
   await expect(first).toBeVisible()
   const number = (await first.getAttribute("aria-label"))!.replace("Télécharger la facture ", "")
-  await expect(page.getByRole("row").filter({ hasText: number }).first()).toContainText("Réservation")
+  // A booking's invoice names the flight when it is known ("Vol en F-EEEE du …"), else "Réservation".
+  await expect(page.getByRole("row").filter({ hasText: number }).first()).toContainText(/Vol en F-|Réservation/)
 
   const [download] = await Promise.all([page.waitForEvent("download"), first.click()])
   await expectPdf(download, new RegExp(`^facture-.*${number}.*\\.pdf$`))

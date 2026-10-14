@@ -176,7 +176,12 @@ export function SidePanel({
         </ol>
       )}
 
-      <div ref={bodyRef} className="flex-1 overflow-y-auto px-6 py-5">
+      <div
+        ref={bodyRef}
+        // A panel that only shows information may have nothing to focus: the keyboard still scrolls it.
+        tabIndex={footer ? 0 : undefined}
+        className="flex-1 overflow-y-auto px-6 py-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+      >
         {steps
           ? steps.map((step, index) => (
               // Every step stays mounted so that fields keep their value; only the current one shows.

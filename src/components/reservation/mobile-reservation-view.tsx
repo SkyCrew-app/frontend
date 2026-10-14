@@ -33,6 +33,8 @@ interface MobileReservationViewProps {
   /** Opening hours of the day, as the desktop grid uses them; null when they are unknown. */
   opening?: Date | null
   closing?: Date | null
+  /** The club's weekly maintenance on this day: never offered as free. */
+  maintenance?: TimeRange | null
   /** A free range was tapped: open the booking form for it. */
   onBookRange?: (aircraftId: number, range: TimeRange) => void
 }
@@ -53,6 +55,7 @@ export function MobileReservationView({
   onViewReservation,
   opening = null,
   closing = null,
+  maintenance = null,
   onBookRange,
 }: MobileReservationViewProps) {
   const { t } = useTranslation("reservations")
@@ -68,7 +71,10 @@ export function MobileReservationView({
           ranges: freeRanges(
             opening,
             closing,
-            reservations.filter((reservation) => String(reservation.aircraft.id) === String(aircraft.id)),
+            [
+              ...reservations.filter((reservation) => String(reservation.aircraft.id) === String(aircraft.id)),
+              ...(maintenance ? [{ start_time: maintenance.start, end_time: maintenance.end }] : []),
+            ],
             { notBefore: now },
           ),
         }))
@@ -109,9 +115,10 @@ export function MobileReservationView({
           <h2 id="free-ranges-heading" className="text-lg font-semibold">
             {t("calendar.mobile.freeHeading")}
           </h2>
-          <ul className="space-y-2">
+          {/* One named group per aircraft (a list item cannot be a group). */}
+          <div className="space-y-2">
             {availability.map(({ aircraft, ranges }) => (
-              <li
+              <div
                 key={aircraft.id}
                 role="group"
                 aria-label={t("calendar.mobile.freeFor", { aircraft: aircraft.registration_number })}
@@ -124,7 +131,10 @@ export function MobileReservationView({
                     <Badge variant="neutral">{t("calendar.aircraftUnavailable")}</Badge>
                   )}
                 </div>
-                {ranges.length > 0 ? (
+                {aircraft.availability_status === "UNAVAILABLE" ? (
+                  // The API refuses any booking of it: no free range is offered.
+                  <p className="mt-1 text-sm text-muted-foreground">{t("calendar.unavailableHint")}</p>
+                ) : ranges.length > 0 ? (
                   <div className="mt-2 flex flex-wrap gap-2">
                     {ranges.map((range) => (
                       <button
@@ -146,9 +156,9 @@ export function MobileReservationView({
                 ) : (
                   <p className="mt-1 text-sm text-muted-foreground">{t("calendar.mobile.noFreeRange")}</p>
                 )}
-              </li>
+              </div>
             ))}
-          </ul>
+          </div>
           <p className="text-xs text-muted-foreground">{t("calendar.mobile.freeHint")}</p>
         </section>
       )}

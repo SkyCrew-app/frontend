@@ -8,6 +8,7 @@ import { StatCard } from "@/components/layout/StatCard"
 import { CalendarDays, CalendarRange, Clock, Plane } from "lucide-react"
 import type { LogbookStats as LogbookStatsType, HoursEntry } from "@/interfaces/logbook"
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts"
+import { durationTicks } from "@/lib/duration-ticks"
 import { formatFlightDuration } from "@/lib/format"
 import { dateFnsLocale } from "@/lib/i18n"
 import { flightTypeLabel } from "@/components/flight/flight-type"
@@ -87,6 +88,7 @@ export default function LogbookStats({ stats, loading }: LogbookStatsProps) {
     ...entry,
     label: formatMonth(entry.month),
   }))
+  const monthlyTicks = durationTicks(Math.max(0, ...monthlyData.map((entry) => Number(entry.hours) || 0)))
 
   const totalFlights = stats?.totalFlights ?? 0
   const hoursByRole = [
@@ -144,10 +146,19 @@ export default function LogbookStats({ stats, loading }: LogbookStatsProps) {
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={monthlyData} margin={{ top: 5, right: 8, left: -16, bottom: 0 }}>
+                  <BarChart data={monthlyData} margin={{ top: 5, right: 8, left: 0, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                     <XAxis dataKey="label" tick={AXIS_TICK} tickLine={false} axisLine={false} />
-                    <YAxis tick={AXIS_TICK} tickLine={false} axisLine={false} unit=" h" />
+                    {/* Hours and minutes, as everywhere else: "45 min", not "0.75 h". */}
+                    <YAxis
+                      tick={AXIS_TICK}
+                      tickLine={false}
+                      axisLine={false}
+                      width={56}
+                      tickFormatter={(value: number) => formatFlightDuration(value)}
+                      ticks={monthlyTicks}
+                      domain={[0, monthlyTicks[monthlyTicks.length - 1]]}
+                    />
                     <Tooltip
                       formatter={(value: number) => [formatFlightDuration(value), t("logbook.stats.tooltipFlightTime")]}
                       contentStyle={TOOLTIP_STYLE}

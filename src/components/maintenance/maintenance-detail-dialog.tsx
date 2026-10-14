@@ -18,9 +18,10 @@ interface MaintenanceDetailDialogProps {
   maintenance: Maintenance | null
   isOpen: boolean
   onOpenChange: (open: boolean) => void
-  onEdit: (maintenance: Maintenance) => void
+  /** Edit and delete, with the cost: for administrators and technicians only. */
+  onEdit?: (maintenance: Maintenance) => void
   /** Asks for the deletion; the page confirms it. */
-  onDelete: (maintenance: Maintenance) => void
+  onDelete?: (maintenance: Maintenance) => void
 }
 
 function Fact({ label, children }: { label: string; children: ReactNode }) {
@@ -67,20 +68,24 @@ export function MaintenanceDetailDialog({
       title={t("maintenance.detail.title", { registration })}
       description={maintenance.aircraft.model}
       footerStart={
-        <Button variant="ghost" className="text-destructive hover:text-destructive" onClick={() => onDelete(maintenance)}>
-          <Trash2 className="h-4 w-4" aria-hidden="true" />
-          {t("common:actions.delete")}
-        </Button>
+        onDelete && (
+          <Button variant="ghost" className="text-destructive hover:text-destructive" onClick={() => onDelete(maintenance)}>
+            <Trash2 className="h-4 w-4" aria-hidden="true" />
+            {t("common:actions.delete")}
+          </Button>
+        )
       }
       footer={
         <>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             {t("common:actions.close")}
           </Button>
-          <Button onClick={() => onEdit(maintenance)}>
-            <Pencil className="h-4 w-4" aria-hidden="true" />
-            {t("common:actions.edit")}
-          </Button>
+          {onEdit && (
+            <Button onClick={() => onEdit(maintenance)}>
+              <Pencil className="h-4 w-4" aria-hidden="true" />
+              {t("common:actions.edit")}
+            </Button>
+          )}
         </>
       }
     >
@@ -92,11 +97,13 @@ export function MaintenanceDetailDialog({
           <Fact label={t("common:labels.status")}>
             <StatusBadge status={maintenance.status} />
           </Fact>
-          <Fact label={t("common:labels.cost")}>
-            <span className="tabular-nums">
-              {maintenance.maintenance_cost ? formatMoney(maintenance.maintenance_cost) : "—"}
-            </span>
-          </Fact>
+          {onEdit && (
+            <Fact label={t("common:labels.cost")}>
+              <span className="tabular-nums">
+                {maintenance.maintenance_cost ? formatMoney(maintenance.maintenance_cost) : "—"}
+              </span>
+            </Fact>
+          )}
           <Fact label={t("common:labels.start")}>{formatDate(maintenance.start_date)}</Fact>
           <Fact label={t("common:labels.end")}>{formatDate(maintenance.end_date)}</Fact>
           <Fact label={t("common:labels.technician")}>

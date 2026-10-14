@@ -28,6 +28,9 @@ export function ReservationCard({ reservation, onEdit, onCancel }: ReservationCa
   const flightPlanId = reservation.flights?.[0]?.id
   const isCancelled = String(reservation.status).toUpperCase() === "CANCELLED"
   const instructor = instructorName(reservation.instructor)
+  const canCancel = canCancelReservation(reservation)
+  const canEdit = canEditReservation(reservation)
+  const showPlanAction = !!flightPlanId || !isCancelled
 
   return (
     <Card className="flex h-full flex-col">
@@ -75,36 +78,40 @@ export function ReservationCard({ reservation, onEdit, onCancel }: ReservationCa
           </p>
         )}
       </CardContent>
-      <CardFooter className="flex flex-wrap justify-end gap-2 border-t pt-4">
-        {canCancelReservation(reservation) && (
-          <Button
-            size="sm"
-            variant="ghost"
-            className="mr-auto text-destructive hover:text-destructive"
-            onClick={() => onCancel(reservation)}
-          >
-            <CalendarX className="h-4 w-4" />
-            {t("my.card.cancel")}
-          </Button>
-        )}
-        {canEditReservation(reservation) && (
-          <Button size="sm" variant="outline" onClick={() => onEdit(reservation)}>
-            <Pencil className="h-4 w-4" />
-            {t("common:actions.edit")}
-          </Button>
-        )}
-        {flightPlanId ? (
-          <Button size="sm" asChild>
-            <Link href={`/reservations/flight-plans/${flightPlanId}`}>{t("my.card.viewFlightPlan")}</Link>
-          </Button>
-        ) : (
-          !isCancelled && (
-            <Button size="sm" asChild>
-              <Link href={`/reservations/flight-plans/create/${reservation.id}`}>{t("my.card.createFlightPlan")}</Link>
+      {(canCancel || canEdit || showPlanAction) && (
+        <CardFooter className="flex flex-wrap items-center justify-end gap-2 border-t pt-4">
+          {canCancel && (
+            // Icon only: three labelled buttons do not fit a card of the three-column grid.
+            <Button
+              size="icon"
+              variant="ghost"
+              className="mr-auto h-9 w-9 text-destructive hover:text-destructive"
+              onClick={() => onCancel(reservation)}
+              aria-label={t("cancel.actionFor", { aircraft: reservation.aircraft.registration_number })}
+              title={t("cancel.action")}
+            >
+              <CalendarX className="h-4 w-4" />
             </Button>
-          )
-        )}
-      </CardFooter>
+          )}
+          {canEdit && (
+            <Button size="sm" variant="outline" onClick={() => onEdit(reservation)}>
+              <Pencil className="h-4 w-4" />
+              {t("common:actions.edit")}
+            </Button>
+          )}
+          {flightPlanId ? (
+            <Button size="sm" asChild>
+              <Link href={`/reservations/flight-plans/${flightPlanId}`}>{t("my.card.viewFlightPlan")}</Link>
+            </Button>
+          ) : (
+            !isCancelled && (
+              <Button size="sm" asChild>
+                <Link href={`/reservations/flight-plans/create/${reservation.id}`}>{t("my.card.createFlightPlan")}</Link>
+              </Button>
+            )
+          )}
+        </CardFooter>
+      )}
     </Card>
   )
 }

@@ -9,6 +9,8 @@ import { expect } from "./test"
 const STARTED = Date.now()
 const MONTHS_AHEAD = 2 + (STARTED % 3)
 const DAY_DRAW = (Math.floor(STARTED / 10) % 100) / 100
+// Monday, as Date.getDay() counts.
+const MAINTENANCE_WEEKDAY = 1
 
 /**
  * Opens the reservation calendar on a day several months ahead and returns its label
@@ -34,7 +36,15 @@ export async function openCalendarAhead(page: Page, knownDay?: string) {
       .filter({ hasText: new RegExp(`^${knownDay}$`) })
       .click()
   } else {
-    const open = picker.locator("[role=gridcell]:not([disabled]):not(.day-outside)").filter({ hasText: /^(1[5-9]|2[0-8])$/ })
+    // Not a Monday either: the demo club holds its weekly maintenance on Monday mornings
+    // (backend admin.seeder), and the API refuses bookings during it.
+    const shown = new Date(new Date(STARTED).getFullYear(), new Date(STARTED).getMonth() + MONTHS_AHEAD, 1)
+    const days = Array.from({ length: 14 }, (_, index) => 15 + index).filter(
+      (day) => new Date(shown.getFullYear(), shown.getMonth(), day).getDay() !== MAINTENANCE_WEEKDAY,
+    )
+    const open = picker
+      .locator("[role=gridcell]:not([disabled]):not(.day-outside)")
+      .filter({ hasText: new RegExp(`^(${days.join("|")})$`) })
     await expect(open.first()).toBeVisible()
     await open.nth(Math.floor(DAY_DRAW * (await open.count()))).click()
   }

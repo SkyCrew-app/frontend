@@ -29,8 +29,8 @@ test.afterEach(async ({ page }) => {
   // The student cancels her own booking.
   await openCalendarAhead(page, booked.day)
   await page.getByRole("button", { name: new RegExp(`^${booked.purpose}`) }).click()
-  await sidePanel(page, "Détails de la réservation").getByRole("button", { name: "Supprimer" }).click()
-  await confirmAlert(page, "Supprimer la réservation")
+  await sidePanel(page, "Détails de la réservation").getByRole("button", { name: "Annuler la réservation" }).click()
+  await confirmAlert(page, "Annuler la réservation")
   await expect(freeCell(page)).toBeVisible()
   booked = null
 })

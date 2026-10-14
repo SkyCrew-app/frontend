@@ -527,6 +527,8 @@ const MapboxMap: React.FC<MapboxMapProps> = ({ waypoints, departure, arrival, fo
             }).setHTML(popupHtml),
           )
           .addTo(m)
+        // Mapbox names a marker with a popup "Map marker": name it after what it shows instead.
+        marker.getElement().setAttribute('aria-label', (el.textContent ?? wp.name ?? '').replace(/\s+/g, ' ').trim())
 
         markersRef.current.push(marker)
       })

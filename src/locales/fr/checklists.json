@@ -50,8 +50,9 @@
       "description": "Choisissez le modèle correspondant à l'avion que vous préparez.",
       "submit": "Démarrer la checklist",
       "templateLabel": "Modèle de checklist",
-      "noTemplate": "Aucun modèle de checklist n'est disponible. Demandez à un administrateur du club d'en activer un.",
-      "placeholder": "Choisir un modèle"
+      "noTemplate": "Aucun modèle de checklist n'est disponible. Les administrateurs, les instructeurs et les techniciens du club peuvent en créer un.",
+      "placeholder": "Choisir un modèle",
+      "manageTemplates": "Gérer les modèles"
     }
   },
   "detail": {

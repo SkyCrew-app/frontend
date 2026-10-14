@@ -14,10 +14,12 @@ interface DateNavigatorProps {
   setCurrentDate: (date: Date) => void
   /** Tells whether the club is closed on that day (greyed out in the picker). */
   isClosedDay: (date: Date) => boolean
+  /** A short date ("mer. 14 oct."): the long one does not fit next to the day buttons on a phone. */
+  compact?: boolean
 }
 
 /** The single date control of the calendar: previous day, today, next day and a date picker. */
-export function DateNavigator({ currentDate, setCurrentDate, isClosedDay }: DateNavigatorProps) {
+export function DateNavigator({ currentDate, setCurrentDate, isClosedDay, compact = false }: DateNavigatorProps) {
   const { t } = useTranslation("reservations")
   const [pickerOpen, setPickerOpen] = useState(false)
   const isToday = isSameDay(currentDate, new Date())
@@ -52,7 +54,9 @@ export function DateNavigator({ currentDate, setCurrentDate, isClosedDay }: Date
         <PopoverTrigger asChild>
           <Button variant="outline" className="min-w-0 flex-1 justify-start font-normal sm:flex-none">
             <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-            <span className="truncate">{format(currentDate, "EEEE d MMMM yyyy", { locale: dateFnsLocale() })}</span>
+            <span className="truncate">
+              {format(currentDate, compact ? "EEE d MMM" : "EEEE d MMMM yyyy", { locale: dateFnsLocale() })}
+            </span>
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">

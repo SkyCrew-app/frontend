@@ -114,11 +114,23 @@
         },
         "deleteFailed": {
           "title": "Session not deleted"
+        },
+        "cancelled": {
+          "title": "Course cancelled"
+        },
+        "cancelFailed": {
+          "title": "Course not cancelled"
         }
       },
       "deleteConfirm": {
         "title": "Delete this session?",
         "description": "The session on {{date}} with {{name}} will be permanently deleted."
+      },
+      "cancel": "Cancel the course",
+      "cancelConfirm": {
+        "title": "Cancel this course?",
+        "description": "The course on {{date}} with {{name}} is part of the training record (competencies, comments or rating): it cannot be deleted. It will stay in the history, marked as cancelled.",
+        "keep": "Keep the course"
       }
     },
     "pagination": {
@@ -137,7 +149,8 @@
       },
       "description": {
         "create": "Choose the student and the time of the session.",
-        "edit": "Change the student, the time or the status of the session."
+        "edit": "Change the student, the time or the status of the session.",
+        "editSchedule": "Change the times or the status of the course. Only an administrator can change the student or the instructor."
       },
       "submitCreate": "Schedule the session",
       "instructorPlaceholder": "Choose an instructor",

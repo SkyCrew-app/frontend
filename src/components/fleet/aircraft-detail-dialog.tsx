@@ -1,12 +1,14 @@
 "use client"
 
-import type { ReactNode } from "react"
+import { useState, type ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 import { SidePanel } from "@/components/layout/SidePanel"
 import { Button } from "@/components/ui/button"
-import { ExternalLink, FileText, Pencil } from "lucide-react"
+import { ExternalLink, FileText, Pencil, TriangleAlert } from "lucide-react"
 import type { Aircraft } from "@/interfaces/aircraft"
 import { StatusBadge } from "./status-badge"
+import { ReturnToServiceButton } from "./return-to-service-button"
+import { ReportIncidentPanel } from "@/components/incidents/report-incident-panel"
 import { getBackendBaseUrl } from "@/lib/runtime-config"
 import { aircraftFileName, aircraftFileUrl } from "@/lib/aircraft"
 import { formatDecimal, formatFlightDuration, formatMoney } from "@/lib/format"
@@ -17,6 +19,8 @@ interface AircraftDetailDialogProps {
   onOpenChange: (open: boolean) => void
   /** Shown as the main action when the viewer may edit the aircraft. */
   onEdit?: (aircraft: Aircraft) => void
+  /** The viewer may put a grounded aircraft back in service (administrators and technicians). */
+  canReturnToService?: boolean
 }
 
 const hasValue = (value: number | string | null | undefined) => value !== null && value !== undefined && value !== ""
@@ -30,8 +34,15 @@ function Fact({ label, children }: { label: string; children: ReactNode }) {
   )
 }
 
-export function AircraftDetailDialog({ aircraft, isOpen, onOpenChange, onEdit }: AircraftDetailDialogProps) {
+export function AircraftDetailDialog({
+  aircraft,
+  isOpen,
+  onOpenChange,
+  onEdit,
+  canReturnToService = false,
+}: AircraftDetailDialogProps) {
   const { t } = useTranslation("fleet")
+  const [reporting, setReporting] = useState(false)
   if (!aircraft) return null
 
   // Optional characteristics: only the ones filled in are listed.
@@ -54,17 +65,22 @@ export function AircraftDetailDialog({ aircraft, isOpen, onOpenChange, onEdit }:
       title={aircraft.registration_number}
       description={aircraft.model}
       footer={
-        onEdit ? (
-          <>
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              {t("common:actions.close")}
-            </Button>
+        <>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            {t("common:actions.close")}
+          </Button>
+          {/* Any member may report what they found on the aircraft, outside a flight. */}
+          <Button variant={onEdit ? "outline" : "default"} onClick={() => setReporting(true)}>
+            <TriangleAlert className="h-4 w-4" aria-hidden="true" />
+            {t("incidents.report.action")}
+          </Button>
+          {onEdit && (
             <Button onClick={() => onEdit(aircraft)}>
               <Pencil className="h-4 w-4" aria-hidden="true" />
               {t("common:actions.edit")}
             </Button>
-          </>
-        ) : undefined
+          )}
+        </>
       }
     >
       <div className="space-y-6">
@@ -72,6 +88,13 @@ export function AircraftDetailDialog({ aircraft, isOpen, onOpenChange, onEdit }:
           <StatusBadge status={aircraft.availability_status} type="availability" />
           <StatusBadge status={aircraft.maintenance_status} type="maintenance" />
         </div>
+
+        {aircraft.availability_status === "UNAVAILABLE" && (
+          <section className="space-y-3 rounded-lg border p-4">
+            <p className="text-sm text-muted-foreground">{t("detail.groundedHint")}</p>
+            {canReturnToService && <ReturnToServiceButton aircraft={aircraft} />}
+          </section>
+        )}
 
         {aircraft.image_url && (
           // Aircraft files need the session: a plain image request carries it.
@@ -133,6 +156,7 @@ export function AircraftDetailDialog({ aircraft, isOpen, onOpenChange, onEdit }:
           )}
         </section>
       </div>
+      <ReportIncidentPanel open={reporting} onOpenChange={setReporting} aircraft={aircraft} />
     </SidePanel>
   )
 }

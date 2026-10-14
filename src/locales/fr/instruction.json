@@ -114,11 +114,23 @@
         },
         "deleteFailed": {
           "title": "Cours non supprimé"
+        },
+        "cancelled": {
+          "title": "Cours annulé"
+        },
+        "cancelFailed": {
+          "title": "Cours non annulé"
         }
       },
       "deleteConfirm": {
         "title": "Supprimer ce cours ?",
         "description": "Le cours du {{date}} avec {{name}} sera définitivement supprimé."
+      },
+      "cancel": "Annuler le cours",
+      "cancelConfirm": {
+        "title": "Annuler ce cours ?",
+        "description": "Le cours du {{date}} avec {{name}} fait partie du suivi de formation (compétences, commentaires ou note) : il ne peut pas être supprimé. Il restera dans l'historique, marqué comme annulé.",
+        "keep": "Conserver le cours"
       }
     },
     "pagination": {
@@ -137,7 +149,8 @@
       },
       "description": {
         "create": "Choisissez l'élève et l'horaire du cours.",
-        "edit": "Changez l'élève, l'horaire ou le statut du cours."
+        "edit": "Changez l'élève, l'horaire ou le statut du cours.",
+        "editSchedule": "Changez l'horaire ou le statut du cours. Seul un administrateur peut changer l'élève ou l'instructeur."
       },
       "submitCreate": "Planifier le cours",
       "instructorPlaceholder": "Choisir un instructeur",

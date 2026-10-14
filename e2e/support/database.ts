@@ -29,14 +29,15 @@ function sql(statement: string): string {
 /**
  * Moves the booking with this purpose to a one-hour slot that is over, as if it had been booked
  * then: the latest hour, at least a day ago, during which neither its aircraft nor its pilot has
- * another booking. A day of margin, because the API stores times without a zone.
+ * another booking. A day of margin, because the API stores times without a zone. Its flight plans
+ * not closed yet move with it, as the API moves them when a booking changes.
  */
 export function moveBookingIntoThePast(purpose: string) {
   if (!/^[\w ]+$/.test(purpose)) throw new Error(`Unexpected booking purpose: ${purpose}`)
 
   const moved = sql(`
     WITH booking AS (
-      SELECT id, "aircraftId", "userId" FROM reservations WHERE purpose = '${purpose}'
+      SELECT id, "aircraftId", "userId", start_time FROM reservations WHERE purpose = '${purpose}'
     ),
     slot AS (
       SELECT hour AS start
@@ -55,13 +56,23 @@ export function moveBookingIntoThePast(purpose: string) {
       )
       ORDER BY hour DESC
       LIMIT 1
+    ),
+    moved AS (
+      UPDATE reservations
+      SET start_time = slot.start, end_time = slot.start + interval '1 hour', reservation_date = slot.start
+      FROM booking, slot
+      WHERE reservations.id = booking.id
+      RETURNING reservations.id, slot.start - booking.start_time AS shift
+    ),
+    plans AS (
+      UPDATE flights
+      SET departure_time = departure_time + moved.shift, arrival_time = arrival_time + moved.shift
+      FROM moved
+      WHERE flights."reservationId" = moved.id AND flights.closed_at IS NULL
+      RETURNING flights.id
     )
-    UPDATE reservations
-    SET start_time = slot.start, end_time = slot.start + interval '1 hour', reservation_date = slot.start
-    FROM booking, slot
-    WHERE reservations.id = booking.id
-    RETURNING reservations.id;
+    SELECT id FROM moved;
   `)
-  // psql prints the returned id, then the command tag.
+  // psql prints the id of the moved booking.
   if (!/^\d+$/m.test(moved)) throw new Error(`No booking "${purpose}" was moved into the past: ${moved || "no row"}`)
 }

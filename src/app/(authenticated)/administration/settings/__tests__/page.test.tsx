@@ -52,6 +52,7 @@ const administration = {
 };
 
 // What the page must send back when nothing but the listed fields changed.
+// The slot length, the fees and the club rules are not on the page: never sent.
 const savedInput = (changes: Record<string, unknown> = {}) => ({
   id: 1,
   clubName: administration.clubName,
@@ -59,17 +60,12 @@ const savedInput = (changes: Record<string, unknown> = {}) => ({
   contactPhone: administration.contactPhone,
   address: administration.address,
   closureDays: administration.closureDays,
-  timeSlotDuration: administration.timeSlotDuration,
   reservationStartTime: administration.reservationStartTime,
   reservationEndTime: administration.reservationEndTime,
   maintenanceDay: administration.maintenanceDay,
   maintenanceDuration: administration.maintenanceDuration,
   pilotLicenses: administration.pilotLicenses,
-  membershipFee: administration.membershipFee,
   flightHourRate: administration.flightHourRate,
-  clubRules: administration.clubRules,
-  allowGuestPilots: administration.allowGuestPilots,
-  guestPilotFee: administration.guestPilotFee,
   fuelManagement: administration.fuelManagement,
   fuelPrice: administration.fuelPrice,
   taxonomies: administration.taxonomies,
@@ -132,7 +128,7 @@ describe('SettingsPage', () => {
 
   it("garde les saisies d'un onglet à l'autre et les enregistre ensemble", async () => {
     const user = userEvent.setup();
-    const update = updateMock(savedInput({ clubName: 'Aéroclub du Val', membershipFee: 200 }));
+    const update = updateMock(savedInput({ clubName: 'Aéroclub du Val', pilotLicenses: ['PPL', 'CPL'] }));
     renderPage([administrationMock(), update.mock]);
 
     const clubName = await screen.findByLabelText(/Nom de l'aéroclub/);
@@ -141,15 +137,14 @@ describe('SettingsPage', () => {
     expect(screen.getByText('Modifications non enregistrées')).toBeInTheDocument();
 
     await openTab(user, 'Membres');
-    const fee = screen.getByLabelText(/Cotisation annuelle/);
-    expect(fee).toHaveValue(180);
-    await user.clear(fee);
-    await user.type(fee, '200');
+    expect(screen.queryByLabelText(/Cotisation annuelle/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/invités/)).not.toBeInTheDocument();
+    await user.click(screen.getByRole('checkbox', { name: 'CPL' }));
 
     await openTab(user, 'Général');
     expect(screen.getByLabelText(/Nom de l'aéroclub/)).toHaveValue('Aéroclub du Val');
     await openTab(user, 'Membres');
-    expect(screen.getByLabelText(/Cotisation annuelle/)).toHaveValue(200);
+    expect(screen.getByRole('checkbox', { name: 'CPL' })).toBeChecked();
 
     await user.click(saveButton());
 
@@ -178,14 +173,14 @@ describe('SettingsPage', () => {
 
   it("ouvre l'onglet du champ invalide et n'enregistre rien", async () => {
     const user = userEvent.setup();
-    const update = updateMock(savedInput({ clubName: 'Aéroclub de test bis', membershipFee: null }));
-    renderPage([administrationMock({ ...administration, membershipFee: null }), update.mock]);
+    const update = updateMock(savedInput({ clubName: 'Aéroclub de test bis', maintenanceDuration: null }));
+    renderPage([administrationMock({ ...administration, maintenanceDuration: null }), update.mock]);
 
     await user.type(await screen.findByLabelText(/Nom de l'aéroclub/), ' bis');
     await user.click(saveButton());
 
-    expect(await screen.findByText('Indiquez un montant')).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /Membres/ })).toHaveAttribute('aria-selected', 'true');
+    expect(await screen.findByText('Indiquez une durée en heures')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Réservations/ })).toHaveAttribute('aria-selected', 'true');
     expect(mockToast).toHaveBeenCalledWith({
       title: 'Enregistrement impossible',
       description: 'Certains champs sont à corriger : ils sont signalés en rouge.',

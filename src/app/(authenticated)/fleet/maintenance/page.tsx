@@ -26,6 +26,9 @@ import { GET_MEMBERS_DIRECTORY } from "@/graphql/course"
 import { GET_AIRCRAFTS } from "@/graphql/planes"
 import type { Maintenance } from "@/interfaces/maintenance"
 import { useToast } from "@/components/hooks/use-toast"
+import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
+import { canManageFleet } from "@/lib/roles"
+import { cn } from "@/lib/utils"
 import { SearchFilter, type TechnicianOption } from "@/components/maintenance/search-filter"
 import { MaintenanceTable } from "@/components/maintenance/maintenance-table"
 import { MaintenanceDetailDialog } from "@/components/maintenance/maintenance-detail-dialog"
@@ -50,6 +53,8 @@ const UNASSIGNED = "non_assigned"
 export default function MaintenanceTablePage() {
   const { t } = useTranslation("fleet")
   const { data, loading, error, refetch } = useQuery(GET_ALL_MAINTENANCES, { notifyOnNetworkStatusChange: true })
+  // Planning, editing and the costs belong to administrators and technicians: the API refuses the others.
+  const canManage = canManageFleet(useUserData(useCurrentUser()))
 
   const [createMaintenance] = useMutation(CREATE_MAINTENANCE)
   const [updateMaintenance] = useMutation(UPDATE_MAINTENANCE)
@@ -70,8 +75,9 @@ export default function MaintenanceTablePage() {
   const { toast } = useToast()
 
   // The directory, not the administrator's list of users: a technician opens this screen too.
-  const { data: usersData } = useQuery(GET_MEMBERS_DIRECTORY)
-  const { data: aircraftsData } = useQuery(GET_AIRCRAFTS)
+  // Only the form needs them.
+  const { data: usersData } = useQuery(GET_MEMBERS_DIRECTORY, { skip: !canManage })
+  const { data: aircraftsData } = useQuery(GET_AIRCRAFTS, { skip: !canManage })
 
   const aircrafts = aircraftsData?.getAircrafts || []
   const technicians =
@@ -247,17 +253,19 @@ export default function MaintenanceTablePage() {
 
     return (
       <>
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div className={cn("grid grid-cols-2 gap-4", canManage ? "lg:grid-cols-4" : "lg:grid-cols-3")}>
           <StatCard label={t("maintenance.stats.planned")} value={countByStatus("PLANNED")} icon={CalendarClock} tone="info" />
           <StatCard label={t("maintenance.stats.inProgress")} value={countByStatus("IN_PROGRESS")} icon={Wrench} tone="warning" />
           <StatCard label={t("maintenance.stats.completed")} value={countByStatus("COMPLETED")} icon={CheckCircle} tone="success" />
-          <StatCard
-            label={t("maintenance.stats.totalCost")}
-            value={formatMoney(totalCost)}
-            hint={t("maintenance.stats.totalCostHint")}
-            icon={Euro}
-            tone="neutral"
-          />
+          {canManage && (
+            <StatCard
+              label={t("maintenance.stats.totalCost")}
+              value={formatMoney(totalCost)}
+              hint={t("maintenance.stats.totalCostHint")}
+              icon={Euro}
+              tone="neutral"
+            />
+          )}
         </div>
 
         <SearchFilter
@@ -283,11 +291,11 @@ export default function MaintenanceTablePage() {
           totalItems={filteredMaintenances.length}
           onPageChange={setCurrentPage}
           onSelectMaintenance={handleSelectMaintenance}
-          onEditMaintenance={handleEditMaintenance}
-          onDeleteMaintenance={setMaintenanceToDelete}
+          onEditMaintenance={canManage ? handleEditMaintenance : undefined}
+          onDeleteMaintenance={canManage ? setMaintenanceToDelete : undefined}
           hasFilters={hasFilters}
           onResetFilters={resetFilters}
-          onCreateMaintenance={handleCreateMaintenance}
+          onCreateMaintenance={canManage ? handleCreateMaintenance : undefined}
         />
       </>
     )
@@ -298,17 +306,19 @@ export default function MaintenanceTablePage() {
       <PageHeader
         className="mb-0"
         title={t("maintenance.title")}
-        description={t("maintenance.description")}
+        description={t(canManage ? "maintenance.description" : "maintenance.descriptionReadOnly")}
         actions={
           <>
             <Button variant="outline" onClick={handleRefresh} disabled={loading}>
               <RefreshCw className="h-4 w-4" aria-hidden="true" />
               {t("common:actions.refresh")}
             </Button>
-            <Button onClick={handleCreateMaintenance}>
-              <Plus className="h-4 w-4" aria-hidden="true" />
-              {t("shared.newMaintenance")}
-            </Button>
+            {canManage && (
+              <Button onClick={handleCreateMaintenance}>
+                <Plus className="h-4 w-4" aria-hidden="true" />
+                {t("shared.newMaintenance")}
+              </Button>
+            )}
           </>
         }
       />
@@ -319,8 +329,8 @@ export default function MaintenanceTablePage() {
         maintenance={shownMaintenance}
         isOpen={isDetailDialogOpen}
         onOpenChange={setIsDetailDialogOpen}
-        onEdit={handleEditMaintenance}
-        onDelete={setMaintenanceToDelete}
+        onEdit={canManage ? handleEditMaintenance : undefined}
+        onDelete={canManage ? setMaintenanceToDelete : undefined}
       />
 
       <MaintenanceFormDialog

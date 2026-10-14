@@ -149,12 +149,45 @@
     "title": "My licences",
     "subtitle": "Sorted by expiry date, soonest first.",
     "emptyTitle": "No licence on record",
-    "emptyDescription": "Your licences will appear here once the club has added them to your file.",
+    "emptyDescription": "Add your licence with its document: an administrator will validate it.",
     "facts": {
       "number": "Number",
       "authority": "Authority",
       "issuedOn": "Issued on",
       "expiresOn": "Expires on"
+    },
+    "add": "Add a licence",
+    "pendingHint": "Waiting for an administrator's validation: it does not yet let you book on your own.",
+    "document": "Document {{number}}",
+    "editLabel": "Edit the {{type}} licence",
+    "form": {
+      "addTitle": "Add a licence",
+      "editTitle": "Edit the licence",
+      "description": "The details of your licence, as they appear on the document.",
+      "validationNotice": "A licence you add or change waits for an administrator's validation. Until then, it does not count for booking on your own.",
+      "type": "Licence type",
+      "typePlaceholder": "Choose a type",
+      "chooseDate": "Choose a date",
+      "noExpiration": "No expiry date",
+      "documents": "Documents",
+      "documentsHint": "Scan or photo of the licence (PDF, JPG, PNG, WEBP). Optional, but it helps the administrator validate it.",
+      "documentsKept_one": "The document already sent is kept, unless you choose a new one.",
+      "documentsKept_other": "The {{count}} documents already sent are kept, unless you choose new ones.",
+      "submitAdd": "Add the licence",
+      "submitEdit": "Save",
+      "errors": {
+        "type": "Choose the licence type.",
+        "number": "Enter the licence number.",
+        "issueDate": "Enter the issue date.",
+        "expirationBeforeIssue": "The expiry date must come after the issue date."
+      }
+    },
+    "toast": {
+      "added": "Licence added",
+      "updated": "Licence updated",
+      "pending": "It is waiting for an administrator's validation.",
+      "failed": "Could not save",
+      "failedDescription": "The licence could not be saved. Try again."
     }
   },
   "licenseStatus": {
@@ -217,7 +250,7 @@
     "title": "Transaction history",
     "loadError": "Your transaction history could not be loaded. Check your connection and try again.",
     "searchLabel": "Search for a transaction",
-    "searchPlaceholder": "Search (amount, payment method…)",
+    "searchPlaceholder": "Amount or payment method",
     "filterByType": "Filter by type",
     "filterByStatus": "Filter by status",
     "allTypes": "All types",
@@ -300,7 +333,7 @@
     "amount": "Amount",
     "subjectBooking": "Booking",
     "subjectTopUp": "Account top-up",
-    "subjectOther": "Invoice",
+    "subjectOther": "Other payment",
     "download": "Download invoice {{number}}",
     "empty": {
       "title": "No invoice",
@@ -310,6 +343,10 @@
     "downloadFailed": {
       "title": "The invoice could not be downloaded",
       "description": "Try again in a moment."
-    }
+    },
+    "subjectBookingOf": "Flight in {{registration}} on {{date}}",
+    "moreLines_one": " and {{count}} more line",
+    "moreLines_other": " and {{count}} more lines",
+    "downloadColumn": "Download"
   }
 }

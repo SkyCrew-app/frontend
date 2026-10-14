@@ -159,7 +159,7 @@ export default function ProfilePage() {
           </TabsContent>
 
           <TabsContent {...panelProps("licenses")}>
-            <LicensesSection licenses={user?.licenses || []} />
+            <LicensesSection active={activeTab === "licenses"} />
           </TabsContent>
         </Tabs>
       )}

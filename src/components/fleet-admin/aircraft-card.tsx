@@ -39,7 +39,7 @@ export function AircraftCard({ aircraft, onEdit, onDelete, onViewDetails }: Airc
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-base font-semibold">{aircraft.registration_number}</h3>
+          <h2 className="truncate text-base font-semibold">{aircraft.registration_number}</h2>
           <p className="truncate text-sm text-muted-foreground">{aircraft.model}</p>
         </div>
         <StatusBadge status={aircraft.availability_status} type="availability" className="shrink-0" />

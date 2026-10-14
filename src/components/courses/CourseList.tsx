@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useMutation } from "@apollo/client"
-import { ChevronRight, MoreHorizontal, Pencil, Star, Trash2 } from "lucide-react"
+import { Ban, ChevronRight, MoreHorizontal, Pencil, Star, Trash2 } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useToast } from "@/components/hooks/use-toast"
 import { ConfirmDeleteDialog } from "@/components/e-learning/ConfirmDeleteDialog"
-import { DELETE_COURSE } from "@/graphql/course"
+import { DELETE_COURSE, UPDATE_COURSE } from "@/graphql/course"
 import { apiRefusal } from "@/lib/api-refusal"
 import { formatDate } from "@/lib/format"
 import { learningRoutes } from "@/lib/learning-navigation"
@@ -28,6 +28,7 @@ import {
   courseCounterpart,
   courseDisplayStatus,
   courseHours,
+  courseRemoval,
   personName,
   type InstructionCourse,
 } from "./course-helpers"
@@ -49,12 +50,32 @@ export default function CourseList({ courses, userId, isAdministrator = false, o
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [courseToDelete, setCourseToDelete] = useState<InstructionCourse | null>(null)
   const [deleteCourse, { loading: deleting }] = useMutation(DELETE_COURSE)
+  const [cancelCourse, { loading: cancelling }] = useMutation(UPDATE_COURSE)
+  // A course in the student's record is cancelled rather than deleted (the API refuses it).
+  const removal = courseToDelete ? courseRemoval(courseToDelete) : null
 
   const givesCourse = (course: InstructionCourse) => userId !== null && Number(course.instructor.id) === userId
   const canEdit = (course: InstructionCourse) => isAdministrator || givesCourse(course)
 
+  const handleCancel = async () => {
+    if (!courseToDelete) return
+    try {
+      await cancelCourse({ variables: { input: { id: courseToDelete.id, status: "CANCELED" } } })
+      setCourseToDelete(null)
+      onChanged()
+      toast({ title: t("courses.list.toast.cancelled.title") })
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: t("courses.list.toast.cancelFailed.title"),
+        description: apiRefusal(error, t("shared.saveFailed")),
+      })
+    }
+  }
+
   const handleDelete = async () => {
     if (!courseToDelete) return
+    if (removal === "cancel") return handleCancel()
     try {
       await deleteCourse({ variables: { id: courseToDelete.id } })
       setCourseToDelete(null)
@@ -158,14 +179,27 @@ export default function CourseList({ courses, userId, isAdministrator = false, o
                             <Pencil className="h-4 w-4" />
                             {t("common:actions.edit")}
                           </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className="text-destructive focus:text-destructive"
-                            onSelect={() => setCourseToDelete(course)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            {t("common:actions.delete")}
-                          </DropdownMenuItem>
+                          {courseRemoval(course) && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onSelect={() => setCourseToDelete(course)}
+                              >
+                                {courseRemoval(course) === "delete" ? (
+                                  <>
+                                    <Trash2 className="h-4 w-4" />
+                                    {t("common:actions.delete")}
+                                  </>
+                                ) : (
+                                  <>
+                                    <Ban className="h-4 w-4" />
+                                    {t("courses.list.cancel")}
+                                  </>
+                                )}
+                              </DropdownMenuItem>
+                            </>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     ) : (
@@ -188,6 +222,8 @@ export default function CourseList({ courses, userId, isAdministrator = false, o
         course={courseToEdit}
         // Only an administrator chooses the instructor of someone else's course.
         instructorId={courseToEdit && !isAdministrator ? Number(courseToEdit.instructor.id) : null}
+        // The API lets only an administrator change who gives or takes a course.
+        canChangeParticipants={isAdministrator}
         onClose={() => setIsEditOpen(false)}
         onSaved={onChanged}
       />
@@ -195,17 +231,19 @@ export default function CourseList({ courses, userId, isAdministrator = false, o
       <ConfirmDeleteDialog
         open={courseToDelete !== null}
         onOpenChange={(open) => !open && setCourseToDelete(null)}
-        title={t("courses.list.deleteConfirm.title")}
+        title={removal === "cancel" ? t("courses.list.cancelConfirm.title") : t("courses.list.deleteConfirm.title")}
         description={
           courseToDelete
-            ? t("courses.list.deleteConfirm.description", {
+            ? t(removal === "cancel" ? "courses.list.cancelConfirm.description" : "courses.list.deleteConfirm.description", {
                 date: formatDate(courseToDelete.startTime),
                 name: personName(courseCounterpart(courseToDelete, userId).person),
               })
             : ""
         }
+        confirmLabel={removal === "cancel" ? t("courses.list.cancel") : undefined}
+        dismissLabel={removal === "cancel" ? t("courses.list.cancelConfirm.keep") : undefined}
         onConfirm={handleDelete}
-        loading={deleting}
+        loading={deleting || cancelling}
       />
     </>
   )

@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next"
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts"
 import { format, parseISO, startOfMonth } from "date-fns"
 import { formatFlightDuration } from "@/lib/format"
+import { durationTicks } from "@/lib/duration-ticks"
 import { dateFnsLocale } from "@/lib/i18n"
 import { GET_USER_FLIGHT_PLANS } from "@/graphql/flights"
 import { WIDGET_REGISTRY } from "@/interfaces/dashboard"
@@ -63,6 +64,7 @@ export default function FlightHoursStatsWidget({ userId }: FlightHoursStatsWidge
     }
     if (error && !data) return <WidgetError onRetry={() => refetch()} />
     if (totalHours === 0) return <WidgetEmpty icon={Clock} title={t("flightHours.empty")} />
+    const ticks = durationTicks(Math.max(...chartData.map((entry) => Number(entry.heures) || 0)))
 
     return (
       <div>
@@ -75,7 +77,15 @@ export default function FlightHoursStatsWidget({ userId }: FlightHoursStatsWidge
           <ResponsiveContainer width="100%" height={160}>
             <BarChart data={chartData}>
               <XAxis dataKey="month" tick={AXIS_TICK} stroke="hsl(var(--border))" tickLine={false} />
-              <YAxis tick={AXIS_TICK} width={30} stroke="hsl(var(--border))" tickLine={false} />
+              <YAxis
+                tick={AXIS_TICK}
+                width={52}
+                stroke="hsl(var(--border))"
+                tickLine={false}
+                tickFormatter={(value: number) => formatFlightDuration(value)}
+                ticks={ticks}
+                domain={[0, ticks[ticks.length - 1]]}
+              />
               <Tooltip
                 cursor={{ fill: "hsl(var(--muted))" }}
                 contentStyle={{

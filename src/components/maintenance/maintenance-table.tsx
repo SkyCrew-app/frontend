@@ -28,12 +28,14 @@ interface MaintenanceTableProps {
   totalItems: number
   onPageChange: (page: number) => void
   onSelectMaintenance: (maintenance: Maintenance) => void
-  onEditMaintenance: (maintenance: Maintenance) => void
-  onDeleteMaintenance: (maintenance: Maintenance) => void
+  /** Edit and delete: given to administrators and technicians only, with the costs. */
+  onEditMaintenance?: (maintenance: Maintenance) => void
+  onDeleteMaintenance?: (maintenance: Maintenance) => void
   /** True when a search or a filter narrows the list. */
   hasFilters: boolean
   onResetFilters: () => void
-  onCreateMaintenance: () => void
+  /** Offered in the empty state when the viewer may plan one. */
+  onCreateMaintenance?: () => void
 }
 
 export function MaintenanceTable({
@@ -50,6 +52,9 @@ export function MaintenanceTable({
   onCreateMaintenance,
 }: MaintenanceTableProps) {
   const { t } = useTranslation("fleet")
+  // A pilot reads the maintenances; the costs and the actions belong to the staff.
+  const canManage = Boolean(onEditMaintenance && onDeleteMaintenance)
+  const columns = canManage ? 7 : 5
   return (
     <div className="space-y-4">
       <Card className="overflow-hidden">
@@ -61,10 +66,14 @@ export function MaintenanceTable({
               <TableHead>{t("common:labels.status")}</TableHead>
               <TableHead>{t("maintenance.table.period")}</TableHead>
               <TableHead>{t("common:labels.technician")}</TableHead>
-              <TableHead className="text-right">{t("common:labels.cost")}</TableHead>
-              <TableHead className="w-12">
-                <span className="sr-only">{t("common:labels.actions")}</span>
-              </TableHead>
+              {canManage && (
+                <>
+                  <TableHead className="text-right">{t("common:labels.cost")}</TableHead>
+                  <TableHead className="w-12">
+                    <span className="sr-only">{t("common:labels.actions")}</span>
+                  </TableHead>
+                </>
+              )}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -103,50 +112,54 @@ export function MaintenanceTable({
                       <span className="text-muted-foreground">{t("shared.unassigned")}</span>
                     )}
                   </TableCell>
-                  <TableCell className="whitespace-nowrap text-right tabular-nums">
-                    {maintenance.maintenance_cost ? formatMoney(maintenance.maintenance_cost) : "—"}
-                  </TableCell>
-                  {/* The menu lives in the row: its clicks must not open the detail view. */}
-                  <TableCell className="text-right" onClick={(event) => event.stopPropagation()}>
-                    <DropdownMenu modal={false}>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-9 w-9"
-                          aria-label={t("maintenance.table.actionsFor", {
-                            registration: maintenance.aircraft.registration_number,
-                          })}
-                          title={t("common:labels.actions")}
-                        >
-                          <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem className="gap-2" onSelect={() => onSelectMaintenance(maintenance)}>
-                          <Eye className="h-4 w-4" aria-hidden="true" />
-                          {t("maintenance.table.viewDetail")}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="gap-2" onSelect={() => onEditMaintenance(maintenance)}>
-                          <Pencil className="h-4 w-4" aria-hidden="true" />
-                          {t("common:actions.edit")}
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className="gap-2 text-destructive focus:text-destructive"
-                          onSelect={() => onDeleteMaintenance(maintenance)}
-                        >
-                          <Trash2 className="h-4 w-4" aria-hidden="true" />
-                          {t("common:actions.delete")}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+                  {onEditMaintenance && onDeleteMaintenance && (
+                    <>
+                      <TableCell className="whitespace-nowrap text-right tabular-nums">
+                        {maintenance.maintenance_cost ? formatMoney(maintenance.maintenance_cost) : "—"}
+                      </TableCell>
+                      {/* The menu lives in the row: its clicks must not open the detail view. */}
+                      <TableCell className="text-right" onClick={(event) => event.stopPropagation()}>
+                        <DropdownMenu modal={false}>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-9 w-9"
+                              aria-label={t("maintenance.table.actionsFor", {
+                                registration: maintenance.aircraft.registration_number,
+                              })}
+                              title={t("common:labels.actions")}
+                            >
+                              <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem className="gap-2" onSelect={() => onSelectMaintenance(maintenance)}>
+                              <Eye className="h-4 w-4" aria-hidden="true" />
+                              {t("maintenance.table.viewDetail")}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="gap-2" onSelect={() => onEditMaintenance(maintenance)}>
+                              <Pencil className="h-4 w-4" aria-hidden="true" />
+                              {t("common:actions.edit")}
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className="gap-2 text-destructive focus:text-destructive"
+                              onSelect={() => onDeleteMaintenance(maintenance)}
+                            >
+                              <Trash2 className="h-4 w-4" aria-hidden="true" />
+                              {t("common:actions.delete")}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </>
+                  )}
                 </TableRow>
               ))
             ) : (
               <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={7} className="p-4">
+                <TableCell colSpan={columns} className="p-4">
                   {hasFilters ? (
                     <EmptyState
                       icon={Search}
@@ -165,10 +178,12 @@ export function MaintenanceTable({
                       title={t("maintenance.table.emptyTitle")}
                       description={t("maintenance.table.emptyDescription")}
                       action={
-                        <Button onClick={onCreateMaintenance}>
-                          <Plus className="h-4 w-4" aria-hidden="true" />
-                          {t("shared.newMaintenance")}
-                        </Button>
+                        onCreateMaintenance && (
+                          <Button onClick={onCreateMaintenance}>
+                            <Plus className="h-4 w-4" aria-hidden="true" />
+                            {t("shared.newMaintenance")}
+                          </Button>
+                        )
                       }
                       className="border-0"
                     />

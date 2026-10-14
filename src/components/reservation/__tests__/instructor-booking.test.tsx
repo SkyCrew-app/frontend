@@ -5,6 +5,7 @@ import { MockedProvider, type MockedResponse } from "@apollo/client/testing"
 import { NewReservationForm, type NewReservationPrefill } from "../new-reservation-form"
 import { InstructorField, useInstructorRequired } from "../instructor-field"
 import { GET_BOOKABLE_INSTRUCTORS, GET_MAY_BOOK_WITHOUT_INSTRUCTOR } from "@/graphql/reservation"
+import type { Reservation } from "@/interfaces/reservation"
 
 // jsdom lacks these APIs, used by the Radix select.
 window.HTMLElement.prototype.hasPointerCapture = jest.fn(() => false)
@@ -23,21 +24,32 @@ const instructorsMock: MockedResponse = {
   },
 }
 
-const rightsMock = (mayBookWithoutInstructor: boolean): MockedResponse => ({
-  request: { query: GET_MAY_BOOK_WITHOUT_INSTRUCTOR },
+const rightsMock = (mayBookWithoutInstructor: boolean, until?: Date): MockedResponse => ({
+  request: { query: GET_MAY_BOOK_WITHOUT_INSTRUCTOR, variables: until ? { until: until.toISOString() } : {} },
   result: { data: { mayBookWithoutInstructor } },
 })
 
 // A day far ahead, so the form never refuses the slot as past.
 const DAY = new Date(2031, 4, 14)
-const aircrafts = [{ id: 1, registration_number: "F-ABCD", model: "Robin DR400" }]
+const aircrafts = [
+  { id: 1, registration_number: "F-ABCD", model: "Robin DR400", hourly_cost: 165 },
+  { id: 2, registration_number: "F-HMTX", model: "Tecnam", hourly_cost: 120, availability_status: "UNAVAILABLE" },
+]
 
 const renderForm = (
-  props: { instructorRequired?: boolean; prefill?: NewReservationPrefill; pilotId?: number } = {},
+  props: {
+    instructorRequired?: boolean
+    prefill?: NewReservationPrefill
+    pilotId?: number
+    editing?: Reservation
+    // End of the slot the licence is checked for (the API's `until`).
+    until?: Date
+  } = {},
   onSubmit = jest.fn().mockResolvedValue(undefined),
 ) => {
+  const until = props.until ?? new Date(2031, 4, 14, 11, 0)
   render(
-    <MockedProvider mocks={[instructorsMock]} addTypename={false}>
+    <MockedProvider mocks={[instructorsMock, rightsMock(!props.instructorRequired, until)]} addTypename={false}>
       <NewReservationForm
         open
         onOpenChange={jest.fn()}
@@ -47,8 +59,8 @@ const renderForm = (
         isClosedDay={() => false}
         onSubmit={onSubmit}
         isSubmitting={false}
-        instructorRequired={props.instructorRequired}
         pilotId={props.pilotId}
+        editing={props.editing}
       />
     </MockedProvider>,
   )
@@ -63,7 +75,8 @@ describe("Réserver avec un instructeur", () => {
   it("exige un instructeur du membre sans licence valide, et dit pourquoi", async () => {
     const onSubmit = renderForm({ instructorRequired: true })
 
-    expect(screen.getByText(/Sans licence valide, vous volez avec un instructeur/)).toBeInTheDocument()
+    // The API answers for a licence valid until the end of the slot (11:00).
+    expect(await screen.findByText(/Sans licence valide, vous volez avec un instructeur/)).toBeInTheDocument()
     expect(instructorList()).toHaveAttribute("aria-required", "true")
 
     await submit()
@@ -114,6 +127,7 @@ describe("Réserver avec un instructeur", () => {
   it("réserve l'avion d'un cours pour son élève et son instructeur, sans les redemander", async () => {
     const onSubmit = renderForm({
       instructorRequired: true,
+      until: new Date(2031, 4, 20, 11, 0),
       prefill: {
         date: "2031-05-20",
         course: { id: 12, studentName: "Emma Girard", instructorName: "Marie Laurent" },
@@ -132,6 +146,57 @@ describe("Réserver avec un instructeur", () => {
     expect(values).toMatchObject({ courseId: 12, flightCategory: "INSTRUCTION" })
     // The day of the course, not the day the calendar was showing.
     expect(values.startTime).toEqual(new Date(2031, 4, 20, 10, 0))
+  })
+})
+
+describe("Prix et avions réservables", () => {
+  it("affiche le prix estimé du créneau avant de réserver", async () => {
+    renderForm({ prefill: { startTime: "10:00", endTime: "12:00" }, until: new Date(2031, 4, 14, 12, 0) })
+
+    expect(screen.getByText(/Prix estimé : 330,00\s€/)).toBeInTheDocument()
+    expect(screen.getByText(/165,00\s€ de l'heure/)).toBeInTheDocument()
+  })
+
+  it("ne propose pas un avion indisponible, que l'API refuserait", async () => {
+    renderForm({ prefill: { aircraftId: "2" } })
+
+    // The pre-filled unavailable aircraft is not kept.
+    expect(screen.getByRole("combobox", { name: /Avion/ })).toHaveTextContent("Sélectionner un avion")
+    await userEvent.click(screen.getByRole("combobox", { name: /Avion/ }))
+    expect(await screen.findByRole("option", { name: /F-HMTX/ })).toHaveAttribute("aria-disabled", "true")
+  })
+})
+
+describe("Modifier une réservation", () => {
+  const booking = {
+    id: 5,
+    start_time: new Date(2031, 4, 14, 10, 0).toISOString(),
+    end_time: new Date(2031, 4, 14, 11, 0).toISOString(),
+    purpose: "Tours de piste",
+    status: "CONFIRMED",
+    flight_category: "LOCAL",
+    charged_amount: 165,
+    aircraft: { id: 1, registration_number: "F-ABCD" },
+    user: { id: 42 },
+  } as unknown as Reservation
+
+  it("part de la réservation, et annonce la différence de prix quand l'horaire change", async () => {
+    const onSubmit = renderForm({ editing: booking })
+
+    expect(screen.getByRole("dialog", { name: "Modifier la réservation" })).toBeInTheDocument()
+    expect(screen.getByLabelText("But de la réservation")).toHaveValue("Tours de piste")
+    expect(screen.getByText(/Prix payé : 165,00\s€/)).toBeInTheDocument()
+
+    const end = screen.getByLabelText(/Fin/)
+    await userEvent.clear(end)
+    await userEvent.type(end, "12:00")
+
+    expect(screen.getByText(/Nouveau prix : 330,00\s€/)).toBeInTheDocument()
+    expect(screen.getByText(/165,00\s€ de plus seront débités de votre solde/)).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole("button", { name: "Enregistrer" }))
+    await waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1))
+    expect(onSubmit.mock.calls[0][0].endTime).toEqual(new Date(2031, 4, 14, 12, 0))
   })
 })
 
@@ -154,6 +219,17 @@ describe("useInstructorRequired", () => {
     expect(screen.getByText("libre")).toBeInTheDocument()
     await new Promise((resolve) => setTimeout(resolve, 20))
     expect(screen.getByText("libre")).toBeInTheDocument()
+  })
+
+  it("demande à l'API pour la fin du vol, comme elle vérifie la licence", async () => {
+    const end = new Date(2031, 4, 14, 11, 0)
+    const UntilProbe = () => <p>{useInstructorRequired(end) ? "instructeur requis" : "libre"}</p>
+    render(
+      <MockedProvider mocks={[rightsMock(false, end)]} addTypename={false}>
+        <UntilProbe />
+      </MockedProvider>,
+    )
+    expect(await screen.findByText("instructeur requis")).toBeInTheDocument()
   })
 })
 

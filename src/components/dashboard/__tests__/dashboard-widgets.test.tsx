@@ -26,7 +26,7 @@ const aircraft = (id: number, availability_status: string) => ({
 describe('aircraftAvailability', () => {
   it('reconnaît les statuts renvoyés par l’API', () => {
     expect(aircraftAvailability('AVAILABLE')).toEqual({ label: 'Disponible', variant: 'success' });
-    expect(aircraftAvailability('UNAVAILABLE')).toEqual({ label: 'En maintenance', variant: 'warning' });
+    expect(aircraftAvailability('UNAVAILABLE')).toEqual({ label: 'Indisponible', variant: 'warning' });
     expect(aircraftAvailability('RESERVATED')).toEqual({ label: 'Réservé', variant: 'info' });
   });
 
@@ -86,9 +86,8 @@ describe('FleetAvailabilityWidget', () => {
 
     expect(await screen.findByText('2 disponibles sur 4')).toBeInTheDocument();
     expect(screen.getAllByText('Disponible')).toHaveLength(2);
-    expect(screen.getByText('En maintenance')).toBeInTheDocument();
+    expect(screen.getByText('Indisponible')).toBeInTheDocument();
     expect(screen.getByText('Réservé')).toBeInTheDocument();
-    expect(screen.queryByText('Indisponible')).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Voir la flotte/i })).toHaveAttribute('href', '/fleet');
   });
 });

@@ -32,7 +32,7 @@
     "fields": {
       "firstName": "Prénom",
       "lastName": "Nom",
-      "email": "Email",
+      "email": "Adresse e-mail",
       "phone": "Numéro de téléphone",
       "address": "Adresse",
       "birthDate": "Date de naissance"
@@ -115,7 +115,7 @@
     "title": "Notifications",
     "description": "Chaque changement est enregistré immédiatement.",
     "email": {
-      "label": "Notifications par email",
+      "label": "Notifications par e-mail",
       "description": "Réservations, rappels et messages du club dans votre boîte mail."
     },
     "sms": {
@@ -149,12 +149,45 @@
     "title": "Mes licences",
     "subtitle": "Classées par date d'expiration, la plus proche en premier.",
     "emptyTitle": "Aucune licence enregistrée",
-    "emptyDescription": "Vos licences apparaîtront ici une fois ajoutées à votre dossier par le club.",
+    "emptyDescription": "Ajoutez votre licence avec son justificatif : un administrateur la validera.",
     "facts": {
       "number": "Numéro",
       "authority": "Autorité",
       "issuedOn": "Délivrée le",
       "expiresOn": "Expire le"
+    },
+    "add": "Ajouter une licence",
+    "pendingHint": "En attente de validation par un administrateur : elle ne permet pas encore de réserver seul.",
+    "document": "Justificatif {{number}}",
+    "editLabel": "Modifier la licence {{type}}",
+    "form": {
+      "addTitle": "Ajouter une licence",
+      "editTitle": "Modifier la licence",
+      "description": "Les informations de votre licence, telles qu'elles figurent sur le document.",
+      "validationNotice": "Une licence ajoutée ou modifiée attend la validation d'un administrateur. En attendant, elle ne compte pas pour réserver seul.",
+      "type": "Type de licence",
+      "typePlaceholder": "Choisir un type",
+      "chooseDate": "Choisir une date",
+      "noExpiration": "Sans date d'expiration",
+      "documents": "Justificatifs",
+      "documentsHint": "Scan ou photo de la licence (PDF, JPG, PNG, WEBP). Facultatif, mais il aide l'administrateur à la valider.",
+      "documentsKept_one": "Le justificatif déjà envoyé est conservé, sauf si vous en choisissez un nouveau.",
+      "documentsKept_other": "Les {{count}} justificatifs déjà envoyés sont conservés, sauf si vous en choisissez de nouveaux.",
+      "submitAdd": "Ajouter la licence",
+      "submitEdit": "Enregistrer",
+      "errors": {
+        "type": "Choisissez le type de licence.",
+        "number": "Indiquez le numéro de licence.",
+        "issueDate": "Indiquez la date de délivrance.",
+        "expirationBeforeIssue": "La date d'expiration doit suivre la date de délivrance."
+      }
+    },
+    "toast": {
+      "added": "Licence ajoutée",
+      "updated": "Licence modifiée",
+      "pending": "Elle attend la validation d'un administrateur.",
+      "failed": "Enregistrement impossible",
+      "failedDescription": "La licence n'a pas pu être enregistrée. Réessayez."
     }
   },
   "licenseStatus": {
@@ -217,7 +250,7 @@
     "title": "Historique des transactions",
     "loadError": "L'historique de vos transactions n'a pas pu être chargé. Vérifiez votre connexion puis réessayez.",
     "searchLabel": "Rechercher une transaction",
-    "searchPlaceholder": "Rechercher (montant, moyen de paiement…)",
+    "searchPlaceholder": "Montant ou moyen de paiement",
     "filterByType": "Filtrer par type",
     "filterByStatus": "Filtrer par statut",
     "allTypes": "Tous les types",
@@ -300,7 +333,7 @@
     "amount": "Montant",
     "subjectBooking": "Réservation",
     "subjectTopUp": "Rechargement du compte",
-    "subjectOther": "Facture",
+    "subjectOther": "Autre paiement",
     "download": "Télécharger la facture {{number}}",
     "empty": {
       "title": "Aucune facture",
@@ -310,6 +343,10 @@
     "downloadFailed": {
       "title": "La facture n'a pas pu être téléchargée",
       "description": "Réessayez dans un instant."
-    }
+    },
+    "subjectBookingOf": "Vol en {{registration}} du {{date}}",
+    "moreLines_one": " et {{count}} autre ligne",
+    "moreLines_other": " et {{count}} autres lignes",
+    "downloadColumn": "Télécharger"
   }
 }

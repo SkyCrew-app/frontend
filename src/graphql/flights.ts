@@ -207,6 +207,13 @@ export const GET_FLIGHT = gql`
   }
 `;
 
+// A closed flight is removed by an administrator only; the API takes its hours back.
+export const REMOVE_FLIGHT = gql`
+  mutation RemoveFlight($id: Float!) {
+    removeFlight(id: $id)
+  }
+`;
+
 export const UPDATE_FLIGHT = gql`
   mutation UpdateFlight($updateFlightInput: UpdateFlightInput!) {
     updateFlight(updateFlightInput: $updateFlightInput) {

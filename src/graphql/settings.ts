@@ -50,6 +50,8 @@ export const GET_SETTINGS = gql`
       closureDays
       reservationStartTime
       reservationEndTime
+      maintenanceDay
+      maintenanceDuration
     }
   }
 `;

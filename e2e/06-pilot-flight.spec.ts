@@ -23,10 +23,10 @@ let booked: { purpose: string; day: string; hour: string } | null = null
 async function cancelBooking(page: Page, purpose: string, day: string, hour = "08:00") {
   await openCalendarAhead(page, day)
   await page.getByRole("button", { name: new RegExp(`^${purpose}`) }).click()
-  await sidePanel(page, "Détails de la réservation").getByRole("button", { name: "Supprimer" }).click()
+  await sidePanel(page, "Détails de la réservation").getByRole("button", { name: "Annuler la réservation" }).click()
   await expect(page.getByRole("alertdialog")).toContainText(`La réservation de ${aircraft.registration}`)
-  await confirmAlert(page, "Supprimer la réservation")
-  await expect(toast(page, "Réservation supprimée")).toBeVisible()
+  await confirmAlert(page, "Annuler la réservation")
+  await expect(toast(page, "Réservation annulée")).toBeVisible()
   await expect(page.getByRole("cell", { name: `Réserver ${aircraft.registration} à ${hour}` })).toBeVisible()
   booked = null
 }

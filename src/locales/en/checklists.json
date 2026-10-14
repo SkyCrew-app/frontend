@@ -50,8 +50,9 @@
       "description": "Choose the template for the aircraft you are preparing.",
       "submit": "Start the checklist",
       "templateLabel": "Checklist template",
-      "noTemplate": "No checklist template is available. Ask a club administrator to activate one.",
-      "placeholder": "Choose a template"
+      "noTemplate": "No checklist template is available. The club's administrators, instructors and technicians can create one.",
+      "placeholder": "Choose a template",
+      "manageTemplates": "Manage the templates"
     }
   },
   "detail": {

@@ -38,6 +38,11 @@ const ROUTE_LABEL_KEYS: Record<string, string> = {
   "close_flight": "pages.closeFlight",
 }
 
+// Whole paths whose label differs from their last segment's elsewhere ("/administration/articles" stays "Articles").
+const PATH_LABEL_KEYS: Record<string, string> = {
+  "/articles": "pages.news",
+}
+
 // Path prefixes that only group pages and have no page of their own: shown, but not as links.
 const WITHOUT_PAGE = new Set(["/close_flight", "/reservations/flight-plans/create"])
 
@@ -45,7 +50,13 @@ export default function Breadcrumbs() {
   const { t } = useTranslation("nav")
   const pathname = usePathname()
 
-  const segments = pathname.split("/").filter(Boolean)
+  const isId = (value: string | undefined) => !!value && (/^\d+$/.test(value) || /^[0-9a-f-]{36}$/.test(value))
+  // "/reservations/flight-plans/create/13": the id is the booking the plan is created for, not a page
+  // of its own; "Nouveau plan de vol" is the current page.
+  const segments = pathname
+    .split("/")
+    .filter(Boolean)
+    .filter((segment, index, all) => !(isId(segment) && all[index - 1] === "create"))
 
   // Don't show breadcrumbs on dashboard (root page)
   if (segments.length <= 1 && segments[0] === "dashboard") {
@@ -56,8 +67,7 @@ export default function Breadcrumbs() {
     const href = "/" + segments.slice(0, index + 1).join("/")
     const isLast = index === segments.length - 1
 
-    // Skip dynamic segments (UUIDs, numeric IDs)
-    const isId = (value: string | undefined) => !!value && (/^\d+$/.test(value) || /^[0-9a-f-]{36}$/.test(value))
+    // Dynamic segments (UUIDs, numeric IDs) are named after what they are.
     const isDynamic = isId(segment)
     // An e-learning address is course then lesson: name them instead of "Details › Details".
     const inLearning = segments.includes("e-learning")
@@ -68,7 +78,9 @@ export default function Breadcrumbs() {
       : t("breadcrumbs.detail")
     const label = isDynamic
       ? dynamicLabel
-      : ROUTE_LABEL_KEYS[segment]
+      : PATH_LABEL_KEYS[href]
+        ? t(PATH_LABEL_KEYS[href])
+        : ROUTE_LABEL_KEYS[segment]
         ? t(ROUTE_LABEL_KEYS[segment])
         : segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, " ")
 
