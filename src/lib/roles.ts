@@ -1,6 +1,7 @@
 // Role names as the API returns them.
 export const ROLE_ADMIN = "Administrateur"
 export const ROLE_INSTRUCTOR = "Instructeur"
+export const ROLE_TECHNICIAN = "Technicien"
 
 // The roles the application relies on: the API refuses to rename or delete them.
 export const BUILT_IN_ROLES: readonly string[] = [ROLE_ADMIN, "Pilote", ROLE_INSTRUCTOR, "Technicien"]
@@ -11,6 +12,10 @@ const roleOf = (user: WithRole) => user?.role?.role_name ?? null
 
 export const isAdministrator = (user: WithRole) => roleOf(user) === ROLE_ADMIN
 export const isInstructor = (user: WithRole) => roleOf(user) === ROLE_INSTRUCTOR
+export const isTechnician = (user: WithRole) => roleOf(user) === ROLE_TECHNICIAN
+
+// Maintenances and the availability of the aircraft: administrators and technicians.
+export const canManageFleet = (user: WithRole) => isAdministrator(user) || isTechnician(user)
 
 type Member = { id: number | string } & NonNullable<WithRole>
 

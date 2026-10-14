@@ -52,7 +52,9 @@ export function DatePicker({
     <div className="relative">
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
+          {/* Not a submit button: the picker is used inside forms. */}
           <Button
+            type="button"
             variant={variant}
             size={size}
             disabled={disabled}
@@ -103,6 +105,7 @@ export function DatePicker({
           />
           <div className="p-2 border-t border-border/10 bg-muted/30 flex justify-center">
             <Button
+              type="button"
               variant="ghost"
               size="sm"
               onClick={() => handleSelect(new Date())}

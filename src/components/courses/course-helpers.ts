@@ -17,7 +17,9 @@ export interface InstructionCourse {
   endTime: string | null
   status: string
   rating: number | null
+  feedback?: string | null
   competencies: { id: number; name: string; description: string; validated: boolean }[]
+  comments?: { id: number | string }[] | null
   /** The aircraft booking made for the course, if any. */
   reservation?: CourseBooking | null
 }
@@ -64,6 +66,31 @@ export function courseDisplayStatus(
   return isAwaitingConfirmation(course, now)
     ? { label: i18n.t("instruction:status.toConfirm"), variant: "warning" }
     : courseStatus(course.status)
+}
+
+// The API deletes only a course that left no trace: once it took place (in progress or completed)
+// or carries competencies, comments or a rating, it is part of the student's training record.
+export function courseHasRecord(
+  course: Pick<InstructionCourse, "status" | "competencies" | "comments" | "rating" | "feedback">,
+): boolean {
+  const status = (course.status ?? "").toUpperCase()
+  return (
+    status === "IN_PROGRESS" ||
+    status === "COMPLETED" ||
+    (course.competencies?.length ?? 0) > 0 ||
+    (course.comments?.length ?? 0) > 0 ||
+    course.rating != null ||
+    !!course.feedback
+  )
+}
+
+// What can still be done to remove a course: delete it, cancel it (it is kept in the record),
+// or nothing (it was held, or is already cancelled).
+export function courseRemoval(
+  course: Pick<InstructionCourse, "status" | "competencies" | "comments" | "rating" | "feedback">,
+): "delete" | "cancel" | null {
+  if (!courseHasRecord(course)) return "delete"
+  return (course.status ?? "").toUpperCase() === "SCHEDULED" ? "cancel" : null
 }
 
 // The booking form, pre-filled for the aircraft of a course: its day, its hours, its student and

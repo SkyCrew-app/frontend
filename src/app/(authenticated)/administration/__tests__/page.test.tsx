@@ -75,14 +75,46 @@ const mocks: MockedResponse[] = [
   },
 ];
 
-const renderPage = () =>
+const renderPage = (withStats: Partial<typeof stats> = {}, recentReservations: unknown[] = []) =>
   render(
-    <MockedProvider mocks={mocks} addTypename={false}>
+    <MockedProvider
+      mocks={[
+        {
+          request: { query: GET_ADMIN_DASHBOARD_STATS },
+          result: { data: { adminDashboardStats: { ...stats, ...withStats } } },
+        },
+        {
+          request: { query: GET_RECENT_RESERVATIONS, variables: { limit: 5 } },
+          result: { data: { recentReservations } },
+        },
+        ...mocks.slice(2),
+      ]}
+      addTypename={false}
+    >
       <AdminHomePage />
     </MockedProvider>,
   );
 
 describe('AdminHomePage', () => {
+  it('nomme les catégories de vol comme le formulaire de réservation', async () => {
+    const booking = (id: number, flight_category: string) => ({
+      id,
+      start_time: '2026-10-20T10:00:00',
+      end_time: '2026-10-20T11:00:00',
+      status: 'confirmed',
+      flight_category,
+      aircraft: { id: 1, registration_number: `F-AB${id}`, model: 'DR400' },
+      user: pilot,
+    });
+    renderPage({}, [booking(1, 'CROSS_COUNTRY'), booking(2, 'CORPORATE'), booking(3, 'SOMETHING_ELSE')]);
+
+    expect(await screen.findByText('Navigation')).toBeInTheDocument();
+    expect(screen.getByText('Affaires')).toBeInTheDocument();
+    expect(screen.getByText('Autre')).toBeInTheDocument();
+    expect(screen.queryByText('Voyage')).not.toBeInTheDocument();
+    expect(screen.queryByText('Entreprise')).not.toBeInTheDocument();
+  });
+
   it('doit dater chaque vol récent : réservation, sinon départ, sinon clôture, sinon un tiret', async () => {
     renderPage();
 
@@ -131,5 +163,13 @@ describe('AdminHomePage', () => {
     expect(attention).toHaveAttribute('href', '/administration/incidents');
     expect(attention).toHaveTextContent('F-ABCD');
     expect(attention).not.toHaveTextContent('F-GHIJ');
+  });
+
+  it('ne parle pas de réservations en attente : une réservation est confirmée dès sa création', async () => {
+    renderPage({ pendingReservations: 2, totalAircrafts: 4, availableAircrafts: 3 });
+
+    const grounded = await screen.findByRole('link', { name: /1 avion indisponible/ });
+    expect(grounded).toHaveTextContent('Immobilisés pour une maintenance, un incident ou un audit.');
+    expect(screen.queryByText(/en attente/)).not.toBeInTheDocument();
   });
 });

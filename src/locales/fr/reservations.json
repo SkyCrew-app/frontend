@@ -62,13 +62,19 @@
       "freeHint": "Touchez un créneau pour le réserver ; vous pourrez ajuster l'horaire.",
       "noFreeRange": "Aucun créneau libre",
       "bookRange": "Réserver {{aircraft}} de {{start}} à {{end}}"
+    },
+    "unavailableHint": "Réservation impossible pour le moment",
+    "maintenance": {
+      "title": "Maintenance hebdomadaire",
+      "description": "De {{from}} à {{to}}, les avions du club sont en maintenance : ce créneau ne peut pas être réservé.",
+      "cell": "Maintenance hebdomadaire"
     }
   },
   "form": {
     "createTitle": "Créer une réservation",
     "createDescription": "Vérifiez le créneau choisi, puis précisez votre vol.",
     "editTitle": "Modifier la réservation",
-    "editDescription": "L'avion et l'horaire ne sont pas modifiables.",
+    "editDescription": "Changez l'avion ou l'horaire jusqu'au début du vol : le prix est recalculé et la différence débitée ou remboursée.",
     "newDescription": "Choisissez l'avion, le jour et l'horaire de votre vol.",
     "submitCreate": "Créer la réservation",
     "aircraftPlaceholder": "Sélectionner un avion",
@@ -83,7 +89,8 @@
       "timeOrder": "L'heure de fin doit être après l'heure de début.",
       "category": "Veuillez sélectionner une catégorie de vol.",
       "past": "Une réservation ne peut pas commencer dans le passé.",
-      "instructor": "Veuillez choisir un instructeur."
+      "instructor": "Veuillez choisir un instructeur.",
+      "weeklyMaintenance": "Ce créneau empiète sur la maintenance hebdomadaire ({{from}} – {{to}}) : choisissez un autre horaire."
     },
     "instructor": {
       "label": "Avec un instructeur",
@@ -99,11 +106,6 @@
   "detail": {
     "title": "Détails de la réservation",
     "schedule": "Horaire",
-    "deleteConfirm": {
-      "title": "Supprimer cette réservation ?",
-      "description": "La réservation de {{aircraft}} du {{date}}, de {{start}} à {{end}}, sera définitivement supprimée et le créneau redeviendra libre.",
-      "action": "Supprimer la réservation"
-    },
     "startedHint": "Cette réservation a commencé : elle ne peut plus être modifiée, et seul un administrateur peut l'annuler.",
     "decline": "Décliner le vol",
     "instructorHint": "Vous êtes l'instructeur de ce vol. Vous pouvez le décliner avant son début : la réservation est annulée et l'élève est remboursé.",
@@ -141,14 +143,6 @@
     "updateFailed": {
       "title": "Modification impossible",
       "description": "La réservation n'a pas pu être modifiée. Réessayez dans un instant."
-    },
-    "deleted": {
-      "title": "Réservation supprimée",
-      "description": "La réservation de {{aircraft}} a été supprimée."
-    },
-    "deleteFailed": {
-      "title": "Suppression impossible",
-      "description": "La réservation n'a pas pu être supprimée. Réessayez dans un instant."
     },
     "cancelled": {
       "title": "Réservation annulée",
@@ -195,9 +189,9 @@
       "plural": "réservations"
     },
     "stats": {
-      "confirmed": "Confirmées",
-      "pending": "En attente",
-      "cancelled": "Annulées"
+      "upcoming": "À venir",
+      "bookedHours": "Heures réservées",
+      "paid": "Montant payé"
     },
     "filters": {
       "searchLabel": "Rechercher une réservation",
@@ -221,14 +215,7 @@
     "card": {
       "noPurpose": "But non précisé",
       "viewFlightPlan": "Voir le plan de vol",
-      "createFlightPlan": "Créer un plan de vol",
-      "cancel": "Annuler la réservation"
-    },
-    "cancelConfirm": {
-      "title": "Annuler cette réservation ?",
-      "description": "La réservation de {{aircraft}} du {{date}}, de {{start}} à {{end}}, sera annulée : elle disparaîtra de vos réservations et le créneau redeviendra libre.",
-      "keep": "Conserver la réservation",
-      "action": "Annuler la réservation"
+      "createFlightPlan": "Créer un plan de vol"
     },
     "instruction": {
       "intro": "Les vols d'instruction réservés avec vous. Vous pouvez décliner un vol avant son début : l'élève est alors remboursé.",
@@ -277,5 +264,31 @@
       "startTime": "Heure de début",
       "endTime": "Heure de fin"
     }
+  },
+  "price": {
+    "estimate": "Prix estimé : {{amount}}",
+    "newPrice": "Nouveau prix : {{amount}}",
+    "paid": "Prix payé : {{amount}}",
+    "unchanged": "Le prix ne change que si vous changez l'avion ou l'horaire.",
+    "rate": "{{rate}} de l'heure",
+    "instructorFee": "dont {{amount}} pour l'instructeur",
+    "chargedOnBooking": "débité de {{account}} à la réservation",
+    "yourAccount": "votre solde",
+    "pilotAccount": "le solde du pilote",
+    "differenceCharged": "{{paid}} déjà payés : {{amount}} de plus seront débités de {{account}}",
+    "differenceRefunded": "{{paid}} déjà payés : {{amount}} seront remboursés sur {{account}}",
+    "samePrice": "même prix que celui déjà payé"
+  },
+  "cancel": {
+    "title": "Annuler cette réservation ?",
+    "description": "La réservation de {{aircraft}} du {{date}}, de {{start}} à {{end}}, sera annulée et le créneau redeviendra libre.",
+    "refund": {
+      "self": "{{amount}} vous seront remboursés sur votre solde.",
+      "pilot": "{{amount}} seront remboursés sur le solde du pilote.",
+      "none": "Rien ne sera remboursé : aucun montant n'a été débité pour cette réservation."
+    },
+    "keep": "Conserver la réservation",
+    "action": "Annuler la réservation",
+    "actionFor": "Annuler la réservation de {{aircraft}}"
   }
 }

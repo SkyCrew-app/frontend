@@ -88,6 +88,8 @@ Both checkouts need their dependencies installed. Ports and other settings are l
 | `13-admin-account` | The administrator credits then debits a member's account (the form refuses an entry without amount or reason), the balance follows, both entries are in the action log with their author, amount, means and reason |
 | `14-pilot-documents` | The pilot downloads one of his invoices and exports his logbook: both files are real PDFs |
 | `15-admin-departure` | The student books with an instructor; the administrator deactivates her account and asks for her upcoming bookings to be cancelled: she is refunded what she paid, the slot is free again, she can no longer sign in, the action log keeps the deactivation with its cancellations and refund; the account is reactivated. Deactivating closes the member's sessions: the journey ends by signing her in again and saving the new session |
+| `16-member-licence` | The pilot adds a licence with its issue date from his profile: it is shown waiting for an administrator. The administrator finds it among the licences to validate on the members page, opens the pilot's sheet on his licences and validates it; the pilot then sees it valid. The administrator deletes it at the end |
+| `17-member-incident` | From the fleet, the detail of `F-EEEE` opens the incident report on that aircraft. From the incidents page, the pilot reports a low-severity incident on `F-EEEE` without a flight (the form first refuses an empty report) and finds it open; the administrator resolves it with a note |
 
 ## What a run leaves in the database
 
@@ -98,9 +100,10 @@ The application offers no deletion for these, so each run adds:
 - the aircraft `F-EMNT`, kept for the maintenance journey;
 - one completed checklist "Visite pré-vol Robin DR400" for the pilot;
 - one failed attempt (0 %) at an assessment for the pilot;
+- one resolved incident of low severity on `F-EEEE`, reported by the pilot without a flight (`17-member-incident`; the application offers no deletion of an incident);
 - two lines in the account history of Antoine Roux (a credit and a debit of one cent, `13-admin-account`): his balance ends where it started;
 - two cancelled bookings of `F-EEEE` for the student, each with its payment and its refund (`09-instruction-flight` at 14:00, `15-admin-departure` at 16:00): her balance ends where it started. The **first** run on a data set also cancels and refunds the upcoming booking the demo data gives her (`F-GAER`), because the departure cancels every upcoming booking of the member;
-- lines in the administrators' action log, which nothing deletes: the two manual entries, the changes of the club's phone (`10-admin-settings`), the deactivations, reactivations and deletion of members (`04`, `15`), the aircraft deleted by `02`;
+- lines in the administrators' action log, which nothing deletes: the two manual entries, the changes of the club's phone (`10-admin-settings`), the deactivations, reactivations and deletion of members (`04`, `15`), the aircraft deleted by `02`, the validation of the pilot's test licence (`16`), the change of status of the test incident (`17`);
 - what the API records along the way: notifications, e-mails, invoices, and the payments of the reservations.
 
 The pilot's balance drops by one cent per run: the price of the booking whose flight is closed. Re-seed the demo data to start clean.

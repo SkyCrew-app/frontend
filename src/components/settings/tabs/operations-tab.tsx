@@ -6,7 +6,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { WEEKDAYS, timeSlotOptions, weekdayLabel, type SettingsFormValues } from "@/lib/settings"
+import { WEEKDAYS, weekdayLabel, type SettingsFormValues } from "@/lib/settings"
 import { SettingsField, SettingsSection, UnitInput, errorMessage } from "../settings-field"
 
 export function OperationsTab() {
@@ -18,7 +18,6 @@ export function OperationsTab() {
     formState: { errors },
   } = useFormContext<SettingsFormValues>()
   const closureDays = watch("closureDays") ?? []
-  const timeSlotDuration = watch("timeSlotDuration")
   const maintenanceDay = watch("maintenanceDay")
 
   const toggleClosureDay = (day: string, checked: boolean) => {
@@ -37,7 +36,7 @@ export function OperationsTab() {
         title={t("settings.bookings.hours.title")}
         description={t("settings.bookings.hours.description")}
       >
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2">
           <SettingsField
             id="reservation-start-time"
             label={t("settings.bookings.hours.start")}
@@ -63,30 +62,6 @@ export function OperationsTab() {
               aria-invalid={errors.reservationEndTime ? true : undefined}
               {...register("reservationEndTime")}
             />
-          </SettingsField>
-          <SettingsField
-            id="timeslot-duration"
-            label={t("settings.bookings.hours.slot")}
-            required
-            error={errorMessage(errors.timeSlotDuration)}
-          >
-            <Select
-              value={timeSlotDuration ? String(timeSlotDuration) : ""}
-              onValueChange={(value) =>
-                setValue("timeSlotDuration", Number.parseInt(value), { shouldDirty: true, shouldValidate: true })
-              }
-            >
-              <SelectTrigger id="timeslot-duration" aria-invalid={errors.timeSlotDuration ? true : undefined}>
-                <SelectValue placeholder={t("settings.bookings.hours.slotPlaceholder")} />
-              </SelectTrigger>
-              <SelectContent>
-                {timeSlotOptions().map((option) => (
-                  <SelectItem key={option.value} value={String(option.value)}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </SettingsField>
         </div>
       </SettingsSection>

@@ -142,7 +142,7 @@ export default function AdminActionsPage() {
                           <TableCell className="whitespace-nowrap tabular-nums">
                             {formatDateTime(entry.created_at)}
                           </TableCell>
-                          <TableCell>{entry.actor_label || "—"}</TableCell>
+                          <TableCell className="whitespace-nowrap">{entry.actor_label || "—"}</TableCell>
                           <TableCell className="font-medium">{adminActionLabel(entry.action)}</TableCell>
                           <TableCell>{adminTargetLabel(entry)}</TableCell>
                           <TableCell className="max-w-md text-muted-foreground">

@@ -2,6 +2,7 @@ import {
   courseBookingHref,
   courseCounterpart,
   courseDisplayStatus,
+  courseRemoval,
   courseStatus,
   isAwaitingConfirmation,
   personInitials,
@@ -122,5 +123,24 @@ describe("courseBookingHref", () => {
       student: { id: 9 },
     })
     expect(new URLSearchParams(href.split("?")[1]).get("end_time")).toBe("10:30")
+  })
+})
+
+describe("courseRemoval", () => {
+  const bare = { status: "SCHEDULED", competencies: [], comments: [], rating: null, feedback: null }
+
+  it("supprime un cours planifié qui n'a laissé aucune trace", () => {
+    expect(courseRemoval(bare)).toBe("delete")
+  })
+
+  it("annule plutôt qu'il ne supprime un cours planifié qui porte des compétences, des commentaires ou une note", () => {
+    expect(courseRemoval({ ...bare, competencies: [{ id: 1, name: "VOR", description: "", validated: false }] })).toBe("cancel")
+    expect(courseRemoval({ ...bare, comments: [{ id: 1 }] })).toBe("cancel")
+    expect(courseRemoval({ ...bare, rating: 4 })).toBe("cancel")
+  })
+
+  it("ne propose plus rien pour un cours qui a eu lieu", () => {
+    expect(courseRemoval({ ...bare, status: "COMPLETED" })).toBeNull()
+    expect(courseRemoval({ ...bare, status: "IN_PROGRESS" })).toBeNull()
   })
 })

@@ -28,7 +28,8 @@
     "balance": "Mon solde",
     "notifications": "Notifications",
     "twoFactor": "Double authentification",
-    "closeFlight": "Clôture de vol"
+    "closeFlight": "Clôture de vol",
+    "news": "Actualités"
   },
   "layout": {
     "mainContent": "Contenu principal",
@@ -49,7 +50,8 @@
   "account": {
     "fallbackName": "Mon compte",
     "menu": "Menu du compte de {{name}}",
-    "signOut": "Se déconnecter"
+    "signOut": "Se déconnecter",
+    "menuPrefix": "Menu du compte de"
   },
   "roles": {
     "Administrateur": "Administrateur",

@@ -107,7 +107,7 @@ export default function CommandPalette({ open, onOpenChange }: CommandPalettePro
           </CommandItem>
           <CommandItem onSelect={() => navigate("/articles")}>
             <Newspaper className="mr-2 h-4 w-4" />
-            {t("pages.articles")}
+            {t("pages.news")}
           </CommandItem>
           <CommandItem onSelect={() => navigate("/profile")}>
             <User className="mr-2 h-4 w-4" />

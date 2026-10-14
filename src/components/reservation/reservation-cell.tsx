@@ -49,7 +49,7 @@ export function ReservationCell({ reservation, colSpan, isMine = false, onClick 
             className="flex h-12 w-full flex-col items-start justify-center px-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
           >
             <span className="w-full truncate text-sm leading-tight">{reservation.purpose || t("shared.untitled")}</span>
-            {crew && <span className="w-full truncate text-xs font-normal leading-tight opacity-80">{crew}</span>}
+            {crew && <span className="w-full truncate text-xs font-normal leading-tight">{crew}</span>}
           </button>
         </HoverCardTrigger>
         <HoverCardContent className="w-72 space-y-3">

@@ -71,7 +71,6 @@
   "planDetail": {
     "title": "Plan de vol",
     "description": "Plan de vol {{type}}",
-    "descriptionWithReservation": "Plan de vol {{type}} · réservation n° {{id}}",
     "loadError": "Le plan de vol n'a pas pu être chargé. Vérifiez votre connexion puis réessayez.",
     "notFound": {
       "title": "Plan de vol introuvable",
@@ -115,7 +114,8 @@
     "navigation": {
       "emptyTitle": "Pas de journal de navigation",
       "emptyDescription": "Le profil vertical et le journal de navigation sont calculés pour les plans de vol générés automatiquement à partir d'une réservation."
-    }
+    },
+    "descriptionWithPilot": "Plan de vol {{type}} · pilote : {{pilot}}"
   },
   "planCreate": {
     "title": "Créer un plan de vol",
@@ -585,6 +585,46 @@
       "INSTRUCTOR": "Instructeur",
       "instructor": "avec {{name}}",
       "student": "élève : {{name}}"
+    }
+  },
+  "closedAdmin": {
+    "title": "Vol clôturé — correction réservée aux administrateurs",
+    "description": "Clôturé le {{date}}, ce vol de {{pilot}} compte {{duration}} dans son carnet de vol. Une correction ou une suppression met ses heures à jour et reste tracée dans le journal des actions.",
+    "edit": "Corriger le vol",
+    "delete": "Supprimer le vol",
+    "form": {
+      "title": "Corriger le vol",
+      "description": "{{route}} · {{pilot}}",
+      "departure": "Départ",
+      "arrival": "Arrivée",
+      "hours": "Temps de vol",
+      "hoursHint": "En heures et minutes, par exemple 1:30 (ou 1,5).",
+      "passengers": "Passagers",
+      "remarks": "Remarques",
+      "trace": "La valeur précédente est conservée dans le journal des actions."
+    },
+    "errors": {
+      "hours": "Indiquez un temps de vol supérieur à zéro, par exemple 1:30.",
+      "passengers": "Indiquez un nombre de passagers entier, zéro ou plus.",
+      "arrival": "L'arrivée doit être après le départ."
+    },
+    "deleteConfirm": {
+      "title": "Supprimer ce vol clôturé ?",
+      "description": "Le vol {{route}} de {{pilot}} sera retiré de son carnet de vol, avec ses {{duration}}. La suppression est tracée dans le journal des actions et ne peut pas être annulée.",
+      "action": "Supprimer le vol"
+    },
+    "toast": {
+      "updated": {
+        "title": "Vol corrigé",
+        "description": "Le carnet de vol du pilote est à jour."
+      },
+      "updateFailed": "Correction impossible",
+      "deleted": {
+        "title": "Vol supprimé",
+        "description": "Le vol {{route}} a été retiré du carnet de vol."
+      },
+      "deleteFailed": "Suppression impossible",
+      "retry": "Réessayez dans un instant."
     }
   }
 }

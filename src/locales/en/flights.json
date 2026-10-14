@@ -71,7 +71,6 @@
   "planDetail": {
     "title": "Flight plan",
     "description": "{{type}} flight plan",
-    "descriptionWithReservation": "{{type}} flight plan · booking no. {{id}}",
     "loadError": "The flight plan could not be loaded. Check your connection and try again.",
     "notFound": {
       "title": "Flight plan not found",
@@ -115,7 +114,8 @@
     "navigation": {
       "emptyTitle": "No navigation log",
       "emptyDescription": "The vertical profile and the navigation log are computed for flight plans generated automatically from a booking."
-    }
+    },
+    "descriptionWithPilot": "{{type}} flight plan · pilot: {{pilot}}"
   },
   "planCreate": {
     "title": "Create a flight plan",
@@ -585,6 +585,46 @@
       "INSTRUCTOR": "Instructor",
       "instructor": "with {{name}}",
       "student": "student: {{name}}"
+    }
+  },
+  "closedAdmin": {
+    "title": "Closed flight — corrections are for administrators",
+    "description": "Closed on {{date}}, this flight of {{pilot}} counts {{duration}} in their logbook. A correction or a deletion updates their hours and is kept in the action log.",
+    "edit": "Correct the flight",
+    "delete": "Delete the flight",
+    "form": {
+      "title": "Correct the flight",
+      "description": "{{route}} · {{pilot}}",
+      "departure": "Departure",
+      "arrival": "Arrival",
+      "hours": "Flight time",
+      "hoursHint": "In hours and minutes, for example 1:30 (or 1.5).",
+      "passengers": "Passengers",
+      "remarks": "Remarks",
+      "trace": "The previous value is kept in the action log."
+    },
+    "errors": {
+      "hours": "Enter a flight time above zero, for example 1:30.",
+      "passengers": "Enter a whole number of passengers, zero or more.",
+      "arrival": "The arrival must be after the departure."
+    },
+    "deleteConfirm": {
+      "title": "Delete this closed flight?",
+      "description": "The flight {{route}} of {{pilot}} will be removed from their logbook, with its {{duration}}. The deletion is kept in the action log and cannot be undone.",
+      "action": "Delete the flight"
+    },
+    "toast": {
+      "updated": {
+        "title": "Flight corrected",
+        "description": "The pilot's logbook is up to date."
+      },
+      "updateFailed": "Correction failed",
+      "deleted": {
+        "title": "Flight deleted",
+        "description": "The flight {{route}} was removed from the logbook."
+      },
+      "deleteFailed": "Deletion failed",
+      "retry": "Try again in a moment."
     }
   }
 }

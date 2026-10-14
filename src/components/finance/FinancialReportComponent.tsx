@@ -102,21 +102,21 @@ export default function FinancialReportComponent() {
     <div className="space-y-6">
       <StatGrid>
         <StatCard
-          label={t("finance.labels.revenue")}
+          label={t("finance.summary.totalRevenue")}
           value={formatMoney(totalRevenue)}
           hint={trendHint(percentChange(previous?.total_revenue, last.total_revenue))}
           icon={TrendingUp}
           tone="primary"
         />
         <StatCard
-          label={t("finance.labels.expenses")}
+          label={t("finance.summary.totalExpenses")}
           value={formatMoney(totalExpense)}
           hint={trendHint(percentChange(previous?.total_expense, last.total_expense))}
           icon={Receipt}
           tone="warning"
         />
         <StatCard
-          label={t("finance.labels.netResult")}
+          label={t("finance.summary.totalResult")}
           value={formatMoney(totalProfit)}
           hint={trendHint(percentChange(previous?.net_profit, last.net_profit))}
           icon={PiggyBank}

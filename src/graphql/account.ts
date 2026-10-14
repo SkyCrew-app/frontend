@@ -117,6 +117,7 @@ export const GET_MEMBER_INVOICES = gql`
       amount
       payment_status
       payment_method
+      invoice_items
     }
   }
 `;

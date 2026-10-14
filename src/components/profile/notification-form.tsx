@@ -80,16 +80,12 @@ export function NotificationForm({ userData, refetch }: NotificationFormProps) {
     }
   }
 
+  // No SMS is ever sent: the stored SMS choice is kept as it is, and not offered.
   const settings = [
     {
       name: "email_notifications_enabled" as const,
       label: t("notifications.email.label"),
       description: t("notifications.email.description"),
-    },
-    {
-      name: "sms_notifications_enabled" as const,
-      label: t("notifications.sms.label"),
-      description: t("notifications.sms.description"),
     },
   ]
 

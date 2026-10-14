@@ -16,4 +16,6 @@ export const reservationBlockClass = (status: string | null | undefined) =>
 export const reservationDotClass = (status: string | null | undefined) =>
   (BLOCKS[(status ?? "").toUpperCase()] ?? FALLBACK).dot
 
-export const LEGEND_STATUSES = ["CONFIRMED", "PENDING", "CANCELLED"]
+// Every booking is confirmed when it is made and a cancelled one is removed: "pending" never
+// happens, so the legend leaves it out (old data keeps its colour).
+export const LEGEND_STATUSES = ["CONFIRMED", "CANCELLED"]

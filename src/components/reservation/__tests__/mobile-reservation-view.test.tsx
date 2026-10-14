@@ -60,19 +60,20 @@ describe('MobileReservationView — créneaux libres', () => {
     renderView();
 
     expect(rangesOf('F-ABCD')).toEqual(['08:00 – 10:00', '12:00 – 15:00', '16:30 – 18:00']);
-    expect(rangesOf('F-EFGH')).toEqual(['08:00 – 18:00']);
+    // The API refuses any booking of an unavailable aircraft: nothing is offered.
+    expect(rangesOf('F-EFGH')).toEqual([]);
     expect(rangesOf('F-FULL')).toEqual([]);
     expect(
       within(screen.getByRole('group', { name: 'Créneaux libres de F-FULL' })).getByText('Aucun créneau libre'),
     ).toBeInTheDocument();
   });
 
-  it('signale un avion indisponible', () => {
+  it('signale un avion indisponible et ne propose pas de le réserver', () => {
     renderView();
 
-    expect(
-      within(screen.getByRole('group', { name: 'Créneaux libres de F-EFGH' })).getByText('Indisponible'),
-    ).toBeInTheDocument();
+    const group = within(screen.getByRole('group', { name: 'Créneaux libres de F-EFGH' }));
+    expect(group.getByText('Indisponible')).toBeInTheDocument();
+    expect(group.getByText('Réservation impossible pour le moment')).toBeInTheDocument();
   });
 
   it('transmet l’avion et la plage touchée', () => {

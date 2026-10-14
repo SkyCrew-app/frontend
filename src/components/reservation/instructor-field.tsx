@@ -21,11 +21,17 @@ export const instructorName = (
   [instructor?.first_name, instructor?.last_name].filter(Boolean).join(" ")
 
 /**
- * True when the signed-in member has no valid licence: they then book with an instructor.
+ * True when the signed-in member has no licence valid until `until` (the end of the flight,
+ * as the API checks it): they then book with an instructor. Without `until`, "now".
  * The API decides when the booking is made; this only lets the form say so beforehand.
  */
-export function useInstructorRequired(): boolean {
-  const { data } = useQuery<{ mayBookWithoutInstructor: boolean }>(GET_MAY_BOOK_WITHOUT_INSTRUCTOR)
+export function useInstructorRequired(until?: Date | null, { skip = false }: { skip?: boolean } = {}): boolean {
+  // Rounded to the minute so that the query does not change at every render.
+  const minute = until && !Number.isNaN(until.getTime()) ? Math.floor(until.getTime() / 60_000) * 60_000 : null
+  const { data } = useQuery<{ mayBookWithoutInstructor: boolean }>(GET_MAY_BOOK_WITHOUT_INSTRUCTOR, {
+    variables: minute != null ? { until: new Date(minute).toISOString() } : {},
+    skip,
+  })
   return data?.mayBookWithoutInstructor === false
 }
 

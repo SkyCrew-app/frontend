@@ -148,8 +148,8 @@ export const GET_BOOKABLE_INSTRUCTORS = gql`
 
 // False for a member without a valid licence: they book with an instructor.
 export const GET_MAY_BOOK_WITHOUT_INSTRUCTOR = gql`
-  query GetMayBookWithoutInstructor {
-    mayBookWithoutInstructor
+  query GetMayBookWithoutInstructor($until: DateTime) {
+    mayBookWithoutInstructor(until: $until)
   }
 `;
 

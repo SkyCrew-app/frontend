@@ -23,7 +23,8 @@ interface ReservationFiltersProps {
   hasActiveFilters: boolean
 }
 
-const STATUSES = ["PENDING", "CONFIRMED", "CANCELLED"]
+// No "pending": every booking is confirmed when it is made.
+const STATUSES = ["CONFIRMED", "CANCELLED"]
 
 /** One-row toolbar of "Mes réservations": search, status, category, sort. */
 export function ReservationFilters({

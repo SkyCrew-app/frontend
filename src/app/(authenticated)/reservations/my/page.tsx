@@ -19,6 +19,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { CancelReservationDialog } from "@/components/reservation/cancel-reservation-dialog"
+import { updateInputFrom } from "@/components/reservation/update-input"
+import type { NewReservationValues } from "@/components/reservation/new-reservation-form"
 import { useToast } from "@/components/hooks/use-toast"
 import {
   GET_USER_RESERVATIONS,
@@ -37,7 +40,6 @@ import { ErrorState } from "@/components/layout/ErrorState"
 import { EmptyState as SharedEmptyState } from "@/components/layout/EmptyState"
 import { ReservationCard } from "@/components/my-reservation/reservation-card"
 import { InstructionBookingCard } from "@/components/my-reservation/instruction-booking-card"
-import { useInstructorRequired } from "@/components/reservation/instructor-field"
 import { isInstructor } from "@/lib/roles"
 import { ReservationFilters, type ReservationSortOrder } from "@/components/my-reservation/reservation-filters"
 import { ReservationEditDialog } from "@/components/my-reservation/reservation-edit-dialog"
@@ -48,7 +50,6 @@ import { TemplateDialog } from "@/components/my-reservation/template-dialog"
 import { ListPager } from "@/components/reservation/list-pager"
 import { apiRefusalMessage } from "@/components/reservation/api-refusal"
 import type { Reservation } from "@/interfaces/reservation"
-import { formatDate, formatTime } from "@/lib/format"
 import type { ReservationTemplate } from "@/interfaces/reservation-template"
 
 const ITEMS_PER_PAGE = 6
@@ -83,7 +84,6 @@ export default function MyReservations() {
     GET_MY_INSTRUCTION_RESERVATIONS,
     { skip: !userId },
   )
-  const instructorRequired = useInstructorRequired()
 
   const [updateReservation] = useMutation(UPDATE_RESERVATION)
   // Same mutation as the calendar: the API checks that the booking is the caller's.
@@ -140,23 +140,12 @@ export default function MyReservations() {
     setIsEditDialogOpen(true)
   }
 
-  const handleSaveEdit = async (purpose: string, notes: string, flightCategory: string, instructorId: string) => {
+  const handleSaveEdit = async (values: NewReservationValues) => {
     if (!selectedReservation) return
 
     try {
       await updateReservation({
-        variables: {
-          input: {
-            id: selectedReservation.id,
-            purpose,
-            notes,
-            flight_category: flightCategory,
-            // Sent only when it changes: null takes the instructor off the booking.
-            ...(instructorId !== String(selectedReservation.instructor?.id ?? "")
-              ? { instructor_id: instructorId ? Number(instructorId) : null }
-              : {}),
-          },
-        },
+        variables: { input: updateInputFrom(selectedReservation, values) },
         refetchQueries: [{ query: GET_USER_RESERVATIONS, variables: { userId } }],
       })
 
@@ -459,46 +448,18 @@ export default function MyReservations() {
         isOpen={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
         reservation={selectedReservation}
+        aircrafts={aircraftList}
         onSave={handleSaveEdit}
         onCancelReservation={handleAskCancel}
-        instructorRequired={instructorRequired}
       />
 
-      <AlertDialog
-        open={reservationToCancel !== null}
-        onOpenChange={(open) => !open && !cancellingReservation && setReservationToCancel(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {declining ? t("detail.declineConfirm.title") : t("my.cancelConfirm.title")}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {reservationToCancel &&
-                t(declining ? "detail.declineConfirm.description" : "my.cancelConfirm.description", {
-                  aircraft: reservationToCancel.aircraft.registration_number,
-                  date: formatDate(reservationToCancel.start_time),
-                  start: formatTime(reservationToCancel.start_time),
-                  end: formatTime(reservationToCancel.end_time),
-                })}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={cancellingReservation}>{t("my.cancelConfirm.keep")}</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              disabled={cancellingReservation}
-              onClick={(event) => {
-                event.preventDefault()
-                void handleCancelReservation()
-              }}
-            >
-              {cancellingReservation && <Loader2 className="h-4 w-4 animate-spin" />}
-              {declining ? t("detail.declineConfirm.action") : t("my.cancelConfirm.action")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <CancelReservationDialog
+        reservation={reservationToCancel}
+        onOpenChange={() => setReservationToCancel(null)}
+        onConfirm={() => void handleCancelReservation()}
+        cancelling={cancellingReservation}
+        declining={declining}
+      />
 
       <TemplateDialog
         open={isTemplateDialogOpen}

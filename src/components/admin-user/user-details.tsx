@@ -8,14 +8,22 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { BadgeCheck, FileText, Pencil, Plane, Shield, Wallet } from "lucide-react"
+import { BadgeCheck, CheckCircle2, FileText, MoreHorizontal, Pencil, Plane, RefreshCw, Shield, Trash2, Wallet } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { EmptyState } from "@/components/layout/EmptyState"
 import { PaginationControls } from "@/components/admin-user/pagination-controls"
 import { AdjustBalancePanel } from "@/components/admin-user/adjust-balance-panel"
 import { formatDate, formatDateTime, formatFlightDuration, formatMoney, formatTime } from "@/lib/format"
-import type { UserDetails } from "@/interfaces/user"
+import type { License, UserDetails } from "@/interfaces/user"
 import { getBackendBaseUrl } from "@/lib/runtime-config"
 import { roleLabel } from "@/lib/settings"
+import { licenseStatus } from "@/components/profile/license-status"
 
 interface UserDetailsProps {
   isOpen: boolean
@@ -27,6 +35,14 @@ interface UserDetailsProps {
   onAddLicense?: (userId: string) => void
   /** The account was credited or debited by hand: reload the member. Enables the action. */
   onBalanceAdjusted?: (userId: string) => void
+  /** Correct, renew or delete one of the member's licences. Enables the actions. */
+  onLicenseAction?: (action: "edit" | "renew" | "delete", license: License, userId: string) => void
+  /** Validate a licence the member entered (pending). Enables the action. */
+  onValidateLicense?: (license: License, userId: string) => void
+  /** The licence being validated, to show its button busy. */
+  validatingLicenseId?: string | null
+  /** The tab shown first ("licenses" when opened to validate a licence). */
+  initialTab?: "personal-info" | "reservations" | "licenses"
 }
 
 const Fact = ({ label, children }: { label: string; children: ReactNode }) => (
@@ -36,8 +52,7 @@ const Fact = ({ label, children }: { label: string; children: ReactNode }) => (
   </div>
 )
 
-const isExpired = (expiration: string | null | undefined) =>
-  Boolean(expiration) && new Date(expiration as string) < new Date()
+const isPending = (license: License) => (license.status ?? "").toLowerCase() === "pending"
 
 // Same day: "12 oct. 2026, 14:30 – 16:00".
 const formatSlot = (start: string, end: string) =>
@@ -53,6 +68,10 @@ export function UserDetailsDialog({
   onEdit,
   onAddLicense,
   onBalanceAdjusted,
+  onLicenseAction,
+  onValidateLicense,
+  validatingLicenseId = null,
+  initialTab = "personal-info",
 }: UserDetailsProps) {
   const { t } = useTranslation("administration")
   const [reservationPage, setReservationPage] = useState(1)
@@ -69,7 +88,9 @@ export function UserDetailsDialog({
   if (!isOpen) return null
 
   const reservations = userDetails?.reservations ?? []
-  const licenses = userDetails?.licenses ?? []
+  // Licences waiting for a validation first, so that they are not missed.
+  const licenses = [...(userDetails?.licenses ?? [])].sort((a, b) => Number(isPending(b)) - Number(isPending(a)))
+  const pendingCount = licenses.filter(isPending).length
 
   // Most recent first: the latest bookings are what an administrator looks for.
   const sortedReservations = [...reservations].sort(
@@ -117,13 +138,17 @@ export function UserDetailsDialog({
       }
     >
       {userDetails ? (
-        <Tabs defaultValue="personal-info">
+        <Tabs key={`${userDetails.id}-${initialTab}`} defaultValue={initialTab}>
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="personal-info">{t("users.details.tabs.info")}</TabsTrigger>
             <TabsTrigger value="reservations">
               {t("users.details.tabs.bookings", { total: reservations.length })}
             </TabsTrigger>
-            <TabsTrigger value="licenses">{t("users.details.tabs.licences", { total: licenses.length })}</TabsTrigger>
+            <TabsTrigger value="licenses">
+              {t("users.details.tabs.licences", { total: licenses.length })}
+              {pendingCount > 0 && <span className="sr-only">{t("users.licence.pendingCount", { count: pendingCount })}</span>}
+              {pendingCount > 0 && <span className="ml-1.5 h-2 w-2 rounded-full bg-warning" aria-hidden="true" />}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="personal-info" className="space-y-6 pt-4">
@@ -233,6 +258,30 @@ export function UserDetailsDialog({
           </TabsContent>
 
           <TabsContent value="licenses" className="space-y-4 pt-4">
+            {onValidateLicense &&
+              licenses.filter(isPending).map((license) => (
+                <div
+                  key={`pending-${license.id}`}
+                  className="flex flex-col gap-3 rounded-lg border border-warning/40 bg-warning/10 p-4 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="min-w-0 text-sm">
+                    <p className="font-medium">
+                      {t("users.licence.pendingTitle", { type: license.license_type, number: license.license_number || "—" })}
+                    </p>
+                    <p className="text-muted-foreground">{t("users.licence.pendingHint")}</p>
+                  </div>
+                  <Button
+                    size="sm"
+                    className="shrink-0 self-start sm:self-auto"
+                    onClick={() => onValidateLicense(license, userDetails.id)}
+                    disabled={validatingLicenseId === String(license.id)}
+                    aria-label={t("users.licence.validateLabel", { type: license.license_type })}
+                  >
+                    <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+                    {t("users.licence.validate")}
+                  </Button>
+                </div>
+              ))}
             {licenses.length > 0 ? (
               <>
                 <div className="rounded-lg border">
@@ -245,6 +294,11 @@ export function UserDetailsDialog({
                         <TableHead>{t("users.details.expiry")}</TableHead>
                         <TableHead>{t("common:labels.status")}</TableHead>
                         <TableHead>{t("users.licence.documents")}</TableHead>
+                        {onLicenseAction && (
+                          <TableHead>
+                            <span className="sr-only">{t("common:labels.actions")}</span>
+                          </TableHead>
+                        )}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -260,11 +314,9 @@ export function UserDetailsDialog({
                           <TableCell className="whitespace-nowrap">{formatDate(license.issue_date)}</TableCell>
                           <TableCell className="whitespace-nowrap">{formatDate(license.expiration_date)}</TableCell>
                           <TableCell>
-                            {isExpired(license.expiration_date) ? (
-                              <Badge variant="danger">{t("users.details.licenceExpired")}</Badge>
-                            ) : (
-                              <Badge variant="success">{t("users.details.licenceValid")}</Badge>
-                            )}
+                            <Badge variant={licenseStatus(license).variant} className="whitespace-nowrap">
+                              {licenseStatus(license).label}
+                            </Badge>
                           </TableCell>
                           <TableCell>
                             {license.documents_url && license.documents_url.length > 0 ? (
@@ -286,6 +338,46 @@ export function UserDetailsDialog({
                               <span className="text-muted-foreground">—</span>
                             )}
                           </TableCell>
+                          {onLicenseAction && (
+                            <TableCell className="text-right">
+                              <DropdownMenu modal={false}>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    aria-label={t("users.licence.actions", { type: license.license_type })}
+                                    title={t("users.licence.actions", { type: license.license_type })}
+                                  >
+                                    <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  {onValidateLicense && isPending(license) && (
+                                    <DropdownMenuItem onSelect={() => onValidateLicense(license, userDetails.id)}>
+                                      <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+                                      {t("users.licence.validate")}
+                                    </DropdownMenuItem>
+                                  )}
+                                  <DropdownMenuItem onSelect={() => onLicenseAction("edit", license, userDetails.id)}>
+                                    <Pencil className="h-4 w-4" aria-hidden="true" />
+                                    {t("users.licence.edit")}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onSelect={() => onLicenseAction("renew", license, userDetails.id)}>
+                                    <RefreshCw className="h-4 w-4" aria-hidden="true" />
+                                    {t("users.licence.renew")}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    className="text-destructive focus:text-destructive"
+                                    onSelect={() => onLicenseAction("delete", license, userDetails.id)}
+                                  >
+                                    <Trash2 className="h-4 w-4" aria-hidden="true" />
+                                    {t("users.licence.delete")}
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          )}
                         </TableRow>
                       ))}
                     </TableBody>

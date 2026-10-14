@@ -222,6 +222,7 @@ export const GET_USER_DETAILS = gql`
         license_type
         issue_date
         expiration_date
+        status
         documents_url
       }
       role {

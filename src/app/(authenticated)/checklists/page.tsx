@@ -23,6 +23,7 @@ import { ChecklistProgress } from "@/components/checklists/ChecklistProgress"
 import { checklistStatus, submissionProgress } from "@/lib/checklist-items"
 import { formatDateTime } from "@/lib/format"
 import { useTranslation } from "react-i18next"
+import { canOpenPage } from "@/lib/proxy-rules"
 
 const HISTORY_PREVIEW = 6
 
@@ -220,9 +221,15 @@ export default function ChecklistsPage() {
           {loadingTemplates && templates.length === 0 ? (
             <Skeleton className="h-10 w-full" />
           ) : templates.length === 0 ? (
-            <p className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
-              {t("list.start.noTemplate")}
-            </p>
+            <div className="space-y-3 rounded-md border border-dashed p-3 text-sm text-muted-foreground">
+              <p>{t("list.start.noTemplate")}</p>
+              {/* Administrators, instructors and technicians manage the templates. */}
+              {canOpenPage(userData?.role?.role_name, "/administration/checklists") && (
+                <Button variant="outline" size="sm" asChild>
+                  <Link href="/administration/checklists">{t("list.start.manageTemplates")}</Link>
+                </Button>
+              )}
+            </div>
           ) : (
             <Select value={templateId} onValueChange={setSelectedTemplateId}>
               <SelectTrigger id="checklist-template">

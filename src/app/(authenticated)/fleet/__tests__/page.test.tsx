@@ -3,7 +3,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MockedProvider, type MockedResponse } from '@apollo/client/testing';
 import FleetDashboard from '../page';
-import { GET_AIRCRAFTS } from '@/graphql/planes';
+import { GET_AIRCRAFTS, SET_AIRCRAFT_AVAILABILITY } from '@/graphql/planes';
 import { formatMoney } from '@/lib/format';
 
 // getByText normalise les espaces insécables du texte affiché : on fait de même pour la valeur attendue.
@@ -44,12 +44,27 @@ beforeAll(() => {
   Element.prototype.setPointerCapture = jest.fn();
   Element.prototype.releasePointerCapture = jest.fn();
   Element.prototype.scrollIntoView = jest.fn();
+  global.ResizeObserver ??= class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  } as unknown as typeof ResizeObserver;
 });
 
 const mockToast = jest.fn();
 jest.mock('@/components/hooks/use-toast', () => ({
   useToast: () => ({ toast: mockToast }),
 }));
+
+// The viewer: a pilot unless a test says otherwise.
+let mockViewerRole = 'Pilote';
+jest.mock('@/components/hooks/userHooks', () => ({
+  useCurrentUser: () => 'viewer@club.fr',
+  useUserData: () => ({ id: 1, role: { role_name: mockViewerRole } }),
+}));
+beforeEach(() => {
+  mockViewerRole = 'Pilote';
+});
 
 type AircraftOverrides = Partial<{
   registration_number: string;
@@ -375,6 +390,15 @@ describe('FleetDashboard Component', () => {
     // Page de consultation : pas d'action de modification.
     expect(dialog.queryByRole('button', { name: /Modifier/ })).not.toBeInTheDocument();
 
+    // Any member reports an incident on this aircraft from here, the aircraft already chosen.
+    await user.click(dialog.getByRole('button', { name: 'Signaler un incident' }));
+    const report = within(await screen.findByRole('dialog', { name: 'Signaler un incident' }));
+    const aircraft = report.getByRole('combobox', { name: /Avion/ });
+    expect(aircraft).toHaveTextContent('F-GABC');
+    expect(aircraft).toBeDisabled();
+    await user.click(report.getByRole('button', { name: 'Annuler' }));
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Signaler un incident' })).not.toBeInTheDocument());
+
     // Le bouton du pied de fenêtre (la croix porte le même nom).
     await user.click(dialog.getAllByRole('button', { name: 'Fermer' }).at(-1)!);
 
@@ -409,5 +433,51 @@ describe('FleetDashboard Component', () => {
     expect(screen.queryByText('F-GABC')).not.toBeInTheDocument();
     expect(getBodyRows()).toHaveLength(1);
     expect(screen.getByText('100 % de la flotte')).toBeInTheDocument();
+  });
+
+  test("laisse un technicien remettre en service un aéronef immobilisé, depuis son détail", async () => {
+    mockViewerRole = 'Technicien';
+    const user = userEvent.setup();
+    const returnedFleet = mockAircrafts.map((aircraft) =>
+      aircraft.id === 3 ? { ...aircraft, availability_status: 'AVAILABLE' } : aircraft,
+    );
+    const returned = jest.fn(() => ({
+      data: { setAircraftAvailability: { id: 3, availability_status: 'AVAILABLE', maintenance_status: 'IN_MAINTENANCE' } },
+    }));
+    renderPage([
+      successMock(),
+      { request: { query: SET_AIRCRAFT_AVAILABILITY, variables: { aircraftId: 3, availability_status: 'AVAILABLE' } }, result: returned },
+      successMock(returnedFleet),
+      successMock(returnedFleet),
+    ]);
+    await screen.findByText('F-HMNT');
+
+    await user.click(screen.getByRole('button', { name: 'Voir les détails de F-HMNT' }));
+    const dialog = within(await screen.findByRole('dialog'));
+    expect(dialog.getByText(/Immobilisé : il ne peut pas être réservé/)).toBeInTheDocument();
+    await user.click(dialog.getByRole('button', { name: 'Remettre en service' }));
+
+    const confirm = within(await screen.findByRole('alertdialog'));
+    expect(confirm.getByText('Remettre F-HMNT en service ?')).toBeInTheDocument();
+    await user.click(confirm.getByRole('button', { name: 'Remettre en service' }));
+
+    await waitFor(() => expect(returned).toHaveBeenCalledTimes(1));
+    expect(mockToast).toHaveBeenCalledWith({
+      title: 'Aéronef remis en service',
+      description: 'F-HMNT est de nouveau disponible à la réservation.',
+    });
+    // The panel follows the refreshed list.
+    await waitFor(() => expect(dialog.queryByText(/Immobilisé : il ne peut pas être réservé/)).not.toBeInTheDocument());
+  });
+
+  test("dit à un pilote pourquoi un aéronef est immobilisé, sans lui proposer de le remettre en service", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText('F-HMNT');
+
+    await user.click(screen.getByRole('button', { name: 'Voir les détails de F-HMNT' }));
+    const dialog = within(await screen.findByRole('dialog'));
+    expect(dialog.getByText(/Immobilisé : il ne peut pas être réservé/)).toBeInTheDocument();
+    expect(dialog.queryByRole('button', { name: 'Remettre en service' })).not.toBeInTheDocument();
   });
 });

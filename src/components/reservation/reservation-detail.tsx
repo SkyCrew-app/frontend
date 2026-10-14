@@ -3,27 +3,18 @@
 import { useState } from "react"
 import { format } from "date-fns"
 import { useTranslation } from "react-i18next"
-import { Loader2, Pencil, Trash2 } from "lucide-react"
+import { CalendarX, Pencil } from "lucide-react"
 import {
   canCancelReservation,
   canEditReservation,
   hasReservationStarted,
   reservationStatus,
 } from "@/lib/reservation-status"
-import { formatDate, formatFlightDuration, formatMoney, formatTime } from "@/lib/format"
+import { formatFlightDuration, formatMoney, formatTime } from "@/lib/format"
 import { dateFnsLocale } from "@/lib/i18n"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+import { CancelReservationDialog } from "@/components/reservation/cancel-reservation-dialog"
 import type { Reservation } from "@/interfaces/reservation"
 import { flightCategoryLabel } from "@/components/reservation/flight-category"
 import { reservationDurationHours, reservationPilotName } from "@/components/reservation/reservation-cell"
@@ -36,7 +27,10 @@ interface ReservationDetailProps {
   reservation: Reservation
   onEdit: () => void
   onDelete: () => Promise<void> | void
+  /** The holder of the booking, or an administrator (who may change anyone's booking). */
   canEdit: boolean
+  /** The booking is the signed-in member's own. Defaults to `canEdit`. */
+  isOwner?: boolean
   /** An administrator may cancel any booking, even once it has started. */
   isAdmin?: boolean
   /** The signed-in member is the instructor of this booking: they may decline it before it starts. */
@@ -51,6 +45,7 @@ export function ReservationDetail({
   onEdit,
   onDelete,
   canEdit,
+  isOwner = canEdit,
   isAdmin = false,
   isInstructor = false,
 }: ReservationDetailProps) {
@@ -78,9 +73,9 @@ export function ReservationDetail({
   const canChange = canEdit && canEditReservation(reservation)
   // Its instructor declines it under the same rule as its holder: before it starts.
   const canDelete = (canEdit || isAdmin || isInstructor) && canCancelReservation(reservation, { isAdmin })
-  const declines = isInstructor && !canEdit && !isAdmin
+  const declines = isInstructor && !isOwner && !isAdmin
   const instructor = instructorName(reservation.instructor)
-  const showStartedHint = canEdit && !canChange && !isAdmin && hasReservationStarted(reservation)
+  const showStartedHint = isOwner && !canChange && !isAdmin && hasReservationStarted(reservation)
   const showPrice = (canEdit || isAdmin) && reservation.charged_amount != null
 
   return (
@@ -96,8 +91,8 @@ export function ReservationDetail({
             className="text-destructive hover:text-destructive"
             onClick={() => setConfirmOpen(true)}
           >
-            <Trash2 className="h-4 w-4" />
-            {declines ? t("detail.decline") : t("common:actions.delete")}
+            <CalendarX className="h-4 w-4" />
+            {declines ? t("detail.decline") : t("cancel.action")}
           </Button>
         ) : undefined
       }
@@ -172,37 +167,14 @@ export function ReservationDetail({
         {showStartedHint && <p className="text-sm text-muted-foreground">{t("detail.startedHint")}</p>}
         {declines && canDelete && <p className="text-sm text-muted-foreground">{t("detail.instructorHint")}</p>}
 
-        <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>
-                {declines ? t("detail.declineConfirm.title") : t("detail.deleteConfirm.title")}
-              </AlertDialogTitle>
-              <AlertDialogDescription>
-                {t(declines ? "detail.declineConfirm.description" : "detail.deleteConfirm.description", {
-                  aircraft: reservation.aircraft.registration_number,
-                  date: formatDate(reservation.start_time),
-                  start: formatTime(reservation.start_time),
-                  end: formatTime(reservation.end_time),
-                })}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={isDeleting}>{t("common:actions.cancel")}</AlertDialogCancel>
-              <AlertDialogAction
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                disabled={isDeleting}
-                onClick={(event) => {
-                  event.preventDefault()
-                  void handleConfirmDelete()
-                }}
-              >
-                {isDeleting && <Loader2 className="h-4 w-4 animate-spin" />}
-                {declines ? t("detail.declineConfirm.action") : t("detail.deleteConfirm.action")}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <CancelReservationDialog
+          reservation={confirmOpen ? reservation : null}
+          onOpenChange={setConfirmOpen}
+          onConfirm={() => void handleConfirmDelete()}
+          cancelling={isDeleting}
+          declining={declines}
+          forSelf={isOwner}
+        />
       </div>
     </SidePanel>
   )

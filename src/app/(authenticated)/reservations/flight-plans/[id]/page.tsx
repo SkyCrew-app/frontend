@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { useQuery } from "@apollo/client"
 import dynamic from "next/dynamic"
 import Link from "next/link"
@@ -16,6 +16,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { EmptyState } from "@/components/layout/EmptyState"
 import { ErrorState } from "@/components/layout/ErrorState"
+import { isAccessRefusal } from "@/lib/api-refusal"
 import { FlightSummary } from "@/components/flight/FlightSummary"
 import { AirportInfo } from "@/components/flight/AirportInfo"
 import { WaypointInfo } from "@/components/flight/WaypointInfo"
@@ -24,6 +25,9 @@ import { NavLog } from "@/components/flight/NavLog"
 import { VerticalProfile } from "@/components/flight/VerticalProfile"
 import { OFPExport } from "@/components/flight/OFPExport"
 import { FlightPlanActions } from "@/components/flight/flight-action-plans"
+import { ClosedFlightAdmin } from "@/components/flight/closed-flight-admin"
+import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
+import { isAdministrator } from "@/lib/roles"
 import { flightTypeLabel } from "@/components/flight/flight-type"
 import { flightPlanState } from "@/components/flight-plan/flight-plan-state"
 import { GET_FLIGHT_PLAN_BY_ID } from "@/graphql/flights"
@@ -102,6 +106,9 @@ const BackButton = () => {
 export default function FlightPlanDetails() {
   const { t } = useTranslation("flights")
   const { id } = useParams()
+  const router = useRouter()
+  const me = useUserData(useCurrentUser())
+  const isAdmin = isAdministrator(me)
   const flightId = Array.isArray(id) ? id[0] : (id as string)
   const [section, setSection] = useState("route")
   const [routePanel, setRoutePanel] = useState("overview")
@@ -196,7 +203,8 @@ export default function FlightPlanDetails() {
     )
   }
 
-  if (error) {
+  // Not found or not the member's: say so, rather than suggest a connection problem.
+  if (error && !isAccessRefusal(error)) {
     return (
       <div className="space-y-6">
         <PageHeader className="mb-0" title={t("planDetail.title")} actions={<BackButton />} />
@@ -282,8 +290,9 @@ export default function FlightPlanDetails() {
           </span>
         }
         description={
-          fp.reservation?.id
-            ? t("planDetail.descriptionWithReservation", { type: typeLabel, id: fp.reservation.id })
+          // Someone else's flight (an administrator or an instructor reading it) names its pilot.
+          fp.user && pilotName && me && String(fp.user.id) !== String(me.id)
+            ? t("planDetail.descriptionWithPilot", { type: typeLabel, pilot: pilotName })
             : t("planDetail.description", { type: typeLabel })
         }
         actions={
@@ -320,6 +329,15 @@ export default function FlightPlanDetails() {
           </>
         }
       />
+
+      {isAdmin && fp.closed_at && (
+        <ClosedFlightAdmin
+          flight={fp}
+          onChanged={() => refetch()}
+          // The flight no longer exists: back to where the administrator came from.
+          onDeleted={() => (window.history.length > 1 ? router.back() : router.push("/dashboard"))}
+        />
+      )}
 
       <FlightSummary
         departure={{
@@ -415,7 +433,7 @@ export default function FlightPlanDetails() {
                             {aircraft.consumption && (
                               <Fact label={t("planDetail.aircraftAndPilot.consumption")} value={`${aircraft.consumption} L/h`} />
                             )}
-                            {aircraft.maxAltitude && <Fact label={t("planDetail.aircraftAndPilot.ceiling")} value={`${aircraft.maxAltitude} ft`} />}
+                            {aircraft.maxAltitude && <Fact label={t("planDetail.aircraftAndPilot.ceiling")} value={`${formatDecimal(aircraft.maxAltitude, 0)} ft`} />}
                           </>
                         )}
                         <Fact label={t("planDetail.aircraftAndPilot.pilotInCommand")} value={pilotName || "—"} />

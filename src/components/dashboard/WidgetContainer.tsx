@@ -25,7 +25,7 @@ export default function WidgetContainer({ title, description, action, children }
       <CardHeader className="flex min-h-[3.75rem] flex-row items-center justify-between gap-3 space-y-0 p-5 pb-3">
         <div className="min-w-0">
           <CardTitle className="text-base">{title}</CardTitle>
-          {description && <CardDescription className="mt-0.5 truncate text-xs">{description}</CardDescription>}
+          {description && <CardDescription className="mt-0.5 text-xs">{description}</CardDescription>}
         </div>
         {action && <div className="flex shrink-0 items-center gap-2">{action}</div>}
       </CardHeader>

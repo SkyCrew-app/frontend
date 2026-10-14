@@ -62,13 +62,19 @@
       "freeHint": "Tap a slot to book it; you can adjust the times.",
       "noFreeRange": "No free slot",
       "bookRange": "Book {{aircraft}} from {{start}} to {{end}}"
+    },
+    "unavailableHint": "Cannot be booked for now",
+    "maintenance": {
+      "title": "Weekly maintenance",
+      "description": "From {{from}} to {{to}} the club's aircraft are in maintenance: this time cannot be booked.",
+      "cell": "Weekly maintenance"
     }
   },
   "form": {
     "createTitle": "Create a booking",
     "createDescription": "Check the chosen slot, then describe your flight.",
     "editTitle": "Edit the booking",
-    "editDescription": "The aircraft and the times cannot be changed.",
+    "editDescription": "Change the aircraft or the times until the flight starts: the price is worked out again and the difference charged or refunded.",
     "newDescription": "Choose the aircraft, the day and the times of your flight.",
     "submitCreate": "Create the booking",
     "aircraftPlaceholder": "Select an aircraft",
@@ -83,7 +89,8 @@
       "timeOrder": "The end time must be after the start time.",
       "category": "Please select a flight category.",
       "past": "A booking cannot start in the past.",
-      "instructor": "Please choose an instructor."
+      "instructor": "Please choose an instructor.",
+      "weeklyMaintenance": "This slot runs into the weekly maintenance ({{from}} – {{to}}): choose another time."
     },
     "instructor": {
       "label": "With an instructor",
@@ -99,11 +106,6 @@
   "detail": {
     "title": "Booking details",
     "schedule": "Times",
-    "deleteConfirm": {
-      "title": "Delete this booking?",
-      "description": "The booking of {{aircraft}} on {{date}}, from {{start}} to {{end}}, will be permanently deleted and the slot will become free again.",
-      "action": "Delete the booking"
-    },
     "startedHint": "This booking has started: it can no longer be changed, and only an administrator can cancel it.",
     "decline": "Decline the flight",
     "instructorHint": "You are the instructor of this flight. You can decline it before it starts: the booking is cancelled and the student is refunded.",
@@ -141,14 +143,6 @@
     "updateFailed": {
       "title": "Could not save changes",
       "description": "The booking could not be changed. Try again in a moment."
-    },
-    "deleted": {
-      "title": "Booking deleted",
-      "description": "The booking of {{aircraft}} has been deleted."
-    },
-    "deleteFailed": {
-      "title": "Could not delete",
-      "description": "The booking could not be deleted. Try again in a moment."
     },
     "cancelled": {
       "title": "Booking cancelled",
@@ -195,9 +189,9 @@
       "plural": "bookings"
     },
     "stats": {
-      "confirmed": "Confirmed",
-      "pending": "Pending",
-      "cancelled": "Cancelled"
+      "upcoming": "Upcoming",
+      "bookedHours": "Hours booked",
+      "paid": "Amount paid"
     },
     "filters": {
       "searchLabel": "Search a booking",
@@ -221,14 +215,7 @@
     "card": {
       "noPurpose": "No purpose given",
       "viewFlightPlan": "View the flight plan",
-      "createFlightPlan": "Create a flight plan",
-      "cancel": "Cancel the booking"
-    },
-    "cancelConfirm": {
-      "title": "Cancel this booking?",
-      "description": "The booking of {{aircraft}} on {{date}}, from {{start}} to {{end}}, will be cancelled: it will disappear from your bookings and the slot will become free again.",
-      "keep": "Keep the booking",
-      "action": "Cancel the booking"
+      "createFlightPlan": "Create a flight plan"
     },
     "instruction": {
       "intro": "The instruction flights booked with you. You can decline a flight before it starts: the student is then refunded.",
@@ -277,5 +264,31 @@
       "startTime": "Start time",
       "endTime": "End time"
     }
+  },
+  "price": {
+    "estimate": "Estimated price: {{amount}}",
+    "newPrice": "New price: {{amount}}",
+    "paid": "Price paid: {{amount}}",
+    "unchanged": "The price only changes if you change the aircraft or the times.",
+    "rate": "{{rate}} per hour",
+    "instructorFee": "including {{amount}} for the instructor",
+    "chargedOnBooking": "taken from {{account}} when you book",
+    "yourAccount": "your balance",
+    "pilotAccount": "the pilot's balance",
+    "differenceCharged": "{{paid}} already paid: {{amount}} more will be taken from {{account}}",
+    "differenceRefunded": "{{paid}} already paid: {{amount}} will be refunded to {{account}}",
+    "samePrice": "same price as already paid"
+  },
+  "cancel": {
+    "title": "Cancel this booking?",
+    "description": "The booking of {{aircraft}} on {{date}}, from {{start}} to {{end}}, will be cancelled and the slot will be free again.",
+    "refund": {
+      "self": "{{amount}} will be refunded to your balance.",
+      "pilot": "{{amount}} will be refunded to the pilot's balance.",
+      "none": "Nothing will be refunded: no amount was charged for this booking."
+    },
+    "keep": "Keep the booking",
+    "action": "Cancel the booking",
+    "actionFor": "Cancel the booking of {{aircraft}}"
   }
 }

@@ -43,7 +43,7 @@ import { useToast } from "@/components/hooks/use-toast"
 import { buildFlightRecapSchema, type FlightRecapFormValues } from "@/lib/flight-recap-schema"
 import { toIntId } from "@/lib/graphql-inputs"
 import { closeBlocker, groundsAircraft } from "@/lib/flight-closing"
-import { apiRefusal } from "@/lib/api-refusal"
+import { apiRefusal, isAccessRefusal } from "@/lib/api-refusal"
 import { isAdministrator } from "@/lib/roles"
 import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
 import { formatDateTime, formatDecimal, formatFlightDuration } from "@/lib/format"
@@ -300,7 +300,8 @@ export default function FlightRecap() {
     )
   }
 
-  if (error) {
+  // Not found or not the member's: say so, rather than suggest a connection problem.
+  if (error && !isAccessRefusal(error)) {
     return (
       <div className="space-y-6">
         <PageHeader className="mb-0" title={t("closeFlight.title")} />

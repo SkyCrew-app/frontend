@@ -89,6 +89,13 @@
     "PAYMENT_RECEIVED": "Payment received",
     "PAYMENT_REFUNDED": "Payment refunded",
     "2FA_ENABLED": "Two-factor authentication enabled",
-    "USER_UPDATED": "Profile updated"
+    "USER_UPDATED": "Profile updated",
+    "AIRCRAFT_GROUNDED": "Aircraft grounded",
+    "INSTRUCTION_BOOKED": "Instruction flight booked",
+    "INSTRUCTION_CHANGED": "Instruction flight changed",
+    "INSTRUCTION_CANCELLED": "Instruction flight cancelled",
+    "LICENCE_DIGEST": "Licence digest",
+    "COURSE_CANCELLED": "Course cancelled",
+    "PAYMENT_FAILED": "Payment failed"
   }
 }

@@ -4,7 +4,7 @@ import type { ReactNode } from "react"
 import Link from "next/link"
 import { useQuery } from "@apollo/client"
 import { useTranslation } from "react-i18next"
-import { AlertTriangle, Calendar, CalendarClock, ChevronRight, Clock, Plane, Users, Wrench } from "lucide-react"
+import { AlertTriangle, Calendar, ChevronRight, Clock, Plane, Users, Wrench } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -25,22 +25,13 @@ import { reservationStatus } from "@/lib/reservation-status"
 import { incidentSeverity, incidentStatus } from "@/lib/incident"
 import { roleLabel } from "@/lib/settings"
 import i18n from "@/lib/i18n"
+import { flightCategoryLabel as bookingCategoryLabel, isFlightCategory } from "@/components/reservation/flight-category"
 
-const FLIGHT_CATEGORIES = [
-  "local",
-  "cross_country",
-  "instruction",
-  "tourism",
-  "training",
-  "maintenance",
-  "private",
-  "corporate",
-]
-
-const flightCategoryLabel = (category: string | null | undefined) => {
-  const code = (category ?? "").toLowerCase()
-  return i18n.t(`administration:flightCategory.${FLIGHT_CATEGORIES.includes(code) ? code : "other"}`)
-}
+// The wording members see when they book; anything else is "Autre".
+const flightCategoryLabel = (category: string | null | undefined) =>
+  isFlightCategory((category ?? "").toUpperCase())
+    ? bookingCategoryLabel(category)
+    : i18n.t("administration:flightCategory.other")
 
 // The date of a flight: when it was planned, else when it left, else when it was closed.
 const flightDate = (flight: {
@@ -168,7 +159,6 @@ export default function AdminHomePage() {
     value: item.count,
   }))
 
-  const pendingReservations: number = stats?.pendingReservations ?? 0
   const unavailableAircrafts = Math.max(0, (stats?.totalAircrafts ?? 0) - (stats?.availableAircrafts ?? 0))
   // A resolved incident no longer needs attention.
   const severeIncidents = recentIncidents.filter(
@@ -176,17 +166,8 @@ export default function AdminHomePage() {
       incidentSeverity(incident.severity_level).level === "high" && incidentStatus(incident.status).key !== "resolved",
   )
 
+  // A booking is confirmed as soon as it is made: nothing waits for a decision there.
   const attention: AttentionItem[] = []
-  if (pendingReservations > 0) {
-    attention.push({
-      key: "reservations",
-      icon: CalendarClock,
-      tone: "bg-warning/15 text-warning",
-      title: t("home.attention.pendingBookings", { count: pendingReservations }),
-      description: t("home.attention.pendingBookingsHint"),
-      href: "/reservations",
-    })
-  }
   if (unavailableAircrafts > 0) {
     attention.push({
       key: "aircrafts",
@@ -233,7 +214,6 @@ export default function AdminHomePage() {
           <StatCard
             label={t("home.stats.bookings")}
             value={stats?.totalReservations ?? 0}
-            hint={t("home.stats.pending", { count: pendingReservations })}
             icon={Calendar}
             tone="warning"
           />
