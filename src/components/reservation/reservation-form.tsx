@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SidePanel } from "@/components/layout/SidePanel"
 import { FlightCategoryError } from "@/components/reservation/flight-category-error"
 import { flightCategoryOptions } from "@/components/reservation/flight-category"
-import { InstructorField } from "@/components/reservation/instructor-field"
+import { InstructorField, LicenceRequiredNote } from "@/components/reservation/instructor-field"
+import { usePlan } from "@/components/hooks/usePlan"
 
 // A flight with an instructor is an instruction flight: the API sets this category itself.
 export const INSTRUCTION_CATEGORY = "INSTRUCTION"
@@ -80,6 +81,11 @@ export function ReservationForm({
   const [categoryError, setCategoryError] = useState(false)
   const [instructorError, setInstructorError] = useState(false)
   const withInstructor = !!setInstructorId && instructorId !== ""
+  // Without instruction in the plan, there is no instructor to choose: a member without a valid
+  // licence cannot book (a booking that already has an instructor keeps it).
+  const instruction = usePlan().includes("INSTRUCTION")
+  const showInstructor = !!setInstructorId && instruction
+  const licenceMissing = !instruction && instructorRequired && !withInstructor
 
   useEffect(() => {
     if (open) {
@@ -90,11 +96,11 @@ export function ReservationForm({
 
   // The category is a required enum of the API; a member without a licence needs an instructor.
   const handleSubmit = async () => {
-    const missingInstructor = !!setInstructorId && instructorRequired && !instructorId
+    const missingInstructor = showInstructor && instructorRequired && !instructorId
     const missingCategory = !flightCategory && !withInstructor
     setInstructorError(missingInstructor)
     setCategoryError(missingCategory)
-    if (missingInstructor || missingCategory) return
+    if (missingInstructor || missingCategory || licenceMissing) return
     await onSubmit()
   }
 
@@ -111,6 +117,8 @@ export function ReservationForm({
       onSubmit={handleSubmit}
       submitLabel={isEdit ? t("common:actions.save") : t("form.submitCreate")}
       submitting={isSubmitting}
+      // Nothing to send: the note above says why.
+      submitDisabled={licenceMissing}
       footerStart={footerStart}
     >
       <div className="space-y-4">
@@ -135,6 +143,8 @@ export function ReservationForm({
           </dl>
         )}
 
+        {licenceMissing && <LicenceRequiredNote />}
+
         {price}
 
         <div className="space-y-2">
@@ -147,7 +157,7 @@ export function ReservationForm({
           />
         </div>
 
-        {setInstructorId && (
+        {showInstructor && (
           <InstructorField
             id="instructor"
             value={instructorId}

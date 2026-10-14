@@ -172,5 +172,31 @@
     "linkPlaceholder": "https://example.com",
     "imagePlaceholder": "https://example.com/image.jpg",
     "imageAlt": "Image"
+  },
+  "plan": {
+    "name": {
+      "CLUB": "Club",
+      "ECOLE": "Club + School"
+    },
+    "notIncluded": {
+      "title": "Not included in your plan",
+      "feature": "A feature of the Club + School plan",
+      "description": "Your club has not chosen this plan. To get it, the club administrator can ask their SkyCrew provider to change plan.",
+      "back": "Back to the dashboard"
+    },
+    "card": {
+      "title": "Plan",
+      "description": "What your club's SkyCrew subscription includes.",
+      "current": "Current plan",
+      "aircraft": "Aircraft in service",
+      "members": "Active members",
+      "unlimited": "no limit",
+      "full": "Limit reached",
+      "instruction": "Instruction (courses, student progress, e-learning, evaluations, flights with an instructor)",
+      "included": "Included",
+      "notIncluded": "Not included",
+      "change": "To change plan or limits, contact your SkyCrew provider.",
+      "fullHint": "Every place is used: to add more, take an aircraft out of service, deactivate a member who left or change plan."
+    }
   }
 }

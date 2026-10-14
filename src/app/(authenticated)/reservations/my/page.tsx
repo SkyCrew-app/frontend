@@ -41,6 +41,7 @@ import { EmptyState as SharedEmptyState } from "@/components/layout/EmptyState"
 import { ReservationCard } from "@/components/my-reservation/reservation-card"
 import { InstructionBookingCard } from "@/components/my-reservation/instruction-booking-card"
 import { isInstructor } from "@/lib/roles"
+import { usePlan } from "@/components/hooks/usePlan"
 import { ReservationFilters, type ReservationSortOrder } from "@/components/my-reservation/reservation-filters"
 import { ReservationEditDialog } from "@/components/my-reservation/reservation-edit-dialog"
 import { EmptyState } from "@/components/my-reservation/empty-state"
@@ -78,10 +79,12 @@ export default function MyReservations() {
     skip: !userId,
   })
 
-  // The bookings the member instructs: an instructor's own tab.
+  // The bookings the member instructs: an instructor's own tab, where the plan includes instruction.
+  const { includes } = usePlan()
+  const instruction = includes("INSTRUCTION")
   const { data: instructionData } = useQuery<{ myInstructionReservations: Reservation[] }>(
     GET_MY_INSTRUCTION_RESERVATIONS,
-    { skip: !userId },
+    { skip: !userId || !instruction },
   )
 
   const [updateReservation] = useMutation(UPDATE_RESERVATION)
@@ -199,7 +202,7 @@ export default function MyReservations() {
     if (pastA !== pastB) return pastA ? 1 : -1
     return pastA ? startB - startA : startA - startB
   })
-  const showInstructionTab = isInstructor(userData) || instructedReservations.length > 0
+  const showInstructionTab = instruction && (isInstructor(userData) || instructedReservations.length > 0)
   const declining =
     reservationToCancel !== null &&
     userId != null &&

@@ -102,7 +102,8 @@
     "course": {
       "note": "Booking the aircraft for {{student}}'s course with {{instructor}}. The student is the pilot of the flight: they pay for the aircraft and receive the confirmation.",
       "leaves": "This flight will no longer belong to the course of {{date}} at {{time}}: the course will be left without an aircraft, and its instructor will be told."
-    }
+    },
+    "licenceRequired": "Without a licence valid until the end of this flight you cannot book. Add your licence in your profile or ask the club administrator to validate it."
   },
   "detail": {
     "title": "Booking details",

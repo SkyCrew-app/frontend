@@ -13,6 +13,7 @@ import DemoBanner from "@/components/ui/DemoBanner"
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts"
 import { useMounted } from "@/components/hooks/useMounted"
 import StoredLanguageSync from "@/components/providers/StoredLanguageSync"
+import { PlanGate } from "@/components/plan/PlanGate"
 
 interface MainLayoutProps {
   children: ReactNode
@@ -58,7 +59,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
           <main id="main-content" role="main" aria-label={t("layout.mainContent")} className="flex-1 overflow-y-auto overflow-x-hidden" tabIndex={-1}>
             <div className="mx-auto w-full max-w-[1440px] p-4 md:p-6 lg:p-8">
               <Breadcrumbs />
-              {mounted ? children : null}
+              {mounted ? <PlanGate>{children}</PlanGate> : null}
             </div>
           </main>
         </div>

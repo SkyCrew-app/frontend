@@ -14,7 +14,8 @@ import { Calendar } from "@/components/ui/calendar"
 import { CalendarIcon, TriangleAlert } from "lucide-react"
 import { SidePanel } from "@/components/layout/SidePanel"
 import { flightCategoryOptions, isFlightCategory } from "@/components/reservation/flight-category"
-import { InstructorField, useInstructorRequired } from "@/components/reservation/instructor-field"
+import { InstructorField, LicenceRequiredNote, useInstructorRequired } from "@/components/reservation/instructor-field"
+import { usePlan } from "@/components/hooks/usePlan"
 import { PriceEstimate } from "@/components/reservation/price-estimate"
 import type { Reservation } from "@/interfaces/reservation"
 import { INSTRUCTION_CATEGORY } from "@/components/reservation/reservation-form"
@@ -193,6 +194,10 @@ export function NewReservationForm({
   const slotEnd = TIME_PATTERN.test(endTime) ? withTime(selectedDate, endTime) : null
   // The licence must be valid until the end of the flight, as the API checks it.
   const instructorRequired = useInstructorRequired(slotEnd, { skip: !checkLicence || !open })
+  // Without instruction in the plan, there is no instructor to choose: a member without a valid
+  // licence cannot book (a booking that already has an instructor keeps it).
+  const instruction = usePlan().includes("INSTRUCTION")
+  const licenceMissing = !instruction && instructorRequired && !withInstructor
   const aircraft = aircrafts.find((a) => String(a.id) === aircraftId)
   const slotChanged =
     !!editing &&
@@ -230,13 +235,13 @@ export function NewReservationForm({
         to: format(clash.end, "HH:mm"),
       })
     }
-    const missingInstructor = !course && instructorRequired && !instructorId
+    const missingInstructor = instruction && !course && instructorRequired && !instructorId
     // Choosing the required instructor sets the category: one error is enough.
     if (!flightCategory && !withInstructor && !missingInstructor) nextErrors.category = t("form.errors.category")
     if (missingInstructor) nextErrors.instructor = t("form.errors.instructor")
 
     setErrors(nextErrors)
-    if (Object.keys(nextErrors).length > 0) return
+    if (Object.keys(nextErrors).length > 0 || licenceMissing) return
 
     await onSubmit({
       aircraftId: Number.parseInt(aircraftId, 10),
@@ -262,9 +267,12 @@ export function NewReservationForm({
       onSubmit={handleSubmit}
       submitLabel={editing ? t("common:actions.save") : t("form.submitCreate")}
       submitting={isSubmitting}
+      // Nothing to send: the note above says why.
+      submitDisabled={licenceMissing}
       footerStart={footerStart}
     >
       <div className="space-y-4">
+        {licenceMissing && <LicenceRequiredNote />}
         {course && (
           <p className="rounded-lg bg-muted/50 p-3 text-sm" role="note">
             {t("form.course.note", { student: course.studentName, instructor: course.instructorName })}
@@ -394,7 +402,7 @@ export function NewReservationForm({
           />
         </div>
 
-        {!course && (
+        {!course && instruction && (
           <InstructorField
             id="new-reservation-instructor"
             value={instructorId}
