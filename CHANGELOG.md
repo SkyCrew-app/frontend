@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.13.1](https://github.com/SkyCrew-app/frontend/compare/2.13.0...2.13.1) (2026-10-14)
+
+
+### Bug Fixes
+
+* **ui:** :bug: screens agree with the rules found while writing the guide ([#175](https://github.com/SkyCrew-app/frontend/issues/175)) ([e569088](https://github.com/SkyCrew-app/frontend/commit/e5690886c26cfff0582d581d8e02e8a3ab9ad3e5))
+
 ## [2.13.0](https://github.com/SkyCrew-app/frontend/compare/2.12.1...2.13.0) (2026-10-14)
 
 
