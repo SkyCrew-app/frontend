@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.13.0](https://github.com/SkyCrew-app/frontend/compare/2.12.1...2.13.0) (2026-10-14)
+
+
+### Features
+
+* **ui:** :sparkles: screens reviewed by role, own licences, incident reports, price before booking ([#171](https://github.com/SkyCrew-app/frontend/issues/171)) ([79769d7](https://github.com/SkyCrew-app/frontend/commit/79769d73ea00da038cf4814066e779bb79b3be89))
+
 ## [2.12.1](https://github.com/SkyCrew-app/frontend/compare/2.12.0...2.12.1) (2026-10-13)
 
 
