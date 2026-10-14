@@ -10,6 +10,14 @@ input AddCompetencyInput {
   name: String!
 }
 
+input AddMyLicenseInput {
+  certification_authority: String
+  expiration_date: DateTime
+  issue_date: DateTime!
+  license_number: String!
+  license_type: String!
+}
+
 input AdjustBalanceInput {
   amount: Float!
   credit: Boolean!
@@ -602,12 +610,12 @@ input CreateIncidentInput {
   corrective_actions: String
   damage_report: String
   description: String!
-  flight_id: Int!
+  flight_id: Int
   incident_date: DateTime!
   priority: String!
   severity_level: String!
   status: String!
-  user_id: Int!
+  user_id: Int
 }
 
 input CreateInvoiceInput {
@@ -1076,6 +1084,7 @@ type MonthlyHoursEntry {
 type Mutation {
   addCommentToCourse(input: AddCommentInput!): CourseComment!
   addCompetencyToCourse(input: AddCompetencyInput!): CourseCompetency!
+  addMyLicense(documents: [Upload!], input: AddMyLicenseInput!): License!
   adjustMemberBalance(input: AdjustBalanceInput!): Payment!
   completeChecklistSubmission(id: Int!): ChecklistSubmission!
   completeLesson(lessonId: Float!, userId: Float!): Boolean!
@@ -1194,6 +1203,7 @@ type Mutation {
   updateMaintenance(files: [Upload!], images: [Upload!], updateMaintenanceInput: UpdateMaintenanceInput!): Maintenance!
   updateModule(id: Float!, updateModuleInput: UpdateModuleDTO!): Module!
   updateMyLanguage(language: String!): User!
+  updateMyLicense(documents: [Upload!], input: UpdateMyLicenseInput!): License!
   updateNotification(updateNotificationInput: UpdateNotificationInput!): Notification!
   updateNotificationSettings(email_notifications_enabled: Boolean!, newsletter_subscribed: Boolean!, sms_notifications_enabled: Boolean!): User!
   updatePassword(currentPassword: String!, newPassword: String!): User!
@@ -1206,6 +1216,7 @@ type Mutation {
   updateUserPreferences(preference: UpdateUserPreferencesInput!, userId: Float!): User!
   validateAnswers(evaluationId: Float!, userAnswers: [UserAnswerInput!]!, userId: Float!): ValidationResult!
   validateCompetency(competencyId: Int!): CourseCompetency!
+  validateLicense(id: Int!): License!
   verify2FA(email: String!, token: String!): LoginResponse!
 }
 
@@ -1287,6 +1298,7 @@ type Query {
   getAllLicenses: [License!]!
   getAllMaintenances: [Maintenance!]!
   getAllModules: [Module!]!
+  getCompletedLessons(lessonIds: [Int!]!, userId: Int!): [Int!]!
   getCourseById(id: Float!, userId: Float): Course!
   getCourseInstructionById(id: Int!): InstructionCourse!
   getCourseProgress(courseId: Float!, userId: Float!): Float!
@@ -1334,6 +1346,7 @@ type Query {
   memberCommitments(id: Int!): MemberCommitments!
   membersDirectory: [User!]!
   myInstructionReservations: [Reservation!]!
+  myLicenses: [License!]!
   myReservationTemplates: [ReservationTemplate!]!
   notification(id: Int!): Notification!
   notificationsByUser(userId: Int!): [Notification!]!
@@ -1702,6 +1715,15 @@ input UpdateModuleDTO {
   title: String
 }
 
+input UpdateMyLicenseInput {
+  certification_authority: String
+  expiration_date: DateTime
+  id: Int!
+  issue_date: DateTime
+  license_number: String
+  license_type: String
+}
+
 input UpdateNotificationInput {
   action_url: String
   expiration_date: DateTime
@@ -1757,6 +1779,7 @@ input UpdateRoleInput {
 
 input UpdateUserInput {
   address: String
+  cancelInstructionCommitments: Boolean
   date_of_birth: DateTime
   distance_unit: String
   email: String

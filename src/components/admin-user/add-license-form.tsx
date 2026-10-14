@@ -13,9 +13,11 @@ import { DatePicker } from "@/components/ui/date-picker"
 import { Skeleton } from "@/components/ui/skeleton"
 import { BadgeCheck, Check, ChevronsUpDown } from "lucide-react"
 import { cn } from "@/lib/utils"
-import type { User } from "@/interfaces/user"
+import type { License, User } from "@/interfaces/user"
 
 export interface LicenseFormValues {
+  /** The licence corrected or renewed; absent for a new one. */
+  licenseId?: string
   userId: string
   license_type: string
   license_number: string
@@ -35,7 +37,20 @@ interface AddLicenseFormProps {
   defaultUserId?: string | null
   saving?: boolean
   onSubmit: (values: LicenseFormValues) => void
+  /**
+   * A licence of `defaultUserId` to correct ("edit") or to renew ("renew": new
+   * dates and new documents, the rest kept). Without it the panel adds one.
+   */
+  license?: License | null
+  mode?: "add" | "edit" | "renew"
+  /** Hide the "Ajouter une licence" button (the panel is opened from elsewhere). */
+  hideTrigger?: boolean
 }
+
+const LICENSE_TYPES = ["PPL", "CPL", "ATPL", "FI"]
+const LICENSE_STATUSES = ["active", "expired", "pending"]
+
+const toDate = (value: string | null | undefined) => (value ? new Date(value) : undefined)
 
 type Errors = Partial<Record<"user" | "license_type" | "license_number" | "issueDate" | "expirationDate", string>>
 
@@ -56,7 +71,11 @@ export function AddLicenseForm({
   defaultUserId = null,
   saving = false,
   onSubmit,
+  license = null,
+  mode = "add",
+  hideTrigger = false,
 }: AddLicenseFormProps) {
+  const changing = mode !== "add" && license !== null
   const { t } = useTranslation("administration")
   const [userPickerOpen, setUserPickerOpen] = useState(false)
   const [userId, setUserId] = useState<string | null>(defaultUserId)
@@ -69,18 +88,19 @@ export function AddLicenseForm({
   const [errors, setErrors] = useState<Errors>({})
   const documentsRef = useRef<HTMLInputElement>(null)
 
-  // Start from a clean form each time the panel opens.
+  // Start from a clean form each time the panel opens, or from the licence
+  // changed: a renewal keeps what the licence is and asks for its new dates.
   useEffect(() => {
     if (!isOpen) return
     setUserId(defaultUserId)
-    setLicenseType("")
-    setLicenseNumber("")
-    setAuthority("")
-    setStatus("active")
-    setIssueDate(undefined)
-    setExpirationDate(undefined)
+    setLicenseType(changing ? license.license_type : "")
+    setLicenseNumber(changing ? (license.license_number ?? "") : "")
+    setAuthority(changing ? (license.certification_authority ?? "") : "")
+    setStatus(mode === "edit" && license?.status && LICENSE_STATUSES.includes(license.status) ? license.status : "active")
+    setIssueDate(mode === "edit" ? toDate(license?.issue_date) : undefined)
+    setExpirationDate(mode === "edit" ? toDate(license?.expiration_date) : undefined)
     setErrors({})
-  }, [isOpen, defaultUserId])
+  }, [isOpen, defaultUserId, changing, license, mode])
 
   const selectedUser = users.find((user) => user.id === userId)
 
@@ -115,6 +135,7 @@ export function AddLicenseForm({
     const files = Array.from(documentsRef.current?.files ?? []).filter((file) => file.size > 0)
 
     onSubmit({
+      licenseId: changing ? String(license.id) : undefined,
       userId,
       license_type: licenseType,
       license_number: licenseNumber.trim(),
@@ -141,6 +162,8 @@ export function AddLicenseForm({
               variant="outline"
               role="combobox"
               aria-expanded={userPickerOpen}
+              // A licence stays with its holder.
+              disabled={changing}
               className={cn("w-full justify-between font-normal", !selectedUser && "text-muted-foreground")}
             >
               <span className="truncate">
@@ -206,10 +229,15 @@ export function AddLicenseForm({
               <SelectValue placeholder={t("users.licence.chooseType")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="PPL">{t("users.licence.types.PPL")}</SelectItem>
-              <SelectItem value="CPL">{t("users.licence.types.CPL")}</SelectItem>
-              <SelectItem value="ATPL">{t("users.licence.types.ATPL")}</SelectItem>
-              <SelectItem value="FI">{t("users.licence.types.FI")}</SelectItem>
+              {LICENSE_TYPES.map((type) => (
+                <SelectItem key={type} value={type}>
+                  {t(`users.licence.types.${type}`)}
+                </SelectItem>
+              ))}
+              {/* A type recorded by an older version stays readable. */}
+              {licenseType && !LICENSE_TYPES.includes(licenseType) && (
+                <SelectItem value={licenseType}>{licenseType}</SelectItem>
+              )}
             </SelectContent>
           </Select>
           <FieldError message={errors.license_type} />
@@ -302,24 +330,40 @@ export function AddLicenseForm({
       <div className="space-y-2">
         <Label htmlFor="documents">{t("users.licence.documents")}</Label>
         <Input ref={documentsRef} id="documents" name="documents" type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.webp" />
-        <p className="text-xs text-muted-foreground">{t("users.licence.documentsHint")}</p>
+        <p className="text-xs text-muted-foreground">
+          {mode === "edit" && (license?.documents_url?.length ?? 0) > 0
+            ? t("users.licence.documentsKeptHint", { count: license?.documents_url?.length ?? 0 })
+            : mode === "renew"
+              ? t("users.licence.documentsRenewHint")
+              : t("users.licence.documentsHint")}
+        </p>
       </div>
     </div>
   )
 
+  const wording = changing ? mode : "add"
+
   return (
     <>
-      <Button variant="outline" onClick={() => onOpenChange(true)}>
-        <BadgeCheck className="h-4 w-4" />
-        {t("users.licence.add")}
-      </Button>
+      {!hideTrigger && (
+        <Button variant="outline" onClick={() => onOpenChange(true)}>
+          <BadgeCheck className="h-4 w-4" />
+          {t("users.licence.add")}
+        </Button>
+      )}
       <SidePanel
         open={isOpen}
         onOpenChange={(next) => (next || !saving) && onOpenChange(next)}
-        title={t("users.licence.add")}
-        description={t("users.licence.description")}
+        title={t(`users.licence.titles.${wording}`)}
+        description={
+          wording === "add"
+            ? t("users.licence.description")
+            : t(`users.licence.descriptions.${wording}`, {
+                name: selectedUser ? `${selectedUser.first_name} ${selectedUser.last_name}` : "",
+              })
+        }
         onSubmit={handleSubmit}
-        submitLabel={t("users.licence.submit")}
+        submitLabel={t(`users.licence.submits.${wording}`)}
         submitting={saving}
         steps={[
           { title: t("users.licence.steps.licence"), content: licenseFields, validate: () => validateStep(licenseErrors()) },

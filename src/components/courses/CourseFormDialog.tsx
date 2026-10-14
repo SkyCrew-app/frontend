@@ -31,6 +31,8 @@ type CourseFormDialogProps = {
   course?: InstructionCourse | null
   // Set when an instructor plans their own course: the instructor is not asked.
   instructorId?: number | null
+  // The API lets only an administrator change who gives or takes an existing course.
+  canChangeParticipants?: boolean
 }
 
 const toInputValue = (iso: string | null | undefined) => (iso ? format(parseISO(iso), "yyyy-MM-dd'T'HH:mm") : "")
@@ -51,15 +53,24 @@ const RequiredMark = () => (
 )
 
 // Plans a course or modifies one: who, when and, for an existing course, its status.
-export default function CourseFormDialog({ open, onClose, onSaved, course = null, instructorId = null }: CourseFormDialogProps) {
+export default function CourseFormDialog({
+  open,
+  onClose,
+  onSaved,
+  course = null,
+  instructorId = null,
+  canChangeParticipants = false,
+}: CourseFormDialogProps) {
   const { t } = useTranslation("instruction")
   const { toast } = useToast()
   const isEdit = course !== null
+  // Who gives and takes a course is chosen when it is planned; afterwards only an administrator changes it.
+  const participantsLocked = isEdit && !canChangeParticipants
   const ownInstructorId = instructorId === null ? "" : String(instructorId)
   const [form, setForm] = useState(emptyForm(ownInstructorId))
   const [submitted, setSubmitted] = useState(false)
 
-  const { data: membersData, loading: membersLoading } = useQuery(GET_MEMBERS_DIRECTORY, { skip: !open })
+  const { data: membersData, loading: membersLoading } = useQuery(GET_MEMBERS_DIRECTORY, { skip: !open || participantsLocked })
   const [createCourse, { loading: creating }] = useMutation(CREATE_COURSE)
   const [updateCourse, { loading: updating }] = useMutation(UPDATE_COURSE)
   const saving = creating || updating
@@ -112,8 +123,12 @@ export default function CourseFormDialog({ open, onClose, onSaved, course = null
               id: course.id,
               startTime: datetimeLocalToISOString(form.startTime),
               endTime: datetimeLocalToISOString(form.endTime),
-              instructorId: Number.parseInt(form.instructorId, 10),
-              studentId: Number.parseInt(form.studentId, 10),
+              ...(participantsLocked
+                ? {}
+                : {
+                    instructorId: Number.parseInt(form.instructorId, 10),
+                    studentId: Number.parseInt(form.studentId, 10),
+                  }),
               status: form.status,
             },
           },
@@ -169,14 +184,31 @@ export default function CourseFormDialog({ open, onClose, onSaved, course = null
       onOpenChange={(next) => !next && !saving && onClose()}
       title={isEdit ? t("courses.form.title.edit") : t("courses.form.title.create")}
       description={
-        isEdit ? t("courses.form.description.edit") : t("courses.form.description.create")
+        isEdit
+          ? participantsLocked
+            ? t("courses.form.description.editSchedule")
+            : t("courses.form.description.edit")
+          : t("courses.form.description.create")
       }
       onSubmit={handleSubmit}
       submitLabel={isEdit ? t("common:actions.save") : t("courses.form.submitCreate")}
       submitting={saving}
     >
       <div className="space-y-4">
-        {askInstructor && (
+        {participantsLocked && course && (
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-1 rounded-lg bg-muted/50 p-3 text-sm">
+            <div>
+              <dt className="text-xs text-muted-foreground">{t("common:labels.instructor")}</dt>
+              <dd className="font-medium">{personName(course.instructor)}</dd>
+            </div>
+            <div>
+              <dt className="text-xs text-muted-foreground">{t("common:labels.student")}</dt>
+              <dd className="font-medium">{personName(course.student)}</dd>
+            </div>
+          </dl>
+        )}
+
+        {askInstructor && !participantsLocked && (
           <div className="space-y-2">
             <Label htmlFor="course-instructor">
               {t("common:labels.instructor")}
@@ -192,19 +224,21 @@ export default function CourseFormDialog({ open, onClose, onSaved, course = null
           </div>
         )}
 
-        <div className="space-y-2">
-          <Label htmlFor="course-student">
-            {t("common:labels.student")}
-            <RequiredMark />
-          </Label>
-          <Select value={form.studentId} onValueChange={(value) => setField("studentId", value)}>
-            <SelectTrigger id="course-student">
-              <SelectValue placeholder={t("courses.form.studentPlaceholder")} />
-            </SelectTrigger>
-            <SelectContent>{memberOptions(students, t("courses.form.noMember"))}</SelectContent>
-          </Select>
-          {fieldError("studentId")}
-        </div>
+        {!participantsLocked && (
+          <div className="space-y-2">
+            <Label htmlFor="course-student">
+              {t("common:labels.student")}
+              <RequiredMark />
+            </Label>
+            <Select value={form.studentId} onValueChange={(value) => setField("studentId", value)}>
+              <SelectTrigger id="course-student">
+                <SelectValue placeholder={t("courses.form.studentPlaceholder")} />
+              </SelectTrigger>
+              <SelectContent>{memberOptions(students, t("courses.form.noMember"))}</SelectContent>
+            </Select>
+            {fieldError("studentId")}
+          </div>
+        )}
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">

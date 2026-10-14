@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo, useRef } from "react"
 import { format, addHours, eachHourOfInterval, isSameDay } from "date-fns"
 import { fr } from "date-fns/locale"
 import { useTranslation } from "react-i18next"
-import { CalendarOff, Clock, Plane, Plus } from "lucide-react"
+import { CalendarOff, Clock, Plane, Plus, Wrench } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
@@ -19,8 +19,9 @@ import {
   UPDATE_RESERVATION,
 } from "@/graphql/reservation"
 import { GET_AIRCRAFTS } from "@/graphql/planes"
-import { type Reservation, ReservationStatus } from "@/interfaces/reservation"
+import type { Reservation } from "@/interfaces/reservation"
 import { GET_SETTINGS } from "@/graphql/settings"
+import { maintenanceClash, maintenanceOn } from "@/lib/weekly-maintenance"
 import { toWeekday } from "@/lib/settings"
 import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
 import { PageHeader } from "@/components/layout/PageHeader"
@@ -39,6 +40,8 @@ import {
   type NewReservationValues,
 } from "@/components/reservation/new-reservation-form"
 import { LEGEND_STATUSES, reservationDotClass } from "@/components/reservation/status-style"
+import { PriceEstimate } from "@/components/reservation/price-estimate"
+import { updateInputFrom } from "@/components/reservation/update-input"
 import { reservationStatus } from "@/lib/reservation-status"
 import { formatDate, formatTime } from "@/lib/format"
 import type { TimeRange } from "@/lib/free-ranges"
@@ -53,6 +56,7 @@ interface Aircraft {
   registration_number: string
   model?: string
   availability_status?: string
+  hourly_cost?: number | null
 }
 
 interface DragSelection {
@@ -119,11 +123,7 @@ export default function ReservationCalendar() {
   const [notes, setNotes] = useState("")
   const [flightCategory, setFlightCategory] = useState("")
   const [instructorId, setInstructorId] = useState("")
-  const [editInstructorId, setEditInstructorId] = useState("")
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [editPurpose, setEditPurpose] = useState("")
-  const [editNotes, setEditNotes] = useState("")
-  const [editFlightCategory, setEditFlightCategory] = useState("")
   const [isCreating, setIsCreating] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
   const [mobileAircraftFilter, setMobileAircraftFilter] = useState<number | null>(null)
@@ -132,8 +132,8 @@ export default function ReservationCalendar() {
   const userData = useUserData(userEmail)
   const userId: string | number | null = userData?.id ?? null
   const isAdmin = isAdministrator(userData)
-  // A member without a valid licence books with an instructor (the API decides).
-  const instructorRequired = useInstructorRequired()
+  // A member without a licence valid until the end of the slot books with an instructor (the API decides).
+  const instructorRequired = useInstructorRequired(slotSelection?.end, { skip: !slotSelection })
   const { toast } = useToast()
 
   const formattedDate = format(currentDate, "yyyy-MM-dd")
@@ -185,6 +185,11 @@ export default function ReservationCalendar() {
     const end = addHours(slots[index], 1)
     return closingTime && end > closingTime ? closingTime : end
   }
+
+  // The club's weekly maintenance on the day shown: no aircraft is booked then (the API refuses it).
+  const maintenance = useMemo(() => maintenanceOn(administration, currentDate), [administration, currentDate])
+  const inMaintenance = (start: Date, end: Date) => maintenance !== null && start < maintenance.end && maintenance.start < end
+  const clashWithMaintenance = (start: Date, end: Date) => maintenanceClash(administration, start, end)
 
   const aircrafts: Aircraft[] = aircraftData?.getAircrafts ?? []
   const dayReservations: Reservation[] = reservationData?.filteredReservations ?? []
@@ -266,6 +271,19 @@ export default function ReservationCalendar() {
       return
     }
 
+    if (inMaintenance(start, end)) {
+      setDrag(null)
+      toast({
+        variant: "destructive",
+        title: t("calendar.maintenance.title"),
+        description: t("form.errors.weeklyMaintenance", {
+          from: format(maintenance!.start, "HH:mm"),
+          to: format(maintenance!.end, "HH:mm"),
+        }),
+      })
+      return
+    }
+
     if (reservationsOverlapping(aircraftId, start, end).length > 0) {
       setDrag(null)
       toast({
@@ -323,10 +341,6 @@ export default function ReservationCalendar() {
 
   const handleUpdate = (reservation: Reservation) => {
     setSelectedReservation(reservation)
-    setEditPurpose(reservation.purpose || "")
-    setEditNotes(reservation.notes || "")
-    setEditFlightCategory(reservation.flight_category || "")
-    setEditInstructorId(reservation.instructor?.id != null ? String(reservation.instructor.id) : "")
     setIsReservationDialogOpen(false)
     setIsEditDialogOpen(true)
   }
@@ -364,7 +378,6 @@ export default function ReservationCalendar() {
             purpose: values.purpose,
             user_id: userId,
             estimated_flight_hours: estimatedFlightHours,
-            status: ReservationStatus.PENDING,
             notes: values.notes,
             flight_category: values.flightCategory,
             // Sent only when there is one: the pilot's licence is then not required.
@@ -425,28 +438,19 @@ export default function ReservationCalendar() {
     }
   }
 
-  const handleUpdateReservation = async () => {
+  const handleUpdateReservation = async (values: NewReservationValues) => {
     if (!selectedReservation) return
 
     setIsUpdating(true)
     try {
       await updateReservation({
-        variables: {
-          input: {
-            id: selectedReservation.id,
-            purpose: editPurpose,
-            notes: editNotes,
-            flight_category: editFlightCategory || selectedReservation.flight_category,
-            // Sent only when it changes: null takes the instructor off the booking.
-            ...(editInstructorId !== String(selectedReservation.instructor?.id ?? "")
-              ? { instructor_id: editInstructorId ? Number(editInstructorId) : null }
-              : {}),
-          },
-        },
+        variables: { input: updateInputFrom(selectedReservation, values) },
         refetchQueries: refetchDay,
       })
 
       setIsEditDialogOpen(false)
+      // Show the day the booking now stands on.
+      if (!isSameDay(values.startTime, currentDate)) setCurrentDate(values.startTime)
       toast({
         title: t("toast.updated.title"),
         description: t("toast.updated.description", { aircraft: selectedReservation.aircraft.registration_number }),
@@ -475,14 +479,14 @@ export default function ReservationCalendar() {
 
       setIsReservationDialogOpen(false)
       toast({
-        title: t("toast.deleted.title"),
-        description: t("toast.deleted.description", { aircraft: selectedReservation.aircraft.registration_number }),
+        title: t("toast.cancelled.title"),
+        description: t("toast.cancelled.description", { aircraft: selectedReservation.aircraft.registration_number }),
       })
     } catch (error) {
       toast({
         variant: "destructive",
-        title: t("toast.deleteFailed.title"),
-        description: apiRefusalMessage(error, t("toast.deleteFailed.description")),
+        title: t("toast.cancelFailed.title"),
+        description: apiRefusalMessage(error, t("toast.cancelFailed.description")),
       })
     }
   }
@@ -490,6 +494,8 @@ export default function ReservationCalendar() {
   const renderRow = (aircraft: Aircraft) => {
     const cells: React.ReactNode[] = []
     let index = 0
+    // The API refuses any booking of an unavailable aircraft: its free hours are not offered.
+    const unavailable = aircraft.availability_status === "UNAVAILABLE"
 
     while (index < slots.length) {
       const slotIndex = index
@@ -510,6 +516,50 @@ export default function ReservationCalendar() {
             isMine={isOwnReservation(reservation)}
             onClick={() => handleReservationClick(reservation)}
           />,
+        )
+        index += span
+        continue
+      }
+
+      // The weekly maintenance is shown like closed hours, on every aircraft.
+      if (inMaintenance(slot, slotEnd(slotIndex))) {
+        let span = 1
+        while (
+          slotIndex + span < slots.length &&
+          inMaintenance(slots[slotIndex + span], slotEnd(slotIndex + span)) &&
+          reservationsOverlapping(aircraft.id, slots[slotIndex + span], slotEnd(slotIndex + span)).length === 0
+        ) {
+          span++
+        }
+        cells.push(
+          <TableCell
+            key={slotIndex}
+            colSpan={span}
+            className="h-12 border-l border-border/50 bg-muted/40 px-3 text-xs text-muted-foreground"
+          >
+            {t("calendar.maintenance.cell")}
+          </TableCell>,
+        )
+        index += span
+        continue
+      }
+
+      if (unavailable) {
+        let span = 1
+        while (
+          slotIndex + span < slots.length &&
+          reservationsOverlapping(aircraft.id, slots[slotIndex + span], slotEnd(slotIndex + span)).length === 0
+        ) {
+          span++
+        }
+        cells.push(
+          <TableCell
+            key={slotIndex}
+            colSpan={span}
+            className="h-12 border-l border-border/50 bg-muted/40 px-3 text-xs text-muted-foreground"
+          >
+            {t("calendar.unavailableHint")}
+          </TableCell>,
         )
         index += span
         continue
@@ -606,6 +656,7 @@ export default function ReservationCalendar() {
           onViewReservation={handleReservationClick}
           opening={slots[0] ?? null}
           closing={closingTime}
+          maintenance={maintenance}
           onBookRange={handleBookRange}
         />
       )
@@ -701,7 +752,20 @@ export default function ReservationCalendar() {
         }
       />
 
-      <DateNavigator currentDate={currentDate} setCurrentDate={setCurrentDate} isClosedDay={isClosedDay} />
+      <DateNavigator currentDate={currentDate} setCurrentDate={setCurrentDate} isClosedDay={isClosedDay} compact={isMobile} />
+
+      {maintenance && !dayClosed && !loading && (
+        <Alert>
+          <Wrench className="h-4 w-4" aria-hidden="true" />
+          <AlertTitle>{t("calendar.maintenance.title")}</AlertTitle>
+          <AlertDescription>
+            {t("calendar.maintenance.description", {
+              from: format(maintenance.start, "HH:mm"),
+              to: format(maintenance.end, "HH:mm"),
+            })}
+          </AlertDescription>
+        </Alert>
+      )}
 
       {renderDay()}
 
@@ -723,6 +787,16 @@ export default function ReservationCalendar() {
                 end: format(slotSelection.end, "HH:mm"),
               }
             : undefined
+        }
+        price={
+          slotSelection ? (
+            <PriceEstimate
+              hourlyCost={aircrafts.find((a) => a.id === slotSelection.aircraftId)?.hourly_cost}
+              start={slotSelection.start}
+              end={slotSelection.end}
+              withInstructor={instructorId !== ""}
+            />
+          ) : undefined
         }
         purpose={purpose}
         setPurpose={setPurpose}
@@ -751,9 +825,9 @@ export default function ReservationCalendar() {
           currentDate={currentDate}
           prefill={prefill}
           isClosedDay={isClosedDay}
+          maintenanceClash={clashWithMaintenance}
           onSubmit={handleCreateFromForm}
           isSubmitting={isCreating}
-          instructorRequired={instructorRequired}
           pilotId={userId}
         />
       )}
@@ -765,37 +839,30 @@ export default function ReservationCalendar() {
           reservation={selectedReservation}
           onEdit={() => handleUpdate(selectedReservation)}
           onDelete={handleDeleteReservation}
-          canEdit={isOwnReservation(selectedReservation)}
+          // An administrator may change anyone's booking (the API checks it).
+          canEdit={isOwnReservation(selectedReservation) || isAdmin}
+          isOwner={isOwnReservation(selectedReservation)}
           isAdmin={isAdmin}
           isInstructor={isInstructorOf(selectedReservation)}
         />
       )}
 
-      {selectedReservation && (
-        <ReservationForm
+      {selectedReservation && isEditDialogOpen && (
+        <NewReservationForm
+          key={`edit-${selectedReservation.id}`}
           open={isEditDialogOpen}
           onOpenChange={setIsEditDialogOpen}
-          title={t("form.editTitle")}
-          description={t("form.editDescription")}
-          isEdit
-          summary={{
-            aircraft: selectedReservation.aircraft.registration_number,
-            date: longDate(new Date(selectedReservation.start_time)),
-            start: format(new Date(selectedReservation.start_time), "HH:mm"),
-            end: format(new Date(selectedReservation.end_time), "HH:mm"),
-          }}
-          purpose={editPurpose}
-          setPurpose={setEditPurpose}
-          notes={editNotes}
-          setNotes={setEditNotes}
-          flightCategory={editFlightCategory}
-          setFlightCategory={setEditFlightCategory}
-          instructorId={editInstructorId}
-          setInstructorId={setEditInstructorId}
-          instructorRequired={instructorRequired && isOwnReservation(selectedReservation)}
-          pilotId={selectedReservation.user?.id}
+          aircrafts={aircrafts}
+          currentDate={currentDate}
+          isClosedDay={isClosedDay}
+          maintenanceClash={clashWithMaintenance}
           onSubmit={handleUpdateReservation}
           isSubmitting={isUpdating}
+          editing={selectedReservation}
+          // Another member's licence is the API's to check.
+          checkLicence={isOwnReservation(selectedReservation)}
+          forSelf={isOwnReservation(selectedReservation)}
+          pilotId={selectedReservation.user?.id}
         />
       )}
     </div>

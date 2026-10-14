@@ -139,7 +139,11 @@ export default function ExpensesReport({ period, date }: { period: string; date:
                     stroke="hsl(var(--card))"
                   >
                     {categories.map((category, index) => (
-                      <Cell key={category.name} fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]} />
+                      <Cell
+                        key={category.name}
+                        fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]}
+                        aria-label={category.name}
+                      />
                     ))}
                   </Pie>
                   <Tooltip

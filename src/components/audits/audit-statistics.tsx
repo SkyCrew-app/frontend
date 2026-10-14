@@ -223,7 +223,12 @@ export function AuditStatistics() {
               <PieChart>
                 <Pie data={resultsData} dataKey="value" cx="50%" cy="50%" outerRadius={80} labelLine={false}>
                   {resultsData.map((entry) => (
-                    <Cell key={entry.name} fill={entry.color} stroke="hsl(var(--card))" />
+                    <Cell
+                      key={entry.name}
+                      fill={entry.color}
+                      stroke="hsl(var(--card))"
+                      aria-label={`${entry.name} : ${entry.value}`}
+                    />
                   ))}
                 </Pie>
                 <Legend content={<ChartLegend />} />
@@ -237,7 +242,12 @@ export function AuditStatistics() {
               <PieChart>
                 <Pie data={statusData} dataKey="value" cx="50%" cy="50%" outerRadius={80} labelLine={false}>
                   {statusData.map((entry) => (
-                    <Cell key={entry.name} fill={entry.color} stroke="hsl(var(--card))" />
+                    <Cell
+                      key={entry.name}
+                      fill={entry.color}
+                      stroke="hsl(var(--card))"
+                      aria-label={`${entry.name} : ${entry.value}`}
+                    />
                   ))}
                 </Pie>
                 <Legend content={<ChartLegend />} />

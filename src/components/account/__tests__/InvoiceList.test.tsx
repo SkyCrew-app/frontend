@@ -24,6 +24,7 @@ const invoice = (overrides: Record<string, unknown> = {}) => ({
   amount: 150,
   payment_status: 'completed',
   payment_method: 'account_balance',
+  invoice_items: null as string | null,
   ...overrides,
 });
 
@@ -60,6 +61,41 @@ describe('Mes factures', () => {
     expect(rows[2]).toHaveTextContent('2026-00005');
     expect(rows[2]).toHaveTextContent('Réservation');
     expect(rows[2]).toHaveTextContent('150,00 €');
+  });
+
+  it('dit l’objet de chaque facture d’après ses lignes, comme son PDF', async () => {
+    renderList([
+      invoicesMock([
+        invoice({
+          id: 7,
+          invoice_number: '2026-00007',
+          invoice_date: '2026-10-13T09:00:00.000Z',
+          invoice_items: JSON.stringify([
+            { kind: 'booking', amount: 150, registration: 'F-GSKY', start: '2026-10-12T08:00:00.000Z' },
+          ]),
+        }),
+        // A flight paid by PayPal: its line, not its payment method, says what it was for.
+        invoice({
+          id: 8,
+          invoice_number: '2026-00008',
+          invoice_date: '2026-10-11T09:00:00.000Z',
+          payment_method: 'paypal',
+          invoice_items: '2.2h de vol Cirrus SR22 (F-GPIL)',
+        }),
+        invoice({
+          id: 9,
+          invoice_number: '2026-00009',
+          invoice_date: '2026-10-10T09:00:00.000Z',
+          payment_method: 'Carte bancaire',
+        }),
+      ]),
+    ]);
+
+    const rows = await screen.findAllByRole('row');
+    expect(rows[1]).toHaveTextContent('Vol en F-GSKY du 12 oct. 2026');
+    expect(rows[2]).toHaveTextContent('2.2h de vol Cirrus SR22 (F-GPIL)');
+    expect(rows[2]).not.toHaveTextContent('Rechargement');
+    expect(rows[3]).toHaveTextContent('Autre paiement');
   });
 
   it('télécharge la facture demandée, sous le nom donné par l’API', async () => {

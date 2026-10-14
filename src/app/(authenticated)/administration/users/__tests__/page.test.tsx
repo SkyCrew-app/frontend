@@ -9,10 +9,13 @@ import {
   DELETE_USER,
   GET_MEMBER_COMMITMENTS,
   GET_USERS,
+  GET_USER_DETAILS,
   RESEND_INVITATION,
   SET_USER_ACTIVE,
+  UPDATE_USER,
 } from '@/graphql/user';
 import { GET_ROLES } from '@/graphql/roles';
+import { DELETE_LICENSE, GET_PENDING_LICENSES, UPDATE_LICENSE, VALIDATE_LICENSE } from '@/graphql/licences';
 import { formatMoney } from '@/lib/format';
 
 const mockToast = jest.fn();
@@ -423,5 +426,256 @@ describe('Administration des membres : état du compte', () => {
     await openActions(user);
     expect(await screen.findByRole('menuitem', { name: 'Désactiver le compte' })).toBeInTheDocument();
     expect(screen.queryByRole('menuitem', { name: "Renvoyer l'invitation" })).not.toBeInTheDocument();
+  });
+});
+
+describe('Administration des membres : licences', () => {
+  beforeEach(() => mockToast.mockClear());
+
+  const licence = {
+    id: '4',
+    certification_authority: 'DGAC',
+    license_number: 'FRA.FCL.PA001',
+    license_type: 'PPL',
+    issue_date: '2020-03-01T00:00:00.000Z',
+    expiration_date: '2030-03-01T00:00:00.000Z',
+    status: 'active',
+    documents_url: ['/uploads/licence.pdf'],
+  };
+  const detailsMock = (licenses = [licence]): MockedResponse => ({
+    request: { query: GET_USER_DETAILS, variables: { id: 7 } },
+    result: {
+      data: {
+        getUserDetails: {
+          ...member(),
+          address: null,
+          total_flight_hours: 12,
+          user_account_balance: 50,
+          reservations: [],
+          licenses,
+        },
+      },
+    },
+  });
+
+  const openLicences = async (user: ReturnType<typeof userEvent.setup>) => {
+    await user.click(await screen.findByText('Camille Martin'));
+    const sheet = await screen.findByRole('dialog', { name: /Camille Martin/ });
+    await user.click(await within(sheet).findByRole('tab', { name: /Licences/ }));
+    await user.click(within(sheet).getByRole('button', { name: 'Actions sur la licence PPL' }));
+  };
+
+  it('corrige une licence sans renvoyer ses justificatifs, puis revient à la fiche', async () => {
+    const user = userEvent.setup();
+    const updated = jest.fn(() => ({ data: { updateLicense: { ...licence, license_number: 'FRA.FCL.PA002' } } }));
+    renderPage([
+      usersMock([member()]),
+      detailsMock(),
+      {
+        request: {
+          query: UPDATE_LICENSE,
+          variables: {
+            updateLicenseInput: {
+              id: 4,
+              license_type: 'PPL',
+              license_number: 'FRA.FCL.PA002',
+              // Calendar days travel as noon UTC, like every date of the forms.
+              expiration_date: '2030-03-01T12:00:00.000Z',
+              issue_date: '2020-03-01T12:00:00.000Z',
+              certification_authority: 'DGAC',
+              status: 'active',
+            },
+            documents: null,
+          },
+        },
+        result: updated,
+      },
+      detailsMock([{ ...licence, license_number: 'FRA.FCL.PA002' }]),
+    ]);
+
+    await openLicences(user);
+    await user.click(await screen.findByRole('menuitem', { name: 'Modifier' }));
+
+    const panel = await screen.findByRole('dialog', { name: 'Modifier la licence' });
+    expect(within(panel).getByRole('combobox', { name: /Membre/ })).toBeDisabled();
+    const number = within(panel).getByLabelText(/^Numéro de licence/);
+    expect(number).toHaveValue('FRA.FCL.PA001');
+    await user.clear(number);
+    await user.type(number, 'FRA.FCL.PA002');
+    await user.click(within(panel).getByRole('button', { name: 'Suivant' }));
+    expect(within(panel).getByText(/le justificatif actuel est conservé/)).toBeInTheDocument();
+    await user.click(within(panel).getByRole('button', { name: 'Enregistrer' }));
+
+    await waitFor(() => expect(updated).toHaveBeenCalledTimes(1));
+    expect(mockToast).toHaveBeenCalledWith({ title: 'Licence modifiée' });
+    const sheet = await screen.findByRole('dialog', { name: /Camille Martin/ });
+    await user.click(await within(sheet).findByRole('tab', { name: /Licences/ }));
+    expect(await within(sheet).findByText('FRA.FCL.PA002')).toBeInTheDocument();
+  });
+
+  it("demande les nouvelles dates pour renouveler une licence", async () => {
+    const user = userEvent.setup();
+    renderPage([usersMock([member()]), detailsMock()]);
+
+    await openLicences(user);
+    await user.click(await screen.findByRole('menuitem', { name: 'Renouveler' }));
+
+    const panel = await screen.findByRole('dialog', { name: 'Renouveler la licence' });
+    expect(within(panel).getByLabelText(/^Numéro de licence/)).toHaveValue('FRA.FCL.PA001');
+    await user.click(within(panel).getByRole('button', { name: 'Suivant' }));
+    await user.click(within(panel).getByRole('button', { name: 'Renouveler la licence' }));
+    expect(await within(panel).findByText('Indiquez la date de délivrance.')).toBeInTheDocument();
+  });
+
+  it('supprime une licence après confirmation', async () => {
+    const user = userEvent.setup();
+    const deleted = jest.fn(() => ({ data: { deleteLicense: true } }));
+    renderPage([
+      usersMock([member()]),
+      detailsMock(),
+      { request: { query: DELETE_LICENSE, variables: { id: 4 } }, result: deleted },
+      detailsMock([]),
+    ]);
+
+    await openLicences(user);
+    await user.click(await screen.findByRole('menuitem', { name: 'Supprimer' }));
+
+    const confirm = await screen.findByRole('alertdialog');
+    expect(confirm).toHaveTextContent('Supprimer la licence PPL de Camille Martin ?');
+    expect(deleted).not.toHaveBeenCalled();
+    await user.click(within(confirm).getByRole('button', { name: 'Supprimer la licence' }));
+
+    await waitFor(() => expect(deleted).toHaveBeenCalledTimes(1));
+    expect(mockToast).toHaveBeenCalledWith({ title: 'Licence supprimée' });
+    expect(await screen.findByText('Aucune licence enregistrée')).toBeInTheDocument();
+  });
+});
+
+describe('Administration des membres : licences à valider', () => {
+  beforeEach(() => mockToast.mockClear());
+
+  const pendingLicence = {
+    id: '9',
+    certification_authority: 'DGAC',
+    license_number: 'FRA.FCL.PA009',
+    license_type: 'CPL',
+    issue_date: '2024-01-15T12:00:00.000Z',
+    expiration_date: '2034-01-15T12:00:00.000Z',
+    status: 'pending',
+    documents_url: ['/uploads/licences/cpl.pdf'],
+  };
+  const pendingMock = (licences: unknown[]): MockedResponse => ({
+    request: { query: GET_PENDING_LICENSES },
+    result: { data: { getAllLicenses: licences } },
+  });
+  const details = (licenses: unknown[]): MockedResponse => ({
+    request: { query: GET_USER_DETAILS, variables: { id: 7 } },
+    result: {
+      data: {
+        getUserDetails: {
+          ...member(),
+          address: null,
+          total_flight_hours: 12,
+          user_account_balance: 50,
+          reservations: [],
+          licenses,
+        },
+      },
+    },
+  });
+
+  it('compte les licences en attente, ouvre la fiche sur ses licences et valide', async () => {
+    const user = userEvent.setup();
+    const validated = jest.fn(() => ({
+      data: { validateLicense: { id: 9, status: 'active', is_valid: true, expiration_date: pendingLicence.expiration_date } },
+    }));
+    renderPage([
+      usersMock([member()]),
+      pendingMock([
+        { id: 9, license_type: 'CPL', status: 'pending', user: { id: 7, first_name: 'Camille', last_name: 'Martin' } },
+        { id: 3, license_type: 'PPL', status: 'active', user: { id: 8, first_name: 'Léa', last_name: 'Petit' } },
+      ]),
+      details([pendingLicence]),
+      { request: { query: VALIDATE_LICENSE, variables: { id: 9 } }, result: validated },
+      details([{ ...pendingLicence, status: 'active' }]),
+      pendingMock([]),
+    ]);
+
+    // Only the pending one counts.
+    expect(await screen.findByText('1 licence attend votre validation')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Ouvrir la fiche de Camille Martin CPL' }));
+
+    const sheet = await screen.findByRole('dialog', { name: /Camille Martin/ });
+    // Opened on the licences, the pending one flagged.
+    expect(await within(sheet).findByText('FRA.FCL.PA009')).toBeInTheDocument();
+    expect(within(sheet).getByText('En attente')).toBeInTheDocument();
+    await user.click(within(sheet).getByRole('button', { name: 'Valider la licence CPL' }));
+
+    await waitFor(() => expect(validated).toHaveBeenCalledTimes(1));
+    expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Licence validée' }));
+    expect(await within(sheet).findByText('Valide')).toBeInTheDocument();
+    expect(within(sheet).queryByRole('button', { name: 'Valider la licence CPL' })).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText(/attend votre validation/)).not.toBeInTheDocument());
+  });
+});
+
+describe("Administration des membres : retrait du rôle d'instructeur", () => {
+  beforeEach(() => mockToast.mockClear());
+
+  const instructor = member({ role: { id: 3, role_name: 'Instructeur' } });
+  const input = (extra: Record<string, unknown> = {}) => ({
+    first_name: 'Camille',
+    last_name: 'Martin',
+    email: 'camille@exemple.fr',
+    phone_number: '0612345678',
+    date_of_birth: '1990-05-12',
+    roleId: 3,
+    ...extra,
+  });
+  const listed =
+    'Ce membre instruit encore 2 réservation(s) et 0 cours à venir (14/05/2031 10:00 F-GABC – Léa Petit ; 03/06/2031 10:00 F-HXYZ – Hugo Roux). Confirmez le changement de rôle pour les annuler : les élèves seront remboursés.';
+  const updated = {
+    data: {
+      updateUser: {
+        first_name: 'Camille',
+        last_name: 'Martin',
+        email: 'camille@exemple.fr',
+        phone_number: '0612345678',
+        address: null,
+        date_of_birth: '1990-05-12T00:00:00.000Z',
+        profile_picture: null,
+      },
+    },
+  };
+
+  it("montre ce que l'API refuse d'abandonner, et ne l'annule qu'après confirmation", async () => {
+    const user = userEvent.setup();
+    renderPage([
+      usersMock([instructor]),
+      { request: { query: UPDATE_USER, variables: { updateUserInput: input() } }, result: refused(listed, 409) },
+      {
+        request: {
+          query: UPDATE_USER,
+          variables: { updateUserInput: input({ cancelInstructionCommitments: true }) },
+        },
+        result: updated,
+      },
+      usersMock([instructor]),
+    ]);
+
+    await openActions(user);
+    await user.click(await screen.findByRole('menuitem', { name: 'Modifier' }));
+    await user.click(await screen.findByRole('button', { name: 'Enregistrer' }));
+
+    const dialog = await screen.findByRole('alertdialog');
+    expect(within(dialog).getByText("Retirer le rôle d'instructeur ?")).toBeInTheDocument();
+    expect(within(dialog).getByText(listed)).toBeInTheDocument();
+    // Nothing said yet: the administrator decides.
+    expect(mockToast).not.toHaveBeenCalled();
+
+    await user.click(within(dialog).getByRole('button', { name: 'Changer le rôle et annuler' }));
+
+    await waitFor(() => expect(mockToast).toHaveBeenCalledWith({ title: 'Membre mis à jour' }));
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
   });
 });

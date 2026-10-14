@@ -150,8 +150,6 @@ describe("CourseFormDialog", () => {
               input: {
                 id: 7,
                 startTime: existingCourse.startTime,
-                instructorId: 2,
-                studentId: 5,
                 status: "COMPLETED",
               },
             },
@@ -163,6 +161,51 @@ describe("CourseFormDialog", () => {
     )
 
     expect(await screen.findByRole("heading", { name: "Modifier le cours" })).toBeInTheDocument()
+    // The API lets only an administrator change the student: an instructor is not offered it.
+    expect(screen.getByText(/Seul un administrateur peut changer l'élève ou l'instructeur/)).toBeInTheDocument()
+    expect(screen.queryByRole("combobox", { name: /Élève/ })).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole("combobox", { name: /Statut/ }))
+    await userEvent.click(await screen.findByRole("option", { name: "Terminé" }))
+    await userEvent.click(screen.getByRole("button", { name: "Enregistrer" }))
+
+    await waitFor(() => expect(update).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(onSaved).toHaveBeenCalled())
+  })
+
+  it("laisse un administrateur changer l'élève d'un cours", async () => {
+    const update = jest.fn(() => ({
+      data: {
+        updateCourseInstruction: {
+          id: 7,
+          startTime: existingCourse.startTime,
+          endTime: null,
+          instructor: { id: 2, first_name: "Paul" },
+        },
+      },
+    }))
+    const { onSaved } = renderDialog(
+      [
+        {
+          request: {
+            query: UPDATE_COURSE,
+            variables: {
+              input: {
+                id: 7,
+                startTime: existingCourse.startTime,
+                instructorId: 2,
+                studentId: 5,
+                status: "COMPLETED",
+              },
+            },
+          },
+          result: update,
+        },
+      ],
+      { course: existingCourse, canChangeParticipants: true },
+    )
+
+    expect(await screen.findByRole("heading", { name: "Modifier le cours" })).toBeInTheDocument()
+    expect(screen.getByRole("combobox", { name: /Élève/ })).toBeInTheDocument()
     await userEvent.click(screen.getByRole("combobox", { name: /Statut/ }))
     await userEvent.click(await screen.findByRole("option", { name: "Terminé" }))
     await userEvent.click(screen.getByRole("button", { name: "Enregistrer" }))

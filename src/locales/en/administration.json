@@ -9,18 +9,14 @@
       "available_one": "{{count}} available",
       "available_other": "{{count}} available",
       "bookings": "Bookings",
-      "pending": "{{count}} pending",
       "flightHoursThisMonth": "Flight hours this month"
     },
     "attention": {
       "title": "Needs attention",
       "empty": "Nothing to report for now.",
-      "pendingBookings_one": "{{count}} pending booking",
-      "pendingBookings_other": "{{count}} pending bookings",
-      "pendingBookingsHint": "To confirm or decline in the schedule.",
       "unavailableAircraft_one": "{{count}} aircraft unavailable",
       "unavailableAircraft_other": "{{count}} aircraft unavailable",
-      "unavailableAircraftHint": "In maintenance or removed from the schedule.",
+      "unavailableAircraftHint": "Grounded for maintenance, an incident or an audit.",
       "severeIncidents_one": "{{count}} recent high-severity incident",
       "severeIncidents_other": "{{count}} recent high-severity incidents"
     },
@@ -184,7 +180,39 @@
         "number": "Enter the licence number.",
         "issueDate": "Enter the date of issue.",
         "expirationBeforeIssue": "The expiry date cannot be before the date of issue."
-      }
+      },
+      "titles": {
+        "add": "Add a licence",
+        "edit": "Edit the licence",
+        "renew": "Renew the licence"
+      },
+      "descriptions": {
+        "edit": "Correct {{name}}'s licence.",
+        "renew": "Enter the new dates of {{name}}'s licence and attach the new document."
+      },
+      "submits": {
+        "add": "Add the licence",
+        "edit": "Save",
+        "renew": "Renew the licence"
+      },
+      "documentsKeptHint_one": "Optional. Without a new file the current document is kept; a new file replaces it.",
+      "documentsKeptHint_other": "Optional. Without new files the {{count}} current documents are kept; new files replace them.",
+      "documentsRenewHint": "Scan or photo of the renewed licence (PDF, JPG, PNG or WebP). Without a file the current documents are kept.",
+      "actions": "Actions on the {{type}} licence",
+      "edit": "Edit",
+      "renew": "Renew",
+      "delete": "Delete",
+      "deleteConfirm": {
+        "title": "Delete {{name}}'s {{type}} licence?",
+        "description": "The licence and its documents disappear from the member's record. If it has only expired, renew it instead.",
+        "confirm": "Delete the licence"
+      },
+      "validate": "Validate",
+      "validateLabel": "Validate the {{type}} licence",
+      "pendingCount_one": "{{count}} waiting for validation",
+      "pendingCount_other": "{{count}} waiting for validation",
+      "pendingTitle": "{{type}} licence no. {{number}} waiting for validation",
+      "pendingHint": "Added or changed by the member. Check it against its document before validating it: it will then count for their bookings."
     },
     "details": {
       "title": "Member details",
@@ -262,6 +290,30 @@
       },
       "deleteFailed": {
         "title": "The member could not be deleted"
+      },
+      "licenceUpdated": {
+        "title": "Licence updated"
+      },
+      "licenceRenewed": {
+        "title": "Licence renewed"
+      },
+      "licenceDeleted": {
+        "title": "Licence deleted"
+      },
+      "licenceUpdateFailed": {
+        "title": "The licence could not be saved",
+        "description": "Check the details entered, then try again."
+      },
+      "licenceDeleteFailed": {
+        "title": "The licence could not be deleted",
+        "description": "Try again in a moment."
+      },
+      "licenceValidated": {
+        "title": "Licence validated",
+        "description": "The {{type}} licence now counts for bookings."
+      },
+      "licenceValidateFailed": {
+        "title": "Validation failed"
       }
     },
     "balance": {
@@ -337,6 +389,16 @@
       "instructionCancelled_other": "{{count}} instruction flights cancelled, {{amount}} refunded to the students.",
       "instructionLeft_one": "{{count}} instruction flight stays on the schedule without an active instructor: let the student know.",
       "instructionLeft_other": "{{count}} instruction flights stay on the schedule without an active instructor: let the students know."
+    },
+    "roleChange": {
+      "title": "Remove the instructor role?",
+      "confirm": "Change the role and cancel"
+    },
+    "pendingLicences": {
+      "title_one": "{{count}} licence is waiting for your validation",
+      "title_other": "{{count}} licences are waiting for your validation",
+      "description": "Members added or changed a licence. Check it against its document, then validate it from their sheet.",
+      "open": "Open the sheet of"
     }
   },
   "finance": {
@@ -391,7 +453,7 @@
     },
     "summary": {
       "noPreviousReport": "No previous report",
-      "lastReport": "Last report: {{change}}",
+      "lastReport": "Last report: {{change}} on the previous one",
       "reportOf": "Report of {{date}}",
       "empty": {
         "title": "No financial reports",
@@ -410,7 +472,10 @@
       "recommendations": {
         "title": "Recommendations",
         "description": "From the report of {{date}}."
-      }
+      },
+      "totalRevenue": "Total revenue",
+      "totalExpenses": "Total expenses",
+      "totalResult": "Total net result"
     },
     "expenses": {
       "empty": {
@@ -456,7 +521,7 @@
       "surplus": "Surplus over {{months}} months",
       "deficit": "Deficit over {{months}} months",
       "title": "{{months}}-month forecast",
-      "description": "Month-by-month estimate, starting from the current month.",
+      "description": "For each month, the bookings already confirmed and the expenses already entered: a month without bookings stays at zero.",
       "byMonth": "Details by month"
     },
     "expenseForm": {
@@ -1214,14 +1279,6 @@
     "pending": "Pending"
   },
   "flightCategory": {
-    "local": "Local",
-    "cross_country": "Cross-country",
-    "instruction": "Instruction",
-    "tourism": "Touring",
-    "training": "Training",
-    "maintenance": "Maintenance",
-    "private": "Private",
-    "corporate": "Corporate",
     "other": "Other"
   },
   "expenseCategory": {
@@ -1409,7 +1466,7 @@
     "targets": {
       "member": "Member",
       "payment": "Payment",
-      "settings": "Settings",
+      "settings": "Club settings",
       "incident": "Incident",
       "role": "Role",
       "reservation": "Booking",
@@ -1425,7 +1482,7 @@
       "upcomingReservations": "Upcoming bookings",
       "cancelledReservations": "Bookings cancelled",
       "refundedAmount": "Refunded",
-      "keptReservationIds": "Bookings not cancelled",
+      "keptReservationIds": "Bookings kept in the schedule",
       "upcomingCourses": "Scheduled lessons",
       "email": "E-mail address",
       "requested": "Status asked for",
@@ -1460,7 +1517,11 @@
       "isMaintenanceActive": "Maintenance mode",
       "maintenanceMessage": "Maintenance message",
       "maintenanceTime": "Planned end of maintenance",
-      "taxonomies": "Club lists"
+      "taxonomies": "Club lists",
+      "flightTypes": "Flight types",
+      "licenseTypes": "Licence types",
+      "maintenanceTypes": "Maintenance types",
+      "aircraftCategories": "Aircraft categories"
     },
     "values": {
       "credit": "credit",
@@ -1476,7 +1537,14 @@
       "refunded": "refunded",
       "AVAILABLE": "available",
       "UNAVAILABLE": "unavailable",
-      "RESERVATED": "booked"
+      "RESERVATED": "booked",
+      "monday": "Monday",
+      "tuesday": "Tuesday",
+      "wednesday": "Wednesday",
+      "thursday": "Thursday",
+      "friday": "Friday",
+      "saturday": "Saturday",
+      "sunday": "Sunday"
     },
     "targetNamed": "{{type}}: {{name}}",
     "targetNumbered": "{{type}} No. {{id}}",

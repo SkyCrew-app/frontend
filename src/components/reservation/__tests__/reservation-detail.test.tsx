@@ -1,5 +1,5 @@
 import React from "react"
-import { render, screen } from "@testing-library/react"
+import { fireEvent, render, screen } from "@testing-library/react"
 import "@testing-library/jest-dom"
 import { ReservationDetail } from "../reservation-detail"
 import { apiRefusalMessage } from "../api-refusal"
@@ -27,7 +27,7 @@ const reservation = (startsInHours: number, overrides: Partial<Reservation> = {}
 
 const renderDetail = (
   booking: Reservation,
-  props: { canEdit: boolean; isAdmin?: boolean; isInstructor?: boolean },
+  props: { canEdit: boolean; isOwner?: boolean; isAdmin?: boolean; isInstructor?: boolean },
 ) =>
   render(
     <ReservationDetail open onOpenChange={jest.fn()} reservation={booking} onEdit={jest.fn()} onDelete={jest.fn()} {...props} />,
@@ -36,11 +36,11 @@ const renderDetail = (
 const action = (name: string) => screen.queryByRole("button", { name })
 
 describe("Détail d'une réservation — ce que l'API accepterait", () => {
-  it("laisse son titulaire modifier et supprimer une réservation à venir, et lui montre le prix payé", () => {
+  it("laisse son titulaire modifier et annuler une réservation à venir, et lui montre le prix payé", () => {
     renderDetail(reservation(24), { canEdit: true })
 
     expect(action("Modifier")).toBeInTheDocument()
-    expect(action("Supprimer")).toBeInTheDocument()
+    expect(action("Annuler la réservation")).toBeInTheDocument()
     expect(screen.getByText("Prix payé")).toBeInTheDocument()
     expect(screen.getByText(/150,00\s€/)).toBeInTheDocument()
   })
@@ -49,14 +49,14 @@ describe("Détail d'une réservation — ce que l'API accepterait", () => {
     renderDetail(reservation(-1), { canEdit: true })
 
     expect(action("Modifier")).not.toBeInTheDocument()
-    expect(action("Supprimer")).not.toBeInTheDocument()
+    expect(action("Annuler la réservation")).not.toBeInTheDocument()
     expect(screen.getByText(/seul un administrateur peut l'annuler/)).toBeInTheDocument()
   })
 
   it("laisse un administrateur annuler la réservation commencée d'un autre membre, sans la modifier", () => {
     renderDetail(reservation(-1), { canEdit: false, isAdmin: true })
 
-    expect(action("Supprimer")).toBeInTheDocument()
+    expect(action("Annuler la réservation")).toBeInTheDocument()
     expect(action("Modifier")).not.toBeInTheDocument()
   })
 
@@ -66,7 +66,7 @@ describe("Détail d'une réservation — ce que l'API accepterait", () => {
       isAdmin: true,
     })
 
-    expect(action("Supprimer")).not.toBeInTheDocument()
+    expect(action("Annuler la réservation")).not.toBeInTheDocument()
     expect(action("Modifier")).not.toBeInTheDocument()
   })
 
@@ -89,18 +89,53 @@ describe("Détail d'une réservation — ce que l'API accepterait", () => {
       expect(screen.getByText(/la réservation est annulée et l'élève est remboursé/)).toBeInTheDocument()
     })
 
+    it("ne prétend rien sur le remboursement quand l'instructeur décline sans voir le prix", () => {
+      renderDetail(reservation(24, { instructor, charged_amount: undefined }), { canEdit: false, isInstructor: true })
+
+      fireEvent.click(action("Décliner le vol")!)
+
+      const dialog = screen.getByRole("alertdialog")
+      expect(dialog).toHaveTextContent(/L'élève sera prévenu et remboursé/)
+      expect(dialog).not.toHaveTextContent(/Rien ne sera remboursé/)
+    })
+
     it("ne laisse plus l'instructeur décliner une fois le vol commencé", () => {
       renderDetail(reservation(-1, { instructor }), { canEdit: false, isInstructor: true })
 
       expect(action("Décliner le vol")).not.toBeInTheDocument()
-      expect(action("Supprimer")).not.toBeInTheDocument()
+      expect(action("Annuler la réservation")).not.toBeInTheDocument()
     })
+  })
+
+  it("laisse un administrateur modifier la réservation à venir d'un autre membre", () => {
+    renderDetail(reservation(24), { canEdit: true, isOwner: false, isAdmin: true })
+
+    expect(action("Modifier")).toBeInTheDocument()
+    expect(action("Annuler la réservation")).toBeInTheDocument()
+  })
+
+  it("annonce, avant d'annuler, le montant qui sera remboursé", () => {
+    renderDetail(reservation(24), { canEdit: true })
+
+    fireEvent.click(action("Annuler la réservation")!)
+
+    const dialog = screen.getByRole("alertdialog")
+    expect(dialog).toHaveTextContent("Annuler cette réservation ?")
+    expect(dialog).toHaveTextContent(/150,00\s€ vous seront remboursés sur votre solde/)
+  })
+
+  it("dit qu'il n'y a rien à rembourser quand rien n'a été débité", () => {
+    renderDetail(reservation(24, { charged_amount: null }), { canEdit: true })
+
+    fireEvent.click(action("Annuler la réservation")!)
+
+    expect(screen.getByRole("alertdialog")).toHaveTextContent(/Rien ne sera remboursé/)
   })
 
   it("ne montre ni action ni prix à un autre membre", () => {
     renderDetail(reservation(24), { canEdit: false })
 
-    expect(action("Supprimer")).not.toBeInTheDocument()
+    expect(action("Annuler la réservation")).not.toBeInTheDocument()
     expect(screen.queryByText("Prix payé")).not.toBeInTheDocument()
   })
 })

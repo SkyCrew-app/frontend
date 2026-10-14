@@ -15,6 +15,7 @@ import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
 import { GET_INVOICE_DOCUMENT, GET_MEMBER_INVOICES } from "@/graphql/account"
 import { downloadBase64Pdf } from "@/lib/download"
 import { formatDate, formatMoney } from "@/lib/format"
+import i18n from "@/lib/i18n"
 import { isBalanceSpend, isTopUp } from "./payment-labels"
 
 interface InvoiceRow {
@@ -23,6 +24,7 @@ interface InvoiceRow {
   invoice_date: string
   amount: number | string
   payment_method?: string | null
+  invoice_items?: string | null
 }
 
 const SHOWN_AT_FIRST = 10
@@ -30,6 +32,36 @@ const SHOWN_AT_FIRST = 10
 // What the invoice is for, read from how it was paid.
 const subjectKey = (method: string | null | undefined) =>
   isBalanceSpend(method) ? "invoices.subjectBooking" : isTopUp(method) ? "invoices.subjectTopUp" : "invoices.subjectOther"
+
+type InvoiceLine = { kind?: string; registration?: string | null; start?: string | null; label?: string | null }
+
+// The lines stored with the invoice (the ones its PDF prints): a JSON list, or
+// free text typed by an administrator.
+const invoiceLines = (stored: string | null | undefined): InvoiceLine[] => {
+  if (!stored?.trim()) return []
+  try {
+    const parsed: unknown = JSON.parse(stored)
+    return Array.isArray(parsed) ? parsed.filter((line) => line && typeof line.kind === "string") : []
+  } catch {
+    return [{ kind: "other", label: stored.trim() }]
+  }
+}
+
+/** What the invoice is for, in the words of its first line; the payment method only when no line was kept. */
+export const invoiceSubject = (invoice: Pick<InvoiceRow, "invoice_items" | "payment_method">): string => {
+  const [line, ...others] = invoiceLines(invoice.invoice_items)
+  const more = others.length > 0 ? i18n.t("profile:invoices.moreLines", { count: others.length }) : ""
+  if (line?.kind === "booking") {
+    const subject =
+      line.registration && line.start
+        ? i18n.t("profile:invoices.subjectBookingOf", { registration: line.registration, date: formatDate(line.start) })
+        : i18n.t("profile:invoices.subjectBooking")
+    return subject + more
+  }
+  if (line?.kind === "top_up") return i18n.t("profile:invoices.subjectTopUp") + more
+  if (line?.kind === "other" && line.label) return line.label + more
+  return i18n.t(`profile:${subjectKey(invoice.payment_method)}`)
+}
 
 /** The member's invoices, each one downloadable as a PDF. */
 export default function InvoiceList() {
@@ -100,7 +132,9 @@ export default function InvoiceList() {
                     <TableHead>{t("invoices.date")}</TableHead>
                     <TableHead>{t("invoices.subject")}</TableHead>
                     <TableHead className="text-right">{t("invoices.amount")}</TableHead>
-                    <TableHead className="w-12" />
+                    <TableHead className="w-12">
+                      <span className="sr-only">{t("invoices.downloadColumn")}</span>
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -111,7 +145,7 @@ export default function InvoiceList() {
                       <TableRow key={invoice.id}>
                         <TableCell className="whitespace-nowrap font-medium tabular-nums">{number}</TableCell>
                         <TableCell className="whitespace-nowrap">{formatDate(invoice.invoice_date)}</TableCell>
-                        <TableCell>{t(subjectKey(invoice.payment_method))}</TableCell>
+                        <TableCell>{invoiceSubject(invoice)}</TableCell>
                         <TableCell className="text-right tabular-nums">{formatMoney(invoice.amount)}</TableCell>
                         <TableCell className="text-right">
                           <Button

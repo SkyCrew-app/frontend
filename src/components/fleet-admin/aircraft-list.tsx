@@ -27,7 +27,7 @@ import {
 import { ErrorState } from "@/components/layout/ErrorState"
 import { EmptyState } from "@/components/layout/EmptyState"
 import { toast } from "@/components/hooks/use-toast"
-import { AIRCRAFT_AVAILABILITY_VALUES, aircraftAvailability } from "@/lib/aircraft"
+import { aircraftAvailability, offeredAvailabilities } from "@/lib/aircraft"
 
 interface AircraftListProps {
   /** Opens the creation form, owned by the page. */
@@ -146,7 +146,7 @@ export function AircraftList({ onCreate }: AircraftListProps) {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{t("shared.allAvailabilities")}</SelectItem>
-            {AIRCRAFT_AVAILABILITY_VALUES.map((status) => (
+            {offeredAvailabilities((data?.getAircrafts ?? []).map((aircraft) => aircraft.availability_status)).map((status) => (
               <SelectItem key={status} value={status}>
                 {aircraftAvailability(status).label}
               </SelectItem>
@@ -204,6 +204,7 @@ export function AircraftList({ onCreate }: AircraftListProps) {
         isOpen={isDetailsModalOpen}
         onOpenChange={setIsDetailsModalOpen}
         onEdit={handleEdit}
+        canReturnToService
       />
 
       <AlertDialog

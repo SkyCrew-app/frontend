@@ -37,7 +37,8 @@ import {
 
 const MONTHS = 6
 
-const profitClass = (value: number) => (value >= 0 ? "text-success" : "text-destructive")
+// Nothing booked yet is not a surplus: zero stays neutral.
+const profitClass = (value: number) => (value > 0 ? "text-success" : value < 0 ? "text-destructive" : "")
 
 export default function BudgetForecast() {
   const { t } = useTranslation("administration")

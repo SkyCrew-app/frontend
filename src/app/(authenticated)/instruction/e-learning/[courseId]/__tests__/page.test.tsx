@@ -2,7 +2,7 @@ import React from "react"
 import { render, screen, within } from "@testing-library/react"
 import { MockedProvider, type MockedResponse } from "@apollo/client/testing"
 import CourseDetailPage from "../page"
-import { GET_COURSE_DETAILS, GET_COURSE_PROGRESS, GET_LESSON_PROGRESS } from "@/graphql/instruction"
+import { GET_COMPLETED_LESSONS, GET_COURSE_DETAILS, GET_COURSE_PROGRESS } from "@/graphql/instruction"
 import { GET_USER_EVALUATION_RESULTS } from "@/graphql/evaluation"
 
 jest.mock("next/navigation", () => ({
@@ -41,9 +41,10 @@ const courseData = {
   ],
 }
 
-const lessonProgress = (lessonId: number, completed: boolean): MockedResponse => ({
-  request: { query: GET_LESSON_PROGRESS, variables: { userId: 5, lessonId } },
-  result: { data: { getUserProgress: completed } },
+// The completion of every lesson of the course is read in one request.
+const completedLessons = (completed: number[]): MockedResponse => ({
+  request: { query: GET_COMPLETED_LESSONS, variables: { userId: 5, lessonIds: [11, 12, 13, 14] } },
+  result: { data: { getCompletedLessons: completed } },
 })
 
 const mocks = (completed: number[]): MockedResponse[] => [
@@ -68,7 +69,7 @@ const mocks = (completed: number[]): MockedResponse[] => [
       },
     },
   },
-  ...[11, 12, 13, 14].map((id) => lessonProgress(id, completed.includes(id))),
+  completedLessons(completed),
 ]
 
 const renderPage = (completed: number[]) =>

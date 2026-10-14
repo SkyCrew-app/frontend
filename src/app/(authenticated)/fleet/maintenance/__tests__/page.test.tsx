@@ -15,6 +15,16 @@ jest.mock('@/components/hooks/use-toast', () => ({
   useToast: () => ({ toast: mockToast }),
 }));
 
+// The viewer: an administrator unless a test says otherwise.
+let mockViewerRole = 'Administrateur';
+jest.mock('@/components/hooks/userHooks', () => ({
+  useCurrentUser: () => 'viewer@club.fr',
+  useUserData: () => ({ id: 1, role: { role_name: mockViewerRole } }),
+}));
+beforeEach(() => {
+  mockViewerRole = 'Administrateur';
+});
+
 // Radix Select s'appuie sur des API absentes de jsdom.
 beforeAll(() => {
   Element.prototype.hasPointerCapture = jest.fn(() => false);
@@ -573,5 +583,32 @@ describe('MaintenanceTablePage', () => {
 
     await waitFor(() => expect(screen.queryByText('F-WXYZ')).not.toBeInTheDocument());
     expect(getDataRows()).toHaveLength(2);
+  });
+
+  it("ne propose ni création, ni modification, ni coûts à un pilote : l'API les lui refuse", async () => {
+    mockViewerRole = 'Pilote';
+    const user = userEvent.setup();
+    renderPage();
+
+    await screen.findByText('F-ABCD');
+    expect(screen.queryByRole('button', { name: /Nouvelle maintenance/ })).not.toBeInTheDocument();
+    expect(screen.queryByText('Coût total')).not.toBeInTheDocument();
+    expect(screen.queryByText(money(500))).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Actions/ })).not.toBeInTheDocument();
+
+    // The detail stays readable, without its actions.
+    await user.click(getRowFor('F-ABCD'));
+    const panel = await screen.findByRole('dialog');
+    expect(within(panel).queryByRole('button', { name: 'Modifier' })).not.toBeInTheDocument();
+    expect(within(panel).queryByRole('button', { name: 'Supprimer' })).not.toBeInTheDocument();
+  });
+
+  it('propose la création à un technicien', async () => {
+    mockViewerRole = 'Technicien';
+    renderPage();
+
+    await screen.findByText('F-ABCD');
+    expect(screen.getByRole('button', { name: /Nouvelle maintenance/ })).toBeInTheDocument();
+    expect(screen.getByText('Coût total')).toBeInTheDocument();
   });
 });

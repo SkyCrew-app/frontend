@@ -20,12 +20,15 @@ import { EmptyState } from "@/components/layout/EmptyState"
 import { GET_AIRCRAFTS } from "@/graphql/planes"
 import { type Aircraft, type AircraftData, AvailabilityStatus } from "@/interfaces/aircraft"
 import { useToast } from "@/components/hooks/use-toast"
+import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
+import { canManageFleet } from "@/lib/roles"
 import { StatusBadge } from "@/components/fleet/status-badge"
 import { ListPagination } from "@/components/fleet/list-pagination"
 import { AircraftDetailDialog } from "@/components/fleet/aircraft-detail-dialog"
-import { AIRCRAFT_AVAILABILITY_VALUES, aircraftAvailability } from "@/lib/aircraft"
+import { aircraftAvailability, offeredAvailabilities } from "@/lib/aircraft"
 import { MAINTENANCE_TYPE_VALUES, maintenanceTypeLabel } from "@/lib/maintenance"
 import { formatFlightDuration, formatMoney } from "@/lib/format"
+import { cn } from "@/lib/utils"
 
 const ITEMS_PER_PAGE = 8
 
@@ -60,6 +63,11 @@ export default function FleetDashboard() {
   const [filterStatus, setFilterStatus] = useState("all")
 
   const aircrafts = data?.getAircrafts ?? []
+  const viewer = useUserData(useCurrentUser())
+  // The panel follows the list: a return to service shows at once.
+  const shownAircraft = selectedAircraft
+    ? (aircrafts.find((aircraft) => aircraft.id === selectedAircraft.id) ?? selectedAircraft)
+    : null
   const totalAircrafts = aircrafts.length
 
   const countByStatus = (status: string) => aircrafts.filter((a) => a.availability_status === status).length
@@ -71,7 +79,8 @@ export default function FleetDashboard() {
       ? t("overview.stats.shareOfFleet", { percent: Math.round((count / totalAircrafts) * 100) })
       : undefined
 
-  const availabilityChartData = AIRCRAFT_AVAILABILITY_VALUES.map((status) => ({
+  const availabilities = offeredAvailabilities(aircrafts.map((aircraft) => aircraft.availability_status))
+  const availabilityChartData = availabilities.map((status) => ({
     status,
     name: aircraftAvailability(status).label,
     value: countByStatus(status),
@@ -155,7 +164,7 @@ export default function FleetDashboard() {
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            <div className={cn("grid grid-cols-2 gap-4", reservedCount > 0 ? "lg:grid-cols-4" : "lg:grid-cols-3")}>
               <StatCard label={t("shared.aircraftPlural")} value={totalAircrafts} icon={Plane} tone="primary" />
               <StatCard
                 label={t("overview.stats.available")}
@@ -164,13 +173,16 @@ export default function FleetDashboard() {
                 icon={CheckCircle}
                 tone="success"
               />
-              <StatCard
-                label={t("overview.stats.reserved")}
-                value={reservedCount}
-                hint={shareOfFleet(reservedCount)}
-                icon={CalendarClock}
-                tone="info"
-              />
+              {/* "Réservé" is never set by the application: only shown when an aircraft has it. */}
+              {reservedCount > 0 && (
+                <StatCard
+                  label={t("overview.stats.reserved")}
+                  value={reservedCount}
+                  hint={shareOfFleet(reservedCount)}
+                  icon={CalendarClock}
+                  tone="info"
+                />
+              )}
               <StatCard
                 label={t("overview.stats.unavailable")}
                 value={unavailableCount}
@@ -209,7 +221,11 @@ export default function FleetDashboard() {
                             stroke="hsl(var(--card))"
                           >
                             {availabilityChartData.map((entry) => (
-                              <Cell key={entry.status} fill={AVAILABILITY_COLORS[entry.status]} />
+                              <Cell
+                                key={entry.status}
+                                fill={AVAILABILITY_COLORS[entry.status]}
+                                aria-label={`${entry.name} : ${entry.value}`}
+                              />
                             ))}
                           </Pie>
                           <Tooltip contentStyle={TOOLTIP_STYLE} itemStyle={{ color: "hsl(var(--foreground))" }} />
@@ -301,12 +317,12 @@ export default function FleetDashboard() {
                 />
               </div>
               <Select value={filterStatus} onValueChange={handleStatusFilterChange}>
-                <SelectTrigger className="w-full sm:w-[200px]" aria-label={t("shared.filterByAvailability")}>
+                <SelectTrigger className="w-full sm:w-[220px]" aria-label={t("shared.filterByAvailability")}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t("shared.allAvailabilities")}</SelectItem>
-                  {AIRCRAFT_AVAILABILITY_VALUES.map((status) => (
+                  {availabilities.map((status) => (
                     <SelectItem key={status} value={status}>
                       {aircraftAvailability(status).label}
                     </SelectItem>
@@ -418,7 +434,12 @@ export default function FleetDashboard() {
         </>
       )}
 
-      <AircraftDetailDialog aircraft={selectedAircraft} isOpen={isDetailModalOpen} onOpenChange={setIsDetailModalOpen} />
+      <AircraftDetailDialog
+        aircraft={shownAircraft}
+        isOpen={isDetailModalOpen}
+        onOpenChange={setIsDetailModalOpen}
+        canReturnToService={canManageFleet(viewer)}
+      />
     </div>
   )
 }

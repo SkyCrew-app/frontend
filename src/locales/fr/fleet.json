@@ -102,7 +102,8 @@
     "generalInformation": "Informations générales",
     "fuel": "Carburant",
     "documents": "Documents",
-    "noDocuments": "Aucun document pour cet aéronef."
+    "noDocuments": "Aucun document pour cet aéronef.",
+    "groundedHint": "Immobilisé : il ne peut pas être réservé. Un incident grave, un audit non conforme ou une maintenance le retiennent au sol ; un technicien ou un administrateur le remet en service une fois vérifié."
   },
   "admin": {
     "title": "Gestion de la flotte",
@@ -322,7 +323,8 @@
       "deleteFailed": {
         "description": "La maintenance n'a pas pu être supprimée. Réessayez."
       }
-    }
+    },
+    "descriptionReadOnly": "Les interventions sur les aéronefs de la flotte, passées et à venir."
   },
   "history": {
     "title": "Historique de la flotte",
@@ -362,6 +364,39 @@
       "returnFailed": {
         "title": "Remise en service impossible",
         "description": "L'état de l'aéronef n'a pas pu être modifié. Réessayez."
+      }
+    },
+    "list": {
+      "title": "Incidents",
+      "description": "Les incidents déclarés sur les avions du club, à la clôture d'un vol ou à tout moment.",
+      "followUp": "Suivre les incidents"
+    },
+    "report": {
+      "action": "Signaler un incident",
+      "title": "Signaler un incident",
+      "description": "Une anomalie, une panne ou un dommage constaté sur un avion, en dehors de la clôture d'un vol. Le club est prévenu et suit l'incident.",
+      "aircraftPlaceholder": "Sélectionner un avion",
+      "when": "Constaté le",
+      "groundingHint": "Une gravité élevée immobilise l'avion dès le signalement : il ne peut plus être réservé jusqu'à sa remise en service par le club.",
+      "descriptionPlaceholder": "Ce que vous avez constaté, où et quand (visite pré-vol, au parking…)",
+      "submit": "Signaler l'incident",
+      "errors": {
+        "aircraft": "Choisissez l'avion concerné.",
+        "severity": "Indiquez la gravité.",
+        "description": "Décrivez l'incident.",
+        "date": "Indiquez la date et l'heure.",
+        "future": "La date ne peut pas être dans le futur."
+      },
+      "toast": {
+        "done": {
+          "title": "Incident signalé",
+          "description": "Le club a été prévenu et va le suivre.",
+          "grounded": "{{registration}} est immobilisé jusqu'à sa remise en service. Le club a été prévenu."
+        },
+        "failed": {
+          "title": "Signalement impossible",
+          "description": "L'incident n'a pas pu être enregistré. Réessayez."
+        }
       }
     }
   }

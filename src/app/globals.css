@@ -75,14 +75,16 @@
     --accent: 214 40% 93%;
     --accent-foreground: 216 50% 16%;
     --brand: 25 81% 54%;
-    --brand-foreground: 0 0% 100%;
-    --destructive: 4 72% 46%;
+    /* Dark text on the orange (demo banner): white reads at 2.9:1 only, WCAG AA asks 4.5:1. */
+    --brand-foreground: 218 50% 8%;
+    --destructive: 4 72% 41%;
     --destructive-foreground: 0 0% 100%;
-    --success: 152 62% 29%;
+    /* Status colours dark enough for small text on their own 15 % tint (badges): WCAG AA 4.5:1. */
+    --success: 152 62% 26%;
     --success-foreground: 0 0% 100%;
-    --warning: 32 92% 35%;
+    --warning: 32 92% 29%;
     --warning-foreground: 0 0% 100%;
-    --info: 212 78% 42%;
+    --info: 212 78% 40%;
     --info-foreground: 0 0% 100%;
     --border: 216 24% 88%;
     --input: 216 24% 84%;
@@ -113,8 +115,9 @@
     --card-foreground: 210 35% 94%;
     --popover: 218 40% 13%;
     --popover-foreground: 210 35% 94%;
-    --primary: 212 72% 52%;
-    --primary-foreground: 0 0% 100%;
+    /* Light enough to read as text on the night background, with dark text on it (WCAG AA 4.5:1). */
+    --primary: 212 72% 60%;
+    --primary-foreground: 218 50% 8%;
     --secondary: 217 32% 18%;
     --secondary-foreground: 210 35% 94%;
     --muted: 217 32% 16%;
@@ -123,8 +126,8 @@
     --accent-foreground: 210 35% 96%;
     --brand: 25 85% 58%;
     --brand-foreground: 218 50% 8%;
-    --destructive: 2 74% 58%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 2 74% 66%;
+    --destructive-foreground: 218 50% 8%;
     --success: 150 52% 54%;
     --success-foreground: 218 50% 8%;
     --warning: 40 92% 58%;

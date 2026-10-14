@@ -11,6 +11,7 @@ import {
   UPDATE_USER,
 } from '@/graphql/user';
 import { GraphQLError } from 'graphql';
+import { MY_LICENSES } from '@/graphql/licences';
 import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
 
@@ -75,6 +76,12 @@ const licenses = [
     status: 'Expirée',
   },
 ];
+
+// The licences tab reads the member's own licences, pending ones included.
+const myLicensesMock = (list: Array<Record<string, unknown>>): MockedResponse => ({
+  request: { query: MY_LICENSES },
+  result: { data: { myLicenses: list.map((licence) => ({ documents_url: [], ...licence })) } },
+});
 
 const meMock: MockedResponse = {
   request: { query: GET_ME },
@@ -147,7 +154,7 @@ describe('ProfilePage Component', () => {
     // Le formulaire est directement visible, sans carte ni dialogue à ouvrir.
     expect(screen.getByLabelText('Prénom')).toBeVisible();
     expect(screen.getByLabelText('Nom')).toHaveValue('Doe');
-    expect(screen.getByLabelText('Email')).toHaveValue(EMAIL);
+    expect(screen.getByLabelText('Adresse e-mail')).toHaveValue(EMAIL);
     expect(screen.getByLabelText('Numéro de téléphone')).toHaveValue('0123456789');
     expect(screen.getByLabelText('Adresse')).toHaveValue('123 Rue de Paris');
     expect(screen.getByLabelText('Date de naissance')).toHaveValue('1990-01-01');
@@ -245,7 +252,7 @@ describe('ProfilePage Component', () => {
 
     fireEvent.change(screen.getByLabelText('Prénom'), { target: { value: '' } });
     fireEvent.change(screen.getByLabelText('Nom'), { target: { value: 'D' } });
-    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'pas-un-email' } });
+    fireEvent.change(screen.getByLabelText('Adresse e-mail'), { target: { value: 'pas-un-email' } });
     fireEvent.change(screen.getByLabelText('Numéro de téléphone'), { target: { value: '123' } });
     fireEvent.click(screen.getByRole('button', { name: 'Enregistrer les modifications' }));
 
@@ -406,7 +413,7 @@ describe('ProfilePage Component', () => {
     expect(screen.getByLabelText('Prénom')).toHaveValue('Jane');
   });
 
-  test('active les notifications SMS en conservant les autres réglages puis reflète la réponse du serveur', async () => {
+  test('coupe les notifications par e-mail en conservant les autres réglages puis reflète la réponse du serveur', async () => {
     let currentUser = { ...baseUser, newsletter_subscribed: true };
     const variableMatcher = jest.fn(() => true);
 
@@ -417,13 +424,13 @@ describe('ProfilePage Component', () => {
         request: { query: UPDATE_NOTIFICATION_SETTINGS },
         variableMatcher,
         result: () => {
-          currentUser = { ...currentUser, sms_notifications_enabled: true };
+          currentUser = { ...currentUser, email_notifications_enabled: false };
           return {
             data: {
               updateNotificationSettings: {
                 id: '42',
-                email_notifications_enabled: true,
-                sms_notifications_enabled: true,
+                email_notifications_enabled: false,
+                sms_notifications_enabled: false,
                 newsletter_subscribed: true,
               },
             },
@@ -435,11 +442,12 @@ describe('ProfilePage Component', () => {
     await waitForProfile();
     openTab('Notifications');
 
-    const smsSwitch = screen.getByRole('switch', { name: 'Notifications par SMS' });
-    expect(screen.getByRole('switch', { name: 'Notifications par email' })).toBeChecked();
-    expect(smsSwitch).not.toBeChecked();
+    // No SMS is ever sent: the choice is not offered.
+    expect(screen.queryByRole('switch', { name: /SMS/ })).not.toBeInTheDocument();
+    const emailSwitch = screen.getByRole('switch', { name: 'Notifications par e-mail' });
+    expect(emailSwitch).toBeChecked();
 
-    fireEvent.click(smsSwitch);
+    fireEvent.click(emailSwitch);
 
     await waitFor(() => {
       expect(mockToast).toHaveBeenCalledWith({
@@ -449,18 +457,17 @@ describe('ProfilePage Component', () => {
     });
     expect(variableMatcher).toHaveBeenCalledTimes(1);
     expect(variableMatcher).toHaveBeenCalledWith({
-      email_notifications_enabled: true,
-      sms_notifications_enabled: true,
+      email_notifications_enabled: false,
+      sms_notifications_enabled: false,
       newsletter_subscribed: true,
     });
-    expect(smsSwitch).toBeChecked();
+    expect(emailSwitch).not.toBeChecked();
 
-    // Après le refetch, l'interrupteur redevient utilisable et reste activé.
+    // Après le refetch, l'interrupteur redevient utilisable et reste coupé.
     await waitFor(() => {
-      expect(smsSwitch).toBeEnabled();
+      expect(emailSwitch).toBeEnabled();
     });
-    expect(smsSwitch).toBeChecked();
-    expect(screen.getByRole('switch', { name: 'Notifications par email' })).toBeChecked();
+    expect(emailSwitch).not.toBeChecked();
   });
 
   test('affiche les suggestions d\'adresses lors de la saisie et permet d\'en choisir une', async () => {
@@ -572,22 +579,20 @@ describe('ProfilePage Component', () => {
     const soon = new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString();
     renderPage([
       meMock,
-      userMock(() => ({
-        ...baseUser,
-        licenses: [
-          ...licenses,
-          {
-            id: '3',
-            certification_authority: 'DGAC',
-            license_number: 'CPL-0003',
-            license_type: 'CPL',
-            issue_date: '2022-03-01T10:00:00.000Z',
-            expiration_date: soon,
-            is_valid: true,
-            status: 'active',
-          },
-        ],
-      })),
+      userMock(),
+      myLicensesMock([
+        ...licenses,
+        {
+          id: '3',
+          certification_authority: 'DGAC',
+          license_number: 'CPL-0003',
+          license_type: 'CPL',
+          issue_date: '2022-03-01T10:00:00.000Z',
+          expiration_date: soon,
+          is_valid: true,
+          status: 'active',
+        },
+      ]),
     ]);
 
     await waitForProfile();
@@ -595,6 +600,7 @@ describe('ProfilePage Component', () => {
 
     const panel = screen.getByRole('tabpanel');
     expect(within(panel).getByRole('heading', { name: 'Mes licences' })).toBeInTheDocument();
+    await within(panel).findByText('PPL-0001');
 
     const titles = within(panel)
       .getAllByText(/^(PPL|ULM|CPL)$/)
@@ -614,11 +620,14 @@ describe('ProfilePage Component', () => {
   });
 
   test('affiche un état vide quand le membre n\'a aucune licence', async () => {
-    renderPage([meMock, userMock()]);
+    renderPage([meMock, userMock(), myLicensesMock([])]);
 
     await waitForProfile();
     openTab('Licences');
 
-    expect(within(screen.getByRole('tabpanel')).getByText('Aucune licence enregistrée')).toBeInTheDocument();
+    const panel = within(screen.getByRole('tabpanel'));
+    expect(await panel.findByText('Aucune licence enregistrée')).toBeInTheDocument();
+    // The member adds their licence themselves.
+    expect(panel.getByRole('button', { name: 'Ajouter une licence' })).toBeInTheDocument();
   });
 });

@@ -44,4 +44,5 @@ export interface License {
   issue_date: string
   expiration_date: string
   documents_url: string[]
+  status?: string
 }

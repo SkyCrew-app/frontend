@@ -13,7 +13,8 @@ describe("action log wording", () => {
       "Membre : Jean Dupont",
     )
     expect(adminTargetLabel({ target_type: "incident", target_id: "12", target_label: null })).toBe("Incident n° 12")
-    expect(adminTargetLabel({ target_type: "settings", target_id: null, target_label: null })).toBe("Paramètres")
+    expect(adminTargetLabel({ target_type: "settings", target_id: null, target_label: null })).toBe("Paramètres du club")
+    expect(adminTargetLabel({ target_type: "settings", target_id: "1", target_label: null })).toBe("Paramètres du club")
   })
 
   it("writes a change as before → after", () => {
@@ -24,7 +25,6 @@ describe("action log wording", () => {
     expect(
       adminActionDetails({ paymentId: 44, direction: "debit", amount: 250, method: "cheque", reason: "Erreur" }),
     ).toEqual([
-      "Ligne de compte n° : 44",
       "Sens : débit",
       `Montant : ${formatMoney(250)}`,
       "Moyen : chèque",
@@ -37,7 +37,7 @@ describe("action log wording", () => {
       adminActionDetails({
         changes: { clubName: { from: "A", to: "B" }, closureDays: { from: ["sunday"], to: [] } },
       }),
-    ).toEqual(["Nom de l'aéroclub : A → B", "Jours de fermeture : sunday → —"])
+    ).toEqual(["Nom de l'aéroclub : A → B", "Jours de fermeture : dimanche → —"])
   })
 
   it("names every setting of the club and keeps the code of a field it does not know", () => {
@@ -57,7 +57,7 @@ describe("action log wording", () => {
       adminActionDetails({
         changes: { taxonomies: { from: { flightTypes: ["VFR"] }, to: { flightTypes: ["VFR", "IFR"], empty: [] } } },
       }),
-    ).toEqual(["Listes du club : flightTypes (VFR) → flightTypes (VFR, IFR) ; empty (—)"])
+    ).toEqual(["Listes du club : Types de vol (VFR) → Types de vol (VFR, IFR) ; empty (—)"])
   })
 
   it("names the actions on bookings, closed flights and aircraft, with their facts", () => {
@@ -67,7 +67,6 @@ describe("action log wording", () => {
     expect(adminTargetLabel({ target_type: "aircraft", target_id: "4", target_label: "F-GABC" })).toBe("Avion : F-GABC")
     expect(adminActionDetails({ from: "UNAVAILABLE", to: "AVAILABLE" })).toEqual(["indisponible → disponible"])
     expect(adminActionDetails({ memberId: 3, start: "2031-05-12T08:00:00.000Z", refundedToStudents: 90 })).toEqual([
-      "Membre n° : 3",
       `Début : ${formatDateTime("2031-05-12T08:00:00.000Z")}`,
       `Remboursé aux élèves : ${formatMoney(90)}`,
     ])
@@ -77,7 +76,18 @@ describe("action log wording", () => {
     expect(adminActionDetails(null)).toEqual([])
     expect(adminActionDetails({ maintenanceActive: true, keptReservationIds: [] })).toEqual([
       "Site en maintenance : oui",
-      "Réservations non annulées : —",
     ])
+  })
+
+  it("leaves out what did not happen and record numbers, and counts the bookings kept", () => {
+    expect(
+      adminActionDetails({
+        refundedAmount: 0,
+        upcomingCourses: 1,
+        keptReservationIds: [12, 13],
+        cancelledReservations: 0,
+        paymentId: 50,
+      }),
+    ).toEqual(["Cours planifiés : 1", "Réservations gardées au planning : 2"])
   })
 })

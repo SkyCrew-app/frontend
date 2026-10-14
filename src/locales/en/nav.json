@@ -28,7 +28,8 @@
     "balance": "My balance",
     "notifications": "Notifications",
     "twoFactor": "Two-factor authentication",
-    "closeFlight": "Close flight"
+    "closeFlight": "Close flight",
+    "news": "News"
   },
   "layout": {
     "mainContent": "Main content",
@@ -49,7 +50,8 @@
   "account": {
     "fallbackName": "My account",
     "menu": "Account menu for {{name}}",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "menuPrefix": "Account menu for"
   },
   "roles": {
     "Administrateur": "Administrator",

@@ -9,6 +9,7 @@ import {
   GET_BOOKABLE_INSTRUCTORS,
   GET_FILTERED_RESERVATIONS,
   GET_MAY_BOOK_WITHOUT_INSTRUCTOR,
+  UPDATE_RESERVATION,
 } from '@/graphql/reservation';
 import { GET_AIRCRAFTS } from '@/graphql/planes';
 import { GET_SETTINGS } from '@/graphql/settings';
@@ -118,16 +119,25 @@ const userMock: MockedResponse = {
   },
 };
 
-// Ouverture de 08:00 à 12:00 => 4 créneaux d'une heure (08, 09, 10, 11) ; fermeture le jeudi.
+// Ouverture de 08:00 à 12:00 => 4 créneaux d'une heure (08, 09, 10, 11) ; fermeture le jeudi ;
+// maintenance hebdomadaire de deux heures le lundi (hors des jours de ces tests).
+const settings = (maintenanceDay = 'Lundi') => ({
+  closureDays: ['jeudi'],
+  reservationStartTime: '08:00',
+  reservationEndTime: '12:00',
+  maintenanceDay,
+  maintenanceDuration: 2,
+});
+
 const settingsMock: MockedResponse = {
   request: { query: GET_SETTINGS },
-  result: {
-    data: {
-      getAllAdministrations: [
-        { closureDays: ['jeudi'], reservationStartTime: '08:00', reservationEndTime: '12:00' },
-      ],
-    },
-  },
+  result: { data: { getAllAdministrations: [settings()] } },
+};
+
+// The weekly maintenance falls on the day shown (Wednesday), 08:00 to 10:00.
+const maintenanceTodayMock: MockedResponse = {
+  request: { query: GET_SETTINGS },
+  result: { data: { getAllAdministrations: [settings('Mercredi')] } },
 };
 
 const aircraftsMock: MockedResponse = {
@@ -280,7 +290,8 @@ describe('ReservationCalendar', () => {
     // La légende reprend les libellés des statuts.
     const legend = within(screen.getByRole('list', { name: 'Légende' }));
     expect(legend.getByText('Confirmée')).toBeInTheDocument();
-    expect(legend.getByText('En attente')).toBeInTheDocument();
+    // A booking is confirmed when it is made: "pending" never happens and is not in the legend.
+    expect(legend.queryByText('En attente')).not.toBeInTheDocument();
     expect(legend.getByText('Annulée')).toBeInTheDocument();
   });
 
@@ -327,7 +338,7 @@ describe('ReservationCalendar', () => {
     expect(details.getByText('Entraînement')).toBeInTheDocument();
     expect(details.getByText('Prévoir le plein avant le départ')).toBeInTheDocument();
     expect(details.queryByRole('button', { name: 'Modifier' })).not.toBeInTheDocument();
-    expect(details.queryByRole('button', { name: 'Supprimer' })).not.toBeInTheDocument();
+    expect(details.queryByRole('button', { name: 'Annuler la réservation' })).not.toBeInTheDocument();
   });
 
   it("doit proposer de modifier et de supprimer une réservation à son propriétaire", async () => {
@@ -346,10 +357,84 @@ describe('ReservationCalendar', () => {
 
     const dialog = await screen.findByRole('dialog', { name: 'Détails de la réservation' });
     expect(await within(dialog).findByRole('button', { name: 'Modifier' })).toBeInTheDocument();
-    expect(within(dialog).getByRole('button', { name: 'Supprimer' })).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: 'Annuler la réservation' })).toBeInTheDocument();
     // Le prix affiché est celui que l'API a enregistré en débitant la réservation.
     expect(within(dialog).getByText('Prix payé')).toBeInTheDocument();
     expect(within(dialog).getByText(/300,00\s€/)).toBeInTheDocument();
+  });
+
+  it("doit laisser un administrateur modifier la réservation d'un autre membre, avec le prix recalculé", async () => {
+    jest.setSystemTime(EARLY_MORNING);
+    const user = userEvent.setup();
+    const updateVariables = jest.fn();
+    const adminMock: MockedResponse = {
+      ...userMock,
+      result: {
+        data: {
+          userByEmail: {
+            ...(userMock.result as { data: { userByEmail: Record<string, unknown> } }).data.userByEmail,
+            role: { id: 2, role_name: 'Administrateur' },
+          },
+        },
+      },
+    };
+    renderPage([
+      meMock,
+      adminMock,
+      settingsMock,
+      aircraftsMock,
+      reservationsMock(TODAY_STR, TOMORROW_STR, [existingReservation]),
+      {
+        request: { query: UPDATE_RESERVATION },
+        variableMatcher: (variables) => {
+          updateVariables(variables);
+          return true;
+        },
+        result: { data: { updateReservation: { id: 1 } } },
+      },
+      reservationsMock(TODAY_STR, TOMORROW_STR, [existingReservation]),
+    ]);
+    await screen.findByRole('table');
+
+    await user.click(screen.getByText('Navigation solo'));
+    const detail = await screen.findByRole('dialog', { name: 'Détails de la réservation' });
+    await user.click(await within(detail).findByRole('button', { name: 'Modifier' }));
+
+    const form = within(await screen.findByRole('dialog', { name: 'Modifier la réservation' }));
+    expect(form.getByRole('combobox', { name: /Avion/ })).toHaveTextContent('F-ABCD');
+    expect(form.getByText(/Prix payé : 300,00\s€/)).toBeInTheDocument();
+
+    const end = form.getByLabelText(/^Fin/);
+    await user.clear(end);
+    await user.type(end, '10:00');
+    // One hour at 150 € instead of two: the pilot gets the difference back.
+    expect(form.getByText(/Nouveau prix : 150,00\s€/)).toBeInTheDocument();
+    expect(form.getByText(/150,00\s€ seront remboursés sur le solde du pilote/)).toBeInTheDocument();
+
+    await user.click(form.getByRole('button', { name: 'Enregistrer' }));
+    await waitFor(() => expect(updateVariables).toHaveBeenCalledTimes(1));
+    const { input } = updateVariables.mock.calls[0][0];
+    expect(input).toMatchObject({ id: 1, aircraft_id: 1 });
+    expect(new Date(input.end_time).getTime()).toBe(new Date(2024, 9, 23, 10, 0).getTime());
+  });
+
+  it("ne doit pas proposer de réserver un avion indisponible, que l'API refuserait", async () => {
+    jest.setSystemTime(EARLY_MORNING);
+    renderPage([
+      meMock,
+      userMock,
+      settingsMock,
+      {
+        request: { query: GET_AIRCRAFTS },
+        result: { data: { getAircrafts: [mockAircrafts[0], { ...mockAircrafts[1], availability_status: 'UNAVAILABLE' }] } },
+      },
+      reservationsMock(TODAY_STR, TOMORROW_STR, []),
+    ]);
+    await screen.findByRole('table');
+
+    expect(within(getRowFor('F-EFGH')).queryAllByRole('cell', { name: /^Réserver / })).toHaveLength(0);
+    expect(within(getRowFor('F-EFGH')).getByText('Réservation impossible pour le moment')).toBeInTheDocument();
+    expect(getFreeCells('F-ABCD').length).toBeGreaterThan(0);
   });
 
   it("ne doit plus proposer ni modification ni suppression une fois la réservation commencée", async () => {
@@ -369,7 +454,7 @@ describe('ReservationCalendar', () => {
     const dialog = await screen.findByRole('dialog', { name: 'Détails de la réservation' });
     expect(await within(dialog).findByText(/seul un administrateur peut l'annuler/)).toBeInTheDocument();
     expect(within(dialog).queryByRole('button', { name: 'Modifier' })).not.toBeInTheDocument();
-    expect(within(dialog).queryByRole('button', { name: 'Supprimer' })).not.toBeInTheDocument();
+    expect(within(dialog).queryByRole('button', { name: 'Annuler la réservation' })).not.toBeInTheDocument();
   });
 
   it("doit refuser la sélection d'un créneau déjà commencé", async () => {
@@ -409,15 +494,17 @@ describe('ReservationCalendar', () => {
 
     await user.click(screen.getByText('Vol local'));
     const dialog = await screen.findByRole('dialog', { name: 'Détails de la réservation' });
-    await user.click(await within(dialog).findByRole('button', { name: 'Supprimer' }));
+    await user.click(await within(dialog).findByRole('button', { name: 'Annuler la réservation' }));
 
     // Rien n'est supprimé tant que la confirmation, qui nomme la réservation, n'est pas validée.
-    const confirmation = await screen.findByRole('alertdialog', { name: 'Supprimer cette réservation ?' });
+    const confirmation = await screen.findByRole('alertdialog', { name: 'Annuler cette réservation ?' });
     expect(confirmation).toHaveTextContent('F-EFGH');
     expect(confirmation).toHaveTextContent('de 09:00 à 11:00');
+    // What is given back is said before anything is sent.
+    expect(confirmation).toHaveTextContent(/rembours/);
     expect(deleteVariables).not.toHaveBeenCalled();
 
-    await user.click(within(confirmation).getByRole('button', { name: 'Supprimer la réservation' }));
+    await user.click(within(confirmation).getByRole('button', { name: 'Annuler la réservation' }));
 
     await waitFor(() => expect(deleteVariables).toHaveBeenCalledWith({ id: 2 }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
@@ -508,10 +595,11 @@ describe('ReservationCalendar', () => {
       purpose: 'Vol local',
       user_id: USER_ID,
       estimated_flight_hours: 2,
-      status: 'PENDING',
       notes: '',
       flight_category: 'LOCAL',
     });
+    // Every booking is confirmed by the API: no status is sent.
+    expect(input).not.toHaveProperty('status');
     expect(new Date(input.start_time).getTime()).toBe(new Date(2024, 9, 23, 9, 0).getTime());
     expect(new Date(input.end_time).getTime()).toBe(new Date(2024, 9, 23, 11, 0).getTime());
 
@@ -556,7 +644,9 @@ describe('ReservationCalendar', () => {
     };
     // The member has no valid licence: the API says they cannot book without an instructor.
     const studentRightsMock: MockedResponse = {
+      // Asked for the end of the selected slot, as the API checks the licence.
       request: { query: GET_MAY_BOOK_WITHOUT_INSTRUCTOR },
+      variableMatcher: (variables) => typeof variables?.until === 'string',
       result: { data: { mayBookWithoutInstructor: false } },
     };
     const instruction = {
@@ -801,9 +891,10 @@ describe('ReservationCalendar', () => {
         purpose: 'Tours de piste',
         user_id: USER_ID,
         estimated_flight_hours: 2,
-        status: 'PENDING',
         flight_category: 'LOCAL',
       });
+      // Every booking is confirmed by the API: no status is sent.
+      expect(input).not.toHaveProperty('status');
       expect(new Date(input.start_time).getTime()).toBe(new Date(2024, 9, 23, 9, 0).getTime());
       expect(new Date(input.end_time).getTime()).toBe(new Date(2024, 9, 23, 11, 0).getTime());
       await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
@@ -870,5 +961,76 @@ describe('ReservationCalendar', () => {
     expect(within(dialog).getByRole('combobox', { name: /Avion/ })).toHaveTextContent('F-EFGH');
     expect(within(dialog).getByLabelText(/Début/)).toHaveValue('10:00');
     expect(within(dialog).getByLabelText(/Fin/)).toHaveValue('11:00');
+  });
+
+  describe('maintenance hebdomadaire', () => {
+    const maintenanceMocks = () => [
+      meMock,
+      userMock,
+      maintenanceTodayMock,
+      aircraftsMock,
+      reservationsMock(TODAY_STR, TOMORROW_STR, []),
+    ];
+
+    it('montre le créneau de maintenance comme indisponible, sans le proposer', async () => {
+      jest.setSystemTime(EARLY_MORNING);
+      renderPage(maintenanceMocks());
+      await screen.findByRole('table');
+
+      // The notice above the grid, then one cell per aircraft.
+      expect(screen.getAllByText('Maintenance hebdomadaire')).toHaveLength(3);
+      expect(
+        screen.getByText(/De 08:00 à 10:00, les avions du club sont en maintenance/),
+      ).toBeInTheDocument();
+      for (const registration of ['F-ABCD', 'F-EFGH']) {
+        const row = within(getRowFor(registration));
+        expect(row.getByText('Maintenance hebdomadaire')).toBeInTheDocument();
+        // Only 10:00 and 11:00 are offered.
+        expect(row.getAllByRole('cell', { name: /^Réserver / }).map((cell) => cell.getAttribute('aria-label'))).toEqual([
+          `Réserver ${registration} à 10:00`,
+          `Réserver ${registration} à 11:00`,
+        ]);
+      }
+    });
+
+    it('refuse dans le formulaire un horaire qui empiète sur la maintenance', async () => {
+      jest.setSystemTime(EARLY_MORNING);
+      const user = userEvent.setup();
+      renderPage(maintenanceMocks());
+      await screen.findByRole('table');
+
+      await user.click(screen.getByRole('button', { name: 'Nouvelle réservation' }));
+      const dialog = await screen.findByRole('dialog', { name: 'Nouvelle réservation' });
+      const start = within(dialog).getByLabelText(/Début/);
+      const end = within(dialog).getByLabelText(/Fin/);
+      await user.clear(start);
+      await user.type(start, '09:00');
+      await user.clear(end);
+      await user.type(end, '11:00');
+      await user.click(within(dialog).getByRole('button', { name: /Suivant|Réserver|Créer/ }));
+
+      expect(
+        await within(dialog).findByText(/empiète sur la maintenance hebdomadaire \(08:00 – 10:00\)/),
+      ).toBeInTheDocument();
+    });
+
+    it('ne propose pas la maintenance comme créneau libre sur petit écran', async () => {
+      jest.setSystemTime(EARLY_MORNING);
+      window.matchMedia = jest.fn().mockImplementation((query: string) => ({
+        matches: query === '(max-width: 768px)',
+        media: query,
+        onchange: null,
+        addListener: jest.fn(),
+        removeListener: jest.fn(),
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+        dispatchEvent: jest.fn(),
+      }));
+      renderPage(maintenanceMocks());
+
+      expect(await screen.findByRole('heading', { name: 'Créneaux libres' })).toBeInTheDocument();
+      const free = screen.getByRole('group', { name: 'Créneaux libres de F-EFGH' });
+      expect(within(free).getAllByRole('button').map((button) => button.textContent)).toEqual(['10:00 – 12:00']);
+    });
   });
 });

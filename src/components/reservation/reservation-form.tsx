@@ -30,6 +30,8 @@ interface ReservationFormProps {
   isEdit?: boolean
   /** The slot being booked or edited, shown read-only above the fields. */
   summary?: ReservationSlotSummary
+  /** Shown under the slot: what the booking will cost. */
+  price?: ReactNode
   purpose: string
   setPurpose: (value: string) => void
   notes: string
@@ -59,6 +61,7 @@ export function ReservationForm({
   description,
   isEdit = false,
   summary,
+  price,
   purpose,
   setPurpose,
   notes,
@@ -131,6 +134,8 @@ export function ReservationForm({
             </div>
           </dl>
         )}
+
+        {price}
 
         <div className="space-y-2">
           <Label htmlFor="purpose">{t("form.purpose")}</Label>

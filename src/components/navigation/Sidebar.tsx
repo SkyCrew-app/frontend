@@ -17,6 +17,7 @@ import {
   LogOut,
   ClipboardCheck,
   BookOpen,
+  Newspaper,
   Search,
 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -40,6 +41,7 @@ const menuItems = [
     subItems: [
       { labelKey: "pages.fleetHistory", path: "/fleet/history" },
       { labelKey: "pages.maintenance", path: "/fleet/maintenance" },
+      { labelKey: "pages.incidents", path: "/fleet/incidents" },
     ],
   },
   {
@@ -60,6 +62,11 @@ const menuItems = [
     labelKey: "pages.logbook",
     icon: BookOpen,
     path: "/logbook",
+  },
+  {
+    labelKey: "pages.news",
+    icon: Newspaper,
+    path: "/articles",
   },
   {
     labelKey: "pages.instruction",
@@ -201,8 +208,7 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
       )}
 
       {/* Sidebar. Off screen on mobile it is also hidden from the keyboard and screen readers. */}
-      <aside
-        role="navigation"
+      <nav
         aria-label={t("sidebar.label")}
         className={cn(
           "fixed md:sticky top-0 left-0 h-screen w-64 bg-sidebar text-sidebar-foreground border-r border-sidebar-border flex flex-col overflow-hidden z-50 transition-[transform,visibility] duration-300 ease-in-out",
@@ -226,7 +232,7 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
           <div className="flex items-center space-x-3">
             <Avatar className="h-10 w-10 border-2 border-sidebar-border">
               {profilePicture && <AvatarImage src={`${getBackendBaseUrl()}${profilePicture}`} alt="" />}
-              <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground">
+              <AvatarFallback className="bg-sidebar-primary font-semibold text-sidebar">
                 {initials || <User className="h-4 w-4" aria-hidden="true" />}
               </AvatarFallback>
             </Avatar>
@@ -249,7 +255,7 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
           >
             <Search className="h-4 w-4" aria-hidden="true" />
             <span className="flex-1 text-left">{t("common:actions.search")}</span>
-            <kbd className="pointer-events-none hidden h-5 select-none items-center rounded border border-sidebar-border bg-sidebar-accent px-1.5 font-mono text-[10px] font-medium text-sidebar-foreground/60 md:inline-flex">
+            <kbd className="pointer-events-none hidden h-5 select-none items-center rounded border border-sidebar-border bg-sidebar-accent px-1.5 font-mono text-[10px] font-medium text-sidebar-foreground/80 md:inline-flex">
               {isMac ? "⌘K" : "Ctrl K"}
             </kbd>
           </button>
@@ -382,7 +388,7 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
             <span>{t("account.signOut")}</span>
           </button>
         </div>
-      </aside>
+      </nav>
     </>
   )
 }

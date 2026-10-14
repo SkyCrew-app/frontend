@@ -87,7 +87,6 @@ describe('formulaire des paramètres', () => {
     expect(values.closureDays).toEqual([]);
     expect(values.maintenanceDay).toBe('');
     expect(values.fuelManagement).toBe('self-service');
-    expect(values.guestPilotFee).toBe(0);
     expect(settingsFormSchema.safeParse(values).success).toBe(true);
   });
 
@@ -100,6 +99,14 @@ describe('formulaire des paramètres', () => {
       flightHourRate: null,
     });
     expect(administrationInputFromValues(7, { ...values, maintenanceTime: '' }).maintenanceTime).toBeNull();
+  });
+
+  it("n'envoie pas les réglages que l'application n'utilise pas : l'API garde leur valeur", () => {
+    const input = administrationInputFromValues(7, settingsFormValuesFromRecord(record));
+
+    for (const field of ['timeSlotDuration', 'membershipFee', 'clubRules', 'allowGuestPilots', 'guestPilotFee']) {
+      expect(input).not.toHaveProperty(field);
+    }
   });
 
   it('refuse une fin des réservations avant leur début, avec un message en français', () => {
@@ -131,7 +138,7 @@ describe('formulaire des paramètres', () => {
   });
 
   it("indique les onglets qui contiennent un champ invalide, dans l'ordre d'affichage", () => {
-    expect(tabsWithErrors(['membershipFee', 'clubName'])).toEqual(['general', 'members']);
+    expect(tabsWithErrors(['pilotLicenses', 'clubName'])).toEqual(['general', 'members']);
     expect(tabsWithErrors([])).toEqual([]);
   });
 });

@@ -20,6 +20,8 @@ export const adminActionLabel = (action: string) =>
 
 export const adminTargetLabel = (entry: Pick<AdminAction, "target_type" | "target_id" | "target_label">) => {
   const type = i18n.t(`administration:actionLog.targets.${entry.target_type}`, { defaultValue: entry.target_type })
+  // The club has one set of settings: its number says nothing.
+  if (entry.target_type === "settings") return type
   if (entry.target_label) {
     return i18n.t("administration:actionLog.targetNamed", { type, name: entry.target_label })
   }
@@ -40,7 +42,7 @@ const plainValue = (field: string, value: unknown): string => {
   if (Array.isArray(value)) return value.length > 0 ? value.map((item) => plainValue(field, item)).join(", ") : "—"
   if (typeof value === "object") {
     // A small nested value (the lists of the club): "name (items)" for each of its parts.
-    const parts = Object.entries(value).map(([key, item]) => `${key} (${plainValue(key, item)})`)
+    const parts = Object.entries(value).map(([key, item]) => `${fieldLabel(key)} (${plainValue(key, item)})`)
     return parts.length > 0 ? parts.join(" ; ") : "—"
   }
   const text = String(value)
@@ -75,7 +77,13 @@ export const adminActionDetails = (summary: AdminAction["summary"]): string[] =>
     }
   }
   for (const [field, value] of Object.entries(rest)) {
-    lines.push(detail(field, plainValue(field, value)))
+    // Record numbers mean nothing to a reader; the bookings kept are counted.
+    if (field.endsWith("Id")) continue
+    const shown = field === "keptReservationIds" && Array.isArray(value) ? value.length : value
+    // Nothing happened on that side (no refund, no booking cancelled): not worth a line.
+    if (shown === 0 || shown === null || shown === undefined || shown === "" || (Array.isArray(shown) && shown.length === 0))
+      continue
+    lines.push(detail(field, plainValue(field, shown)))
   }
   return lines
 }

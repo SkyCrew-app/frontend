@@ -71,7 +71,7 @@ const renderPage = (mocks: MockedResponse[] = [listMock()]) =>
   );
 
 const getCard = (registration: string) => {
-  const card = screen.getByRole('heading', { level: 3, name: registration }).closest('[data-aircraft-card]');
+  const card = screen.getByRole('heading', { level: 2, name: registration }).closest('[data-aircraft-card]');
   if (!card) throw new Error(`Carte introuvable pour ${registration}`);
   return within(card as HTMLElement);
 };
@@ -87,9 +87,9 @@ describe('FleetManagementPage', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Gestion de la flotte' })).toBeInTheDocument();
     expect(screen.getByLabelText('Chargement des aéronefs')).toHaveAttribute('aria-busy', 'true');
 
-    expect(await screen.findByRole('heading', { level: 3, name: 'F-GABC' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 2, name: 'F-GABC' })).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: 'Ajouter un aéronef' })).toHaveLength(1);
-    expect(screen.getAllByRole('heading', { level: 3 }).map((heading) => heading.textContent)).toEqual([
+    expect(screen.getAllByRole('heading', { level: 2 }).map((heading) => heading.textContent)).toEqual([
       'F-GABC',
       'F-HDIA',
     ]);
@@ -110,18 +110,20 @@ describe('FleetManagementPage', () => {
   it('filtre les aéronefs par recherche et par disponibilité', async () => {
     const user = userEvent.setup();
     renderPage();
-    await screen.findByRole('heading', { level: 3, name: 'F-GABC' });
+    await screen.findByRole('heading', { level: 2, name: 'F-GABC' });
 
     await user.type(screen.getByRole('textbox', { name: 'Rechercher un aéronef' }), 'diamond');
-    expect(screen.queryByRole('heading', { level: 3, name: 'F-GABC' })).not.toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 3, name: 'F-HDIA' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { level: 2, name: 'F-GABC' })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'F-HDIA' })).toBeInTheDocument();
 
     await user.click(screen.getByRole('combobox', { name: 'Filtrer par disponibilité' }));
-    await user.click(await screen.findByRole('option', { name: 'Réservé' }));
+    // « Réservé » is never set by the application: not offered when no aircraft has it.
+    expect(screen.queryByRole('option', { name: 'Réservé' })).not.toBeInTheDocument();
+    await user.click(await screen.findByRole('option', { name: 'Disponible' }));
     expect(screen.getByText('Aucun aéronef ne correspond')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Réinitialiser les filtres' }));
-    expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(2);
+    expect(screen.getAllByRole('heading', { level: 2 })).toHaveLength(2);
   });
 
   it("propose d'ajouter le premier aéronef quand la flotte est vide", async () => {
@@ -169,7 +171,7 @@ describe('FleetManagementPage', () => {
       },
       listMock([robin, diamond, created]),
     ]);
-    await screen.findByRole('heading', { level: 3, name: 'F-GABC' });
+    await screen.findByRole('heading', { level: 2, name: 'F-GABC' });
 
     await user.click(screen.getByRole('button', { name: 'Ajouter un aéronef' }));
     const dialog = within(await screen.findByRole('dialog', { name: 'Ajouter un aéronef' }));
@@ -205,7 +207,7 @@ describe('FleetManagementPage', () => {
     expect(dialog.getByRole('button', { name: 'Choisir une photo' })).toBeInTheDocument();
     await user.click(dialog.getByRole('button', { name: "Ajouter l'aéronef" }));
 
-    expect(await screen.findByRole('heading', { level: 3, name: 'F-NEUF' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 2, name: 'F-NEUF' })).toBeInTheDocument();
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Aéronef ajouté' }));
   });
@@ -239,7 +241,7 @@ describe('FleetManagementPage', () => {
       },
       listMock([updated, diamond]),
     ]);
-    await screen.findByRole('heading', { level: 3, name: 'F-GABC' });
+    await screen.findByRole('heading', { level: 2, name: 'F-GABC' });
 
     await user.click(getCard('F-GABC').getByRole('button', { name: 'Modifier' }));
     const dialog = within(await screen.findByRole('dialog', { name: 'Modifier F-GABC' }));
@@ -267,7 +269,7 @@ describe('FleetManagementPage', () => {
   it("garde dans le formulaire un état de maintenance saisi à la main", async () => {
     const user = userEvent.setup();
     renderPage();
-    await screen.findByRole('heading', { level: 3, name: 'F-HDIA' });
+    await screen.findByRole('heading', { level: 2, name: 'F-HDIA' });
 
     await user.click(getCard('F-HDIA').getByRole('button', { name: 'Modifier' }));
     const dialog = within(await screen.findByRole('dialog', { name: 'Modifier F-HDIA' }));
@@ -279,7 +281,7 @@ describe('FleetManagementPage', () => {
   it("ouvre les détails d'un aéronef et permet de passer à la modification", async () => {
     const user = userEvent.setup();
     renderPage();
-    await screen.findByRole('heading', { level: 3, name: 'F-GABC' });
+    await screen.findByRole('heading', { level: 2, name: 'F-GABC' });
 
     await user.click(getCard('F-GABC').getByRole('button', { name: 'Détails' }));
     const details = within(await screen.findByRole('dialog', { name: 'F-GABC' }));
@@ -303,27 +305,27 @@ describe('FleetManagementPage', () => {
       },
       listMock([robin]),
     ]);
-    await screen.findByRole('heading', { level: 3, name: 'F-HDIA' });
+    await screen.findByRole('heading', { level: 2, name: 'F-HDIA' });
 
     await user.click(screen.getByRole('button', { name: 'Supprimer F-HDIA' }));
     let confirmation = await screen.findByRole('alertdialog', { name: 'Supprimer F-HDIA ?' });
     expect(confirmation).toHaveTextContent(/F-HDIA \(Diamond DA40\) sera définitivement/);
     await user.click(within(confirmation).getByRole('button', { name: 'Annuler' }));
     await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
-    expect(screen.getByRole('heading', { level: 3, name: 'F-HDIA' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'F-HDIA' })).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Supprimer F-HDIA' }));
     confirmation = await screen.findByRole('alertdialog', { name: 'Supprimer F-HDIA ?' });
     await user.click(within(confirmation).getByRole('button', { name: 'Supprimer' }));
 
-    await waitFor(() => expect(screen.queryByRole('heading', { level: 3, name: 'F-HDIA' })).not.toBeInTheDocument());
-    expect(screen.getByRole('heading', { level: 3, name: 'F-GABC' })).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole('heading', { level: 2, name: 'F-HDIA' })).not.toBeInTheDocument());
+    expect(screen.getByRole('heading', { level: 2, name: 'F-GABC' })).toBeInTheDocument();
     await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
     expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Aéronef supprimé' }));
   });
 
   const askToDelete = async (user: ReturnType<typeof userEvent.setup>) => {
-    await screen.findByRole('heading', { level: 3, name: 'F-HDIA' });
+    await screen.findByRole('heading', { level: 2, name: 'F-HDIA' });
     await user.click(screen.getByRole('button', { name: 'Supprimer F-HDIA' }));
     const confirmation = await screen.findByRole('alertdialog', { name: 'Supprimer F-HDIA ?' });
     // The dialog says what happens to an aircraft that has a history.
@@ -354,7 +356,7 @@ describe('FleetManagementPage', () => {
       ),
     );
     expect(mockToast).not.toHaveBeenCalledWith(expect.objectContaining({ title: 'Aéronef supprimé' }));
-    expect(screen.getByRole('heading', { level: 3, name: 'F-HDIA' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'F-HDIA' })).toBeInTheDocument();
   });
 
   it("explique le refus de l'API quand des réservations à venir empêchent le retrait", async () => {
@@ -376,7 +378,7 @@ describe('FleetManagementPage', () => {
       ),
     );
     // The aircraft is still there, behind the confirmation left open.
-    expect(screen.getByRole('heading', { level: 3, name: 'F-HDIA', hidden: true })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'F-HDIA', hidden: true })).toBeInTheDocument();
   });
 
   it("affiche un état d'erreur avec Réessayer quand la liste ne se charge pas", async () => {
@@ -389,6 +391,6 @@ describe('FleetManagementPage', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Gestion de la flotte' })).toBeInTheDocument();
 
     await user.click(within(alert).getByRole('button', { name: 'Réessayer' }));
-    expect(await screen.findByRole('heading', { level: 3, name: 'F-GABC' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 2, name: 'F-GABC' })).toBeInTheDocument();
   });
 });

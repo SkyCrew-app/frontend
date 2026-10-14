@@ -84,7 +84,7 @@ export default function LogbookFilters({ filter, onFilterChange, aircraftList, f
           })
         }
       >
-        <SelectTrigger aria-label={t("logbook.filters.flightTypeAria")} className="sm:w-[180px]">
+        <SelectTrigger aria-label={t("logbook.filters.flightTypeAria")} className="sm:w-[220px]">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>

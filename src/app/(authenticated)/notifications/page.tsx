@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -417,22 +417,23 @@ export default function NotificationsPage() {
         }
       />
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="relative w-full sm:max-w-xs">
-          <Search
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-            aria-hidden="true"
-          />
-          <Input
-            type="search"
-            aria-label={t("search.label")}
-            placeholder={t("search.placeholder")}
-            className="pl-9"
-            value={searchQuery}
-            onChange={(e) => handleSearchChange(e.target.value)}
-          />
-        </div>
-        <Tabs value={selectedTab} onValueChange={handleTabChange}>
+      {/* One Tabs root around the toolbar and the list: each filter tab controls the list below it. */}
+      <Tabs value={selectedTab} onValueChange={handleTabChange} className="space-y-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="relative w-full sm:max-w-xs">
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+              aria-hidden="true"
+            />
+            <Input
+              type="search"
+              aria-label={t("search.label")}
+              placeholder={t("search.placeholder")}
+              className="pl-9"
+              value={searchQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
+            />
+          </div>
           <TabsList>
             <TabsTrigger value="all">
               {t("tabs.all")}
@@ -447,10 +448,12 @@ export default function NotificationsPage() {
               <span className="ml-1.5 text-xs text-muted-foreground tabular-nums">{highCount}</span>
             </TabsTrigger>
           </TabsList>
-        </Tabs>
-      </div>
+        </div>
 
-      {renderList()}
+        <TabsContent value={selectedTab} className="mt-0">
+          {renderList()}
+        </TabsContent>
+      </Tabs>
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>

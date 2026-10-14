@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { EmptyState } from "@/components/layout/EmptyState"
 import { ErrorState } from "@/components/layout/ErrorState"
@@ -91,46 +91,43 @@ export default function InstructionDashboard() {
     <div className="space-y-6">
       <PageHeader className="mb-0" title={t("courses.title")} description={description} actions={planButton} />
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="relative w-full sm:max-w-xs">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="search"
-            aria-label={t("courses.page.searchAria")}
-            placeholder={t("courses.page.searchPlaceholder", { name: searchExample })}
-            className="pl-9"
-            value={searchTerm}
-            onChange={(event) => {
-              setSearchTerm(event.target.value)
+      {/* One Tabs root around the toolbar and the content: the view switch controls the panel below it. */}
+      <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as "list" | "calendar")} className="space-y-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="relative w-full sm:max-w-xs">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="search"
+              aria-label={t("courses.page.searchAria")}
+              placeholder={t("courses.page.searchPlaceholder", { name: searchExample })}
+              className="pl-9"
+              value={searchTerm}
+              onChange={(event) => {
+                setSearchTerm(event.target.value)
+                setPage(1)
+              }}
+            />
+          </div>
+          <Select
+            value={statusFilter}
+            onValueChange={(value) => {
+              setStatusFilter(value)
               setPage(1)
             }}
-          />
-        </div>
-        <Select
-          value={statusFilter}
-          onValueChange={(value) => {
-            setStatusFilter(value)
-            setPage(1)
-          }}
-        >
-          <SelectTrigger className="w-full sm:w-44" aria-label={t("courses.page.filterStatusAria")}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t("courses.page.allStatuses")}</SelectItem>
-            {courseStatusOptions().map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Tabs
-          value={viewMode}
-          onValueChange={(value) => setViewMode(value as "list" | "calendar")}
-          className="sm:ml-auto"
-        >
-          <TabsList aria-label={t("courses.page.viewAria")}>
+          >
+            <SelectTrigger className="w-full sm:w-44" aria-label={t("courses.page.filterStatusAria")}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("courses.page.allStatuses")}</SelectItem>
+              {courseStatusOptions().map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <TabsList aria-label={t("courses.page.viewAria")} className="sm:ml-auto">
             <TabsTrigger value="list" className="gap-2">
               <List className="h-4 w-4" />
               {t("courses.page.viewList")}
@@ -140,52 +137,54 @@ export default function InstructionDashboard() {
               {t("courses.page.viewCalendar")}
             </TabsTrigger>
           </TabsList>
-        </Tabs>
-      </div>
-
-      {userId === null || (loading && !data) ? (
-        <div className="space-y-2 rounded-xl border bg-card p-4">
-          {Array.from({ length: 6 }).map((_, index) => (
-            <Skeleton key={index} className="h-12 w-full" />
-          ))}
         </div>
-      ) : error && !data ? (
-        <ErrorState onRetry={() => refetch()} />
-      ) : filteredCourses.length === 0 ? (
-        <EmptyState
-          icon={CalendarX}
-          title={isFiltered ? t("courses.page.empty.filteredTitle") : t("courses.page.empty.title")}
-          description={
-            isFiltered
-              ? t("courses.page.empty.filteredDescription")
-              : canCreateCourse
-                ? t("courses.page.empty.planDescription")
-                : t("courses.page.empty.studentDescription")
-          }
-          action={
-            isFiltered ? (
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setSearchTerm("")
-                  setStatusFilter("all")
-                }}
-              >
-                {t("common:actions.clearFilters")}
-              </Button>
-            ) : (
-              planButton
-            )
-          }
-        />
-      ) : viewMode === "list" ? (
-        <>
-          <CourseList courses={rows} userId={userId} isAdministrator={isAdmin} onChanged={() => refetch()} />
-          <ListPagination page={currentPage} pageCount={pageCount} onPageChange={setPage} />
-        </>
-      ) : (
-        <CourseCalendar courses={filteredCourses} userId={userId} />
-      )}
+
+        <TabsContent value={viewMode} className="mt-0">
+          {userId === null || (loading && !data) ? (
+            <div className="space-y-2 rounded-xl border bg-card p-4">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <Skeleton key={index} className="h-12 w-full" />
+              ))}
+            </div>
+          ) : error && !data ? (
+            <ErrorState onRetry={() => refetch()} />
+          ) : filteredCourses.length === 0 ? (
+            <EmptyState
+              icon={CalendarX}
+              title={isFiltered ? t("courses.page.empty.filteredTitle") : t("courses.page.empty.title")}
+              description={
+                isFiltered
+                  ? t("courses.page.empty.filteredDescription")
+                  : canCreateCourse
+                    ? t("courses.page.empty.planDescription")
+                    : t("courses.page.empty.studentDescription")
+              }
+              action={
+                isFiltered ? (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setSearchTerm("")
+                      setStatusFilter("all")
+                    }}
+                  >
+                    {t("common:actions.clearFilters")}
+                  </Button>
+                ) : (
+                  planButton
+                )
+              }
+            />
+          ) : viewMode === "list" ? (
+            <>
+              <CourseList courses={rows} userId={userId} isAdministrator={isAdmin} onChanged={() => refetch()} />
+              <ListPagination page={currentPage} pageCount={pageCount} onPageChange={setPage} />
+            </>
+          ) : (
+            <CourseCalendar courses={filteredCourses} userId={userId} />
+          )}
+        </TabsContent>
+      </Tabs>
 
       <CourseFormDialog
         open={isNewCourseOpen}

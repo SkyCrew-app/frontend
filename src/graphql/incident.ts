@@ -69,6 +69,22 @@ export const GET_ALL_INCIDENTS = gql`
   }
 `
 
+// Every member reads the incidents (club rule); the full list is kept for the staff,
+// so a member reads them status by status, in one request.
+export const GET_INCIDENTS_FOR_MEMBERS = gql`
+  query GetIncidentsForMembers {
+    open: getIncidentsByStatus(status: "Ouvert") {
+      ${INCIDENT_FIELDS}
+    }
+    inProgress: getIncidentsByStatus(status: "En cours") {
+      ${INCIDENT_FIELDS}
+    }
+    resolved: getIncidentsByStatus(status: "Résolu") {
+      ${INCIDENT_FIELDS}
+    }
+  }
+`
+
 export const UPDATE_INCIDENT_STATUS = gql`
   mutation UpdateIncidentStatus($id: Int!, $status: String!, $resolution_note: String) {
     updateIncidentStatus(id: $id, status: $status, resolution_note: $resolution_note) {

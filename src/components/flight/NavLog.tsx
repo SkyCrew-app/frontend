@@ -3,6 +3,7 @@
 import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { flightTypeLabel } from "@/components/flight/flight-type"
+import { formatDecimal } from "@/lib/format"
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -188,7 +189,7 @@ export function NavLog({
             )}
             {aircraft.maxAltitude && (
               <span>
-                {t("navLog.performance.ceiling")} <strong className="text-foreground">{aircraft.maxAltitude} ft</strong>
+                {t("navLog.performance.ceiling")} <strong className="text-foreground">{formatDecimal(aircraft.maxAltitude, 0)} ft</strong>
               </span>
             )}
           </div>

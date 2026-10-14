@@ -1,5 +1,6 @@
 "use client"
 
+import { useTranslation } from "react-i18next"
 import { useToast } from "@/components/hooks/use-toast"
 import {
   Toast,
@@ -12,6 +13,7 @@ import {
 
 export function Toaster() {
   const { toasts } = useToast()
+  const { t } = useTranslation()
 
   return (
     <ToastProvider>
@@ -25,7 +27,8 @@ export function Toaster() {
               )}
             </div>
             {action}
-            <ToastClose />
+            {/* An icon-only button: it needs a name for screen readers. */}
+            <ToastClose aria-label={t("common:actions.close")} />
           </Toast>
         )
       })}

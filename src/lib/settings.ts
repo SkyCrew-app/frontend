@@ -53,10 +53,6 @@ const TRANSLATED_ROLES = ["Administrateur", "Pilote", "Instructeur", "Technicien
 export const roleLabel = <T extends string | null | undefined>(name: T): T | string =>
   name && TRANSLATED_ROLES.includes(name) ? i18n.t(`administration:roleName.${name}`) : name
 
-const TIME_SLOT_VALUES = [30, 60, 90, 120] as const
-
-export const timeSlotOptions = () =>
-  TIME_SLOT_VALUES.map((value) => ({ value, label: i18n.t(`administration:settings.timeSlot.${value}`) }))
 
 export const PILOT_LICENSES = ["PPL", "LAPL", "CPL", "ATPL"] as const
 
@@ -92,11 +88,6 @@ export const taxonomyLists = (): {
 // Validation messages of the settings form.
 const message = (key: string) => i18n.t(`administration:settings.validation.${key}`)
 
-const amount = () =>
-  z
-    .number({ invalid_type_error: message("amount"), required_error: message("amount") })
-    .min(0, { message: message("amountNegative") })
-
 const itemList = z.array(z.string())
 
 // Built when it is used, so that the messages follow the language.
@@ -108,10 +99,6 @@ export const buildSettingsFormSchema = () =>
       contactPhone: z.string().refine(isValidPhone, { message: message("contactPhone") }),
       address: z.string().min(5, { message: message("address") }),
       closureDays: z.array(z.string()),
-      timeSlotDuration: z
-        .number({ invalid_type_error: message("timeSlotRequired"), required_error: message("timeSlotRequired") })
-        .min(30, { message: message("timeSlotMin") })
-        .max(120, { message: message("timeSlotMax") }),
       reservationStartTime: z.string(),
       reservationEndTime: z.string(),
       maintenanceDay: z.string(),
@@ -124,12 +111,8 @@ export const buildSettingsFormSchema = () =>
         .min(1, { message: message("maintenanceDurationMin") })
         .max(24, { message: message("maintenanceDurationMax") }),
       pilotLicenses: z.array(z.string()),
-      membershipFee: amount(),
       // Not editable on this page: sent back as loaded.
       flightHourRate: z.number().nullable(),
-      clubRules: z.string(),
-      allowGuestPilots: z.boolean(),
-      guestPilotFee: amount(),
       fuelManagement: z.enum(FUEL_MANAGEMENT_VALUES),
       fuelPrice: z
         .number({ invalid_type_error: message("fuelPrice"), required_error: message("fuelPrice") })
@@ -196,18 +179,13 @@ export function settingsFormValuesFromRecord(record: AdministrationRecord): Sett
     contactPhone: record.contactPhone ?? "",
     address: record.address ?? "",
     closureDays: (record.closureDays ?? []).map(toWeekday),
-    timeSlotDuration: record.timeSlotDuration as number,
     reservationStartTime: record.reservationStartTime ?? "",
     reservationEndTime: record.reservationEndTime ?? "",
     maintenanceDay: record.maintenanceDay ?? "",
-    // A missing duration or fee stays empty: the form asks for it instead of inventing a value.
+    // A missing duration stays empty: the form asks for it instead of inventing a value.
     maintenanceDuration: record.maintenanceDuration as number,
     pilotLicenses: [...(record.pilotLicenses ?? [])],
-    membershipFee: record.membershipFee as number,
     flightHourRate: record.flightHourRate ?? null,
-    clubRules: record.clubRules || "",
-    allowGuestPilots: record.allowGuestPilots || false,
-    guestPilotFee: record.guestPilotFee || 0,
     fuelManagement: isFuelManagement(record.fuelManagement) ? record.fuelManagement : "self-service",
     fuelPrice: record.fuelPrice || 0,
     taxonomies: taxonomiesFromRecord(record),
@@ -217,7 +195,12 @@ export function settingsFormValuesFromRecord(record: AdministrationRecord): Sett
   }
 }
 
-/** `UpdateAdministrationInput` for the validated form values. */
+/**
+ * `UpdateAdministrationInput` for the validated form values.
+ * The slot length, the membership and guest fees and the club rules are not on
+ * the form (nothing in the application uses them yet): they are not sent, so
+ * the API keeps what it has.
+ */
 export function administrationInputFromValues(id: number, values: SettingsFormValues) {
   return {
     id,
@@ -226,17 +209,12 @@ export function administrationInputFromValues(id: number, values: SettingsFormVa
     contactPhone: normalisePhone(values.contactPhone),
     address: values.address,
     closureDays: values.closureDays,
-    timeSlotDuration: values.timeSlotDuration,
     reservationStartTime: values.reservationStartTime,
     reservationEndTime: values.reservationEndTime,
     maintenanceDay: values.maintenanceDay,
     maintenanceDuration: values.maintenanceDuration,
     pilotLicenses: values.pilotLicenses,
-    membershipFee: values.membershipFee,
     flightHourRate: values.flightHourRate,
-    clubRules: values.clubRules,
-    allowGuestPilots: values.allowGuestPilots,
-    guestPilotFee: values.guestPilotFee,
     fuelManagement: values.fuelManagement,
     fuelPrice: values.fuelPrice,
     taxonomies: values.taxonomies,
@@ -261,14 +239,13 @@ export const SETTINGS_TAB_FIELDS: Record<SettingsFormTab, (keyof SettingsFormVal
   ],
   reservations: [
     "closureDays",
-    "timeSlotDuration",
     "reservationStartTime",
     "reservationEndTime",
     "maintenanceDay",
     "maintenanceDuration",
   ],
   aircraft: ["fuelManagement", "fuelPrice"],
-  members: ["pilotLicenses", "membershipFee", "allowGuestPilots", "guestPilotFee", "clubRules"],
+  members: ["pilotLicenses"],
   lists: ["taxonomies"],
 }
 

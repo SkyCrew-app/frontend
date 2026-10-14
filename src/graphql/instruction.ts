@@ -73,3 +73,10 @@ export const GET_LESSON_PROGRESS = gql`
     getUserProgress(userId: $userId, lessonId: $lessonId)
   }
 `
+
+// The lessons of a course the member completed, in one request.
+export const GET_COMPLETED_LESSONS = gql`
+  query GetCompletedLessons($userId: Int!, $lessonIds: [Int!]!) {
+    getCompletedLessons(userId: $userId, lessonIds: $lessonIds)
+  }
+`

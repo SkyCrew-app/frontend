@@ -14,9 +14,9 @@ import {
   SET_USER_ACTIVE,
   UPDATE_USER,
 } from "@/graphql/user"
-import { CREATE_LICENSE } from "@/graphql/licences"
+import { CREATE_LICENSE, DELETE_LICENSE, GET_PENDING_LICENSES, UPDATE_LICENSE, VALIDATE_LICENSE } from "@/graphql/licences"
 import { GET_ROLES } from "@/graphql/roles"
-import type { User, Role, UserDetails } from "@/interfaces/user"
+import type { License, User, Role, UserDetails } from "@/interfaces/user"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { ErrorState } from "@/components/layout/ErrorState"
 import { UsersTable } from "@/components/admin-user/users-table"
@@ -28,11 +28,20 @@ import { UserFilters } from "@/components/admin-user/user-filters"
 import { PaginationControls } from "@/components/admin-user/pagination-controls"
 import { AccountConfirmDialog } from "@/components/admin-user/account-confirm-dialog"
 import { DeactivateMemberDialog } from "@/components/admin-user/deactivate-member-dialog"
+import { PendingLicencesNotice, type PendingLicence } from "@/components/admin-user/pending-licences-notice"
 import { formatMoney } from "@/lib/format"
 import { calendarDayToISOString } from "@/lib/datetime"
-import { apiErrorMessage } from "@/lib/api-error"
+import { apiErrorMessage, apiRefusalMessage } from "@/lib/api-error"
 
 const USERS_PER_PAGE = 10
+
+interface MemberFormValues {
+  first_name: string
+  last_name: string
+  email: string
+  date_of_birth: string
+  phone_number: string
+}
 
 const nameOf = (user: User) => `${user.first_name ?? ""} ${user.last_name ?? ""}`.trim() || user.email
 
@@ -48,6 +57,9 @@ export default function AdministrationPage() {
   // Set when the licence dialog was opened from a member sheet, to come back to it.
   const [returnToDetails, setReturnToDetails] = useState(false)
   const [selectedUserDetails, setSelectedUserDetails] = useState<UserDetails | null>(null)
+  // The member sheet opens on its licences when it is opened to validate one.
+  const [detailsTab, setDetailsTab] = useState<"personal-info" | "licenses">("personal-info")
+  const [validatingLicenseId, setValidatingLicenseId] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [filterRole, setFilterRole] = useState<string | null>(null)
@@ -57,6 +69,18 @@ export default function AdministrationPage() {
   const [accountAction, setAccountAction] = useState<{ kind: "deactivate" | "delete"; user: User } | null>(null)
   // Kept after closing so the dialog text does not change while it fades out.
   const [lastAccountAction, setLastAccountAction] = useState(accountAction)
+  // A licence being corrected or renewed (in the licence panel), or waiting for its deletion to be confirmed.
+  const [licenseChange, setLicenseChange] = useState<{
+    action: "edit" | "renew" | "delete"
+    license: License
+    userId: string
+  } | null>(null)
+  const [lastLicenseChange, setLastLicenseChange] = useState(licenseChange)
+  // A role change the API refused because the member still instructs: what it listed.
+  const [roleChange, setRoleChange] = useState<{
+    userData: MemberFormValues
+    message: string
+  } | null>(null)
 
   const { toast } = useToast()
 
@@ -64,13 +88,25 @@ export default function AdministrationPage() {
     fetchPolicy: "cache-and-network",
   })
   const { data: rolesData } = useQuery<{ roles: Role[] }>(GET_ROLES)
+  const { data: licencesData, refetch: refetchPendingLicences } = useQuery<{ getAllLicenses: PendingLicence[] }>(
+    GET_PENDING_LICENSES,
+    { fetchPolicy: "cache-and-network" },
+  )
+  const pendingLicences = (licencesData?.getAllLicenses ?? []).filter(
+    (licence) => (licence.status ?? "").toLowerCase() === "pending",
+  )
 
   const users: User[] = data?.getUsers ?? []
   const roles: Role[] = rolesData?.roles ?? []
 
   const [createUser, { loading: creating }] = useMutation(CREATE_USER)
   const [updateUser, { loading: updating }] = useMutation(UPDATE_USER)
-  const [onAddLicense, { loading: addingLicense }] = useMutation(CREATE_LICENSE)
+  // The count of licences waiting for a validation follows every change of a licence.
+  const licenceChanged = { refetchQueries: ["GetPendingLicenses"] }
+  const [onAddLicense, { loading: addingLicense }] = useMutation(CREATE_LICENSE, licenceChanged)
+  const [updateLicense, { loading: updatingLicense }] = useMutation(UPDATE_LICENSE, licenceChanged)
+  const [deleteLicense, { loading: deletingLicense }] = useMutation(DELETE_LICENSE, licenceChanged)
+  const [validateLicense] = useMutation(VALIDATE_LICENSE)
   const [setUserActive] = useMutation(SET_USER_ACTIVE)
   const [deactivateMember, { loading: deactivating }] = useMutation<{
     deactivateMember: {
@@ -113,13 +149,10 @@ export default function AdministrationPage() {
     }
   }
 
-  const handleUpdateUser = async (userData: {
-    first_name: string
-    last_name: string
-    email: string
-    date_of_birth: string
-    phone_number: string
-  }) => {
+  const handleUpdateUser = async (
+    userData: MemberFormValues,
+    cancelInstructionCommitments = false,
+  ) => {
     try {
       await updateUser({
         variables: {
@@ -128,13 +161,23 @@ export default function AdministrationPage() {
             // An empty date input is not a date: leave the field out.
             date_of_birth: userData.date_of_birth || undefined,
             roleId: selectedRole ? Number(selectedRole) : null,
+            ...(cancelInstructionCommitments && { cancelInstructionCommitments }),
           },
         },
       })
       toast({ title: t("users.toast.updated.title") })
+      setRoleChange(null)
       setIsEditDialogOpen(false)
       refetch()
     } catch (error) {
+      // Taking the instructor role away while they still instruct bookings or courses: the API
+      // lists them (409) and the administrator confirms that they are cancelled.
+      const commitments = cancelInstructionCommitments ? undefined : apiRefusalMessage(error, 409)
+      if (commitments) {
+        setRoleChange({ userData, message: commitments })
+        return
+      }
+      setRoleChange(null)
       // The API says why when a rule refuses the change (last administrator…).
       toast({
         title: t("users.toast.updateFailed.title"),
@@ -274,13 +317,15 @@ export default function AdministrationPage() {
   }
 
   // The dialog opens at once with a skeleton, then fills in.
-  const handleViewDetails = (userId: string) => {
+  const handleViewDetails = (userId: string, tab: "personal-info" | "licenses" = "personal-info") => {
+    setDetailsTab(tab)
     setSelectedUserDetails(null)
     setIsDetailsDialogOpen(true)
     void loadUserDetails(userId)
   }
 
   const handleSubmitLicense = async (values: LicenseFormValues) => {
+    if (values.licenseId) return handleUpdateLicense(values)
     try {
       await onAddLicense({
         variables: {
@@ -298,11 +343,94 @@ export default function AdministrationPage() {
       })
       toast({ title: t("users.toast.licenceAdded.title") })
       setIsLicenseDialogOpen(false)
-      if (returnToDetails) handleViewDetails(values.userId)
+      if (returnToDetails) handleViewDetails(values.userId, "licenses")
     } catch {
       toast({
         title: t("users.toast.licenceFailed.title"),
         description: t("users.toast.licenceFailed.description"),
+        variant: "destructive",
+      })
+    }
+  }
+
+  // A correction or a renewal; back to the member's sheet afterwards.
+  const handleUpdateLicense = async (values: LicenseFormValues) => {
+    const renewing = licenseChange?.action === "renew"
+    try {
+      await updateLicense({
+        variables: {
+          updateLicenseInput: {
+            id: Number.parseInt(values.licenseId as string),
+            license_type: values.license_type,
+            license_number: values.license_number,
+            expiration_date: calendarDayToISOString(values.expirationDate),
+            issue_date: calendarDayToISOString(values.issueDate),
+            certification_authority: values.certification_authority || null,
+            status: values.status || "active",
+          },
+          // Without new files the API keeps the documents already on the licence.
+          documents: values.documents.length > 0 ? values.documents : null,
+        },
+      })
+      toast({ title: t(renewing ? "users.toast.licenceRenewed.title" : "users.toast.licenceUpdated.title") })
+      setIsLicenseDialogOpen(false)
+      setLicenseChange(null)
+      handleViewDetails(values.userId, "licenses")
+    } catch {
+      toast({
+        title: t("users.toast.licenceUpdateFailed.title"),
+        description: t("users.toast.licenceUpdateFailed.description"),
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleLicenseAction = (action: "edit" | "renew" | "delete", license: License, userId: string) => {
+    const change = { action, license, userId }
+    setLicenseChange(change)
+    setLastLicenseChange(change)
+    if (action === "delete") return
+    // One panel at a time: the sheet closes, and reopens once the licence is saved.
+    setIsDetailsDialogOpen(false)
+    setLicenseUserId(userId)
+    setReturnToDetails(true)
+    setIsLicenseDialogOpen(true)
+  }
+
+  // A licence the member entered becomes valid (or stays expired when its date has passed).
+  const handleValidateLicense = async (license: License, userId: string) => {
+    setValidatingLicenseId(String(license.id))
+    try {
+      await validateLicense({ variables: { id: Number.parseInt(String(license.id)) } })
+      toast({
+        title: t("users.toast.licenceValidated.title"),
+        description: t("users.toast.licenceValidated.description", { type: license.license_type }),
+      })
+      setDetailsTab("licenses")
+      void loadUserDetails(userId)
+      void refetchPendingLicences().catch(() => undefined)
+    } catch (error) {
+      toast({
+        title: t("users.toast.licenceValidateFailed.title"),
+        description: apiErrorMessage(error) ?? t("users.toast.retryLater"),
+        variant: "destructive",
+      })
+    } finally {
+      setValidatingLicenseId(null)
+    }
+  }
+
+  const confirmDeleteLicense = async () => {
+    if (!licenseChange || licenseChange.action !== "delete") return
+    try {
+      await deleteLicense({ variables: { id: Number.parseInt(licenseChange.license.id) } })
+      toast({ title: t("users.toast.licenceDeleted.title") })
+      setLicenseChange(null)
+      void loadUserDetails(licenseChange.userId)
+    } catch {
+      toast({
+        title: t("users.toast.licenceDeleteFailed.title"),
+        description: t("users.toast.licenceDeleteFailed.description"),
         variant: "destructive",
       })
     }
@@ -359,6 +487,7 @@ export default function AdministrationPage() {
   }
 
   const openLicenseDialog = (userId: string | null) => {
+    setLicenseChange(null)
     setLicenseUserId(userId)
     setReturnToDetails(false)
     setIsLicenseDialogOpen(true)
@@ -366,6 +495,7 @@ export default function AdministrationPage() {
 
   // One dialog at a time: the sheet closes, and reopens once the licence is saved.
   const openLicenseFromDetails = (userId: string) => {
+    setLicenseChange(null)
     setIsDetailsDialogOpen(false)
     setLicenseUserId(userId)
     setReturnToDetails(true)
@@ -388,8 +518,10 @@ export default function AdministrationPage() {
               users={users}
               loading={loading}
               defaultUserId={licenseUserId}
-              saving={addingLicense}
+              saving={addingLicense || updatingLicense}
               onSubmit={handleSubmitLicense}
+              license={licenseChange && licenseChange.action !== "delete" ? licenseChange.license : null}
+              mode={licenseChange && licenseChange.action !== "delete" ? licenseChange.action : "add"}
             />
             <CreateUserForm
               isOpen={isCreateDialogOpen}
@@ -406,6 +538,11 @@ export default function AdministrationPage() {
         <ErrorState onRetry={() => refetch()} />
       ) : (
         <>
+          <PendingLicencesNotice
+            licences={pendingLicences}
+            onOpenMember={(userId) => handleViewDetails(userId, "licenses")}
+          />
+
           <UserFilters
             searchTerm={searchTerm}
             setSearchTerm={withPageReset(setSearchTerm)}
@@ -453,6 +590,16 @@ export default function AdministrationPage() {
         onSubmit={handleUpdateUser}
       />
 
+      <AccountConfirmDialog
+        open={roleChange !== null}
+        onOpenChange={(open) => !open && setRoleChange(null)}
+        title={t("users.roleChange.title")}
+        description={roleChange?.message ?? ""}
+        confirmLabel={t("users.roleChange.confirm")}
+        pending={updating}
+        onConfirm={() => roleChange && void handleUpdateUser(roleChange.userData, true)}
+      />
+
       {lastAccountAction?.kind === "delete" && (
         <AccountConfirmDialog
           open={accountAction?.kind === "delete"}
@@ -482,7 +629,28 @@ export default function AdministrationPage() {
         onEdit={handleEditFromDetails}
         onAddLicense={openLicenseFromDetails}
         onBalanceAdjusted={(userId) => void loadUserDetails(userId)}
+        onLicenseAction={handleLicenseAction}
+        onValidateLicense={(license, userId) => void handleValidateLicense(license, userId)}
+        validatingLicenseId={validatingLicenseId}
+        initialTab={detailsTab}
       />
+
+      {lastLicenseChange?.action === "delete" && (
+        <AccountConfirmDialog
+          open={licenseChange?.action === "delete"}
+          onOpenChange={(open) => !open && setLicenseChange(null)}
+          title={t("users.licence.deleteConfirm.title", {
+            type: lastLicenseChange.license.license_type,
+            name: selectedUserDetails
+              ? `${selectedUserDetails.first_name ?? ""} ${selectedUserDetails.last_name ?? ""}`.trim()
+              : "",
+          })}
+          description={t("users.licence.deleteConfirm.description")}
+          confirmLabel={t("users.licence.deleteConfirm.confirm")}
+          pending={deletingLicense}
+          onConfirm={() => void confirmDeleteLicense()}
+        />
+      )}
     </div>
   )
 }

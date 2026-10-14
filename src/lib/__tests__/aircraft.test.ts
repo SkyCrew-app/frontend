@@ -3,6 +3,7 @@ import {
   aircraftFileUrl,
   aircraftMaintenanceState,
   buildAircraftInput,
+  offeredAvailabilities,
 } from '../aircraft';
 
 describe('buildAircraftInput', () => {
@@ -70,6 +71,14 @@ describe('buildAircraftInput', () => {
     buildAircraftInput(formData);
 
     expect(formData).toEqual({ ...base, consumption: 25.5, last_inspection_date: '' });
+  });
+});
+
+describe('offeredAvailabilities', () => {
+  it("ne propose « Réservé » que si un avion l'a déjà : l'application ne le pose jamais", () => {
+    expect(offeredAvailabilities()).toEqual(['AVAILABLE', 'UNAVAILABLE']);
+    expect(offeredAvailabilities(['AVAILABLE', null])).toEqual(['AVAILABLE', 'UNAVAILABLE']);
+    expect(offeredAvailabilities(['RESERVATED'])).toEqual(['AVAILABLE', 'RESERVATED', 'UNAVAILABLE']);
   });
 });
 

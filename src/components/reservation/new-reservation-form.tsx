@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, type ReactNode } from "react"
 import { format, addHours, startOfHour } from "date-fns"
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
@@ -13,7 +13,9 @@ import { Calendar } from "@/components/ui/calendar"
 import { CalendarIcon } from "lucide-react"
 import { SidePanel } from "@/components/layout/SidePanel"
 import { flightCategoryOptions, isFlightCategory } from "@/components/reservation/flight-category"
-import { InstructorField } from "@/components/reservation/instructor-field"
+import { InstructorField, useInstructorRequired } from "@/components/reservation/instructor-field"
+import { PriceEstimate } from "@/components/reservation/price-estimate"
+import type { Reservation } from "@/interfaces/reservation"
 import { INSTRUCTION_CATEGORY } from "@/components/reservation/reservation-form"
 import { dateFnsLocale } from "@/lib/i18n"
 
@@ -21,6 +23,9 @@ interface Aircraft {
   id: number
   registration_number: string
   model?: string
+  /** "UNAVAILABLE": the API refuses any booking of it. */
+  availability_status?: string | null
+  hourly_cost?: number | null
 }
 
 export interface NewReservationValues {
@@ -64,12 +69,23 @@ interface NewReservationFormProps {
   currentDate: Date
   prefill?: NewReservationPrefill
   isClosedDay: (date: Date) => boolean
+  /** The club's weekly maintenance a slot runs into, which the API refuses (null when none). */
+  maintenanceClash?: (start: Date, end: Date) => { start: Date; end: Date } | null
   onSubmit: (values: NewReservationValues) => Promise<void>
   isSubmitting: boolean
-  /** The signed-in member has no valid licence: an instructor must be chosen. */
-  instructorRequired?: boolean
-  /** The signed-in member, who cannot be their own instructor. */
+  /**
+   * Whether the form checks the signed-in member's licence (valid until the end of the
+   * slot) to require an instructor. Off when an administrator changes someone else's booking.
+   */
+  checkLicence?: boolean
+  /** The pilot of the booking, who cannot be their own instructor. */
   pilotId?: number | string | null
+  /** The booking being changed: the form then edits it instead of creating one. */
+  editing?: Reservation
+  /** Optional action at the start of the footer (cancelling the booking being edited). */
+  footerStart?: ReactNode
+  /** The booking is the signed-in member's (wording of the price line). */
+  forSelf?: boolean
 }
 
 const TIME_PATTERN = /^([01]\d|2[0-3]):[0-5]\d/
@@ -82,6 +98,21 @@ const withTime = (day: Date, time: string) => {
   const date = new Date(day)
   date.setHours(hours, minutes, 0, 0)
   return date
+}
+
+// The values of an existing booking, in the shape of a pre-fill.
+const prefillFrom = (reservation: Reservation): NewReservationPrefill => {
+  const start = new Date(reservation.start_time)
+  return {
+    date: format(start, "yyyy-MM-dd"),
+    aircraftId: String(reservation.aircraft.id),
+    startTime: format(start, "HH:mm"),
+    endTime: format(new Date(reservation.end_time), "HH:mm"),
+    flightCategory: reservation.flight_category ?? undefined,
+    purpose: reservation.purpose ?? undefined,
+    notes: reservation.notes ?? undefined,
+    instructorId: reservation.instructor?.id != null ? String(reservation.instructor.id) : undefined,
+  }
 }
 
 const RequiredMark = () => (
@@ -107,22 +138,33 @@ export function NewReservationForm({
   onOpenChange,
   aircrafts,
   currentDate,
-  prefill,
+  prefill: given,
   isClosedDay,
+  maintenanceClash,
   onSubmit,
   isSubmitting,
-  instructorRequired = false,
+  checkLicence = true,
   pilotId,
+  editing,
+  footerStart,
+  forSelf = true,
 }: NewReservationFormProps) {
   const { t } = useTranslation("reservations")
   const nextHour = addHours(startOfHour(new Date()), 1)
+  // A booking being changed starts from its own values.
+  const prefill = editing ? prefillFrom(editing) : given
   const course = prefill?.course
   const [instructorId, setInstructorId] = useState(prefill?.instructorId ?? "")
   // A booking made for a course is flown with the instructor of the course.
   const withInstructor = !!course || instructorId !== ""
 
+  // An aircraft the API refuses to book is not offered, except the one the booking already has.
+  const isBookable = (aircraft: Aircraft) =>
+    aircraft.availability_status !== "UNAVAILABLE" || (!!editing && String(aircraft.id) === String(editing.aircraft.id))
   const [aircraftId, setAircraftId] = useState(
-    prefill?.aircraftId && aircrafts.some((a) => String(a.id) === prefill.aircraftId) ? prefill.aircraftId : "",
+    prefill?.aircraftId && aircrafts.some((a) => String(a.id) === prefill.aircraftId && isBookable(a))
+      ? prefill.aircraftId
+      : "",
   )
   const [selectedDate, setSelectedDate] = useState<Date>(() => {
     const prefilled = prefill?.date ? new Date(`${prefill.date}T00:00:00`) : null
@@ -136,6 +178,16 @@ export function NewReservationForm({
   const [flightCategory, setFlightCategory] = useState(
     prefill?.flightCategory && isFlightCategory(prefill.flightCategory) ? prefill.flightCategory : "",
   )
+  const slotStart = TIME_PATTERN.test(startTime) ? withTime(selectedDate, startTime) : null
+  const slotEnd = TIME_PATTERN.test(endTime) ? withTime(selectedDate, endTime) : null
+  // The licence must be valid until the end of the flight, as the API checks it.
+  const instructorRequired = useInstructorRequired(slotEnd, { skip: !checkLicence || !open })
+  const aircraft = aircrafts.find((a) => String(a.id) === aircraftId)
+  const slotChanged =
+    !!editing &&
+    (aircraftId !== String(editing.aircraft.id) ||
+      slotStart?.getTime() !== new Date(editing.start_time).getTime() ||
+      slotEnd?.getTime() !== new Date(editing.end_time).getTime())
   const [errors, setErrors] = useState<{
     aircraft?: string
     date?: string
@@ -156,8 +208,21 @@ export function NewReservationForm({
       // The API refuses it too; saying so here spares a round trip.
       nextErrors.time = t("form.errors.past")
     }
-    if (!flightCategory && !withInstructor) nextErrors.category = t("form.errors.category")
-    if (!course && instructorRequired && !instructorId) nextErrors.instructor = t("form.errors.instructor")
+    // A new or moved booking stays out of the weekly maintenance (the API checks it).
+    const clash =
+      !nextErrors.time && slotStart && slotEnd && (!editing || slotChanged)
+        ? maintenanceClash?.(slotStart, slotEnd)
+        : null
+    if (clash) {
+      nextErrors.time = t("form.errors.weeklyMaintenance", {
+        from: format(clash.start, "HH:mm"),
+        to: format(clash.end, "HH:mm"),
+      })
+    }
+    const missingInstructor = !course && instructorRequired && !instructorId
+    // Choosing the required instructor sets the category: one error is enough.
+    if (!flightCategory && !withInstructor && !missingInstructor) nextErrors.category = t("form.errors.category")
+    if (missingInstructor) nextErrors.instructor = t("form.errors.instructor")
 
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length > 0) return
@@ -181,11 +246,12 @@ export function NewReservationForm({
         if (!next && isSubmitting) return
         onOpenChange(next)
       }}
-      title={t("shared.newReservation")}
-      description={t("form.newDescription")}
+      title={editing ? t("form.editTitle") : t("shared.newReservation")}
+      description={editing ? t("form.editDescription") : t("form.newDescription")}
       onSubmit={handleSubmit}
-      submitLabel={t("form.submitCreate")}
+      submitLabel={editing ? t("common:actions.save") : t("form.submitCreate")}
       submitting={isSubmitting}
+      footerStart={footerStart}
     >
       <div className="space-y-4">
         {course && (
@@ -214,9 +280,10 @@ export function NewReservationForm({
             </SelectTrigger>
             <SelectContent>
               {aircrafts.map((aircraft) => (
-                <SelectItem key={aircraft.id} value={aircraft.id.toString()}>
+                <SelectItem key={aircraft.id} value={aircraft.id.toString()} disabled={!isBookable(aircraft)}>
                   {aircraft.registration_number}
                   {aircraft.model ? ` — ${aircraft.model}` : ""}
+                  {!isBookable(aircraft) ? ` (${t("calendar.aircraftUnavailable").toLowerCase()})` : ""}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -293,6 +360,18 @@ export function NewReservationForm({
             <FieldError message={errors.time} />
           </div>
         </div>
+
+        {aircraft && (
+          <PriceEstimate
+            hourlyCost={aircraft.hourly_cost}
+            start={slotStart}
+            end={slotEnd}
+            withInstructor={withInstructor}
+            chargedAmount={editing ? (editing.charged_amount ?? null) : undefined}
+            slotChanged={slotChanged}
+            forSelf={forSelf}
+          />
+        )}
 
         <div className="space-y-2">
           <Label htmlFor="new-reservation-purpose">{t("form.purpose")}</Label>

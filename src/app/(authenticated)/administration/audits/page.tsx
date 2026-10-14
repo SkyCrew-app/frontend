@@ -167,17 +167,19 @@ export default function SecurityAuditsPage() {
                   </TabsTrigger>
                 ))}
               </TabsList>
+              {/* One list for every tab: the selected tab filters it, and the list is its panel. */}
+              <TabsContent value={activeTab} className="mt-4">
+                <AuditList
+                  loading={loading}
+                  error={error}
+                  audits={visibleAudits}
+                  searchTerm={filters.searchTerm}
+                  hasActiveFilters={hasActiveFilters}
+                  onCreate={() => setIsCreateModalOpen(true)}
+                  onRefetch={refetch}
+                />
+              </TabsContent>
             </Tabs>
-
-            <AuditList
-              loading={loading}
-              error={error}
-              audits={visibleAudits}
-              searchTerm={filters.searchTerm}
-              hasActiveFilters={hasActiveFilters}
-              onCreate={() => setIsCreateModalOpen(true)}
-              onRefetch={refetch}
-            />
           </div>
 
           <AuditStatistics />

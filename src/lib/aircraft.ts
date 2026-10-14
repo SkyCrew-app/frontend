@@ -51,6 +51,14 @@ const AVAILABILITY_VARIANTS: Record<string, StatusVariant> = {
 // Order used by the filters, the forms and the charts.
 export const AIRCRAFT_AVAILABILITY_VALUES = ["AVAILABLE", "RESERVATED", "UNAVAILABLE"] as const
 
+/**
+ * The availabilities offered by the forms, the filters and the charts. "Réservé"
+ * is never set by the application and blocks nothing: it is offered only where
+ * an aircraft already has it, so that this aircraft still reads right.
+ */
+export const offeredAvailabilities = (present: (string | null | undefined)[] = []): string[] =>
+  AIRCRAFT_AVAILABILITY_VALUES.filter((status) => status !== "RESERVATED" || present.includes(status))
+
 export const aircraftAvailability = (status: string | null | undefined): { label: string; variant: StatusVariant } => {
   const code = (status ?? "").toUpperCase()
   const variant = AVAILABILITY_VARIANTS[code]

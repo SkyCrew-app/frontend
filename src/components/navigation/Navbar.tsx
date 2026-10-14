@@ -235,12 +235,12 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
         ) : (
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="h-10 gap-2 rounded-full pl-1 pr-1 sm:pr-3"
-                aria-label={t("account.menu", { name: userName })}
-              >
-                {avatar("h-8 w-8")}
+              {/* Named by its content rather than an aria-label, so that speech and sight agree: "Menu du
+                  compte de" for screen readers, then the visible name and balance (hidden on a phone). */}
+              <Button variant="ghost" className="h-10 gap-2 rounded-full pl-1 pr-1 sm:pr-3">
+                <span aria-hidden="true">{avatar("h-8 w-8")}</span>
+                <span className="sr-only sm:hidden">{t("account.menu", { name: userName })}</span>
+                <span className="sr-only hidden sm:inline">{t("account.menuPrefix")}</span>
                 <span className="hidden flex-col items-start leading-tight sm:flex">
                   <span className="max-w-[10rem] truncate text-sm font-medium text-foreground">{userName}</span>
                   {balance && <span className="text-xs font-normal text-muted-foreground tabular-nums">{balance}</span>}
