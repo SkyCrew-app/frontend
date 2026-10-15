@@ -1,6 +1,17 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { canOpenPage, isNextAsset, isPublicFile, secondsLeft } from '../proxy-rules';
+import { buildSchema, parse, validate } from 'graphql';
+import {
+  canOpenPage,
+  isNextAsset,
+  isPublicFile,
+  LEGACY_SITE_STATUS_QUERY,
+  needsLegacyStatusQuery,
+  readSiteStatus,
+  secondsLeft,
+  SITE_STATUS_QUERY,
+  statusRedirect,
+} from '../proxy-rules';
 
 describe('isNextAsset', () => {
   it.each(['/_next/static/chunks/main.js', '/_next/image', '/_next/webpack-hmr'])('laisse passer %s', (pathname) => {
@@ -154,5 +165,48 @@ describe('canOpenPage', () => {
   it("ne se laisse pas tromper par une page dont le nom commence comme une page ouverte", () => {
     expect(canOpenPage('Technicien', '/administration/incidents-export')).toBe(false);
     expect(canOpenPage('Pilote', '/administration/2fa-admin')).toBe(false);
+  });
+});
+
+describe('état de l’installation', () => {
+  it.each([SITE_STATUS_QUERY, LEGACY_SITE_STATUS_QUERY])('%s correspond au schéma de l’API', (query) => {
+    const schema = buildSchema(fs.readFileSync(path.join(__dirname, '..', '..', 'graphql', 'schema.graphql'), 'utf8'));
+    expect(validate(schema, parse(query)).map((error) => error.message)).toEqual([]);
+  });
+
+  it('lit la réponse de l’API', () => {
+    expect(readSiteStatus({ data: { getSiteStatus: true, serviceSuspended: true } })).toEqual({ maintenance: true, suspended: true });
+    expect(readSiteStatus({ data: { getSiteStatus: false } })).toEqual({ maintenance: false, suspended: false });
+    expect(readSiteStatus({})).toEqual({ maintenance: false, suspended: false });
+  });
+
+  it('repose l’ancienne question seulement quand la question entière est refusée', () => {
+    expect(needsLegacyStatusQuery({ errors: [{ message: 'Cannot query field' }] })).toBe(true);
+    expect(needsLegacyStatusQuery({ errors: [{ message: 'Cannot query field' }], data: null })).toBe(true);
+    expect(needsLegacyStatusQuery({ errors: [{}], data: { getSiteStatus: false, serviceSuspended: false } })).toBe(false);
+    expect(needsLegacyStatusQuery({ data: { getSiteStatus: false, serviceSuspended: false } })).toBe(false);
+  });
+
+  const normal = { maintenance: false, suspended: false };
+  const suspendedOnly = { maintenance: false, suspended: true };
+  const maintenanceOnly = { maintenance: true, suspended: false };
+  const both = { maintenance: true, suspended: true };
+
+  it.each([
+    [normal, '/dashboard', null],
+    [normal, '/system/maintenance', null],
+    [normal, '/system/suspended', '/'],
+    [suspendedOnly, '/dashboard', '/system/suspended'],
+    [suspendedOnly, '/', '/system/suspended'],
+    [suspendedOnly, '/system/maintenance', '/system/suspended'],
+    [suspendedOnly, '/system/suspended', null],
+    [suspendedOnly, '/system/suspendedx', '/system/suspended'],
+    [both, '/dashboard', '/system/suspended'],
+    [both, '/system/suspended', null],
+    [maintenanceOnly, '/dashboard', '/system/maintenance'],
+    [maintenanceOnly, '/system/maintenance', null],
+    [maintenanceOnly, '/system/suspended', '/system/maintenance'],
+  ])('%o, %s → %s', (status, pathname, expected) => {
+    expect(statusRedirect(status, pathname)).toBe(expected);
   });
 });

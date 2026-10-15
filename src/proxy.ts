@@ -2,7 +2,18 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtDecode } from "jwt-decode";
 import { getServerGraphqlUrl, stripBasePath, withBasePath } from '@/lib/runtime-config';
-import { canOpenPage, isNextAsset, isPublicFile, secondsLeft } from '@/lib/proxy-rules';
+import {
+  canOpenPage,
+  isNextAsset,
+  isPublicFile,
+  LEGACY_SITE_STATUS_QUERY,
+  needsLegacyStatusQuery,
+  readSiteStatus,
+  secondsLeft,
+  SITE_STATUS_QUERY,
+  statusRedirect,
+  type SiteStatus,
+} from '@/lib/proxy-rules';
 import { contentSecurityPolicy, createNonce, isWorkerScript } from '@/lib/content-security-policy';
 
 interface CustomJwtPayload {
@@ -11,30 +22,33 @@ interface CustomJwtPayload {
   [key: string]: any;
 }
 
-const publicPaths = new Set(['/', '/auth/2fa', '/auth/forgot-password', '/auth/reset-password', '/auth/new-account', '/system/notconnected', '/system/unauthorized', '/system/maintenance']);
+const publicPaths = new Set(['/', '/auth/2fa', '/auth/forgot-password', '/auth/reset-password', '/auth/new-account', '/system/notconnected', '/system/unauthorized', '/system/maintenance', '/system/suspended']);
 
-async function isInMaintenanceMode(req: NextRequest) {
+async function askSiteStatus(query: string) {
+  const response = await fetch(getServerGraphqlUrl(), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    body: JSON.stringify({ query }),
+  });
+  return response.json();
+}
+
+// State of the installation, or null when the API cannot be reached.
+async function siteStatus(): Promise<SiteStatus | null> {
   try {
-    const response = await fetch(getServerGraphqlUrl(), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: JSON.stringify({
-        query: `
-          query GetSiteStatus {
-            getSiteStatus
-          }
-        `
-      }),
-    });
-
-    const result = await response.json();
-    return result.data?.getSiteStatus ?? false;
+    const answer = await askSiteStatus(SITE_STATUS_QUERY);
+    // An API older than the suspension rejects the whole question: ask the
+    // older one, the installation is then never suspended.
+    if (needsLegacyStatusQuery(answer)) {
+      return { ...readSiteStatus(await askSiteStatus(LEGACY_SITE_STATUS_QUERY)), suspended: false };
+    }
+    return readSiteStatus(answer);
   } catch (error) {
     console.error('Erreur maintenance:', error);
-    return NextResponse.redirect(new URL(withBasePath('/system/sitedown'), req.url))
+    return null;
   }
 }
 
@@ -61,12 +75,14 @@ export async function proxy(req: NextRequest) {
 // written here could reach the browser after a sign-out (answers to link
 // prefetches still on their way) and open the session again.
 async function route(req: NextRequest, pathname: string, headers: Headers) {
-  const maintenance = await isInMaintenanceMode(req);
-  if (maintenance.status === 307) {
+  const status = await siteStatus();
+  if (!status) {
     return NextResponse.rewrite(new URL(withBasePath('/system/sitedown'), req.url), { request: { headers } });
   }
-  if (maintenance && !pathname.startsWith('/system/maintenance')) {
-    return NextResponse.redirect(new URL(withBasePath('/system/maintenance'), req.url));
+  // Suspension first, then maintenance.
+  const statusPage = statusRedirect(status, pathname);
+  if (statusPage) {
+    return NextResponse.redirect(new URL(withBasePath(statusPage), req.url));
   }
 
   const isPublicPath = publicPaths.has(pathname);
