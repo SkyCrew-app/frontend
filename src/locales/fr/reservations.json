@@ -102,7 +102,8 @@
     "course": {
       "note": "Réservation de l'avion du cours de {{student}} avec {{instructor}}. L'élève est le pilote du vol : il paie l'avion et reçoit la confirmation.",
       "leaves": "Ce vol ne sera plus rattaché au cours du {{date}} à {{time}} : le cours restera sans avion, et son instructeur en sera informé."
-    }
+    },
+    "licenceRequired": "Sans licence valide jusqu'à la fin de ce vol, vous ne pouvez pas réserver. Ajoutez votre licence dans votre profil ou demandez à l'administrateur du club de la valider."
   },
   "detail": {
     "title": "Détails de la réservation",

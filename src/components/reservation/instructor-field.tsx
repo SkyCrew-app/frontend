@@ -2,6 +2,7 @@
 
 import { useQuery } from "@apollo/client"
 import { useTranslation } from "react-i18next"
+import { TriangleAlert } from "lucide-react"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { GET_BOOKABLE_INSTRUCTORS, GET_MAY_BOOK_WITHOUT_INSTRUCTOR } from "@/graphql/reservation"
@@ -97,5 +98,19 @@ export function InstructorField({ id, value, onChange, required, error, excludeI
         </p>
       )}
     </div>
+  )
+}
+
+/**
+ * Where the plan of the club has no instruction, a member without a valid licence cannot book
+ * at all (the API refuses it): the form says so instead of offering an instructor.
+ */
+export function LicenceRequiredNote() {
+  const { t } = useTranslation("reservations")
+  return (
+    <p role="alert" className="flex items-start gap-2 rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm">
+      <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-warning" aria-hidden="true" />
+      <span>{t("form.licenceRequired")}</span>
+    </p>
   )
 }

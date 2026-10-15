@@ -5,6 +5,8 @@ import { MockedProvider, type MockedResponse } from '@apollo/client/testing';
 import { GraphQLError } from 'graphql';
 import FleetManagementPage from '../page';
 import { CREATE_AIRCRAFT, DELETE_AIRCRAFT, GET_AIRCRAFTS, UPDATE_AIRCRAFT } from '@/graphql/planes';
+import { GET_PLAN } from '@/graphql/plan';
+import type { ClubPlan } from '@/lib/plan';
 
 const mockToast = jest.fn();
 jest.mock('@/components/hooks/use-toast', () => ({
@@ -63,9 +65,26 @@ const listMock = (aircrafts: unknown[] = [robin, diamond]): MockedResponse => ({
 const mutationResult = (aircraft: Record<string, unknown>) =>
   Object.fromEntries(Object.entries(aircraft).filter(([field]) => field !== 'maintenances'));
 
+// The page asks for the plan of the club: without a limit unless a test gives its own first.
+const unlimitedPlan: MockedResponse = {
+  request: { query: GET_PLAN },
+  result: {
+    data: {
+      plan: {
+        plan: 'ECOLE',
+        features: ['INSTRUCTION'],
+        maxAircraft: null,
+        aircraftInService: 2,
+        maxMembers: null,
+        activeMembers: 12,
+      },
+    },
+  },
+};
+
 const renderPage = (mocks: MockedResponse[] = [listMock()]) =>
   render(
-    <MockedProvider mocks={mocks} addTypename={false}>
+    <MockedProvider mocks={[...mocks, unlimitedPlan]} addTypename={false}>
       <FleetManagementPage />
     </MockedProvider>,
   );
@@ -379,6 +398,80 @@ describe('FleetManagementPage', () => {
     );
     // The aircraft is still there, behind the confirmation left open.
     expect(screen.getByRole('heading', { level: 2, name: 'F-HDIA', hidden: true })).toBeInTheDocument();
+  });
+
+  const clubPlan = (overrides: Partial<ClubPlan> = {}): MockedResponse => ({
+    request: { query: GET_PLAN },
+    result: {
+      data: {
+        plan: {
+          plan: 'CLUB',
+          features: [],
+          maxAircraft: 2,
+          aircraftInService: 2,
+          maxMembers: null,
+          activeMembers: 12,
+          ...overrides,
+        },
+      },
+    },
+  });
+
+  it("n'ouvre pas le formulaire et dit pourquoi quand la formule n'a plus de place pour un avion", async () => {
+    const user = userEvent.setup();
+    renderPage([listMock(), clubPlan()]);
+    await screen.findByRole('heading', { level: 2, name: 'F-GABC' });
+
+    const add = screen.getByRole('button', { name: 'Ajouter un aéronef' });
+    await waitFor(() => expect(add).toHaveAttribute('aria-disabled', 'true'));
+    expect(add).toHaveAccessibleDescription(
+      'Votre formule permet 2 avions en service : retirez-en un ou contactez votre fournisseur pour changer de formule',
+    );
+    await user.click(add);
+    expect(screen.queryByRole('dialog', { name: 'Ajouter un aéronef' })).not.toBeInTheDocument();
+  });
+
+  it('propose de nouveau un avion une fois un aéronef retiré, la formule étant relue', async () => {
+    const user = userEvent.setup();
+    renderPage([
+      listMock(),
+      clubPlan(),
+      {
+        request: { query: DELETE_AIRCRAFT, variables: { aircraftId: 2 } },
+        result: { data: { deleteAircraft: true } },
+      },
+      listMock([robin]),
+      clubPlan({ aircraftInService: 1 }),
+    ]);
+    await screen.findByRole('heading', { level: 2, name: 'F-HDIA' });
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Ajouter un aéronef' })).toHaveAttribute('aria-disabled', 'true'),
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Supprimer F-HDIA' }));
+    const confirmation = await screen.findByRole('alertdialog', { name: 'Supprimer F-HDIA ?' });
+    await user.click(within(confirmation).getByRole('button', { name: 'Supprimer' }));
+    await waitFor(() => expect(screen.queryByRole('heading', { level: 2, name: 'F-HDIA' })).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
+
+    const add = await waitFor(() => {
+      const button = screen.getByRole('button', { name: 'Ajouter un aéronef' });
+      expect(button).not.toHaveAttribute('aria-disabled');
+      return button;
+    });
+    await user.click(add);
+    expect(await screen.findByRole('dialog', { name: 'Ajouter un aéronef' })).toBeInTheDocument();
+  });
+
+  it("propose l'ajout quand la formule laisse de la place", async () => {
+    const user = userEvent.setup();
+    renderPage([listMock(), clubPlan({ maxAircraft: 3 })]);
+    await screen.findByRole('heading', { level: 2, name: 'F-GABC' });
+
+    const add = screen.getByRole('button', { name: 'Ajouter un aéronef' });
+    expect(add).not.toHaveAttribute('aria-disabled');
+    await user.click(add);
+    expect(await screen.findByRole('dialog', { name: 'Ajouter un aéronef' })).toBeInTheDocument();
   });
 
   it("affiche un état d'erreur avec Réessayer quand la liste ne se charge pas", async () => {

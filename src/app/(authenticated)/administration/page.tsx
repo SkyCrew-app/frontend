@@ -26,6 +26,7 @@ import { incidentSeverity, incidentStatus } from "@/lib/incident"
 import { roleLabel } from "@/lib/settings"
 import i18n from "@/lib/i18n"
 import { flightCategoryLabel as bookingCategoryLabel, isFlightCategory } from "@/components/reservation/flight-category"
+import { PlanCard } from "@/components/plan/PlanCard"
 
 // The wording members see when they book; anything else is "Autre".
 const flightCategoryLabel = (category: string | null | undefined) =>
@@ -437,6 +438,8 @@ export default function AdminHomePage() {
           </Section>
         </div>
       )}
+
+      <PlanCard />
     </div>
   )
 }

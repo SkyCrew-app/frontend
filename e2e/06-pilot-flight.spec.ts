@@ -5,6 +5,7 @@ import { ensureAircraft, type TestAircraft } from "./support/aircraft"
 import { stubAirportSearch } from "./support/airports"
 import { openCalendarAhead } from "./support/calendar"
 import { moveBookingIntoThePast } from "./support/database"
+import { instructionInPlan } from "./support/plan"
 
 test.use({ storageState: sessionFile("pilot") })
 
@@ -44,8 +45,11 @@ async function bookSlot(page: Page, purpose: string, hour = "08:00") {
   await expect(panel).toContainText(hour)
   await expect(panel).toContainText(end)
   await panel.getByLabel("But de la réservation").fill(purpose)
-  // The pilot holds a licence: the instructor is optional and none is chosen.
-  await expect(panel.getByRole("combobox", { name: "Avec un instructeur" })).toContainText("Sans instructeur")
+  const instructor = panel.getByRole("combobox", { name: "Avec un instructeur" })
+  // The pilot holds a licence: the instructor is optional and none is chosen. A plan without
+  // instruction offers none.
+  if (instructionInPlan) await expect(instructor).toContainText("Sans instructeur")
+  else await expect(instructor).toHaveCount(0)
   await choose(page, panel.getByRole("combobox", { name: "Catégorie de vol" }), "Local")
   await panel.getByRole("button", { name: "Créer la réservation" }).click()
   booked = { purpose, day, hour }

@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { SidePanel } from "@/components/layout/SidePanel"
 import { UserPlus } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { roleLabel } from "@/lib/settings"
+import { PlanLimitButton } from "@/components/plan/PlanLimitButton"
 import type { Role } from "@/interfaces/user"
 
 interface CreateUserFormProps {
@@ -17,6 +17,8 @@ interface CreateUserFormProps {
   saving?: boolean
   /** Roles the administrator can give; without them the API gives the default role (pilot). */
   roles?: Role[]
+  /** The member places of the plan when they are all used (the button then says so), null otherwise. */
+  membersLimitReached?: number | null
   onSubmit: (userData: {
     first_name: string
     last_name: string
@@ -44,7 +46,14 @@ const Required = () => (
 const FieldError = ({ message }: { message?: string }) =>
   message ? <p className="text-sm text-destructive">{message}</p> : null
 
-export function CreateUserForm({ isOpen, onOpenChange, saving = false, roles = [], onSubmit }: CreateUserFormProps) {
+export function CreateUserForm({
+  isOpen,
+  onOpenChange,
+  saving = false,
+  roles = [],
+  membersLimitReached = null,
+  onSubmit,
+}: CreateUserFormProps) {
   const { t } = useTranslation("administration")
   const [values, setValues] = useState<Values>(EMPTY)
   const [errors, setErrors] = useState<Errors>({})
@@ -92,10 +101,10 @@ export function CreateUserForm({ isOpen, onOpenChange, saving = false, roles = [
 
   return (
     <>
-      <Button onClick={() => onOpenChange(true)}>
+      <PlanLimitButton limit="members" reached={membersLimitReached} onClick={() => onOpenChange(true)}>
         <UserPlus className="h-4 w-4" />
         {t("users.create.title")}
-      </Button>
+      </PlanLimitButton>
       <SidePanel
         open={isOpen}
         onOpenChange={(next) => (next || !saving) && onOpenChange(next)}

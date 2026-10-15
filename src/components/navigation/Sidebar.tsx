@@ -30,6 +30,8 @@ import { getBackendBaseUrl } from "@/lib/runtime-config"
 import { useLogout } from "@/components/hooks/useLogout"
 import SkycrewLogo from "./SkycrewLogo"
 import { roleLabel } from "./role-label"
+import { usePlan } from "@/components/hooks/usePlan"
+import { planAllowsPage } from "@/lib/plan"
 
 // `labelKey` is a key of the `nav` namespace.
 const menuItems = [
@@ -119,6 +121,7 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
     return current ? [current] : []
   })
   const userEmail = useCurrentUser()
+  const { plan } = usePlan()
 
   const { data } = useQuery(GET_USER_PROFILE, {
     variables: { email: userEmail || "" },
@@ -133,12 +136,14 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
   const userName = `${firstName} ${lastName}`.trim()
   const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
   const userRole: string | null = profile?.role?.role_name || null
-  // Same rule as the route guard: a role sees the pages it may open, nothing else.
+  // Same rule as the route guard: a role sees the pages it may open, nothing else; nor
+  // the pages the plan of the club leaves out.
   // A section whose own page is closed to the member leads to its first open page.
+  const opens = (path: string) => canOpenPage(userRole, path) && planAllowsPage(plan, path)
   const visibleItems = menuItems
     .map((item) => {
-      const subItems = item.subItems?.filter((subItem) => canOpenPage(userRole, subItem.path))
-      const href = canOpenPage(userRole, item.path) ? item.path : subItems?.[0]?.path
+      const subItems = item.subItems?.filter((subItem) => opens(subItem.path))
+      const href = opens(item.path) ? item.path : subItems?.[0]?.path
       return { ...item, subItems, href }
     })
     .filter((item): item is typeof item & { href: string } => Boolean(item.href))
