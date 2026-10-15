@@ -7,6 +7,7 @@ import { useQuery } from "@apollo/client"
 import { GET_USER_PROFILE } from "@/graphql/user"
 import { useCurrentUser } from "@/components/hooks/userHooks"
 import { canOpenPage } from "@/lib/proxy-rules"
+import { usePlan } from "@/components/hooks/usePlan"
 import {
   AlertTriangle,
   LayoutDashboard,
@@ -54,6 +55,7 @@ export default function CommandPalette({ open, onOpenChange }: CommandPalettePro
   })
   // Same rule as the route guard and the menu.
   const userRole: string | null = data?.userByEmail?.role?.role_name ?? null
+  const { includes } = usePlan()
 
   const navigate = (path: string) => {
     onOpenChange(false)
@@ -101,10 +103,12 @@ export default function CommandPalette({ open, onOpenChange }: CommandPalettePro
             <Plane className="mr-2 h-4 w-4" />
             {t("pages.fleet")}
           </CommandItem>
-          <CommandItem onSelect={() => navigate("/instruction")}>
-            <GraduationCap className="mr-2 h-4 w-4" />
-            {t("pages.instruction")}
-          </CommandItem>
+          {includes("INSTRUCTION") && (
+            <CommandItem onSelect={() => navigate("/instruction")}>
+              <GraduationCap className="mr-2 h-4 w-4" />
+              {t("pages.instruction")}
+            </CommandItem>
+          )}
           <CommandItem onSelect={() => navigate("/articles")}>
             <Newspaper className="mr-2 h-4 w-4" />
             {t("pages.news")}

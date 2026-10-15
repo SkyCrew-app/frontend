@@ -28,6 +28,7 @@ The suite does not start anything. It expects:
 | `E2E_DOCKER` | `/usr/local/bin/docker` | Full path of the `docker` command used by that fixture |
 | `E2E_SLOW` | `1` | Stretches every delay of the suite at once on a loaded machine (`E2E_SLOW=2` doubles them) |
 | `CI` | — | When set, a journey that only passes on its second attempt fails the run (see "Slow servers and flaky journeys") |
+| `SKYCREW_PLAN` | — | Plan of the API under test, also read by `stack.sh`, which passes it on with `SKYCREW_MAX_AIRCRAFT` / `SKYCREW_MAX_MEMBERS`. With `club` (no instruction), the booking form of `06-pilot-flight` is expected without an instructor field; the journeys about instruction (`08`, `09-*`, `15`, `18`, and the instruction pages of `12-smoke`) do not apply |
 
 ### Against a production build (faster, and what members really get)
 

@@ -194,6 +194,19 @@ describe("CreateUserForm", () => {
     expect(onOpenChange).toHaveBeenCalledWith(true)
   })
 
+  it("keeps the button but says why it does nothing once every member place of the plan is used", () => {
+    const onOpenChange = jest.fn()
+    render(<CreateUserForm isOpen={false} onOpenChange={onOpenChange} membersLimitReached={25} onSubmit={jest.fn()} />)
+
+    const button = screen.getByRole("button", { name: "Ajouter un membre" })
+    expect(button).toHaveAttribute("aria-disabled", "true")
+    expect(button).toHaveAccessibleDescription(
+      "Votre formule permet 25 membres actifs : désactivez-en un ou contactez votre fournisseur pour changer de formule",
+    )
+    fireEvent.click(button)
+    expect(onOpenChange).not.toHaveBeenCalled()
+  })
+
   it("shows what is missing under the fields instead of submitting", async () => {
     const onSubmit = jest.fn()
     render(<CreateUserForm isOpen onOpenChange={jest.fn()} onSubmit={onSubmit} />)

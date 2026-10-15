@@ -30,6 +30,7 @@ import {
   manufactureYearBounds,
 } from "@/lib/aircraft"
 import { apiRefusal } from "@/lib/api-refusal"
+import { apiErrorMessage } from "@/lib/api-error"
 import { getBackendBaseUrl } from "@/lib/runtime-config"
 import { cn } from "@/lib/utils"
 
@@ -177,10 +178,11 @@ export function AircraftFormDialog({ aircraft, isOpen, onClose, onSuccess }: Air
       })
       onSuccess()
     },
-    onError: () => {
+    // The API's reason when it gives one (e.g. every aircraft place of the plan is used).
+    onError: (createError) => {
       toast({
         title: t("aircraftForm.toast.createFailed.title"),
-        description: t("aircraftForm.toast.createFailed.description"),
+        description: apiErrorMessage(createError) ?? t("aircraftForm.toast.createFailed.description"),
         variant: "destructive",
       })
     },

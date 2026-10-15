@@ -32,6 +32,9 @@ import { PendingLicencesNotice, type PendingLicence } from "@/components/admin-u
 import { formatMoney } from "@/lib/format"
 import { calendarDayToISOString } from "@/lib/datetime"
 import { apiErrorMessage, apiRefusalMessage } from "@/lib/api-error"
+import { usePlan } from "@/components/hooks/usePlan"
+import { usePlanRoom } from "@/components/hooks/usePlanRoom"
+import { assignableRoles } from "@/lib/plan"
 
 const USERS_PER_PAGE = 10
 
@@ -98,6 +101,14 @@ export default function AdministrationPage() {
 
   const users: User[] = data?.getUsers ?? []
   const roles: Role[] = rolesData?.roles ?? []
+  // The instructor role belongs to instruction: where the plan leaves it out, it is not offered
+  // (a member who already holds it keeps it).
+  const { plan } = usePlan()
+  // A member added, deactivated, reactivated or deleted changes the places used in the plan.
+  const membersFullAt = usePlanRoom(
+    "members",
+    data?.getUsers.map((user) => `${user.id}:${user.is_active === false ? 0 : 1}`).join(","),
+  )
 
   const [createUser, { loading: creating }] = useMutation(CREATE_USER)
   const [updateUser, { loading: updating }] = useMutation(UPDATE_USER)
@@ -527,7 +538,8 @@ export default function AdministrationPage() {
               isOpen={isCreateDialogOpen}
               onOpenChange={setIsCreateDialogOpen}
               saving={creating}
-              roles={roles}
+              roles={assignableRoles(plan, roles)}
+              membersLimitReached={membersFullAt}
               onSubmit={handleCreateUser}
             />
           </>
@@ -583,7 +595,7 @@ export default function AdministrationPage() {
         isOpen={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
         user={selectedUser}
-        roles={roles}
+        roles={assignableRoles(plan, roles, selectedUser?.role?.role_name)}
         selectedRole={selectedRole}
         onRoleChange={setSelectedRole}
         saving={updating}

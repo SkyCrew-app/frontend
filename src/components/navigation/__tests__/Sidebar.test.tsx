@@ -1,8 +1,9 @@
 import React from "react"
-import { render, screen, within } from "@testing-library/react"
+import { render, screen, waitFor, within } from "@testing-library/react"
 import { MockedProvider } from "@apollo/client/testing"
 import AppSidebar from "../Sidebar"
 import { GET_ME, GET_USER_PROFILE } from "@/graphql/user"
+import { GET_PLAN } from "@/graphql/plan"
 
 jest.mock("next/navigation", () => ({
   usePathname: () => "/dashboard",
@@ -11,11 +12,28 @@ jest.mock("next/navigation", () => ({
 jest.mock("@/components/hooks/useLogout", () => ({ useLogout: () => jest.fn() }))
 jest.mock("@/components/hooks/use-toast", () => ({ toast: jest.fn(), useToast: () => ({ toast: jest.fn() }) }))
 
-const renderSidebar = (role: string) =>
+const planMock = (plan: "CLUB" | "ECOLE") => ({
+  request: { query: GET_PLAN },
+  result: {
+    data: {
+      plan: {
+        plan,
+        features: plan === "ECOLE" ? ["INSTRUCTION"] : [],
+        maxAircraft: null,
+        aircraftInService: 2,
+        maxMembers: null,
+        activeMembers: 12,
+      },
+    },
+  },
+})
+
+const renderSidebar = (role: string, plan?: "CLUB" | "ECOLE") =>
   render(
     <MockedProvider
       addTypename={false}
       mocks={[
+        ...(plan ? [planMock(plan)] : []),
         { request: { query: GET_ME }, result: { data: { me: { id: 3, email: "membre@exemple.fr" } } } },
         {
           request: { query: GET_USER_PROFILE, variables: { email: "membre@exemple.fr" } },
@@ -75,5 +93,23 @@ describe("Sidebar: the administration section per role", () => {
 
     expect(sidebar.getByRole("link", { name: "Carnet de vol" })).toBeInTheDocument()
     expect(administrationLink(sidebar)).not.toBeInTheDocument()
+  })
+})
+
+describe("Sidebar: the plan of the club", () => {
+  it("leaves instruction out of the menu in the Club plan", async () => {
+    renderSidebar("Administrateur", "CLUB")
+    const sidebar = await sidebarOf()
+
+    await waitFor(() => expect(sidebar.queryByRole("link", { name: "Instruction" })).not.toBeInTheDocument())
+    expect(sidebar.queryByRole("link", { name: "E-learning" })).not.toBeInTheDocument()
+    expect(sidebar.getByRole("link", { name: "Carnet de vol" })).toBeInTheDocument()
+  })
+
+  it("shows instruction in the Club + École plan", async () => {
+    renderSidebar("Pilote", "ECOLE")
+    const sidebar = await sidebarOf()
+
+    expect(await sidebar.findByRole("link", { name: "Instruction" })).toHaveAttribute("href", "/instruction")
   })
 })

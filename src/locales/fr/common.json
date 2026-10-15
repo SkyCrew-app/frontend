@@ -172,5 +172,37 @@
     "linkPlaceholder": "https://exemple.com",
     "imagePlaceholder": "https://exemple.com/image.jpg",
     "imageAlt": "Image"
+  },
+  "plan": {
+    "name": {
+      "CLUB": "Club",
+      "ECOLE": "Club + École"
+    },
+    "notIncluded": {
+      "title": "Pas inclus dans votre formule",
+      "feature": "Une fonction de la formule Club + École",
+      "description": "Votre club n'a pas choisi cette formule. Pour en profiter, l'administrateur du club peut demander un changement de formule à son fournisseur SkyCrew.",
+      "back": "Retour au tableau de bord"
+    },
+    "card": {
+      "title": "Formule",
+      "description": "Ce que comprend l'abonnement SkyCrew de votre club.",
+      "current": "Formule actuelle",
+      "aircraft": "Avions en service",
+      "members": "Membres actifs",
+      "unlimited": "sans limite",
+      "full": "Limite atteinte",
+      "instruction": "Instruction (cours, progression des élèves, e-learning, évaluations, vols avec instructeur)",
+      "included": "Incluse",
+      "notIncluded": "Non incluse",
+      "change": "Pour changer de formule ou de limites, contactez votre fournisseur SkyCrew.",
+      "fullHint": "Toutes les places sont utilisées : pour en ajouter, mettez un avion hors service, désactivez un membre parti ou changez de formule."
+    },
+    "limit": {
+      "aircraft_one": "Votre formule permet 1 avion en service : retirez-le ou contactez votre fournisseur pour changer de formule",
+      "aircraft_other": "Votre formule permet {{count}} avions en service : retirez-en un ou contactez votre fournisseur pour changer de formule",
+      "members_one": "Votre formule permet 1 membre actif : désactivez-le ou contactez votre fournisseur pour changer de formule",
+      "members_other": "Votre formule permet {{count}} membres actifs : désactivez-en un ou contactez votre fournisseur pour changer de formule"
+    }
   }
 }
