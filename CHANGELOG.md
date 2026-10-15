@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.14.0](https://github.com/SkyCrew-app/frontend/compare/2.13.1...2.14.0) (2026-10-15)
+
+
+### Features
+
+* **plans:** :sparkles: screens follow the club's plan and its limits ([#179](https://github.com/SkyCrew-app/frontend/issues/179)) ([9760171](https://github.com/SkyCrew-app/frontend/commit/976017105a43522f8467771f309ac90243f0577b))
+
 ## [2.13.1](https://github.com/SkyCrew-app/frontend/compare/2.13.0...2.13.1) (2026-10-14)
 
 
