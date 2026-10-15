@@ -1393,6 +1393,7 @@ type Query {
     """ICAO code, IATA code or part of the name"""
     query: String!
   ): [Aerodrome!]!
+  serviceSuspended: Boolean!
   twoFactorEnabled: Boolean!
   upcomingAudits(daysAhead: Int! = 30): [Audit!]!
   userByEmail(email: String!): User!
