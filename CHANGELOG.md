@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.15.0](https://github.com/SkyCrew-app/frontend/compare/2.14.0...2.15.0) (2026-10-15)
+
+
+### Features
+
+* **suspension:** :sparkles: suspended service page for members ([#183](https://github.com/SkyCrew-app/frontend/issues/183)) ([b3fd7c8](https://github.com/SkyCrew-app/frontend/commit/b3fd7c8fa0b1b47ba277a4e849fdc8ff4421f6d7))
+
 ## [2.14.0](https://github.com/SkyCrew-app/frontend/compare/2.13.1...2.14.0) (2026-10-15)
 
 
