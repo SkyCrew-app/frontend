@@ -65,3 +65,52 @@ export const canOpenPage = (role: string | null | undefined, pathname: string): 
   }
   return false
 }
+
+/** State of the installation as the API reports it on every page request. */
+export interface SiteStatus {
+  /** The club put the site in maintenance. */
+  maintenance: boolean
+  /** The platform owner suspended the installation (unpaid subscription). */
+  suspended: boolean
+}
+
+/** One question for both states: the proxy asks it before every page. */
+export const SITE_STATUS_QUERY = "query GetSiteStatus { getSiteStatus serviceSuspended }"
+
+/** The question of the APIs older than the suspension (no serviceSuspended field). */
+export const LEGACY_SITE_STATUS_QUERY = "query GetSiteStatus { getSiteStatus }"
+
+interface StatusAnswer {
+  data?: { getSiteStatus?: unknown; serviceSuspended?: unknown } | null
+  errors?: unknown
+}
+
+/**
+ * Whether the API refused the question as a whole (errors and no data): an
+ * older API does not know serviceSuspended and rejects the document, so the
+ * proxy asks the older question once more.
+ */
+export const needsLegacyStatusQuery = (answer: StatusAnswer | null | undefined): boolean =>
+  !!answer?.errors && !answer?.data
+
+/** Reads the answer of the API; a field it does not give counts as false. */
+export const readSiteStatus = (answer: StatusAnswer | null | undefined): SiteStatus => ({
+  maintenance: Boolean(answer?.data?.getSiteStatus ?? false),
+  suspended: answer?.data?.serviceSuspended === true,
+})
+
+export const SUSPENDED_PAGE = "/system/suspended"
+export const MAINTENANCE_PAGE = "/system/maintenance"
+
+/**
+ * Where a page request must go given the state of the installation (pathname
+ * without base path), or null to carry on with the session checks. Suspension
+ * wins over maintenance. The suspended page sends back home once the service
+ * is restored, so "Réessayer" (a reload) gets the member back in.
+ */
+export const statusRedirect = (status: SiteStatus, pathname: string): string | null => {
+  if (status.suspended) return isWithin(pathname, SUSPENDED_PAGE) ? null : SUSPENDED_PAGE
+  if (status.maintenance && !pathname.startsWith(MAINTENANCE_PAGE)) return MAINTENANCE_PAGE
+  if (isWithin(pathname, SUSPENDED_PAGE)) return "/"
+  return null
+}
