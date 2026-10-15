@@ -376,6 +376,22 @@ type ChecklistTemplateRemoval {
   submissions_count: Int!
 }
 
+type ClubPlan {
+  """Active members now"""
+  activeMembers: Int!
+
+  """Aircraft in service now"""
+  aircraftInService: Int!
+  features: [PlanFeature!]!
+
+  """Aircraft in service allowed; null: no limit"""
+  maxAircraft: Int
+
+  """Active members allowed; null: no limit"""
+  maxMembers: Int
+  plan: PlanName!
+}
+
 type Course {
   category: String
   description: String
@@ -1259,6 +1275,16 @@ type PaymentResult {
   user: User!
 }
 
+enum PlanFeature {
+  INSTRUCTION
+}
+
+"""club: the club without instruction; ecole: everything"""
+enum PlanName {
+  CLUB
+  ECOLE
+}
+
 type Query {
   adminActionNames: [String!]!
   adminActions(action: String, memberId: Int, page: Int, pageSize: Int): AdminActionsPage!
@@ -1355,6 +1381,7 @@ type Query {
   payments: [Payment!]!
   paymentsByInvoice(invoiceId: Int!): [Payment!]!
   paymentsByUser(userId: Int!): [Payment!]!
+  plan: ClubPlan!
   recentFlights(limit: Int!): [Flight!]!
   recentIncidents(limit: Int!): [Incident!]!
   recentReservations(limit: Int!): [Reservation!]!

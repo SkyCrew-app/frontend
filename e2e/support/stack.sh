@@ -17,6 +17,8 @@
 #   E2E_REDIS_PORT   Redis          (default 6390)
 #   E2E_SMTP_PORT    mail sink      (default 1035; its inbox is on E2E_MAIL_PORT, default 8035)
 #   E2E_SKIP_BUILD   1 to start what is already built
+#   SKYCREW_PLAN, SKYCREW_MAX_AIRCRAFT, SKYCREW_MAX_MEMBERS
+#                    plan of the API (default: everything, no limit), e.g. SKYCREW_PLAN=club
 set -eu
 
 FRONTEND_DIR=$(cd "$(dirname "$0")/../.." && pwd)
@@ -117,6 +119,9 @@ up() {
   # No third party is reached during the journeys.
   export STRIPE_SECRET_KEY="" STRIPE_WEBHOOK_SECRET="" PAYPAL_CLIENT_ID="" PAYPAL_CLIENT_SECRET=""
   export OPENWEATHERMAP_API_KEY="" OPENAIP_API_KEY="" API_NINJAS_KEY="" SENTRY_SECRET_KEY=""
+  # The plan comes from the caller only (empty: the default plan), never from a .env file.
+  export SKYCREW_PLAN="${SKYCREW_PLAN:-}" SKYCREW_MAX_AIRCRAFT="${SKYCREW_MAX_AIRCRAFT:-}"
+  export SKYCREW_MAX_MEMBERS="${SKYCREW_MAX_MEMBERS:-}"
 
   say "API: build, demo data, start"
   cd "$BACKEND_DIR"
@@ -152,6 +157,7 @@ up() {
 
   say "The stack is up"
   echo "frontend http://localhost:$WEB_PORT, API http://localhost:$API_PORT, mail inbox http://localhost:$MAIL_UI_PORT"
+  echo "plan of the API: ${SKYCREW_PLAN:-default}"
   echo "To run the journeys against it:"
   print_env
   echo "npm run e2e"
@@ -165,5 +171,5 @@ case ${1:-} in
     for name in backend frontend; do
       printf '\n== %s\n' "$name"; tail -n "${2:-80}" "$STATE/$name.log" 2>/dev/null || echo "(no log)"
     done ;;
-  *) sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'; exit 64 ;;
+  *) sed -n '2,21p' "$0" | sed 's/^# \{0,1\}//'; exit 64 ;;
 esac

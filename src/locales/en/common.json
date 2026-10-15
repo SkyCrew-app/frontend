@@ -197,6 +197,12 @@
       "notIncluded": "Not included",
       "change": "To change plan or limits, contact your SkyCrew provider.",
       "fullHint": "Every place is used: to add more, take an aircraft out of service, deactivate a member who left or change plan."
+    },
+    "limit": {
+      "aircraft_one": "Your plan allows 1 aircraft in service: take it out of service or contact your provider to change plans",
+      "aircraft_other": "Your plan allows {{count}} aircraft in service: take one out of service or contact your provider to change plans",
+      "members_one": "Your plan allows 1 active member: deactivate them or contact your provider to change plans",
+      "members_other": "Your plan allows {{count}} active members: deactivate one or contact your provider to change plans"
     }
   }
 }

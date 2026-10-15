@@ -64,3 +64,17 @@ export function assignableRoles<T extends { role_name: string }>(
   if (planIncludes(plan, "INSTRUCTION")) return roles
   return roles.filter((role) => role.role_name !== ROLE_INSTRUCTOR || role.role_name === currentRole)
 }
+
+/** The two limits a plan may set. */
+export type PlanLimit = "aircraft" | "members"
+
+/**
+ * The number of places of `limit` when they are all used, null while there is room (or the plan
+ * is unknown: the API still refuses one too many).
+ */
+export const reachedLimit = (plan: ClubPlan | null | undefined, limit: PlanLimit): number | null => {
+  if (!plan) return null
+  const [used, max] =
+    limit === "aircraft" ? [plan.aircraftInService, plan.maxAircraft] : [plan.activeMembers, plan.maxMembers]
+  return isFull(used, max) ? max : null
+}

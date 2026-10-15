@@ -7,7 +7,8 @@ test.use({ storageState: sessionFile("pilot") })
 const AIRCRAFT = "F-EEEE"
 
 test("le pilote signale un incident en dehors d'un vol, le club le suit", async ({ page, browser }) => {
-  const description = `E2E incident ${Date.now()} : feu anticollision qui clignote mal`
+  const stamp = `E2E incident ${Date.now()}`
+  const description = `${stamp} : feu anticollision qui clignote mal`
 
   await test.step("depuis la fiche de l'avion, l'avion est déjà choisi", async () => {
     await page.goto("/fleet")
@@ -38,7 +39,7 @@ test("le pilote signale un incident en dehors d'un vol, le club le suit", async 
 
     await expect(toast(page, "Incident signalé")).toBeVisible()
     await expect(report).toBeHidden()
-    await page.getByRole("textbox", { name: "Rechercher des incidents" }).fill(description.slice(0, 22))
+    await page.getByRole("textbox", { name: "Rechercher des incidents" }).fill(stamp)
     const row = page.getByRole("row").filter({ hasText: AIRCRAFT })
     await expect(row.first()).toContainText("Ouvert")
   })
@@ -47,7 +48,7 @@ test("le pilote signale un incident en dehors d'un vol, le club le suit", async 
   await test.step("l'administrateur le résout", async () => {
     await asRole(browser, "admin", async (admin) => {
       await admin.goto("/administration/incidents")
-      await admin.getByRole("textbox", { name: "Rechercher des incidents" }).fill(description.slice(0, 22))
+      await admin.getByRole("textbox", { name: "Rechercher des incidents" }).fill(stamp)
       await admin.getByRole("row").filter({ hasText: AIRCRAFT }).first().click()
       const detail = admin.getByRole("dialog", { name: /^Incident du / })
       await expect(detail).toContainText(description)
@@ -65,7 +66,10 @@ test("le pilote signale un incident en dehors d'un vol, le club le suit", async 
 
 // The author withdraws a report nobody has taken up; the detail offers it only then.
 test("le pilote supprime son propre signalement tant que personne ne l'a pris en charge", async ({ page }) => {
-  const description = `E2E incident ${Date.now()} : signalé par erreur`
+  // The whole stamp, down to the millisecond: the incident of the journey above, kept, is
+  // reported seconds earlier and would share a shorter prefix.
+  const stamp = `E2E incident ${Date.now()}`
+  const description = `${stamp} : signalé par erreur`
 
   await test.step("il signale l'incident", async () => {
     await page.goto("/fleet/incidents")
@@ -80,7 +84,7 @@ test("le pilote supprime son propre signalement tant que personne ne l'a pris en
   })
 
   await test.step("le détail lui propose de le supprimer, après confirmation", async () => {
-    await page.getByRole("textbox", { name: "Rechercher des incidents" }).fill(description.slice(0, 22))
+    await page.getByRole("textbox", { name: "Rechercher des incidents" }).fill(stamp)
     await page.getByRole("row").filter({ hasText: AIRCRAFT }).first().click()
     const detail = page.getByRole("dialog", { name: /^Incident du / })
     await expect(detail).toContainText(description)
@@ -90,7 +94,7 @@ test("le pilote supprime son propre signalement tant que personne ne l'a pris en
     await confirmAlert(page, "Supprimer mon signalement")
     await expect(toast(page, "Signalement supprimé")).toBeVisible()
     await expect(detail).toBeHidden()
-    await expect(page.getByRole("row").filter({ hasText: description.slice(0, 22) })).toHaveCount(0)
+    await expect(page.getByRole("row").filter({ hasText: stamp })).toHaveCount(0)
   })
 })
 

@@ -1,4 +1,13 @@
-import { assignableRoles, featureOfPage, isFull, planAllowsPage, planIncludes, usage, type ClubPlan } from "../plan"
+import {
+  assignableRoles,
+  featureOfPage,
+  isFull,
+  planAllowsPage,
+  planIncludes,
+  reachedLimit,
+  usage,
+  type ClubPlan,
+} from "../plan"
 
 const plan = (overrides: Partial<ClubPlan> = {}): ClubPlan => ({
   plan: "CLUB",
@@ -46,5 +55,16 @@ describe("the plan of the club", () => {
     expect(assignableRoles(plan(), roles, "Instructeur")).toEqual(roles)
     expect(assignableRoles(ecole, roles)).toEqual(roles)
     expect(assignableRoles(null, roles)).toEqual(roles)
+  })
+
+  it("gives the number of places once a limit is reached, null while there is room", () => {
+    expect(reachedLimit(plan(), "aircraft")).toBeNull()
+    expect(reachedLimit(plan({ aircraftInService: 3 }), "aircraft")).toBe(3)
+    // More than allowed, after a change of plan.
+    expect(reachedLimit(plan({ aircraftInService: 5 }), "aircraft")).toBe(3)
+    expect(reachedLimit(plan({ activeMembers: 400 }), "members")).toBeNull()
+    expect(reachedLimit(plan({ maxMembers: 40 }), "members")).toBe(40)
+    // Unknown plan: the API decides.
+    expect(reachedLimit(null, "aircraft")).toBeNull()
   })
 })
