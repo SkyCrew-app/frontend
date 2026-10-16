@@ -342,6 +342,7 @@ export default function FlightPlanDetails() {
                 <ResultsPanel
                   result={plan.result}
                   reserveCase={plan.input.reserveCase}
+                  departureTime={plan.input.departureTime}
                   settings={settingsData?.flightPlanningSettings ?? null}
                   roles={roles}
                 />

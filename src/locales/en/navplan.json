@@ -71,7 +71,8 @@
       "qnhPlaceholder": "Departure METAR",
       "qnhHint": "Leave empty to use the QNH of the departure METAR.",
       "qnhInvalid": "Enter a QNH between 940 and 1060 hPa.",
-      "envelopeCategory": "Operating category"
+      "envelopeCategory": "Operating category",
+      "nightImposed": "Flight partly at night from {{time}} (at {{icao}}: civil twilight ends {{dusk}}, begins {{dawn}}): the night final reserve (45 min) applies."
     },
     "route": {
       "title": "Route",
@@ -235,7 +236,8 @@
     "calm": "calm",
     "tocAt": "Top of climb at {{distance}}",
     "todAt": "Top of descent at {{distance}}",
-    "suggestedAltitude": "suggested level {{altitude}}"
+    "suggestedAltitude": "suggested level {{altitude}}",
+    "noWindForecast": "0 (no forecast)"
   },
   "massBalance": {
     "takeoff": "Take-off",
@@ -337,7 +339,8 @@
     "unavailable": "Not available",
     "windSource": "Winds and temperatures aloft: {{source}}.",
     "automatic": "Automatic forecast, not checked by a forecaster.",
-    "metarSource": "METAR and TAF: aviationweather.gov (NOAA/NWS)."
+    "metarSource": "METAR and TAF: aviationweather.gov (NOAA/NWS).",
+    "tafValidity": "Valid from {{from}} to {{to}}"
   },
   "navdata": {
     "current": "Aeronautical data: AIRAC cycle {{airac}}, effective {{from}} to {{to}} · {{source}}.",
@@ -412,7 +415,8 @@
     "reserve": "Final reserve: {{litres}} ({{minutes}} min)",
     "loaded": "On board: {{litres}}",
     "endurance": "Endurance: {{value}}",
-    "notamChecked": "NOTAMs and AIP SUPs checked"
+    "notamChecked": "NOTAMs and AIP SUPs checked",
+    "navdataOurAirports": "OurAirports aerodrome data of {{date}}, no AIRAC cycle"
   },
   "editor": {
     "rowActions": "Actions",
@@ -695,6 +699,25 @@
       "saveFailed": "Could not save",
       "invalid": "Fix the highlighted fields.",
       "tryAgain": "Try again in a moment."
+    }
+  },
+  "conditions": {
+    "title": "Day, night and QNH",
+    "night": "Flight partly at night from {{time}} (aviation night: from the end of evening civil twilight to the beginning of morning civil twilight).",
+    "day": "Flight entirely by day: all its times are between the beginning and the end of civil twilight.",
+    "caption": "Civil twilight, sunrise and sunset at the aerodromes of the plan (UTC)",
+    "columns": {
+      "aerodrome": "Aerodrome",
+      "civilDawn": "Civil twilight begins",
+      "sunrise": "Sunrise",
+      "sunset": "Sunset",
+      "civilDusk": "Civil twilight ends"
+    },
+    "qnh": "QNH {{qnh}} hPa: {{source}}.",
+    "qnhSource": {
+      "METAR": "{{icao}} METAR of {{time}}",
+      "INPUT": "entered by the pilot",
+      "DEFAULT": "unknown, standard atmosphere"
     }
   }
 }

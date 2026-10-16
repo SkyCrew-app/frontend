@@ -56,6 +56,8 @@ export function NavLogTable({ legs, alternateLeg, totalDistanceNm, totalTimeMin 
   const { t } = useTranslation("navplan")
   const rows = alternateLeg ? [...legs, alternateLeg] : legs
   const calm = t("log.calm")
+  // Without a winds aloft forecast the API assumes a calm wind: said so, never shown as a forecast.
+  const windOf = (leg: Leg) => (leg.wind.source === "NONE" ? t("log.noWindForecast") : formatWind(leg.wind, calm))
 
   return (
     <div className="space-y-3">
@@ -95,7 +97,7 @@ export function NavLogTable({ legs, alternateLeg, totalDistanceNm, totalTimeMin 
                   </td>
                   <td className="text-right tabular-nums">{formatFt(leg.altitudeFt)}</td>
                   <td className="text-right tabular-nums">{formatCourse(leg.magneticCourseDeg)}</td>
-                  <td className="text-right tabular-nums">{formatWind(leg.wind, calm)}</td>
+                  <td className="text-right tabular-nums">{windOf(leg)}</td>
                   <td className="text-right tabular-nums">{formatDrift(leg.windCorrectionDeg)}</td>
                   <td className="text-right font-semibold tabular-nums">{formatCourse(leg.magneticHeadingDeg)}</td>
                   <td className="text-right tabular-nums">{formatKt(leg.groundSpeedKt)}</td>
@@ -139,7 +141,7 @@ export function NavLogTable({ legs, alternateLeg, totalDistanceNm, totalTimeMin 
                 <MobileFact label={t("log.columns.time")} value={formatMinutes(leg.timeMin)} strong />
                 <MobileFact label={t("log.columns.fuelRemaining")} value={formatLitres(leg.fuelRemainingL)} strong />
                 <MobileFact label={t("log.columns.magneticCourse")} value={formatCourse(leg.magneticCourseDeg)} />
-                <MobileFact label={t("log.columns.wind")} value={formatWind(leg.wind, calm)} />
+                <MobileFact label={t("log.columns.wind")} value={windOf(leg)} />
                 <MobileFact label={t("log.columns.drift")} value={formatDrift(leg.windCorrectionDeg)} />
                 <MobileFact label={t("log.columns.groundSpeed")} value={formatKt(leg.groundSpeedKt)} />
                 <MobileFact label={t("log.columns.distance")} value={formatNm(leg.distanceNm)} />

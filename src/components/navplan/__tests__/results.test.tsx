@@ -9,7 +9,8 @@ import { NavLogTable, legProfileNotes } from "../NavLogTable"
 import { NavdataAge, NoticesList } from "../NoticesBanner"
 import { ResultsPanel } from "../ResultsPanel"
 import { WeatherPanel } from "../WeatherPanel"
-import { BLOCKING_RESULT, NAVDATA, RESULT, SETTINGS, SAVED_PLAN } from "@/test/fixtures/flight-plan"
+import { FlightConditions } from "../FlightConditions"
+import { BLOCKING_RESULT, NAVDATA, NIGHT_RESULT, RESULT, SETTINGS, SAVED_PLAN } from "@/test/fixtures/flight-plan"
 
 global.ResizeObserver = class {
   observe() {}
@@ -39,6 +40,15 @@ describe("NavLogTable", () => {
     ])
     expect(within(table).getByRole("row", { name: /Dégagement LFOC → LFOT/ })).toBeInTheDocument()
     expect(within(table).getByRole("row", { name: /Total/ })).toHaveTextContent("45,4 NM")
+  })
+
+  it("never shows a calm wind assumed without a forecast as a forecast", () => {
+    const [first, ...others] = RESULT.legs
+    const noForecast = { ...first, wind: { ...first.wind, directionDeg: 0, speedKt: 0, source: "NONE" as const } }
+    render(<NavLogTable legs={[noForecast, ...others]} totalDistanceNm={45.4} totalTimeMin={29.6} />)
+    const table = screen.getByRole("table", { name: "Log de navigation, branche par branche" })
+    expect(within(table).getByRole("row", { name: /LFPN → RBT/ })).toHaveTextContent("0 (sans prévision)")
+    expect(within(table).getByRole("row", { name: /RBT → P1/ })).toHaveTextContent("270/15")
   })
 
   it("tells where the climb ends and the descent starts", () => {
@@ -119,6 +129,22 @@ describe("paper nav log", () => {
     expect(printedQnh(null)).toBe("—")
   })
 
+  it("prints where the QNH comes from, and no AIRAC cycle for aerodromes-only data", () => {
+    render(
+      <PrintableNavLog
+        result={{ ...RESULT, qnhObservedAt: "2026-10-16T17:30:00.000Z", navdata: { ...NAVDATA, airac: "OURAIRPORTS", effectiveFrom: "2026-10-16T00:00:00.000Z" } }}
+        input={SAVED_PLAN.input}
+        aircraft="F-GAER"
+        pilot="Jean Dupont"
+        format="A5"
+      />,
+    )
+    const log = document.querySelector(".navlog-print")!
+    expect(log).toHaveTextContent("QNH : 1018 hPa (METAR LFPN de 16/10 17:30Z)")
+    expect(log).toHaveTextContent("Données aérodromes OurAirports du 16 oct. 2026, pas de cycle AIRAC")
+    expect(log).not.toHaveTextContent("AIRAC : OURAIRPORTS")
+  })
+
   it("is printed from <body> with its reserve and endurance line, which a <footer> would lose", () => {
     render(<PrintableNavLog result={RESULT} input={SAVED_PLAN.input} aircraft="F-GAER" pilot="Jean Dupont" format="A5" />)
     const log = document.querySelector(".navlog-print")!
@@ -190,6 +216,11 @@ describe("weather and data age", () => {
     expect(screen.getByText(/DWD ICON-EU/)).toBeInTheDocument()
   })
 
+  it("gives the validity of each TAF", () => {
+    render(<WeatherPanel reports={RESULT.weather} roles={{ LFPN: "departure" }} windSource={RESULT.windSource} />)
+    expect(screen.getAllByText(/Valable du 17\/10 06:00Z au 17\/10 15:00Z/)).toHaveLength(2)
+  })
+
   it("warns in full when the aeronautical data are out of date", () => {
     const { rerender } = render(<NavdataAge navdata={NAVDATA} />)
     expect(screen.getByText(/cycle AIRAC 2610, en vigueur du 1 oct. 2026 au 29 oct. 2026/)).toBeInTheDocument()
@@ -248,9 +279,47 @@ describe("ResultsPanel", () => {
     expect(screen.getByText(/Données aéronautiques : cycle AIRAC 2610/)).toBeInTheDocument()
   })
 
+  it("shows the reserve the API applied to a night flight, not the day case chosen", async () => {
+    render(<ResultsPanel result={NIGHT_RESULT} reserveCase="VFR_DAY" roles={{}} departureTime="2026-10-17T18:30:00.000Z" />)
+    await userEvent.click(screen.getByRole("tab", { name: /Carburant/ }))
+    expect(screen.getByText(/^VFR de nuit : 45 min au débit d'attente/)).toBeInTheDocument()
+    expect(screen.queryByText(/^VFR de jour : /)).toBeNull()
+  })
+
   it("puts a blocking result in red", () => {
     render(<ResultsPanel result={BLOCKING_RESULT} reserveCase="VFR_DAY" roles={{}} />)
     expect(screen.getByText("Bilan : Bloquant")).toBeInTheDocument()
     expect(screen.getByText("Masse et centrage", { selector: "dt" }).nextSibling).toHaveTextContent("Hors limites")
+  })
+})
+
+describe("FlightConditions", () => {
+  it("gives day or night, the twilight, sunrise and sunset of each aerodrome, and the QNH source", () => {
+    render(<FlightConditions result={RESULT} departureTime="2026-10-17T09:00:00.000Z" />)
+    expect(screen.getByText(/^Vol entièrement de jour/)).toBeInTheDocument()
+    const table = screen.getByRole("table", { name: "Crépuscule civil, lever et coucher du soleil aux aérodromes du plan (UTC)" })
+    expect(within(table).getAllByRole("columnheader").map((cell) => cell.textContent)).toEqual([
+      "Aérodrome",
+      "Début crép. civil",
+      "Lever",
+      "Coucher",
+      "Fin crép. civil",
+    ])
+    const departure = within(table).getByRole("row", { name: /LFPN/ })
+    expect(departure).toHaveTextContent("LFPN Départ · 17/10 09:00Z")
+    expect(within(departure).getAllByRole("cell").map((cell) => cell.textContent)).toEqual(["05:44Z", "06:15Z", "16:58Z", "17:29Z"])
+    expect(screen.getByText("QNH 1018 hPa : METAR LFPN de 08:30Z.")).toBeInTheDocument()
+  })
+
+  it("says when the flight is partly at night, with the time", () => {
+    render(<FlightConditions result={NIGHT_RESULT} departureTime="2026-10-17T18:30:00.000Z" />)
+    expect(screen.getByText(/^Vol en partie de nuit à partir de 19:00Z/)).toBeInTheDocument()
+  })
+
+  it("names an old METAR's day and a QNH left to the standard atmosphere", () => {
+    const { rerender } = render(<FlightConditions result={{ ...RESULT, qnhObservedAt: "2026-10-16T17:30:00.000Z" }} departureTime="2026-10-17T09:00:00.000Z" />)
+    expect(screen.getByText("QNH 1018 hPa : METAR LFPN de 16/10 17:30Z.")).toBeInTheDocument()
+    rerender(<FlightConditions result={{ ...RESULT, qnhHpa: 1013.25, qnhSource: "DEFAULT", qnhStation: null }} />)
+    expect(screen.getByText("QNH 1013 hPa : inconnu, atmosphère standard.")).toBeInTheDocument()
   })
 })

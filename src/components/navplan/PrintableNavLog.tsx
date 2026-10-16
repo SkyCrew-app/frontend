@@ -16,6 +16,7 @@ import {
   formatWind,
 } from "@/lib/navplan/units"
 import { legProfileNotes } from "./NavLogTable"
+import { useQnhOrigin } from "./FlightConditions"
 import { massBalanceComputed } from "@/lib/navplan/status"
 import "./navlog-print.css"
 
@@ -66,6 +67,7 @@ export function PrintableNavLog({ result, input, aircraft, pilot, format }: Prin
   // (display: none) instead of only hidden, which printed it as blank sheets.
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
+  const qnhOrigin = useQnhOrigin(result, input.departureTime)
   const legs = result.alternateLeg ? [...result.legs, result.alternateLeg] : result.legs
   let cumulativeDistance = 0
 
@@ -77,8 +79,16 @@ export function PrintableNavLog({ result, input, aircraft, pilot, format }: Prin
         <span>{t("print.aircraft", { value: aircraft })}</span>
         <span>{t("print.pilot", { value: pilot })}</span>
         <span>{t("print.date", { value: formatDate(input.departureTime), time: formatUtcTime(input.departureTime) })}</span>
-        <span>{t("print.qnh", { value: printedQnh(result.qnhHpa ?? input.qnhHpa) })}</span>
-        <span>{t("print.airac", { value: result.navdata.airac })}</span>
+        <span>
+          {t("print.qnh", { value: printedQnh(result.qnhHpa ?? input.qnhHpa) })}
+          {qnhOrigin ? ` (${qnhOrigin})` : ""}
+        </span>
+        <span>
+          {/* Aerodromes-only data has no AIRAC cycle. */}
+          {result.navdata.airac === "OURAIRPORTS"
+            ? t("print.navdataOurAirports", { date: formatDate(result.navdata.effectiveFrom) })
+            : t("print.airac", { value: result.navdata.airac })}
+        </span>
         <span>{t("print.wind", { value: result.windSource })}</span>
       </header>
       {result.navdata.stale && <p className="navlog-print__warning">{t("navdata.staleTitle", { airac: result.navdata.airac, date: formatDate(result.navdata.effectiveFrom) })}</p>}
