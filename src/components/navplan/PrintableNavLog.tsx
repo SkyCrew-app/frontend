@@ -54,6 +54,9 @@ const zonesToContact = (leg: Leg) =>
     })
     .join(" · ")
 
+/** The QNH the plan was computed with, so the paper log never says "—" when the METAR gave it. */
+export const printedQnh = (qnh: number | null | undefined) => (typeof qnh === "number" ? `${Math.round(qnh)} hPa` : "—")
+
 /** Paper nav log of design § 2.10, with blank columns for the actual times and fuel. */
 export function PrintableNavLog({ result, input, aircraft, pilot, format }: PrintableNavLogProps) {
   const { t } = useTranslation("navplan")
@@ -67,7 +70,7 @@ export function PrintableNavLog({ result, input, aircraft, pilot, format }: Prin
         <span>{t("print.aircraft", { value: aircraft })}</span>
         <span>{t("print.pilot", { value: pilot })}</span>
         <span>{t("print.date", { value: formatDate(input.departureTime), time: formatUtcTime(input.departureTime) })}</span>
-        <span>{t("print.qnh", { value: input.qnhHpa ?? "—" })}</span>
+        <span>{t("print.qnh", { value: printedQnh(result.qnhHpa ?? input.qnhHpa) })}</span>
         <span>{t("print.airac", { value: result.navdata.airac })}</span>
         <span>{t("print.wind", { value: result.windSource })}</span>
       </header>

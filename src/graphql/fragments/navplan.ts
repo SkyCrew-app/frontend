@@ -281,6 +281,7 @@ export const FLIGHT_PLAN_RESULT_FIELDS = gql`
       message
     }
     encodedPolyline
+    qnhHpa
   }
   ${LEG_FIELDS}
 `;

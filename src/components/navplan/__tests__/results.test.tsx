@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event"
 import { AirspaceCrossings, airspacesNotChecked, crossingsStatus } from "../AirspaceCrossings"
 import { FuelSummary } from "../FuelSummary"
 import { MassBalanceChart, labelBelow } from "../MassBalanceChart"
+import { printedQnh } from "../PrintableNavLog"
 import { MassBalancePanel } from "../MassBalancePanel"
 import { NavLogTable, legProfileNotes } from "../NavLogTable"
 import { NavdataAge, NoticesList } from "../NoticesBanner"
@@ -108,6 +109,14 @@ describe("labels of the envelope chart", () => {
     expect(labelBelow([[100, 100]], [108, 104])).toBe(true)
     expect(labelBelow([[100, 100]], [200, 100])).toBe(false)
     expect(labelBelow([], [100, 100])).toBe(false)
+  })
+})
+
+describe("paper nav log", () => {
+  it("prints the QNH the plan was computed with, the departure METAR's when the pilot left it blank", () => {
+    expect(printedQnh(1021)).toBe("1021 hPa")
+    expect(printedQnh(1013.25)).toBe("1013 hPa")
+    expect(printedQnh(null)).toBe("—")
   })
 })
 

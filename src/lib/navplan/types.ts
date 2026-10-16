@@ -407,6 +407,8 @@ export interface FlightPlanResult {
   status: CheckStatus
   notices: Notice[]
   encodedPolyline: string
+  /** QNH the plan was computed with (the pilot's, the departure METAR's or standard). */
+  qnhHpa?: number | null
 }
 
 export interface FlightPlan {
