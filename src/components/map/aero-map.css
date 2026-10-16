@@ -35,3 +35,8 @@
   outline: 3px solid hsl(var(--ring));
   outline-offset: 2px;
 }
+
+/* Credits of the map: links told apart from the text by more than their colour (WCAG 1.4.1). */
+.maplibregl-ctrl-attrib a {
+  text-decoration: underline;
+}

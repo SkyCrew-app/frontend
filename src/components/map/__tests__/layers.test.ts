@@ -88,3 +88,11 @@ describe("base map", () => {
     expect(mapOrigins()).toEqual([])
   })
 })
+
+describe("map stylesheet", () => {
+  it("underlines the links of the credits, which differ from the text by too little colour", () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const css: string = require("fs").readFileSync(require("path").join(__dirname, "..", "aero-map.css"), "utf8")
+    expect(css).toMatch(/\.maplibregl-ctrl-attrib a\s*\{[^}]*text-decoration:\s*underline/)
+  })
+})
