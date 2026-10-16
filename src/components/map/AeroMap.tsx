@@ -9,13 +9,17 @@ import type { AddLayerObject, GeoJSONSource, Map as MapLibreMap, Marker } from "
 import { AIRSPACES_IN_BOX, NAV_POINTS_IN_BOX } from "@/graphql/navdata"
 import type { Airspace, NavPoint } from "@/lib/navplan/types"
 import { cn } from "@/lib/utils"
-import { BASE_MAP_ATTRIBUTION, mapStyleUrl } from "./style"
+import { BASE_MAP_ATTRIBUTION, DEFAULT_MAP_STYLE_DARK_URL, DEFAULT_MAP_STYLE_URL, mapStyleUrl } from "./style"
 import { AIRSPACE_SOURCE, airspaceFeatures, airspaceLayers } from "./layers/airspaces"
 import { NAVPOINT_LAYERS, NAVPOINT_SOURCE, navPointFeatures, navPointFromFeature, navPointLayers } from "./layers/navpoints"
 import { ROUTE_SOURCE, legMidpoints, routeFeatures, routeLayers } from "./layers/route"
 import type { AeroMapProps } from "./types"
 import "maplibre-gl/dist/maplibre-gl.css"
 import "./aero-map.css"
+
+const OPENFREEMAP_STYLES = new Set([DEFAULT_MAP_STYLE_URL, DEFAULT_MAP_STYLE_DARK_URL])
+// Room left under the route for the attribution, open when the map starts.
+const FIT_PADDING = { top: 48, right: 48, bottom: 96, left: 48 }
 
 // France, when there is no route yet.
 const DEFAULT_CENTER: [number, number] = [2.5, 46.6]
@@ -107,7 +111,12 @@ function AeroMapCanvas({
           zoom: DEFAULT_ZOOM,
           attributionControl: {
             compact: true,
-            customAttribution: [BASE_MAP_ATTRIBUTION, t("map.notAnAeronauticalChart"), t("map.siaAttribution")],
+            customAttribution: [
+              // OpenFreeMap's own style already credits OpenFreeMap, OpenMapTiles and OpenStreetMap.
+              ...(OPENFREEMAP_STYLES.has(mapStyleUrl(theme)) ? [] : [BASE_MAP_ATTRIBUTION]),
+              t("map.notAnAeronauticalChart"),
+              t("map.siaAttribution"),
+            ],
           },
           dragRotate: false,
           pitchWithRotate: false,
@@ -219,7 +228,7 @@ function AeroMapCanvas({
     if (!fittedRef.current && points.length >= 2) {
       const bounds = new maplibregl.LngLatBounds()
       ;[...points, ...(alternate ? [alternate] : [])].forEach((point) => bounds.extend([point.lon, point.lat]))
-      map.fitBounds(bounds, { padding: 48, maxZoom: 10, duration: 0 })
+      map.fitBounds(bounds, { padding: FIT_PADDING, maxZoom: 10, duration: 0 })
       fittedRef.current = true
     } else if (!fittedRef.current && points.length === 1) {
       map.flyTo({ center: [points[0].lon, points[0].lat], zoom: 9 })

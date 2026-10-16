@@ -149,7 +149,8 @@ describe("AeroMap", () => {
 
     expect(map.options.style).toBe("https://tiles.openfreemap.org/styles/positron")
     const attribution = map.options.attributionControl as { customAttribution: string[] }
-    expect(attribution.customAttribution.join(" ")).toContain("OpenStreetMap")
+    // The OpenFreeMap style credits OpenFreeMap / OpenMapTiles / OpenStreetMap itself: not twice.
+    expect(attribution.customAttribution.join(" ")).not.toContain("openmaptiles")
     expect(attribution.customAttribution).toContain("Fond OpenStreetMap — ne remplace pas la carte aéronautique OACI en vigueur")
     expect(map.layers).toEqual(expect.arrayContaining(["aero-airspaces-fill", "aero-navpoints-circle", "aero-route-line"]))
     expect(map.fitted).toBeInstanceOf(MockBounds)
@@ -158,6 +159,14 @@ describe("AeroMap", () => {
     // positioned container collapsed to a height of 0 in a real browser.
     expect(screen.getByRole("region", { name: "Carte de la route" })).toHaveClass("h-full", "w-full")
     expect(screen.getByRole("region", { name: "Carte de la route" })).not.toHaveClass("absolute")
+  })
+
+  it("credits OpenStreetMap itself under a club's own base map", async () => {
+    process.env.NEXT_PUBLIC_MAP_STYLE_URL = "https://tiles.example.org/style.json"
+    renderMap()
+    const map = await loadedMap()
+    const attribution = map.options.attributionControl as { customAttribution: string[] }
+    expect(attribution.customAttribution.join(" ")).toContain("https://www.openstreetmap.org/copyright")
   })
 
   it("lets the pilot drag a point and insert one on a leg when editing", async () => {
