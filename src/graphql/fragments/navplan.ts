@@ -221,6 +221,7 @@ export const FLIGHT_PLAN_RESULT_FIELDS = gql`
     totalDistanceNm
     totalTimeMin
     fuel {
+      reserveCase
       taxiL
       tripL
       contingencyL
@@ -264,6 +265,8 @@ export const FLIGHT_PLAN_RESULT_FIELDS = gql`
       metar
       taf
       observedAt
+      tafValidFrom
+      tafValidTo
     }
     windSource
     navdata {
@@ -282,6 +285,23 @@ export const FLIGHT_PLAN_RESULT_FIELDS = gql`
     }
     encodedPolyline
     qnhHpa
+    qnhSource
+    qnhStation
+    qnhObservedAt
+    daylight {
+      night
+      nightFrom
+      aerodromes {
+        icao
+        role
+        at
+        date
+        civilDawn
+        sunrise
+        sunset
+        civilDusk
+      }
+    }
   }
   ${LEG_FIELDS}
 `;

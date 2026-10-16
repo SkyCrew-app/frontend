@@ -9,6 +9,7 @@ import type { CheckStatus, FlightPlanningSettings, FlightPlanResult, ReserveCase
 import { formatLitres, formatMinutes, formatNm } from "@/lib/navplan/units"
 import { cn } from "@/lib/utils"
 import { AirspaceCrossings, airspacesNotChecked, crossingsStatus } from "./AirspaceCrossings"
+import { FlightConditions } from "./FlightConditions"
 import { FuelSummary } from "./FuelSummary"
 import { MassBalancePanel } from "./MassBalancePanel"
 import { NavLogTable } from "./NavLogTable"
@@ -29,6 +30,8 @@ interface ResultsPanelProps {
   onTabChange?: (tab: ResultsTab) => void
   /** The key figures are shown elsewhere (next to the map in the builder). */
   hideSummary?: boolean
+  /** Off-block time of the plan (ISO), the reference day of the times shown. */
+  departureTime?: string
 }
 
 const STATUS_DOT: Record<CheckStatus, string> = {
@@ -57,6 +60,7 @@ export function ResultsPanel({
   tab,
   onTabChange,
   hideSummary = false,
+  departureTime,
 }: ResultsPanelProps) {
   const { t } = useTranslation("navplan")
   const notChecked = airspacesNotChecked(result.notices)
@@ -67,6 +71,8 @@ export function ResultsPanel({
       {!hideSummary && <ResultsSummary result={result} pending={pending} />}
 
       <NoticesList notices={result.notices} />
+
+      <FlightConditions result={result} departureTime={departureTime} />
 
       <Tabs value={tab} defaultValue={tab ? undefined : "log"} onValueChange={(value) => onTabChange?.(value as ResultsTab)}>
         <TabsList className="tabs-list h-auto w-full flex-wrap justify-start">
@@ -97,7 +103,8 @@ export function ResultsPanel({
           <MassBalancePanel massBalance={result.massBalance} weighingDate={weighingDate} />
         </TabsContent>
         <TabsContent value="fuel" className="mt-4">
-          <FuelSummary fuel={result.fuel} reserveCase={reserveCase} settings={settings} />
+          {/* The API applies the night reserve to a flight partly at night, whatever was chosen. */}
+          <FuelSummary fuel={result.fuel} reserveCase={result.fuel.reserveCase ?? reserveCase} settings={settings} />
         </TabsContent>
         <TabsContent value="airspaces" className="mt-4">
           <AirspaceCrossings legs={result.legs} alternateLeg={result.alternateLeg} notChecked={notChecked} />

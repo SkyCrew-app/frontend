@@ -204,6 +204,7 @@ export const RESULT: FlightPlanResult = {
   totalDistanceNm: 45.4,
   totalTimeMin: 29.6,
   fuel: {
+    reserveCase: "VFR_DAY",
     taxiL: 3,
     tripL: 13.8,
     contingencyL: 0,
@@ -251,9 +252,25 @@ export const RESULT: FlightPlanResult = {
       metar: "LFPN 170830Z 27012KT 9999 FEW030 12/06 Q1018 NOSIG",
       taf: "TAF LFPN 170500Z 1706/1715 26010KT 9999 SCT035\n  TEMPO 1709/1713 27015G25KT",
       observedAt: "2026-10-17T08:30:00.000Z",
+      tafValidFrom: "2026-10-17T06:00:00.000Z",
+      tafValidTo: "2026-10-17T15:00:00.000Z",
     },
-    { icao: "LFOC", metar: "LFOC 170830Z AUTO 26010KT 9999 NCD 13/07 Q1019", taf: null, observedAt: "2026-10-17T08:30:00.000Z" },
-    { icao: "LFOT", metar: "LFOT 170830Z 25008KT CAVOK 14/07 Q1020", taf: "TAF LFOT 170500Z 1706/1715 25008KT CAVOK", observedAt: "2026-10-17T08:30:00.000Z" },
+    {
+      icao: "LFOC",
+      metar: "LFOC 170830Z AUTO 26010KT 9999 NCD 13/07 Q1019",
+      taf: null,
+      observedAt: "2026-10-17T08:30:00.000Z",
+      tafValidFrom: null,
+      tafValidTo: null,
+    },
+    {
+      icao: "LFOT",
+      metar: "LFOT 170830Z 25008KT CAVOK 14/07 Q1020",
+      taf: "TAF LFOT 170500Z 1706/1715 25008KT CAVOK",
+      observedAt: "2026-10-17T08:30:00.000Z",
+      tafValidFrom: "2026-10-17T06:00:00.000Z",
+      tafValidTo: "2026-10-17T15:00:00.000Z",
+    },
   ],
   windSource: "DWD ICON-EU, run 2026-10-17T06Z (CC BY 4.0)",
   navdata: NAVDATA,
@@ -263,6 +280,36 @@ export const RESULT: FlightPlanResult = {
     { code: "QNH_DEFAULTED", status: "WARNING", message: "QNH du METAR de LFPN utilisé : 1018 hPa." },
   ],
   encodedPolyline: "",
+  qnhHpa: 1018,
+  qnhSource: "METAR",
+  qnhStation: "LFPN",
+  qnhObservedAt: "2026-10-17T08:30:00.000Z",
+  daylight: {
+    night: false,
+    nightFrom: null,
+    aerodromes: [
+      { icao: "LFPN", role: "departure", at: "2026-10-17T09:00:00.000Z", date: "2026-10-17", civilDawn: "2026-10-17T05:44:00.000Z", sunrise: "2026-10-17T06:15:00.000Z", sunset: "2026-10-17T16:58:00.000Z", civilDusk: "2026-10-17T17:29:00.000Z" },
+      { icao: "LFOC", role: "destination", at: "2026-10-17T09:47:00.000Z", date: "2026-10-17", civilDawn: "2026-10-17T05:47:00.000Z", sunrise: "2026-10-17T06:18:00.000Z", sunset: "2026-10-17T17:02:00.000Z", civilDusk: "2026-10-17T17:32:00.000Z" },
+    ],
+  },
+}
+
+/** The same flight at night: the API applies the night reserve whatever the pilot chose. */
+export const NIGHT_RESULT: FlightPlanResult = {
+  ...RESULT,
+  fuel: { ...RESULT.fuel, reserveCase: "VFR_NIGHT", finalReserveMin: 45, finalReserveL: 18 },
+  notices: [
+    {
+      code: "NIGHT_FLIGHT",
+      status: "WARNING",
+      message: "Vol en partie de nuit à partir de 17/10 19:00 UTC (nuit aéronautique : de la fin du crépuscule civil du soir au début du crépuscule civil du matin, règlement SERA) : la réserve finale de nuit (45 min) remplace la réserve de jour choisie ; qualification de vol de nuit requise",
+    },
+  ],
+  daylight: {
+    night: true,
+    nightFrom: "2026-10-17T19:00:00.000Z",
+    aerodromes: (RESULT.daylight?.aerodromes ?? []).map((aerodrome) => ({ ...aerodrome, at: "2026-10-17T19:00:00.000Z" })),
+  },
 }
 
 export const BLOCKING_RESULT: FlightPlanResult = {

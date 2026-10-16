@@ -3,6 +3,7 @@
 import { useTranslation } from "react-i18next"
 import { formatDateTime } from "@/lib/format"
 import type { WeatherReport } from "@/lib/navplan/types"
+import { formatUtcDateTime } from "./FlightConditions"
 
 interface WeatherPanelProps {
   reports: WeatherReport[]
@@ -52,7 +53,15 @@ export function WeatherPanel({ reports, roles, windSource }: WeatherPanelProps) 
                   <p className="break-words rounded-md bg-muted p-2 font-mono text-xs leading-relaxed">{report.metar || t("weather.unavailable")}</p>
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground">TAF</p>
+                  <p className="text-xs font-medium text-muted-foreground">
+                    TAF
+                    {report.tafValidFrom && report.tafValidTo && (
+                      <span className="font-normal">
+                        {" · "}
+                        {t("weather.tafValidity", { from: formatUtcDateTime(report.tafValidFrom), to: formatUtcDateTime(report.tafValidTo) })}
+                      </span>
+                    )}
+                  </p>
                   <p className="whitespace-pre-wrap break-words rounded-md bg-muted p-2 font-mono text-xs leading-relaxed">
                     {report.taf || t("weather.unavailable")}
                   </p>
