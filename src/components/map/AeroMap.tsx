@@ -230,7 +230,8 @@ function AeroMapCanvas({
     <div className={cn("relative h-full w-full overflow-hidden bg-muted", className)}>
       <div
         ref={containerRef}
-        className="absolute inset-0"
+        // Sized by height, not by position: MapLibre's own class sets "position: relative" on it.
+        className="h-full w-full"
         role="region"
         aria-label={editable ? t("map.labelEditable") : t("map.label")}
       />

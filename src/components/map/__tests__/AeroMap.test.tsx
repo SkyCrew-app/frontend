@@ -154,6 +154,10 @@ describe("AeroMap", () => {
     expect(map.layers).toEqual(expect.arrayContaining(["aero-airspaces-fill", "aero-navpoints-circle", "aero-route-line"]))
     expect(map.fitted).toBeInstanceOf(MockBounds)
     expect(screen.getByRole("region", { name: "Carte de la route" })).toBeInTheDocument()
+    // MapLibre adds "maplibregl-map" (position: relative) to this element: an absolutely
+    // positioned container collapsed to a height of 0 in a real browser.
+    expect(screen.getByRole("region", { name: "Carte de la route" })).toHaveClass("h-full", "w-full")
+    expect(screen.getByRole("region", { name: "Carte de la route" })).not.toHaveClass("absolute")
   })
 
   it("lets the pilot drag a point and insert one on a leg when editing", async () => {
