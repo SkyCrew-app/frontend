@@ -2,14 +2,13 @@
 // proxy (src/proxy.ts): scripts run only when they carry the nonce of the
 // request or come from the listed addresses.
 import { getBackendBaseUrl, getGraphqlUrl } from "./runtime-config"
+import { mapOrigins } from "@/components/map/style"
 
-const MAPBOX = ["https://api.mapbox.com", "https://events.mapbox.com", "https://*.tiles.mapbox.com"]
 const STRIPE_SCRIPTS = ["https://js.stripe.com", "https://*.js.stripe.com"]
 const STRIPE_FRAMES = [...STRIPE_SCRIPTS, "https://hooks.stripe.com", "https://m.stripe.network"]
 const STRIPE_CALLS = ["https://api.stripe.com", "https://m.stripe.com", "https://r.stripe.com"]
 const PAYPAL = ["https://*.paypal.com", "https://*.paypalobjects.com"]
 const YOUTUBE = ["https://www.youtube.com", "https://www.youtube-nocookie.com"]
-const AVIATION_DATA = ["https://api.openweathermap.org", "https://api.core.openaip.net"]
 const ADDRESS_SEARCH = ["https://api-adresse.data.gouv.fr"]
 
 const unique = (values: string[]) => [...new Set(values)]
@@ -65,10 +64,10 @@ export function contentSecurityPolicy({
       "'self'",
       ...ownWebsocket(host),
       ...api,
-      ...MAPBOX,
+      // Base map of the flight preparation (OpenFreeMap by default): style, tiles, glyphs, sprites.
+      ...mapOrigins(),
       ...STRIPE_CALLS,
       ...PAYPAL,
-      ...AVIATION_DATA,
       ...ADDRESS_SEARCH,
       ...developmentCalls,
     ]),

@@ -1,0 +1,700 @@
+{
+  "disclaimer": {
+    "preparation": "Flight preparation aid. It replaces neither the official aeronautical publications (AIP, AIP SUP, NOTAM, VAC charts), nor the aircraft flight manual, nor the judgement of the pilot in command."
+  },
+  "status": {
+    "OK": "Compliant",
+    "WARNING": "To check",
+    "BLOCKING": "Blocking",
+    "UNKNOWN": "—"
+  },
+  "pointType": {
+    "AERODROME": "Aerodrome",
+    "VOR": "VOR",
+    "VOR_DME": "VOR-DME",
+    "NDB": "NDB",
+    "DME": "DME",
+    "TACAN": "TACAN",
+    "VRP": "VFR reporting point",
+    "USER": "User point"
+  },
+  "airspaceType": {
+    "P": "Prohibited area",
+    "R": "Restricted area",
+    "D": "Danger area",
+    "CTR": "CTR",
+    "TMA": "TMA",
+    "CTA": "CTA",
+    "SIV": "FIS area",
+    "RMZ": "RMZ",
+    "TMZ": "TMZ",
+    "TRA": "TRA",
+    "TSA": "TSA",
+    "PROTECTED": "Park or reserve",
+    "GLIDING": "Gliding area",
+    "OTHER": "Other area"
+  },
+  "envelopeCategory": {
+    "NORMAL": "Normal",
+    "UTILITY": "Utility",
+    "AEROBATIC": "Aerobatic"
+  },
+  "stationKind": {
+    "SEAT": "Seat",
+    "BAGGAGE": "Baggage area",
+    "FUEL": "Fuel",
+    "OTHER": "Other"
+  },
+  "fuelType": {
+    "AVGAS_100LL": "AVGAS 100LL",
+    "UL91": "UL91",
+    "JET_A1": "Jet A-1",
+    "MOGAS": "MOGAS"
+  },
+  "reserveCase": {
+    "VFR_DAY": "VFR by day",
+    "VFR_DAY_LOCAL": "VFR by day, local in sight of the aerodrome",
+    "VFR_NIGHT": "VFR by night"
+  },
+  "builder": {
+    "editTitle": "Change the flight preparation",
+    "notFound": {
+      "title": "Booking not found",
+      "description": "This booking does not exist, is not yours or was cancelled. Prepare the flight from your bookings."
+    },
+    "flight": {
+      "title": "Flight",
+      "departureTime": "Off-block time (local time)",
+      "utc": "That is {{time}} UTC ({{local}} local time).",
+      "reserveCase": "Kind of flight for the final reserve",
+      "qnh": "QNH",
+      "qnhPlaceholder": "Departure METAR",
+      "qnhHint": "Leave empty to use the QNH of the departure METAR.",
+      "qnhInvalid": "Enter a QNH between 940 and 1060 hPa.",
+      "envelopeCategory": "Operating category"
+    },
+    "route": {
+      "title": "Route",
+      "description": "Departure, turning points, destination and alternate, with the planned altitude of each leg."
+    },
+    "load": {
+      "title": "Loading",
+      "description": "Actual masses on board and fuel at departure, tank by tank.",
+      "noStations": "The loading stations and tanks of this aircraft are not filled in yet: mass and balance cannot be computed."
+    },
+    "results": {
+      "title": "Results",
+      "waiting": "Choose at least the departure and destination aerodromes: the nav log, fuel, mass and balance, airspaces and weather appear here.",
+      "error": "The computation failed. Check your connection and try again.",
+      "retry": "Compute again"
+    },
+    "save": {
+      "action": "Save the plan",
+      "hint": "Results update with every change.",
+      "unsaved": "Unsaved changes.",
+      "incomplete": "Complete the highlighted fields before saving.",
+      "blockingTitle": "Save a blocking plan?",
+      "blockingDescription": "The computation reports at least one blocking item (mass and balance out of limits, not enough fuel or a prohibited area). The plan will be saved as a draft and the printed briefing will read “DO NOT DEPART”.",
+      "saveAnyway": "Save anyway",
+      "updated": "Preparation saved"
+    }
+  },
+  "aircraftState": {
+    "MISSING": {
+      "badge": "To fill in",
+      "title": "No flight data for {{registration}}",
+      "builder": "The performance and mass and balance of this aircraft have not been entered yet: fuel and balance cannot be computed.",
+      "admin": "Choose a type template, then enter the values of this aircraft's flight manual and weighing report."
+    },
+    "INCOMPLETE": {
+      "badge": "To complete",
+      "title": "Flight data of {{registration}} incomplete",
+      "builder": "Some flight manual or weighing values are missing: the related computations are not possible.",
+      "admin": "Complete the missing values, save, then confirm them."
+    },
+    "NOT_VALIDATED": {
+      "badge": "To confirm",
+      "title": "Flight data of {{registration}} not confirmed",
+      "builder": "An administrator has not confirmed the values of this aircraft yet: mass and balance cannot be used and the plan is marked “performance not validated”.",
+      "admin": "Check the values against the flight manual and the weighing report, then confirm them: until then the aircraft cannot be used for mass and balance."
+    },
+    "VALIDATED": {
+      "badge": "Confirmed",
+      "title": "Flight data of {{registration}} confirmed",
+      "builder": "The values of this aircraft have been confirmed.",
+      "admin": "The values of this aircraft have been confirmed."
+    },
+    "missingList": "Missing: {{list}}.",
+    "missing": {
+      "emptyMass": "empty mass",
+      "emptyArm": "empty arm",
+      "weighingDate": "weighing date",
+      "mtow": "maximum take-off mass",
+      "mlw": "maximum landing mass",
+      "seats": "seats",
+      "envelope": "centre of gravity envelope",
+      "tanks": "tanks",
+      "cruise": "cruise table",
+      "reserve": "reserve fuel flows",
+      "descent": "descent"
+    },
+    "openEditor": "Enter the aircraft data",
+    "askAdmin": "Ask a club administrator to fill them in (Administration › Fleet)."
+  },
+  "route": {
+    "departure": "Departure aerodrome",
+    "destination": "Destination aerodrome",
+    "alternate": "Alternate aerodrome",
+    "chooseAerodrome": "Search for an aerodrome",
+    "chooseAlternate": "Optional",
+    "departureRequired": "Choose the departure aerodrome.",
+    "destinationRequired": "Choose the destination aerodrome.",
+    "removeAlternate": "Remove the alternate",
+    "cruiseAltitude": "Cruise altitude",
+    "applyToAllLegs": "Apply to every leg",
+    "legsTitle": "Points and legs",
+    "mapHint": "On the map: click to add a point, drag a point to move it, or drag the “+” of a leg to insert a point.",
+    "legAltitude": "Altitude {{leg}}",
+    "legSetting": "Power setting",
+    "normalSetting": "Normal ({{setting}})",
+    "windOverride": "Typed wind",
+    "windDirection": "Wind from (°)",
+    "windSpeed": "Speed (kt)",
+    "temperature": "Temperature (°C)",
+    "altitudeInvalid": "Enter an altitude between 0 and {{max}}.",
+    "suggestion": "Suggested level: {{altitude}} (semicircular rule, above 3,000 ft AGL).",
+    "useSuggestion": "Use",
+    "addPoint": "Add a point (VOR, reporting point, aerodrome, coordinates)",
+    "pointName": "Name of point {{position}}",
+    "moveUp": "Move {{ident}} up",
+    "moveUpShort": "Move up",
+    "moveDown": "Move {{ident}} down",
+    "moveDownShort": "Move down",
+    "removePoint": "Remove {{ident}}",
+    "removePointShort": "Remove"
+  },
+  "search": {
+    "placeholder": "ICAO code, name, identifier…",
+    "hint": "Type at least 2 characters, or coordinates (48.75 2.10).",
+    "loading": "Searching…",
+    "error": "The search failed. Try again in a moment.",
+    "empty": "No point found.",
+    "freePoint": "User point",
+    "freePointAt": "User point at {{lat}}, {{lon}}",
+    "mandatory": "compulsory",
+    "optional": "on request"
+  },
+  "load": {
+    "massUnit": "Masses in",
+    "volumeUnit": "Fuel in",
+    "people": "People on board",
+    "realMasses": "Actual masses, including clothes and hand bags.",
+    "baggage": "Baggage",
+    "fuel": "Fuel at departure",
+    "stationLabel": "{{station}} ({{unit}})",
+    "tankLabel": "{{tank}} ({{unit}})",
+    "max": "Maximum {{value}} {{unit}}",
+    "usable": "Usable: {{value}} {{unit}}",
+    "full": "Full"
+  },
+  "results": {
+    "overall": "Overall: {{status}}",
+    "updating": "Updating…",
+    "distance": "Distance",
+    "time": "Flight time",
+    "minimumBlock": "Minimum fuel",
+    "massBalance": "Mass and balance",
+    "tabs": {
+      "log": "Nav log",
+      "massBalance": "Mass and balance",
+      "fuel": "Fuel",
+      "airspaces": "Airspaces",
+      "weather": "Weather"
+    }
+  },
+  "log": {
+    "caption": "Nav log, leg by leg",
+    "columns": {
+      "leg": "Leg",
+      "altitude": "Alt.",
+      "magneticCourse": "MC",
+      "magneticCourseLong": "Magnetic course",
+      "wind": "Wind",
+      "drift": "WCA",
+      "magneticHeading": "MH",
+      "magneticHeadingLong": "Magnetic heading",
+      "groundSpeed": "GS",
+      "distance": "Dist.",
+      "time": "Time",
+      "eta": "ETA",
+      "fuel": "Burn",
+      "fuelRemaining": "Fuel left"
+    },
+    "alternate": "Alternate",
+    "total": "Total",
+    "calm": "calm",
+    "tocAt": "Top of climb at {{distance}}",
+    "todAt": "Top of descent at {{distance}}",
+    "suggestedAltitude": "suggested level {{altitude}}"
+  },
+  "massBalance": {
+    "takeoff": "Take-off",
+    "landing": "Landing",
+    "zeroFuel": "Zero fuel",
+    "short": {
+      "takeoff": "TO",
+      "landing": "LDG",
+      "zeroFuel": "ZF"
+    },
+    "within": "Within limits",
+    "outside": "Out of limits",
+    "verdict": {
+      "ok": "Mass and balance within limits at take-off and landing.",
+      "out": "OUT OF LIMITS — DO NOT DEPART"
+    },
+    "massValue": "Mass: {{value}}",
+    "cgValue": "CG: {{value}}",
+    "margins": "Margins: {{kg}} · {{mm}}",
+    "table": {
+      "caption": "Loading, station by station",
+      "station": "Station",
+      "mass": "Mass",
+      "arm": "Arm",
+      "moment": "Moment"
+    },
+    "chart": {
+      "title": "Centre of gravity envelope",
+      "empty": "No envelope to show.",
+      "noEnvelope": "Incomplete envelope.",
+      "envelopeDescription": "Envelope of {{count}} points.",
+      "pointDescription": "{{name}}: {{mass}} kg, CG {{arm}} m, {{verdict}}.",
+      "armAxis": "Arm (m)",
+      "massAxis": "Mass (kg)",
+      "legend": "{{category}} envelope; TO = take-off, LDG = landing, ZF = zero fuel. The dotted line follows the CG during the flight."
+    },
+    "disclaimer": "Computed from the data entered by the club (weighed on {{date}}). The pilot in command checks against the flight manual.",
+    "notComputed": "Mass and balance not computed",
+    "notComputedShort": "Not computed"
+  },
+  "fuel": {
+    "intro": "Fuel balance under NCO.OP.125 and the club rule.",
+    "taxi": "Taxi",
+    "trip": "Trip fuel",
+    "contingency": "Contingency",
+    "contingencyRule": "Club rule: {{percent}} % of trip fuel, at least {{litres}}.",
+    "alternate": "Alternate",
+    "finalReserve": "Final reserve ({{minutes}} min)",
+    "reserveRule": {
+      "VFR_DAY": "VFR by day: {{minutes}} min at holding fuel flow at 1,500 ft (AMC1 NCO.OP.125(b)(a)(2)).",
+      "VFR_DAY_LOCAL": "VFR by day, local in sight of the aerodrome: {{minutes}} min at maximum continuous power (AMC1 NCO.OP.125(b)(a)(1)).",
+      "VFR_NIGHT": "VFR by night: {{minutes}} min at holding fuel flow at 1,500 ft (AMC1 NCO.OP.125(b)(a)(3))."
+    },
+    "clubMargin": "Club margin",
+    "clubMarginRule": "{{minutes}} min at normal cruise fuel flow.",
+    "minimumBlock": "Minimum block fuel",
+    "loaded": "Fuel on board",
+    "usableOf": "of {{usable}} usable",
+    "extra": "Extra",
+    "missing": "Short by",
+    "landing": "Expected fuel on landing",
+    "landingAtAlternate": "Expected fuel at the alternate",
+    "endurance": "Endurance",
+    "regulation": "The final reserve is never contingency fuel: using it is an emergency (AMC3 NCO.OP.125)."
+  },
+  "crossings": {
+    "checkNotam": "Check the NOTAMs and AIP SUPs before the flight.",
+    "unknownIsNotInactive": "Unknown activity ≠ inactive area: an area whose activity is not published here may be active.",
+    "sofia": "SOFIA Briefing (NOTAM)",
+    "sia": "SIA (AIP SUP, AZBA activity of the RTBA)",
+    "newWindow": "(new window)",
+    "none": "No airspace crossed on the planned route.",
+    "notCheckedTitle": "Airspaces not checked",
+    "notCheckedDescription": "No airspace data is imported: the route was not compared with any airspace. Find the airspaces it crosses on the current aeronautical chart (ICAO chart, VAC, AIP).",
+    "class": "class {{value}}",
+    "activityUnknown": "Activity unknown",
+    "limits": "{{ceiling}} / {{floor}}",
+    "span": "from {{entry}} to {{exit}} along the leg",
+    "aircraftAltitude": "aircraft between {{min}} and {{max}}",
+    "activity": "Published activity: {{value}}",
+    "overUnder": "Airspaces flown over or under",
+    "relation": {
+      "INSIDE": "Crossed",
+      "NEAR_FLOOR": "Near the floor",
+      "NEAR_CEILING": "Near the ceiling",
+      "UNKNOWN_VERTICAL": "Ground-based limit: check",
+      "BELOW": "Below the area",
+      "ABOVE": "Above the area"
+    }
+  },
+  "weather": {
+    "none": "No METAR or TAF for the aerodromes of the plan.",
+    "role": {
+      "departure": "Departure",
+      "destination": "Destination",
+      "alternate": "Alternate"
+    },
+    "observed": "Observed {{date}} ({{minutes}} min ago)",
+    "unavailable": "Not available",
+    "windSource": "Winds and temperatures aloft: {{source}}.",
+    "automatic": "Automatic forecast, not checked by a forecaster.",
+    "metarSource": "METAR and TAF: aviationweather.gov (NOAA/NWS)."
+  },
+  "navdata": {
+    "current": "Aeronautical data: AIRAC cycle {{airac}}, effective {{from}} to {{to}} · {{source}}.",
+    "staleTitle": "Aeronautical data of cycle {{airac}} ({{date}}) OUT OF DATE",
+    "staleDescription": "Check the current publications: airspaces, frequencies and points may have changed.",
+    "noneTitle": "No aeronautical data imported",
+    "noneDescription": "No airspaces, reporting points or navaids: only distances and fuel are indicative. Prepare the flight with the current publications.",
+    "aerodromesOnly": "Aeronautical data: aerodromes only, no airspace or navaid imported · {{source}}."
+  },
+  "notices": {
+    "blockingTitle": "Blocking items",
+    "warningTitle": "Items to check"
+  },
+  "map": {
+    "label": "Route map",
+    "labelEditable": "Route map: click to add a point",
+    "notAnAeronauticalChart": "OpenStreetMap background — does not replace the current ICAO aeronautical chart",
+    "siaAttribution": "Aeronautical data: French Aeronautical Information Service (SIA)",
+    "dragPoint": "Point {{ident}}: drag to move it",
+    "insertHandle": "Insert a point on leg {{leg}}: drag",
+    "unavailableTitle": "Map unavailable",
+    "unavailableDescription": "The map cannot be shown on this device. The route can still be changed from the list of points."
+  },
+  "detail": {
+    "legacyBadge": "Former computation",
+    "legacyTitle": "Former computation",
+    "legacyDescription": "This plan was prepared with the former version of Skycrew: its figures are not guaranteed. For a new flight, prepare it with the new tool from your booking.",
+    "beforeDeparture": "Check today's NOTAMs, AIP SUPs and weather, and make sure every document required for the flight is on board.",
+    "computedAt": "Computed on",
+    "documents": "Print",
+    "printLog": "Nav log",
+    "printA5": "A5 log (kneeboard)",
+    "printA4": "A4 log",
+    "dossier": "Flight briefing (PDF)",
+    "dossierA4": "A4 briefing",
+    "dossierA5": "A5 briefing",
+    "dossierFileName": "flight-briefing-{{departure}}-{{destination}}-{{date}}.pdf",
+    "dossierFailed": "Flight briefing unavailable",
+    "dossierFailedDescription": "The PDF could not be created. Try again in a moment.",
+    "edit": "Change the preparation"
+  },
+  "print": {
+    "title": "Nav log",
+    "aircraft": "Aircraft: {{value}}",
+    "pilot": "Pilot: {{value}}",
+    "date": "Date: {{value}} · off-block {{time}}",
+    "qnh": "QNH: {{value}}",
+    "airac": "AIRAC: {{value}}",
+    "wind": "Wind: {{value}}",
+    "outOfLimits": "OUT OF LIMITS — DO NOT DEPART",
+    "columns": {
+      "point": "Point",
+      "altitude": "Alt.",
+      "trueCourse": "TC",
+      "magneticCourse": "MC",
+      "wind": "Wind",
+      "drift": "WCA",
+      "magneticHeading": "MH",
+      "tas": "TAS",
+      "gs": "GS",
+      "distance": "Dist.",
+      "cumulativeDistance": "Total",
+      "time": "Time",
+      "cumulativeTime": "Total",
+      "eta": "ETA",
+      "ata": "ATA",
+      "fuelPlanned": "Fuel plan",
+      "fuelActual": "Fuel actual",
+      "contacts": "Frequencies / areas",
+      "remarks": "Remarks"
+    },
+    "reserve": "Final reserve: {{litres}} ({{minutes}} min)",
+    "loaded": "On board: {{litres}}",
+    "endurance": "Endurance: {{value}}",
+    "notamChecked": "NOTAMs and AIP SUPs checked"
+  },
+  "editor": {
+    "rowActions": "Actions",
+    "emptyTable": "No row.",
+    "cellLabel": "{{column}}, row {{row}}",
+    "moveUp": "Move row {{row}} up",
+    "moveUpShort": "Move up",
+    "moveDown": "Move row {{row}} down",
+    "moveDownShort": "Move down",
+    "removeRow": "Delete row {{row}}",
+    "removeRowShort": "Delete"
+  },
+  "aircraftData": {
+    "cardAction": "Flight data",
+    "title": "Flight data of {{registration}}",
+    "titleDefault": "Flight data",
+    "description": "Performance and mass and balance of the aircraft, from its flight manual and weighing report.",
+    "back": "Fleet",
+    "notFound": {
+      "title": "Aircraft not found",
+      "description": "This aircraft does not exist or was deleted."
+    },
+    "status": {
+      "title": "Data status",
+      "validated": "Confirmed on {{date}} by {{by}}. Any saved change must be confirmed again."
+    },
+    "validate": {
+      "action": "Confirm the values of this aircraft",
+      "saveFirst": "Save your changes first.",
+      "completeFirst": "Complete the missing values first.",
+      "confirmTitle": "Confirm the values of {{registration}}?",
+      "confirmDescription": "You confirm you have checked the weighing, the stations, the centre of gravity envelope and the performance against this aircraft's flight manual and weighing report. Pilots will then compute mass and balance with these values."
+    },
+    "template": {
+      "label": "Type template",
+      "choose": "Choose an aircraft type",
+      "help": "The template sets the structure (stations, tanks, settings); the figures come from this aircraft's flight manual.",
+      "apply": "Apply the template",
+      "confirmTitle": "Apply the template?",
+      "confirmDescription": "The stations, tanks, envelopes and tables of {{registration}} will be replaced by those of the template. The values must then be checked and confirmed."
+    },
+    "units": {
+      "mass": "Masses in",
+      "arm": "Arms in",
+      "volume": "Fuel in"
+    },
+    "tabs": {
+      "massBalance": "Mass and balance",
+      "performance": "Performance"
+    },
+    "unsavedTab": "(unsaved changes)",
+    "unsaved": "Unsaved changes.",
+    "nothingToSave": "Nothing to save.",
+    "discard": "Discard changes",
+    "weighing": {
+      "title": "Weighing",
+      "description": "Copy the latest weighing report of the aircraft (basic empty mass, oil included as the manual says).",
+      "emptyMass": "Empty mass ({{unit}})",
+      "emptyArm": "Empty arm ({{unit}})",
+      "emptyMoment": "Empty moment: {{value}} kg·m",
+      "date": "Weighing date",
+      "reference": "Report reference",
+      "referencePlaceholder": "E.g. weighing 2024-03, workshop…"
+    },
+    "limits": {
+      "title": "Mass limits",
+      "mtow": "Maximum take-off mass ({{unit}})",
+      "mlw": "Maximum landing mass ({{unit}})",
+      "mlwHint": "Often equal to the maximum take-off mass.",
+      "mzfw": "Maximum zero fuel mass ({{unit}})",
+      "optional": "Optional."
+    },
+    "stations": {
+      "title": "Loading stations",
+      "description": "Seats, baggage areas and tanks, with their arm measured from the datum of the manual.",
+      "add": "Add a station",
+      "newLabel": "Station {{count}}",
+      "label": "Label",
+      "kind": "Kind",
+      "arm": "Arm",
+      "max": "Maximum",
+      "tank": "Tank",
+      "chooseTank": "Choose"
+    },
+    "combined": {
+      "title": "Combined limits",
+      "description": "For instance “baggage 1 + baggage 2 ≤ 54 kg”.",
+      "add": "Add a limit",
+      "none": "No combined limit.",
+      "label": "Label",
+      "stations": "Stations",
+      "max": "Maximum"
+    },
+    "envelope": {
+      "sectionTitle": "Centre of gravity envelopes",
+      "sectionDescription": "Copy the points of each envelope of the manual, in drawing order.",
+      "title": "{{category}} envelope",
+      "category": "Category",
+      "remove": "Delete the envelope",
+      "add": "Add an envelope",
+      "help": "The drawing updates as you type: compare it with the chart of the manual.",
+      "pointsCaption": "Points of the envelope, in order",
+      "addPoint": "Add a point",
+      "noPoints": "No point: add the corners of the envelope.",
+      "arm": "Arm",
+      "mass": "Mass",
+      "preview": "Envelope preview",
+      "empty": "Empty aircraft",
+      "emptyShort": "EMPTY",
+      "valid": "Consistent envelope.",
+      "issue": {
+        "TOO_FEW_POINTS": "An envelope has at least 3 points.",
+        "SELF_INTERSECTING": "The sides of the envelope cross: check the order of the points.",
+        "ZERO_AREA": "The points are aligned: the envelope has no area.",
+        "INVALID_VALUE": "Each point has an arm and a positive mass."
+      }
+    },
+    "fuel": {
+      "title": "Fuel",
+      "description": "Fuel type, tanks and fixed quantities.",
+      "type": "Fuel",
+      "density": "Density",
+      "densityHint": "Default value of the chosen type.",
+      "taxi": "Taxi fuel",
+      "taxiHint": "3 L by default.",
+      "arrival": "Joining and circuit",
+      "arrivalHint": "Fixed quantity added at arrival (0 by default).",
+      "tanks": "Tanks",
+      "addTank": "Add a tank",
+      "newTank": "Tank {{count}}",
+      "defaultTank": "Main tank",
+      "tankLabel": "Label",
+      "usable": "Usable",
+      "unusable": "Unusable",
+      "arm": "Arm",
+      "burnOrder": "Tank usage",
+      "proportional": "Proportional",
+      "ordered": "In list order"
+    },
+    "climb": {
+      "title": "Climb",
+      "description": "The “time, fuel, distance to climb” table of the manual, or a simple model.",
+      "ias": "Climb speed (Vy)",
+      "mode": "Climb data",
+      "table": "Manual table",
+      "simple": "Simple model",
+      "addRow": "Add a row",
+      "pressureAlt": "Pressure altitude",
+      "time": "Time",
+      "fuel": "Fuel",
+      "distance": "Distance",
+      "seaLevelRate": "Rate of climb at sea level",
+      "ceilingRate": "Rate of climb at service ceiling",
+      "fuelFlow": "Fuel flow"
+    },
+    "cruise": {
+      "title": "Cruise",
+      "description": "Cruise table of the manual: true airspeed and fuel flow per pressure altitude and power setting.",
+      "addRow": "Add a row",
+      "pressureAlt": "Pressure altitude",
+      "setting": "Power setting",
+      "isa": "ISA deviation",
+      "tas": "True airspeed",
+      "fuelFlow": "Fuel flow",
+      "normalSetting": "Normal cruise setting",
+      "chooseSetting": "Choose a setting of the table"
+    },
+    "descent": {
+      "title": "Descent",
+      "description": "Descent speed, rate and fuel flow.",
+      "ias": "Descent speed",
+      "rate": "Rate of descent",
+      "fuelFlow": "Fuel flow"
+    },
+    "reserve": {
+      "title": "Reserve fuel flows",
+      "description": "For the final reserve of NCO.OP.125.",
+      "holding": "Holding fuel flow at 1,500 ft",
+      "holdingHint": "Otherwise, economy cruise fuel flow (GM2 NCO.OP.125).",
+      "maxContinuous": "Fuel flow at maximum continuous power",
+      "maxContinuousHint": "For the “local in sight of the aerodrome” reserve."
+    },
+    "other": {
+      "title": "Other data",
+      "description": "Service ceiling, source of the figures and airspeed calibration.",
+      "serviceCeiling": "Service ceiling",
+      "source": "Source of the figures",
+      "sourcePlaceholder": "E.g. DR400-140B flight manual, 2019 edition",
+      "calibration": "IAS → CAS calibration",
+      "addCalibration": "Add a calibration row",
+      "noCalibration": "Without calibration, CAS is taken equal to IAS.",
+      "ias": "IAS",
+      "cas": "CAS"
+    },
+    "problem": {
+      "EMPTY_MASS": "Enter the empty mass of the weighing.",
+      "EMPTY_ARM": "Enter the empty arm of the weighing.",
+      "WEIGHING_DATE": "Enter the weighing date.",
+      "MTOW": "Enter the maximum take-off mass.",
+      "MLW": "Enter the maximum landing mass.",
+      "MLW_ABOVE_MTOW": "The maximum landing mass is above the take-off one.",
+      "STATION_LABEL": "Each station has a label.",
+      "STATION_DUPLICATE": "Two stations have the same identifier.",
+      "STATION_TANK": "Each fuel station is linked to a tank.",
+      "COMBINED_LIMIT": "A combined limit covers at least two stations, with a maximum.",
+      "ENVELOPE": "An envelope is incomplete or inconsistent.",
+      "TANKS": "Each tank has a label and a usable quantity.",
+      "DENSITY": "Enter a density between 0.5 and 1 kg/L.",
+      "CLIMB": "Enter the climb speed and the manual table (at least 2 rows) or the simple model.",
+      "CRUISE": "Each cruise row has a setting, a true airspeed and a fuel flow.",
+      "NORMAL_SETTING": "Choose the normal cruise setting among those of the table.",
+      "DESCENT": "Enter the descent speed, rate and fuel flow.",
+      "RESERVE": "Enter both reserve fuel flows."
+    },
+    "toast": {
+      "saved": "Flight data saved",
+      "savedDescription": "Check them, then confirm them so they are used in computations.",
+      "saveFailed": "Could not save",
+      "fixMassBalance": "Fix the highlighted fields in “Mass and balance”.",
+      "fixPerformance": "Fix the highlighted fields in “Performance”.",
+      "tryAgain": "Try again in a moment.",
+      "templateApplied": "Template applied",
+      "templateFailed": "Template not applied",
+      "validated": "Values of {{registration}} confirmed",
+      "validationFailed": "Could not confirm"
+    }
+  },
+  "settings": {
+    "tab": "Flight preparation",
+    "reserve": {
+      "title": "Final reserve",
+      "description": "Minutes of flight kept on arrival, by kind of flight. Minimum values of AMC1 NCO.OP.125(b): the club can only raise them."
+    },
+    "club": {
+      "title": "Club rule",
+      "description": "Reasonable contingencies and an extra margin, shown to the pilot with the rule applied."
+    },
+    "other": {
+      "title": "Airspaces and arrival",
+      "description": "Vertical margin around airspaces and default circuit height."
+    },
+    "fields": {
+      "reserveVfrDayLocalMin": "VFR by day, local in sight of the aerodrome ({{unit}})",
+      "reserveVfrDayMin": "VFR by day ({{unit}})",
+      "reserveVfrNightMin": "VFR by night ({{unit}})",
+      "contingencyPercent": "Contingency ({{unit}} of trip fuel)",
+      "contingencyMinL": "Minimum contingency ({{unit}})",
+      "clubMarginMin": "Club margin ({{unit}})",
+      "alternateRequiredVfr": "Require an alternate in VFR",
+      "verticalMarginFt": "Vertical margin to airspaces ({{unit}})",
+      "defaultCircuitHeightFt": "Circuit height ({{unit}})"
+    },
+    "hints": {
+      "reserveVfrDayLocalMin": "At least 10 min, at maximum continuous power.",
+      "reserveVfrDayMin": "At least 30 min, at holding fuel flow.",
+      "reserveVfrNightMin": "At least 45 min, at holding fuel flow.",
+      "contingencyPercent": "0 % by default. Example: 10 %.",
+      "contingencyMinL": "Minimum contingency quantity.",
+      "clubMarginMin": "At normal cruise fuel flow.",
+      "alternateRequiredVfr": "Without this option, an alternate is only counted when the pilot chooses one.",
+      "verticalMarginFt": "A crossing closer to a floor or a ceiling is reported.",
+      "defaultCircuitHeightFt": "Height above the aerodrome, when the aerodrome publishes none."
+    },
+    "problems": {
+      "reserveVfrDayLocalMin": "At least {{min}} min (AMC1 NCO.OP.125).",
+      "reserveVfrDayMin": "At least {{min}} min (AMC1 NCO.OP.125).",
+      "reserveVfrNightMin": "At least {{min}} min (AMC1 NCO.OP.125).",
+      "contingencyPercent": "Between 0 and 100 %.",
+      "contingencyMinL": "Zero or more.",
+      "clubMarginMin": "A whole number of minutes, zero or more.",
+      "verticalMarginFt": "A whole number of feet, zero or more.",
+      "defaultCircuitHeightFt": "A whole number of feet, above zero."
+    },
+    "taxiFuelNote": "Taxi fuel is set aircraft by aircraft (Administration › Fleet › Flight data), 3 L by default.",
+    "unsaved": "Unsaved changes.",
+    "nothingToSave": "Nothing to save.",
+    "discard": "Discard changes",
+    "toast": {
+      "saved": "Preparation rules saved",
+      "saveFailed": "Could not save",
+      "invalid": "Fix the highlighted fields.",
+      "tryAgain": "Try again in a moment."
+    }
+  }
+}

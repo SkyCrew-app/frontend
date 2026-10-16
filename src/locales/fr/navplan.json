@@ -1,0 +1,700 @@
+{
+  "disclaimer": {
+    "preparation": "Aide à la préparation du vol. Ne remplace ni les publications aéronautiques officielles (AIP, SUP AIP, NOTAM, cartes VAC), ni le manuel de vol de l'avion, ni le jugement du commandant de bord."
+  },
+  "status": {
+    "OK": "Conforme",
+    "WARNING": "À vérifier",
+    "BLOCKING": "Bloquant",
+    "UNKNOWN": "—"
+  },
+  "pointType": {
+    "AERODROME": "Aérodrome",
+    "VOR": "VOR",
+    "VOR_DME": "VOR-DME",
+    "NDB": "NDB",
+    "DME": "DME",
+    "TACAN": "TACAN",
+    "VRP": "Point de report VFR",
+    "USER": "Point libre"
+  },
+  "airspaceType": {
+    "P": "Zone interdite",
+    "R": "Zone réglementée",
+    "D": "Zone dangereuse",
+    "CTR": "CTR",
+    "TMA": "TMA",
+    "CTA": "CTA",
+    "SIV": "SIV",
+    "RMZ": "RMZ",
+    "TMZ": "TMZ",
+    "TRA": "TRA",
+    "TSA": "TSA",
+    "PROTECTED": "Parc ou réserve",
+    "GLIDING": "Zone de vol à voile",
+    "OTHER": "Autre zone"
+  },
+  "envelopeCategory": {
+    "NORMAL": "Normale",
+    "UTILITY": "Utilitaire",
+    "AEROBATIC": "Voltige"
+  },
+  "stationKind": {
+    "SEAT": "Siège",
+    "BAGGAGE": "Soute à bagages",
+    "FUEL": "Carburant",
+    "OTHER": "Autre"
+  },
+  "fuelType": {
+    "AVGAS_100LL": "AVGAS 100LL",
+    "UL91": "UL91",
+    "JET_A1": "Jet A-1",
+    "MOGAS": "MOGAS (SP98)"
+  },
+  "reserveCase": {
+    "VFR_DAY": "VFR de jour",
+    "VFR_DAY_LOCAL": "VFR de jour, local en vue du terrain",
+    "VFR_NIGHT": "VFR de nuit"
+  },
+  "builder": {
+    "editTitle": "Modifier la préparation du vol",
+    "notFound": {
+      "title": "Réservation introuvable",
+      "description": "Cette réservation n'existe pas, n'est pas la vôtre ou a été annulée. Préparez le vol depuis vos réservations."
+    },
+    "flight": {
+      "title": "Vol",
+      "departureTime": "Heure de départ bloc (heure locale)",
+      "utc": "Soit {{time}} UTC ({{local}} heure locale).",
+      "reserveCase": "Type de vol pour la réserve finale",
+      "qnh": "QNH",
+      "qnhPlaceholder": "METAR de départ",
+      "qnhHint": "Laissez vide pour utiliser le QNH du METAR de départ.",
+      "qnhInvalid": "Indiquez un QNH entre 940 et 1060 hPa.",
+      "envelopeCategory": "Catégorie d'exploitation"
+    },
+    "route": {
+      "title": "Route",
+      "description": "Départ, points tournants, arrivée et dégagement, avec l'altitude prévue de chaque branche."
+    },
+    "load": {
+      "title": "Chargement",
+      "description": "Masses réelles à bord et carburant au départ, réservoir par réservoir.",
+      "noStations": "Les stations de chargement et les réservoirs de cet avion ne sont pas encore renseignés : la masse et le centrage ne peuvent pas être calculés."
+    },
+    "results": {
+      "title": "Résultats",
+      "waiting": "Choisissez au moins l'aérodrome de départ et celui d'arrivée : le log de navigation, le carburant, la masse et le centrage, les zones et la météo s'affichent ici.",
+      "error": "Le calcul n'a pas pu être fait. Vérifiez votre connexion puis réessayez.",
+      "retry": "Relancer le calcul"
+    },
+    "save": {
+      "action": "Enregistrer le plan",
+      "hint": "Les résultats se mettent à jour à chaque modification.",
+      "unsaved": "Modifications non enregistrées.",
+      "incomplete": "Complétez les champs signalés avant d'enregistrer.",
+      "blockingTitle": "Enregistrer un plan bloquant ?",
+      "blockingDescription": "Le calcul signale au moins un point bloquant (masse et centrage hors limites, carburant insuffisant ou zone interdite). Le plan sera enregistré comme brouillon et le dossier imprimé portera la mention « NE PAS PARTIR ».",
+      "saveAnyway": "Enregistrer quand même",
+      "updated": "Préparation enregistrée"
+    }
+  },
+  "aircraftState": {
+    "MISSING": {
+      "badge": "À renseigner",
+      "title": "Données de vol de {{registration}} absentes",
+      "builder": "Les performances et la masse et le centrage de cet avion n'ont pas encore été saisis : les calculs de carburant et de centrage ne sont pas possibles.",
+      "admin": "Choisissez un gabarit de type puis saisissez les valeurs du manuel de vol et du rapport de pesée de cet avion."
+    },
+    "INCOMPLETE": {
+      "badge": "À compléter",
+      "title": "Données de vol de {{registration}} incomplètes",
+      "builder": "Certaines valeurs du manuel de vol ou de la pesée manquent : les calculs concernés ne sont pas possibles.",
+      "admin": "Complétez les valeurs manquantes, enregistrez, puis confirmez-les."
+    },
+    "NOT_VALIDATED": {
+      "badge": "À confirmer",
+      "title": "Données de vol de {{registration}} non confirmées",
+      "builder": "Un administrateur n'a pas encore confirmé les valeurs de cet avion : la masse et le centrage ne sont pas utilisables et le plan est marqué « performances non validées ».",
+      "admin": "Vérifiez les valeurs avec le manuel de vol et le rapport de pesée, puis confirmez-les : tant qu'elles ne sont pas confirmées, l'avion ne peut pas servir au calcul de masse et centrage."
+    },
+    "VALIDATED": {
+      "badge": "Confirmées",
+      "title": "Données de vol de {{registration}} confirmées",
+      "builder": "Les valeurs de cet avion ont été confirmées.",
+      "admin": "Les valeurs de cet avion ont été confirmées."
+    },
+    "missingList": "À renseigner : {{list}}.",
+    "missing": {
+      "emptyMass": "masse à vide",
+      "emptyArm": "bras à vide",
+      "weighingDate": "date de pesée",
+      "mtow": "masse maximale au décollage",
+      "mlw": "masse maximale à l'atterrissage",
+      "seats": "sièges",
+      "envelope": "enveloppe de centrage",
+      "tanks": "réservoirs",
+      "cruise": "table de croisière",
+      "reserve": "débits de réserve",
+      "descent": "descente"
+    },
+    "openEditor": "Saisir les données de l'avion",
+    "askAdmin": "Demandez à un administrateur du club de les renseigner (Administration › Flotte)."
+  },
+  "route": {
+    "departure": "Aérodrome de départ",
+    "destination": "Aérodrome d'arrivée",
+    "alternate": "Aérodrome de dégagement",
+    "chooseAerodrome": "Rechercher un aérodrome",
+    "chooseAlternate": "Facultatif",
+    "departureRequired": "Choisissez l'aérodrome de départ.",
+    "destinationRequired": "Choisissez l'aérodrome d'arrivée.",
+    "removeAlternate": "Retirer le dégagement",
+    "cruiseAltitude": "Altitude de croisière",
+    "applyToAllLegs": "Appliquer à toutes les branches",
+    "legsTitle": "Points et branches",
+    "mapHint": "Sur la carte : cliquez pour ajouter un point, faites glisser un point pour le déplacer, ou le « + » d'une branche pour y insérer un point.",
+    "legAltitude": "Altitude {{leg}}",
+    "legSetting": "Régime",
+    "normalSetting": "Normal ({{setting}})",
+    "windOverride": "Vent saisi",
+    "windDirection": "Vent de (°)",
+    "windSpeed": "Force (kt)",
+    "temperature": "Température (°C)",
+    "altitudeInvalid": "Indiquez une altitude entre 0 et {{max}}.",
+    "suggestion": "Niveau conseillé : {{altitude}} (règle semi-circulaire, au-dessus de 3 000 ft sol).",
+    "useSuggestion": "Utiliser",
+    "addPoint": "Ajouter un point (VOR, point de report, aérodrome, coordonnées)",
+    "pointName": "Nom du point {{position}}",
+    "moveUp": "Monter {{ident}}",
+    "moveUpShort": "Monter",
+    "moveDown": "Descendre {{ident}}",
+    "moveDownShort": "Descendre",
+    "removePoint": "Retirer {{ident}}",
+    "removePointShort": "Retirer"
+  },
+  "search": {
+    "placeholder": "Code OACI, nom, identifiant…",
+    "hint": "Tapez au moins 2 caractères, ou des coordonnées (48.75 2.10).",
+    "loading": "Recherche…",
+    "error": "La recherche n'a pas abouti. Réessayez dans un instant.",
+    "empty": "Aucun point trouvé.",
+    "freePoint": "Point libre",
+    "freePointAt": "Point libre à {{lat}}, {{lon}}",
+    "mandatory": "obligatoire",
+    "optional": "facultatif"
+  },
+  "load": {
+    "massUnit": "Masses en",
+    "volumeUnit": "Carburant en",
+    "people": "Personnes à bord",
+    "realMasses": "Masses réelles, vêtements et sacs à main compris.",
+    "baggage": "Bagages",
+    "fuel": "Carburant au départ",
+    "stationLabel": "{{station}} ({{unit}})",
+    "tankLabel": "{{tank}} ({{unit}})",
+    "max": "Maximum {{value}} {{unit}}",
+    "usable": "Utilisable : {{value}} {{unit}}",
+    "full": "Plein"
+  },
+  "results": {
+    "overall": "Bilan : {{status}}",
+    "updating": "Mise à jour…",
+    "distance": "Distance",
+    "time": "Temps de vol",
+    "minimumBlock": "Carburant minimum",
+    "massBalance": "Masse et centrage",
+    "tabs": {
+      "log": "Log de navigation",
+      "massBalance": "Masse et centrage",
+      "fuel": "Carburant",
+      "airspaces": "Zones",
+      "weather": "Météo"
+    }
+  },
+  "log": {
+    "caption": "Log de navigation, branche par branche",
+    "columns": {
+      "leg": "Branche",
+      "altitude": "Alt.",
+      "magneticCourse": "Rm",
+      "magneticCourseLong": "Route magnétique",
+      "wind": "Vent",
+      "drift": "Dérive",
+      "magneticHeading": "Cm",
+      "magneticHeadingLong": "Cap magnétique",
+      "groundSpeed": "Vs",
+      "distance": "Dist.",
+      "time": "Temps",
+      "eta": "HE",
+      "fuel": "Conso.",
+      "fuelRemaining": "Carb. restant"
+    },
+    "alternate": "Dégagement",
+    "total": "Total",
+    "calm": "calme",
+    "tocAt": "Fin de montée à {{distance}}",
+    "todAt": "Début de descente à {{distance}}",
+    "suggestedAltitude": "niveau conseillé {{altitude}}"
+  },
+  "massBalance": {
+    "takeoff": "Décollage",
+    "landing": "Atterrissage",
+    "zeroFuel": "Sans carburant",
+    "short": {
+      "takeoff": "DÉC",
+      "landing": "ATT",
+      "zeroFuel": "ZF"
+    },
+    "within": "Dans les limites",
+    "outside": "Hors limites",
+    "verdict": {
+      "ok": "Masse et centrage dans les limites au décollage et à l'atterrissage.",
+      "out": "HORS LIMITES — NE PAS PARTIR"
+    },
+    "massValue": "Masse : {{value}}",
+    "cgValue": "Centrage : {{value}}",
+    "margins": "Marges : {{kg}} · {{mm}}",
+    "table": {
+      "caption": "Chargement, station par station",
+      "station": "Station",
+      "mass": "Masse",
+      "arm": "Bras",
+      "moment": "Moment"
+    },
+    "chart": {
+      "title": "Enveloppe de centrage",
+      "empty": "Aucune enveloppe à afficher.",
+      "noEnvelope": "Enveloppe incomplète.",
+      "envelopeDescription": "Enveloppe de {{count}} points.",
+      "pointDescription": "{{name}} : {{mass}} kg, centrage {{arm}} m, {{verdict}}.",
+      "armAxis": "Bras de levier (m)",
+      "massAxis": "Masse (kg)",
+      "legend": "Enveloppe {{category}} ; DÉC = décollage, ATT = atterrissage, ZF = sans carburant. Le pointillé suit le déplacement du centrage pendant le vol."
+    },
+    "disclaimer": "Calcul établi à partir des données saisies par le club (pesée du {{date}}). Le commandant de bord vérifie avec le manuel de vol.",
+    "notComputed": "Masse et centrage non calculés",
+    "notComputedShort": "Non calculé"
+  },
+  "fuel": {
+    "intro": "Bilan carburant selon NCO.OP.125 et la règle du club.",
+    "taxi": "Roulage",
+    "trip": "Délestage (étape)",
+    "contingency": "Contingence",
+    "contingencyRule": "Règle du club : {{percent}} % du délestage, au moins {{litres}}.",
+    "alternate": "Dégagement",
+    "finalReserve": "Réserve finale ({{minutes}} min)",
+    "reserveRule": {
+      "VFR_DAY": "VFR de jour : {{minutes}} min au débit d'attente à 1 500 ft (AMC1 NCO.OP.125(b)(a)(2)).",
+      "VFR_DAY_LOCAL": "VFR de jour, local en vue du terrain : {{minutes}} min à la puissance maximale continue (AMC1 NCO.OP.125(b)(a)(1)).",
+      "VFR_NIGHT": "VFR de nuit : {{minutes}} min au débit d'attente à 1 500 ft (AMC1 NCO.OP.125(b)(a)(3))."
+    },
+    "clubMargin": "Marge du club",
+    "clubMarginRule": "{{minutes}} min au débit de croisière normale.",
+    "minimumBlock": "Minimum requis au bloc",
+    "loaded": "Carburant embarqué",
+    "usableOf": "sur {{usable}} utilisables",
+    "extra": "Supplément",
+    "missing": "Manque",
+    "landing": "Carburant prévu à l'atterrissage",
+    "landingAtAlternate": "Carburant prévu au dégagement",
+    "endurance": "Autonomie",
+    "regulation": "La réserve finale ne sert jamais de contingence : l'entamer est une situation d'urgence (AMC3 NCO.OP.125)."
+  },
+  "crossings": {
+    "checkNotam": "Vérifiez les NOTAM et les SUP AIP avant le vol.",
+    "unknownIsNotInactive": "Activité inconnue ≠ zone inactive : une zone dont l'activité n'est pas publiée ici peut être active.",
+    "sofia": "SOFIA Briefing (NOTAM)",
+    "sia": "SIA (SUP AIP, activité AZBA du RTBA)",
+    "newWindow": "(nouvelle fenêtre)",
+    "none": "Aucune zone traversée sur la route prévue.",
+    "notCheckedTitle": "Zones non vérifiées",
+    "notCheckedDescription": "Aucune donnée d'espace aérien n'est importée : la route n'a été comparée à aucune zone. Repérez les zones traversées sur la carte aéronautique en vigueur (carte OACI, VAC, AIP).",
+    "class": "classe {{value}}",
+    "activityUnknown": "Activité inconnue",
+    "limits": "{{ceiling}} / {{floor}}",
+    "span": "de {{entry}} à {{exit}} sur la branche",
+    "aircraftAltitude": "avion entre {{min}} et {{max}}",
+    "activity": "Activité publiée : {{value}}",
+    "overUnder": "Zones survolées ou sous-volées",
+    "relation": {
+      "INSIDE": "Traversée",
+      "NEAR_FLOOR": "Proche du plancher",
+      "NEAR_CEILING": "Proche du plafond",
+      "UNKNOWN_VERTICAL": "Limite sol : vérifier",
+      "BELOW": "Sous la zone",
+      "ABOVE": "Au-dessus de la zone"
+    }
+  },
+  "weather": {
+    "none": "Aucun METAR ni TAF pour les aérodromes du plan.",
+    "role": {
+      "departure": "Départ",
+      "destination": "Arrivée",
+      "alternate": "Dégagement"
+    },
+    "observed": "Observé le {{date}} (il y a {{minutes}} min)",
+    "unavailable": "Non disponible",
+    "windSource": "Vents et températures en altitude : {{source}}.",
+    "automatic": "Prévision automatique non validée par un prévisionniste.",
+    "metarSource": "METAR et TAF : aviationweather.gov (NOAA/NWS)."
+  },
+  "navdata": {
+    "current": "Données aéronautiques : cycle AIRAC {{airac}}, en vigueur du {{from}} au {{to}} · {{source}}.",
+    "staleTitle": "Données aéronautiques du cycle {{airac}} ({{date}}) PÉRIMÉES",
+    "staleDescription": "Vérifiez les publications en vigueur : les zones, fréquences et points peuvent avoir changé.",
+    "noneTitle": "Aucune donnée aéronautique importée",
+    "noneDescription": "Ni zones, ni points de report, ni balises : seules les distances et le carburant sont indicatifs. Préparez le vol avec les publications en vigueur.",
+    "aerodromesOnly": "Données aéronautiques : aérodromes seulement, aucune zone ni balise importée · {{source}}."
+  },
+  "notices": {
+    "blockingTitle": "Points bloquants",
+    "warningTitle": "Points à vérifier"
+  },
+  "map": {
+    "label": "Carte de la route",
+    "labelEditable": "Carte de la route : cliquez pour ajouter un point",
+    "notAnAeronauticalChart": "Fond OpenStreetMap — ne remplace pas la carte aéronautique OACI en vigueur",
+    "siaAttribution": "Données aéronautiques : Service de l'Information Aéronautique (SIA)",
+    "dragPoint": "Point {{ident}} : faites-le glisser pour le déplacer",
+    "insertHandle": "Insérer un point sur la branche {{leg}} : faites glisser",
+    "unavailableTitle": "Carte indisponible",
+    "unavailableDescription": "La carte ne peut pas être affichée sur cet appareil. La route se modifie aussi depuis la liste des points."
+  },
+  "detail": {
+    "legacyBadge": "Ancien calcul",
+    "legacyTitle": "Ancien calcul",
+    "legacyDescription": "Ce plan a été préparé avec l'ancienne version de Skycrew : ses calculs ne sont pas garantis. Pour un nouveau vol, préparez-le avec le nouvel outil depuis votre réservation.",
+    "beforeDeparture": "Vérifiez les NOTAM, les SUP AIP et la météo du jour, et assurez-vous d'avoir à bord tous les documents nécessaires au vol.",
+    "computedAt": "Calculé le",
+    "documents": "Imprimer",
+    "printLog": "Log de navigation",
+    "printA5": "Log A5 (planchette)",
+    "printA4": "Log A4",
+    "dossier": "Dossier de vol (PDF)",
+    "dossierA4": "Dossier A4",
+    "dossierA5": "Dossier A5",
+    "dossierFileName": "dossier-de-vol-{{departure}}-{{destination}}-{{date}}.pdf",
+    "dossierFailed": "Dossier de vol indisponible",
+    "dossierFailedDescription": "Le PDF n'a pas pu être créé. Réessayez dans un instant.",
+    "edit": "Modifier la préparation"
+  },
+  "print": {
+    "title": "Log de navigation",
+    "aircraft": "Avion : {{value}}",
+    "pilot": "Pilote : {{value}}",
+    "date": "Date : {{value}} · départ {{time}}",
+    "qnh": "QNH : {{value}}",
+    "airac": "AIRAC : {{value}}",
+    "wind": "Vent : {{value}}",
+    "outOfLimits": "HORS LIMITES — NE PAS PARTIR",
+    "columns": {
+      "point": "Point",
+      "altitude": "Alt.",
+      "trueCourse": "Rv",
+      "magneticCourse": "Rm",
+      "wind": "Vent",
+      "drift": "X",
+      "magneticHeading": "Cm",
+      "tas": "Vp",
+      "gs": "Vs",
+      "distance": "Dist.",
+      "cumulativeDistance": "Cumul",
+      "time": "Temps",
+      "cumulativeTime": "Cumul",
+      "eta": "HE",
+      "ata": "HR",
+      "fuelPlanned": "Carb. prévu",
+      "fuelActual": "Carb. réel",
+      "contacts": "Fréquences / zones",
+      "remarks": "Remarques"
+    },
+    "reserve": "Réserve finale : {{litres}} ({{minutes}} min)",
+    "loaded": "Embarqué : {{litres}}",
+    "endurance": "Autonomie : {{value}}",
+    "notamChecked": "NOTAM et SUP AIP consultés"
+  },
+  "editor": {
+    "rowActions": "Actions",
+    "emptyTable": "Aucune ligne.",
+    "cellLabel": "{{column}}, ligne {{row}}",
+    "moveUp": "Monter la ligne {{row}}",
+    "moveUpShort": "Monter",
+    "moveDown": "Descendre la ligne {{row}}",
+    "moveDownShort": "Descendre",
+    "removeRow": "Supprimer la ligne {{row}}",
+    "removeRowShort": "Supprimer"
+  },
+  "aircraftData": {
+    "cardAction": "Données de vol",
+    "title": "Données de vol de {{registration}}",
+    "titleDefault": "Données de vol",
+    "description": "Performances et masse et centrage de l'avion, d'après son manuel de vol et son rapport de pesée.",
+    "back": "Flotte",
+    "notFound": {
+      "title": "Avion introuvable",
+      "description": "Cet avion n'existe pas ou a été supprimé."
+    },
+    "status": {
+      "title": "État des données",
+      "validated": "Confirmées le {{date}} par {{by}}. Toute modification enregistrée devra être confirmée à nouveau."
+    },
+    "validate": {
+      "action": "Confirmer les valeurs de cet avion",
+      "saveFirst": "Enregistrez d'abord vos modifications.",
+      "completeFirst": "Complétez d'abord les valeurs manquantes.",
+      "confirmTitle": "Confirmer les valeurs de {{registration}} ?",
+      "confirmDescription": "Vous confirmez avoir vérifié la pesée, les stations, l'enveloppe de centrage et les performances avec le manuel de vol et le rapport de pesée de cet avion. Les pilotes pourront alors calculer la masse et le centrage avec ces valeurs."
+    },
+    "template": {
+      "label": "Gabarit de type",
+      "choose": "Choisir un type d'avion",
+      "help": "Le gabarit pose la structure (stations, réservoirs, réglages) ; les chiffres viennent du manuel de vol de cet avion.",
+      "apply": "Appliquer le gabarit",
+      "confirmTitle": "Appliquer le gabarit ?",
+      "confirmDescription": "Les stations, réservoirs, enveloppes et tables de {{registration}} seront remplacés par ceux du gabarit. Les valeurs devront ensuite être vérifiées et confirmées."
+    },
+    "units": {
+      "mass": "Masses en",
+      "arm": "Bras en",
+      "volume": "Carburant en"
+    },
+    "tabs": {
+      "massBalance": "Masse et centrage",
+      "performance": "Performances"
+    },
+    "unsavedTab": "(modifications non enregistrées)",
+    "unsaved": "Modifications non enregistrées.",
+    "nothingToSave": "Aucune modification à enregistrer.",
+    "discard": "Annuler les modifications",
+    "weighing": {
+      "title": "Pesée",
+      "description": "Recopiez le dernier rapport de pesée de l'avion (masse à vide de base, huile comprise selon le manuel).",
+      "emptyMass": "Masse à vide ({{unit}})",
+      "emptyArm": "Bras à vide ({{unit}})",
+      "emptyMoment": "Moment à vide : {{value}} kg·m",
+      "date": "Date de pesée",
+      "reference": "Référence du rapport",
+      "referencePlaceholder": "Ex. : pesée 2024-03, atelier…"
+    },
+    "limits": {
+      "title": "Masses limites",
+      "mtow": "Masse maximale au décollage ({{unit}})",
+      "mlw": "Masse maximale à l'atterrissage ({{unit}})",
+      "mlwHint": "Souvent égale à la masse maximale au décollage.",
+      "mzfw": "Masse maximale sans carburant ({{unit}})",
+      "optional": "Facultatif."
+    },
+    "stations": {
+      "title": "Stations de chargement",
+      "description": "Sièges, soutes et réservoirs, avec leur bras de levier mesuré depuis la référence du manuel.",
+      "add": "Ajouter une station",
+      "newLabel": "Station {{count}}",
+      "label": "Libellé",
+      "kind": "Type",
+      "arm": "Bras",
+      "max": "Maximum",
+      "tank": "Réservoir",
+      "chooseTank": "Choisir"
+    },
+    "combined": {
+      "title": "Limites combinées",
+      "description": "Par exemple « soute 1 + soute 2 ≤ 54 kg ».",
+      "add": "Ajouter une limite",
+      "none": "Aucune limite combinée.",
+      "label": "Libellé",
+      "stations": "Stations",
+      "max": "Maximum"
+    },
+    "envelope": {
+      "sectionTitle": "Enveloppes de centrage",
+      "sectionDescription": "Recopiez les points de chaque enveloppe du manuel, dans l'ordre du tracé.",
+      "title": "Enveloppe {{category}}",
+      "category": "Catégorie",
+      "remove": "Supprimer l'enveloppe",
+      "add": "Ajouter une enveloppe",
+      "help": "Le dessin se met à jour à chaque saisie : comparez-le avec le graphique du manuel.",
+      "pointsCaption": "Points de l'enveloppe, dans l'ordre",
+      "addPoint": "Ajouter un point",
+      "noPoints": "Aucun point : ajoutez les sommets de l'enveloppe.",
+      "arm": "Bras",
+      "mass": "Masse",
+      "preview": "Aperçu de l'enveloppe",
+      "empty": "Avion à vide",
+      "emptyShort": "VIDE",
+      "valid": "Enveloppe cohérente.",
+      "issue": {
+        "TOO_FEW_POINTS": "Une enveloppe a au moins 3 points.",
+        "SELF_INTERSECTING": "Les côtés de l'enveloppe se croisent : vérifiez l'ordre des points.",
+        "ZERO_AREA": "Les points sont alignés : l'enveloppe n'a pas de surface.",
+        "INVALID_VALUE": "Chaque point a un bras et une masse positive."
+      }
+    },
+    "fuel": {
+      "title": "Carburant",
+      "description": "Type de carburant, réservoirs et quantités forfaitaires.",
+      "type": "Carburant",
+      "density": "Densité",
+      "densityHint": "Valeur par défaut du type choisi.",
+      "taxi": "Carburant de roulage",
+      "taxiHint": "3 L par défaut.",
+      "arrival": "Intégration et tour de piste",
+      "arrivalHint": "Forfait ajouté à l'arrivée (0 par défaut).",
+      "tanks": "Réservoirs",
+      "addTank": "Ajouter un réservoir",
+      "newTank": "Réservoir {{count}}",
+      "defaultTank": "Réservoir principal",
+      "tankLabel": "Libellé",
+      "usable": "Utilisable",
+      "unusable": "Inutilisable",
+      "arm": "Bras",
+      "burnOrder": "Consommation des réservoirs",
+      "proportional": "Proportionnelle",
+      "ordered": "Dans l'ordre de la liste"
+    },
+    "climb": {
+      "title": "Montée",
+      "description": "Table « temps, carburant, distance de montée » du manuel, ou modèle simple.",
+      "ias": "Vitesse de montée (Vy)",
+      "mode": "Données de montée",
+      "table": "Table du manuel",
+      "simple": "Modèle simple",
+      "addRow": "Ajouter une ligne",
+      "pressureAlt": "Altitude-pression",
+      "time": "Temps",
+      "fuel": "Carburant",
+      "distance": "Distance",
+      "seaLevelRate": "Vario au niveau de la mer",
+      "ceilingRate": "Vario au plafond pratique",
+      "fuelFlow": "Débit"
+    },
+    "cruise": {
+      "title": "Croisière",
+      "description": "Table de croisière du manuel : vitesse vraie et débit par altitude-pression et régime.",
+      "addRow": "Ajouter une ligne",
+      "pressureAlt": "Altitude-pression",
+      "setting": "Régime",
+      "isa": "Écart ISA",
+      "tas": "Vitesse vraie",
+      "fuelFlow": "Débit",
+      "normalSetting": "Régime de croisière normal",
+      "chooseSetting": "Choisir un régime de la table"
+    },
+    "descent": {
+      "title": "Descente",
+      "description": "Vitesse, taux et débit de descente.",
+      "ias": "Vitesse de descente",
+      "rate": "Taux de descente",
+      "fuelFlow": "Débit"
+    },
+    "reserve": {
+      "title": "Débits de réserve",
+      "description": "Pour la réserve finale de NCO.OP.125.",
+      "holding": "Débit d'attente à 1 500 ft",
+      "holdingHint": "À défaut, débit de croisière économique (GM2 NCO.OP.125).",
+      "maxContinuous": "Débit à la puissance maximale continue",
+      "maxContinuousHint": "Pour la réserve « local en vue du terrain »."
+    },
+    "other": {
+      "title": "Autres données",
+      "description": "Plafond pratique, source des chiffres et étalonnage anémométrique.",
+      "serviceCeiling": "Plafond pratique",
+      "source": "Source des chiffres",
+      "sourcePlaceholder": "Ex. : Manuel de vol DR400-140B, éd. 2019",
+      "calibration": "Étalonnage IAS → CAS",
+      "addCalibration": "Ajouter une ligne d'étalonnage",
+      "noCalibration": "Sans étalonnage, la CAS est prise égale à l'IAS.",
+      "ias": "IAS",
+      "cas": "CAS"
+    },
+    "problem": {
+      "EMPTY_MASS": "Indiquez la masse à vide de la pesée.",
+      "EMPTY_ARM": "Indiquez le bras à vide de la pesée.",
+      "WEIGHING_DATE": "Indiquez la date de pesée.",
+      "MTOW": "Indiquez la masse maximale au décollage.",
+      "MLW": "Indiquez la masse maximale à l'atterrissage.",
+      "MLW_ABOVE_MTOW": "La masse maximale à l'atterrissage dépasse celle au décollage.",
+      "STATION_LABEL": "Chaque station a un libellé.",
+      "STATION_DUPLICATE": "Deux stations portent le même identifiant.",
+      "STATION_TANK": "Chaque station de carburant est reliée à un réservoir.",
+      "COMBINED_LIMIT": "Une limite combinée porte sur au moins deux stations, avec un maximum.",
+      "ENVELOPE": "Une enveloppe est incomplète ou incohérente.",
+      "TANKS": "Chaque réservoir a un libellé et une quantité utilisable.",
+      "DENSITY": "Indiquez une densité entre 0,5 et 1 kg/L.",
+      "CLIMB": "Indiquez la vitesse de montée et la table du manuel (au moins 2 lignes) ou le modèle simple.",
+      "CRUISE": "Chaque ligne de croisière a un régime, une vitesse vraie et un débit.",
+      "NORMAL_SETTING": "Choisissez le régime de croisière normal parmi ceux de la table.",
+      "DESCENT": "Indiquez la vitesse, le taux et le débit de descente.",
+      "RESERVE": "Indiquez les deux débits de réserve."
+    },
+    "toast": {
+      "saved": "Données de vol enregistrées",
+      "savedDescription": "Vérifiez-les puis confirmez-les pour qu'elles servent aux calculs.",
+      "saveFailed": "Enregistrement impossible",
+      "fixMassBalance": "Corrigez les champs signalés dans « Masse et centrage ».",
+      "fixPerformance": "Corrigez les champs signalés dans « Performances ».",
+      "tryAgain": "Réessayez dans un instant.",
+      "templateApplied": "Gabarit appliqué",
+      "templateFailed": "Gabarit non appliqué",
+      "validated": "Valeurs de {{registration}} confirmées",
+      "validationFailed": "Confirmation impossible"
+    }
+  },
+  "settings": {
+    "tab": "Préparation des vols",
+    "reserve": {
+      "title": "Réserve finale",
+      "description": "Minutes de vol gardées à l'arrivée selon le type de vol. Valeurs minimales de l'AMC1 NCO.OP.125(b) : le club peut seulement les augmenter."
+    },
+    "club": {
+      "title": "Règle du club",
+      "description": "Aléas raisonnables et marge supplémentaire, montrés au pilote avec la règle appliquée."
+    },
+    "other": {
+      "title": "Zones et arrivée",
+      "description": "Marge verticale autour des zones et hauteur du tour de piste par défaut."
+    },
+    "fields": {
+      "reserveVfrDayLocalMin": "VFR de jour, local en vue du terrain ({{unit}})",
+      "reserveVfrDayMin": "VFR de jour ({{unit}})",
+      "reserveVfrNightMin": "VFR de nuit ({{unit}})",
+      "contingencyPercent": "Contingence ({{unit}} du délestage)",
+      "contingencyMinL": "Contingence minimale ({{unit}})",
+      "clubMarginMin": "Marge du club ({{unit}})",
+      "alternateRequiredVfr": "Exiger un dégagement en VFR",
+      "verticalMarginFt": "Marge verticale des zones ({{unit}})",
+      "defaultCircuitHeightFt": "Hauteur du tour de piste ({{unit}})"
+    },
+    "hints": {
+      "reserveVfrDayLocalMin": "Au moins 10 min, à la puissance maximale continue.",
+      "reserveVfrDayMin": "Au moins 30 min, au débit d'attente.",
+      "reserveVfrNightMin": "Au moins 45 min, au débit d'attente.",
+      "contingencyPercent": "0 % par défaut. Exemple : 10 %.",
+      "contingencyMinL": "Quantité minimale de contingence.",
+      "clubMarginMin": "Au débit de croisière normale.",
+      "alternateRequiredVfr": "Sans cette option, le dégagement n'est compté que si le pilote en choisit un.",
+      "verticalMarginFt": "Une traversée plus proche d'un plancher ou d'un plafond est signalée.",
+      "defaultCircuitHeightFt": "Hauteur au-dessus du terrain, quand l'aérodrome n'en publie pas."
+    },
+    "problems": {
+      "reserveVfrDayLocalMin": "Au moins {{min}} min (AMC1 NCO.OP.125).",
+      "reserveVfrDayMin": "Au moins {{min}} min (AMC1 NCO.OP.125).",
+      "reserveVfrNightMin": "Au moins {{min}} min (AMC1 NCO.OP.125).",
+      "contingencyPercent": "Entre 0 et 100 %.",
+      "contingencyMinL": "Zéro ou plus.",
+      "clubMarginMin": "Un nombre entier de minutes, zéro ou plus.",
+      "verticalMarginFt": "Un nombre entier de pieds, zéro ou plus.",
+      "defaultCircuitHeightFt": "Un nombre entier de pieds, supérieur à zéro."
+    },
+    "taxiFuelNote": "Le carburant de roulage se règle avion par avion (Administration › Flotte › Données de vol), 3 L par défaut.",
+    "unsaved": "Modifications non enregistrées.",
+    "nothingToSave": "Aucune modification à enregistrer.",
+    "discard": "Annuler les modifications",
+    "toast": {
+      "saved": "Règles de préparation enregistrées",
+      "saveFailed": "Enregistrement impossible",
+      "invalid": "Corrigez les champs signalés.",
+      "tryAgain": "Réessayez dans un instant."
+    }
+  }
+}

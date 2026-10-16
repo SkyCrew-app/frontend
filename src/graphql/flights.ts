@@ -22,6 +22,7 @@ export const GET_USER_FLIGHT_PLANS = gql`
       number_of_passengers
       distance_km
       estimated_flight_time
+      plan_engine
       user {
         id
         first_name
@@ -80,6 +81,7 @@ export const GET_FLIGHT_PLAN_BY_ID = gql`
       wind_summary
       performance_profile
       estimated_fuel_liters
+      plan_engine
       user {
         id
         first_name
@@ -115,49 +117,6 @@ export const GET_FLIGHT_PLAN_BY_ID = gql`
           image_url
         }
       }
-    }
-  }
-`;
-
-export const CREATE_FLIGHT = gql`
-  mutation CreateFlight($createFlightInput: CreateFlightInput!) {
-    createFlight(createFlightInput: $createFlightInput) {
-      id
-      origin_icao
-      destination_icao
-      flight_type
-      flight_hours
-      number_of_passengers
-      distance_km
-      estimated_flight_time
-      waypoints
-      encoded_polyline
-    }
-  }
-`;
-
-export const GENERATE_FLIGHT_PLAN = gql`
-  mutation GenerateFlightPlan($input: GenerateFlightPlanInput!) {
-    generateFlightPlan(input: $input) {
-      id
-      origin_icao
-      destination_icao
-      flight_type
-      flight_hours
-      number_of_passengers
-      distance_km
-      estimated_flight_time
-      waypoints
-      encoded_polyline
-      departure_time
-      arrival_time
-      departure_airport_info
-      arrival_airport_info
-      weather_conditions
-      fuel_policy
-      wind_summary
-      performance_profile
-      estimated_fuel_liters
     }
   }
 `;

@@ -84,6 +84,13 @@ type Aerodrome {
   timezone: String
 }
 
+type AerodromeDetails {
+  circuitHeightFt: Int
+  frequencies: [RadioFrequency!]!
+  point: NavPoint!
+  runways: [Runway!]!
+}
+
 type AerodromeWeather {
   """Percent"""
   cloudCover: Float
@@ -141,6 +148,133 @@ type AircraftAuditStats {
   auditCount: Int!
   nonConformCount: Int!
   registration: String!
+}
+
+type AircraftMassBalance {
+  aircraftId: Int!
+  combinedLimits: [CombinedLimit!]!
+  emptyArmM: Float
+  emptyMassKg: Float
+  envelopes: [Envelope!]!
+  mlwKg: Float
+  mtowKg: Float
+  mzfwKg: Float
+  stations: [Station!]!
+  validatedAt: DateTime
+  validatedBy: String
+  weighingDate: DateTime
+  weighingRef: String
+}
+
+input AircraftMassBalanceInput {
+  combinedLimits: [CombinedLimitInput!]!
+  emptyArmM: Float!
+  emptyMassKg: Float!
+  envelopes: [EnvelopeInput!]!
+  mlwKg: Float!
+  mtowKg: Float!
+  mzfwKg: Float
+  stations: [StationInput!]!
+  weighingDate: DateTime!
+  weighingRef: String
+}
+
+type AircraftPerformance {
+  aircraftId: Int!
+  arrivalFuelL: Float!
+  calibration: [CalibrationRow!]!
+  climb: ClimbData!
+  cruise: CruiseData!
+  descent: DescentData!
+  fuel: FuelData!
+  reserve: ReserveData!
+  serviceCeilingFt: Int
+  source: String
+  templateCode: String
+  validatedAt: DateTime
+  validatedBy: String
+}
+
+input AircraftPerformanceInput {
+  arrivalFuelL: Float!
+  calibration: [CalibrationRowInput!]!
+  climb: ClimbDataInput!
+  cruise: CruiseDataInput!
+  descent: DescentDataInput!
+  fuel: FuelDataInput!
+  reserve: ReserveDataInput!
+  serviceCeilingFt: Int
+  source: String
+}
+
+type AircraftTypeTemplate {
+  code: String!
+  label: String!
+  source: String
+}
+
+type Airspace {
+  activity: String
+  ceiling: AltitudeLimit!
+  floor: AltitudeLimit!
+  frequencies: [RadioFrequency!]!
+  geometry: JSON!
+  icaoClass: String
+  id: ID!
+  name: String!
+  remarks: String
+  type: AirspaceType!
+}
+
+type AirspaceCrossing {
+  activityKnown: Boolean!
+  aircraftMaxAltFt: Int!
+  aircraftMinAltFt: Int!
+  airspace: Airspace!
+  entryNm: Float!
+  exitNm: Float!
+  relation: AirspaceRelation!
+  requirement: String!
+  status: CheckStatus!
+}
+
+enum AirspaceRelation {
+  ABOVE
+  BELOW
+  INSIDE
+  NEAR_CEILING
+  NEAR_FLOOR
+  UNKNOWN_VERTICAL
+}
+
+enum AirspaceType {
+  CTA
+  CTR
+  D
+  GLIDING
+  OTHER
+  P
+  PROTECTED
+  R
+  RMZ
+  SIV
+  TMA
+  TMZ
+  TRA
+  TSA
+}
+
+type AltitudeLimit {
+  label: String!
+  ref: AltitudeRef!
+  value: Int!
+}
+
+enum AltitudeRef {
+  AGL
+  AMSL
+  FL
+  SFC
 }
 
 type Answer {
@@ -291,6 +425,13 @@ enum AvailabilityStatus {
   UNAVAILABLE
 }
 
+input BBoxInput {
+  east: Float!
+  north: Float!
+  south: Float!
+  west: Float!
+}
+
 type BudgetForecast {
   cashReceived: Float!
   cashRefunded: Float!
@@ -299,12 +440,28 @@ type BudgetForecast {
   revenueForecast: Float!
 }
 
+type CalibrationRow {
+  casKt: Float!
+  iasKt: Float!
+}
+
+input CalibrationRowInput {
+  casKt: Float!
+  iasKt: Float!
+}
+
 type CertificationDto {
   expiryDate: DateTime
   id: Int!
   name: String!
   progress: Int!
   status: String!
+}
+
+enum CheckStatus {
+  BLOCKING
+  OK
+  WARNING
 }
 
 enum ChecklistCategory {
@@ -376,6 +533,36 @@ type ChecklistTemplateRemoval {
   submissions_count: Int!
 }
 
+type ClimbData {
+  ceilingRateFpm: Int
+  fuelFlowLph: Float
+  iasKt: Int!
+  seaLevelRateFpm: Int
+  table: [ClimbRow!]
+}
+
+input ClimbDataInput {
+  ceilingRateFpm: Int
+  fuelFlowLph: Float
+  iasKt: Int!
+  seaLevelRateFpm: Int
+  table: [ClimbRowInput!]
+}
+
+type ClimbRow {
+  distanceNm: Float!
+  fuelL: Float!
+  pressureAltFt: Int!
+  timeMin: Float!
+}
+
+input ClimbRowInput {
+  distanceNm: Float!
+  fuelL: Float!
+  pressureAltFt: Int!
+  timeMin: Float!
+}
+
 type ClubPlan {
   """Active members now"""
   activeMembers: Int!
@@ -390,6 +577,18 @@ type ClubPlan {
   """Active members allowed; null: no limit"""
   maxMembers: Int
   plan: PlanName!
+}
+
+type CombinedLimit {
+  label: String!
+  maxKg: Float!
+  stationIds: [String!]!
+}
+
+input CombinedLimitInput {
+  label: String!
+  maxKg: Float!
+  stationIds: [String!]!
 }
 
 type Course {
@@ -756,6 +955,32 @@ enum CriticalityLevel {
   MINEUR
 }
 
+type CruiseData {
+  normalSetting: String!
+  rows: [CruiseRow!]!
+}
+
+input CruiseDataInput {
+  normalSetting: String!
+  rows: [CruiseRowInput!]!
+}
+
+type CruiseRow {
+  fuelFlowLph: Float!
+  isaDeviationC: Int!
+  pressureAltFt: Int!
+  setting: String!
+  tasKt: Float!
+}
+
+input CruiseRowInput {
+  fuelFlowLph: Float!
+  isaDeviationC: Int!
+  pressureAltFt: Int!
+  setting: String!
+  tasKt: Float!
+}
+
 type DashboardWidgetConfig {
   order: Int!
   size: String!
@@ -770,10 +995,30 @@ input DashboardWidgetConfigInput {
   widgetId: String!
 }
 
+enum DataSourceKind {
+  METAR
+  MODEL
+  NONE
+  PILOT
+  TAF
+}
+
 """
 A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
 """
 scalar DateTime
+
+type DescentData {
+  fuelFlowLph: Float!
+  iasKt: Int!
+  rateFpm: Int!
+}
+
+input DescentDataInput {
+  fuelFlowLph: Float!
+  iasKt: Int!
+  rateFpm: Int!
+}
 
 type ELearningCourseDto {
   category: String!
@@ -783,6 +1028,32 @@ type ELearningCourseDto {
   progress: Float!
   title: String!
   totalLessons: Int!
+}
+
+type Envelope {
+  category: EnvelopeCategory!
+  points: [EnvelopePoint!]!
+}
+
+enum EnvelopeCategory {
+  AEROBATIC
+  NORMAL
+  UTILITY
+}
+
+input EnvelopeInput {
+  category: EnvelopeCategory!
+  points: [EnvelopePointInput!]!
+}
+
+type EnvelopePoint {
+  armM: Float!
+  massKg: Float!
+}
+
+input EnvelopePointInput {
+  armM: Float!
+  massKg: Float!
 }
 
 type Evaluation {
@@ -841,6 +1112,7 @@ type Flight {
   number_of_passengers: Int
   origin_icao: String!
   performance_profile: String
+  plan_engine: String
   remarks: String
   reservation: Reservation
   user: User!
@@ -858,6 +1130,143 @@ enum FlightCategory {
   PRIVATE
   TOURISM
   TRAINING
+}
+
+enum FlightPhase {
+  CLIMB
+  CRUISE
+  DESCENT
+}
+
+type FlightPlan {
+  createdAt: DateTime!
+  flightId: Int
+  id: Int!
+  input: JSON!
+  result: FlightPlanResult!
+  updatedAt: DateTime!
+}
+
+input FlightPlanInput {
+  aircraftId: Int!
+  alternate: RoutePointInput
+  departure: RoutePointInput!
+  departureTime: DateTime!
+  destination: RoutePointInput!
+  envelopeCategory: EnvelopeCategory! = NORMAL
+  extraFuelNote: String
+  fuel: [FuelLoadInput!]!
+  legs: [LegInput!]!
+  loads: [LoadInput!]!
+  qnhHpa: Float
+  reservationId: Int
+  reserveCase: ReserveCase!
+  waypoints: [RoutePointInput!]!
+}
+
+type FlightPlanResult {
+  alternateLeg: Leg
+  encodedPolyline: String!
+  engineVersion: String!
+  fuel: FuelPlan!
+  legs: [Leg!]!
+  massBalance: MassBalanceResult!
+  navdata: NavdataInfo!
+  notices: [Notice!]!
+  profile: [ProfilePoint!]!
+  qnhHpa: Float
+  status: CheckStatus!
+  totalDistanceNm: Float!
+  totalTimeMin: Float!
+  weather: [WeatherReport!]!
+  windSource: String!
+}
+
+type FlightPlanningSettings {
+  alternateRequiredVfr: Boolean!
+  clubMarginMin: Int!
+  contingencyMinL: Float!
+  contingencyPercent: Float!
+  defaultCircuitHeightFt: Int!
+  reserveVfrDayLocalMin: Int!
+  reserveVfrDayMin: Int!
+  reserveVfrNightMin: Int!
+  verticalMarginFt: Int!
+}
+
+input FlightPlanningSettingsInput {
+  alternateRequiredVfr: Boolean!
+  clubMarginMin: Int!
+  contingencyMinL: Float!
+  contingencyPercent: Float!
+  defaultCircuitHeightFt: Int!
+  reserveVfrDayLocalMin: Int!
+  reserveVfrDayMin: Int!
+  reserveVfrNightMin: Int!
+  verticalMarginFt: Int!
+}
+
+type FuelData {
+  burnOrder: [String!]!
+  densityKgPerL: Float!
+  tanks: [FuelTank!]!
+  taxiFuelL: Float!
+  type: FuelType!
+}
+
+input FuelDataInput {
+  burnOrder: [String!]!
+  densityKgPerL: Float!
+  tanks: [FuelTankInput!]!
+  taxiFuelL: Float!
+  type: FuelType!
+}
+
+input FuelLoadInput {
+  liters: Float!
+  tankId: String!
+}
+
+type FuelPlan {
+  alternateL: Float!
+  clubMarginL: Float!
+  contingencyL: Float!
+  enduranceMin: Float!
+  extraL: Float!
+  finalReserveL: Float!
+  finalReserveMin: Int!
+  landingAtAlternateL: Float
+  landingL: Float!
+  loadedL: Float!
+  messages: [String!]!
+  minimumBlockL: Float!
+  status: CheckStatus!
+  taxiL: Float!
+  tripL: Float!
+  usableL: Float!
+}
+
+type FuelTank {
+  armM: Float!
+  id: String!
+  label: String!
+  unusableL: Float!
+  usableL: Float!
+}
+
+input FuelTankInput {
+  armM: Float!
+  id: String!
+  label: String!
+  unusableL: Float!
+  usableL: Float!
+}
+
+enum FuelType {
+  AVGAS_100LL
+  JET_A1
+  MOGAS
+  UL91
 }
 
 input GenerateFlightPlanInput {
@@ -954,11 +1363,47 @@ The `JSONObject` scalar type represents JSON objects as specified by [ECMA-404](
 """
 scalar JSONObject
 
+input LatLonInput {
+  lat: Float!
+  lon: Float!
+}
+
 type LearningProgressDto {
   completedCourses: Int!
   completedLessons: Int!
   totalCourses: Int!
   totalLessons: Int!
+}
+
+type Leg {
+  altitudeFt: Int!
+  crossings: [AirspaceCrossing!]!
+  cumulativeTimeMin: Float!
+  distanceNm: Float!
+  eta: DateTime!
+  from: NavPoint!
+  fuelL: Float!
+  fuelRemainingL: Float!
+  groundSpeedKt: Float!
+  index: Int!
+  magneticCourseDeg: Float!
+  magneticHeadingDeg: Float!
+  segments: [PhaseSegment!]!
+  suggestedAltitudeFt: Int
+  tasKt: Float!
+  timeMin: Float!
+  to: NavPoint!
+  trueCourseDeg: Float!
+  trueHeadingDeg: Float!
+  variationDeg: Float!
+  wind: Wind!
+  windCorrectionDeg: Float!
+}
+
+input LegInput {
+  altitudeFt: Int!
+  cruiseSetting: String
+  windOverride: WindInput
 }
 
 type Lesson {
@@ -991,6 +1436,11 @@ enum LicenseType {
   ATPL
   CPL
   PPL
+}
+
+input LoadInput {
+  massKg: Float
+  stationId: String!
 }
 
 input LogbookFilterInput {
@@ -1056,6 +1506,33 @@ enum MaintenanceType {
   SOFTWARE_UPDATE
 }
 
+type MassBalanceLine {
+  armM: Float!
+  label: String!
+  massKg: Float!
+  momentKgm: Float!
+  stationId: String!
+}
+
+type MassBalanceResult {
+  envelope: Envelope!
+  landing: MassBalanceState!
+  lines: [MassBalanceLine!]!
+  messages: [String!]!
+  status: CheckStatus!
+  takeoff: MassBalanceState!
+  zeroFuel: MassBalanceState!
+}
+
+type MassBalanceState {
+  cgM: Float!
+  marginCgMm: Float!
+  marginKg: Float!
+  massKg: Float!
+  momentKgm: Float!
+  withinEnvelope: Boolean!
+}
+
 type MemberCommitments {
   upcomingCourses: [InstructionCourse!]!
   upcomingInstructionReservations: [Reservation!]!
@@ -1102,6 +1579,7 @@ type Mutation {
   addCompetencyToCourse(input: AddCompetencyInput!): CourseCompetency!
   addMyLicense(documents: [Upload!], input: AddMyLicenseInput!): License!
   adjustMemberBalance(input: AdjustBalanceInput!): Payment!
+  applyAircraftTemplate(aircraftId: Int!, templateCode: String!): AircraftPerformance!
   completeChecklistSubmission(id: Int!): ChecklistSubmission!
   completeLesson(lessonId: Float!, userId: Float!): Boolean!
   confirm2FA(token: String!): Boolean!
@@ -1163,6 +1641,7 @@ type Mutation {
   deleteRole(id: Int!): Boolean!
   deleteUser(id: Int!): Boolean!
   disable2FA(password: String!): Boolean!
+  exportFlightPlanPdf(flightPlanId: Int!, format: PdfFormat!): String!
   exportFlightRecapPDF(flightId: Int!): String!
   exportLogbookPDF(filter: LogbookFilterInput): String!
   generate2FASecret(code: String, email: String, password: String): String!
@@ -1188,6 +1667,10 @@ type Mutation {
   requestPasswordReset(email: String!): Boolean!
   resendInvitation(id: Int!): Boolean!
   resetPassword(newPassword: String!, token: String!): Boolean!
+  saveAircraftMassBalance(aircraftId: Int!, input: AircraftMassBalanceInput!): AircraftMassBalance!
+  saveAircraftPerformance(aircraftId: Int!, input: AircraftPerformanceInput!): AircraftPerformance!
+  saveFlightPlan(flightPlanId: Int, input: FlightPlanInput!): FlightPlan!
+  saveFlightPlanningSettings(input: FlightPlanningSettingsInput!): FlightPlanningSettings!
   seenNotification(id: Int!): Boolean!
   setAircraftAvailability(aircraftId: Int!, availability_status: AvailabilityStatus!): Aircraft!
   setSiteStatus: Boolean!
@@ -1230,10 +1713,49 @@ type Mutation {
   updateRole(updateRoleInput: UpdateRoleInput!): Role!
   updateUser(image: Upload, updateUserInput: UpdateUserInput!): User!
   updateUserPreferences(preference: UpdateUserPreferencesInput!, userId: Float!): User!
+  validateAircraftData(aircraftId: Int!): Boolean!
   validateAnswers(evaluationId: Float!, userAnswers: [UserAnswerInput!]!, userId: Float!): ValidationResult!
   validateCompetency(competencyId: Int!): CourseCompetency!
   validateLicense(id: Int!): License!
   verify2FA(email: String!, token: String!): LoginResponse!
+}
+
+type NavPoint {
+  aerodromeIcao: String
+  elevationFt: Int
+  frequency: String
+  id: ID!
+  ident: String!
+  lat: Float!
+  lon: Float!
+  mandatory: Boolean
+  name: String
+  type: NavPointType!
+}
+
+enum NavPointType {
+  AERODROME
+  DME
+  NDB
+  TACAN
+  USER
+  VOR
+  VOR_DME
+  VRP
+}
+
+type NavdataInfo {
+  airac: String!
+  effectiveFrom: DateTime!
+  effectiveTo: DateTime!
+  source: String!
+  stale: Boolean!
+}
+
+type Notice {
+  code: String!
+  message: String!
+  status: CheckStatus!
 }
 
 type Notification {
@@ -1275,6 +1797,23 @@ type PaymentResult {
   user: User!
 }
 
+enum PdfFormat {
+  A4
+  A5
+}
+
+type PhaseSegment {
+  endAltFt: Int!
+  fromNm: Float!
+  fuelL: Float!
+  gsKt: Float!
+  phase: FlightPhase!
+  startAltFt: Int!
+  tasKt: Float!
+  timeMin: Float!
+  toNm: Float!
+}
+
 enum PlanFeature {
   INSTRUCTION
 }
@@ -1285,12 +1824,23 @@ enum PlanName {
   ECOLE
 }
 
+type ProfilePoint {
+  altitudeFt: Int!
+  distanceNm: Float!
+  label: String
+}
+
 type Query {
   adminActionNames: [String!]!
   adminActions(action: String, memberId: Int, page: Int, pageSize: Int): AdminActionsPage!
   adminDashboardStats: adminStatus!
+  aerodrome(icao: String!): AerodromeDetails
   aerodromeByIata(iata: String!): Aerodrome
   aerodromeByIcao(icao: String!): Aerodrome
+  aircraftMassBalance(aircraftId: Int!): AircraftMassBalance
+  aircraftPerformance(aircraftId: Int!): AircraftPerformance
+  aircraftTypeTemplates: [AircraftTypeTemplate!]!
+  airspacesInBox(bbox: BBoxInput!, maxFloorFt: Int = 19500): [Airspace!]!
   article(id: Int!): Article!
   articles: [Article!]!
   audit(id: Int!): Audit!
@@ -1308,6 +1858,7 @@ type Query {
   checklistSubmissionsByReservation(reservationId: Int!): [ChecklistSubmission!]!
   checklistTemplate(id: Int!): ChecklistTemplate!
   checklistTemplates(aircraftModel: String): [ChecklistTemplate!]!
+  computeFlightPlan(input: FlightPlanInput!): FlightPlanResult!
   criticalityLevels: [String!]!
   expense(id: Int!): Expense!
   expenseByPeriod(endDate: DateTime!, startDate: DateTime!): [Expense!]!
@@ -1315,6 +1866,9 @@ type Query {
   filteredReservations(end_date: String, start_date: String): [Reservation!]!
   financialReport(id: Int!): FinancialReport!
   financialReports: [FinancialReport!]!
+  flightPlan(id: Int!): FlightPlan
+  flightPlanByFlight(flightId: Int!): FlightPlan
+  flightPlanningSettings: FlightPlanningSettings!
   generateBudgetForecast(endDate: DateTime!, startDate: DateTime!): BudgetForecast!
   getAircrafts: [Aircraft!]!
   getAllAdministrations: [Administration!]!
@@ -1374,6 +1928,9 @@ type Query {
   myInstructionReservations: [Reservation!]!
   myLicenses: [License!]!
   myReservationTemplates: [ReservationTemplate!]!
+  navPointsInBox(bbox: BBoxInput!, types: [NavPointType!]): [NavPoint!]!
+  navSearch(limit: Int = 20, near: LatLonInput, query: String!, types: [NavPointType!]): [NavPoint!]!
+  navdataInfo: NavdataInfo!
   notification(id: Int!): Notification!
   notificationsByUser(userId: Int!): [Notification!]!
   overdueAudits: [Audit!]!
@@ -1410,6 +1967,12 @@ type Question {
   correct_answer: String
   id: Int!
   options: [String!]!
+}
+
+type RadioFrequency {
+  callsign: String
+  mhz: String!
+  service: String!
 }
 
 type Reservation {
@@ -1464,10 +2027,66 @@ type ReservationsByCategory {
   flight_category: String!
 }
 
+enum ReserveCase {
+  VFR_DAY
+  VFR_DAY_LOCAL
+  VFR_NIGHT
+}
+
+type ReserveData {
+  holdingFuelFlowLph: Float!
+  maxContinuousFuelFlowLph: Float!
+}
+
+input ReserveDataInput {
+  holdingFuelFlowLph: Float!
+  maxContinuousFuelFlowLph: Float!
+}
+
 type Role {
   id: Int!
   role_name: String!
   users: [User!]
+}
+
+input RoutePointInput {
+  lat: Float
+  lon: Float
+  name: String
+  navPointId: ID
+}
+
+type Runway {
+  designator: String!
+  lengthM: Int
+  surface: String
+  trueHeadingDeg: Float
+  widthM: Int
+}
+
+type Station {
+  armM: Float!
+  id: String!
+  kind: StationKind!
+  label: String!
+  maxKg: Float
+  tankId: String
+}
+
+input StationInput {
+  armM: Float!
+  id: String!
+  kind: StationKind!
+  label: String!
+  maxKg: Float
+  tankId: String
+}
+
+enum StationKind {
+  BAGGAGE
+  FUEL
+  OTHER
+  SEAT
 }
 
 input SubmitChecklistInput {
@@ -1916,6 +2535,27 @@ type UsersByRole {
 type ValidationResult {
   passed: Boolean!
   score: Float!
+}
+
+type WeatherReport {
+  icao: String!
+  metar: String
+  observedAt: DateTime
+  taf: String
+}
+
+type Wind {
+  directionDeg: Int!
+  source: DataSourceKind!
+  speedKt: Int!
+  temperatureC: Float
+  validAt: DateTime
+}
+
+input WindInput {
+  directionDeg: Int!
+  speedKt: Int!
+  temperatureC: Float
 }
 
 type adminStatus {

@@ -82,12 +82,11 @@ Assurez-vous d'avoir les éléments suivants installés :
    ```env
       NEXT_PUBLIC_API_URL=http://localhost:3000/graphql
       NEXTAUTH_URL=http://api.skycrew.local:8080/graphql
-      NEXT_PUBLIC_OPENWEATHERMAP_API_KEY=
-      NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=
       NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
       NEXT_PUBLIC_PAYPAL_CLIENT_ID=
       SENTRY_SECRET_KEY=
-      NEXT_PUBLIC_OPENAIP_API_KEY=
+      # Optional: base map of the flight preparation (empty = OpenFreeMap, no key)
+      NEXT_PUBLIC_MAP_STYLE_URL=
    ```
 
 4. **Démarrer le serveur de développement Next.js :**

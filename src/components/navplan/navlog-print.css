@@ -1,0 +1,72 @@
+/* Paper nav log: hidden on screen, alone on the page when printed from "Imprimer le log". */
+.navlog-print {
+  display: none;
+}
+
+@media print {
+  /* The log is a child of <body>: everything else leaves the print, blank sheets included. */
+  body[data-print-mode="navlog"] > :not(.navlog-print) {
+    display: none !important;
+  }
+  body[data-print-mode="navlog"] .navlog-print {
+    display: block !important;
+    position: static;
+    width: 100%;
+    color: #000;
+    background: #fff;
+    font: 8pt/1.25 ui-sans-serif, system-ui, sans-serif;
+  }
+  .navlog-print[data-format="A4"] {
+    font-size: 7.5pt;
+  }
+  .navlog-print__header,
+  .navlog-print__footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2mm 5mm;
+    margin: 0 0 2mm;
+  }
+  .navlog-print__footer {
+    margin-top: 2mm;
+  }
+  .navlog-print__footer p {
+    flex-basis: 100%;
+    margin: 0;
+    font-size: 6.5pt;
+  }
+  .navlog-print__warning {
+    margin: 0 0 2mm;
+    padding: 1mm 2mm;
+    border: 1.5pt solid #000;
+    font-weight: 700;
+  }
+  .navlog-print table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: auto;
+  }
+  .navlog-print th,
+  .navlog-print td {
+    border: 0.5pt solid #000;
+    padding: 0.8mm 1mm;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .navlog-print th {
+    font-weight: 600;
+    background: #eee !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .navlog-print td:first-child,
+  .navlog-print td:nth-last-child(-n + 2) {
+    text-align: left;
+    white-space: normal;
+  }
+  .navlog-print tbody tr {
+    height: 7mm;
+  }
+  .navlog-print__strong {
+    font-weight: 700;
+  }
+}
