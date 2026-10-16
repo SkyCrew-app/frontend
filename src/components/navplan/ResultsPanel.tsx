@@ -8,7 +8,7 @@ import { checkStatusLabel, checkStatusVariant, massBalanceComputed } from "@/lib
 import type { CheckStatus, FlightPlanningSettings, FlightPlanResult, ReserveCase } from "@/lib/navplan/types"
 import { formatLitres, formatMinutes, formatNm } from "@/lib/navplan/units"
 import { cn } from "@/lib/utils"
-import { AirspaceCrossings, crossingsStatus } from "./AirspaceCrossings"
+import { AirspaceCrossings, airspacesNotChecked, crossingsStatus } from "./AirspaceCrossings"
 import { FuelSummary } from "./FuelSummary"
 import { MassBalancePanel } from "./MassBalancePanel"
 import { NavLogTable } from "./NavLogTable"
@@ -59,7 +59,8 @@ export function ResultsPanel({
   hideSummary = false,
 }: ResultsPanelProps) {
   const { t } = useTranslation("navplan")
-  const zones = crossingsStatus(result.alternateLeg ? [...result.legs, result.alternateLeg] : result.legs)
+  const notChecked = airspacesNotChecked(result.notices)
+  const zones = crossingsStatus(result.alternateLeg ? [...result.legs, result.alternateLeg] : result.legs, notChecked)
 
   return (
     <div className="space-y-4" aria-busy={pending}>
@@ -99,7 +100,7 @@ export function ResultsPanel({
           <FuelSummary fuel={result.fuel} reserveCase={reserveCase} settings={settings} />
         </TabsContent>
         <TabsContent value="airspaces" className="mt-4">
-          <AirspaceCrossings legs={result.legs} alternateLeg={result.alternateLeg} />
+          <AirspaceCrossings legs={result.legs} alternateLeg={result.alternateLeg} notChecked={notChecked} />
         </TabsContent>
         <TabsContent value="weather" className="mt-4">
           <WeatherPanel reports={result.weather} roles={roles} windSource={result.windSource} />

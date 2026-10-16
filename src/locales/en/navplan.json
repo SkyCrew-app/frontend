@@ -308,6 +308,8 @@
     "sia": "SIA (AIP SUP, AZBA activity of the RTBA)",
     "newWindow": "(new window)",
     "none": "No airspace crossed on the planned route.",
+    "notCheckedTitle": "Airspaces not checked",
+    "notCheckedDescription": "No airspace data is imported: the route was not compared with any airspace. Find the airspaces it crosses on the current aeronautical chart (ICAO chart, VAC, AIP).",
     "class": "class {{value}}",
     "activityUnknown": "Activity unknown",
     "limits": "{{ceiling}} / {{floor}}",

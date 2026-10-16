@@ -1,6 +1,6 @@
 import { render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { AirspaceCrossings, crossingsStatus } from "../AirspaceCrossings"
+import { AirspaceCrossings, airspacesNotChecked, crossingsStatus } from "../AirspaceCrossings"
 import { FuelSummary } from "../FuelSummary"
 import { MassBalanceChart } from "../MassBalanceChart"
 import { MassBalancePanel } from "../MassBalancePanel"
@@ -139,6 +139,19 @@ describe("AirspaceCrossings", () => {
     const legs = [{ ...RESULT.legs[0], crossings: [{ ...RESULT.legs[0].crossings[0], status: "BLOCKING" as const }] }]
     expect(crossingsStatus(legs)).toBe("BLOCKING")
     expect(crossingsStatus([{ ...RESULT.legs[2] }])).toBe("OK")
+  })
+})
+
+describe("airspaces without airspace data", () => {
+  it("says the route was not checked, never that no area is crossed, and is not OK", () => {
+    const legs = [{ ...RESULT.legs[2], crossings: [] }]
+    render(<AirspaceCrossings legs={legs} notChecked />)
+    expect(screen.getByText("Zones non vérifiées")).toBeInTheDocument()
+    expect(screen.queryByText("Aucune zone traversée sur la route prévue.")).toBeNull()
+    expect(airspacesNotChecked([{ code: "NAVDATA_NO_AIRSPACE" }])).toBe(true)
+    expect(airspacesNotChecked([{ code: "DISCLAIMER" }])).toBe(false)
+    expect(crossingsStatus(legs, true)).toBe("WARNING")
+    expect(crossingsStatus(legs)).toBe("OK")
   })
 })
 

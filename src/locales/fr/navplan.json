@@ -308,6 +308,8 @@
     "sia": "SIA (SUP AIP, activité AZBA du RTBA)",
     "newWindow": "(nouvelle fenêtre)",
     "none": "Aucune zone traversée sur la route prévue.",
+    "notCheckedTitle": "Zones non vérifiées",
+    "notCheckedDescription": "Aucune donnée d'espace aérien n'est importée : la route n'a été comparée à aucune zone. Repérez les zones traversées sur la carte aéronautique en vigueur (carte OACI, VAC, AIP).",
     "class": "classe {{value}}",
     "activityUnknown": "Activité inconnue",
     "limits": "{{ceiling}} / {{floor}}",

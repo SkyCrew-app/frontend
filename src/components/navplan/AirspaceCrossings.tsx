@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next"
 import { ExternalLink } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { airspaceTypeLabel, checkStatusVariant } from "@/lib/navplan/status"
-import type { AirspaceCrossing, CheckStatus, Leg } from "@/lib/navplan/types"
+import type { AirspaceCrossing, CheckStatus, Leg, Notice } from "@/lib/navplan/types"
 import { formatFt, formatNm } from "@/lib/navplan/units"
 
 export const SOFIA_BRIEFING_URL = "https://sofia-briefing.aviation-civile.gouv.fr"
@@ -12,8 +12,16 @@ export const SIA_URL = "https://www.sia.aviation-civile.gouv.fr"
 
 const crossed = (crossing: AirspaceCrossing) => crossing.relation !== "ABOVE" && crossing.relation !== "BELOW"
 
-/** Worst status of the crossings of a plan; an unknown activity is never "OK" (design § 2.7). */
-export function crossingsStatus(legs: Leg[]): CheckStatus {
+/** The API had no airspace to check the route against (aerodromes only, before an SIA import). */
+export const airspacesNotChecked = (notices: Pick<Notice, "code">[] = []) =>
+  notices.some((notice) => notice.code === "NAVDATA_NO_AIRSPACE")
+
+/**
+ * Worst status of the crossings of a plan; an unknown activity is never "OK" (design § 2.7),
+ * and neither is a route that could not be checked at all.
+ */
+export function crossingsStatus(legs: Leg[], notChecked = false): CheckStatus {
+  if (notChecked) return "WARNING"
   const all = legs.flatMap((leg) => leg.crossings).filter(crossed)
   if (all.some((crossing) => crossing.status === "BLOCKING")) return "BLOCKING"
   if (all.some((crossing) => crossing.status === "WARNING" || !crossing.activityKnown)) return "WARNING"
@@ -58,7 +66,16 @@ function CrossingItem({ crossing }: { crossing: AirspaceCrossing }) {
 }
 
 /** Airspaces met leg by leg: what each one requires, and where to check its activity. */
-export function AirspaceCrossings({ legs, alternateLeg }: { legs: Leg[]; alternateLeg?: Leg | null }) {
+export function AirspaceCrossings({
+  legs,
+  alternateLeg,
+  notChecked = false,
+}: {
+  legs: Leg[]
+  alternateLeg?: Leg | null
+  /** No airspace data: say the route was not checked, never "no area crossed". */
+  notChecked?: boolean
+}) {
   const { t } = useTranslation("navplan")
   const all = alternateLeg ? [...legs, alternateLeg] : legs
   const total = all.reduce((count, leg) => count + leg.crossings.filter(crossed).length, 0)
@@ -82,7 +99,12 @@ export function AirspaceCrossings({ legs, alternateLeg }: { legs: Leg[]; alterna
         </div>
       </div>
 
-      {total === 0 ? (
+      {notChecked ? (
+        <div className="space-y-1 text-sm" role="note">
+          <p className="font-medium">{t("crossings.notCheckedTitle")}</p>
+          <p className="text-muted-foreground">{t("crossings.notCheckedDescription")}</p>
+        </div>
+      ) : total === 0 ? (
         <p className="text-sm text-muted-foreground">{t("crossings.none")}</p>
       ) : (
         all.map((leg, position) => {
