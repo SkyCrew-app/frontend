@@ -46,11 +46,14 @@ describe("club fuel policy", () => {
 
 describe("mass and balance editor", () => {
   it("starts from the weights already known for the aircraft", () => {
+    expect(Number.isNaN(emptyMassBalanceInput(560, 1000).emptyArmM)).toBe(true)
     expect(emptyMassBalanceInput(560, 1000)).toMatchObject({ emptyMassKg: 560, mtowKg: 1000, mlwKg: 1000, envelopes: [{ category: "NORMAL", points: [] }] })
   })
 
   it("finds nothing to correct in F-TEST", () => {
     expect(massBalanceProblems(massBalanceInput(MASS_BALANCE), ["main"])).toEqual([])
+    // A template applied before the weighing has no empty arm: it is asked for, not taken as 0.
+    expect(massBalanceProblems(massBalanceInput({ ...MASS_BALANCE, emptyArmM: null }), ["main"])).toEqual([{ code: "EMPTY_ARM" }])
   })
 
   it("lists what is missing or inconsistent", () => {

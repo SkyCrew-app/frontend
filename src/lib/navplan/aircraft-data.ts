@@ -70,7 +70,8 @@ export function performanceInput(
 export function emptyMassBalanceInput(emptyMassKg?: number | null, mtowKg?: number | null): AircraftMassBalanceInput {
   return {
     emptyMassKg: emptyMassKg ?? 0,
-    emptyArmM: 0,
+    // Unknown until weighed: an empty field, never a lever arm of 0.
+    emptyArmM: Number.NaN,
     weighingDate: "",
     weighingRef: "",
     mtowKg: mtowKg ?? 0,
@@ -87,7 +88,7 @@ export function massBalanceInput(massBalance: AircraftMassBalance | null | undef
   const value = clean(massBalance)
   return {
     emptyMassKg: value.emptyMassKg ?? 0,
-    emptyArmM: value.emptyArmM ?? 0,
+    emptyArmM: value.emptyArmM ?? Number.NaN,
     weighingDate: value.weighingDate ? value.weighingDate.slice(0, 10) : "",
     weighingRef: value.weighingRef ?? "",
     mtowKg: value.mtowKg ?? 0,
