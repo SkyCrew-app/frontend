@@ -5,7 +5,7 @@ import { useApolloClient } from "@apollo/client"
 import { useTheme } from "next-themes"
 import { useTranslation } from "react-i18next"
 import { MapPinOff } from "lucide-react"
-import type { Map as MapLibreMap, Marker } from "maplibre-gl"
+import type { AddLayerObject, GeoJSONSource, Map as MapLibreMap, Marker } from "maplibre-gl"
 import { AIRSPACES_IN_BOX, NAV_POINTS_IN_BOX } from "@/graphql/navdata"
 import type { Airspace, NavPoint } from "@/lib/navplan/types"
 import { cn } from "@/lib/utils"
@@ -25,6 +25,15 @@ const AIRSPACE_MIN_ZOOM = 5
 const NAVPOINT_MIN_ZOOM = 7
 
 type MapState = "loading" | "ready" | "unavailable"
+type MapLibrary = typeof import("maplibre-gl")
+type GeoJson = Parameters<GeoJSONSource["setData"]>[0]
+
+// The bundler hands the UMD build either as the namespace itself or under `default`.
+const mapLibrary = (module: MapLibrary & { default?: MapLibrary }): MapLibrary => module.default ?? module
+// Our feature builders return plain GeoJSON objects; MapLibre's type is stricter about their shape.
+const asGeoJson = (data: { type: "FeatureCollection"; features: unknown[] }) => data as unknown as GeoJson
+const setSourceData = (map: MapLibreMap, id: string, data: { type: "FeatureCollection"; features: unknown[] }) =>
+  map.getSource<GeoJSONSource>(id)?.setData(asGeoJson(data))
 
 export default function AeroMap(props: AeroMapProps) {
   const { resolvedTheme } = useTheme()
@@ -49,7 +58,7 @@ function AeroMapCanvas({
   const client = useApolloClient()
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<MapLibreMap | null>(null)
-  const libraryRef = useRef<typeof import("maplibre-gl").default | null>(null)
+  const libraryRef = useRef<MapLibrary | null>(null)
   const markersRef = useRef<Marker[]>([])
   const navPointsRef = useRef<NavPoint[]>([])
   const fittedRef = useRef(false)
@@ -68,14 +77,14 @@ function AeroMapCanvas({
     try {
       if (zoom >= AIRSPACE_MIN_ZOOM) {
         const { data } = await client.query<{ airspacesInBox: Airspace[] }>({ query: AIRSPACES_IN_BOX, variables: { bbox } })
-        map.getSource(AIRSPACE_SOURCE)?.setData(airspaceFeatures(data?.airspacesInBox ?? []))
+        setSourceData(map, AIRSPACE_SOURCE, airspaceFeatures(data?.airspacesInBox ?? []))
       }
       const { data } =
         zoom >= NAVPOINT_MIN_ZOOM
           ? await client.query<{ navPointsInBox: NavPoint[] }>({ query: NAV_POINTS_IN_BOX, variables: { bbox } })
           : { data: { navPointsInBox: [] as NavPoint[] } }
       navPointsRef.current = data?.navPointsInBox ?? []
-      map.getSource(NAVPOINT_SOURCE)?.setData(navPointFeatures(navPointsRef.current))
+      setSourceData(map, NAVPOINT_SOURCE, navPointFeatures(navPointsRef.current))
     } catch {
       // Too much to show at this zoom, or the API is unreachable: the route stays usable.
     }
@@ -87,7 +96,8 @@ function AeroMapCanvas({
     let moveTimer: ReturnType<typeof setTimeout> | undefined
 
     import("maplibre-gl")
-      .then(({ default: maplibregl }) => {
+      .then((module) => {
+        const maplibregl = mapLibrary(module)
         if (cancelled || !containerRef.current) return
         libraryRef.current = maplibregl
         const map = new maplibregl.Map({
@@ -109,10 +119,10 @@ function AeroMapCanvas({
 
         map.on("load", () => {
           if (cancelled) return
-          map.addSource(AIRSPACE_SOURCE, { type: "geojson", data: airspaceFeatures([]) })
-          map.addSource(NAVPOINT_SOURCE, { type: "geojson", data: navPointFeatures([]) })
-          map.addSource(ROUTE_SOURCE, { type: "geojson", data: routeFeatures([], null) })
-          for (const layer of [...airspaceLayers(), ...routeLayers(), ...navPointLayers()]) map.addLayer(layer)
+          map.addSource(AIRSPACE_SOURCE, { type: "geojson", data: asGeoJson(airspaceFeatures([])) })
+          map.addSource(NAVPOINT_SOURCE, { type: "geojson", data: asGeoJson(navPointFeatures([])) })
+          map.addSource(ROUTE_SOURCE, { type: "geojson", data: asGeoJson(routeFeatures([], null)) })
+          for (const layer of [...airspaceLayers(), ...routeLayers(), ...navPointLayers()]) map.addLayer(layer as AddLayerObject)
           setState("ready")
           void loadOverlays()
         })
@@ -150,7 +160,7 @@ function AeroMapCanvas({
   // Route line, alternate, TOC/TOD.
   useEffect(() => {
     if (state !== "ready") return
-    mapRef.current?.getSource(ROUTE_SOURCE)?.setData(routeFeatures(points, alternate, profile, legDistancesNm))
+    if (mapRef.current) setSourceData(mapRef.current, ROUTE_SOURCE, routeFeatures(points, alternate, profile, legDistancesNm))
   }, [state, points, alternate, profile, legDistancesNm])
 
   // Point markers (draggable in edit mode) and leg handles to insert a point.
