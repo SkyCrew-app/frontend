@@ -57,13 +57,9 @@ export function FlightConditions({ result, departureTime, bare = false }: { resu
         </p>
       )}
       {daylight && daylight.aerodromes.length > 0 && (
-        <div
-          className="overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          tabIndex={0}
-          role="region"
-          aria-label={t("conditions.caption")}
-        >
-          <table className="w-full whitespace-nowrap text-xs [&_td]:px-2 [&_td]:py-1 [&_th]:px-2 [&_th]:py-1">
+        <div>
+          {/* Wraps rather than scrolls on a phone. */}
+          <table className="w-full text-xs [&_td]:px-2 [&_td]:py-1 [&_th]:px-2 [&_th]:py-1">
             <caption className="sr-only">{t("conditions.caption")}</caption>
             <thead className="text-muted-foreground">
               <tr className="border-b">

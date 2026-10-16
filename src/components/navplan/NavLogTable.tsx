@@ -65,7 +65,7 @@ export function NavLogTable({ legs, alternateLeg, totalDistanceNm, totalTimeMin 
     <div className="space-y-3">
       {/* Its own scrolling region, reachable with the keyboard when the log is wider than the screen. */}
       <div
-        className="relative hidden overflow-x-auto rounded-lg border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:block"
+        className="relative hidden overflow-x-auto rounded-lg border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring xl:block"
         tabIndex={0}
         role="region"
         aria-label={t("log.caption")}
@@ -137,8 +137,8 @@ export function NavLogTable({ legs, alternateLeg, totalDistanceNm, totalTimeMin 
         </table>
       </div>
 
-      {/* Phone: one card per leg, nothing to scroll sideways. */}
-      <ol className="space-y-3 md:hidden" aria-label={t("log.caption")}>
+      {/* Narrower screens: one card per leg, nothing to scroll sideways. */}
+      <ol className="grid gap-3 sm:grid-cols-2 xl:hidden" aria-label={t("log.caption")}>
         {rows
           .filter((row) => row.leg)
           .map((row) => {
@@ -170,7 +170,7 @@ export function NavLogTable({ legs, alternateLeg, totalDistanceNm, totalTimeMin 
               </li>
             )
           })}
-        <li className="flex justify-between rounded-lg bg-muted/50 px-3 py-2 text-sm font-medium tabular-nums">
+        <li className="flex justify-between rounded-lg bg-muted/50 px-3 py-2 text-sm font-medium tabular-nums sm:col-span-2">
           <span>{t("log.total")}</span>
           <span>
             {formatNm(totalDistanceNm)} · {formatNumber(totalTimeMin, 0)} min

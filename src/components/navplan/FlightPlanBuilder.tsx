@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import dynamic from "next/dynamic"
 import Link from "next/link"
 import { useTranslation } from "react-i18next"
-import { AlertTriangle, ArrowRight, ChevronDown, Loader2, Printer, RotateCcw, Save } from "lucide-react"
+import { AlertTriangle, ArrowRight, Loader2, Printer, RotateCcw, Save, SlidersHorizontal } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import {
   AlertDialog,
@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -50,6 +50,7 @@ import type {
 } from "@/lib/navplan/types"
 import { formatCourse, formatNm, type MassUnit, type VolumeUnit } from "@/lib/navplan/units"
 import { formatTime } from "@/lib/format"
+import { cn } from "@/lib/utils"
 import { isNavPoint, type AeroMapProps } from "@/components/map/types"
 import type { MapPoint } from "@/components/map/layers/route"
 import { AirspaceCrossings, airspacesNotChecked } from "./AirspaceCrossings"
@@ -94,9 +95,6 @@ export const BUILDER_STEPS = ["route", "load", "log"] as const
 export type BuilderStep = (typeof BUILDER_STEPS)[number]
 
 const RESERVE_CASES: ReserveCase[] = ["VFR_DAY", "VFR_NIGHT", "VFR_DAY_LOCAL"]
-
-// The map and the route panel fill the window under the header, the steps and the summary.
-const WORKSPACE_HEIGHT = "lg:h-[calc(100dvh-26.5rem)] lg:min-h-[30rem]"
 
 // Wide screens carry the save button next to the steps; phones at the bottom, within reach.
 const WIDE = "(min-width: 1024px)"
@@ -359,63 +357,44 @@ export function FlightPlanBuilder({ initialDraft, aircraft, settings, navdata, i
           )}
         </div>
 
-        <TabsContent value="route">
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem] xl:grid-cols-[minmax(0,1fr)_25rem]">
-            <div className={`map-container h-80 overflow-hidden rounded-xl border sm:h-[28rem] ${WORKSPACE_HEIGHT}`}>
-              <AeroMap
-                points={mapPoints}
-                alternate={draft.route.alternate}
-                profile={mapLegs.length > 0 ? result?.profile : undefined}
-                legDistancesNm={legDistances}
-                legLabels={legLabels}
-                editable
-                onAddPoint={handleMapAdd}
-                onMoveWaypoint={handleMapMove}
-                onInsertPoint={handleMapInsert}
-              />
-            </div>
-
-            <Card className={`flex flex-col overflow-hidden ${WORKSPACE_HEIGHT}`}>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">
-                  <h2>{t("builder.route.title")}</h2>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex-1 space-y-5 overflow-y-auto">
-                <div className="space-y-1.5">
-                  <Label htmlFor="departure-time">{t("builder.flight.departureTime")}</Label>
-                  <Input
-                    id="departure-time"
-                    type="datetime-local"
-                    value={departureLocal}
-                    aria-describedby="departure-time-utc"
-                    onChange={(event) => {
-                      const iso = fromLocalInputValue(event.target.value)
-                      if (iso) change((current) => ({ ...current, departureTime: iso }))
-                    }}
-                  />
-                  <p id="departure-time-utc" className="text-xs text-muted-foreground">
-                    {t("builder.flight.utc", { time: new Date(draft.departureTime).toISOString().slice(11, 16), local: formatTime(draft.departureTime) })}
-                  </p>
-                </div>
-
-                <RouteEditor
-                  route={draft.route}
-                  onChange={(route) => changeRoute(() => route)}
-                  computedLegs={result?.legs}
-                  cruiseSettings={cruiseSettings}
-                  normalSetting={aircraft.performance?.cruise.normalSetting}
-                  showErrors={showErrors}
+        <TabsContent value="route" className="flex flex-col gap-3">
+          <RouteEditor
+            route={draft.route}
+            onChange={(route) => changeRoute(() => route)}
+            computedLegs={result?.legs}
+            cruiseSettings={cruiseSettings}
+            normalSetting={aircraft.performance?.cruise.normalSetting}
+            showErrors={showErrors}
+            before={
+              <div className="w-full space-y-1 sm:w-60">
+                <Label htmlFor="departure-time">{t("builder.flight.departureTime")}</Label>
+                <Input
+                  id="departure-time"
+                  type="datetime-local"
+                  value={departureLocal}
+                  aria-describedby="departure-time-utc"
+                  onChange={(event) => {
+                    const iso = fromLocalInputValue(event.target.value)
+                    if (iso) change((current) => ({ ...current, departureTime: iso }))
+                  }}
                 />
-
-                <Collapsible defaultOpen={qnhInvalid || draft.qnhHpa !== null} className="border-t pt-3">
-                  <CollapsibleTrigger asChild>
-                    <Button type="button" variant="ghost" size="sm" className="group -ml-2 gap-1.5 px-2 text-muted-foreground">
-                      <ChevronDown className="h-4 w-4 transition-transform group-data-[state=open]:rotate-180" aria-hidden="true" />
+                <p id="departure-time-utc" className="text-xs text-muted-foreground">
+                  {t("builder.flight.utc", { time: new Date(draft.departureTime).toISOString().slice(11, 16), local: formatTime(draft.departureTime) })}
+                </p>
+              </div>
+            }
+            after={
+              // Level with the inputs, under their labels.
+              <div className="pt-[1.125rem]">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button type="button" variant="ghost" className={cn("gap-1.5 text-muted-foreground", (qnhInvalid || draft.qnhHpa !== null) && "text-foreground")}>
+                      <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
                       {t("builder.advanced.title")}
+                      {draft.qnhHpa !== null && <span className="text-xs tabular-nums">· QNH {draft.qnhHpa}</span>}
                     </Button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="space-y-1.5 pt-2">
+                  </PopoverTrigger>
+                  <PopoverContent className="w-72 space-y-1.5" align="start" aria-label={t("builder.advanced.title")}>
                     <Label htmlFor="qnh">{t("builder.flight.qnh")}</Label>
                     <NumberField
                       id="qnh"
@@ -431,10 +410,24 @@ export function FlightPlanBuilder({ initialDraft, aircraft, settings, navdata, i
                       {qnhInvalid ? <span className="text-destructive">{t("builder.flight.qnhInvalid")}</span> : t("builder.flight.qnhHint")}
                     </p>
                     <p className="pt-1 text-xs text-muted-foreground">{t("builder.advanced.legHint")}</p>
-                  </CollapsibleContent>
-                </Collapsible>
-              </CardContent>
-            </Card>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            }
+          />
+          {/* Phone: the map first, the fields and the strip under it. Wide screen: the strip above the map. */}
+          <div className="map-container order-first h-80 overflow-hidden rounded-xl border sm:h-[28rem] lg:order-none lg:h-[max(30rem,calc(100dvh-26rem))]">
+            <AeroMap
+              points={mapPoints}
+              alternate={draft.route.alternate}
+              profile={mapLegs.length > 0 ? result?.profile : undefined}
+              legDistancesNm={legDistances}
+              legLabels={legLabels}
+              editable
+              onAddPoint={handleMapAdd}
+              onMoveWaypoint={handleMapMove}
+              onInsertPoint={handleMapInsert}
+            />
           </div>
         </TabsContent>
 

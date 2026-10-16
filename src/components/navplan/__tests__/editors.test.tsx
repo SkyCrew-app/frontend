@@ -81,9 +81,13 @@ describe("RouteEditor", () => {
         <RouteHarness initial={initial} onRoute={onRoute} />
       </MockedProvider>,
     )
-    expect(screen.getByRole("button", { name: "Monter RBT" })).toBeDisabled()
-    await userEvent.click(screen.getByRole("button", { name: "Descendre RBT" }))
+    // A point of the strip opens on its place in the route and its removal.
+    await userEvent.click(screen.getByRole("button", { name: /^Point tournant 1 : RBT/ }))
+    expect(screen.getByRole("button", { name: "Déplacer RBT vers le départ" })).toBeDisabled()
+    await userEvent.click(screen.getByRole("button", { name: "Déplacer RBT vers l'arrivée" }))
     expect((onRoute.mock.calls.at(-1)[0] as RouteDraft).waypoints.map((point) => point.ident)).toEqual(["W", "RBT"])
+    await userEvent.keyboard("{Escape}")
+    await userEvent.click(screen.getByRole("button", { name: /^Point tournant 1 : W/ }))
     await userEvent.click(screen.getByRole("button", { name: "Retirer W" }))
     expect((onRoute.mock.calls.at(-1)[0] as RouteDraft).waypoints.map((point) => point.ident)).toEqual(["RBT"])
   })
@@ -96,7 +100,7 @@ describe("RouteEditor", () => {
         <RouteHarness initial={initial} onRoute={onRoute} showErrors />
       </MockedProvider>,
     )
-    // The legs are closed: one line each, their own altitude only once opened.
+    // A leg is one chip of the strip; its own altitude only once opened.
     expect(screen.queryByLabelText("Altitude RBT → LFOC")).toBeNull()
     const toggle = screen.getByRole("button", { name: /^Branche RBT → LFOC :/ })
     expect(toggle).toHaveAttribute("aria-expanded", "false")
@@ -112,7 +116,8 @@ describe("RouteEditor", () => {
 
     await userEvent.clear(second)
     await userEvent.type(second, "30000")
-    expect(screen.getByText(/Indiquez une altitude entre 0 et 19\s500 ft\./)).toBeInTheDocument()
+    expect(screen.getAllByText(/Indiquez une altitude entre 0 et 19\s500 ft\./).length).toBeGreaterThan(0)
+    await userEvent.keyboard("{Escape}")
 
     const cruise = screen.getByLabelText("Altitude de croisière")
     await userEvent.clear(cruise)
@@ -157,6 +162,22 @@ describe("RouteEditor", () => {
     expect((onRoute.mock.calls.at(-1)[0] as RouteDraft).legs[0].windOverride).toEqual({ directionDeg: 270, speedKt: 15 })
     await userEvent.click(screen.getByRole("radio", { name: "Prévision" }))
     expect((onRoute.mock.calls.at(-1)[0] as RouteDraft).legs[0].windOverride).toBeNull()
+  })
+
+  it("renames a turning point from its chip", async () => {
+    const onRoute = jest.fn()
+    render(
+      <MockedProvider mocks={[]}>
+        <RouteHarness initial={appendWaypoint(baseRoute(), routePointFromNavPoint(P1))} onRoute={onRoute} />
+      </MockedProvider>,
+    )
+    await userEvent.click(screen.getByRole("button", { name: /^Point tournant 1 : P1/ }))
+    const name = screen.getByLabelText("Nom du point 1")
+    await userEvent.clear(name)
+    await userEvent.type(name, "Château{Enter}")
+    expect((onRoute.mock.calls.at(-1)[0] as RouteDraft).waypoints[0].ident).toBe("Château")
+    // The strip wraps onto new lines: it never scrolls inside itself.
+    expect(screen.getByRole("list", { name: "Points et branches" })).toHaveClass("flex-wrap")
   })
 
   it("says which aerodrome is missing", () => {
@@ -250,14 +271,17 @@ describe("NumberField", () => {
 })
 
 describe("route list", () => {
-  it("lists the departure first and the destination last", () => {
+  it("lists the departure first, then the points in order, then the destination, as a strip that wraps", () => {
     render(
       <MockedProvider mocks={[]}>
         <RouteHarness initial={appendWaypoint(baseRoute(), routePointFromNavPoint(RBT))} />
       </MockedProvider>,
     )
-    const items = within(screen.getByRole("list", { name: "Points et branches" })).getAllByRole("listitem")
+    const strip = screen.getByRole("list", { name: "Points et branches" })
+    const items = within(strip).getAllByRole("listitem")
     expect(items[0]).toHaveTextContent("LFPN")
-    expect(items.at(-1)).toHaveTextContent("LFOC")
+    // Departure ▸ leg ▸ point ▸ leg ▸ destination, then the chips to add a point and the alternate.
+    expect(items[4]).toHaveTextContent("LFOC")
+    expect(strip).toHaveTextContent(/^Aérodrome de départ.*LFPN.*RBT.*Aérodrome d'arrivée.*LFOC.*Ajouter un point.*Dégagement/)
   })
 })

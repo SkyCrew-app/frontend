@@ -95,7 +95,10 @@ async function prepareFlightPlan(page: Page, purpose: string) {
   await expect(page.getByRole("combobox", { name: "Aérodrome d'arrivée" })).toContainText("LFPO")
   await pickPoint(page, /^Ajouter un point/, "48.85 2.45", /^Point tournant à/)
   const route = page.getByRole("list", { name: "Points et branches" })
-  await expect(route.getByRole("textbox", { name: "Nom du point 1" })).toHaveValue("P1")
+  // The route is a strip of chips: the point opens on its name, its place and its removal.
+  await route.getByRole("button", { name: /^Point tournant 1 : P1/ }).click()
+  await expect(page.getByRole("textbox", { name: "Nom du point 1" })).toHaveValue("P1")
+  await page.keyboard.press("Escape")
 
   // The results come from the API (computeFlightPlan), whatever their verdict for this aircraft:
   // the verdict and the totals stay above the three steps.
