@@ -36,6 +36,7 @@ const ROUTE_LABEL_KEYS: Record<string, string> = {
   "2fa": "pages.twoFactor",
   "money_account": "pages.balance",
   "close_flight": "pages.closeFlight",
+  "flight-data": "pages.flightData",
 }
 
 // Whole paths whose label differs from their last segment's elsewhere ("/administration/articles" stays "Articles").

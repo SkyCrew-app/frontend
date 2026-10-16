@@ -2,7 +2,6 @@ import type { Page } from "@playwright/test"
 import { test, expect, sidePanel, toast, confirmAlert, choose, asRole, uniqueName } from "./support/test"
 import { sessionFile } from "./support/accounts"
 import { ensureAircraft, type TestAircraft } from "./support/aircraft"
-import { stubAirportSearch } from "./support/airports"
 import { openCalendarAhead } from "./support/calendar"
 import { moveBookingIntoThePast } from "./support/database"
 import { instructionInPlan } from "./support/plan"
@@ -59,8 +58,20 @@ async function bookSlot(page: Page, purpose: string, hour = "08:00") {
   return { day, dayLabel }
 }
 
-/** From the pilot's reservations, opens the booking's flight plan form and generates LFPG → LFPO. */
-async function generateFlightPlan(page: Page, purpose: string) {
+/** Picks an aerodrome or a point in the search of the builder (answered by our API, from its navdata). */
+async function pickPoint(page: Page, field: string | RegExp, search: string, option: RegExp) {
+  await page.getByRole("combobox", { name: field }).click()
+  await page.getByPlaceholder("Code OACI, nom, identifiant…").fill(search)
+  await page.getByRole("option", { name: option }).first().click()
+}
+
+/**
+ * From the pilot's reservations, opens the booking's flight preparation and builds LFPG → LFPO
+ * through a point typed as coordinates; the API computes the results live, then the plan is saved.
+ * The aircraft of the tests has no confirmed mass and balance data: the builder says why, and a
+ * plan the API finds blocking is saved as a draft after the confirmation it asks for.
+ */
+async function prepareFlightPlan(page: Page, purpose: string) {
   await page.goto("/reservations/my")
   await page.getByRole("searchbox", { name: "Rechercher une réservation" }).fill(purpose)
   const list = page.getByRole("tabpanel", { name: "Réservations" })
@@ -71,23 +82,41 @@ async function generateFlightPlan(page: Page, purpose: string) {
 
   await expect(page.getByRole("heading", { level: 1, name: "Créer un plan de vol" })).toBeVisible()
   await expect(page.getByText(`Pour la réservation de ${aircraft.registration}`)).toBeVisible()
-  const auto = page.getByRole("tabpanel", { name: "Génération automatique" })
+  await expect(page.getByText(/Aide à la préparation du vol/).first()).toBeVisible()
+  // Nothing is computed before both ends of the route are known.
+  await expect(page.getByText(/Choisissez au moins l'aérodrome de départ et celui d'arrivée/)).toBeVisible()
 
-  await auto.getByRole("combobox", { name: "Aérodrome de départ" }).click()
-  await page.getByPlaceholder(/./).last().fill("LFPG")
-  await page.getByRole("option", { name: /LFPG/ }).click()
-  await auto.getByRole("combobox", { name: "Aérodrome d'arrivée" }).click()
-  await page.getByPlaceholder(/./).last().fill("LFPO")
-  await page.getByRole("option", { name: /LFPO/ }).click()
-  await expect(auto.getByRole("combobox", { name: "Aérodrome de départ" })).toContainText("LFPG")
-  await expect(auto.getByRole("combobox", { name: "Aérodrome d'arrivée" })).toContainText("LFPO")
+  await pickPoint(page, "Aérodrome de départ", "LFPG", /^LFPG/)
+  await pickPoint(page, "Aérodrome d'arrivée", "LFPO", /^LFPO/)
+  await expect(page.getByRole("combobox", { name: "Aérodrome de départ" })).toContainText("LFPG")
+  await expect(page.getByRole("combobox", { name: "Aérodrome d'arrivée" })).toContainText("LFPO")
+  await pickPoint(page, /^Ajouter un point/, "48.85 2.45", /^Point libre/)
+  const route = page.getByRole("list", { name: "Points et branches" })
+  await expect(route).toContainText("P1")
 
-  await auto.getByRole("button", { name: "Générer le plan de vol" }).click()
-  await expect(page).toHaveURL(/\/reservations\/flight-plans\/\d+$/)
+  // The results come from the API (computeFlightPlan), whatever their verdict for this aircraft.
+  await expect(page.getByText(/^Bilan : /)).toBeVisible({ timeout: 20_000 })
+  await expect(page.getByRole("tab", { name: "Log de navigation" })).toBeVisible()
+  await expect(page.getByRole("tab", { name: /^Masse et centrage/ })).toBeVisible()
+  await expect(page.getByRole("tab", { name: /^Carburant/ })).toBeVisible()
+
+  await page.getByRole("button", { name: "Enregistrer le plan" }).click()
+  const blocking = page.getByRole("alertdialog", { name: "Enregistrer un plan bloquant ?" })
+  const saved = page.waitForURL(/\/reservations\/flight-plans\/\d+$/, { timeout: 20_000 })
+  await Promise.race([
+    saved,
+    blocking
+      .waitFor({ state: "visible", timeout: 20_000 })
+      .then(() => confirmAlert(page, "Enregistrer quand même"))
+      // Saved straight away: no dialog was needed.
+      .catch(() => undefined),
+  ])
+  await saved
   await expect(page.getByRole("heading", { level: 1 })).toContainText("LFPG → LFPO")
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Prévu")
   await expect(page.getByRole("main")).toContainText(`${aircraft.registration} · ${aircraft.model}`)
-  await expect(page.getByRole("tab", { name: "Navigation" })).toBeVisible()
+  await expect(page.getByRole("tab", { name: "Log de navigation" })).toBeVisible()
+  await expect(page.getByRole("link", { name: "Modifier la préparation" })).toBeVisible()
 }
 
 /** Balance shown in the top bar, in euros. */
@@ -107,11 +136,9 @@ test.afterEach(async ({ page }) => {
 // The API closes a flight only once its booking has started. The slot booked here is months
 // ahead, so the journey stops where the member is told to wait; the booking is cancelled by the
 // cleanup. (Before this rule the journey closed the flight straight away, months before the slot.)
-test("le pilote réserve un créneau, génère le plan de vol et ne peut pas clôturer le vol avant le début du créneau", async ({
+test("le pilote réserve un créneau, prépare le plan de vol et ne peut pas clôturer le vol avant le début du créneau", async ({
   page,
-  context,
 }) => {
-  await stubAirportSearch(context)
   const purpose = uniqueName("E2E vol")
 
   const { dayLabel } = await test.step("réservation sur le calendrier", () => bookSlot(page, purpose))
@@ -131,7 +158,7 @@ test("le pilote réserve un créneau, génère le plan de vol et ne peut pas cl�
     await detail.getByRole("button", { name: "Fermer" }).click()
   })
 
-  await test.step("génération du plan de vol LFPG → LFPO", () => generateFlightPlan(page, purpose))
+  await test.step("préparation du plan de vol LFPG → LFPO", () => prepareFlightPlan(page, purpose))
 
   const flightUrl = page.url()
   const flightId = flightUrl.match(/(\d+)$/)![1]
@@ -157,17 +184,13 @@ test("le pilote réserve un créneau, génère le plan de vol et ne peut pas cl�
 // Closing needs a booking that has started, and a member can only book ahead. The journey books
 // and plans the flight like any member, then a test-only database fixture (support/database.ts)
 // moves that booking into the past: the API keeps its rule and gets no way around it.
-test("le pilote clôture un vol dont la réservation a commencé et le retrouve dans son carnet", async ({
-  page,
-  context,
-}) => {
-  await stubAirportSearch(context)
+test("le pilote clôture un vol dont la réservation a commencé et le retrouve dans son carnet", async ({ page }) => {
   const purpose = uniqueName("E2E vol clos")
   const remark = uniqueName("Remarque E2E vol")
 
   await test.step("réservation et plan de vol", async () => {
     await bookSlot(page, purpose)
-    await generateFlightPlan(page, purpose)
+    await prepareFlightPlan(page, purpose)
   })
   const flightPlanUrl = page.url()
 

@@ -40,9 +40,10 @@ export function FlightPlanCard({ flight, onEdit }: FlightPlanCardProps) {
           </CardTitle>
           <p className="mt-0.5 text-xs text-muted-foreground">{flightTypeLabel(flight.flight_type)}</p>
         </div>
-        <Badge variant={state.variant} className="shrink-0">
-          {state.label}
-        </Badge>
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          <Badge variant={state.variant}>{state.label}</Badge>
+          {flight.plan_engine === "legacy" && <Badge variant="neutral">{t("navplan:detail.legacyBadge")}</Badge>}
+        </div>
       </CardHeader>
       <CardContent className="flex-1 space-y-2 pb-4 text-sm">
         {reservation ? (

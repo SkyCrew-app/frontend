@@ -80,20 +80,6 @@
       "title": "Before departure",
       "description": "Check the NOTAMs and the weather, and make sure all the documents required for the flight are on board."
     },
-    "tabs": {
-      "route": "Route and aerodromes",
-      "navigation": "Navigation",
-      "fuel": "Fuel and wind"
-    },
-    "routeTabs": {
-      "overview": "Flight",
-      "waypoints": "Waypoints"
-    },
-    "flightDetails": {
-      "title": "Flight details",
-      "estimatedDuration": "Estimated duration",
-      "performanceProfile": "Performance profile"
-    },
     "aircraftAndPilot": {
       "title": "Aircraft and pilot",
       "noAircraft": "No aircraft is linked to this flight plan.",
@@ -103,17 +89,9 @@
       "ceiling": "Ceiling",
       "pilotInCommand": "Pilot in command"
     },
-    "weather": {
-      "title": "Reported weather (METAR)"
-    },
     "map": {
       "unavailableTitle": "Map unavailable",
-      "unavailableDescription": "The aerodrome coordinates are not recorded for this flight plan.",
-      "notDisplayable": "The map cannot be displayed on this device. The rest of the flight plan remains available."
-    },
-    "navigation": {
-      "emptyTitle": "No navigation log",
-      "emptyDescription": "The vertical profile and the navigation log are computed for flight plans generated automatically from a booking."
+      "unavailableDescription": "The aerodrome coordinates are not recorded for this flight plan."
     },
     "descriptionWithPilot": "{{type}} flight plan · pilot: {{pilot}}"
   },
@@ -122,44 +100,6 @@
     "descriptionForReservation": "For the booking of {{aircraft}} on {{date}}, {{start}} – {{end}}.",
     "descriptionDefault": "The flight plan will be linked to your booking.",
     "backToReservations": "My bookings",
-    "steps": {
-      "journey": "Trip",
-      "route": "Route",
-      "summary": "Summary"
-    },
-    "airports": {
-      "departure": "Departure aerodrome",
-      "chooseDeparture": "Choose the departure",
-      "departureRequired": "Choose the departure aerodrome.",
-      "arrival": "Arrival aerodrome",
-      "chooseArrival": "Choose the arrival",
-      "arrivalRequired": "Choose the arrival aerodrome."
-    },
-    "auto": {
-      "title": "Automatic generation",
-      "description": "Enter the departure and the arrival: the route, navigation log, fuel and wind are computed for the aircraft of the booking.",
-      "generate": "Generate the flight plan",
-      "generating": "Generating…"
-    },
-    "manual": {
-      "title": "Manual preparation",
-      "description": "Choose the waypoints and the cruise settings yourself.",
-      "flightRules": "Flight rules",
-      "rules": {
-        "VFR": "VFR — visual flight rules",
-        "IFR": "IFR — instrument flight rules",
-        "SVFR": "SVFR — special VFR"
-      },
-      "passengerCount": "Number of passengers",
-      "waypoints": "Waypoints",
-      "waypointsHint": "Optional: without waypoints, the flight is direct between the two aerodromes.",
-      "cruiseSpeedKt": "Cruise speed (kt)",
-      "cruiseAltitudeFt": "Cruise altitude (ft)",
-      "cruiseAltitude": "Cruise altitude",
-      "estimatedFlightTime": "Estimated flight time",
-      "create": "Create the flight plan",
-      "creating": "Creating…"
-    },
     "toast": {
       "created": {
         "title": "Flight plan created"
@@ -168,13 +108,6 @@
         "title": "Could not create",
         "description": "The flight plan could not be created. Try again in a moment.",
         "accountNotLoaded": "Your account is not loaded yet. Try again in a moment."
-      },
-      "generated": {
-        "title": "Flight plan generated"
-      },
-      "generateFailed": {
-        "title": "Could not generate",
-        "description": "The flight plan could not be generated. Try again, or prepare it manually."
       }
     }
   },
@@ -184,130 +117,6 @@
     "typePlaceholder": "Select",
     "weather": "Weather conditions",
     "weatherPlaceholder": "E.g. CAVOK, wind 240/08"
-  },
-  "routeSearch": {
-    "searching": "Searching…",
-    "minChars": "Enter at least two characters.",
-    "airport": {
-      "placeholder": "ICAO code, name or city",
-      "loadError": "The aerodrome details could not be loaded.",
-      "noResult": "No aerodrome found for this search.",
-      "unavailable": "Aerodrome search is unavailable at the moment."
-    },
-    "waypoint": {
-      "add": "Add a waypoint",
-      "placeholder": "Identifier or name (VOR, NDB, fix…)",
-      "loadError": "Some waypoints could not be loaded.",
-      "noResult": "No waypoint found for this search.",
-      "unavailable": "Waypoint search is unavailable at the moment.",
-      "removeLabel": "Remove {{ident}} from the route"
-    },
-    "map": {
-      "missingToken": "Mapbox API key missing. Please set NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN.",
-      "loadError": "The map could not be loaded. Check your Mapbox API key and your internet connection.",
-      "initError": "The map could not be initialised. Please check your internet connection.",
-      "updateError": "The map could not be updated."
-    }
-  },
-  "navLog": {
-    "title": "Navigation log",
-    "pilotInCommand": "pilot in command: {{name}}",
-    "performance": {
-      "cruiseSpeed": "Cruise speed:",
-      "consumption": "Fuel consumption:",
-      "ceiling": "Ceiling:"
-    },
-    "columns": {
-      "from": "From",
-      "to": "To",
-      "trackHint": "Track",
-      "wcaHint": "Wind correction angle",
-      "headingHint": "Heading to steer",
-      "distance": "Dist.",
-      "distanceHint": "Leg distance",
-      "cumulativeDistance": "Cum.",
-      "cumulativeDistanceHint": "Cumulative distance (NM)",
-      "altitude": "Alt.",
-      "altitudeHint": "Altitude (ft) or flight level",
-      "groundSpeedHint": "Ground speed",
-      "eteHint": "Leg flight time",
-      "elapsed": "Elapsed",
-      "elapsedHint": "Time elapsed since departure",
-      "fuel": "Fuel",
-      "fuelHint": "Fuel remaining"
-    }
-  },
-  "verticalProfile": {
-    "title": "Vertical profile",
-    "description": "{{distance}} NM · maximum altitude {{altitude}}",
-    "axis": {
-      "altitude": "Altitude (ft)",
-      "distance": "Distance (NM)"
-    },
-    "legend": {
-      "climb": "Climb",
-      "cruise": "Cruise",
-      "descent": "Descent"
-    }
-  },
-  "map": {
-    "legend": {
-      "climb": "Climb",
-      "cruise": "Cruise",
-      "descent": "Descent"
-    }
-  },
-  "airportInfo": {
-    "departure": "Departure aerodrome",
-    "arrival": "Arrival aerodrome",
-    "tabs": {
-      "general": "General",
-      "runways": "Runways",
-      "frequencies": "Frequencies",
-      "weather": "Weather"
-    },
-    "general": {
-      "elevation": "Aerodrome elevation",
-      "sunrise": "Sunrise",
-      "sunset": "Sunset",
-      "timezone": "Time zone",
-      "coordinates": "Coordinates"
-    },
-    "types": {
-      "large_airport": "Large airport",
-      "medium_airport": "Medium airport",
-      "small_airport": "Small aerodrome",
-      "heliport": "Heliport",
-      "seaplane_base": "Seaplane base",
-      "closed": "Closed"
-    },
-    "cardinal": {
-      "north": "N",
-      "south": "S",
-      "east": "E",
-      "west": "W"
-    },
-    "runways": {
-      "name": "Runway {{ident}}",
-      "lighted": "Lit",
-      "empty": "No runway information available"
-    },
-    "frequencies": {
-      "fallbackName": "Frequency",
-      "empty": "No frequency available"
-    },
-    "weather": {
-      "flightConditions": "Flight conditions",
-      "temperature": "Temperature",
-      "dewPoint": "Dew point",
-      "wind": "Wind",
-      "gusts": "(gusting {{speed}} kt)",
-      "visibility": "Visibility",
-      "cloudLayers": "Cloud layers",
-      "conditions": "Conditions",
-      "pressure": "Pressure",
-      "empty": "No weather information available"
-    }
   },
   "waypointInfo": {
     "title": "Waypoints",
@@ -319,35 +128,9 @@
       "point": "Point"
     }
   },
-  "fuel": {
-    "title": "Fuel",
-    "description": "Calculated to ICAO rules, final reserve of {{minutes}} min.",
-    "descriptionWithProfile": "Calculated to ICAO rules, final reserve of {{minutes}} min · {{profile}} profile.",
-    "taxi": "Taxi",
-    "trip": "Trip",
-    "contingency": "Contingency (5%)",
-    "alternate": "Alternate",
-    "finalReserve": "Final reserve",
-    "totalRequired": "Total required",
-    "checkBeforeDeparture": "Before departure, check that the fuel on board covers at least {{liters}} L.",
-    "wind": {
-      "title": "En-route wind",
-      "description": "Mean wind used to calculate the route.",
-      "wind": "Wind",
-      "headwind": "Headwind",
-      "tailwind": "Tailwind",
-      "crosswind": "Crosswind",
-      "wca": "Wind correction angle",
-      "groundSpeed": "Ground speed"
-    }
-  },
   "summary": {
     "departure": "Departure",
     "arrival": "Arrival"
-  },
-  "ofp": {
-    "print": "Print the OFP",
-    "printHint": "Opens the operational flight plan (OFP) ready to print"
   },
   "actionPlans": {
     "more": "Other actions",

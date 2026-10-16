@@ -62,6 +62,25 @@ describe("contentSecurityPolicy", () => {
     expect(policy["connect-src"]).toEqual(expect.arrayContaining(["ws://localhost:*", "http://localhost:*"]))
   })
 
+  it("lets the map reach its keyless base map, and no Mapbox, openAIP or OpenWeatherMap from the browser", () => {
+    delete process.env.NEXT_PUBLIC_MAP_STYLE_URL
+    delete process.env.NEXT_PUBLIC_MAP_STYLE_DARK_URL
+    const policy = directives(contentSecurityPolicy({ nonce: "abc", isDevelopment: false }))
+
+    expect(policy["connect-src"]).toContain("https://tiles.openfreemap.org")
+    expect(policy["worker-src"]).toContain("blob:")
+    const everything = Object.values(policy).flat().join(" ")
+    expect(everything).not.toMatch(/mapbox|openaip|openweathermap/)
+  })
+
+  it("follows a self-hosted base map configured for the club", () => {
+    process.env.NEXT_PUBLIC_MAP_STYLE_URL = "https://maps.club.example/styles/france.json"
+    const policy = directives(contentSecurityPolicy({ nonce: "abc", isDevelopment: false }))
+
+    expect(policy["connect-src"]).toContain("https://maps.club.example")
+    expect(policy["connect-src"]).not.toContain("https://tiles.openfreemap.org")
+  })
+
   it("ignores a Host header that is not a host", () => {
     const policy = contentSecurityPolicy({ nonce: "abc", host: "evil.example; script-src *", isDevelopment: false })
 

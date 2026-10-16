@@ -87,16 +87,10 @@ jobs:
         env:
           SOURCE: https://github.com/${{ github.repository }}
           # Public keys read by the browser, set as repository variables.
-          NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN: ${{ vars.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN }}
-          NEXT_PUBLIC_OPENWEATHERMAP_API_KEY: ${{ vars.NEXT_PUBLIC_OPENWEATHERMAP_API_KEY }}
-          NEXT_PUBLIC_OPENAIP_API_KEY: ${{ vars.NEXT_PUBLIC_OPENAIP_API_KEY }}
           NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ vars.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
           NEXT_PUBLIC_PAYPAL_CLIENT_ID: ${{ vars.NEXT_PUBLIC_PAYPAL_CLIENT_ID }}
         run: |
           docker build \
-            --build-arg NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN \
-            --build-arg NEXT_PUBLIC_OPENWEATHERMAP_API_KEY \
-            --build-arg NEXT_PUBLIC_OPENAIP_API_KEY \
             --build-arg NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY \
             --build-arg NEXT_PUBLIC_PAYPAL_CLIENT_ID \
             --label "org.opencontainers.image.source=$SOURCE" \

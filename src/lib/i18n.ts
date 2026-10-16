@@ -15,6 +15,7 @@ import frAdministration from "@/locales/fr/administration.json"
 import frProfile from "@/locales/fr/profile.json"
 import frChecklists from "@/locales/fr/checklists.json"
 import frArticles from "@/locales/fr/articles.json"
+import frNavplan from "@/locales/fr/navplan.json"
 
 import enCommon from "@/locales/en/common.json"
 import enNav from "@/locales/en/nav.json"
@@ -29,6 +30,7 @@ import enAdministration from "@/locales/en/administration.json"
 import enProfile from "@/locales/en/profile.json"
 import enChecklists from "@/locales/en/checklists.json"
 import enArticles from "@/locales/en/articles.json"
+import enNavplan from "@/locales/en/navplan.json"
 
 export const LANGUAGES = [
   { code: "fr", label: "Français" },
@@ -54,6 +56,7 @@ export const resources = {
     profile: frProfile,
     checklists: frChecklists,
     articles: frArticles,
+    navplan: frNavplan,
   },
   en: {
     common: enCommon,
@@ -69,6 +72,7 @@ export const resources = {
     profile: enProfile,
     checklists: enChecklists,
     articles: enArticles,
+    navplan: enNavplan,
   },
 }
 
