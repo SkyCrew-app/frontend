@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.16.1](https://github.com/SkyCrew-app/frontend/compare/2.16.0...2.16.1) (2026-10-16)
+
+
+### Bug Fixes
+
+* **flight-plans:** :bug: show night, sun times and weather age; impose the night reserve ([#191](https://github.com/SkyCrew-app/frontend/issues/191)) ([6ec2d02](https://github.com/SkyCrew-app/frontend/commit/6ec2d02d41504d856b12a137000eaf17666301e5))
+
 ## [2.16.0](https://github.com/SkyCrew-app/frontend/compare/2.15.0...2.16.0) (2026-10-16)
 
 
