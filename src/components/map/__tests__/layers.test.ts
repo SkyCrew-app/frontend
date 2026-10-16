@@ -1,6 +1,6 @@
 import { airspaceFeatures, airspaceLabel, airspaceLayers } from "../layers/airspaces"
-import { navPointFeatures } from "../layers/navpoints"
-import { legMidpoints, pointAlongRoute, routeFeatures } from "../layers/route"
+import { navPointFeatures, navPointLayers } from "../layers/navpoints"
+import { legMidpoints, pointAlongRoute, routeFeatures, routeLayers } from "../layers/route"
 import { DEFAULT_MAP_STYLE_DARK_URL, DEFAULT_MAP_STYLE_URL, mapOrigins, mapStyleUrl } from "../style"
 import { LFOC, LFPN, R_ZONE, TMA_PARIS } from "@/test/fixtures/flight-plan"
 
@@ -40,6 +40,19 @@ describe("aerodromes, navaids and reporting points", () => {
   })
 })
 
+describe("aerodromes around the route", () => {
+  it("leaves out the points of the route, which the route draws itself", () => {
+    const features = navPointFeatures([LFPN, LFOC, { ...LFOC, id: "ap-lfoa", ident: "LFOA" }], ["LFPN", "LFOC"]).features
+    expect(features.map((feature) => feature.properties.ident)).toEqual(["LFOA"])
+  })
+
+  it("draws them small when zoomed out, and names them only once there is room", () => {
+    const [circle, label] = navPointLayers() as { minzoom?: number; paint: Record<string, unknown> }[]
+    expect(circle.paint["circle-radius"]).toEqual(expect.arrayContaining(["interpolate", ["zoom"]]))
+    expect(label.minzoom).toBe(9)
+  })
+})
+
 describe("route overlay", () => {
   const points = [LFPN, { lat: 48.42, lon: 1.62 }, LFOC]
 
@@ -64,6 +77,20 @@ describe("route overlay", () => {
       { distanceNm: 0, altitudeFt: 538, label: "LFPN" },
     ], [20, 30])
     expect(collection.features.map((feature) => (feature.properties as { kind: string }).kind)).toEqual(["route", "alternate", "profile"])
+  })
+
+  it("writes the magnetic course and distance along each leg", () => {
+    const collection = routeFeatures(points, null, [], [20, 30], ["316° · 20 NM", "313° · 30 NM"])
+    const legs = collection.features.filter((feature) => (feature.properties as { kind: string }).kind === "leg")
+    expect(legs.map((feature) => (feature.properties as { label: string }).label)).toEqual(["316° · 20 NM", "313° · 30 NM"])
+    expect(routeLayers().map((layer) => layer.id)).toContain("aero-route-leg-label")
+    // Labels for another route (a computation not yet updated) are not drawn.
+    expect(routeFeatures(points, null, [], [], ["316° · 20 NM"]).features).toHaveLength(1)
+  })
+
+  it("lightens the route on the dark base map", () => {
+    const line = routeLayers("dark").find((layer) => layer.id === "aero-route-line") as { paint: Record<string, unknown> }
+    expect(line.paint["line-color"]).toBe("#fb923c")
   })
 })
 

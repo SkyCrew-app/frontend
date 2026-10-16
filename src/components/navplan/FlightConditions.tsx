@@ -33,7 +33,7 @@ export function useQnhOrigin(result: Pick<FlightPlanResult, "qnhSource" | "qnhSt
  * morning civil twilight), the twilight, sunrise and sunset times of each aerodrome of the plan,
  * and where the QNH comes from. Times in UTC, as on the nav log.
  */
-export function FlightConditions({ result, departureTime }: { result: FlightPlanResult; departureTime?: string }) {
+export function FlightConditions({ result, departureTime, bare = false }: { result: FlightPlanResult; departureTime?: string; bare?: boolean }) {
   const { t } = useTranslation("navplan")
   const daylight = result.daylight
   const qnh = useQnhOrigin(result, departureTime)
@@ -41,10 +41,13 @@ export function FlightConditions({ result, departureTime }: { result: FlightPlan
   const Icon = daylight?.night ? Moon : Sun
 
   return (
-    <section className="space-y-2 rounded-lg border p-3 text-sm" aria-labelledby="flight-conditions-title">
-      <h3 id="flight-conditions-title" className="font-medium">
-        {t("conditions.title")}
-      </h3>
+    <section className={cn("space-y-2 text-sm", !bare && "rounded-lg border p-3")} aria-labelledby={bare ? undefined : "flight-conditions-title"}>
+      {/* Bare: inside a card that already carries the title. */}
+      {!bare && (
+        <h3 id="flight-conditions-title" className="font-medium">
+          {t("conditions.title")}
+        </h3>
+      )}
       {daylight && (
         <p className={cn("flex items-start gap-2", daylight.night && "font-medium text-warning")}>
           <Icon className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
@@ -54,7 +57,12 @@ export function FlightConditions({ result, departureTime }: { result: FlightPlan
         </p>
       )}
       {daylight && daylight.aerodromes.length > 0 && (
-        <div className="overflow-x-auto">
+        <div
+          className="overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          tabIndex={0}
+          role="region"
+          aria-label={t("conditions.caption")}
+        >
           <table className="w-full whitespace-nowrap text-xs [&_td]:px-2 [&_td]:py-1 [&_th]:px-2 [&_th]:py-1">
             <caption className="sr-only">{t("conditions.caption")}</caption>
             <thead className="text-muted-foreground">

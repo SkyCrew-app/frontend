@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react"
+import { render, screen, within, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { MockedProvider, type MockedResponse } from "@apollo/client/testing"
 import { GET_FLIGHT_PLAN_BY_ID } from "@/graphql/flights"
@@ -102,7 +102,9 @@ describe("flight plan page", () => {
       </MockedProvider>,
     )
     expect(await screen.findByRole("heading", { level: 1, name: /LFPN → LFOC/ })).toBeInTheDocument()
-    expect(screen.getByRole("table", { name: "Log de navigation, branche par branche" })).toHaveTextContent("LFPN → RBT")
+    // The nav log in the format of the paper one: a line per point.
+    const log = screen.getByRole("table", { name: "Log de navigation, point par point" })
+    expect(within(log).getByRole("rowheader", { name: /^RBT/ })).toBeInTheDocument()
     expect(screen.getByTestId("map")).toHaveTextContent("LFPN RBT P1 LFOC")
     expect(screen.getByRole("link", { name: "Modifier la préparation" })).toHaveAttribute("href", "/reservations/flight-plans/create/55?plan=41")
     // On screen, and again on the printed log.

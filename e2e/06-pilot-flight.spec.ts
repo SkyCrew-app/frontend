@@ -93,15 +93,24 @@ async function prepareFlightPlan(page: Page, purpose: string) {
   await pickPoint(page, "Aérodrome d'arrivée", "LFPO", /^LFPO/)
   await expect(page.getByRole("combobox", { name: "Aérodrome de départ" })).toContainText("LFPG")
   await expect(page.getByRole("combobox", { name: "Aérodrome d'arrivée" })).toContainText("LFPO")
-  await pickPoint(page, /^Ajouter un point/, "48.85 2.45", /^Point libre/)
+  await pickPoint(page, /^Ajouter un point/, "48.85 2.45", /^Point tournant à/)
   const route = page.getByRole("list", { name: "Points et branches" })
-  await expect(route).toContainText("P1")
+  await expect(route.getByRole("textbox", { name: "Nom du point 1" })).toHaveValue("P1")
 
-  // The results come from the API (computeFlightPlan), whatever their verdict for this aircraft.
+  // The results come from the API (computeFlightPlan), whatever their verdict for this aircraft:
+  // the verdict and the totals stay above the three steps.
   await expect(page.getByText(/^Bilan : /)).toBeVisible({ timeout: 20_000 })
-  await expect(page.getByRole("tab", { name: "Log de navigation" })).toBeVisible()
-  await expect(page.getByRole("tab", { name: /^Masse et centrage/ })).toBeVisible()
-  await expect(page.getByRole("tab", { name: /^Carburant/ })).toBeVisible()
+  await expect(page.getByRole("region", { name: "Bilan du plan" })).toContainText("Carburant requis")
+  // Each leg of the route says its magnetic course, distance and time once computed.
+  await expect(page.getByRole("button", { name: /^Branche LFPG → P1 :/ })).toContainText(/Rm \d{3}° · [\d,]+ NM · \d+ min/)
+
+  await page.getByRole("tab", { name: /Avion et chargement/ }).click()
+  await expect(page.getByRole("heading", { name: "Chargement" })).toBeVisible()
+  await page.getByRole("tab", { name: /Log et dossier/ }).click()
+  const log = page.getByRole("table", { name: "Log de navigation, point par point" })
+  await expect(log).toBeVisible()
+  await expect(log.getByRole("rowheader", { name: /^P1/ })).toBeVisible()
+  await expect(log.getByRole("columnheader", { name: /HE réelle/ })).toBeVisible()
 
   await page.getByRole("button", { name: "Enregistrer le plan" }).click()
   const blocking = page.getByRole("alertdialog", { name: "Enregistrer un plan bloquant ?" })

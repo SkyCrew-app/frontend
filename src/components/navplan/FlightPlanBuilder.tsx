@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import dynamic from "next/dynamic"
 import Link from "next/link"
 import { useTranslation } from "react-i18next"
-import { AlertTriangle, Loader2, RotateCcw, Save } from "lucide-react"
+import { AlertTriangle, ArrowRight, ChevronDown, Loader2, Printer, RotateCcw, Save } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import {
   AlertDialog,
@@ -18,10 +18,12 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { draftIssues, fromLocalInputValue, isComputable, toLocalInputValue, withAircraftStations, type FlightPlanDraft } from "@/lib/navplan/draft"
 import {
   appendWaypoint,
@@ -43,18 +45,25 @@ import type {
   FlightPlanningSettings,
   NavdataInfo,
   NavPoint,
+  PdfFormat,
   ReserveCase,
 } from "@/lib/navplan/types"
-import type { MassUnit, VolumeUnit } from "@/lib/navplan/units"
+import { formatCourse, formatNm, type MassUnit, type VolumeUnit } from "@/lib/navplan/units"
 import { formatTime } from "@/lib/format"
 import { isNavPoint, type AeroMapProps } from "@/components/map/types"
 import type { MapPoint } from "@/components/map/layers/route"
+import { AirspaceCrossings, airspacesNotChecked } from "./AirspaceCrossings"
+import { FlightConditions, formatUtcDateTime } from "./FlightConditions"
+import { FuelSummary } from "./FuelSummary"
 import { LoadEditor } from "./LoadEditor"
+import { MassBalancePanel } from "./MassBalancePanel"
+import { NavLogTable } from "./NavLogTable"
 import { NavdataAge, PreparationDisclaimer, WARNING_ALERT } from "./NoticesBanner"
 import { NumberField } from "./NumberField"
-import { formatUtcDateTime } from "./FlightConditions"
-import { ResultsPanel, ResultsSummary, type ResultsTab } from "./ResultsPanel"
+import { PlanSummary, checksFromNotices, type Check } from "./PlanSummary"
+import { PrintableNavLog, printNavLog } from "./PrintableNavLog"
 import { RouteEditor } from "./RouteEditor"
+import { WeatherPanel } from "./WeatherPanel"
 import { useFlightPlanDraft } from "./useFlightPlanDraft"
 
 const AeroMap = dynamic<AeroMapProps>(() => import("@/components/map/AeroMap"), {
@@ -77,12 +86,39 @@ interface FlightPlanBuilderProps {
   isAdmin: boolean
   saving: boolean
   onSave: (input: FlightPlanInput) => void
+  /** Printed on the paper log. */
+  pilotName?: string
 }
 
-const RESERVE_CASES: ReserveCase[] = ["VFR_DAY", "VFR_DAY_LOCAL", "VFR_NIGHT"]
+export const BUILDER_STEPS = ["route", "load", "log"] as const
+export type BuilderStep = (typeof BUILDER_STEPS)[number]
 
-/** The flight preparation: route on the map and in a list, load, and the live results. */
-export function FlightPlanBuilder({ initialDraft, aircraft, settings, navdata, isAdmin, saving, onSave }: FlightPlanBuilderProps) {
+const RESERVE_CASES: ReserveCase[] = ["VFR_DAY", "VFR_NIGHT", "VFR_DAY_LOCAL"]
+
+// The map and the route panel fill the window under the header, the steps and the summary.
+const WORKSPACE_HEIGHT = "lg:h-[calc(100dvh-26.5rem)] lg:min-h-[30rem]"
+
+// Wide screens carry the save button next to the steps; phones at the bottom, within reach.
+const WIDE = "(min-width: 1024px)"
+function useWideScreen() {
+  const [wide, setWide] = useState(false)
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return
+    const media = window.matchMedia(WIDE)
+    const listener = () => setWide(media.matches)
+    listener()
+    media.addEventListener("change", listener)
+    return () => media.removeEventListener("change", listener)
+  }, [])
+  return wide
+}
+
+/**
+ * The flight preparation in three steps, as a pilot prepares a navigation: the route on the map,
+ * the aircraft and its load, then the nav log and the file. The API computes everything live; the
+ * verdict and the points to check stay above the steps.
+ */
+export function FlightPlanBuilder({ initialDraft, aircraft, settings, navdata, isAdmin, saving, onSave, pilotName }: FlightPlanBuilderProps) {
   const { t } = useTranslation("navplan")
   const startDraft = useMemo(
     () => withAircraftStations(initialDraft, aircraft.massBalance, aircraft.performance),
@@ -93,12 +129,16 @@ export function FlightPlanBuilder({ initialDraft, aircraft, settings, navdata, i
   const [confirmBlocking, setConfirmBlocking] = useState(false)
   const [massUnit, setMassUnit] = useState<MassUnit>("kg")
   const [volumeUnit, setVolumeUnit] = useState<VolumeUnit>("L")
-  const [tab, setTab] = useState<ResultsTab>("log")
+  const [step, setStep] = useState<BuilderStep>("route")
   const [dirty, setDirty] = useState(false)
+  const [printFormat, setPrintFormat] = useState<PdfFormat>("A5")
+  const wide = useWideScreen()
 
   const dataState = aircraftDataState(aircraft.performance, aircraft.massBalance)
   const missing = missingAircraftData(aircraft.performance, aircraft.massBalance)
   const issues = draftIssues(draft)
+  const computable = isComputable(issues)
+  const shownResult = computable && !error ? result : null
   const cruiseSettings = useMemo(
     () => [...new Set((aircraft.performance?.cruise.rows ?? []).map((row) => row.setting))],
     [aircraft.performance],
@@ -149,7 +189,14 @@ export function FlightPlanBuilder({ initialDraft, aircraft, settings, navdata, i
   )
 
   const mapPoints = useMemo(() => routePoints(draft.route), [draft.route])
-  const legDistances = useMemo(() => result?.legs.map((leg) => leg.distanceNm) ?? [], [result])
+  // Leg figures on the map only while the computed legs are those of the route drawn.
+  const mapLegs = useMemo(() => {
+    const legs = result?.legs ?? []
+    const matches = legs.length === mapPoints.length - 1 && legs.every((leg, index) => leg.from.ident === mapPoints[index].ident && leg.to.ident === mapPoints[index + 1].ident)
+    return matches ? legs : []
+  }, [result, mapPoints])
+  const legDistances = useMemo(() => mapLegs.map((leg) => leg.distanceNm), [mapLegs])
+  const legLabels = useMemo(() => mapLegs.map((leg) => `${formatCourse(leg.magneticCourseDeg)} · ${formatNm(leg.distanceNm, 0)}`), [mapLegs])
   const roles = useMemo(() => {
     const value: Record<string, "departure" | "destination" | "alternate"> = {}
     if (draft.route.departure) value[draft.route.departure.ident] = "departure"
@@ -161,6 +208,8 @@ export function FlightPlanBuilder({ initialDraft, aircraft, settings, navdata, i
   const save = () => {
     if (!input) {
       setShowErrors(true)
+      // The missing fields (aerodromes, altitudes) are on the route step.
+      setStep("route")
       return
     }
     if (result?.status === "BLOCKING") {
@@ -181,211 +230,122 @@ export function FlightPlanBuilder({ initialDraft, aircraft, settings, navdata, i
   }, [night, draft.reserveCase, update])
   const departureSun = daylight?.aerodromes.find((aerodrome) => aerodrome.role === "departure")
 
-  return (
-    <div className="space-y-6">
-      <div className="space-y-3">
-        <PreparationDisclaimer />
-        {navdata?.stale && <NavdataAge navdata={navdata} />}
-        {dataState !== "VALIDATED" && (
-          <Alert className={WARNING_ALERT}>
-            <AlertTriangle className="h-4 w-4" aria-hidden="true" />
-            <AlertTitle>{t(`aircraftState.${dataState}.title`, { registration: aircraft.registration })}</AlertTitle>
-            <AlertDescription className="space-y-1">
-              <p>{t(`aircraftState.${dataState}.builder`)}</p>
-              {missing.length > 0 && (
-                <p className="text-xs">{t("aircraftState.missingList", { list: missing.map((field) => t(`aircraftState.missing.${field}`)).join(", ") })}</p>
-              )}
-              {isAdmin ? (
-                <Link className="font-medium underline underline-offset-4" href={`/administration/planes/${aircraft.id}/flight-data`}>
-                  {t("aircraftState.openEditor")}
-                </Link>
-              ) : (
-                <p>{t("aircraftState.askAdmin")}</p>
-              )}
-            </AlertDescription>
-          </Alert>
+  const checks = useMemo<Check[]>(() => {
+    if (!shownResult) return []
+    const own: Check[] = night
+      ? [
+          {
+            key: "night",
+            status: "WARNING",
+            message: t("builder.flight.nightImposed", {
+              time: formatUtcDateTime(daylight?.nightFrom, draft.departureTime),
+              icao: departureSun?.icao ?? "—",
+              dusk: formatUtcDateTime(departureSun?.civilDusk, draft.departureTime),
+              dawn: formatUtcDateTime(departureSun?.civilDawn, draft.departureTime),
+            }),
+          },
+        ]
+      : []
+    return [...own, ...checksFromNotices(shownResult.notices)]
+  }, [shownResult, night, daylight, departureSun, draft.departureTime, t])
+
+  const qnhInvalid = issues.some((issue) => issue.code === "QNH_INVALID")
+  const stepIndex = BUILDER_STEPS.indexOf(step)
+  const nextStep = BUILDER_STEPS[stepIndex + 1]
+
+  const status = showErrors && !input ? <span className="text-destructive">{t("builder.save.incomplete")}</span> : dirty ? t("builder.save.unsaved") : t("builder.save.hint")
+  const saveButton = (
+    <Button type="button" className="flex-1 lg:flex-none" onClick={save} disabled={saving}>
+      {saving ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Save className="h-4 w-4" aria-hidden="true" />}
+      {t("builder.save.action")}
+    </Button>
+  )
+  // Wide screen: next to the steps. Phone: a slim bar at the bottom, within reach of the thumb.
+  const actions = wide ? (
+    <div className="flex items-center gap-3">
+      <p className="text-xs text-muted-foreground" role="status">
+        {status}
+      </p>
+      {saveButton}
+    </div>
+  ) : (
+    <div className="space-y-2">
+      <p className="text-xs text-muted-foreground" role="status">
+        {status}
+      </p>
+      <div className="flex gap-2">
+        {nextStep && (
+          <Button
+            type="button"
+            variant="outline"
+            className="flex-1"
+            aria-label={t("builder.steps.next", { step: t(`builder.steps.${nextStep}`) })}
+            onClick={() => setStep(nextStep)}
+          >
+            {t("builder.steps.nextShort")}
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </Button>
         )}
+        {saveButton}
       </div>
+    </div>
+  )
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,30rem)_minmax(0,1fr)]">
-        <div className="min-w-0 space-y-6">
-          <Card>
-            <CardHeader className="pb-4">
-              <CardTitle className="text-base">
-                <h2>{t("builder.flight.title")}</h2>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="departure-time">{t("builder.flight.departureTime")}</Label>
-                <Input
-                  id="departure-time"
-                  type="datetime-local"
-                  value={departureLocal}
-                  aria-describedby="departure-time-utc"
-                  onChange={(event) => {
-                    const iso = fromLocalInputValue(event.target.value)
-                    if (iso) change((current) => ({ ...current, departureTime: iso }))
-                  }}
-                />
-                <p id="departure-time-utc" className="text-xs text-muted-foreground">
-                  {t("builder.flight.utc", { time: new Date(draft.departureTime).toISOString().slice(11, 16), local: formatTime(draft.departureTime) })}
-                </p>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="reserve-case">{t("builder.flight.reserveCase")}</Label>
-                <Select
-                  value={draft.reserveCase}
-                  onValueChange={(value) => change((current) => ({ ...current, reserveCase: value as ReserveCase }))}
-                >
-                  <SelectTrigger id="reserve-case" aria-describedby={night ? "reserve-case-night" : undefined}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {RESERVE_CASES.map((reserveCase) => (
-                      <SelectItem key={reserveCase} value={reserveCase} disabled={night && reserveCase !== "VFR_NIGHT"}>
-                        {t(`reserveCase.${reserveCase}`)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {night && (
-                  <p id="reserve-case-night" className="text-xs font-medium text-warning" role="status">
-                    {t("builder.flight.nightImposed", {
-                      time: formatUtcDateTime(daylight?.nightFrom, draft.departureTime),
-                      icao: departureSun?.icao ?? "—",
-                      dusk: formatUtcDateTime(departureSun?.civilDusk, draft.departureTime),
-                      dawn: formatUtcDateTime(departureSun?.civilDawn, draft.departureTime),
-                    })}
-                  </p>
+  const print = (format: PdfFormat) => {
+    setPrintFormat(format)
+    printNavLog(format)
+  }
+
+  return (
+    <div className="space-y-4">
+      {(dataState !== "VALIDATED" || navdata?.stale) && (
+        <div className="space-y-3">
+          {navdata?.stale && <NavdataAge navdata={navdata} />}
+          {dataState !== "VALIDATED" && (
+            <Alert className={WARNING_ALERT}>
+              <AlertTriangle className="h-4 w-4" aria-hidden="true" />
+              <AlertTitle>{t(`aircraftState.${dataState}.title`, { registration: aircraft.registration })}</AlertTitle>
+              <AlertDescription className="space-y-1">
+                <p>{t(`aircraftState.${dataState}.builder`)}</p>
+                {missing.length > 0 && (
+                  <p className="text-xs">{t("aircraftState.missingList", { list: missing.map((field) => t(`aircraftState.missing.${field}`)).join(", ") })}</p>
                 )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="qnh">{t("builder.flight.qnh")}</Label>
-                <NumberField
-                  id="qnh"
-                  value={draft.qnhHpa}
-                  unit="hPa"
-                  digits={0}
-                  placeholder={t("builder.flight.qnhPlaceholder")}
-                  invalid={issues.some((issue) => issue.code === "QNH_INVALID")}
-                  aria-describedby="qnh-hint"
-                  onValueChange={(value) => change((current) => ({ ...current, qnhHpa: value }))}
-                />
-                <p id="qnh-hint" className="text-xs text-muted-foreground">
-                  {issues.some((issue) => issue.code === "QNH_INVALID") ? (
-                    <span className="text-destructive">{t("builder.flight.qnhInvalid")}</span>
-                  ) : (
-                    t("builder.flight.qnhHint")
-                  )}
-                </p>
-              </div>
-              {envelopeCategories.length > 1 && (
-                <div className="space-y-2 sm:col-span-2">
-                  <Label htmlFor="envelope-category">{t("builder.flight.envelopeCategory")}</Label>
-                  <Select
-                    value={draft.envelopeCategory}
-                    onValueChange={(value) => change((current) => ({ ...current, envelopeCategory: value as EnvelopeCategory }))}
-                  >
-                    <SelectTrigger id="envelope-category">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {envelopeCategories.map((category) => (
-                        <SelectItem key={category} value={category}>
-                          {t(`envelopeCategory.${category}`)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-4">
-              <CardTitle className="text-base">
-                <h2>{t("builder.route.title")}</h2>
-              </CardTitle>
-              <CardDescription>{t("builder.route.description")}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <RouteEditor
-                route={draft.route}
-                onChange={(route) => changeRoute(() => route)}
-                computedLegs={result?.legs}
-                cruiseSettings={cruiseSettings}
-                normalSetting={aircraft.performance?.cruise.normalSetting}
-                showErrors={showErrors}
-              />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-4">
-              <CardTitle className="text-base">
-                <h2>{t("builder.load.title")}</h2>
-              </CardTitle>
-              <CardDescription>{t("builder.load.description")}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {(aircraft.massBalance?.stations.length ?? 0) === 0 && (aircraft.performance?.fuel.tanks.length ?? 0) === 0 ? (
-                <p className="text-sm text-muted-foreground">{t("builder.load.noStations")}</p>
-              ) : (
-                <LoadEditor
-                  stations={aircraft.massBalance?.stations ?? []}
-                  tanks={aircraft.performance?.fuel.tanks ?? []}
-                  loads={draft.loads}
-                  fuel={draft.fuel}
-                  massUnit={massUnit}
-                  volumeUnit={volumeUnit}
-                  onMassUnitChange={setMassUnit}
-                  onVolumeUnitChange={setVolumeUnit}
-                  onLoadChange={(stationId, massKg) => change((current) => ({ ...current, loads: { ...current.loads, [stationId]: massKg } }))}
-                  onFuelChange={(tankId, litres) => change((current) => ({ ...current, fuel: { ...current.fuel, [tankId]: litres } }))}
-                />
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Map and verdict stay in view while the route and the load are edited. */}
-        <div className="min-w-0 space-y-4 xl:sticky xl:top-4 xl:self-start">
-          <div className="map-container h-72 overflow-hidden rounded-xl border sm:h-96 xl:h-[28rem]">
-            <AeroMap
-              points={mapPoints}
-              alternate={draft.route.alternate}
-              profile={result?.profile}
-              legDistancesNm={legDistances}
-              editable
-              onAddPoint={handleMapAdd}
-              onMoveWaypoint={handleMapMove}
-              onInsertPoint={handleMapInsert}
-            />
-          </div>
-
-          {result && isComputable(issues) && !error && (
-            <Card>
-              <CardContent className="p-4">
-                <ResultsSummary result={result} pending={pending} />
-              </CardContent>
-            </Card>
+                {isAdmin ? (
+                  <Link className="font-medium underline underline-offset-4" href={`/administration/planes/${aircraft.id}/flight-data`}>
+                    {t("aircraftState.openEditor")}
+                  </Link>
+                ) : (
+                  <p>{t("aircraftState.askAdmin")}</p>
+                )}
+              </AlertDescription>
+            </Alert>
           )}
         </div>
-      </div>
+      )}
 
-      <Card>
-        <CardHeader className="pb-4">
-          <CardTitle className="text-base">
-            <h2>{t("builder.results.title")}</h2>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {!isComputable(issues) ? (
-            <p className="text-sm text-muted-foreground">{t("builder.results.waiting")}</p>
+      <Tabs value={step} onValueChange={(value) => setStep(value as BuilderStep)}>
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <TabsList className="grid h-auto w-full grid-cols-3 sm:inline-grid sm:w-auto" aria-label={t("builder.steps.label")}>
+          {BUILDER_STEPS.map((value, index) => (
+            <TabsTrigger key={value} value={value} className="gap-2 whitespace-normal px-2 sm:whitespace-nowrap sm:px-4">
+              <span
+                className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted-foreground/15 text-xs tabular-nums"
+                aria-hidden="true"
+              >
+                {index + 1}
+              </span>
+              {t(`builder.steps.${value}`)}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        {wide && actions}
+        </div>
+
+        <div className="mt-4">
+          {!computable ? (
+            <p className="rounded-xl border border-dashed bg-card p-4 text-sm text-muted-foreground">{t("builder.results.waiting")}</p>
           ) : error ? (
-            <div className="flex flex-col items-start gap-3 text-sm" role="alert">
+            <div className="flex flex-col items-start gap-3 rounded-xl border bg-card p-4 text-sm" role="alert">
               <p className="text-destructive">{t("builder.results.error")}</p>
               <Button type="button" variant="outline" onClick={retry}>
                 <RotateCcw className="h-4 w-4" aria-hidden="true" />
@@ -393,36 +353,250 @@ export function FlightPlanBuilder({ initialDraft, aircraft, settings, navdata, i
               </Button>
             </div>
           ) : !result ? (
-            <div className="space-y-3" aria-busy="true">
-              <Skeleton className="h-16 w-full" />
-              <Skeleton className="h-48 w-full" />
-            </div>
+            <Skeleton className="h-24 w-full rounded-xl" aria-busy="true" />
           ) : (
-            <ResultsPanel
-              hideSummary
-              departureTime={draft.departureTime}
-              result={result}
-              reserveCase={draft.reserveCase}
-              settings={settings}
-              weighingDate={aircraft.massBalance?.weighingDate}
-              roles={roles}
-              pending={pending}
-              tab={tab}
-              onTabChange={setTab}
-            />
+            <PlanSummary result={result} pending={pending} checks={checks} />
           )}
-        </CardContent>
-      </Card>
+        </div>
 
-      <div className="sticky bottom-4 z-10 flex flex-col gap-3 rounded-lg border bg-card p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-muted-foreground" role="status">
-          {showErrors && !input ? <span className="text-destructive">{t("builder.save.incomplete")}</span> : dirty ? t("builder.save.unsaved") : t("builder.save.hint")}
-        </p>
-        <Button type="button" onClick={save} disabled={saving}>
-          {saving ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Save className="h-4 w-4" aria-hidden="true" />}
-          {t("builder.save.action")}
-        </Button>
+        <TabsContent value="route">
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem] xl:grid-cols-[minmax(0,1fr)_25rem]">
+            <div className={`map-container h-80 overflow-hidden rounded-xl border sm:h-[28rem] ${WORKSPACE_HEIGHT}`}>
+              <AeroMap
+                points={mapPoints}
+                alternate={draft.route.alternate}
+                profile={mapLegs.length > 0 ? result?.profile : undefined}
+                legDistancesNm={legDistances}
+                legLabels={legLabels}
+                editable
+                onAddPoint={handleMapAdd}
+                onMoveWaypoint={handleMapMove}
+                onInsertPoint={handleMapInsert}
+              />
+            </div>
+
+            <Card className={`flex flex-col overflow-hidden ${WORKSPACE_HEIGHT}`}>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">
+                  <h2>{t("builder.route.title")}</h2>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex-1 space-y-5 overflow-y-auto">
+                <div className="space-y-1.5">
+                  <Label htmlFor="departure-time">{t("builder.flight.departureTime")}</Label>
+                  <Input
+                    id="departure-time"
+                    type="datetime-local"
+                    value={departureLocal}
+                    aria-describedby="departure-time-utc"
+                    onChange={(event) => {
+                      const iso = fromLocalInputValue(event.target.value)
+                      if (iso) change((current) => ({ ...current, departureTime: iso }))
+                    }}
+                  />
+                  <p id="departure-time-utc" className="text-xs text-muted-foreground">
+                    {t("builder.flight.utc", { time: new Date(draft.departureTime).toISOString().slice(11, 16), local: formatTime(draft.departureTime) })}
+                  </p>
+                </div>
+
+                <RouteEditor
+                  route={draft.route}
+                  onChange={(route) => changeRoute(() => route)}
+                  computedLegs={result?.legs}
+                  cruiseSettings={cruiseSettings}
+                  normalSetting={aircraft.performance?.cruise.normalSetting}
+                  showErrors={showErrors}
+                />
+
+                <Collapsible defaultOpen={qnhInvalid || draft.qnhHpa !== null} className="border-t pt-3">
+                  <CollapsibleTrigger asChild>
+                    <Button type="button" variant="ghost" size="sm" className="group -ml-2 gap-1.5 px-2 text-muted-foreground">
+                      <ChevronDown className="h-4 w-4 transition-transform group-data-[state=open]:rotate-180" aria-hidden="true" />
+                      {t("builder.advanced.title")}
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="space-y-1.5 pt-2">
+                    <Label htmlFor="qnh">{t("builder.flight.qnh")}</Label>
+                    <NumberField
+                      id="qnh"
+                      value={draft.qnhHpa}
+                      unit="hPa"
+                      digits={0}
+                      placeholder={t("builder.flight.qnhPlaceholder")}
+                      invalid={qnhInvalid}
+                      aria-describedby="qnh-hint"
+                      onValueChange={(value) => change((current) => ({ ...current, qnhHpa: value }))}
+                    />
+                    <p id="qnh-hint" className="text-xs text-muted-foreground">
+                      {qnhInvalid ? <span className="text-destructive">{t("builder.flight.qnhInvalid")}</span> : t("builder.flight.qnhHint")}
+                    </p>
+                    <p className="pt-1 text-xs text-muted-foreground">{t("builder.advanced.legHint")}</p>
+                  </CollapsibleContent>
+                </Collapsible>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="load">
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+            <Card>
+              <CardHeader className="pb-4">
+                <CardTitle className="text-base">
+                  <h2>{t("builder.load.title")}</h2>
+                </CardTitle>
+                <CardDescription>{t("builder.load.description")}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {(aircraft.massBalance?.stations.length ?? 0) === 0 && (aircraft.performance?.fuel.tanks.length ?? 0) === 0 ? (
+                  <p className="text-sm text-muted-foreground">{t("builder.load.noStations")}</p>
+                ) : (
+                  <LoadEditor
+                    stations={aircraft.massBalance?.stations ?? []}
+                    tanks={aircraft.performance?.fuel.tanks ?? []}
+                    loads={draft.loads}
+                    fuel={draft.fuel}
+                    massUnit={massUnit}
+                    volumeUnit={volumeUnit}
+                    onMassUnitChange={setMassUnit}
+                    onVolumeUnitChange={setVolumeUnit}
+                    onLoadChange={(stationId, massKg) => change((current) => ({ ...current, loads: { ...current.loads, [stationId]: massKg } }))}
+                    onFuelChange={(tankId, litres) => change((current) => ({ ...current, fuel: { ...current.fuel, [tankId]: litres } }))}
+                  />
+                )}
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="reserve-case">{t("builder.flight.reserveCase")}</Label>
+                    <Select value={draft.reserveCase} onValueChange={(value) => change((current) => ({ ...current, reserveCase: value as ReserveCase }))}>
+                      <SelectTrigger id="reserve-case" aria-describedby={night ? "reserve-case-night" : undefined}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {RESERVE_CASES.map((reserveCase) => (
+                          <SelectItem key={reserveCase} value={reserveCase} disabled={night && reserveCase !== "VFR_NIGHT"}>
+                            {t(`reserveCase.${reserveCase}`)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {night && (
+                      <p id="reserve-case-night" className="text-xs font-medium text-warning">
+                        {t("builder.flight.nightShort")}
+                      </p>
+                    )}
+                  </div>
+                  {envelopeCategories.length > 1 && (
+                    <div className="space-y-1.5">
+                      <Label htmlFor="envelope-category">{t("builder.flight.envelopeCategory")}</Label>
+                      <Select
+                        value={draft.envelopeCategory}
+                        onValueChange={(value) => change((current) => ({ ...current, envelopeCategory: value as EnvelopeCategory }))}
+                      >
+                        <SelectTrigger id="envelope-category">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {envelopeCategories.map((category) => (
+                            <SelectItem key={category} value={category}>
+                              {t(`envelopeCategory.${category}`)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-4">
+                <CardTitle className="text-base">
+                  <h2>{t("results.tabs.massBalance")}</h2>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {shownResult ? (
+                  <MassBalancePanel massBalance={shownResult.massBalance} weighingDate={aircraft.massBalance?.weighingDate} stacked />
+                ) : (
+                  <p className="text-sm text-muted-foreground">{t("builder.results.waitingShort")}</p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="log" className="space-y-4">
+          <Card>
+            <CardHeader className="flex flex-col gap-3 pb-4 sm:flex-row sm:items-start sm:justify-between sm:space-y-0">
+              <div className="space-y-1.5">
+                <CardTitle className="text-base">
+                  <h2>{t("results.tabs.log")}</h2>
+                </CardTitle>
+                <CardDescription>{t("builder.log.description")}</CardDescription>
+              </div>
+              {shownResult && input && (
+                <div className="flex shrink-0 flex-wrap gap-2">
+                  <Button type="button" variant="outline" onClick={() => print("A5")}>
+                    <Printer className="h-4 w-4" aria-hidden="true" />
+                    {t("detail.printA5")}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => print("A4")}>
+                    <Printer className="h-4 w-4" aria-hidden="true" />
+                    {t("detail.printA4")}
+                  </Button>
+                </div>
+              )}
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {shownResult ? (
+                <NavLogTable
+                  legs={shownResult.legs}
+                  alternateLeg={shownResult.alternateLeg}
+                  totalDistanceNm={shownResult.totalDistanceNm}
+                  totalTimeMin={shownResult.totalTimeMin}
+                />
+              ) : (
+                <p className="text-sm text-muted-foreground">{t("builder.results.waitingShort")}</p>
+              )}
+              <p className="text-xs text-muted-foreground">{t("builder.log.pdfHint")}</p>
+            </CardContent>
+          </Card>
+
+          {shownResult && (
+            <>
+              <div className="grid items-start gap-4 xl:grid-cols-2">
+                <ResultCard title={t("results.tabs.fuel")}>
+                  {/* The API applies the night reserve to a flight partly at night, whatever was chosen. */}
+                  <FuelSummary fuel={shownResult.fuel} reserveCase={shownResult.fuel.reserveCase ?? draft.reserveCase} settings={settings} />
+                </ResultCard>
+                <div className="grid gap-4">
+                  <ResultCard title={t("results.tabs.airspaces")}>
+                    <AirspaceCrossings legs={shownResult.legs} alternateLeg={shownResult.alternateLeg} notChecked={airspacesNotChecked(shownResult.notices)} />
+                  </ResultCard>
+                  <ResultCard title={t("conditions.title")}>
+                    <FlightConditions result={shownResult} departureTime={draft.departureTime} bare />
+                  </ResultCard>
+                </div>
+              </div>
+              <ResultCard title={t("results.tabs.weather")}>
+                <WeatherPanel reports={shownResult.weather} roles={roles} windSource={shownResult.windSource} columns />
+              </ResultCard>
+            </>
+          )}
+        </TabsContent>
+      </Tabs>
+
+      <div className="space-y-1">
+        <PreparationDisclaimer />
+        {shownResult && !shownResult.navdata.stale && <NavdataAge navdata={shownResult.navdata} />}
       </div>
+
+      {!wide && <div className="sticky bottom-2 z-10 rounded-lg border bg-card p-2.5 shadow-sm">{actions}</div>}
+
+      {shownResult && input && (
+        <PrintableNavLog result={shownResult} input={input} aircraft={aircraft.registration} pilot={pilotName ?? "—"} format={printFormat} />
+      )}
 
       <AlertDialog open={confirmBlocking} onOpenChange={setConfirmBlocking}>
         <AlertDialogContent>
@@ -443,5 +617,18 @@ export function FlightPlanBuilder({ initialDraft, aircraft, settings, navdata, i
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  )
+}
+
+function ResultCard({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <Card className="min-w-0">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-base">
+          <h3>{title}</h3>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>{children}</CardContent>
+    </Card>
   )
 }

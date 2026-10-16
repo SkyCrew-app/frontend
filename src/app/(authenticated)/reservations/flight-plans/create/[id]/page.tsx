@@ -169,11 +169,9 @@ function FlightPlanBuilderScreen() {
     return (
       <div className="space-y-6" aria-busy="true">
         {header}
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,28rem)_minmax(0,1fr)]">
-          <div className="space-y-6">
-            <Skeleton className="h-48 w-full rounded-xl" />
-            <Skeleton className="h-72 w-full rounded-xl" />
-          </div>
+        <Skeleton className="h-10 w-full max-w-md rounded-lg" />
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem] xl:grid-cols-[minmax(0,1fr)_25rem]">
+          <Skeleton className="h-[28rem] w-full rounded-xl" />
           <Skeleton className="h-[28rem] w-full rounded-xl" />
         </div>
       </div>
@@ -208,6 +206,7 @@ function FlightPlanBuilderScreen() {
         settings={settingsData?.flightPlanningSettings ?? null}
         navdata={navdataData?.navdataInfo ?? null}
         isAdmin={isAdministrator(me)}
+        pilotName={reservation?.user ? [reservation.user.first_name, reservation.user.last_name].filter(Boolean).join(" ") : undefined}
         saving={saving}
         onSave={save}
       />
