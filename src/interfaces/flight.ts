@@ -6,6 +6,8 @@ export interface FlightPerson {
 
 export interface Flight {
   id: number | string
+  /** "legacy", "navplan-1" or null (see the API contract). */
+  plan_engine?: string | null
   flight_hours: number
   flight_type: string
   origin_icao: string

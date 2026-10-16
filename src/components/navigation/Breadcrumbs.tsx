@@ -36,6 +36,7 @@ const ROUTE_LABEL_KEYS: Record<string, string> = {
   "2fa": "pages.twoFactor",
   "money_account": "pages.balance",
   "close_flight": "pages.closeFlight",
+  "flight-data": "pages.flightData",
 }
 
 // Whole paths whose label differs from their last segment's elsewhere ("/administration/articles" stays "Articles").
@@ -45,6 +46,9 @@ const PATH_LABEL_KEYS: Record<string, string> = {
 
 // Path prefixes that only group pages and have no page of their own: shown, but not as links.
 const WITHOUT_PAGE = new Set(["/close_flight", "/reservations/flight-plans/create"])
+// Same, for an id that only groups pages: an aircraft has its flight data page, no page of its own.
+const WITHOUT_PAGE_PATTERNS = [/^\/administration\/planes\/[^/]+$/]
+const hasPage = (href: string) => !WITHOUT_PAGE.has(href) && !WITHOUT_PAGE_PATTERNS.some((pattern) => pattern.test(href))
 
 export default function Breadcrumbs() {
   const { t } = useTranslation("nav")
@@ -84,7 +88,7 @@ export default function Breadcrumbs() {
         ? t(ROUTE_LABEL_KEYS[segment])
         : segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, " ")
 
-    return { href, label, isLast, isLink: !isLast && !WITHOUT_PAGE.has(href) }
+    return { href, label, isLast, isLink: !isLast && hasPage(href) }
   })
 
   return (

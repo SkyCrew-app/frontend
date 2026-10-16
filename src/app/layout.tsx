@@ -3,7 +3,6 @@ import { headers } from 'next/headers';
 import SkipLink from "@/components/navigation/SkipLink"
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
-import 'mapbox-gl/dist/mapbox-gl.css';
 import Providers from '@/components/providers/providers';
 import { getBasePath } from '@/lib/runtime-config';
 

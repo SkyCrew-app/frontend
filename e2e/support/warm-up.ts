@@ -14,6 +14,9 @@ import { prepareContext, signIn } from "./test"
 const APP_DIR = path.join(__dirname, "..", "..", "src", "app")
 // One page of a cold development server, on a loaded machine.
 const PAGE_TIMEOUT = 180_000
+// Pages served only in a state the journeys never put the installation in: the suspended-service
+// page sends back home while the service runs (src/lib/proxy-rules.ts), with or without a session.
+const NOT_SERVED_WHILE_RUNNING = new Set(["/system/suspended"])
 
 /** Addresses of the pages under a folder of the app router; a parameter ("[id]") becomes 0. */
 export function pagesUnder(dir: string, segments: string[] = []): string[] {
@@ -81,7 +84,7 @@ async function administratorSession(config: FullConfig, baseURL: string) {
 export default async function warmUp(config: FullConfig) {
   const baseURL = config.projects[0]?.use.baseURL
   if (!baseURL) throw new Error("No baseURL in playwright.config.ts")
-  const pages = pagesUnder(APP_DIR)
+  const pages = pagesUnder(APP_DIR).filter((page) => !NOT_SERVED_WHILE_RUNNING.has(page))
   if (pages.length < 10) throw new Error(`Only ${pages.length} pages found under ${APP_DIR}`)
   const started = Date.now()
 

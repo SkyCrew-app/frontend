@@ -16,6 +16,15 @@ describe('Breadcrumbs', () => {
     expect(screen.getByText('Incidents')).toHaveAttribute('aria-current', 'page');
   });
 
+  it("ne doit pas faire un lien vers la fiche d'un avion, qui n'a pas de page", () => {
+    mockPathname = '/administration/planes/3/flight-data';
+    render(<Breadcrumbs />);
+
+    expect(screen.getByRole('link', { name: 'Avions' })).toHaveAttribute('href', '/administration/planes');
+    expect(screen.queryByRole('link', { name: 'Détail' })).not.toBeInTheDocument();
+    expect(screen.getByText('Détail')).toBeInTheDocument();
+  });
+
   it("ne doit rien afficher sur le tableau de bord", () => {
     mockPathname = '/dashboard';
     const { container } = render(<Breadcrumbs />);

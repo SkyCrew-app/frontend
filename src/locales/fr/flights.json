@@ -80,20 +80,6 @@
       "title": "Avant le départ",
       "description": "Vérifiez les NOTAM et la météo, et assurez-vous d'avoir à bord tous les documents nécessaires au vol."
     },
-    "tabs": {
-      "route": "Route et aérodromes",
-      "navigation": "Navigation",
-      "fuel": "Carburant et vent"
-    },
-    "routeTabs": {
-      "overview": "Vol",
-      "waypoints": "Points"
-    },
-    "flightDetails": {
-      "title": "Détails du vol",
-      "estimatedDuration": "Durée estimée",
-      "performanceProfile": "Profil de performance"
-    },
     "aircraftAndPilot": {
       "title": "Avion et pilote",
       "noAircraft": "Aucun avion n'est associé à ce plan de vol.",
@@ -103,17 +89,9 @@
       "ceiling": "Plafond",
       "pilotInCommand": "Commandant de bord"
     },
-    "weather": {
-      "title": "Météo relevée (METAR)"
-    },
     "map": {
       "unavailableTitle": "Carte indisponible",
-      "unavailableDescription": "Les coordonnées des aérodromes ne sont pas enregistrées pour ce plan de vol.",
-      "notDisplayable": "La carte ne peut pas être affichée sur cet appareil. Le reste du plan de vol reste consultable."
-    },
-    "navigation": {
-      "emptyTitle": "Pas de journal de navigation",
-      "emptyDescription": "Le profil vertical et le journal de navigation sont calculés pour les plans de vol générés automatiquement à partir d'une réservation."
+      "unavailableDescription": "Les coordonnées des aérodromes ne sont pas enregistrées pour ce plan de vol."
     },
     "descriptionWithPilot": "Plan de vol {{type}} · pilote : {{pilot}}"
   },
@@ -122,44 +100,6 @@
     "descriptionForReservation": "Pour la réservation de {{aircraft}} du {{date}}, {{start}} – {{end}}.",
     "descriptionDefault": "Le plan de vol sera rattaché à votre réservation.",
     "backToReservations": "Mes réservations",
-    "steps": {
-      "journey": "Trajet",
-      "route": "Route",
-      "summary": "Récapitulatif"
-    },
-    "airports": {
-      "departure": "Aérodrome de départ",
-      "chooseDeparture": "Choisir le départ",
-      "departureRequired": "Choisissez l'aérodrome de départ.",
-      "arrival": "Aérodrome d'arrivée",
-      "chooseArrival": "Choisir l'arrivée",
-      "arrivalRequired": "Choisissez l'aérodrome d'arrivée."
-    },
-    "auto": {
-      "title": "Génération automatique",
-      "description": "Indiquez le départ et l'arrivée : la route, le journal de navigation, le carburant et le vent sont calculés pour l'avion de la réservation.",
-      "generate": "Générer le plan de vol",
-      "generating": "Génération en cours…"
-    },
-    "manual": {
-      "title": "Préparation manuelle",
-      "description": "Choisissez vous-même les points de route et les paramètres de croisière.",
-      "flightRules": "Régime de vol",
-      "rules": {
-        "VFR": "VFR — vol à vue",
-        "IFR": "IFR — vol aux instruments",
-        "SVFR": "SVFR — VFR spécial"
-      },
-      "passengerCount": "Nombre de passagers",
-      "waypoints": "Points de route",
-      "waypointsHint": "Facultatif : sans point de route, le vol est direct entre les deux aérodromes.",
-      "cruiseSpeedKt": "Vitesse de croisière (kt)",
-      "cruiseAltitudeFt": "Altitude de croisière (ft)",
-      "cruiseAltitude": "Altitude de croisière",
-      "estimatedFlightTime": "Temps de vol estimé",
-      "create": "Créer le plan de vol",
-      "creating": "Création en cours…"
-    },
     "toast": {
       "created": {
         "title": "Plan de vol créé"
@@ -168,13 +108,6 @@
         "title": "Création impossible",
         "description": "Le plan de vol n'a pas pu être créé. Réessayez dans un instant.",
         "accountNotLoaded": "Votre compte n'est pas encore chargé. Réessayez dans un instant."
-      },
-      "generated": {
-        "title": "Plan de vol généré"
-      },
-      "generateFailed": {
-        "title": "Génération impossible",
-        "description": "Le plan de vol n'a pas pu être généré. Réessayez, ou préparez-le manuellement."
       }
     }
   },
@@ -184,130 +117,6 @@
     "typePlaceholder": "Sélectionner",
     "weather": "Conditions météo",
     "weatherPlaceholder": "Ex. : CAVOK, vent 240/08"
-  },
-  "routeSearch": {
-    "searching": "Recherche en cours…",
-    "minChars": "Saisissez au moins deux caractères.",
-    "airport": {
-      "placeholder": "Code OACI, nom ou ville",
-      "loadError": "Les détails de l'aérodrome n'ont pas pu être chargés.",
-      "noResult": "Aucun aérodrome trouvé pour cette recherche.",
-      "unavailable": "La recherche d'aérodromes est indisponible pour le moment."
-    },
-    "waypoint": {
-      "add": "Ajouter un point de route",
-      "placeholder": "Identifiant ou nom (VOR, NDB, point…)",
-      "loadError": "Certains points de route n'ont pas pu être chargés.",
-      "noResult": "Aucun point trouvé pour cette recherche.",
-      "unavailable": "La recherche de points est indisponible pour le moment.",
-      "removeLabel": "Retirer {{ident}} de la route"
-    },
-    "map": {
-      "missingToken": "Clé d'API Mapbox manquante. Veuillez configurer NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN.",
-      "loadError": "Erreur lors du chargement de la carte. Vérifiez votre clé API Mapbox et votre connexion internet.",
-      "initError": "Impossible d'initialiser la carte. Veuillez vérifier votre connexion internet.",
-      "updateError": "Erreur lors de la mise à jour de la carte."
-    }
-  },
-  "navLog": {
-    "title": "Journal de navigation",
-    "pilotInCommand": "commandant de bord : {{name}}",
-    "performance": {
-      "cruiseSpeed": "Vitesse de croisière :",
-      "consumption": "Consommation :",
-      "ceiling": "Plafond :"
-    },
-    "columns": {
-      "from": "De",
-      "to": "Vers",
-      "trackHint": "Route (track)",
-      "wcaHint": "Correction de dérive",
-      "headingHint": "Cap à suivre",
-      "distance": "Dist.",
-      "distanceHint": "Distance du tronçon",
-      "cumulativeDistance": "Cumul",
-      "cumulativeDistanceHint": "Distance cumulée (NM)",
-      "altitude": "Alt.",
-      "altitudeHint": "Altitude (ft) ou niveau de vol",
-      "groundSpeedHint": "Vitesse sol",
-      "eteHint": "Temps de vol du tronçon",
-      "elapsed": "Cumul t.",
-      "elapsedHint": "Temps écoulé depuis le départ",
-      "fuel": "Carb.",
-      "fuelHint": "Carburant restant"
-    }
-  },
-  "verticalProfile": {
-    "title": "Profil vertical",
-    "description": "{{distance}} NM · altitude maximale {{altitude}}",
-    "axis": {
-      "altitude": "Altitude (ft)",
-      "distance": "Distance (NM)"
-    },
-    "legend": {
-      "climb": "Montée",
-      "cruise": "Croisière",
-      "descent": "Descente"
-    }
-  },
-  "map": {
-    "legend": {
-      "climb": "Montée",
-      "cruise": "Croisière",
-      "descent": "Descente"
-    }
-  },
-  "airportInfo": {
-    "departure": "Aérodrome de départ",
-    "arrival": "Aérodrome d'arrivée",
-    "tabs": {
-      "general": "Général",
-      "runways": "Pistes",
-      "frequencies": "Fréquences",
-      "weather": "Météo"
-    },
-    "general": {
-      "elevation": "Altitude du terrain",
-      "sunrise": "Lever du soleil",
-      "sunset": "Coucher du soleil",
-      "timezone": "Fuseau horaire",
-      "coordinates": "Coordonnées"
-    },
-    "types": {
-      "large_airport": "Grand aéroport",
-      "medium_airport": "Aéroport moyen",
-      "small_airport": "Petit aérodrome",
-      "heliport": "Héliport",
-      "seaplane_base": "Hydrobase",
-      "closed": "Fermé"
-    },
-    "cardinal": {
-      "north": "N",
-      "south": "S",
-      "east": "E",
-      "west": "O"
-    },
-    "runways": {
-      "name": "Piste {{ident}}",
-      "lighted": "Éclairée",
-      "empty": "Aucune information de piste disponible"
-    },
-    "frequencies": {
-      "fallbackName": "Fréquence",
-      "empty": "Aucune fréquence disponible"
-    },
-    "weather": {
-      "flightConditions": "Conditions de vol",
-      "temperature": "Température",
-      "dewPoint": "Point de rosée",
-      "wind": "Vent",
-      "gusts": "(rafales {{speed}} kt)",
-      "visibility": "Visibilité",
-      "cloudLayers": "Couches nuageuses",
-      "conditions": "Conditions",
-      "pressure": "Pression",
-      "empty": "Aucune information météo disponible"
-    }
   },
   "waypointInfo": {
     "title": "Points de route",
@@ -319,35 +128,9 @@
       "point": "Point"
     }
   },
-  "fuel": {
-    "title": "Carburant",
-    "description": "Calcul selon les règles OACI, réserve finale de {{minutes}} min.",
-    "descriptionWithProfile": "Calcul selon les règles OACI, réserve finale de {{minutes}} min · profil {{profile}}.",
-    "taxi": "Roulage",
-    "trip": "Étape",
-    "contingency": "Réserve de route (5 %)",
-    "alternate": "Dégagement",
-    "finalReserve": "Réserve finale",
-    "totalRequired": "Total requis",
-    "checkBeforeDeparture": "Vérifiez avant le départ que le carburant embarqué couvre au moins {{liters}} L.",
-    "wind": {
-      "title": "Vent en route",
-      "description": "Vent moyen retenu pour le calcul de la route.",
-      "wind": "Vent",
-      "headwind": "Vent de face",
-      "tailwind": "Vent arrière",
-      "crosswind": "Vent de travers",
-      "wca": "Correction de dérive",
-      "groundSpeed": "Vitesse sol"
-    }
-  },
   "summary": {
     "departure": "Départ",
     "arrival": "Arrivée"
-  },
-  "ofp": {
-    "print": "Imprimer l'OFP",
-    "printHint": "Ouvre le plan de vol opérationnel (OFP) prêt à imprimer"
   },
   "actionPlans": {
     "more": "Autres actions",

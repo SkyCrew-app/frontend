@@ -134,12 +134,10 @@ up() {
   say "Frontend: production build, start"
   cd "$FRONTEND_DIR"
   if [ "${E2E_SKIP_BUILD:-}" != 1 ]; then
-    # Addresses read by the browser are fixed when the frontend is built. The
-    # airport picker only asks when a key is set; the suite answers in its place.
+    # Addresses read by the browser are fixed when the frontend is built.
     step frontend-build env NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 \
       NEXT_PUBLIC_API_URL="http://localhost:$API_PORT/graphql" NEXT_PUBLIC_GRAPHQL_URL="" NEXT_PUBLIC_BACKEND_URL="" \
       NEXT_PUBLIC_BASE_PATH="" NEXT_PUBLIC_DEMO_MODE=false \
-      NEXT_PUBLIC_OPENAIP_API_KEY="${NEXT_PUBLIC_OPENAIP_API_KEY:-e2e-placeholder}" \
       npm run build
     # The self-contained server, put together as the container image does.
     rm -rf .next/standalone/.next/static .next/standalone/public

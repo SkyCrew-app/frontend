@@ -1,7 +1,8 @@
 "use client"
 
 import { useTranslation } from "react-i18next"
-import { Pencil, Plane, Trash2 } from "lucide-react"
+import Link from "next/link"
+import { Gauge, Pencil, Plane, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { StatusBadge } from "@/components/fleet/status-badge"
@@ -69,6 +70,12 @@ export function AircraftCard({ aircraft, onEdit, onDelete, onViewDetails }: Airc
       <div className="mt-auto flex flex-wrap items-center justify-end gap-2 p-4">
         <Button variant="ghost" size="sm" onClick={() => onViewDetails(aircraft)}>
           {t("common:actions.details")}
+        </Button>
+        <Button variant="outline" size="sm" asChild>
+          <Link href={`/administration/planes/${aircraft.id}/flight-data`}>
+            <Gauge className="h-4 w-4" aria-hidden="true" />
+            {t("navplan:aircraftData.cardAction")}
+          </Link>
         </Button>
         <Button variant="outline" size="sm" onClick={() => onEdit(aircraft)}>
           <Pencil className="h-4 w-4" aria-hidden="true" />

@@ -30,6 +30,7 @@ import { AircraftTab } from "@/components/settings/tabs/aircraft-tab"
 import { MembersTab } from "@/components/settings/tabs/members-tab"
 import { TaxonomyManager } from "@/components/settings/taxonomy/taxonomy-manager"
 import { RoleManager } from "@/components/settings/roles/roles-manager"
+import { FlightPlanningSettingsForm } from "@/components/settings/flight-planning-settings"
 import {
   administrationInputFromValues,
   buildSettingsFormSchema,
@@ -168,6 +169,7 @@ export default function SettingsPage() {
                 </TabsTrigger>
               ))}
               <TabsTrigger value="roles">{t("settings.tabs.roles")}</TabsTrigger>
+              <TabsTrigger value="flightPlanning">{t("navplan:settings.tab")}</TabsTrigger>
             </TabsList>
 
             {/* Values live in the form state, so they survive a change of tab. */}
@@ -193,9 +195,13 @@ export default function SettingsPage() {
             <TabsContent value="roles">
               <RoleManager />
             </TabsContent>
+            {/* Saved by its own button: it is not part of the club record. */}
+            <TabsContent value="flightPlanning">
+              <FlightPlanningSettingsForm />
+            </TabsContent>
           </Tabs>
 
-          {(activeTab !== "roles" || isDirty) && (
+          {((activeTab !== "roles" && activeTab !== "flightPlanning") || isDirty) && (
             <div className="sticky bottom-4 z-10 flex flex-col gap-3 rounded-lg border bg-card p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
               <p className="flex items-center gap-2 text-sm text-muted-foreground" role="status">
                 {isDirty ? (
