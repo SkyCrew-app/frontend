@@ -60,8 +60,11 @@ async function bookSlot(page: Page, purpose: string, hour = "08:00") {
 
 /** Picks an aerodrome or a point in the search of the builder (answered by our API, from its navdata). */
 async function pickPoint(page: Page, field: string | RegExp, search: string, option: RegExp) {
+  const searchField = page.getByPlaceholder("Code OACI, nom, identifiant…")
+  // The search of the previous pick fades out for a moment after its choice.
+  await expect(searchField).toHaveCount(0)
   await page.getByRole("combobox", { name: field }).click()
-  await page.getByPlaceholder("Code OACI, nom, identifiant…").fill(search)
+  await searchField.fill(search)
   await page.getByRole("option", { name: option }).first().click()
 }
 
