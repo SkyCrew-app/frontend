@@ -144,9 +144,9 @@ function StateCard({ title, state }: { title: string; state: MassBalanceState })
   const { t } = useTranslation("navplan")
   return (
     <div className="rounded-lg border p-3">
-      <dt className="flex items-center justify-between gap-2 text-sm font-medium">
+      <dt className="flex flex-wrap items-center justify-between gap-2 text-sm font-medium">
         {title}
-        <Badge variant={state.withinEnvelope ? "success" : "danger"}>
+        <Badge variant={state.withinEnvelope ? "success" : "danger"} className="whitespace-nowrap">
           {state.withinEnvelope ? t("massBalance.within") : t("massBalance.outside")}
         </Badge>
       </dt>

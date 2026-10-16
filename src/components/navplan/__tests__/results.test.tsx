@@ -2,7 +2,7 @@ import { render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { AirspaceCrossings, airspacesNotChecked, crossingsStatus } from "../AirspaceCrossings"
 import { FuelSummary } from "../FuelSummary"
-import { MassBalanceChart } from "../MassBalanceChart"
+import { MassBalanceChart, labelBelow } from "../MassBalanceChart"
 import { MassBalancePanel } from "../MassBalancePanel"
 import { NavLogTable, legProfileNotes } from "../NavLogTable"
 import { NavdataAge, NoticesList } from "../NoticesBanner"
@@ -100,6 +100,14 @@ describe("mass and balance", () => {
     expect(screen.getByText("HORS LIMITES — NE PAS PARTIR")).toBeInTheDocument()
     expect(screen.getByText(/Centrage arrière hors limites/)).toBeInTheDocument()
     expect(screen.getAllByText("Hors limites").length).toBeGreaterThanOrEqual(2)
+  })
+})
+
+describe("labels of the envelope chart", () => {
+  it("puts a label under its point when an earlier point is close, so DÉC and ATT do not overlap", () => {
+    expect(labelBelow([[100, 100]], [108, 104])).toBe(true)
+    expect(labelBelow([[100, 100]], [200, 100])).toBe(false)
+    expect(labelBelow([], [100, 100])).toBe(false)
   })
 })
 

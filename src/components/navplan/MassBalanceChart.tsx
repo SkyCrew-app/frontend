@@ -129,9 +129,10 @@ export function MassBalanceChart({ envelope, points = [], showPath = false, clas
           />
         )}
 
-        {points.map((point) => {
+        {points.map((point, index) => {
           const x = scale.x(point.armM)
           const y = scale.y(point.massKg)
+          const below = labelBelow(points.slice(0, index).map((other) => [scale.x(other.armM), scale.y(other.massKg)]), [x, y])
           const tone = point.within ? "fill-success stroke-background" : "fill-destructive stroke-background"
           return (
             <g key={point.label}>
@@ -142,7 +143,7 @@ export function MassBalanceChart({ envelope, points = [], showPath = false, clas
               ) : (
                 <circle cx={x} cy={y} r={6} className={tone} strokeWidth={1.5} />
               )}
-              <text x={x + 9} y={y - 7} fontSize="13" fontWeight={600} className={point.within ? "fill-success" : "fill-destructive"}>
+              <text x={x + 9} y={below ? y + 18 : y - 7} fontSize="13" fontWeight={600} className={point.within ? "fill-success" : "fill-destructive"}>
                 {point.label}
               </text>
             </g>
@@ -155,3 +156,7 @@ export function MassBalanceChart({ envelope, points = [], showPath = false, clas
     </figure>
   )
 }
+
+/** A label goes under its point when an earlier point (and its label above) sits close by. */
+export const labelBelow = (earlier: [number, number][], [x, y]: [number, number]) =>
+  earlier.some(([ox, oy]) => Math.abs(ox - x) < 40 && Math.abs(oy - y) < 20)
