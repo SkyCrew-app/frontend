@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.16.0](https://github.com/SkyCrew-app/frontend/compare/2.15.0...2.16.0) (2026-10-16)
+
+
+### Features
+
+* **flight-plans:** :sparkles: flight preparation builder, aircraft data and free map ([#187](https://github.com/SkyCrew-app/frontend/issues/187)) ([ebc5bd3](https://github.com/SkyCrew-app/frontend/commit/ebc5bd3e2ff3bb07936486ce5d8ee9ca87eed804))
+
 ## [2.15.0](https://github.com/SkyCrew-app/frontend/compare/2.14.0...2.15.0) (2026-10-15)
 
 
