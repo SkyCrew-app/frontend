@@ -52,6 +52,7 @@ import type { MapPoint } from "@/components/map/layers/route"
 import { LoadEditor } from "./LoadEditor"
 import { NavdataAge, PreparationDisclaimer, WARNING_ALERT } from "./NoticesBanner"
 import { NumberField } from "./NumberField"
+import { formatUtcDateTime } from "./FlightConditions"
 import { ResultsPanel, ResultsSummary, type ResultsTab } from "./ResultsPanel"
 import { RouteEditor } from "./RouteEditor"
 import { useFlightPlanDraft } from "./useFlightPlanDraft"
@@ -171,6 +172,15 @@ export function FlightPlanBuilder({ initialDraft, aircraft, settings, navdata, i
 
   const departureLocal = toLocalInputValue(draft.departureTime)
 
+  // Part of the flight at night (the API decides, from the sun at the times of the flight): the
+  // night reserve applies and the day cases cannot be chosen.
+  const daylight = result?.daylight
+  const night = daylight?.night === true
+  useEffect(() => {
+    if (night && draft.reserveCase !== "VFR_NIGHT") update((current) => ({ ...current, reserveCase: "VFR_NIGHT" }))
+  }, [night, draft.reserveCase, update])
+  const departureSun = daylight?.aerodromes.find((aerodrome) => aerodrome.role === "departure")
+
   return (
     <div className="space-y-6">
       <div className="space-y-3">
@@ -228,17 +238,27 @@ export function FlightPlanBuilder({ initialDraft, aircraft, settings, navdata, i
                   value={draft.reserveCase}
                   onValueChange={(value) => change((current) => ({ ...current, reserveCase: value as ReserveCase }))}
                 >
-                  <SelectTrigger id="reserve-case">
+                  <SelectTrigger id="reserve-case" aria-describedby={night ? "reserve-case-night" : undefined}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {RESERVE_CASES.map((reserveCase) => (
-                      <SelectItem key={reserveCase} value={reserveCase}>
+                      <SelectItem key={reserveCase} value={reserveCase} disabled={night && reserveCase !== "VFR_NIGHT"}>
                         {t(`reserveCase.${reserveCase}`)}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                {night && (
+                  <p id="reserve-case-night" className="text-xs font-medium text-warning" role="status">
+                    {t("builder.flight.nightImposed", {
+                      time: formatUtcDateTime(daylight?.nightFrom, draft.departureTime),
+                      icao: departureSun?.icao ?? "—",
+                      dusk: formatUtcDateTime(departureSun?.civilDusk, draft.departureTime),
+                      dawn: formatUtcDateTime(departureSun?.civilDawn, draft.departureTime),
+                    })}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="qnh">{t("builder.flight.qnh")}</Label>
@@ -380,6 +400,7 @@ export function FlightPlanBuilder({ initialDraft, aircraft, settings, navdata, i
           ) : (
             <ResultsPanel
               hideSummary
+              departureTime={draft.departureTime}
               result={result}
               reserveCase={draft.reserveCase}
               settings={settings}

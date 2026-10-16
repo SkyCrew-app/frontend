@@ -71,7 +71,8 @@
       "qnhPlaceholder": "METAR de départ",
       "qnhHint": "Laissez vide pour utiliser le QNH du METAR de départ.",
       "qnhInvalid": "Indiquez un QNH entre 940 et 1060 hPa.",
-      "envelopeCategory": "Catégorie d'exploitation"
+      "envelopeCategory": "Catégorie d'exploitation",
+      "nightImposed": "Vol en partie de nuit à partir de {{time}} (à {{icao}} : fin du crépuscule civil {{dusk}}, début {{dawn}}) : la réserve finale de nuit (45 min) s'applique."
     },
     "route": {
       "title": "Route",
@@ -235,7 +236,8 @@
     "calm": "calme",
     "tocAt": "Fin de montée à {{distance}}",
     "todAt": "Début de descente à {{distance}}",
-    "suggestedAltitude": "niveau conseillé {{altitude}}"
+    "suggestedAltitude": "niveau conseillé {{altitude}}",
+    "noWindForecast": "0 (sans prévision)"
   },
   "massBalance": {
     "takeoff": "Décollage",
@@ -337,7 +339,8 @@
     "unavailable": "Non disponible",
     "windSource": "Vents et températures en altitude : {{source}}.",
     "automatic": "Prévision automatique non validée par un prévisionniste.",
-    "metarSource": "METAR et TAF : aviationweather.gov (NOAA/NWS)."
+    "metarSource": "METAR et TAF : aviationweather.gov (NOAA/NWS).",
+    "tafValidity": "Valable du {{from}} au {{to}}"
   },
   "navdata": {
     "current": "Données aéronautiques : cycle AIRAC {{airac}}, en vigueur du {{from}} au {{to}} · {{source}}.",
@@ -412,7 +415,8 @@
     "reserve": "Réserve finale : {{litres}} ({{minutes}} min)",
     "loaded": "Embarqué : {{litres}}",
     "endurance": "Autonomie : {{value}}",
-    "notamChecked": "NOTAM et SUP AIP consultés"
+    "notamChecked": "NOTAM et SUP AIP consultés",
+    "navdataOurAirports": "Données aérodromes OurAirports du {{date}}, pas de cycle AIRAC"
   },
   "editor": {
     "rowActions": "Actions",
@@ -695,6 +699,25 @@
       "saveFailed": "Enregistrement impossible",
       "invalid": "Corrigez les champs signalés.",
       "tryAgain": "Réessayez dans un instant."
+    }
+  },
+  "conditions": {
+    "title": "Jour, nuit et QNH",
+    "night": "Vol en partie de nuit à partir de {{time}} (nuit aéronautique : de la fin du crépuscule civil du soir au début du crépuscule civil du matin).",
+    "day": "Vol entièrement de jour : toutes ses heures sont entre le début et la fin du crépuscule civil.",
+    "caption": "Crépuscule civil, lever et coucher du soleil aux aérodromes du plan (UTC)",
+    "columns": {
+      "aerodrome": "Aérodrome",
+      "civilDawn": "Début crép. civil",
+      "sunrise": "Lever",
+      "sunset": "Coucher",
+      "civilDusk": "Fin crép. civil"
+    },
+    "qnh": "QNH {{qnh}} hPa : {{source}}.",
+    "qnhSource": {
+      "METAR": "METAR {{icao}} de {{time}}",
+      "INPUT": "saisi par le pilote",
+      "DEFAULT": "inconnu, atmosphère standard"
     }
   }
 }

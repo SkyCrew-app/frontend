@@ -336,6 +336,8 @@ export interface ProfilePoint {
 }
 
 export interface FuelPlan {
+  /** The case the reserve was computed for: the pilot's, or VFR_NIGHT when part of the flight is at night. */
+  reserveCase?: ReserveCase | null
   taxiL: number
   tripL: number
   contingencyL: number
@@ -390,6 +392,30 @@ export interface WeatherReport {
   metar?: string | null
   taf?: string | null
   observedAt?: string | null
+  tafValidFrom?: string | null
+  tafValidTo?: string | null
+}
+
+export type AerodromeRole = "departure" | "destination" | "alternate"
+
+/** Twilight, sunrise and sunset (UTC) of an aerodrome of the plan, on the day the aircraft is there. */
+export interface AerodromeSun {
+  icao: string
+  role: AerodromeRole | string
+  /** Off-block at the departure, landing at the destination, arrival at the alternate. */
+  at: string
+  date: string
+  civilDawn?: string | null
+  sunrise?: string | null
+  sunset?: string | null
+  civilDusk?: string | null
+}
+
+export interface Daylight {
+  aerodromes: AerodromeSun[]
+  /** Part of the flight is in the aviation night (end of evening to beginning of morning civil twilight). */
+  night: boolean
+  nightFrom?: string | null
 }
 
 export interface FlightPlanResult {
@@ -409,6 +435,10 @@ export interface FlightPlanResult {
   encodedPolyline: string
   /** QNH the plan was computed with (the pilot's, the departure METAR's or standard). */
   qnhHpa?: number | null
+  qnhSource?: "INPUT" | "METAR" | "DEFAULT" | string | null
+  qnhStation?: string | null
+  qnhObservedAt?: string | null
+  daylight?: Daylight | null
 }
 
 export interface FlightPlan {

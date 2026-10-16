@@ -5,7 +5,7 @@ import { COMPUTE_FLIGHT_PLAN } from "@/graphql/navplan"
 import { draftFromPlan, emptyDraft } from "@/lib/navplan/draft"
 import type { FlightPlanInput, FlightPlanResult } from "@/lib/navplan/types"
 import type { AeroMapProps } from "@/components/map/types"
-import { BLOCKING_RESULT, MASS_BALANCE, PERFORMANCE, RESULT, SAVED_PLAN, SETTINGS } from "@/test/fixtures/flight-plan"
+import { BLOCKING_RESULT, MASS_BALANCE, NIGHT_RESULT, PERFORMANCE, RESULT, SAVED_PLAN, SETTINGS } from "@/test/fixtures/flight-plan"
 import { FlightPlanBuilder, type BuilderAircraft } from "../FlightPlanBuilder"
 
 global.ResizeObserver = class {
@@ -100,6 +100,26 @@ describe("FlightPlanBuilder", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Enregistrer le plan" }))
     expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ aircraftId: 7, waypoints: SAVED_PLAN.input.waypoints }))
+  })
+
+  it("imposes the night reserve when the API finds the flight partly at night, and says why with the times", async () => {
+    const sent: FlightPlanInput[] = []
+    const onSave = jest.fn()
+    renderBuilder({ onSave, mocks: [computeMock(NIGHT_RESULT, sent)] })
+
+    expect(
+      await screen.findByText(
+        "Vol en partie de nuit à partir de 19:00Z (à LFPN : fin du crépuscule civil 17:29Z, début 05:44Z) : la réserve finale de nuit (45 min) s'applique.",
+        {},
+        { timeout: 2000 },
+      ),
+    ).toBeInTheDocument()
+    expect(sent[0].reserveCase).toBe("VFR_DAY")
+    await waitFor(() => expect(sent[sent.length - 1].reserveCase).toBe("VFR_NIGHT"), { timeout: 2000 })
+    expect(screen.getByRole("combobox", { name: "Type de vol pour la réserve finale" })).toHaveTextContent("VFR de nuit")
+
+    await userEvent.click(screen.getByRole("button", { name: "Enregistrer le plan" }))
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ reserveCase: "VFR_NIGHT" }))
   })
 
   it("asks before saving a blocking plan, as a draft", async () => {
