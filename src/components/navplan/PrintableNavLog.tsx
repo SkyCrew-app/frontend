@@ -1,5 +1,7 @@
 "use client"
 
+import { useEffect, useState } from "react"
+import { createPortal } from "react-dom"
 import { useTranslation } from "react-i18next"
 import { formatDate } from "@/lib/format"
 import type { FlightPlanInput, FlightPlanResult, Leg, PdfFormat } from "@/lib/navplan/types"
@@ -60,10 +62,15 @@ export const printedQnh = (qnh: number | null | undefined) => (typeof qnh === "n
 /** Paper nav log of design § 2.10, with blank columns for the actual times and fuel. */
 export function PrintableNavLog({ result, input, aircraft, pilot, format }: PrintableNavLogProps) {
   const { t } = useTranslation("navplan")
+  // Printed as a child of <body>, so the rest of the page can be left out of the print
+  // (display: none) instead of only hidden, which printed it as blank sheets.
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
   const legs = result.alternateLeg ? [...result.legs, result.alternateLeg] : result.legs
   let cumulativeDistance = 0
 
-  return (
+  if (!mounted) return null
+  return createPortal(
     <section className="navlog-print" data-format={format} aria-hidden="true">
       <header className="navlog-print__header">
         <strong>{t("print.title")}</strong>
@@ -142,7 +149,8 @@ export function PrintableNavLog({ result, input, aircraft, pilot, format }: Prin
           })}
         </tbody>
       </table>
-      <footer className="navlog-print__footer">
+      {/* Not a <footer>: the application's print styles hide those. */}
+      <div className="navlog-print__footer">
         <span>
           {t("print.reserve", { litres: formatLitres(result.fuel.finalReserveL), minutes: result.fuel.finalReserveMin })}
         </span>
@@ -150,7 +158,8 @@ export function PrintableNavLog({ result, input, aircraft, pilot, format }: Prin
         <span>{t("print.endurance", { value: formatMinutes(result.fuel.enduranceMin) })}</span>
         <span>☐ {t("print.notamChecked")}</span>
         <p>{t("disclaimer.preparation")}</p>
-      </footer>
-    </section>
+      </div>
+    </section>,
+    document.body,
   )
 }

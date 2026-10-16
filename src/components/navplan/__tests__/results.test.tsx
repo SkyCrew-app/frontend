@@ -3,13 +3,13 @@ import userEvent from "@testing-library/user-event"
 import { AirspaceCrossings, airspacesNotChecked, crossingsStatus } from "../AirspaceCrossings"
 import { FuelSummary } from "../FuelSummary"
 import { MassBalanceChart, labelBelow } from "../MassBalanceChart"
-import { printedQnh } from "../PrintableNavLog"
+import { PrintableNavLog, printedQnh } from "../PrintableNavLog"
 import { MassBalancePanel } from "../MassBalancePanel"
 import { NavLogTable, legProfileNotes } from "../NavLogTable"
 import { NavdataAge, NoticesList } from "../NoticesBanner"
 import { ResultsPanel } from "../ResultsPanel"
 import { WeatherPanel } from "../WeatherPanel"
-import { BLOCKING_RESULT, NAVDATA, RESULT, SETTINGS } from "@/test/fixtures/flight-plan"
+import { BLOCKING_RESULT, NAVDATA, RESULT, SETTINGS, SAVED_PLAN } from "@/test/fixtures/flight-plan"
 
 global.ResizeObserver = class {
   observe() {}
@@ -117,6 +117,15 @@ describe("paper nav log", () => {
     expect(printedQnh(1021)).toBe("1021 hPa")
     expect(printedQnh(1013.25)).toBe("1013 hPa")
     expect(printedQnh(null)).toBe("—")
+  })
+
+  it("is printed from <body> with its reserve and endurance line, which a <footer> would lose", () => {
+    render(<PrintableNavLog result={RESULT} input={SAVED_PLAN.input} aircraft="F-GAER" pilot="Jean Dupont" format="A5" />)
+    const log = document.querySelector(".navlog-print")!
+    expect(log.parentElement).toBe(document.body)
+    expect(log.querySelector("footer")).toBeNull()
+    expect(log).toHaveTextContent("Réserve finale")
+    expect(log).toHaveTextContent("NOTAM et SUP AIP consultés")
   })
 })
 
