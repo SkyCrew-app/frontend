@@ -19,7 +19,8 @@ export function airspaceFeatures(airspaces: Airspace[]) {
   return {
     type: "FeatureCollection" as const,
     features: airspaces
-      .filter((airspace) => airspace.geometry && Array.isArray(airspace.geometry.coordinates))
+      // An area without a published outline has no coordinates: nothing to draw.
+      .filter((airspace) => airspace.geometry && Array.isArray(airspace.geometry.coordinates) && airspace.geometry.coordinates.length > 0)
       .map((airspace) => {
         const style = AIRSPACE_STYLES[airspace.type] ?? AIRSPACE_STYLES.OTHER
         return {

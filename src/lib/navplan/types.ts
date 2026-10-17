@@ -72,6 +72,17 @@ export interface Airspace {
   frequencies: RadioFrequency[]
   remarks?: string | null
   geometry?: GeoJsonMultiPolygon | null
+  /** false: the SIA publishes no outline (géométrie inconnue); the area is never drawn nor "not crossed". */
+  outlineKnown?: boolean
+}
+
+/** An area near the route whose outline is not published: to be found on the chart. */
+export interface UnverifiedAirspace {
+  airspace: Airspace
+  /** Distance from the route to its published point; null when it cannot be located. */
+  distanceNm?: number | null
+  status: CheckStatus
+  message: string
 }
 
 export interface GeoJsonMultiPolygon {
@@ -432,6 +443,8 @@ export interface FlightPlanResult {
   engineVersion: string
   status: CheckStatus
   notices: Notice[]
+  /** Absent from plans computed before it existed. */
+  unverifiedAirspaces?: UnverifiedAirspace[]
   encodedPolyline: string
   /** QNH the plan was computed with (the pilot's, the departure METAR's or standard). */
   qnhHpa?: number | null

@@ -454,6 +454,7 @@ const TYPENAMES: Record<string, string> = {
   weather: "WeatherReport",
   navdata: "NavdataInfo",
   notices: "Notice",
+  unverifiedAirspaces: "UnverifiedAirspace",
 }
 
 const annotate = (value: unknown, typename?: string): unknown => {
