@@ -116,8 +116,8 @@ export function ChecksList({ checks }: { checks: Check[] }) {
                 aria-hidden="true"
               />
               <span className={cn("min-w-0", !expanded && "sm:truncate")}>
-                <span className="sr-only">{t("summary.statusPrefix", { status: checkStatusLabel(check.status) })} </span>
-                {check.message}
+                {/* The space stays outside the hidden prefix: kept in the text read out and copied. */}
+                <span className="sr-only">{t("summary.statusPrefix", { status: checkStatusLabel(check.status) })}</span> {check.message}
               </span>
             </li>
           )

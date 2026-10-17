@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next"
 import { ExternalLink } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { airspaceTypeLabel, checkStatusVariant } from "@/lib/navplan/status"
-import type { AirspaceCrossing, CheckStatus, Leg, Notice } from "@/lib/navplan/types"
+import type { AirspaceCrossing, CheckStatus, Leg, Notice, UnverifiedAirspace } from "@/lib/navplan/types"
 import { formatFt, formatNm } from "@/lib/navplan/units"
 
 export const SOFIA_BRIEFING_URL = "https://sofia-briefing.aviation-civile.gouv.fr"
@@ -18,14 +18,39 @@ export const airspacesNotChecked = (notices: Pick<Notice, "code">[] = []) =>
 
 /**
  * Worst status of the crossings of a plan; an unknown activity is never "OK" (design § 2.7),
- * and neither is a route that could not be checked at all.
+ * and neither is a route that could not be checked at all, or one near an area without outline.
  */
-export function crossingsStatus(legs: Leg[], notChecked = false): CheckStatus {
+export function crossingsStatus(legs: Leg[], notChecked = false, unverified: UnverifiedAirspace[] = []): CheckStatus {
   if (notChecked) return "WARNING"
   const all = legs.flatMap((leg) => leg.crossings).filter(crossed)
   if (all.some((crossing) => crossing.status === "BLOCKING")) return "BLOCKING"
-  if (all.some((crossing) => crossing.status === "WARNING" || !crossing.activityKnown)) return "WARNING"
+  if (all.some((crossing) => crossing.status === "WARNING" || !crossing.activityKnown) || unverified.length > 0) return "WARNING"
   return "OK"
+}
+
+/** Areas near the route that the API could not check: the SIA publishes no outline for them. */
+function UnverifiedList({ items }: { items: UnverifiedAirspace[] }) {
+  const { t } = useTranslation("navplan")
+  return (
+    <section className="space-y-2 rounded-lg border border-warning/50 p-3" aria-label={t("crossings.unverifiedTitle")}>
+      <h3 className="text-sm font-semibold">{t("crossings.unverifiedTitle")}</h3>
+      <p className="text-xs text-muted-foreground">{t("crossings.unverifiedDescription")}</p>
+      <ul className="space-y-1">
+        {items.map((item) => (
+          <li key={item.airspace.id} className="text-sm">
+            <p>{item.message}</p>
+            <p className="text-xs text-muted-foreground tabular-nums">
+              {airspaceTypeLabel(item.airspace.type)}
+              {" · "}
+              {t("crossings.limits", { ceiling: item.airspace.ceiling.label, floor: item.airspace.floor.label })}
+              {" · "}
+              {item.distanceNm == null ? t("crossings.unverifiedUnlocated") : t("crossings.unverifiedDistance", { distance: formatNm(item.distanceNm) })}
+            </p>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
 }
 
 function CrossingItem({ crossing }: { crossing: AirspaceCrossing }) {
@@ -70,11 +95,14 @@ export function AirspaceCrossings({
   legs,
   alternateLeg,
   notChecked = false,
+  unverified = [],
 }: {
   legs: Leg[]
   alternateLeg?: Leg | null
   /** No airspace data: say the route was not checked, never "no area crossed". */
   notChecked?: boolean
+  /** Areas near the route without a published outline. */
+  unverified?: UnverifiedAirspace[]
 }) {
   const { t } = useTranslation("navplan")
   const all = alternateLeg ? [...legs, alternateLeg] : legs
@@ -99,13 +127,15 @@ export function AirspaceCrossings({
         </div>
       </div>
 
+      {!notChecked && unverified.length > 0 && <UnverifiedList items={unverified} />}
+
       {notChecked ? (
         <div className="space-y-1 text-sm" role="note">
           <p className="font-medium">{t("crossings.notCheckedTitle")}</p>
           <p className="text-muted-foreground">{t("crossings.notCheckedDescription")}</p>
         </div>
       ) : total === 0 ? (
-        <p className="text-sm text-muted-foreground">{t("crossings.none")}</p>
+        unverified.length === 0 && <p className="text-sm text-muted-foreground">{t("crossings.none")}</p>
       ) : (
         all.map((leg, position) => {
           const items = leg.crossings.filter(crossed)

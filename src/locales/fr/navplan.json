@@ -383,6 +383,10 @@
     "aircraftAltitude": "avion entre {{min}} et {{max}}",
     "activity": "Activité publiée : {{value}}",
     "overUnder": "Zones survolées ou sous-volées",
+    "unverifiedTitle": "Zones non vérifiées : tracé non disponible",
+    "unverifiedDescription": "Le SIA ne publie pas le contour de ces zones proches de la route : la route n'a pas pu être comparée à elles. Repérez-les sur la carte aéronautique en vigueur.",
+    "unverifiedDistance": "point publié à {{distance}} de la route",
+    "unverifiedUnlocated": "position non localisable",
     "relation": {
       "INSIDE": "Traversée",
       "NEAR_FLOOR": "Proche du plancher",
@@ -770,7 +774,7 @@
     "checksTitle_one": "Point à vérifier",
     "checksTitle_other": "Points à vérifier ({{count}})",
     "showFewer": "Réduire la liste",
-    "statusPrefix": "{{status}} :",
+    "statusPrefix": "{{status}}\u00a0:",
     "showAll": "Voir les {{count}} points à vérifier"
   }
 }

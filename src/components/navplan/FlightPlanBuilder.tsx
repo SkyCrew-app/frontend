@@ -565,7 +565,12 @@ export function FlightPlanBuilder({ initialDraft, aircraft, settings, navdata, i
                 </ResultCard>
                 <div className="grid gap-4">
                   <ResultCard title={t("results.tabs.airspaces")}>
-                    <AirspaceCrossings legs={shownResult.legs} alternateLeg={shownResult.alternateLeg} notChecked={airspacesNotChecked(shownResult.notices)} />
+                    <AirspaceCrossings
+                      legs={shownResult.legs}
+                      alternateLeg={shownResult.alternateLeg}
+                      notChecked={airspacesNotChecked(shownResult.notices)}
+                      unverified={shownResult.unverifiedAirspaces}
+                    />
                   </ResultCard>
                   <ResultCard title={t("conditions.title")}>
                     <FlightConditions result={shownResult} departureTime={draft.departureTime} bare />

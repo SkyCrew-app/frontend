@@ -283,6 +283,27 @@ export const FLIGHT_PLAN_RESULT_FIELDS = gql`
       status
       message
     }
+    unverifiedAirspaces {
+      airspace {
+        id
+        name
+        type
+        floor {
+          ref
+          value
+          label
+        }
+        ceiling {
+          ref
+          value
+          label
+        }
+        outlineKnown
+      }
+      distanceNm
+      status
+      message
+    }
     encodedPolyline
     qnhHpa
     qnhSource

@@ -382,6 +382,10 @@
     "span": "from {{entry}} to {{exit}} along the leg",
     "aircraftAltitude": "aircraft between {{min}} and {{max}}",
     "activity": "Published activity: {{value}}",
+    "unverifiedTitle": "Unverified areas: outline not available",
+    "unverifiedDescription": "The SIA does not publish the outline of these areas near the route: the route could not be compared with them. Find them on the current aeronautical chart.",
+    "unverifiedDistance": "published point {{distance}} from the route",
+    "unverifiedUnlocated": "position unknown",
     "overUnder": "Airspaces flown over or under",
     "relation": {
       "INSIDE": "Crossed",

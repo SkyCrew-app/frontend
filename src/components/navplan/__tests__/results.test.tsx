@@ -2,6 +2,7 @@ import { render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { AirspaceCrossings, airspacesNotChecked, crossingsStatus } from "../AirspaceCrossings"
 import { FuelSummary } from "../FuelSummary"
+import { ChecksList } from "../PlanSummary"
 import { MassBalanceChart, labelBelow } from "../MassBalanceChart"
 import { PrintableNavLog, printedQnh } from "../PrintableNavLog"
 import { MassBalancePanel } from "../MassBalancePanel"
@@ -234,6 +235,39 @@ describe("AirspaceCrossings", () => {
     const legs = [{ ...RESULT.legs[0], crossings: [{ ...RESULT.legs[0].crossings[0], status: "BLOCKING" as const }] }]
     expect(crossingsStatus(legs)).toBe("BLOCKING")
     expect(crossingsStatus([{ ...RESULT.legs[2] }])).toBe("OK")
+  })
+})
+
+describe("areas without a published outline", () => {
+  const park = {
+    airspace: { ...RESULT.legs[0].crossings[0].airspace, id: "prn-390", name: "PRN 390 PARC NATIONAL DES CEVENNES", type: "PROTECTED" as const, outlineKnown: false },
+    distanceNm: 12.4,
+    status: "WARNING" as const,
+    message: "Zone non vérifiée : PRN 390 PARC NATIONAL DES CEVENNES, tracé non disponible — la repérer sur la carte en vigueur.",
+  }
+
+  it("lists them in the airspace section, never says no area is crossed, and is not OK", () => {
+    const legs = [{ ...RESULT.legs[2], crossings: [] }]
+    render(<AirspaceCrossings legs={legs} unverified={[park, { ...park, airspace: { ...park.airspace, id: "lta" }, distanceNm: null }]} />)
+    const section = screen.getByRole("region", { name: "Zones non vérifiées : tracé non disponible" })
+    expect(within(section).getAllByText(/^Zone non vérifiée : PRN 390 PARC NATIONAL DES CEVENNES, tracé non disponible/)).toHaveLength(2)
+    expect(section).toHaveTextContent("point publié à 12,4 NM de la route")
+    expect(section).toHaveTextContent("position non localisable")
+    expect(screen.queryByText("Aucune zone traversée sur la route prévue.")).toBeNull()
+    expect(crossingsStatus(legs, false, [park])).toBe("WARNING")
+    expect(crossingsStatus(legs, false, [])).toBe("OK")
+  })
+})
+
+describe("points to check", () => {
+  it("puts a non-breaking space before the colon of the status and a space after it", () => {
+    render(<ChecksList checks={[{ key: "a", status: "WARNING", message: "Aucune donnée d’espace aérien importée" }]} />)
+    const item = screen.getByRole("listitem")
+    expect(item.textContent).toBe("À vérifier\u00a0: Aucune donnée d’espace aérien importée")
+    // The space is not inside the hidden prefix, where a browser drops it from the text read out and copied.
+    const prefix = item.querySelector(".sr-only")!
+    expect(prefix.textContent).toBe("À vérifier\u00a0:")
+    expect(prefix.nextSibling?.textContent?.startsWith(" ")).toBe(true)
   })
 })
 
