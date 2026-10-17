@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.16.3](https://github.com/SkyCrew-app/frontend/compare/2.16.2...2.16.3) (2026-10-17)
+
+
+### Bug Fixes
+
+* **flight-plans:** :bug: list areas without outline and space the status colon ([#199](https://github.com/SkyCrew-app/frontend/issues/199)) ([689c1bd](https://github.com/SkyCrew-app/frontend/commit/689c1bd148e0f1fb086eb740a3c0b0358605c9a4))
+
 ## [2.16.2](https://github.com/SkyCrew-app/frontend/compare/2.16.1...2.16.2) (2026-10-17)
 
 
