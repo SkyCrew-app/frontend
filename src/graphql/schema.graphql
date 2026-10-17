@@ -233,6 +233,7 @@ type Airspace {
   icaoClass: String
   id: ID!
   name: String!
+  outlineKnown: Boolean!
   remarks: String
   type: AirspaceType!
 }
@@ -1191,6 +1192,7 @@ type FlightPlanResult {
   massBalance: MassBalanceResult!
   navdata: NavdataInfo!
   notices: [Notice!]!
+  unverifiedAirspaces: [UnverifiedAirspace!]!
   profile: [ProfilePoint!]!
   qnhHpa: Float
   qnhObservedAt: DateTime
@@ -2481,6 +2483,13 @@ input UpdateUserPreferencesInput {
 
 """The `Upload` scalar type represents a file upload."""
 scalar Upload
+
+type UnverifiedAirspace {
+  airspace: Airspace!
+  distanceNm: Float
+  message: String!
+  status: CheckStatus!
+}
 
 type User {
   address: String

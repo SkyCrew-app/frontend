@@ -64,7 +64,7 @@ export function ResultsPanel({
 }: ResultsPanelProps) {
   const { t } = useTranslation("navplan")
   const notChecked = airspacesNotChecked(result.notices)
-  const zones = crossingsStatus(result.alternateLeg ? [...result.legs, result.alternateLeg] : result.legs, notChecked)
+  const zones = crossingsStatus(result.alternateLeg ? [...result.legs, result.alternateLeg] : result.legs, notChecked, result.unverifiedAirspaces)
 
   return (
     <div className="space-y-4" aria-busy={pending}>
@@ -107,7 +107,7 @@ export function ResultsPanel({
           <FuelSummary fuel={result.fuel} reserveCase={result.fuel.reserveCase ?? reserveCase} settings={settings} />
         </TabsContent>
         <TabsContent value="airspaces" className="mt-4">
-          <AirspaceCrossings legs={result.legs} alternateLeg={result.alternateLeg} notChecked={notChecked} />
+          <AirspaceCrossings legs={result.legs} alternateLeg={result.alternateLeg} notChecked={notChecked} unverified={result.unverifiedAirspaces} />
         </TabsContent>
         <TabsContent value="weather" className="mt-4">
           <WeatherPanel reports={result.weather} roles={roles} windSource={result.windSource} />

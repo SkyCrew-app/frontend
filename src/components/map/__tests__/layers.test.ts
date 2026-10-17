@@ -21,6 +21,8 @@ describe("airspace overlay", () => {
 
   it("skips an area without geometry rather than failing", () => {
     expect(airspaceFeatures([{ ...TMA_PARIS, geometry: null }]).features).toEqual([])
+    // Published without an outline (géométrie inconnue): empty coordinates, never drawn.
+    expect(airspaceFeatures([{ ...TMA_PARIS, outlineKnown: false, geometry: { type: "MultiPolygon", coordinates: [] } }]).features).toEqual([])
   })
 
   it("draws solid and dashed borders on separate layers", () => {
