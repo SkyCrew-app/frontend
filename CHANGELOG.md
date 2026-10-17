@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.16.2](https://github.com/SkyCrew-app/frontend/compare/2.16.1...2.16.2) (2026-10-17)
+
+
+### Bug Fixes
+
+* **flight-plans:** :lipstick: map-first flight plan builder in three steps with paper nav log ([#195](https://github.com/SkyCrew-app/frontend/issues/195)) ([35e1035](https://github.com/SkyCrew-app/frontend/commit/35e1035553756748db3296b760743210ad0f8d97))
+
 ## [2.16.1](https://github.com/SkyCrew-app/frontend/compare/2.16.0...2.16.1) (2026-10-16)
 
 
