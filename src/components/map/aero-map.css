@@ -40,3 +40,14 @@
 .maplibregl-ctrl-attrib a {
   text-decoration: underline;
 }
+
+/* Dark base map: the route colour lightened, the points on a dark background. */
+.aero-marker--dark {
+  border-color: #fb923c;
+  background: #0f172a;
+  color: #fed7aa;
+}
+.aero-marker--dark.aero-marker--end {
+  background: #fb923c;
+  color: #0f172a;
+}

@@ -10,6 +10,8 @@ interface WeatherPanelProps {
   /** ICAO → role, to say which report is the departure, destination or alternate. */
   roles: Record<string, "departure" | "destination" | "alternate">
   windSource: string
+  /** Side by side on a wide screen (the reports of the aerodromes around the route can be many). */
+  columns?: boolean
 }
 
 const ageMinutes = (iso: string | null | undefined, now: Date) => {
@@ -22,7 +24,9 @@ const ageMinutes = (iso: string | null | undefined, now: Date) => {
 const OLD_METAR_MIN = 90
 
 /** Raw METAR/TAF of the aerodromes of the plan, with their age and the source of the winds aloft. */
-export function WeatherPanel({ reports, roles, windSource }: WeatherPanelProps) {
+const ROLE_ORDER = { departure: 0, destination: 1, alternate: 2 } as const
+
+export function WeatherPanel({ reports, roles, windSource, columns = false }: WeatherPanelProps) {
   const { t } = useTranslation("navplan")
   const now = new Date()
 
@@ -31,8 +35,11 @@ export function WeatherPanel({ reports, roles, windSource }: WeatherPanelProps) 
       {reports.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("weather.none")}</p>
       ) : (
-        <ul className="space-y-3">
-          {reports.map((report) => {
+        <ul className={columns ? "grid gap-3 lg:grid-cols-2 2xl:grid-cols-3" : "space-y-3"}>
+          {/* The aerodromes of the plan first, then the others around the route. */}
+          {[...reports]
+            .sort((a, b) => (roles[a.icao] ? ROLE_ORDER[roles[a.icao]] : 3) - (roles[b.icao] ? ROLE_ORDER[roles[b.icao]] : 3))
+            .map((report) => {
             const age = ageMinutes(report.observedAt, now)
             const role = roles[report.icao]
             return (

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react"
+import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { MockedProvider, type MockedResponse } from "@apollo/client/testing"
 import { COMPUTE_FLIGHT_PLAN } from "@/graphql/navplan"
@@ -19,6 +19,7 @@ jest.mock("next/dynamic", () => () => {
   const MapStandIn = (props: AeroMapProps) => (
     <div data-testid="map">
       <span>{props.points.map((point) => point.ident).join(" ")}</span>
+      <span data-testid="leg-labels">{(props.legLabels ?? []).join(" | ")}</span>
       <button type="button" onClick={() => props.onAddPoint?.({ lat: 48.3, lon: 1.5 })}>
         clic carte
       </button>
@@ -78,8 +79,47 @@ describe("FlightPlanBuilder", () => {
     expect(await screen.findByText("Bilan : À vérifier", {}, { timeout: 2000 })).toBeInTheDocument()
     expect(sent[0]).toMatchObject({ aircraftId: 7, reservationId: 55, departure: { navPointId: "ap-lfpn" }, fuel: [{ tankId: "main", liters: 80 }] })
     expect(sent[0].legs).toHaveLength(sent[0].waypoints.length + 1)
-    expect(screen.getByRole("table", { name: "Log de navigation, branche par branche" })).toHaveTextContent("RBT → P1")
-    expect(screen.getByText(/Aide à la préparation du vol/)).toBeInTheDocument()
+    // On screen, and on the paper log printed from the page.
+    expect(screen.getAllByText(/Aide à la préparation du vol/)[0]).toBeInTheDocument()
+    // Magnetic course and distance written along each leg of the map.
+    await waitFor(() => expect(screen.getByTestId("leg-labels").textContent?.split(" | ")).toHaveLength(3))
+    expect(screen.getByTestId("leg-labels")).toHaveTextContent(/^\d{3}° · \d+ NM/)
+    // The totals and the points to check stay above the steps.
+    expect(screen.getByRole("region", { name: "Bilan du plan" })).toHaveTextContent("Carburant requis")
+
+    await userEvent.click(screen.getByRole("tab", { name: /Log et dossier/ }))
+    const log = screen.getByRole("table", { name: "Log de navigation, point par point" })
+    expect(within(log).getByRole("rowheader", { name: /^P1/ })).toBeInTheDocument()
+  })
+
+  it("goes through the three steps: route, aircraft and load, log and file", async () => {
+    renderBuilder()
+    await screen.findByText("Bilan : À vérifier", {}, { timeout: 2000 })
+    expect(screen.getByRole("tab", { name: /Route/ })).toHaveAttribute("aria-selected", "true")
+    expect(screen.getByRole("list", { name: "Points et branches" })).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole("button", { name: "Suivant : Avion et chargement" }))
+    expect(screen.getByRole("tab", { name: /Avion et chargement/ })).toHaveAttribute("aria-selected", "true")
+    expect(screen.getByLabelText("Réservoir principal (L)")).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "Masse et centrage" })).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole("button", { name: "Suivant : Log et dossier" }))
+    expect(screen.getByRole("table", { name: "Log de navigation, point par point" })).toBeInTheDocument()
+    expect(screen.getByText("Minimum requis au bloc")).toBeInTheDocument()
+    // Last step: nothing after it.
+    expect(screen.queryByRole("button", { name: /^Suivant/ })).toBeNull()
+  })
+
+  it("prints the nav log of the plan being prepared", async () => {
+    const print = jest.fn()
+    window.print = print
+    renderBuilder()
+    await screen.findByText("Bilan : À vérifier", {}, { timeout: 2000 })
+    await userEvent.click(screen.getByRole("tab", { name: /Log et dossier/ }))
+    await userEvent.click(screen.getByRole("button", { name: "Log A5 (planchette)" }))
+    await waitFor(() => expect(print).toHaveBeenCalled())
+    expect(document.querySelector(".navlog-print")).toHaveTextContent("F-TEST")
+    expect(document.querySelector(".navlog-print")).toHaveAttribute("data-format", "A5")
   })
 
   it("sends a point clicked on the map in the next computation", async () => {
@@ -116,7 +156,9 @@ describe("FlightPlanBuilder", () => {
     ).toBeInTheDocument()
     expect(sent[0].reserveCase).toBe("VFR_DAY")
     await waitFor(() => expect(sent[sent.length - 1].reserveCase).toBe("VFR_NIGHT"), { timeout: 2000 })
-    expect(screen.getByRole("combobox", { name: "Type de vol pour la réserve finale" })).toHaveTextContent("VFR de nuit")
+    await userEvent.click(screen.getByRole("tab", { name: /Avion et chargement/ }))
+    expect(screen.getByRole("combobox", { name: "Réserve finale" })).toHaveTextContent("VFR de nuit")
+    expect(screen.getByText("Imposée : une partie du vol est de nuit.")).toBeInTheDocument()
 
     await userEvent.click(screen.getByRole("button", { name: "Enregistrer le plan" }))
     expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ reserveCase: "VFR_NIGHT" }))
@@ -148,6 +190,14 @@ describe("FlightPlanBuilder", () => {
     expect(sent).toEqual([])
   })
 
+  it("brings the pilot back to the route when saving with an aerodrome missing", async () => {
+    renderBuilder({ draft: emptyDraft({ aircraftId: 7, reservationId: 55 }) })
+    await userEvent.click(screen.getByRole("tab", { name: /Log et dossier/ }))
+    await userEvent.click(screen.getByRole("button", { name: "Enregistrer le plan" }))
+    expect(screen.getByRole("tab", { name: /Route/ })).toHaveAttribute("aria-selected", "true")
+    expect(screen.getByText("Choisissez l'aérodrome d'arrivée.")).toBeInTheDocument()
+  })
+
   it("explains to a pilot why mass and balance is not available yet", () => {
     render(
       <MockedProvider mocks={[computeMock(RESULT)]}>
@@ -168,7 +218,7 @@ describe("FlightPlanBuilder", () => {
     expect(screen.queryByRole("link", { name: "Saisir les données de l'avion" })).toBeNull()
   })
 
-  it("sends an administrator to the aircraft data when they are missing", () => {
+  it("sends an administrator to the aircraft data when they are missing", async () => {
     render(
       <MockedProvider mocks={[computeMock(RESULT)]}>
         <FlightPlanBuilder
@@ -185,6 +235,7 @@ describe("FlightPlanBuilder", () => {
     expect(screen.getByText("Données de vol de F-TEST absentes")).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Saisir les données de l'avion" })).toHaveAttribute("href", "/administration/planes/7/flight-data")
     expect(screen.getByText(/PÉRIMÉES/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole("tab", { name: /Avion et chargement/ }))
     expect(screen.getByText(/Les stations de chargement et les réservoirs de cet avion ne sont pas encore renseignés/)).toBeInTheDocument()
   })
 })

@@ -68,7 +68,7 @@ describe("RouteEditor", () => {
     )
     await userEvent.click(screen.getByRole("combobox", { name: /Ajouter un point/ }))
     await userEvent.type(screen.getByPlaceholderText("Code OACI, nom, identifiant…"), "48.42 1.62")
-    await userEvent.click(await screen.findByRole("option", { name: "Point libre à 48.4200, 1.6200" }))
+    await userEvent.click(await screen.findByRole("option", { name: "Point tournant à 48.4200, 1.6200" }))
 
     expect((onRoute.mock.calls.at(-1)[0] as RouteDraft).waypoints[0]).toEqual({ type: "USER", ident: "P1", name: "P1", lat: 48.42, lon: 1.62 })
   })
@@ -81,14 +81,18 @@ describe("RouteEditor", () => {
         <RouteHarness initial={initial} onRoute={onRoute} />
       </MockedProvider>,
     )
-    expect(screen.getByRole("button", { name: "Monter RBT" })).toBeDisabled()
-    await userEvent.click(screen.getByRole("button", { name: "Descendre RBT" }))
+    // A point of the strip opens on its place in the route and its removal.
+    await userEvent.click(screen.getByRole("button", { name: /^Point tournant 1 : RBT/ }))
+    expect(screen.getByRole("button", { name: "Déplacer RBT vers le départ" })).toBeDisabled()
+    await userEvent.click(screen.getByRole("button", { name: "Déplacer RBT vers l'arrivée" }))
     expect((onRoute.mock.calls.at(-1)[0] as RouteDraft).waypoints.map((point) => point.ident)).toEqual(["W", "RBT"])
+    await userEvent.keyboard("{Escape}")
+    await userEvent.click(screen.getByRole("button", { name: /^Point tournant 1 : W/ }))
     await userEvent.click(screen.getByRole("button", { name: "Retirer W" }))
     expect((onRoute.mock.calls.at(-1)[0] as RouteDraft).waypoints.map((point) => point.ident)).toEqual(["RBT"])
   })
 
-  it("sets the altitude of one leg, or of all of them, and refuses an impossible one", async () => {
+  it("sets one cruise altitude for every leg, and another one for a leg the pilot opens", async () => {
     const onRoute = jest.fn()
     const initial = appendWaypoint(baseRoute(), routePointFromNavPoint(RBT))
     render(
@@ -96,20 +100,45 @@ describe("RouteEditor", () => {
         <RouteHarness initial={initial} onRoute={onRoute} showErrors />
       </MockedProvider>,
     )
+    // A leg is one chip of the strip; its own altitude only once opened.
+    expect(screen.queryByLabelText("Altitude RBT → LFOC")).toBeNull()
+    const toggle = screen.getByRole("button", { name: /^Branche RBT → LFOC :/ })
+    expect(toggle).toHaveAttribute("aria-expanded", "false")
+    await userEvent.click(toggle)
+    expect(toggle).toHaveAttribute("aria-expanded", "true")
+
     const second = screen.getByLabelText("Altitude RBT → LFOC")
     await userEvent.clear(second)
     await userEvent.type(second, "3500")
     expect((onRoute.mock.calls.at(-1)[0] as RouteDraft).legs.map((leg) => leg.altitudeFt)).toEqual([2500, 3500])
+    // A leg off the cruise altitude says so on its line.
+    expect(toggle).toHaveTextContent(/3\s500 ft/)
 
     await userEvent.clear(second)
     await userEvent.type(second, "30000")
-    expect(screen.getByText(/Indiquez une altitude entre 0 et 19\s500 ft\./)).toBeInTheDocument()
+    expect(screen.getAllByText(/Indiquez une altitude entre 0 et 19\s500 ft\./).length).toBeGreaterThan(0)
+    await userEvent.keyboard("{Escape}")
 
     const cruise = screen.getByLabelText("Altitude de croisière")
     await userEvent.clear(cruise)
     await userEvent.type(cruise, "4500")
-    await userEvent.click(screen.getByRole("button", { name: "Appliquer à toutes les branches" }))
     expect((onRoute.mock.calls.at(-1)[0] as RouteDraft).legs.map((leg) => leg.altitudeFt)).toEqual([4500, 4500])
+  })
+
+  it("writes the course, distance and time of each leg, only while they are those of its two points", () => {
+    const computed = [RESULT.legs[0]]
+    const { rerender } = render(
+      <MockedProvider mocks={[]}>
+        <RouteEditor route={setDestination(baseRoute(), routePointFromNavPoint(RBT))} onChange={jest.fn()} computedLegs={computed} />
+      </MockedProvider>,
+    )
+    expect(screen.getByRole("button", { name: /^Branche LFPN → RBT :/ })).toHaveTextContent(/Rm \d{3}° · 5,2 NM · \d+ min/)
+    rerender(
+      <MockedProvider mocks={[]}>
+        <RouteEditor route={baseRoute()} onChange={jest.fn()} computedLegs={computed} />
+      </MockedProvider>,
+    )
+    expect(screen.getByRole("button", { name: /^Branche LFPN → LFOC :/ })).toHaveTextContent("en attente du calcul")
   })
 
   it("offers the semicircular suggestion of the API and a typed wind", async () => {
@@ -119,16 +148,36 @@ describe("RouteEditor", () => {
         <RouteHarness
           initial={baseRoute()}
           onRoute={onRoute}
-          computedLegs={[{ ...RESULT.legs[0], suggestedAltitudeFt: 4500 }]}
+          computedLegs={[{ ...RESULT.legs[0], from: LFPN, to: LFOC, suggestedAltitudeFt: 4500 }]}
         />
       </MockedProvider>,
     )
+    await userEvent.click(screen.getByRole("button", { name: /^Branche LFPN → LFOC :/ }))
     expect(screen.getByText(/Niveau conseillé : 4\s500 ft/)).toBeInTheDocument()
     await userEvent.click(screen.getByRole("button", { name: "Utiliser" }))
     expect((onRoute.mock.calls.at(-1)[0] as RouteDraft).legs[0].altitudeFt).toBe(4500)
 
-    await userEvent.click(screen.getByRole("switch", { name: "Vent saisi" }))
+    expect(screen.getByRole("radio", { name: "Prévision" })).toHaveAttribute("aria-checked", "true")
+    await userEvent.click(screen.getByRole("radio", { name: "Saisi" }))
     expect((onRoute.mock.calls.at(-1)[0] as RouteDraft).legs[0].windOverride).toEqual({ directionDeg: 270, speedKt: 15 })
+    await userEvent.click(screen.getByRole("radio", { name: "Prévision" }))
+    expect((onRoute.mock.calls.at(-1)[0] as RouteDraft).legs[0].windOverride).toBeNull()
+  })
+
+  it("renames a turning point from its chip", async () => {
+    const onRoute = jest.fn()
+    render(
+      <MockedProvider mocks={[]}>
+        <RouteHarness initial={appendWaypoint(baseRoute(), routePointFromNavPoint(P1))} onRoute={onRoute} />
+      </MockedProvider>,
+    )
+    await userEvent.click(screen.getByRole("button", { name: /^Point tournant 1 : P1/ }))
+    const name = screen.getByLabelText("Nom du point 1")
+    await userEvent.clear(name)
+    await userEvent.type(name, "Château{Enter}")
+    expect((onRoute.mock.calls.at(-1)[0] as RouteDraft).waypoints[0].ident).toBe("Château")
+    // The strip wraps onto new lines: it never scrolls inside itself.
+    expect(screen.getByRole("list", { name: "Points et branches" })).toHaveClass("flex-wrap")
   })
 
   it("says which aerodrome is missing", () => {
@@ -222,14 +271,17 @@ describe("NumberField", () => {
 })
 
 describe("route list", () => {
-  it("lists the departure first and the destination last", () => {
+  it("lists the departure first, then the points in order, then the destination, as a strip that wraps", () => {
     render(
       <MockedProvider mocks={[]}>
         <RouteHarness initial={appendWaypoint(baseRoute(), routePointFromNavPoint(RBT))} />
       </MockedProvider>,
     )
-    const items = within(screen.getByRole("list", { name: "Points et branches" })).getAllByRole("listitem")
+    const strip = screen.getByRole("list", { name: "Points et branches" })
+    const items = within(strip).getAllByRole("listitem")
     expect(items[0]).toHaveTextContent("LFPN")
-    expect(items.at(-1)).toHaveTextContent("LFOC")
+    // Departure ▸ leg ▸ point ▸ leg ▸ destination, then the chips to add a point and the alternate.
+    expect(items[4]).toHaveTextContent("LFOC")
+    expect(strip).toHaveTextContent(/^Aérodrome de départ.*LFPN.*RBT.*Aérodrome d'arrivée.*LFOC.*Ajouter un point.*Dégagement/)
   })
 })

@@ -16,7 +16,7 @@
     "DME": "DME",
     "TACAN": "TACAN",
     "VRP": "Point de report VFR",
-    "USER": "Point libre"
+    "USER": "Point tournant"
   },
   "airspaceType": {
     "P": "Zone interdite",
@@ -64,19 +64,19 @@
     },
     "flight": {
       "title": "Vol",
-      "departureTime": "Heure de départ bloc (heure locale)",
+      "departureTime": "Heure de départ (bloc)",
       "utc": "Soit {{time}} UTC ({{local}} heure locale).",
-      "reserveCase": "Type de vol pour la réserve finale",
+      "reserveCase": "Réserve finale",
       "qnh": "QNH",
       "qnhPlaceholder": "METAR de départ",
       "qnhHint": "Laissez vide pour utiliser le QNH du METAR de départ.",
       "qnhInvalid": "Indiquez un QNH entre 940 et 1060 hPa.",
       "envelopeCategory": "Catégorie d'exploitation",
-      "nightImposed": "Vol en partie de nuit à partir de {{time}} (à {{icao}} : fin du crépuscule civil {{dusk}}, début {{dawn}}) : la réserve finale de nuit (45 min) s'applique."
+      "nightImposed": "Vol en partie de nuit à partir de {{time}} (à {{icao}} : fin du crépuscule civil {{dusk}}, début {{dawn}}) : la réserve finale de nuit (45 min) s'applique.",
+      "nightShort": "Imposée : une partie du vol est de nuit."
     },
     "route": {
-      "title": "Route",
-      "description": "Départ, points tournants, arrivée et dégagement, avec l'altitude prévue de chaque branche."
+      "title": "Route"
     },
     "load": {
       "title": "Chargement",
@@ -87,7 +87,8 @@
       "title": "Résultats",
       "waiting": "Choisissez au moins l'aérodrome de départ et celui d'arrivée : le log de navigation, le carburant, la masse et le centrage, les zones et la météo s'affichent ici.",
       "error": "Le calcul n'a pas pu être fait. Vérifiez votre connexion puis réessayez.",
-      "retry": "Relancer le calcul"
+      "retry": "Relancer le calcul",
+      "waitingShort": "Le calcul s'affiche ici dès que le départ et l'arrivée sont choisis."
     },
     "save": {
       "action": "Enregistrer le plan",
@@ -98,6 +99,22 @@
       "blockingDescription": "Le calcul signale au moins un point bloquant (masse et centrage hors limites, carburant insuffisant ou zone interdite). Le plan sera enregistré comme brouillon et le dossier imprimé portera la mention « NE PAS PARTIR ».",
       "saveAnyway": "Enregistrer quand même",
       "updated": "Préparation enregistrée"
+    },
+    "steps": {
+      "label": "Étapes de la préparation",
+      "route": "Route",
+      "load": "Avion et chargement",
+      "log": "Log et dossier",
+      "next": "Suivant : {{step}}",
+      "nextShort": "Suivant"
+    },
+    "advanced": {
+      "title": "Options avancées",
+      "legHint": "Régime et vent saisi d'une branche : ouvrez-la dans la route."
+    },
+    "log": {
+      "description": "Comme le log papier : une ligne par point, l'heure estimée de passage, et les cases « HE réelle » et « Carb. réel » à remplir en vol.",
+      "pdfHint": "Le dossier de vol complet (PDF A4 ou A5) se télécharge depuis la page du plan, une fois enregistré."
     }
   },
   "aircraftState": {
@@ -152,13 +169,11 @@
     "destinationRequired": "Choisissez l'aérodrome d'arrivée.",
     "removeAlternate": "Retirer le dégagement",
     "cruiseAltitude": "Altitude de croisière",
-    "applyToAllLegs": "Appliquer à toutes les branches",
     "legsTitle": "Points et branches",
-    "mapHint": "Sur la carte : cliquez pour ajouter un point, faites glisser un point pour le déplacer, ou le « + » d'une branche pour y insérer un point.",
+    "mapHint": "Carte : cliquez pour ajouter un point avant l'arrivée, glissez un point pour le déplacer ou le « + » d'une branche pour en insérer un. Une branche s'ouvre sur son altitude, son vent et son régime.",
     "legAltitude": "Altitude {{leg}}",
     "legSetting": "Régime",
     "normalSetting": "Normal ({{setting}})",
-    "windOverride": "Vent saisi",
     "windDirection": "Vent de (°)",
     "windSpeed": "Force (kt)",
     "temperature": "Température (°C)",
@@ -167,12 +182,28 @@
     "useSuggestion": "Utiliser",
     "addPoint": "Ajouter un point (VOR, point de report, aérodrome, coordonnées)",
     "pointName": "Nom du point {{position}}",
-    "moveUp": "Monter {{ident}}",
-    "moveUpShort": "Monter",
-    "moveDown": "Descendre {{ident}}",
-    "moveDownShort": "Descendre",
+    "moveUp": "Déplacer {{ident}} vers le départ",
+    "moveUpShort": "Vers le départ",
+    "moveDown": "Déplacer {{ident}} vers l'arrivée",
+    "moveDownShort": "Vers l'arrivée",
     "removePoint": "Retirer {{ident}}",
-    "removePointShort": "Retirer"
+    "removePointShort": "Retirer",
+    "departureShort": "Départ",
+    "destinationShort": "Arrivée",
+    "alternateShort": "Dégagement",
+    "turningPointShort": "Point tournant",
+    "cruiseAltitudeHint": "Pour toute la route. Ouvrez une branche pour lui donner une autre altitude.",
+    "addPointShort": "Ajouter un point",
+    "legFigures": "{{course}} · {{distance}} · {{time}}",
+    "legPending": "en attente du calcul",
+    "legOf": "Branche {{leg}} :",
+    "windSource": "Vent",
+    "windForecast": "Prévision",
+    "windTyped": "Saisi",
+    "chooseShort": "à choisir",
+    "cruiseAltitudeShort": "Toutes les branches",
+    "pointChip": "Point tournant {{position}} :",
+    "legTitle": "Branche {{leg}}"
   },
   "search": {
     "placeholder": "Code OACI, nom, identifiant…",
@@ -180,8 +211,8 @@
     "loading": "Recherche…",
     "error": "La recherche n'a pas abouti. Réessayez dans un instant.",
     "empty": "Aucun point trouvé.",
-    "freePoint": "Point libre",
-    "freePointAt": "Point libre à {{lat}}, {{lon}}",
+    "freePoint": "Coordonnées saisies",
+    "freePointAt": "Point tournant à {{lat}}, {{lon}}",
     "mandatory": "obligatoire",
     "optional": "facultatif"
   },
@@ -214,22 +245,24 @@
     }
   },
   "log": {
-    "caption": "Log de navigation, branche par branche",
+    "caption": "Log de navigation, point par point",
     "columns": {
-      "leg": "Branche",
+      "point": "Point",
+      "frequency": "Fréq.",
       "altitude": "Alt.",
+      "trueCourse": "Rv",
       "magneticCourse": "Rm",
-      "magneticCourseLong": "Route magnétique",
       "wind": "Vent",
-      "drift": "Dérive",
+      "drift": "X",
       "magneticHeading": "Cm",
-      "magneticHeadingLong": "Cap magnétique",
+      "tas": "Vp",
       "groundSpeed": "Vs",
       "distance": "Dist.",
       "time": "Temps",
-      "eta": "HE",
-      "fuel": "Conso.",
-      "fuelRemaining": "Carb. restant"
+      "eta": "HE prévue",
+      "ata": "HE réelle",
+      "fuelRemaining": "Carb. restant",
+      "fuelActual": "Carb. réel"
     },
     "alternate": "Dégagement",
     "total": "Total",
@@ -237,7 +270,38 @@
     "tocAt": "Fin de montée à {{distance}}",
     "todAt": "Début de descente à {{distance}}",
     "suggestedAltitude": "niveau conseillé {{altitude}}",
-    "noWindForecast": "0 (sans prévision)"
+    "noWindForecast": "0 (sans prévision)",
+    "units": {
+      "frequency": "MHz",
+      "altitude": "ft",
+      "wind": "°/kt",
+      "tas": "kt",
+      "groundSpeed": "kt",
+      "distance": "NM",
+      "time": "min",
+      "eta": "UTC",
+      "ata": "UTC",
+      "fuelRemaining": "L",
+      "fuelActual": "L"
+    },
+    "long": {
+      "point": "Point tournant ou aérodrome atteint",
+      "frequency": "Fréquence du point et des zones à contacter sur la branche",
+      "altitude": "Altitude de la branche",
+      "trueCourse": "Route vraie",
+      "magneticCourse": "Route magnétique",
+      "wind": "Vent prévu : direction d'où il vient / force",
+      "drift": "Dérive : correction de cap due au vent",
+      "magneticHeading": "Cap magnétique à tenir",
+      "tas": "Vitesse propre",
+      "groundSpeed": "Vitesse sol",
+      "distance": "Distance de la branche (Σ : cumul)",
+      "time": "Temps de vol de la branche, vent compris (Σ : cumul)",
+      "eta": "Heure estimée de passage",
+      "ata": "Heure réelle de passage, à noter en vol",
+      "fuelRemaining": "Carburant restant prévu au point",
+      "fuelActual": "Carburant restant réel, à noter en vol"
+    }
   },
   "massBalance": {
     "takeoff": "Décollage",
@@ -357,8 +421,8 @@
   "map": {
     "label": "Carte de la route",
     "labelEditable": "Carte de la route : cliquez pour ajouter un point",
-    "notAnAeronauticalChart": "Fond OpenStreetMap — ne remplace pas la carte aéronautique OACI en vigueur",
-    "siaAttribution": "Données aéronautiques : Service de l'Information Aéronautique (SIA)",
+    "notAnAeronauticalChart": "Ne remplace pas la carte aéronautique OACI",
+    "siaAttribution": "Données aéronautiques : SIA",
     "dragPoint": "Point {{ident}} : faites-le glisser pour le déplacer",
     "insertHandle": "Insérer un point sur la branche {{leg}} : faites glisser",
     "unavailableTitle": "Carte indisponible",
@@ -391,27 +455,6 @@
     "airac": "AIRAC : {{value}}",
     "wind": "Vent : {{value}}",
     "outOfLimits": "HORS LIMITES — NE PAS PARTIR",
-    "columns": {
-      "point": "Point",
-      "altitude": "Alt.",
-      "trueCourse": "Rv",
-      "magneticCourse": "Rm",
-      "wind": "Vent",
-      "drift": "X",
-      "magneticHeading": "Cm",
-      "tas": "Vp",
-      "gs": "Vs",
-      "distance": "Dist.",
-      "cumulativeDistance": "Cumul",
-      "time": "Temps",
-      "cumulativeTime": "Cumul",
-      "eta": "HE",
-      "ata": "HR",
-      "fuelPlanned": "Carb. prévu",
-      "fuelActual": "Carb. réel",
-      "contacts": "Fréquences / zones",
-      "remarks": "Remarques"
-    },
     "reserve": "Réserve finale : {{litres}} ({{minutes}} min)",
     "loaded": "Embarqué : {{litres}}",
     "endurance": "Autonomie : {{value}}",
@@ -719,5 +762,15 @@
       "INPUT": "saisi par le pilote",
       "DEFAULT": "inconnu, atmosphère standard"
     }
+  },
+  "summary": {
+    "title": "Bilan du plan",
+    "fuel": "Carburant requis",
+    "fuelOnBoard": "/ {{litres}} à bord",
+    "checksTitle_one": "Point à vérifier",
+    "checksTitle_other": "Points à vérifier ({{count}})",
+    "showFewer": "Réduire la liste",
+    "statusPrefix": "{{status}} :",
+    "showAll": "Voir les {{count}} points à vérifier"
   }
 }

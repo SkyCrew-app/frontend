@@ -18,37 +18,63 @@ global.ResizeObserver = class {
   disconnect() {}
 }
 
+const LOG = "Log de navigation, point par point"
+const rowOf = (table: HTMLElement, point: RegExp) => within(table).getByRole("rowheader", { name: point }).closest("tr") as HTMLElement
+const cellsOf = (row: HTMLElement) => within(row).getAllByRole("cell").map((cell) => cell.textContent)
+
 describe("NavLogTable", () => {
-  it("shows each leg with its own magnetic course, heading, ground speed, time and fuel", () => {
+  it("writes one line per point, as on the paper log, with the figures of the leg that reaches it", () => {
     render(<NavLogTable legs={RESULT.legs} alternateLeg={RESULT.alternateLeg} totalDistanceNm={45.4} totalTimeMin={29.6} />)
-    const table = screen.getByRole("table", { name: "Log de navigation, branche par branche" })
-    const row = within(table).getByRole("row", { name: /RBT → P1/ })
-    // The figures of the RBT → P1 leg, not those of the next one (defect of the former log).
-    expect(within(row).getAllByRole("cell").map((cell) => cell.textContent)).toEqual([
-      "RBT → P1",
-      "2 500 ft".replace(" ", " "),
-      "223°",
-      "270/15",
-      "−7°",
-      "215°",
-      "95 kt",
-      "17,3 NM",
-      "11 min",
-      "09:18Z",
-      "5,1 L",
-      "69,5 L",
+    const table = screen.getByRole("table", { name: LOG })
+    expect(within(table).getAllByRole("columnheader").map((header) => header.textContent)).toEqual([
+      "Point",
+      "Fréq.MHz",
+      "Alt.ft",
+      "Rv",
+      "Rm",
+      "Vent°/kt",
+      "X",
+      "Cm",
+      "Vpkt",
+      "Vskt",
+      "Dist.NM",
+      "Tempsmin",
+      "HE prévueUTC",
+      "HE réelleUTC",
+      "Carb. restantL",
+      "Carb. réelL",
     ])
-    expect(within(table).getByRole("row", { name: /Dégagement LFOC → LFOT/ })).toBeInTheDocument()
-    expect(within(table).getByRole("row", { name: /Total/ })).toHaveTextContent("45,4 NM")
+    // The abbreviations of the paper log are spelt out.
+    expect(within(table).getByTitle("Route magnétique")).toHaveTextContent("Rm")
+    expect(within(table).getByTitle("Cap magnétique à tenir")).toHaveTextContent("Cm")
+
+    // P1 is reached by the RBT → P1 leg: its own figures, not those of the next one (defect of the former log).
+    const p1 = cellsOf(rowOf(table, /^P1/))
+    expect(p1.slice(1, 13)).toEqual([expect.stringMatching(/^2\s500$/), "225°", "223°", "270/15", "−7°", "215°", "105", "95", expect.stringMatching(/^17,3Σ /), "11Σ 15", "09:18", ""])
+    expect(p1[13]).toBe("70")
+    // Blank boxes for the actual time and fuel, written in flight.
+    expect(p1[12]).toBe("")
+    expect(p1[14]).toBe("")
+    // The departure line: the fuel when the first leg starts, nothing else computed.
+    expect(cellsOf(rowOf(table, /^LFPN/))[13]).toBe("77")
+    expect(rowOf(table, /^Dégagement LFOT/)).toBeInTheDocument()
+    expect(within(table).getByRole("rowheader", { name: "Total" }).closest("tr")).toHaveTextContent("45,4")
+  })
+
+  it("gives the frequency of a navaid and of the areas to contact on its line", () => {
+    render(<NavLogTable legs={RESULT.legs} totalDistanceNm={45.4} totalTimeMin={29.6} />)
+    const table = screen.getByRole("table", { name: LOG })
+    // And of the areas to contact on the leg that reaches it.
+    expect(cellsOf(rowOf(table, /^RBT/))[0]).toBe("114.70 · TMA PARIS 1 119.850")
   })
 
   it("never shows a calm wind assumed without a forecast as a forecast", () => {
     const [first, ...others] = RESULT.legs
     const noForecast = { ...first, wind: { ...first.wind, directionDeg: 0, speedKt: 0, source: "NONE" as const } }
     render(<NavLogTable legs={[noForecast, ...others]} totalDistanceNm={45.4} totalTimeMin={29.6} />)
-    const table = screen.getByRole("table", { name: "Log de navigation, branche par branche" })
-    expect(within(table).getByRole("row", { name: /LFPN → RBT/ })).toHaveTextContent("0 (sans prévision)")
-    expect(within(table).getByRole("row", { name: /RBT → P1/ })).toHaveTextContent("270/15")
+    const table = screen.getByRole("table", { name: LOG })
+    expect(rowOf(table, /^RBT/)).toHaveTextContent("0 (sans prévision)")
+    expect(rowOf(table, /^P1/)).toHaveTextContent("270/15")
   })
 
   it("tells where the climb ends and the descent starts", () => {
@@ -60,8 +86,9 @@ describe("NavLogTable", () => {
 
   it("gives the phone one card per leg with heading, time and fuel first", () => {
     render(<NavLogTable legs={RESULT.legs} totalDistanceNm={45.4} totalTimeMin={29.6} />)
-    const cards = screen.getByRole("list", { name: "Log de navigation, branche par branche" })
+    const cards = screen.getByRole("list", { name: LOG })
     const first = within(cards).getAllByRole("listitem")[0]
+    expect(first).toHaveTextContent("LFPN → RBT")
     expect(within(first).getAllByRole("term").slice(0, 3).map((term) => term.textContent)).toEqual(["Cm", "Temps", "Carb. restant"])
     expect(first).toHaveTextContent("225°")
   })
@@ -143,6 +170,22 @@ describe("paper nav log", () => {
     expect(log).toHaveTextContent("QNH : 1018 hPa (METAR LFPN de 16/10 17:30Z)")
     expect(log).toHaveTextContent("Données aérodromes OurAirports du 16 oct. 2026, pas de cycle AIRAC")
     expect(log).not.toHaveTextContent("AIRAC : OURAIRPORTS")
+  })
+
+  it("has the columns and the lines of the nav log on screen", () => {
+    render(
+      <>
+        <NavLogTable legs={RESULT.legs} alternateLeg={RESULT.alternateLeg} totalDistanceNm={45.4} totalTimeMin={29.6} />
+        <PrintableNavLog result={RESULT} input={SAVED_PLAN.input} aircraft="F-GAER" pilot="Jean Dupont" format="A5" />
+      </>,
+    )
+    const printed = document.querySelector(".navlog-print table") as HTMLTableElement
+    const screenTable = screen.getByRole("table", { name: LOG })
+    const texts = (table: HTMLTableElement) => [...table.querySelectorAll("thead th")].map((cell) => cell.textContent)
+    expect(texts(printed)).toEqual(texts(screenTable as HTMLTableElement))
+    const firstCells = (table: Element) => [...table.querySelectorAll("tbody tr")].map((row) => row.firstElementChild?.textContent)
+    expect(firstCells(printed)).toEqual(firstCells(screenTable))
+    expect(printed.querySelectorAll("tbody tr")[2].textContent).toContain("09:18")
   })
 
   it("is printed from <body> with its reserve and endurance line, which a <footer> would lose", () => {

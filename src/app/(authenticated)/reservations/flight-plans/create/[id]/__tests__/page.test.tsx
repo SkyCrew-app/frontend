@@ -87,10 +87,11 @@ describe("flight plan builder page", () => {
     )
     expect(await screen.findByRole("heading", { level: 1, name: "Créer un plan de vol" })).toBeInTheDocument()
     expect(screen.getByText(/Pour la réservation de F-TEST/)).toBeInTheDocument()
-    expect(await screen.findByLabelText("Heure de départ bloc (heure locale)")).toBeInTheDocument()
+    expect(await screen.findByLabelText("Heure de départ (bloc)")).toBeInTheDocument()
     expect(screen.getByText(/Soit 09:00 UTC/)).toBeInTheDocument()
-    expect(screen.getByLabelText("Sièges avant (kg)")).toBeInTheDocument()
     expect(screen.getByText(/Choisissez au moins l'aérodrome de départ/)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole("tab", { name: /Avion et chargement/ }))
+    expect(screen.getByLabelText("Sièges avant (kg)")).toBeInTheDocument()
   })
 
   it("says so when the booking is not the member's", async () => {

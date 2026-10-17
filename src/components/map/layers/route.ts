@@ -7,6 +7,7 @@ export const ROUTE_LAYERS = {
   casing: "aero-route-casing",
   line: "aero-route-line",
   alternate: "aero-route-alternate",
+  legLabels: "aero-route-leg-label",
   markers: "aero-route-profile",
   markerLabels: "aero-route-profile-label",
 } as const
@@ -52,6 +53,8 @@ export function routeFeatures(
   alternate: MapPoint | null,
   profile: ProfilePoint[] = [],
   legDistancesNm: number[] = [],
+  /** One label per leg ("316° · 24 NM"), written along it. */
+  legLabels: string[] = [],
 ) {
   const features: Record<string, unknown>[] = []
   if (points.length >= 2) {
@@ -60,6 +63,16 @@ export function routeFeatures(
       geometry: { type: "LineString", coordinates: points.map((point) => [point.lon, point.lat]) },
       properties: { kind: "route" },
     })
+    if (legLabels.length === points.length - 1) {
+      points.slice(1).forEach((to, index) => {
+        const from = points[index]
+        features.push({
+          type: "Feature",
+          geometry: { type: "LineString", coordinates: [[from.lon, from.lat], [to.lon, to.lat]] },
+          properties: { kind: "leg", label: legLabels[index] },
+        })
+      })
+    }
   }
   const destination = points[points.length - 1]
   if (alternate && destination) {
@@ -88,7 +101,11 @@ export function routeFeatures(
   return { type: "FeatureCollection" as const, features }
 }
 
-export function routeLayers() {
+export const ROUTE_COLOR = { light: "#c2410c", dark: "#fb923c" } as const
+
+export function routeLayers(theme: "light" | "dark" = "light") {
+  const color = ROUTE_COLOR[theme]
+  const halo = theme === "dark" ? "#0f172a" : "#ffffff"
   return [
     {
       id: ROUTE_LAYERS.casing,
@@ -96,7 +113,7 @@ export function routeLayers() {
       source: ROUTE_SOURCE,
       filter: ["==", ["get", "kind"], "route"],
       layout: { "line-cap": "round", "line-join": "round" },
-      paint: { "line-color": "#ffffff", "line-width": 7, "line-opacity": 0.85 },
+      paint: { "line-color": halo, "line-width": 7, "line-opacity": 0.85 },
     },
     {
       id: ROUTE_LAYERS.line,
@@ -104,21 +121,37 @@ export function routeLayers() {
       source: ROUTE_SOURCE,
       filter: ["==", ["get", "kind"], "route"],
       layout: { "line-cap": "round", "line-join": "round" },
-      paint: { "line-color": "#c2410c", "line-width": 3.5 },
+      paint: { "line-color": color, "line-width": 3.5 },
     },
     {
       id: ROUTE_LAYERS.alternate,
       type: "line",
       source: ROUTE_SOURCE,
       filter: ["==", ["get", "kind"], "alternate"],
-      paint: { "line-color": "#c2410c", "line-width": 2.5, "line-dasharray": [2, 2] },
+      paint: { "line-color": color, "line-width": 2.5, "line-dasharray": [2, 2] },
+    },
+    {
+      // Magnetic course and distance of each leg, along the line as on a chart prepared by hand.
+      id: ROUTE_LAYERS.legLabels,
+      type: "symbol",
+      source: ROUTE_SOURCE,
+      filter: ["==", ["get", "kind"], "leg"],
+      layout: {
+        "symbol-placement": "line-center",
+        "text-field": ["get", "label"],
+        "text-size": 12,
+        "text-offset": [0, -1],
+        "text-font": ["Noto Sans Bold"],
+        "text-allow-overlap": false,
+      },
+      paint: { "text-color": color, "text-halo-color": halo, "text-halo-width": 2 },
     },
     {
       id: ROUTE_LAYERS.markers,
       type: "circle",
       source: ROUTE_SOURCE,
       filter: ["==", ["get", "kind"], "profile"],
-      paint: { "circle-radius": 4, "circle-color": "#ffffff", "circle-stroke-color": "#c2410c", "circle-stroke-width": 2 },
+      paint: { "circle-radius": 4, "circle-color": halo, "circle-stroke-color": color, "circle-stroke-width": 2 },
     },
     {
       id: ROUTE_LAYERS.markerLabels,
@@ -131,7 +164,7 @@ export function routeLayers() {
         "text-offset": [0, -1.2],
         "text-font": ["Noto Sans Bold"],
       },
-      paint: { "text-color": "#c2410c", "text-halo-color": "#ffffff", "text-halo-width": 1.2 },
+      paint: { "text-color": color, "text-halo-color": halo, "text-halo-width": 1.2 },
     },
   ]
 }

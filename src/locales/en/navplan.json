@@ -16,7 +16,7 @@
     "DME": "DME",
     "TACAN": "TACAN",
     "VRP": "VFR reporting point",
-    "USER": "User point"
+    "USER": "Turning point"
   },
   "airspaceType": {
     "P": "Prohibited area",
@@ -64,19 +64,19 @@
     },
     "flight": {
       "title": "Flight",
-      "departureTime": "Off-block time (local time)",
+      "departureTime": "Departure time (off-block)",
       "utc": "That is {{time}} UTC ({{local}} local time).",
-      "reserveCase": "Kind of flight for the final reserve",
+      "reserveCase": "Final reserve",
       "qnh": "QNH",
       "qnhPlaceholder": "Departure METAR",
       "qnhHint": "Leave empty to use the QNH of the departure METAR.",
       "qnhInvalid": "Enter a QNH between 940 and 1060 hPa.",
       "envelopeCategory": "Operating category",
-      "nightImposed": "Flight partly at night from {{time}} (at {{icao}}: civil twilight ends {{dusk}}, begins {{dawn}}): the night final reserve (45 min) applies."
+      "nightImposed": "Flight partly at night from {{time}} (at {{icao}}: civil twilight ends {{dusk}}, begins {{dawn}}): the night final reserve (45 min) applies.",
+      "nightShort": "Imposed: part of the flight is at night."
     },
     "route": {
-      "title": "Route",
-      "description": "Departure, turning points, destination and alternate, with the planned altitude of each leg."
+      "title": "Route"
     },
     "load": {
       "title": "Loading",
@@ -87,7 +87,8 @@
       "title": "Results",
       "waiting": "Choose at least the departure and destination aerodromes: the nav log, fuel, mass and balance, airspaces and weather appear here.",
       "error": "The computation failed. Check your connection and try again.",
-      "retry": "Compute again"
+      "retry": "Compute again",
+      "waitingShort": "The computation shows here as soon as the departure and destination are chosen."
     },
     "save": {
       "action": "Save the plan",
@@ -98,6 +99,22 @@
       "blockingDescription": "The computation reports at least one blocking item (mass and balance out of limits, not enough fuel or a prohibited area). The plan will be saved as a draft and the printed briefing will read “DO NOT DEPART”.",
       "saveAnyway": "Save anyway",
       "updated": "Preparation saved"
+    },
+    "steps": {
+      "label": "Flight preparation steps",
+      "route": "Route",
+      "load": "Aircraft and load",
+      "log": "Log and file",
+      "next": "Next: {{step}}",
+      "nextShort": "Next"
+    },
+    "advanced": {
+      "title": "Advanced options",
+      "legHint": "Power setting and typed wind of a leg: open it in the route."
+    },
+    "log": {
+      "description": "Like the paper log: one line per point, the estimated time over it, and the “ATA” and “Actual fuel” boxes to fill in flight.",
+      "pdfHint": "The full flight file (A4 or A5 PDF) is downloaded from the plan's page once it is saved."
     }
   },
   "aircraftState": {
@@ -152,13 +169,11 @@
     "destinationRequired": "Choose the destination aerodrome.",
     "removeAlternate": "Remove the alternate",
     "cruiseAltitude": "Cruise altitude",
-    "applyToAllLegs": "Apply to every leg",
     "legsTitle": "Points and legs",
-    "mapHint": "On the map: click to add a point, drag a point to move it, or drag the “+” of a leg to insert a point.",
+    "mapHint": "Map: click to add a point before the destination, drag a point to move it or the “+” of a leg to insert one. A leg opens on its altitude, wind and power setting.",
     "legAltitude": "Altitude {{leg}}",
     "legSetting": "Power setting",
     "normalSetting": "Normal ({{setting}})",
-    "windOverride": "Typed wind",
     "windDirection": "Wind from (°)",
     "windSpeed": "Speed (kt)",
     "temperature": "Temperature (°C)",
@@ -167,12 +182,28 @@
     "useSuggestion": "Use",
     "addPoint": "Add a point (VOR, reporting point, aerodrome, coordinates)",
     "pointName": "Name of point {{position}}",
-    "moveUp": "Move {{ident}} up",
-    "moveUpShort": "Move up",
-    "moveDown": "Move {{ident}} down",
-    "moveDownShort": "Move down",
+    "moveUp": "Move {{ident}} towards the departure",
+    "moveUpShort": "Towards the departure",
+    "moveDown": "Move {{ident}} towards the destination",
+    "moveDownShort": "Towards the destination",
     "removePoint": "Remove {{ident}}",
-    "removePointShort": "Remove"
+    "removePointShort": "Remove",
+    "departureShort": "Departure",
+    "destinationShort": "Destination",
+    "alternateShort": "Alternate",
+    "turningPointShort": "Turning point",
+    "cruiseAltitudeHint": "For the whole route. Open a leg to give it another altitude.",
+    "addPointShort": "Add a point",
+    "legFigures": "{{course}} · {{distance}} · {{time}}",
+    "legPending": "awaiting the computation",
+    "legOf": "Leg {{leg}}:",
+    "windSource": "Wind",
+    "windForecast": "Forecast",
+    "windTyped": "Typed",
+    "chooseShort": "to choose",
+    "cruiseAltitudeShort": "Every leg",
+    "pointChip": "Turning point {{position}}:",
+    "legTitle": "Leg {{leg}}"
   },
   "search": {
     "placeholder": "ICAO code, name, identifier…",
@@ -180,8 +211,8 @@
     "loading": "Searching…",
     "error": "The search failed. Try again in a moment.",
     "empty": "No point found.",
-    "freePoint": "User point",
-    "freePointAt": "User point at {{lat}}, {{lon}}",
+    "freePoint": "Typed coordinates",
+    "freePointAt": "Turning point at {{lat}}, {{lon}}",
     "mandatory": "compulsory",
     "optional": "on request"
   },
@@ -214,22 +245,24 @@
     }
   },
   "log": {
-    "caption": "Nav log, leg by leg",
+    "caption": "Nav log, point by point",
     "columns": {
-      "leg": "Leg",
+      "point": "Point",
+      "frequency": "Freq.",
       "altitude": "Alt.",
+      "trueCourse": "TC",
       "magneticCourse": "MC",
-      "magneticCourseLong": "Magnetic course",
       "wind": "Wind",
       "drift": "WCA",
       "magneticHeading": "MH",
-      "magneticHeadingLong": "Magnetic heading",
+      "tas": "TAS",
       "groundSpeed": "GS",
       "distance": "Dist.",
       "time": "Time",
       "eta": "ETA",
-      "fuel": "Burn",
-      "fuelRemaining": "Fuel left"
+      "ata": "ATA",
+      "fuelRemaining": "Fuel left",
+      "fuelActual": "Actual fuel"
     },
     "alternate": "Alternate",
     "total": "Total",
@@ -237,7 +270,38 @@
     "tocAt": "Top of climb at {{distance}}",
     "todAt": "Top of descent at {{distance}}",
     "suggestedAltitude": "suggested level {{altitude}}",
-    "noWindForecast": "0 (no forecast)"
+    "noWindForecast": "0 (no forecast)",
+    "units": {
+      "frequency": "MHz",
+      "altitude": "ft",
+      "wind": "°/kt",
+      "tas": "kt",
+      "groundSpeed": "kt",
+      "distance": "NM",
+      "time": "min",
+      "eta": "UTC",
+      "ata": "UTC",
+      "fuelRemaining": "L",
+      "fuelActual": "L"
+    },
+    "long": {
+      "point": "Turning point or aerodrome reached",
+      "frequency": "Frequency of the point and of the areas to contact on the leg",
+      "altitude": "Altitude of the leg",
+      "trueCourse": "True course",
+      "magneticCourse": "Magnetic course",
+      "wind": "Forecast wind: direction it blows from / speed",
+      "drift": "Wind correction angle",
+      "magneticHeading": "Magnetic heading to fly",
+      "tas": "True airspeed",
+      "groundSpeed": "Ground speed",
+      "distance": "Distance of the leg (Σ: running total)",
+      "time": "Flight time of the leg, wind included (Σ: running total)",
+      "eta": "Estimated time over the point",
+      "ata": "Actual time over the point, written in flight",
+      "fuelRemaining": "Expected fuel left at the point",
+      "fuelActual": "Actual fuel left, written in flight"
+    }
   },
   "massBalance": {
     "takeoff": "Take-off",
@@ -357,8 +421,8 @@
   "map": {
     "label": "Route map",
     "labelEditable": "Route map: click to add a point",
-    "notAnAeronauticalChart": "OpenStreetMap background — does not replace the current ICAO aeronautical chart",
-    "siaAttribution": "Aeronautical data: French Aeronautical Information Service (SIA)",
+    "notAnAeronauticalChart": "Does not replace the ICAO aeronautical chart",
+    "siaAttribution": "Aeronautical data: SIA",
     "dragPoint": "Point {{ident}}: drag to move it",
     "insertHandle": "Insert a point on leg {{leg}}: drag",
     "unavailableTitle": "Map unavailable",
@@ -391,27 +455,6 @@
     "airac": "AIRAC: {{value}}",
     "wind": "Wind: {{value}}",
     "outOfLimits": "OUT OF LIMITS — DO NOT DEPART",
-    "columns": {
-      "point": "Point",
-      "altitude": "Alt.",
-      "trueCourse": "TC",
-      "magneticCourse": "MC",
-      "wind": "Wind",
-      "drift": "WCA",
-      "magneticHeading": "MH",
-      "tas": "TAS",
-      "gs": "GS",
-      "distance": "Dist.",
-      "cumulativeDistance": "Total",
-      "time": "Time",
-      "cumulativeTime": "Total",
-      "eta": "ETA",
-      "ata": "ATA",
-      "fuelPlanned": "Fuel plan",
-      "fuelActual": "Fuel actual",
-      "contacts": "Frequencies / areas",
-      "remarks": "Remarks"
-    },
     "reserve": "Final reserve: {{litres}} ({{minutes}} min)",
     "loaded": "On board: {{litres}}",
     "endurance": "Endurance: {{value}}",
@@ -719,5 +762,15 @@
       "INPUT": "entered by the pilot",
       "DEFAULT": "unknown, standard atmosphere"
     }
+  },
+  "summary": {
+    "title": "Plan summary",
+    "fuel": "Fuel required",
+    "fuelOnBoard": "/ {{litres}} on board",
+    "checksTitle_one": "Point to check",
+    "checksTitle_other": "Points to check ({{count}})",
+    "showFewer": "Show fewer",
+    "statusPrefix": "{{status}}:",
+    "showAll": "See the {{count}} points to check"
   }
 }

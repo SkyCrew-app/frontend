@@ -8,6 +8,10 @@
   body[data-print-mode="navlog"] > :not(.navlog-print) {
     display: none !important;
   }
+  html:has(body[data-print-mode="navlog"]),
+  body[data-print-mode="navlog"] {
+    background: #fff !important;
+  }
   body[data-print-mode="navlog"] .navlog-print {
     display: block !important;
     position: static;
@@ -58,10 +62,33 @@
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
-  .navlog-print td:first-child,
-  .navlog-print td:nth-last-child(-n + 2) {
+  .navlog-print td.navlog-print__point,
+  .navlog-print td.navlog-print__frequency,
+  .navlog-print td.navlog-print__wind {
     text-align: left;
-    white-space: normal;
+    white-space: normal !important;
+  }
+  /* Room for the point and its notes, and for what is written by hand (frequency, times, fuel). */
+  .navlog-print td.navlog-print__point {
+    min-width: 28mm;
+  }
+  .navlog-print td.navlog-print__wind {
+    max-width: 16mm;
+    text-align: center;
+  }
+  .navlog-print td.navlog-print__frequency,
+  .navlog-print td.navlog-print__ata,
+  .navlog-print td.navlog-print__fuelActual {
+    min-width: 12mm;
+  }
+  .navlog-print td.navlog-print__magneticHeading {
+    font-weight: 700;
+  }
+  .navlog-print__unit,
+  .navlog-print__note {
+    display: block;
+    font-weight: 400;
+    font-size: 6.5pt;
   }
   .navlog-print tbody tr {
     height: 7mm;

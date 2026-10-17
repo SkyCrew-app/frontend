@@ -53,7 +53,11 @@ export const formatWind = (wind: { directionDeg: number; speedKt: number } | nul
   return `${formatCourse(wind.directionDeg).replace("°", "")}/${Math.round(wind.speedKt)}`
 }
 
-export const formatNm = (nm: number | null | undefined, digits = 1) => (isNumber(nm) ? `${number(nm, digits)} NM` : "—")
+/** A bare figure, rounded, for a table whose column heading gives the unit (as a paper nav log). */
+export const formatNumber = (value: number | null | undefined, digits = 0) =>
+  isNumber(value) ? number(digits === 0 ? Math.round(value) : value, digits) : "—"
+
+export const formatNm =(nm: number | null | undefined, digits = 1) => (isNumber(nm) ? `${number(nm, digits)} NM` : "—")
 export const formatKt = (kt: number | null | undefined) => (isNumber(kt) ? `${number(Math.round(kt), 0)} kt` : "—")
 export const formatFt = (ft: number | null | undefined) => (isNumber(ft) ? `${number(Math.round(ft), 0)} ft` : "—")
 export const formatLitres = (l: number | null | undefined, digits = 1) => (isNumber(l) ? `${number(l, digits)} L` : "—")

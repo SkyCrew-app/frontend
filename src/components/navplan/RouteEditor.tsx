@@ -1,13 +1,14 @@
 "use client"
 
-import { Fragment, useState } from "react"
+import { Fragment, useState, type ReactNode } from "react"
 import { useTranslation } from "react-i18next"
-import { ArrowDown, ArrowUp, Plane, Trash2, Wind, X } from "lucide-react"
+import { ArrowLeft, ArrowRight, ChevronDown, ChevronRight, Trash2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import {
   appendWaypoint,
   removeWaypoint,
@@ -27,7 +28,7 @@ import {
 } from "@/lib/navplan/route"
 import { MAX_ALTITUDE_FT } from "@/lib/navplan/draft"
 import type { Leg, NavPoint } from "@/lib/navplan/types"
-import { formatFt } from "@/lib/navplan/units"
+import { formatCourse, formatFt, formatMinutes, formatNm } from "@/lib/navplan/units"
 import { cn } from "@/lib/utils"
 import { NavPointSearch } from "./NavPointSearch"
 import { NumberField } from "./NumberField"
@@ -35,150 +36,109 @@ import { NumberField } from "./NumberField"
 interface RouteEditorProps {
   route: RouteDraft
   onChange: (route: RouteDraft) => void
-  /** Legs of the last computation, for the suggested altitudes. */
+  /** Legs of the last computation: course, distance and time of each leg, suggested altitudes. */
   computedLegs?: Leg[]
   /** Settings of the cruise table of the aircraft ("2400 tr/min", "65 %"). */
   cruiseSettings?: string[]
   normalSetting?: string | null
   showErrors?: boolean
+  /** Fields written in the same row as the cruise altitude: before it (off-block time) and after it. */
+  before?: ReactNode
+  after?: ReactNode
 }
 
 const toRoutePoint = (route: RouteDraft, point: NavPoint): RoutePoint =>
   point.type === "USER" ? userPoint(route, point.lat, point.lon, point.ident || undefined) : routePointFromNavPoint(point)
 
-function PointLabel({ point }: { point: RoutePoint }) {
-  const { t } = useTranslation("navplan")
-  return (
-    <span className="min-w-0">
-      <span className="font-medium">{point.ident}</span>
-      <span className="ml-2 text-xs text-muted-foreground">{t(`pointType.${point.type}`)}</span>
-      {point.name && point.name !== point.ident && <span className="block truncate text-xs text-muted-foreground">{point.name}</span>}
-    </span>
-  )
+const validAltitude = (value: number | null): value is number => value !== null && value >= 0 && value <= MAX_ALTITUDE_FT
+
+/** The most frequent altitude of the legs: what the pilot thinks of as "the" cruise altitude. */
+const usualAltitude = (route: RouteDraft) => {
+  const counts = new Map<number, number>()
+  for (const leg of route.legs) counts.set(leg.altitudeFt, (counts.get(leg.altitudeFt) ?? 0) + 1)
+  return [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null
 }
 
-/** Departure, points, destination and alternate, with the altitude (and wind if typed) of each leg. */
-export function RouteEditor({ route, onChange, computedLegs = [], cruiseSettings = [], normalSetting, showErrors = false }: RouteEditorProps) {
+// Chips of the strip: the aerodromes of the route stand out, turning points are plain.
+const END_CHIP = "h-9 w-auto max-w-[16rem] rounded-full border-brand/60 bg-brand/10 px-3 hover:bg-brand/15"
+const POINT_CHIP = "h-9 rounded-full px-3"
+
+/**
+ * The route as a strip of chips that wraps onto as many lines as it needs, never a scrolling box:
+ * departure ▸ leg ▸ turning point ▸ … ▸ destination, then the alternate. A leg chip gives its
+ * magnetic course, distance and time and opens on its own altitude, wind and power setting; a
+ * point chip opens on its name, its place in the route and its removal.
+ */
+export function RouteEditor({ route, onChange, computedLegs = [], cruiseSettings = [], normalSetting, showErrors = false, before, after }: RouteEditorProps) {
   const { t } = useTranslation("navplan")
-  const [cruiseAltitude, setCruiseAltitude] = useState<number | null>(route.legs[0]?.altitudeFt ?? null)
+  const [cruiseAltitude, setCruiseAltitude] = useState<number | null>(usualAltitude(route))
   const near = route.departure ? { lat: route.departure.lat, lon: route.departure.lon } : null
   const departureMissing = showErrors && !route.departure
   const destinationMissing = showErrors && !route.destination
+  const cruiseInvalid = cruiseAltitude !== null && !validAltitude(cruiseAltitude)
 
   return (
-    <div className="space-y-5">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="route-departure">
-            {t("route.departure")} <span className="text-destructive" aria-hidden="true">*</span>
-          </Label>
-          <NavPointSearch
-            id="route-departure"
-            placeholder={t("route.chooseAerodrome")}
-            types={["AERODROME"]}
-            value={route.departure}
-            near={near}
-            invalid={departureMissing}
-            describedBy={departureMissing ? "route-departure-error" : undefined}
-            onSelect={(point) => onChange(setDeparture(route, routePointFromNavPoint(point)))}
-          />
-          {departureMissing && (
-            <p id="route-departure-error" className="text-sm text-destructive">
-              {t("route.departureRequired")}
-            </p>
-          )}
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="route-destination">
-            {t("route.destination")} <span className="text-destructive" aria-hidden="true">*</span>
-          </Label>
-          <NavPointSearch
-            id="route-destination"
-            placeholder={t("route.chooseAerodrome")}
-            types={["AERODROME"]}
-            value={route.destination}
-            near={near}
-            invalid={destinationMissing}
-            describedBy={destinationMissing ? "route-destination-error" : undefined}
-            onSelect={(point) => onChange(setDestination(route, routePointFromNavPoint(point)))}
-          />
-          {destinationMissing && (
-            <p id="route-destination-error" className="text-sm text-destructive">
-              {t("route.destinationRequired")}
-            </p>
-          )}
-        </div>
-        <div className="space-y-2 sm:col-span-2">
-          <Label htmlFor="route-alternate">{t("route.alternate")}</Label>
-          <div className="flex gap-2">
-            <div className="min-w-0 flex-1">
-              <NavPointSearch
-                id="route-alternate"
-                placeholder={t("route.chooseAlternate")}
-                types={["AERODROME"]}
-                value={route.alternate}
-                near={route.destination ? { lat: route.destination.lat, lon: route.destination.lon } : near}
-                onSelect={(point) => onChange(setAlternate(route, routePointFromNavPoint(point)))}
-              />
-            </div>
-            {route.alternate && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-10 w-10 shrink-0"
-                aria-label={t("route.removeAlternate")}
-                title={t("route.removeAlternate")}
-                onClick={() => onChange(setAlternate(route, null))}
-              >
-                <X className="h-4 w-4" aria-hidden="true" />
-              </Button>
-            )}
-          </div>
-        </div>
-        <div className="space-y-2 sm:col-span-2">
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-start gap-x-4 gap-y-3">
+        {before}
+        <div className="w-36 space-y-1">
           <Label htmlFor="route-cruise-altitude">{t("route.cruiseAltitude")}</Label>
-          <div className="flex flex-wrap gap-2">
-            <div className="min-w-[8rem] flex-1">
-              <NumberField
-                id="route-cruise-altitude"
-                value={cruiseAltitude}
-                onValueChange={setCruiseAltitude}
-                unit="ft"
-                digits={0}
-              />
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={cruiseAltitude === null || cruiseAltitude < 0 || cruiseAltitude > MAX_ALTITUDE_FT}
-              onClick={() => cruiseAltitude !== null && onChange(setAllAltitudes(route, Math.round(cruiseAltitude)))}
-            >
-              {t("route.applyToAllLegs")}
-            </Button>
-          </div>
+          <NumberField
+            id="route-cruise-altitude"
+            value={cruiseAltitude}
+            unit="ft"
+            digits={0}
+            invalid={cruiseInvalid}
+            aria-describedby="route-cruise-altitude-hint"
+            title={t("route.cruiseAltitudeHint")}
+            onValueChange={(value) => {
+              setCruiseAltitude(value)
+              if (validAltitude(value)) onChange(setAllAltitudes(route, Math.round(value)))
+            }}
+          />
+          <p id="route-cruise-altitude-hint" className={cn("text-xs", cruiseInvalid ? "text-destructive" : "text-muted-foreground")}>
+            {cruiseInvalid ? t("route.altitudeInvalid", { max: formatFt(MAX_ALTITUDE_FT) }) : t("route.cruiseAltitudeShort")}
+          </p>
         </div>
+        {after}
       </div>
 
       <div className="space-y-2">
-        <h3 className="text-sm font-semibold">{t("route.legsTitle")}</h3>
-        <p className="text-xs text-muted-foreground">{t("route.mapHint")}</p>
-        <ol className="space-y-2" aria-label={t("route.legsTitle")}>
-          <li className="flex items-center gap-2 rounded-md bg-muted/50 px-3 py-2 text-sm">
-            <Plane className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-            {route.departure ? <PointLabel point={route.departure} /> : <span className="text-muted-foreground">{t("route.departure")}</span>}
+        <h3 className="sr-only">{t("route.legsTitle")}</h3>
+        <ol className="flex flex-wrap items-center gap-x-1 gap-y-2" aria-label={t("route.legsTitle")}>
+          <li>
+            <Label htmlFor="route-departure" className="sr-only">
+              {t("route.departure")}
+            </Label>
+            <NavPointSearch
+              id="route-departure"
+              prefix={t("route.departureShort")}
+              placeholder={t("route.chooseShort")}
+              types={["AERODROME"]}
+              value={route.departure}
+              near={near}
+              invalid={departureMissing}
+              describedBy={departureMissing ? "route-departure-error" : undefined}
+              compact
+              className={END_CHIP}
+              onSelect={(point) => onChange(setDeparture(route, routePointFromNavPoint(point)))}
+            />
           </li>
           {route.legs.map((leg, legIndex) => {
             const waypoint = route.waypoints[legIndex]
             const from = legIndex === 0 ? route.departure : route.waypoints[legIndex - 1]
             const to = waypoint ?? route.destination
+            const candidate = computedLegs[legIndex]
+            // Figures of the last computation, only while they are still about these two points.
+            const computed = candidate && from && to && candidate.from.ident === from.ident && candidate.to.ident === to.ident ? candidate : undefined
             return (
               <Fragment key={`leg-${legIndex}`}>
-                <LegRow
+                <LegChip
                   index={legIndex}
                   label={`${from?.ident ?? "…"} → ${to?.ident ?? "…"}`}
                   leg={leg}
-                  computed={computedLegs[legIndex]}
+                  computed={computed}
+                  cruiseAltitude={validAltitude(cruiseAltitude) ? cruiseAltitude : null}
                   cruiseSettings={cruiseSettings}
                   normalSetting={normalSetting}
                   showErrors={showErrors}
@@ -187,12 +147,12 @@ export function RouteEditor({ route, onChange, computedLegs = [], cruiseSettings
                   onSetting={(setting) => onChange(setLegSetting(route, legIndex, setting))}
                 />
                 {waypoint && (
-                  <WaypointRow
+                  <WaypointChip
                     point={waypoint}
                     index={legIndex}
                     count={route.waypoints.length}
-                    onUp={() => onChange(reorderWaypoint(route, legIndex, legIndex - 1))}
-                    onDown={() => onChange(reorderWaypoint(route, legIndex, legIndex + 1))}
+                    onEarlier={() => onChange(reorderWaypoint(route, legIndex, legIndex - 1))}
+                    onLater={() => onChange(reorderWaypoint(route, legIndex, legIndex + 1))}
                     onRemove={() => onChange(removeWaypoint(route, legIndex))}
                     onRename={(name) => onChange(renameWaypoint(route, legIndex, name))}
                   />
@@ -200,34 +160,91 @@ export function RouteEditor({ route, onChange, computedLegs = [], cruiseSettings
               </Fragment>
             )
           })}
-          <li className="flex items-center gap-2 rounded-md bg-muted/50 px-3 py-2 text-sm">
-            <Plane className="h-4 w-4 shrink-0 rotate-90 text-muted-foreground" aria-hidden="true" />
-            {route.destination ? <PointLabel point={route.destination} /> : <span className="text-muted-foreground">{t("route.destination")}</span>}
+          <li>
+            <Label htmlFor="route-destination" className="sr-only">
+              {t("route.destination")}
+            </Label>
+            <NavPointSearch
+              id="route-destination"
+              prefix={t("route.destinationShort")}
+              placeholder={t("route.chooseShort")}
+              types={["AERODROME"]}
+              value={route.destination}
+              near={near}
+              invalid={destinationMissing}
+              describedBy={destinationMissing ? "route-destination-error" : undefined}
+              compact
+              className={END_CHIP}
+              onSelect={(point) => onChange(setDestination(route, routePointFromNavPoint(point)))}
+            />
+          </li>
+          <li className="ml-2">
+            <Label htmlFor="route-add-point" className="sr-only">
+              {t("route.addPoint")}
+            </Label>
+            <NavPointSearch
+              id="route-add-point"
+              addMode
+              allowCoordinates
+              compact
+              placeholder={t("route.addPointShort")}
+              near={near}
+              className="h-9 w-auto rounded-full border-dashed px-3"
+              onSelect={(point) => onChange(appendWaypoint(route, toRoutePoint(route, point)))}
+            />
+          </li>
+          <li className="ml-2 flex items-center">
+            <Label htmlFor="route-alternate" className="sr-only">
+              {t("route.alternate")}
+            </Label>
+            <NavPointSearch
+              id="route-alternate"
+              prefix={t("route.alternateShort")}
+              placeholder={t("route.chooseAlternate")}
+              types={["AERODROME"]}
+              value={route.alternate}
+              near={route.destination ? { lat: route.destination.lat, lon: route.destination.lon } : near}
+              compact
+              className={cn("h-9 w-auto max-w-[16rem] rounded-full border-dashed px-3", route.alternate && "rounded-r-none border-r-0")}
+              onSelect={(point) => onChange(setAlternate(route, routePointFromNavPoint(point)))}
+            />
+            {route.alternate && (
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="h-9 w-9 shrink-0 rounded-l-none rounded-r-full border-dashed"
+                aria-label={t("route.removeAlternate")}
+                title={t("route.removeAlternate")}
+                onClick={() => onChange(setAlternate(route, null))}
+              >
+                <X className="h-4 w-4" aria-hidden="true" />
+              </Button>
+            )}
           </li>
         </ol>
-        <div className="space-y-1 pt-1">
-          <Label htmlFor="route-add-point" className="sr-only">
-            {t("route.addPoint")}
-          </Label>
-          <NavPointSearch
-            id="route-add-point"
-            addMode
-            allowCoordinates
-            placeholder={t("route.addPoint")}
-            near={near}
-            onSelect={(point) => onChange(appendWaypoint(route, toRoutePoint(route, point)))}
-          />
-        </div>
+        {departureMissing && (
+          <p id="route-departure-error" className="text-sm text-destructive">
+            {t("route.departureRequired")}
+          </p>
+        )}
+        {destinationMissing && (
+          <p id="route-destination-error" className="text-sm text-destructive">
+            {t("route.destinationRequired")}
+          </p>
+        )}
+        <p className="text-xs text-muted-foreground">{t("route.mapHint")}</p>
       </div>
     </div>
   )
 }
 
-interface LegRowProps {
+interface LegChipProps {
   index: number
   label: string
   leg: RouteDraft["legs"][number]
   computed?: Leg
+  cruiseAltitude: number | null
   cruiseSettings: string[]
   normalSetting?: string | null
   showErrors: boolean
@@ -236,197 +253,234 @@ interface LegRowProps {
   onSetting: (setting: string | null) => void
 }
 
-function LegRow({ index, label, leg, computed, cruiseSettings, normalSetting, showErrors, onAltitude, onWind, onSetting }: LegRowProps) {
+function LegChip({ index, label, leg, computed, cruiseAltitude, cruiseSettings, normalSetting, showErrors, onAltitude, onWind, onSetting }: LegChipProps) {
   const { t } = useTranslation("navplan")
   const [altitudeText, setAltitudeText] = useState<number | null>(leg.altitudeFt)
-  const invalid = showErrors && (altitudeText === null || altitudeText < 0 || altitudeText > MAX_ALTITUDE_FT)
+  const invalid = showErrors && !validAltitude(altitudeText)
   const suggestion = computed?.suggestedAltitudeFt
   const id = `leg-${index}`
   const wind = leg.windOverride
+  const ownAltitude = cruiseAltitude !== null && leg.altitudeFt !== cruiseAltitude
+  const custom = [ownAltitude ? formatFt(leg.altitudeFt) : null, leg.cruiseSetting ? leg.cruiseSetting : null, wind ? t("route.windTyped") : null].filter(Boolean)
+  const figures = computed
+    ? t("route.legFigures", { course: formatCourse(computed.magneticCourseDeg), distance: formatNm(computed.distanceNm), time: formatMinutes(computed.timeMin) })
+    : t("route.legPending")
 
   return (
-    <li className="ml-3 space-y-2 border-l-2 border-dashed border-border py-1 pl-4">
-      <div className="flex flex-wrap items-end gap-3">
-        <div className="min-w-[9rem] flex-1 space-y-1">
-          <Label htmlFor={`${id}-altitude`} className="text-xs text-muted-foreground">
-            {t("route.legAltitude", { leg: label })}
-          </Label>
-          <NumberField
-            id={`${id}-altitude`}
-            value={leg.altitudeFt}
-            digits={0}
-            unit="ft"
-            invalid={invalid}
-            className="h-9"
-            onValueChange={(value) => {
-              setAltitudeText(value)
-              if (value !== null && value >= 0 && value <= MAX_ALTITUDE_FT) onAltitude(Math.round(value))
-            }}
-          />
-        </div>
-        {cruiseSettings.length > 1 && (
-          <div className="min-w-[9rem] flex-1 space-y-1">
-            <Label htmlFor={`${id}-setting`} className="text-xs text-muted-foreground">
-              {t("route.legSetting")}
-            </Label>
-            <Select value={leg.cruiseSetting ?? "__normal"} onValueChange={(value) => onSetting(value === "__normal" ? null : value)}>
-              <SelectTrigger id={`${id}-setting`} className="h-9">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__normal">{t("route.normalSetting", { setting: normalSetting ?? "—" })}</SelectItem>
-                {cruiseSettings.map((setting) => (
-                  <SelectItem key={setting} value={setting}>
-                    {setting}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-        <div className="flex items-center gap-2 pb-2">
-          <Switch
-            id={`${id}-wind`}
-            checked={Boolean(wind)}
-            onCheckedChange={(checked) => onWind(checked ? { directionDeg: computed?.wind.directionDeg ?? 0, speedKt: computed?.wind.speedKt ?? 0 } : null)}
-          />
-          <Label htmlFor={`${id}-wind`} className="flex items-center gap-1 text-xs">
-            <Wind className="h-3.5 w-3.5" aria-hidden="true" />
-            {t("route.windOverride")}
-          </Label>
-        </div>
-      </div>
-      {invalid && <p className="text-sm text-destructive">{t("route.altitudeInvalid", { max: formatFt(MAX_ALTITUDE_FT) })}</p>}
-      {suggestion && suggestion !== leg.altitudeFt && (
-        <p className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
-          {t("route.suggestion", { altitude: formatFt(suggestion) })}
-          <Button type="button" variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => onAltitude(suggestion)}>
-            {t("route.useSuggestion")}
-          </Button>
-        </p>
-      )}
-      {wind && (
-        <div className="grid grid-cols-3 gap-2">
+    <li className="flex items-center">
+      <ChevronRight className="h-4 w-4 shrink-0 text-brand" aria-hidden="true" />
+      <Popover>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            className={cn(
+              "inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-xs tabular-nums text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              invalid && "text-destructive ring-1 ring-destructive",
+            )}
+          >
+            <span className="sr-only">{t("route.legOf", { leg: label })} </span>
+            <abbr title={t("log.long.magneticCourse")} className="no-underline">
+              {t("log.columns.magneticCourse")}
+            </abbr>{" "}
+            <span>{figures}</span>
+            {custom.length > 0 && <span className="rounded bg-muted px-1.5 py-0.5 font-medium text-foreground">{custom.join(" · ")}</span>}
+            {invalid && <span className="sr-only">{t("route.altitudeInvalid", { max: formatFt(MAX_ALTITUDE_FT) })}</span>}
+            <ChevronDown className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-80 space-y-3" align="start" aria-label={t("route.legTitle", { leg: label })}>
+          <p className="text-sm font-semibold">{t("route.legTitle", { leg: label })}</p>
           <div className="space-y-1">
-            <Label htmlFor={`${id}-wind-dir`} className="text-xs text-muted-foreground">
-              {t("route.windDirection")}
+            <Label htmlFor={`${id}-altitude`} className="text-xs">
+              {t("route.legAltitude", { leg: label })}
             </Label>
             <NumberField
-              id={`${id}-wind-dir`}
-              value={wind.directionDeg}
+              id={`${id}-altitude`}
+              value={leg.altitudeFt}
               digits={0}
-              unit="°"
+              unit="ft"
+              invalid={invalid}
               className="h-9"
-              onValueChange={(value) => value !== null && onWind({ ...wind, directionDeg: Math.round(((value % 360) + 360) % 360) })}
+              onValueChange={(value) => {
+                setAltitudeText(value)
+                if (validAltitude(value)) onAltitude(Math.round(value))
+              }}
             />
+            {invalid && <p className="text-sm text-destructive">{t("route.altitudeInvalid", { max: formatFt(MAX_ALTITUDE_FT) })}</p>}
+            {suggestion && suggestion !== leg.altitudeFt && (
+              <p className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+                {t("route.suggestion", { altitude: formatFt(suggestion) })}
+                <Button type="button" variant="link" size="sm" className="h-auto p-0 text-xs" onClick={() => onAltitude(suggestion)}>
+                  {t("route.useSuggestion")}
+                </Button>
+              </p>
+            )}
           </div>
-          <div className="space-y-1">
-            <Label htmlFor={`${id}-wind-speed`} className="text-xs text-muted-foreground">
-              {t("route.windSpeed")}
-            </Label>
-            <NumberField
-              id={`${id}-wind-speed`}
-              value={wind.speedKt}
-              digits={0}
-              unit="kt"
-              className="h-9"
-              onValueChange={(value) => value !== null && value >= 0 && onWind({ ...wind, speedKt: Math.round(value) })}
-            />
+
+          <div className="space-y-2">
+            <span className="text-xs font-medium" id={`${id}-wind-label`}>
+              {t("route.windSource")}
+            </span>
+            <ToggleGroup
+              type="single"
+              size="sm"
+              className="justify-start"
+              value={wind ? "typed" : "forecast"}
+              aria-labelledby={`${id}-wind-label`}
+              onValueChange={(value) => {
+                if (value === "typed" && !wind) onWind({ directionDeg: computed?.wind.directionDeg ?? 0, speedKt: computed?.wind.speedKt ?? 0 })
+                if (value === "forecast" && wind) onWind(null)
+              }}
+            >
+              <ToggleGroupItem value="forecast">{t("route.windForecast")}</ToggleGroupItem>
+              <ToggleGroupItem value="typed">{t("route.windTyped")}</ToggleGroupItem>
+            </ToggleGroup>
+            {wind && (
+              <div className="grid grid-cols-3 gap-2">
+                <div className="space-y-1">
+                  <Label htmlFor={`${id}-wind-dir`} className="text-xs text-muted-foreground">
+                    {t("route.windDirection")}
+                  </Label>
+                  <NumberField
+                    id={`${id}-wind-dir`}
+                    value={wind.directionDeg}
+                    digits={0}
+                    unit="°"
+                    className="h-9"
+                    onValueChange={(value) => value !== null && onWind({ ...wind, directionDeg: Math.round(((value % 360) + 360) % 360) })}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor={`${id}-wind-speed`} className="text-xs text-muted-foreground">
+                    {t("route.windSpeed")}
+                  </Label>
+                  <NumberField
+                    id={`${id}-wind-speed`}
+                    value={wind.speedKt}
+                    digits={0}
+                    unit="kt"
+                    className="h-9"
+                    onValueChange={(value) => value !== null && value >= 0 && onWind({ ...wind, speedKt: Math.round(value) })}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor={`${id}-wind-temp`} className="text-xs text-muted-foreground">
+                    {t("route.temperature")}
+                  </Label>
+                  <NumberField
+                    id={`${id}-wind-temp`}
+                    value={wind.temperatureC ?? null}
+                    digits={0}
+                    unit="°C"
+                    className="h-9"
+                    onValueChange={(value) => onWind({ ...wind, temperatureC: value })}
+                  />
+                </div>
+              </div>
+            )}
           </div>
-          <div className="space-y-1">
-            <Label htmlFor={`${id}-wind-temp`} className="text-xs text-muted-foreground">
-              {t("route.temperature")}
-            </Label>
-            <NumberField
-              id={`${id}-wind-temp`}
-              value={wind.temperatureC ?? null}
-              digits={0}
-              unit="°C"
-              className="h-9"
-              onValueChange={(value) => onWind({ ...wind, temperatureC: value })}
-            />
-          </div>
-        </div>
-      )}
+
+          {cruiseSettings.length > 1 && (
+            <div className="space-y-1">
+              <Label htmlFor={`${id}-setting`} className="text-xs">
+                {t("route.legSetting")}
+              </Label>
+              <Select value={leg.cruiseSetting ?? "__normal"} onValueChange={(value) => onSetting(value === "__normal" ? null : value)}>
+                <SelectTrigger id={`${id}-setting`} className="h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__normal">{t("route.normalSetting", { setting: normalSetting ?? "—" })}</SelectItem>
+                  {cruiseSettings.map((setting) => (
+                    <SelectItem key={setting} value={setting}>
+                      {setting}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </PopoverContent>
+      </Popover>
+      <ChevronRight className="h-4 w-4 shrink-0 text-brand" aria-hidden="true" />
     </li>
   )
 }
 
-interface WaypointRowProps {
+interface WaypointChipProps {
   point: RoutePoint
   index: number
   count: number
-  onUp: () => void
-  onDown: () => void
+  onEarlier: () => void
+  onLater: () => void
   onRemove: () => void
   onRename: (name: string) => void
 }
 
-function WaypointRow({ point, index, count, onUp, onDown, onRemove, onRename }: WaypointRowProps) {
+function WaypointChip({ point, index, count, onEarlier, onLater, onRemove, onRename }: WaypointChipProps) {
   const { t } = useTranslation("navplan")
   const isUser = point.type === "USER"
+  const [name, setName] = useState(point.ident)
+  const commit = () => {
+    if (name.trim() && name.trim() !== point.ident) onRename(name)
+  }
   return (
-    <li className={cn("flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm")}>
-      <span className="w-5 shrink-0 text-xs tabular-nums text-muted-foreground">{index + 1}</span>
-      {isUser ? (
-        <div className="min-w-0 flex-1">
-          <Label htmlFor={`waypoint-${index}-name`} className="sr-only">
-            {t("route.pointName", { position: index + 1 })}
-          </Label>
-          <Input
-            key={`${point.ident}-${point.lat}-${point.lon}`}
-            id={`waypoint-${index}-name`}
-            defaultValue={point.ident}
-            maxLength={24}
-            className="h-8"
-            onBlur={(event) => onRename(event.target.value)}
-          />
-          <span className="text-xs text-muted-foreground tabular-nums">
-            {t("pointType.USER")} · {point.lat.toFixed(4)}, {point.lon.toFixed(4)}
-          </span>
-        </div>
-      ) : (
-        <div className="min-w-0 flex-1">
-          <PointLabel point={point} />
-        </div>
-      )}
-      <div className="flex shrink-0 items-center">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-9 w-9"
-          disabled={index === 0}
-          aria-label={t("route.moveUp", { ident: point.ident })}
-          title={t("route.moveUpShort")}
-          onClick={onUp}
-        >
-          <ArrowUp className="h-4 w-4" aria-hidden="true" />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-9 w-9"
-          disabled={index === count - 1}
-          aria-label={t("route.moveDown", { ident: point.ident })}
-          title={t("route.moveDownShort")}
-          onClick={onDown}
-        >
-          <ArrowDown className="h-4 w-4" aria-hidden="true" />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-9 w-9 text-destructive hover:text-destructive"
-          aria-label={t("route.removePoint", { ident: point.ident })}
-          title={t("route.removePointShort")}
-          onClick={onRemove}
-        >
-          <Trash2 className="h-4 w-4" aria-hidden="true" />
-        </Button>
-      </div>
+    <li>
+      <Popover
+        onOpenChange={(open) => {
+          // Opened: start from the current name. Closed: keep what was typed.
+          if (open) setName(point.ident)
+          else commit()
+        }}
+      >
+        <PopoverTrigger asChild>
+          <Button type="button" variant="outline" className={POINT_CHIP} title={`${point.lat.toFixed(4)}, ${point.lon.toFixed(4)}`}>
+            <span className="sr-only">{t("route.pointChip", { position: index + 1 })} </span>
+            <span className="font-semibold">{point.ident}</span>
+            {!isUser && <span className="text-xs text-muted-foreground">{t(`pointType.${point.type}`)}</span>}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-72 space-y-3" align="start" aria-label={`${t("route.pointChip", { position: index + 1 })} ${point.ident}`}>
+          {isUser ? (
+            <div className="space-y-1">
+              <Label htmlFor={`waypoint-${index}-name`} className="text-xs">
+                {t("route.pointName", { position: index + 1 })}
+              </Label>
+              <Input
+                id={`waypoint-${index}-name`}
+                value={name}
+                maxLength={24}
+                className="h-9 font-medium"
+                onChange={(event) => setName(event.target.value)}
+                onBlur={commit}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") commit()
+                }}
+              />
+            </div>
+          ) : (
+            <p className="text-sm">
+              <span className="font-semibold">{point.ident}</span>
+              <span className="ml-2 text-xs text-muted-foreground">{t(`pointType.${point.type}`)}</span>
+              {point.name && point.name !== point.ident && <span className="block text-xs text-muted-foreground">{point.name}</span>}
+            </p>
+          )}
+          <div className="grid grid-cols-2 gap-2">
+            <Button type="button" variant="outline" size="sm" disabled={index === 0} aria-label={t("route.moveUp", { ident: point.ident })} onClick={onEarlier}>
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+              {t("route.moveUpShort")}
+            </Button>
+            <Button type="button" variant="outline" size="sm" disabled={index === count - 1} aria-label={t("route.moveDown", { ident: point.ident })} onClick={onLater}>
+              {t("route.moveDownShort")}
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </Button>
+          </div>
+          <Button type="button" variant="ghost" size="sm" className="w-full text-destructive hover:text-destructive" aria-label={t("route.removePoint", { ident: point.ident })} onClick={onRemove}>
+            <Trash2 className="h-4 w-4" aria-hidden="true" />
+            {t("route.removePointShort")}
+          </Button>
+        </PopoverContent>
+      </Popover>
     </li>
   )
 }

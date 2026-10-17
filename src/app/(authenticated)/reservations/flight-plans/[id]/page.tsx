@@ -45,6 +45,7 @@ import { downloadBase64Pdf } from "@/lib/download"
 import { apiRefusal } from "@/lib/api-refusal"
 import { formatDate, formatDateTime, formatFlightDuration, formatTime } from "@/lib/format"
 import type { FlightPlan, FlightPlanningSettings, NavPoint, PdfFormat } from "@/lib/navplan/types"
+import { formatCourse, formatNm } from "@/lib/navplan/units"
 
 import "@/styles/print.css"
 
@@ -132,6 +133,7 @@ export default function FlightPlanDetails() {
       points: legs.length > 0 ? [toMapPoint(legs[0].from), ...legs.map((leg) => toMapPoint(leg.to))] : [],
       alternate: plan.result.alternateLeg ? toMapPoint(plan.result.alternateLeg.to) : null,
       distances: legs.map((leg) => leg.distanceNm),
+      labels: legs.map((leg) => `${formatCourse(leg.magneticCourseDeg)} · ${formatNm(leg.distanceNm, 0)}`),
     }
   }, [plan])
 
@@ -330,6 +332,7 @@ export default function FlightPlanDetails() {
                 alternate={planMap?.alternate}
                 profile={plan.result.profile}
                 legDistancesNm={planMap?.distances}
+                legLabels={planMap?.labels}
               />
             </div>
             <Card className="min-w-0">

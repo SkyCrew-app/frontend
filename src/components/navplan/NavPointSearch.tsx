@@ -26,6 +26,11 @@ interface NavPointSearchProps {
   invalid?: boolean
   describedBy?: string
   addMode?: boolean
+  /** Written before the value, muted ("Départ"), for a compact chip of the route strip. */
+  prefix?: string
+  /** Only the ident of the chosen point in the button (its name as a tooltip). */
+  compact?: boolean
+  className?: string
 }
 
 const MIN_QUERY = 2
@@ -41,6 +46,9 @@ export function NavPointSearch({
   invalid = false,
   describedBy,
   addMode = false,
+  prefix,
+  compact = false,
+  className,
 }: NavPointSearchProps) {
   const { t } = useTranslation("navplan")
   const [open, setOpen] = useState(false)
@@ -77,25 +85,27 @@ export function NavPointSearch({
           aria-expanded={open}
           aria-invalid={invalid || undefined}
           aria-describedby={describedBy}
-          className={cn("w-full justify-between font-normal", invalid && "border-destructive", !value && "text-muted-foreground")}
+          title={compact && value?.name && value.name !== value.ident ? value.name : undefined}
+          className={cn("w-full justify-between font-normal", invalid && "border-destructive", !value && "text-muted-foreground", className)}
         >
           <span className="flex min-w-0 items-center gap-2">
             {addMode ? <Plus className="h-4 w-4 shrink-0" aria-hidden="true" /> : null}
+            {prefix && <span className="shrink-0 text-xs text-muted-foreground">{prefix}</span>}
             <span className="truncate">
               {value ? (
                 <>
-                  <span className="font-medium text-foreground">{value.ident}</span>
-                  {value.name && value.name !== value.ident ? ` · ${value.name}` : ""}
+                  <span className="font-semibold text-foreground">{value.ident}</span>
+                  {!compact && value.name && value.name !== value.ident ? ` · ${value.name}` : ""}
                 </>
               ) : (
                 placeholder
               )}
             </span>
           </span>
-          <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" aria-hidden="true" />
+          {!compact && <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" aria-hidden="true" />}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[min(24rem,calc(100vw-2rem))] p-0" align="start">
+      <PopoverContent className="w-[min(24rem,calc(100vw-2rem))] p-0" align="start" aria-label={t("search.placeholder")}>
         <Command shouldFilter={false}>
           <CommandInput value={text} onValueChange={setText} placeholder={t("search.placeholder")} />
           <CommandList>

@@ -151,8 +151,10 @@ describe("AeroMap", () => {
     const attribution = map.options.attributionControl as { customAttribution: string[] }
     // The OpenFreeMap style credits OpenFreeMap / OpenMapTiles / OpenStreetMap itself: not twice.
     expect(attribution.customAttribution.join(" ")).not.toContain("openmaptiles")
-    expect(attribution.customAttribution).toContain("Fond OpenStreetMap — ne remplace pas la carte aéronautique OACI en vigueur")
+    expect(attribution.customAttribution).toEqual(["Ne remplace pas la carte aéronautique OACI", "Données aéronautiques : SIA"])
     expect(map.layers).toEqual(expect.arrayContaining(["aero-airspaces-fill", "aero-navpoints-circle", "aero-route-line"]))
+    // The route is drawn over the aerodromes around it, never under them.
+    expect(map.layers.indexOf("aero-route-line")).toBeGreaterThan(map.layers.indexOf("aero-navpoints-label"))
     expect(map.fitted).toBeInstanceOf(MockBounds)
     expect(screen.getByRole("region", { name: "Carte de la route" })).toBeInTheDocument()
     // MapLibre adds "maplibregl-map" (position: relative) to this element: an absolutely
