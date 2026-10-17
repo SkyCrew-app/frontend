@@ -4,18 +4,10 @@ import { useEffect, useState } from "react"
 import { createPortal } from "react-dom"
 import { useTranslation } from "react-i18next"
 import { formatDate } from "@/lib/format"
-import type { FlightPlanInput, FlightPlanResult, Leg, PdfFormat } from "@/lib/navplan/types"
-import {
-  formatCourse,
-  formatDrift,
-  formatKt,
-  formatLitres,
-  formatMinutes,
-  formatNm,
-  formatUtcTime,
-  formatWind,
-} from "@/lib/navplan/units"
-import { legProfileNotes } from "./NavLogTable"
+import type { FlightPlanInput, FlightPlanResult, PdfFormat } from "@/lib/navplan/types"
+import { formatLitres, formatMinutes, formatUtcTime } from "@/lib/navplan/units"
+import { NAVLOG_COLUMNS, navLogCell, navLogCumulative, navLogRows } from "./navlog-rows"
+import { useRowNotes } from "./NavLogTable"
 import { useQnhOrigin } from "./FlightConditions"
 import { massBalanceComputed } from "@/lib/navplan/status"
 import "./navlog-print.css"
@@ -48,19 +40,10 @@ export function printNavLog(format: PdfFormat) {
   setTimeout(() => window.print(), 150)
 }
 
-const zonesToContact = (leg: Leg) =>
-  leg.crossings
-    .filter((crossing) => crossing.relation !== "ABOVE" && crossing.relation !== "BELOW")
-    .map((crossing) => {
-      const frequency = crossing.airspace.frequencies[0]
-      return frequency ? `${crossing.airspace.name} ${frequency.mhz}` : crossing.airspace.name
-    })
-    .join(" · ")
-
 /** The QNH the plan was computed with, so the paper log never says "—" when the METAR gave it. */
 export const printedQnh = (qnh: number | null | undefined) => (typeof qnh === "number" ? `${Math.round(qnh)} hPa` : "—")
 
-/** Paper nav log of design § 2.10, with blank columns for the actual times and fuel. */
+/** Paper nav log of design § 2.10: the columns of the screen, with blank boxes for the actual times and fuel. */
 export function PrintableNavLog({ result, input, aircraft, pilot, format }: PrintableNavLogProps) {
   const { t } = useTranslation("navplan")
   // Printed as a child of <body>, so the rest of the page can be left out of the print
@@ -68,8 +51,9 @@ export function PrintableNavLog({ result, input, aircraft, pilot, format }: Prin
   const [mounted, setMounted] = useState(false)
   useEffect(() => setMounted(true), [])
   const qnhOrigin = useQnhOrigin(result, input.departureTime)
-  const legs = result.alternateLeg ? [...result.legs, result.alternateLeg] : result.legs
-  let cumulativeDistance = 0
+  const rows = navLogRows(result)
+  const labels = { calm: t("log.calm"), noForecast: t("log.noWindForecast") }
+  const notesOf = useRowNotes()
 
   if (!mounted) return null
   return createPortal(
@@ -96,64 +80,40 @@ export function PrintableNavLog({ result, input, aircraft, pilot, format }: Prin
       <table>
         <thead>
           <tr>
-            <th>{t("print.columns.point")}</th>
-            <th>{t("print.columns.altitude")}</th>
-            <th>{t("print.columns.trueCourse")}</th>
-            <th>{t("print.columns.magneticCourse")}</th>
-            <th>{t("print.columns.wind")}</th>
-            <th>{t("print.columns.drift")}</th>
-            <th>{t("print.columns.magneticHeading")}</th>
-            <th>{t("print.columns.tas")}</th>
-            <th>{t("print.columns.gs")}</th>
-            <th>{t("print.columns.distance")}</th>
-            <th>{t("print.columns.cumulativeDistance")}</th>
-            <th>{t("print.columns.time")}</th>
-            <th>{t("print.columns.cumulativeTime")}</th>
-            <th>{t("print.columns.eta")}</th>
-            <th>{t("print.columns.ata")}</th>
-            <th>{t("print.columns.fuelPlanned")}</th>
-            <th>{t("print.columns.fuelActual")}</th>
-            <th>{t("print.columns.contacts")}</th>
-            <th>{t("print.columns.remarks")}</th>
+            {NAVLOG_COLUMNS.map((column) => (
+              <th key={column}>
+                {t(`log.columns.${column}`)}
+                {t(`log.units.${column}`, { defaultValue: "" }) && <span className="navlog-print__unit">{t(`log.units.${column}`)}</span>}
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td>{result.legs[0]?.from.ident ?? "—"}</td>
-            <td colSpan={18} />
-          </tr>
-          {legs.map((leg, position) => {
-            const isAlternate = position === result.legs.length
-            cumulativeDistance = isAlternate ? leg.distanceNm : cumulativeDistance + leg.distanceNm
-            const { toc, tod } = legProfileNotes(leg)
-            const remarks = [
-              isAlternate ? t("log.alternate") : null,
-              toc !== undefined ? `TOC ${formatNm(toc)}` : null,
-              tod !== undefined ? `TOD ${formatNm(tod)}` : null,
-            ]
-              .filter(Boolean)
-              .join(" · ")
+          {rows.map((row) => {
+            const notes = notesOf(row)
             return (
-              <tr key={`${isAlternate ? "alt" : "leg"}-${leg.index}`}>
-                <td>{leg.to.ident}</td>
-                <td>{leg.altitudeFt}</td>
-                <td>{formatCourse(leg.trueCourseDeg)}</td>
-                <td>{formatCourse(leg.magneticCourseDeg)}</td>
-                <td>{formatWind(leg.wind, t("log.calm"))}</td>
-                <td>{formatDrift(leg.windCorrectionDeg)}</td>
-                <td className="navlog-print__strong">{formatCourse(leg.magneticHeadingDeg)}</td>
-                <td>{formatKt(leg.tasKt)}</td>
-                <td>{formatKt(leg.groundSpeedKt)}</td>
-                <td>{formatNm(leg.distanceNm)}</td>
-                <td>{formatNm(cumulativeDistance)}</td>
-                <td>{formatMinutes(leg.timeMin)}</td>
-                <td>{formatMinutes(leg.cumulativeTimeMin)}</td>
-                <td>{formatUtcTime(leg.eta)}</td>
-                <td />
-                <td>{formatLitres(leg.fuelRemainingL, 0)}</td>
-                <td />
-                <td>{zonesToContact(leg)}</td>
-                <td>{remarks}</td>
+              <tr key={row.key}>
+                {NAVLOG_COLUMNS.map((column) => {
+                  if (column === "point") {
+                    return (
+                      <td key={column} className="navlog-print__point">
+                        <span className="navlog-print__strong">
+                          {row.kind === "alternate" ? `${t("log.alternate")} ` : ""}
+                          {row.ident}
+                        </span>
+                        {row.name && row.name !== row.ident && <span className="navlog-print__note">{row.name}</span>}
+                        {notes.length > 0 && <span className="navlog-print__note">{notes.join(" · ")}</span>}
+                      </td>
+                    )
+                  }
+                  const cumulative = navLogCumulative(row, column)
+                  return (
+                    <td key={column} className={`navlog-print__${column}`}>
+                      {navLogCell(row, column, labels)}
+                      {cumulative && <span className="navlog-print__note">{cumulative}</span>}
+                    </td>
+                  )
+                })}
               </tr>
             )
           })}

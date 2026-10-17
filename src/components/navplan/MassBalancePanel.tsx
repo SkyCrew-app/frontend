@@ -13,6 +13,8 @@ import { MassBalanceChart, type PlottedPoint } from "./MassBalanceChart"
 interface MassBalancePanelProps {
   massBalance: MassBalanceResult
   weighingDate?: string | null
+  /** In a narrow column (next to the load): chart above the three states, never side by side. */
+  stacked?: boolean
 }
 
 export function massBalancePoints(result: MassBalanceResult, labels: { takeoff: [string, string]; landing: [string, string]; zeroFuel: [string, string] }): PlottedPoint[] {
@@ -32,7 +34,7 @@ export function massBalancePoints(result: MassBalanceResult, labels: { takeoff: 
 }
 
 /** Mass & balance of the flight: verdict first, then the chart and the loading table. */
-export function MassBalancePanel({ massBalance, weighingDate }: MassBalancePanelProps) {
+export function MassBalancePanel({ massBalance, weighingDate, stacked = false }: MassBalancePanelProps) {
   const { t } = useTranslation("navplan")
   if (!massBalanceComputed(massBalance)) {
     return (
@@ -83,7 +85,7 @@ export function MassBalancePanel({ massBalance, weighingDate }: MassBalancePanel
         </Badge>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className={cn("grid gap-4", !stacked && "lg:grid-cols-2")}>
         <div className="space-y-2">
           <MassBalanceChart envelope={massBalance.envelope.points} points={points} showPath />
           <p className="text-xs text-muted-foreground">
@@ -91,7 +93,7 @@ export function MassBalancePanel({ massBalance, weighingDate }: MassBalancePanel
           </p>
         </div>
 
-        <dl className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
+        <dl className={cn("grid grid-cols-1 gap-3 sm:grid-cols-3", !stacked && "lg:grid-cols-1 xl:grid-cols-3")}>
           <StateCard title={t("massBalance.takeoff")} state={massBalance.takeoff} />
           <StateCard title={t("massBalance.landing")} state={massBalance.landing} />
           <StateCard title={t("massBalance.zeroFuel")} state={massBalance.zeroFuel} />

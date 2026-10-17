@@ -51,6 +51,7 @@ function AeroMapCanvas({
   alternate = null,
   profile = [],
   legDistancesNm = [],
+  legLabels = [],
   editable = false,
   onAddPoint,
   onMoveWaypoint,
@@ -66,6 +67,9 @@ function AeroMapCanvas({
   const markersRef = useRef<Marker[]>([])
   const navPointsRef = useRef<NavPoint[]>([])
   const fittedRef = useRef(false)
+  // Idents of the route: the overlay of nav points leaves them to the route markers.
+  const routeIdentsRef = useRef<string[]>([])
+  routeIdentsRef.current = [...points.map((point) => point.ident), ...(alternate ? [alternate.ident] : [])]
   const [state, setState] = useState<MapState>("loading")
 
   // Latest callbacks, read by map listeners registered once.
@@ -88,7 +92,7 @@ function AeroMapCanvas({
           ? await client.query<{ navPointsInBox: NavPoint[] }>({ query: NAV_POINTS_IN_BOX, variables: { bbox } })
           : { data: { navPointsInBox: [] as NavPoint[] } }
       navPointsRef.current = data?.navPointsInBox ?? []
-      setSourceData(map, NAVPOINT_SOURCE, navPointFeatures(navPointsRef.current))
+      setSourceData(map, NAVPOINT_SOURCE, navPointFeatures(navPointsRef.current, routeIdentsRef.current))
     } catch {
       // Too much to show at this zoom, or the API is unreachable: the route stays usable.
     }
@@ -98,6 +102,7 @@ function AeroMapCanvas({
   useEffect(() => {
     let cancelled = false
     let moveTimer: ReturnType<typeof setTimeout> | undefined
+    let resizeObserver: ResizeObserver | undefined
 
     import("maplibre-gl")
       .then((module) => {
@@ -123,6 +128,11 @@ function AeroMapCanvas({
           touchPitch: false,
         })
         mapRef.current = map
+        // The map may be laid out while hidden (a step not shown yet): it follows its box.
+        if (typeof ResizeObserver !== "undefined") {
+          resizeObserver = new ResizeObserver(() => map.resize())
+          resizeObserver.observe(containerRef.current)
+        }
         map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right")
         map.addControl(new maplibregl.ScaleControl({ unit: "nautical" }), "bottom-left")
 
@@ -131,7 +141,8 @@ function AeroMapCanvas({
           map.addSource(AIRSPACE_SOURCE, { type: "geojson", data: asGeoJson(airspaceFeatures([])) })
           map.addSource(NAVPOINT_SOURCE, { type: "geojson", data: asGeoJson(navPointFeatures([])) })
           map.addSource(ROUTE_SOURCE, { type: "geojson", data: asGeoJson(routeFeatures([], null)) })
-          for (const layer of [...airspaceLayers(), ...routeLayers(), ...navPointLayers()]) map.addLayer(layer as AddLayerObject)
+          // Bottom to top: areas, nav points around, then the route over them.
+          for (const layer of [...airspaceLayers(), ...navPointLayers(theme), ...routeLayers(theme)]) map.addLayer(layer as AddLayerObject)
           setState("ready")
           void loadOverlays()
         })
@@ -157,6 +168,7 @@ function AeroMapCanvas({
     return () => {
       cancelled = true
       clearTimeout(moveTimer)
+      resizeObserver?.disconnect()
       markersRef.current.forEach((marker) => marker.remove())
       markersRef.current = []
       mapRef.current?.remove()
@@ -169,8 +181,11 @@ function AeroMapCanvas({
   // Route line, alternate, TOC/TOD.
   useEffect(() => {
     if (state !== "ready") return
-    if (mapRef.current) setSourceData(mapRef.current, ROUTE_SOURCE, routeFeatures(points, alternate, profile, legDistancesNm))
-  }, [state, points, alternate, profile, legDistancesNm])
+    const map = mapRef.current
+    if (!map) return
+    setSourceData(map, ROUTE_SOURCE, routeFeatures(points, alternate, profile, legDistancesNm, legLabels))
+    setSourceData(map, NAVPOINT_SOURCE, navPointFeatures(navPointsRef.current, routeIdentsRef.current))
+  }, [state, points, alternate, profile, legDistancesNm, legLabels])
 
   // Point markers (draggable in edit mode) and leg handles to insert a point.
   useEffect(() => {
@@ -185,7 +200,7 @@ function AeroMapCanvas({
       const waypointIndex = index - 1
       const draggable = editable && !isEnd
       const element = document.createElement(draggable ? "button" : "div")
-      element.className = cn("aero-marker", isEnd ? "aero-marker--end" : "aero-marker--point")
+      element.className = cn("aero-marker", isEnd ? "aero-marker--end" : "aero-marker--point", theme === "dark" && "aero-marker--dark")
       element.textContent = point.ident
       if (draggable) {
         element.setAttribute("type", "button")
@@ -203,7 +218,7 @@ function AeroMapCanvas({
 
     if (alternate) {
       const element = document.createElement("div")
-      element.className = "aero-marker aero-marker--alternate"
+      element.className = cn("aero-marker aero-marker--alternate", theme === "dark" && "aero-marker--dark")
       element.textContent = alternate.ident
       markersRef.current.push(new maplibregl.Marker({ element }).setLngLat([alternate.lon, alternate.lat]).addTo(map))
     }
@@ -212,7 +227,7 @@ function AeroMapCanvas({
       legMidpoints(points).forEach((midpoint) => {
         const element = document.createElement("button")
         element.type = "button"
-        element.className = "aero-marker aero-marker--handle"
+        element.className = cn("aero-marker aero-marker--handle", theme === "dark" && "aero-marker--dark")
         element.textContent = "+"
         element.setAttribute("aria-label", t("map.insertHandle", { leg: midpoint.legIndex + 1 }))
         const marker = new maplibregl.Marker({ element, draggable: true }).setLngLat([midpoint.lon, midpoint.lat]).addTo(map)
@@ -233,7 +248,7 @@ function AeroMapCanvas({
     } else if (!fittedRef.current && points.length === 1) {
       map.flyTo({ center: [points[0].lon, points[0].lat], zoom: 9 })
     }
-  }, [state, points, alternate, editable, onInsertPoint, t])
+  }, [state, points, alternate, editable, onInsertPoint, t, theme])
 
   return (
     <div className={cn("relative h-full w-full overflow-hidden bg-muted", className)}>

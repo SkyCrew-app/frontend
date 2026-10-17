@@ -14,6 +14,8 @@ export interface AeroMapProps {
   alternate?: AeroMapPoint | null
   profile?: ProfilePoint[]
   legDistancesNm?: number[]
+  /** Written along each leg, e.g. "316° · 24 NM" (magnetic course and distance). */
+  legLabels?: string[]
   /** Click to add, drag to move, drag a leg handle to insert. */
   editable?: boolean
   onAddPoint?: (point: NavPoint | MapPoint) => void
