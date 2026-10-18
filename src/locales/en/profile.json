@@ -111,6 +111,18 @@
       "toastDescription": "Only your password will be requested when you sign in."
     }
   },
+  "signIns": {
+    "title": "My recent sign-ins",
+    "description": "The last 20 sign-ins to your account, successful or not.",
+    "hint": "A sign-in you do not recognise? Change your password.",
+    "loading": "Loading your sign-ins",
+    "loadError": "Your sign-ins could not be loaded.",
+    "empty": "No sign-in recorded yet.",
+    "date": "Date",
+    "device": "Device",
+    "ip": "IP address",
+    "outcome": "Result"
+  },
   "notifications": {
     "title": "Notifications",
     "description": "Each change is saved immediately.",

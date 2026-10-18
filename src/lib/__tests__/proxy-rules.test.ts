@@ -125,6 +125,7 @@ describe('canOpenPage', () => {
     '/administration/e-learning',
     '/administration/settings',
     '/administration/actions',
+    '/administration/logins',
     '/administration/unknown-page',
   ];
 

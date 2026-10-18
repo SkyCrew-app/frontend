@@ -227,6 +227,9 @@
       "activity": "Activity",
       "flightHours": "Flight hours",
       "accountBalance": "Account balance",
+      "lastSignIn": "Last sign-in",
+      "neverSignedIn": "Never signed in",
+      "signInHistory": "See their sign-ins",
       "slot": "Slot",
       "noBookings": {
         "title": "No bookings",
@@ -1563,5 +1566,67 @@
     "targetNamed": "{{type}}: {{name}}",
     "targetNumbered": "{{type}} No. {{id}}",
     "detail": "{{label}}: {{value}}"
+  },
+  "loginLog": {
+    "title": "Sign-in log",
+    "description": "Who signed in to which account, when, from where and with what result. Lines are kept for six months.",
+    "loading": "Loading the log",
+    "filters": {
+      "member": "Account",
+      "allMembers": "All accounts",
+      "outcome": "Result",
+      "allOutcomes": "All results",
+      "period": "Period",
+      "periods": {
+        "all": "The last six months",
+        "day": "Last 24 hours",
+        "week": "Last 7 days",
+        "month": "Last 30 days"
+      }
+    },
+    "table": {
+      "date": "Date",
+      "account": "Account",
+      "outcome": "Result",
+      "device": "Device",
+      "ip": "IP address"
+    },
+    "outcomes": {
+      "SUCCESS": "Signed in",
+      "WRONG_PASSWORD": "Wrong password",
+      "UNKNOWN_ACCOUNT": "Unknown account",
+      "LOCKED_OR_THROTTLED": "Too many attempts",
+      "SECOND_FACTOR_REQUIRED": "Two-factor code requested",
+      "SECOND_FACTOR_FAILED": "Wrong two-factor code",
+      "ACCOUNT_DEACTIVATED": "Account deactivated",
+      "LOGOUT": "Signed out"
+    },
+    "methods": {
+      "PASSWORD": "with the password",
+      "TWO_FACTOR_CODE": "with the two-factor code"
+    },
+    "devices": {
+      "DESKTOP": "Computer",
+      "MOBILE": "Phone",
+      "TABLET": "Tablet",
+      "BOT": "Robot or script",
+      "UNKNOWN": "Unknown device"
+    },
+    "unknownAddress": "Unknown address: {{email}}",
+    "unknownAccount": "Unknown address",
+    "formerMember": "Former member",
+    "noIp": "—",
+    "empty": {
+      "title": "No sign-in recorded",
+      "description": "Every sign-in, successful or not, will appear here."
+    },
+    "noMatch": {
+      "title": "No sign-in matches",
+      "description": "Widen the filters to see other sign-ins."
+    },
+    "pagination": {
+      "events_one": "sign-in",
+      "events_other": "sign-ins"
+    }
   }
 }

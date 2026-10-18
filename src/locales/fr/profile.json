@@ -111,6 +111,18 @@
       "toastDescription": "Seul votre mot de passe sera demandé à la connexion."
     }
   },
+  "signIns": {
+    "title": "Mes dernières connexions",
+    "description": "Les 20 dernières connexions à votre compte, réussies ou non.",
+    "hint": "Une connexion que vous ne reconnaissez pas ? Changez votre mot de passe.",
+    "loading": "Chargement de vos connexions",
+    "loadError": "Vos connexions n'ont pas pu être chargées.",
+    "empty": "Aucune connexion enregistrée pour l'instant.",
+    "date": "Date",
+    "device": "Appareil",
+    "ip": "Adresse IP",
+    "outcome": "Résultat"
+  },
   "notifications": {
     "title": "Notifications",
     "description": "Chaque changement est enregistré immédiatement.",
