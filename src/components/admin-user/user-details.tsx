@@ -1,6 +1,7 @@
 "use client"
 import { useEffect, useState } from "react"
 import type { ReactNode } from "react"
+import Link from "next/link"
 import { useTranslation } from "react-i18next"
 import { SidePanel } from "@/components/layout/SidePanel"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
@@ -45,8 +46,8 @@ interface UserDetailsProps {
   initialTab?: "personal-info" | "reservations" | "licenses"
 }
 
-const Fact = ({ label, children }: { label: string; children: ReactNode }) => (
-  <div className="min-w-0">
+const Fact = ({ label, children, className }: { label: string; children: ReactNode; className?: string }) => (
+  <div className={className ? `min-w-0 ${className}` : "min-w-0"}>
     <dt className="text-xs text-muted-foreground">{label}</dt>
     <dd className="mt-0.5 break-words text-sm font-medium">{children}</dd>
   </div>
@@ -195,6 +196,21 @@ export function UserDetailsDialog({
                 </Fact>
                 <Fact label={t("users.details.accountBalance")}>
                   <span className="tabular-nums">{formatMoney(userDetails.user_account_balance ?? 0)}</span>
+                </Fact>
+                <Fact label={t("users.details.lastSignIn")} className="col-span-2">
+                  <span className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                    <span className="tabular-nums">
+                      {userDetails.lastSignInAt
+                        ? formatDateTime(userDetails.lastSignInAt)
+                        : t("users.details.neverSignedIn")}
+                    </span>
+                    <Link
+                      href={`/administration/logins?member=${encodeURIComponent(userDetails.id)}`}
+                      className="text-sm font-normal text-primary underline-offset-4 hover:underline focus-visible:underline"
+                    >
+                      {t("users.details.signInHistory")}
+                    </Link>
+                  </span>
                 </Fact>
               </dl>
               {onBalanceAdjusted && (

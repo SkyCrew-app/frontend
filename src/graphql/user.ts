@@ -206,6 +206,7 @@ export const GET_USER_DETAILS = gql`
       date_of_birth
       total_flight_hours
       user_account_balance
+      lastSignInAt
       reservations {
         id
         start_time

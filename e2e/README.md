@@ -91,6 +91,7 @@ Both checkouts need their dependencies installed. Ports and other settings are l
 | `15-admin-departure` | The student books with an instructor; the administrator deactivates her account and asks for her upcoming bookings to be cancelled: she is refunded what she paid, the slot is free again, she can no longer sign in, the action log keeps the deactivation with its cancellations and refund; the account is reactivated. Deactivating closes the member's sessions: the journey ends by signing her in again and saving the new session |
 | `16-member-licence` | The pilot adds a licence with its issue date from his profile: it is shown waiting for an administrator. The administrator finds it among the licences to validate on the members page, opens the pilot's sheet on his licences and validates it; the pilot then sees it valid. The administrator deletes it at the end |
 | `17-member-incident` | From the fleet, the detail of `F-EEEE` opens the incident report on that aircraft. From the incidents page, the pilot reports a low-severity incident on `F-EEEE` without a flight (the form first refuses an empty report) and finds it open; the administrator resolves it with a note |
+| `19-login-journal` | An address nobody has and a wrong password for the pilot are refused, then the pilot signs in: his profile (Sécurité) lists the wrong password and the sign-in, the administrator finds the unknown address in the sign-in log filtered on « Compte inconnu », the pilot's lines with device and IP filtered on his account and the last 24 hours, his last sign-in on his sheet with a link to his lines, and on a phone one card per sign-in without horizontal scroll |
 
 ## What a run leaves in the database
 
@@ -105,6 +106,7 @@ The application offers no deletion for these, so each run adds:
 - two lines in the account history of Antoine Roux (a credit and a debit of one cent, `13-admin-account`): his balance ends where it started;
 - two cancelled bookings of `F-EEEE` for the student, each with its payment and its refund (`09-instruction-flight` at 14:00, `15-admin-departure` at 16:00): her balance ends where it started. The **first** run on a data set also cancels and refunds the upcoming booking the demo data gives her (`F-GAER`), because the departure cancels every upcoming booking of the member;
 - lines in the administrators' action log, which nothing deletes: the two manual entries, the changes of the club's phone (`10-admin-settings`), the deactivations, reactivations and deletion of members (`04`, `15`), the aircraft deleted by `02`, the validation of the pilot's test licence (`16`), the change of status of the test incident (`17`);
+- lines in the sign-in log, which nothing deletes before six months: every sign-in of the suite, and the three attempts of `19-login-journal`;
 - what the API records along the way: notifications, e-mails, invoices, and the payments of the reservations.
 
 The pilot's balance drops by one cent per run: the price of the booking whose flight is closed. Re-seed the demo data to start clean.
