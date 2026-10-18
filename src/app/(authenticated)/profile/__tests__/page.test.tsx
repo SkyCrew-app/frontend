@@ -12,6 +12,8 @@ import {
 } from '@/graphql/user';
 import { GraphQLError } from 'graphql';
 import { MY_LICENSES } from '@/graphql/licences';
+import { GET_MY_LOGIN_EVENTS } from '@/graphql/login-events';
+import { formatDateTime } from '@/lib/format';
 import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
 
@@ -102,10 +104,32 @@ const twoFactorMock = (enabled: boolean, maxUsageCount = Number.POSITIVE_INFINIT
   maxUsageCount,
 });
 
+const signIn = (overrides: Record<string, unknown> = {}) => ({
+  id: 1,
+  created_at: '2026-10-12T14:30:00.000Z',
+  outcome: 'SUCCESS',
+  method: 'PASSWORD',
+  ip_address: '203.0.113.7',
+  browser: 'Firefox 131',
+  os: 'Windows',
+  device_type: 'DESKTOP',
+  ...overrides,
+});
+
+const signInsMock = (events = [signIn()]): MockedResponse => ({
+  request: { query: GET_MY_LOGIN_EVENTS },
+  result: { data: { myLoginEvents: events } },
+  maxUsageCount: Number.POSITIVE_INFINITY,
+});
+
 // Two-factor is off unless the test provides its own status mocks.
-const renderPage = (mocks: MockedResponse[], twoFactorMocks: MockedResponse[] = [twoFactorMock(false)]) =>
+const renderPage = (
+  mocks: MockedResponse[],
+  twoFactorMocks: MockedResponse[] = [twoFactorMock(false)],
+  signIns: MockedResponse = signInsMock(),
+) =>
   render(
-    <MockedProvider mocks={[...mocks, ...twoFactorMocks]} addTypename={false}>
+    <MockedProvider mocks={[...mocks, ...twoFactorMocks, signIns]} addTypename={false}>
       <ProfilePage />
     </MockedProvider>
   );
@@ -573,6 +597,54 @@ describe('ProfilePage Component', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Réessayer' }));
 
     expect(await screen.findByRole('button', { name: 'Activer le 2FA' })).toBeInTheDocument();
+  });
+
+  test('montre au membre ses dernières connexions avec appareil, adresse et résultat', async () => {
+    renderPage(
+      [meMock, userMock()],
+      [twoFactorMock(false)],
+      signInsMock([
+        signIn(),
+        signIn({
+          id: 2,
+          created_at: '2026-10-11T09:00:00.000Z',
+          outcome: 'WRONG_PASSWORD',
+          ip_address: '198.51.100.23',
+          browser: 'Safari 18',
+          os: 'iOS',
+          device_type: 'MOBILE',
+        }),
+      ]),
+    );
+
+    await waitForProfile();
+    openTab('Sécurité');
+
+    expect(await screen.findByText('Mes dernières connexions')).toBeInTheDocument();
+    expect(
+      screen.getByText('Une connexion que vous ne reconnaissez pas ? Changez votre mot de passe.'),
+    ).toBeInTheDocument();
+    const table = screen.getByRole('table');
+    const rows = within(table).getAllByRole('row');
+    expect(rows).toHaveLength(3);
+    expect(rows[1]).toHaveTextContent(formatDateTime('2026-10-12T14:30:00.000Z').replace(/\s/g, ' '));
+    expect(rows[1]).toHaveTextContent('Firefox 131 · Windows · Ordinateur');
+    expect(rows[1]).toHaveTextContent('203.0.113.7');
+    expect(rows[1]).toHaveTextContent('Connexion réussie');
+    expect(rows[2]).toHaveTextContent('Safari 18 · iOS · Téléphone');
+    expect(rows[2]).toHaveTextContent('Mot de passe erroné');
+    // The same lines, stacked, for a phone.
+    const list = screen.getByRole('list', { name: 'Mes dernières connexions' });
+    expect(within(list).getAllByRole('listitem')).toHaveLength(2);
+  });
+
+  test("dit quand aucune connexion n'est encore enregistrée", async () => {
+    renderPage([meMock, userMock()], [twoFactorMock(false)], signInsMock([]));
+
+    await waitForProfile();
+    openTab('Sécurité');
+
+    expect(await screen.findByText("Aucune connexion enregistrée pour l'instant.")).toBeInTheDocument();
   });
 
   test('affiche les licences avec leur statut, la plus proche de l\'expiration en premier', async () => {

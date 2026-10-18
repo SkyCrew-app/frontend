@@ -22,6 +22,8 @@ export interface UserDetails extends User {
   address: string
   total_flight_hours: number
   user_account_balance: number
+  /** Last time the member opened a session; null when they never did. */
+  lastSignInAt?: string | null
   reservations: Reservation[]
   licenses: License[]
 }

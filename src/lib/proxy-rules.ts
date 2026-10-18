@@ -38,9 +38,10 @@ const EVERY_MEMBER = "*"
 
 /**
  * The administration section belongs to administrators, except the pages the
- * club's access rules give to other roles. A page that is not listed here, the
- * action log (/administration/actions) for instance, is for administrators only. One list for the proxy, the menu
- * and the command palette; the API applies the same rules to the data itself.
+ * club's access rules give to other roles. A page that is not listed here (the
+ * action log /administration/actions, the sign-in log /administration/logins…) is for administrators only.
+ * One list for the proxy, the menu and the command palette; the API applies the same rules to the data
+ * itself.
  */
 const ADMINISTRATION_PAGES_FOR_OTHERS: Record<string, readonly string[]> = {
   // Every member sets up their own two-factor authentication there.

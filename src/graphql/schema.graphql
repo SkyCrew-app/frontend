@@ -1192,7 +1192,6 @@ type FlightPlanResult {
   massBalance: MassBalanceResult!
   navdata: NavdataInfo!
   notices: [Notice!]!
-  unverifiedAirspaces: [UnverifiedAirspace!]!
   profile: [ProfilePoint!]!
   qnhHpa: Float
   qnhObservedAt: DateTime
@@ -1201,6 +1200,7 @@ type FlightPlanResult {
   status: CheckStatus!
   totalDistanceNm: Float!
   totalTimeMin: Float!
+  unverifiedAirspaces: [UnverifiedAirspace!]!
   weather: [WeatherReport!]!
   windSource: String!
 }
@@ -1496,9 +1496,55 @@ type LogbookStats {
   totalHours: Float!
 }
 
+enum LoginDeviceType {
+  BOT
+  DESKTOP
+  MOBILE
+  TABLET
+  UNKNOWN
+}
+
+type LoginEvent {
+  attempted_email: String
+  browser: String
+  created_at: DateTime!
+  device_type: LoginDeviceType!
+  id: Int!
+  ip_address: String
+  member_name: String
+  method: LoginMethod
+  os: String
+  outcome: LoginOutcome!
+  user_agent: String
+  user_id: Int
+}
+
+type LoginEventsPage {
+  items: [LoginEvent!]!
+  page: Int!
+  pageSize: Int!
+  total: Int!
+}
+
 input LoginInput {
   email: String!
   password: String!
+}
+
+enum LoginMethod {
+  PASSWORD
+  TWO_FACTOR_CODE
+}
+
+enum LoginOutcome {
+  ACCOUNT_DEACTIVATED
+  LOCKED_OR_THROTTLED
+  LOGOUT
+  SECOND_FACTOR_FAILED
+  SECOND_FACTOR_REQUIRED
+  SUCCESS
+  UNKNOWN_ACCOUNT
+  WRONG_PASSWORD
 }
 
 type LoginResponse {
@@ -1945,12 +1991,24 @@ type Query {
   invoicesByUser(userId: Int!): [Invoice!]!
   logbookEntries(filter: LogbookFilterInput): [Flight!]!
   logbookStats(filter: LogbookFilterInput): LogbookStats!
+  loginEvents(
+    """From this moment, included."""
+    from: DateTime
+    memberId: Int
+    outcome: LoginOutcome
+    page: Int
+    pageSize: Int
+
+    """Up to this moment, excluded."""
+    to: DateTime
+  ): LoginEventsPage!
   mayBookWithoutInstructor(until: DateTime): Boolean!
   me: User!
   memberCommitments(id: Int!): MemberCommitments!
   membersDirectory: [User!]!
   myInstructionReservations: [Reservation!]!
   myLicenses: [License!]!
+  myLoginEvents: [LoginEvent!]!
   myReservationTemplates: [ReservationTemplate!]!
   navPointsInBox(bbox: BBoxInput!, types: [NavPointType!]): [NavPoint!]!
   navSearch(limit: Int = 20, near: LatLonInput, query: String!, types: [NavPointType!]): [NavPoint!]!
@@ -2131,6 +2189,13 @@ input TaxonomiesInput {
   flightTypes: [String!]!
   licenseTypes: [String!]!
   maintenanceTypes: [String!]!
+}
+
+type UnverifiedAirspace {
+  airspace: Airspace!
+  distanceNm: Float
+  message: String!
+  status: CheckStatus!
 }
 
 input UpdateAdministrationInput {
@@ -2484,13 +2549,6 @@ input UpdateUserPreferencesInput {
 """The `Upload` scalar type represents a file upload."""
 scalar Upload
 
-type UnverifiedAirspace {
-  airspace: Airspace!
-  distanceNm: Float
-  message: String!
-  status: CheckStatus!
-}
-
 type User {
   address: String
   answers: [Answer!]
@@ -2507,6 +2565,7 @@ type User {
   isEmailConfirmed: Boolean
   is_active: Boolean
   language: String
+  lastSignInAt: DateTime
   last_name: String!
   licenses: [License!]
   maintenances: [Maintenance!]

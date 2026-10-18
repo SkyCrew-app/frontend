@@ -21,7 +21,10 @@ export async function openCalendarAhead(page: Page, knownDay?: string) {
   await page.goto("/reservations")
   await expect(page.getByRole("heading", { level: 1, name: "Calendrier des réservations" })).toBeVisible()
   // The grid comes with the club settings: the picker greys closed days out only once they are loaded.
-  await expect(page.getByRole("columnheader", { name: "Avion" })).toBeVisible()
+  // On a day the club is closed (Sunday for the demo club) the page says so instead of the grid.
+  await expect(
+    page.getByRole("columnheader", { name: "Avion" }).or(page.getByText("Aéroclub fermé", { exact: true })),
+  ).toBeVisible()
 
   const navigator = page.getByRole("main").getByRole("button", { name: /^(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche) \d/ })
   await navigator.click()

@@ -227,6 +227,9 @@
       "activity": "Activité",
       "flightHours": "Heures de vol",
       "accountBalance": "Solde du compte",
+      "lastSignIn": "Dernière connexion",
+      "neverSignedIn": "Jamais connecté",
+      "signInHistory": "Voir ses connexions",
       "slot": "Créneau",
       "noBookings": {
         "title": "Aucune réservation",
@@ -1563,5 +1566,67 @@
     "targetNamed": "{{type}} : {{name}}",
     "targetNumbered": "{{type}} n° {{id}}",
     "detail": "{{label}} : {{value}}"
+  },
+  "loginLog": {
+    "title": "Journal des connexions",
+    "description": "Qui s'est connecté à quel compte, quand, d'où et avec quel résultat. Les lignes sont gardées six mois.",
+    "loading": "Chargement du journal",
+    "filters": {
+      "member": "Compte",
+      "allMembers": "Tous les comptes",
+      "outcome": "Résultat",
+      "allOutcomes": "Tous les résultats",
+      "period": "Période",
+      "periods": {
+        "all": "Les six derniers mois",
+        "day": "Dernières 24 heures",
+        "week": "7 derniers jours",
+        "month": "30 derniers jours"
+      }
+    },
+    "table": {
+      "date": "Date",
+      "account": "Compte",
+      "outcome": "Résultat",
+      "device": "Appareil",
+      "ip": "Adresse IP"
+    },
+    "outcomes": {
+      "SUCCESS": "Connexion réussie",
+      "WRONG_PASSWORD": "Mot de passe erroné",
+      "UNKNOWN_ACCOUNT": "Compte inconnu",
+      "LOCKED_OR_THROTTLED": "Trop de tentatives",
+      "SECOND_FACTOR_REQUIRED": "Code de double authentification demandé",
+      "SECOND_FACTOR_FAILED": "Code de double authentification erroné",
+      "ACCOUNT_DEACTIVATED": "Compte désactivé",
+      "LOGOUT": "Déconnexion"
+    },
+    "methods": {
+      "PASSWORD": "par mot de passe",
+      "TWO_FACTOR_CODE": "par code de double authentification"
+    },
+    "devices": {
+      "DESKTOP": "Ordinateur",
+      "MOBILE": "Téléphone",
+      "TABLET": "Tablette",
+      "BOT": "Robot ou script",
+      "UNKNOWN": "Appareil inconnu"
+    },
+    "unknownAddress": "Adresse inconnue : {{email}}",
+    "unknownAccount": "Adresse inconnue",
+    "formerMember": "Ancien membre",
+    "noIp": "—",
+    "empty": {
+      "title": "Aucune connexion enregistrée",
+      "description": "Chaque connexion, réussie ou non, apparaîtra ici."
+    },
+    "noMatch": {
+      "title": "Aucune connexion ne correspond",
+      "description": "Élargissez les filtres pour voir d'autres connexions."
+    },
+    "pagination": {
+      "events_one": "connexion",
+      "events_other": "connexions"
+    }
   }
 }

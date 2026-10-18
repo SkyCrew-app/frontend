@@ -16,7 +16,7 @@ import {
 } from '@/graphql/user';
 import { GET_ROLES } from '@/graphql/roles';
 import { DELETE_LICENSE, GET_PENDING_LICENSES, UPDATE_LICENSE, VALIDATE_LICENSE } from '@/graphql/licences';
-import { formatMoney } from '@/lib/format';
+import { formatDateTime, formatMoney } from '@/lib/format';
 
 const mockToast = jest.fn();
 jest.mock('@/components/hooks/use-toast', () => ({
@@ -442,7 +442,7 @@ describe('Administration des membres : licences', () => {
     status: 'active',
     documents_url: ['/uploads/licence.pdf'],
   };
-  const detailsMock = (licenses = [licence]): MockedResponse => ({
+  const detailsMock = (licenses = [licence], lastSignInAt: string | null = null): MockedResponse => ({
     request: { query: GET_USER_DETAILS, variables: { id: 7 } },
     result: {
       data: {
@@ -451,11 +451,39 @@ describe('Administration des membres : licences', () => {
           address: null,
           total_flight_hours: 12,
           user_account_balance: 50,
+          lastSignInAt,
           reservations: [],
           licenses,
         },
       },
     },
+  });
+
+  it('montre la dernière connexion du membre et mène à son journal des connexions', async () => {
+    const user = userEvent.setup();
+    renderPage([usersMock([member()]), detailsMock([licence], '2026-10-12T14:30:00.000Z')]);
+
+    await user.click(await screen.findByText('Camille Martin'));
+    const sheet = await screen.findByRole('dialog', { name: /Camille Martin/ });
+
+    expect(await within(sheet).findByText('Dernière connexion')).toBeInTheDocument();
+    expect(
+      within(sheet).getByText(formatDateTime('2026-10-12T14:30:00.000Z').replace(/\s/g, ' ')),
+    ).toBeInTheDocument();
+    expect(within(sheet).getByRole('link', { name: 'Voir ses connexions' })).toHaveAttribute(
+      'href',
+      '/administration/logins?member=7',
+    );
+  });
+
+  it("dit qu'un membre ne s'est jamais connecté", async () => {
+    const user = userEvent.setup();
+    renderPage([usersMock([member()]), detailsMock([licence], null)]);
+
+    await user.click(await screen.findByText('Camille Martin'));
+    const sheet = await screen.findByRole('dialog', { name: /Camille Martin/ });
+
+    expect(await within(sheet).findByText('Jamais connecté')).toBeInTheDocument();
   });
 
   const openLicences = async (user: ReturnType<typeof userEvent.setup>) => {
@@ -577,6 +605,7 @@ describe('Administration des membres : licences à valider', () => {
           address: null,
           total_flight_hours: 12,
           user_account_balance: 50,
+          lastSignInAt: null,
           reservations: [],
           licenses,
         },

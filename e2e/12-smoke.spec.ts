@@ -32,6 +32,7 @@ const PAGES = [
   "/administration/audits",
   "/administration/incidents",
   "/administration/actions",
+  "/administration/logins",
   "/administration/articles",
   "/administration/checklists",
   "/administration/e-learning",

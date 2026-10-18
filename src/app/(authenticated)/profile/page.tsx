@@ -29,6 +29,7 @@ import { PreferencesForm } from "@/components/profile/preferences-form"
 import { PasswordForm } from "@/components/profile/password-form"
 import { DisableTwoFactorDialog } from "@/components/profile/disable-two-factor-dialog"
 import { LicensesSection } from "@/components/profile/licenses-section"
+import { MySignIns } from "@/components/profile/my-sign-ins"
 
 const TABS = ["profile", "security", "notifications", "preferences", "licenses"]
 
@@ -148,6 +149,8 @@ export default function ProfilePage() {
                 )}
               </CardFooter>
             </Card>
+
+            <MySignIns active={activeTab === "security"} />
           </TabsContent>
 
           <TabsContent {...panelProps("notifications")}>
