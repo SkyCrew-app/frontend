@@ -1,6 +1,6 @@
 {
   "name": "skycrew-frontend",
-  "version": "2.16.3",
+  "version": "2.17.0",
   "private": true,
   "scripts": {
     "dev": "next dev --webpack -p 5173",
