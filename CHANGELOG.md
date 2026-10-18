@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.17.0](https://github.com/SkyCrew-app/frontend/compare/2.16.3...2.17.0) (2026-10-18)
+
+
+### Features
+
+* **security:** :sparkles: add the sign-in log page, last sign-in and my recent sign-ins ([#203](https://github.com/SkyCrew-app/frontend/issues/203)) ([4beaf6f](https://github.com/SkyCrew-app/frontend/commit/4beaf6fc244936d720ce00369cdf2b33056f5093))
+
 ## [2.16.3](https://github.com/SkyCrew-app/frontend/compare/2.16.2...2.16.3) (2026-10-17)
 
 
