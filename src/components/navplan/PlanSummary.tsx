@@ -9,6 +9,7 @@ import { checkStatusLabel, checkStatusVariant, massBalanceComputed } from "@/lib
 import type { CheckStatus, FlightPlanResult, Notice } from "@/lib/navplan/types"
 import { formatLitres, formatMinutes, formatNm } from "@/lib/navplan/units"
 import { cn } from "@/lib/utils"
+import { airspacesNotChecked, crossedAirspaces, crossingsStatus } from "./AirspaceCrossings"
 
 const STATUS_DOT: Record<CheckStatus, string> = {
   OK: "bg-success",
@@ -57,6 +58,10 @@ function Figure({ label, value, detail, status }: { label: string; value: string
 export function PlanSummary({ result, pending = false, checks }: { result: FlightPlanResult; pending?: boolean; checks: Check[] }) {
   const { t } = useTranslation("navplan")
   const mbComputed = massBalanceComputed(result.massBalance)
+  // The airspaces of the route, next to the other verdicts: the route is drawn on this step.
+  const flown = result.alternateLeg ? [...result.legs, result.alternateLeg] : result.legs
+  const notChecked = airspacesNotChecked(result.notices)
+  const zonesCount = crossedAirspaces(flown).length
   return (
     <section className="rounded-xl border bg-card px-4 py-3" aria-labelledby="plan-summary-title" aria-busy={pending}>
       <h2 id="plan-summary-title" className="sr-only">
@@ -74,7 +79,7 @@ export function PlanSummary({ result, pending = false, checks }: { result: Fligh
             </span>
           )}
         </div>
-        <dl className="grid flex-1 grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-4">
+        <dl className="grid flex-1 grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-5">
           <Figure label={t("results.distance")} value={formatNm(result.totalDistanceNm)} />
           <Figure label={t("results.time")} value={formatMinutes(result.totalTimeMin)} />
           <Figure
@@ -87,6 +92,11 @@ export function PlanSummary({ result, pending = false, checks }: { result: Fligh
             label={t("results.massBalance")}
             value={!mbComputed ? t("massBalance.notComputedShort") : result.massBalance.status === "BLOCKING" ? t("massBalance.outside") : t("massBalance.within")}
             status={result.massBalance.status}
+          />
+          <Figure
+            label={t("summary.zones")}
+            value={notChecked ? t("summary.zonesNotChecked") : t("summary.zonesCrossed", { count: zonesCount })}
+            status={crossingsStatus(flown, notChecked, result.unverifiedAirspaces)}
           />
         </dl>
       </div>

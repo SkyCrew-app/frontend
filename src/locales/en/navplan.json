@@ -394,7 +394,10 @@
       "UNKNOWN_VERTICAL": "Ground-based limit: check",
       "BELOW": "Below the area",
       "ABOVE": "Above the area"
-    }
+    },
+    "check": "{{name}} ({{kind}}): {{requirement}}",
+    "moreRadios_one": "(+ {{count}} other frequency)",
+    "moreRadios_other": "(+ {{count}} other frequencies)"
   },
   "weather": {
     "none": "No METAR or TAF for the aerodromes of the plan.",
@@ -775,6 +778,11 @@
     "checksTitle_other": "Points to check ({{count}})",
     "showFewer": "Show fewer",
     "statusPrefix": "{{status}}:",
-    "showAll": "See the {{count}} points to check"
+    "showAll": "See the {{count}} points to check",
+    "zones": "Airspaces",
+    "zonesNotChecked": "Not checked",
+    "zonesCrossed_zero": "None crossed",
+    "zonesCrossed_one": "{{count}} crossed",
+    "zonesCrossed_other": "{{count}} crossed"
   }
 }

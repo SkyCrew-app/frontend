@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next"
 import { MapPinOff } from "lucide-react"
 import type { AddLayerObject, GeoJSONSource, Map as MapLibreMap, Marker } from "maplibre-gl"
 import { AIRSPACES_IN_BOX, NAV_POINTS_IN_BOX } from "@/graphql/navdata"
-import type { Airspace, NavPoint } from "@/lib/navplan/types"
+import type { Airspace, CheckStatus, NavPoint } from "@/lib/navplan/types"
 import { cn } from "@/lib/utils"
 import { BASE_MAP_ATTRIBUTION, DEFAULT_MAP_STYLE_DARK_URL, DEFAULT_MAP_STYLE_URL, mapStyleUrl } from "./style"
 import { AIRSPACE_SOURCE, airspaceFeatures, airspaceLayers } from "./layers/airspaces"
@@ -29,6 +29,7 @@ const AIRSPACE_MIN_ZOOM = 5
 const NAVPOINT_MIN_ZOOM = 7
 
 type MapState = "loading" | "ready" | "unavailable"
+const NO_CROSSING: Record<string, CheckStatus> = {}
 type MapLibrary = typeof import("maplibre-gl")
 type GeoJson = Parameters<GeoJSONSource["setData"]>[0]
 
@@ -52,6 +53,7 @@ function AeroMapCanvas({
   profile = [],
   legDistancesNm = [],
   legLabels = [],
+  crossedAirspaces,
   editable = false,
   onAddPoint,
   onMoveWaypoint,
@@ -66,6 +68,10 @@ function AeroMapCanvas({
   const libraryRef = useRef<MapLibrary | null>(null)
   const markersRef = useRef<Marker[]>([])
   const navPointsRef = useRef<NavPoint[]>([])
+  // Last airspaces received, redrawn when the crossings of the route change.
+  const airspacesRef = useRef<Airspace[]>([])
+  const crossedRef = useRef<Record<string, CheckStatus>>({})
+  crossedRef.current = crossedAirspaces ?? NO_CROSSING
   const fittedRef = useRef(false)
   // Idents of the route: the overlay of nav points leaves them to the route markers.
   const routeIdentsRef = useRef<string[]>([])
@@ -85,7 +91,8 @@ function AeroMapCanvas({
     try {
       if (zoom >= AIRSPACE_MIN_ZOOM) {
         const { data } = await client.query<{ airspacesInBox: Airspace[] }>({ query: AIRSPACES_IN_BOX, variables: { bbox } })
-        setSourceData(map, AIRSPACE_SOURCE, airspaceFeatures(data?.airspacesInBox ?? []))
+        airspacesRef.current = data?.airspacesInBox ?? []
+        setSourceData(map, AIRSPACE_SOURCE, airspaceFeatures(airspacesRef.current, crossedRef.current))
       }
       const { data } =
         zoom >= NAVPOINT_MIN_ZOOM
@@ -186,6 +193,13 @@ function AeroMapCanvas({
     setSourceData(map, ROUTE_SOURCE, routeFeatures(points, alternate, profile, legDistancesNm, legLabels))
     setSourceData(map, NAVPOINT_SOURCE, navPointFeatures(navPointsRef.current, routeIdentsRef.current))
   }, [state, points, alternate, profile, legDistancesNm, legLabels])
+
+  // Airspaces crossed by the route, drawn over the others.
+  useEffect(() => {
+    if (state !== "ready") return
+    const map = mapRef.current
+    if (map) setSourceData(map, AIRSPACE_SOURCE, airspaceFeatures(airspacesRef.current, crossedAirspaces ?? NO_CROSSING))
+  }, [state, crossedAirspaces])
 
   // Point markers (draggable in edit mode) and leg handles to insert a point.
   useEffect(() => {
