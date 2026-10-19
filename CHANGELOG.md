@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.18.0](https://github.com/SkyCrew-app/frontend/compare/2.17.1...2.18.0) (2026-10-19)
+
+
+### Features
+
+* **flight-plans:** :sparkles: aerodrome sheets, activity zones, obstacles and runway wind ([#210](https://github.com/SkyCrew-app/frontend/issues/210)) ([40b9d13](https://github.com/SkyCrew-app/frontend/commit/40b9d1387007b488a9394b372afcf1e81a17cfcd))
+
 ## [2.17.1](https://github.com/SkyCrew-app/frontend/compare/2.17.0...2.17.1) (2026-10-19)
 
 
