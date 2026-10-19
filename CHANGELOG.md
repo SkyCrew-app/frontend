@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.17.1](https://github.com/SkyCrew-app/frontend/compare/2.17.0...2.17.1) (2026-10-19)
+
+
+### Bug Fixes
+
+* **flight-plans:** :bug: show crossed airspaces on the route step and the map ([#207](https://github.com/SkyCrew-app/frontend/issues/207)) ([402589c](https://github.com/SkyCrew-app/frontend/commit/402589c33d7c0986abe0270ed88fe0047113228f))
+
 ## [2.17.0](https://github.com/SkyCrew-app/frontend/compare/2.16.3...2.17.0) (2026-10-18)
 
 
