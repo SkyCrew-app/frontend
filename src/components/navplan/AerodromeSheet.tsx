@@ -34,11 +34,11 @@ export function AerodromeStatus({ sheet }: { sheet: Pick<Sheet, "status" | "vfr"
   return (
     <div className={cn("space-y-1 rounded-md p-2 text-sm", limited || sheet.vfr === false ? "border border-warning/60 bg-warning/10" : "bg-muted/50")}>
       {sheet.status && (
-        <p className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {limited && <AlertTriangle className="h-4 w-4 shrink-0 text-warning" aria-hidden="true" />}
           <Badge variant={limited ? "warning" : "success"}>{t(`aerodrome.status.${sheet.status}`, { defaultValue: sheet.status })}</Badge>
           <span>{t(`aerodrome.statusHint.${sheet.status}`, { defaultValue: "" })}</span>
-        </p>
+        </div>
       )}
       {sheet.vfr === false && <p className="font-medium">{t("aerodrome.noVfr")}</p>}
       {sheet.privateFlights === false && <p>{t("aerodrome.noPrivate")}</p>}
@@ -230,8 +230,22 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 /** The whole sheet: everything of AD 2 a pilot reads before leaving, nothing to scroll inside. */
-export function AerodromeSheetContent({ sheet, role, conditions, showConditions = true }: { sheet: Sheet; role?: SheetRole; conditions?: AerodromeConditions | null; showConditions?: boolean }) {
+export function AerodromeSheetContent({
+  sheet: given,
+  role,
+  conditions,
+  showConditions = true,
+  logFrequency,
+}: {
+  sheet: Sheet
+  role?: SheetRole
+  conditions?: AerodromeConditions | null
+  showConditions?: boolean
+  /** What the plan's nav log prints for it (with the ground and ATIS of its role). */
+  logFrequency?: string | null
+}) {
   const { t } = useTranslation("navplan")
+  const sheet = logFrequency ? { ...given, navLogFrequency: logFrequency } : given
   return (
     <div className="space-y-3">
       <SheetHeading sheet={sheet} role={role} />
@@ -288,13 +302,25 @@ export function AerodromeSheetContent({ sheet, role, conditions, showConditions 
 }
 
 /** A card of the aerodromes step: the sheet of one aerodrome of the plan. */
-export function AerodromeSheetCard({ icao, role, conditions, id }: { icao: string; role?: SheetRole; conditions?: AerodromeConditions | null; id?: string }) {
+export function AerodromeSheetCard({
+  icao,
+  role,
+  conditions,
+  id,
+  logFrequency,
+}: {
+  icao: string
+  role?: SheetRole
+  conditions?: AerodromeConditions | null
+  id?: string
+  logFrequency?: string | null
+}) {
   const { t } = useTranslation("navplan")
   const { sheet, loading } = useAerodromeSheet(icao)
   return (
     <article id={id} className="scroll-mt-24 rounded-lg border p-3" aria-label={t("aerodrome.sheetOf", { icao })}>
       {sheet ? (
-        <AerodromeSheetContent sheet={sheet} role={role} conditions={conditions} />
+        <AerodromeSheetContent sheet={sheet} role={role} conditions={conditions} logFrequency={logFrequency} />
       ) : loading ? (
         <p className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
@@ -391,6 +417,16 @@ export const aerodromeSheetId = (icao: string) => `aerodrome-sheet-${icao}`
  */
 export function AerodromesPanel({ result }: { result: Pick<FlightPlanResult, "aerodromes" | "legs" | "alternateLeg"> }) {
   const roles: { icao: string; role: SheetRole; conditions?: AerodromeConditions | null }[] = []
+  // The frequency each line of the nav log carries.
+  const last = result.legs[result.legs.length - 1]
+  const logFrequencyOf = (icao: string, role: SheetRole) =>
+    role === "departure"
+      ? result.legs[0]?.from.frequency
+      : role === "destination"
+        ? last?.to.frequency
+        : role === "alternate"
+          ? result.alternateLeg?.to.frequency
+          : result.legs.find((leg) => leg.to.ident === icao)?.to.frequency
   const planned = result.aerodromes ?? []
   if (planned.length > 0) {
     for (const aerodrome of planned) roles.push({ icao: aerodrome.icao, role: aerodrome.role, conditions: aerodrome.conditions ?? null })
@@ -405,7 +441,14 @@ export function AerodromesPanel({ result }: { result: Pick<FlightPlanResult, "ae
   return (
     <div className="space-y-3">
       {roles.map((entry) => (
-        <AerodromeSheetCard key={`${entry.role}-${entry.icao}`} id={aerodromeSheetId(entry.icao)} icao={entry.icao} role={entry.role} conditions={entry.conditions} />
+        <AerodromeSheetCard
+          key={`${entry.role}-${entry.icao}`}
+          id={aerodromeSheetId(entry.icao)}
+          icao={entry.icao}
+          role={entry.role}
+          conditions={entry.conditions}
+          logFrequency={logFrequencyOf(entry.icao, entry.role)}
+        />
       ))}
     </div>
   )

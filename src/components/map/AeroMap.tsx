@@ -47,7 +47,7 @@ const NAVPOINT_MIN_ZOOM = 7
 // About 0.7° wide: a few hundred obstacles (13 000 in mainland France, 78 % wind turbines).
 const OBSTACLE_MIN_ZOOM = 10
 // Areas listed in the popup of a click; the others are counted.
-const POPUP_MAX_AREAS = 4
+const POPUP_MAX_AREAS = 3
 
 type MapLayers = Record<ActivityGroup | "obstacles", boolean>
 // Information layers off by default (they would clutter the route); obstacles once zoomed in.
