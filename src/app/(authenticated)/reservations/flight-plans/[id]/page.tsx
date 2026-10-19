@@ -30,6 +30,7 @@ import { FlightPlanActions } from "@/components/flight/flight-action-plans"
 import { ClosedFlightAdmin } from "@/components/flight/closed-flight-admin"
 import { NavdataAge, PreparationDisclaimer, WARNING_ALERT } from "@/components/navplan/NoticesBanner"
 import { ResultsPanel } from "@/components/navplan/ResultsPanel"
+import { crossedAirspaceStatuses } from "@/components/navplan/AirspaceCrossings"
 import { PrintableNavLog, printNavLog } from "@/components/navplan/PrintableNavLog"
 import type { AeroMapPoint, AeroMapProps } from "@/components/map/types"
 import { useCurrentUser, useUserData } from "@/components/hooks/userHooks"
@@ -134,6 +135,7 @@ export default function FlightPlanDetails() {
       alternate: plan.result.alternateLeg ? toMapPoint(plan.result.alternateLeg.to) : null,
       distances: legs.map((leg) => leg.distanceNm),
       labels: legs.map((leg) => `${formatCourse(leg.magneticCourseDeg)} · ${formatNm(leg.distanceNm, 0)}`),
+      crossed: crossedAirspaceStatuses(plan.result.alternateLeg ? [...legs, plan.result.alternateLeg] : legs),
     }
   }, [plan])
 
@@ -333,6 +335,7 @@ export default function FlightPlanDetails() {
                 profile={plan.result.profile}
                 legDistancesNm={planMap?.distances}
                 legLabels={planMap?.labels}
+                crossedAirspaces={planMap?.crossed}
               />
             </div>
             <Card className="min-w-0">

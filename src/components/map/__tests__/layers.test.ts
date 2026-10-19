@@ -19,6 +19,17 @@ describe("airspace overlay", () => {
     expect(prohibited.properties.fillOpacity).toBeGreaterThan(restricted.properties.fillOpacity)
   })
 
+  it("draws the areas the route goes through last, outlined in the colour of their verdict, filled when forbidden", () => {
+    const prohibited = { ...R_ZONE, id: "p-23", name: "P 23 PARIS", type: "P" as const }
+    const features = airspaceFeatures([prohibited, TMA_PARIS, R_ZONE], { "p-23": "BLOCKING", [TMA_PARIS.id]: "WARNING" }).features
+    expect(features.map((feature) => feature.id)).toEqual([R_ZONE.id, "p-23", TMA_PARIS.id])
+    expect(features[0].properties).toMatchObject({ crossed: "", crossedWidth: 0 })
+    expect(features[1].properties).toMatchObject({ crossed: "BLOCKING", crossedColor: "#dc2626", crossedFillOpacity: 0.14, crossedWidth: 3 })
+    expect(features[2].properties).toMatchObject({ crossed: "WARNING", crossedColor: "#d97706", crossedFillOpacity: 0 })
+    const crossedLine = airspaceLayers().find((layer) => layer.id === "aero-airspaces-crossed-line")!
+    expect(crossedLine.filter).toEqual(["!=", ["get", "crossed"], ""])
+  })
+
   it("skips an area without geometry rather than failing", () => {
     expect(airspaceFeatures([{ ...TMA_PARIS, geometry: null }]).features).toEqual([])
     // Published without an outline (géométrie inconnue): empty coordinates, never drawn.
@@ -27,7 +38,14 @@ describe("airspace overlay", () => {
 
   it("draws solid and dashed borders on separate layers", () => {
     const layers = airspaceLayers()
-    expect(layers.map((layer) => layer.id)).toEqual(["aero-airspaces-fill", "aero-airspaces-line", "aero-airspaces-line-dashed", "aero-airspaces-label"])
+    expect(layers.map((layer) => layer.id)).toEqual([
+      "aero-airspaces-fill",
+      "aero-airspaces-line",
+      "aero-airspaces-line-dashed",
+      "aero-airspaces-crossed-fill",
+      "aero-airspaces-crossed-line",
+      "aero-airspaces-label",
+    ])
   })
 })
 

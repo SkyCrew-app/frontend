@@ -28,6 +28,27 @@ export function crossingsStatus(legs: Leg[], notChecked = false, unverified: Unv
   return "OK"
 }
 
+const SHOWN_RADIOS = 3
+
+const RANK: Record<CheckStatus, number> = { OK: 0, WARNING: 1, BLOCKING: 2 }
+
+/**
+ * The airspaces the route goes through (not over or under them), once each with the crossing of
+ * worst status, in route order: what the map highlights and the summary lists.
+ */
+export function crossedAirspaces(legs: Leg[]): AirspaceCrossing[] {
+  const worst = new Map<string, AirspaceCrossing>()
+  for (const crossing of legs.flatMap((leg) => leg.crossings).filter(crossed)) {
+    const known = worst.get(crossing.airspace.id)
+    if (!known || RANK[crossing.status] > RANK[known.status]) worst.set(crossing.airspace.id, crossing)
+  }
+  return [...worst.values()]
+}
+
+/** Worst status of each crossed airspace, by id: the map draws them over the others. */
+export const crossedAirspaceStatuses = (legs: Leg[]): Record<string, CheckStatus> =>
+  Object.fromEntries(crossedAirspaces(legs).map((crossing) => [crossing.airspace.id, crossing.status]))
+
 /** Areas near the route that the API could not check: the SIA publishes no outline for them. */
 function UnverifiedList({ items }: { items: UnverifiedAirspace[] }) {
   const { t } = useTranslation("navplan")
@@ -57,6 +78,8 @@ function CrossingItem({ crossing }: { crossing: AirspaceCrossing }) {
   const { t } = useTranslation("navplan")
   const { airspace } = crossing
   const unknownActivity = !crossing.activityKnown
+  // The TMA PARIS list fifteen sectors of PARIS Contrôle: the first ones, then how many more.
+  const radios = [...new Set(airspace.frequencies.map((frequency) => [frequency.callsign ?? frequency.service, frequency.mhz].join(" ")))]
   return (
     <li className="space-y-1 rounded-lg border p-3">
       <div className="flex flex-wrap items-center gap-2">
@@ -80,12 +103,14 @@ function CrossingItem({ crossing }: { crossing: AirspaceCrossing }) {
         })}
       </p>
       <p className="text-sm">{crossing.requirement}</p>
-      {airspace.frequencies.length > 0 && (
+      {radios.length > 0 && (
         <p className="text-xs text-muted-foreground">
-          {airspace.frequencies.map((frequency) => [frequency.callsign ?? frequency.service, frequency.mhz].join(" ")).join(" · ")}
+          {radios.slice(0, SHOWN_RADIOS).join(" · ")}
+          {radios.length > SHOWN_RADIOS && ` ${t("crossings.moreRadios", { count: radios.length - SHOWN_RADIOS })}`}
         </p>
       )}
-      {airspace.activity && <p className="text-xs text-muted-foreground">{t("crossings.activity", { value: airspace.activity })}</p>}
+      {/* The SIA writes the activity on several lines, French then English. */}
+      {airspace.activity && <p className="whitespace-pre-line text-xs text-muted-foreground">{t("crossings.activity", { value: airspace.activity })}</p>}
     </li>
   )
 }
