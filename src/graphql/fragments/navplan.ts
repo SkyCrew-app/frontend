@@ -1,6 +1,7 @@
 import { gql } from '@apollo/client';
 
-// Fragments shared by the flight preparation documents. Kept out of src/graphql/*.ts:
+// Fragments shared by the flight preparation documents. The API refuses an operation of more
+// than 400 fields: the plan result asks the aerodrome sheets apart (AERODROME_DETAILS). Kept out of src/graphql/*.ts:
 // every document there is validated on its own, and a lone fragment is "never used".
 
 export const NAV_POINT_FIELDS = gql`
@@ -18,6 +19,93 @@ export const NAV_POINT_FIELDS = gql`
   }
 `;
 
+
+const RADIO_FIELDS = `
+  service
+  callsign
+  mhz
+  hoursCode
+  hours
+  remark
+  auxiliary
+`;
+
+export const AERODROME_SHEET_FIELDS = gql`
+  fragment AerodromeSheetFields on AerodromeSheet {
+    icao
+    name
+    elevationFt
+    source
+    status
+    vfr
+    ifr
+    privateFlights
+    magneticVariationDeg
+    magneticVariationYear
+    atsHoursCode
+    atsHours
+    fuelHours
+    fuel
+    fuelRemarks
+    fuelTypes
+    remarks
+    phone
+    operator
+    runways {
+      designator
+      trueHeadingDeg
+      lengthM
+      widthM
+      surface
+      main
+      ends {
+        designator
+        trueBearingDeg
+        magneticBearingDeg
+        toraM
+        todaM
+        asdaM
+        ldaM
+        thresholdElevationFt
+        displacedThreshold
+        remarks
+      }
+    }
+    frequencies {${RADIO_FIELDS}}
+    vacUrl
+    chartsUrl
+    navLogFrequency
+  }
+`;
+
+export const AIRSPACE_FIELDS = gql`
+  fragment AirspaceFields on Airspace {
+    id
+    name
+    type
+    icaoClass
+    floor {
+      ref
+      value
+      label
+    }
+    ceiling {
+      ref
+      value
+      label
+    }
+    activity
+    hours
+    frequencies {${RADIO_FIELDS}}
+    remarks
+    outlineKnown
+    referencePoint {
+      lat
+      lon
+    }
+    radiusNm
+  }
+`;
 
 export const AIRCRAFT_PERFORMANCE_FIELDS = gql`
   fragment AircraftPerformanceFields on AircraftPerformance {
@@ -176,10 +264,14 @@ export const LEG_FIELDS = gql`
           label
         }
         activity
+        hours
         frequencies {
           service
           callsign
           mhz
+          hoursCode
+          hours
+          remark
         }
         remarks
       }
@@ -192,6 +284,18 @@ export const LEG_FIELDS = gql`
       requirement
       activityKnown
     }
+    obstacles {
+      type
+      count
+      amslFt
+      lat
+      lon
+      alongNm
+      offsetNm
+      marginFt
+      status
+    }
+    highestObstacleFt
   }
   ${NAV_POINT_FIELDS}
 `;
@@ -322,6 +426,39 @@ export const FLIGHT_PLAN_RESULT_FIELDS = gql`
         sunset
         civilDusk
       }
+    }
+    aerodromes {
+      role
+      icao
+      conditions {
+        station
+        observedAt
+        windDirectionDeg
+        windSpeedKt
+        gustKt
+        windVariable
+        temperatureC
+        dewpointC
+        qnhHpa
+        pressureAltitudeFt
+        densityAltitudeFt
+        runways {
+          designator
+          headwindKt
+          crosswindKt
+          gustHeadwindKt
+          gustCrosswindKt
+          best
+        }
+      }
+    }
+    freezingLevels {
+      place
+      ident
+      at
+      altitudeFt
+      state
+      topFt
     }
   }
   ${LEG_FIELDS}

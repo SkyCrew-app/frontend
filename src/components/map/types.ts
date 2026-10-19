@@ -1,4 +1,4 @@
-import type { CheckStatus, NavPoint, NavPointType, ProfilePoint } from "@/lib/navplan/types"
+import type { CheckStatus, LegObstacle, NavPoint, NavPointType, ProfilePoint } from "@/lib/navplan/types"
 import type { MapPoint } from "./layers/route"
 
 // Kept apart from AeroMap.tsx so pages can type their props without loading the map library.
@@ -6,6 +6,8 @@ import type { MapPoint } from "./layers/route"
 export interface AeroMapPoint extends MapPoint {
   ident: string
   type: NavPointType
+  /** The aerodrome of a VFR reporting point, written before it ("LFPN S"). */
+  aerodromeIcao?: string | null
 }
 
 export interface AeroMapProps {
@@ -18,6 +20,8 @@ export interface AeroMapProps {
   legLabels?: string[]
   /** Airspaces the route goes through, by id, with the worst status of their crossing: highlighted. */
   crossedAirspaces?: Record<string, CheckStatus>
+  /** Obstacles the plan warns of (less than 500 ft under a leg): always drawn, in red. */
+  warnedObstacles?: LegObstacle[]
   /** Click to add, drag to move, drag a leg handle to insert. */
   editable?: boolean
   onAddPoint?: (point: NavPoint | MapPoint) => void

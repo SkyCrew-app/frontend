@@ -17,6 +17,14 @@ export type AirspaceType =
   | "PROTECTED"
   | "GLIDING"
   | "OTHER"
+  // Activities the SIA publishes at a point (parachuting, model aircraft...): their extent is not published.
+  | "PARACHUTING"
+  | "AEROBATICS"
+  | "WINCH"
+  | "MODEL_AIRCRAFT"
+  | "BALLOON"
+  | "DRONE"
+  | "LOW_OVERFLIGHT"
 export type AltitudeRef = "SFC" | "AGL" | "AMSL" | "FL"
 export type FuelType = "AVGAS_100LL" | "UL91" | "JET_A1" | "MOGAS"
 export type StationKind = "SEAT" | "BAGGAGE" | "FUEL" | "OTHER"
@@ -59,6 +67,150 @@ export interface RadioFrequency {
   service: string
   callsign?: string | null
   mhz: string
+  /** H24, HO, HX, HJ, NOTAM, with the published text. */
+  hoursCode?: string | null
+  hours?: string | null
+  /** Coverage, sector, "Absence ATS"... */
+  remark?: string | null
+  /** An auxiliary frequency (SIA "supplétive"). */
+  auxiliary?: boolean | null
+}
+
+export interface GeoPoint {
+  lat: number
+  lon: number
+}
+
+/** One direction of a runway (QFU) with its declared distances: what is usable, not the physical length. */
+export interface RunwayEnd {
+  designator: string
+  trueBearingDeg?: number | null
+  magneticBearingDeg?: number | null
+  toraM?: number | null
+  todaM?: number | null
+  asdaM?: number | null
+  ldaM?: number | null
+  thresholdElevationFt?: number | null
+  displacedThreshold: boolean
+  /** Why the distances are reduced. */
+  remarks?: string | null
+}
+
+export interface Runway {
+  designator: string
+  trueHeadingDeg?: number | null
+  lengthM?: number | null
+  widthM?: number | null
+  surface?: string | null
+  main?: boolean | null
+  ends: RunwayEnd[]
+}
+
+/** AD 2 data of an aerodrome (SIA), texts in the reader's language. */
+export interface AerodromeSheet {
+  icao: string
+  name?: string | null
+  elevationFt?: number | null
+  source: string
+  /** CAP, RST, PRV, MIL, OFF; null when unknown (OurAirports). */
+  status?: string | null
+  vfr?: boolean | null
+  ifr?: boolean | null
+  privateFlights?: boolean | null
+  magneticVariationDeg?: number | null
+  magneticVariationYear?: string | null
+  atsHoursCode?: string | null
+  atsHours?: string | null
+  fuelHours?: string | null
+  fuel?: string | null
+  fuelRemarks?: string | null
+  fuelTypes: string[]
+  remarks?: string | null
+  phone?: string | null
+  operator?: string | null
+  runways: Runway[]
+  frequencies: RadioFrequency[]
+  vacUrl?: string | null
+  chartsUrl: string
+  /** What the nav log prints for it (tower, else AFIS, else A/A; both when the tower hours are not H24). */
+  navLogFrequency?: string | null
+}
+
+export interface AerodromeDetails {
+  point: NavPoint
+  sheet: AerodromeSheet
+}
+
+/** Head and cross wind on a runway direction from the METAR wind. */
+export interface RunwayWind {
+  designator: string
+  /** Positive: head wind; negative: tail wind. */
+  headwindKt: number
+  /** Positive: from the right; negative: from the left. */
+  crosswindKt: number
+  gustHeadwindKt?: number | null
+  gustCrosswindKt?: number | null
+  best: boolean
+}
+
+export interface AerodromeConditions {
+  station: string
+  observedAt?: string | null
+  windDirectionDeg?: number | null
+  windSpeedKt?: number | null
+  gustKt?: number | null
+  windVariable: boolean
+  temperatureC?: number | null
+  dewpointC?: number | null
+  qnhHpa?: number | null
+  pressureAltitudeFt?: number | null
+  densityAltitudeFt?: number | null
+  runways: RunwayWind[]
+}
+
+export interface PlanAerodrome {
+  role: AerodromeRole
+  icao: string
+  sheet?: AerodromeSheet | null
+  conditions?: AerodromeConditions | null
+}
+
+/** The 0 °C isotherm from the winds aloft forecast. */
+export interface FreezingLevel {
+  place: "DEPARTURE" | "ROUTE" | "DESTINATION"
+  ident?: string | null
+  at: string
+  altitudeFt?: number | null
+  state: "LEVEL" | "SURFACE" | "ABOVE" | "UNKNOWN"
+  topFt?: number | null
+}
+
+/** An obstacle of the SIA (map). */
+export interface Obstacle {
+  ident: string
+  type: string
+  lat: number
+  lon: number
+  amslFt: number
+  aglFt?: number | null
+  count: number
+  lighting?: string | null
+}
+
+/** Obstacles near a leg whose top is less than 500 ft below its altitude (grouped: a wind farm once). */
+export interface LegObstacle {
+  type: string
+  count: number
+  ident?: string
+  amslFt: number
+  aglFt?: number | null
+  lat?: number
+  lon?: number
+  lighting?: string | null
+  alongNm: number
+  offsetNm: number
+  marginFt: number
+  status: CheckStatus
 }
 
 export interface Airspace {
@@ -69,9 +221,15 @@ export interface Airspace {
   floor: AltitudeLimit
   ceiling: AltitudeLimit
   activity?: string | null
+  /** Published hours, apart from the activity. */
+  hours?: string | null
   frequencies: RadioFrequency[]
   remarks?: string | null
   geometry?: GeoJsonMultiPolygon | null
+  /** Without an outline: the published point (activities, protected areas). */
+  referencePoint?: GeoPoint | null
+  /** An activity published at a point: the distance the plans look around it. */
+  radiusNm?: number | null
   /** false: the SIA publishes no outline (géométrie inconnue); the area is never drawn nor "not crossed". */
   outlineKnown?: boolean
 }
@@ -338,6 +496,9 @@ export interface Leg {
   fuelL: number
   fuelRemainingL: number
   crossings: AirspaceCrossing[]
+  /** Obstacles within 2 NM less than 500 ft under the leg (absent from older plans). */
+  obstacles?: LegObstacle[]
+  highestObstacleFt?: number | null
 }
 
 export interface ProfilePoint {
@@ -452,6 +613,9 @@ export interface FlightPlanResult {
   qnhStation?: string | null
   qnhObservedAt?: string | null
   daylight?: Daylight | null
+  /** Departure, destination, alternate: AD 2 data and METAR conditions (absent from older plans). */
+  aerodromes?: PlanAerodrome[]
+  freezingLevels?: FreezingLevel[]
 }
 
 export interface FlightPlan {

@@ -63,6 +63,7 @@ import { NavdataAge, PreparationDisclaimer, WARNING_ALERT } from "./NoticesBanne
 import { NumberField } from "./NumberField"
 import { PlanSummary, checksFromNotices, type Check } from "./PlanSummary"
 import { PrintableNavLog, printNavLog } from "./PrintableNavLog"
+import { AerodromesPanel, aerodromeSheetId } from "./AerodromeSheet"
 import { RouteEditor } from "./RouteEditor"
 import { WeatherPanel } from "./WeatherPanel"
 import { useFlightPlanDraft } from "./useFlightPlanDraft"
@@ -128,6 +129,11 @@ export function FlightPlanBuilder({ initialDraft, aircraft, settings, navdata, i
   const [massUnit, setMassUnit] = useState<MassUnit>("kg")
   const [volumeUnit, setVolumeUnit] = useState<VolumeUnit>("L")
   const [step, setStep] = useState<BuilderStep>("route")
+  // The full sheet of an aerodrome is in the log step: shown there, scrolled to.
+  const openAerodrome = (icao: string) => {
+    setStep("log")
+    setTimeout(() => document.getElementById(aerodromeSheetId(icao))?.scrollIntoView({ behavior: "smooth", block: "start" }), 120)
+  }
   const [dirty, setDirty] = useState(false)
   const [printFormat, setPrintFormat] = useState<PdfFormat>("A5")
   const wide = useWideScreen()
@@ -197,6 +203,11 @@ export function FlightPlanBuilder({ initialDraft, aircraft, settings, navdata, i
   // The airspaces the drawn route goes through, highlighted on the map.
   const mapCrossings = useMemo(
     () => crossedAirspaceStatuses(mapLegs.length > 0 && result?.alternateLeg ? [...mapLegs, result.alternateLeg] : mapLegs),
+    [mapLegs, result],
+  )
+  // Obstacles less than 500 ft under a leg: always on the map, in red.
+  const mapObstacles = useMemo(
+    () => (mapLegs.length > 0 && result?.alternateLeg ? [...mapLegs, result.alternateLeg] : mapLegs).flatMap((leg) => leg.obstacles ?? []),
     [mapLegs, result],
   )
   const legLabels = useMemo(() => mapLegs.map((leg) => `${formatCourse(leg.magneticCourseDeg)} · ${formatNm(leg.distanceNm, 0)}`), [mapLegs])
@@ -386,6 +397,7 @@ export function FlightPlanBuilder({ initialDraft, aircraft, settings, navdata, i
             cruiseSettings={cruiseSettings}
             normalSetting={aircraft.performance?.cruise.normalSetting}
             showErrors={showErrors}
+            onOpenAerodrome={openAerodrome}
             before={
               <div className="w-full space-y-1 sm:w-60">
                 <Label htmlFor="departure-time">{t("builder.flight.departureTime")}</Label>
@@ -445,6 +457,7 @@ export function FlightPlanBuilder({ initialDraft, aircraft, settings, navdata, i
               legDistancesNm={legDistances}
               legLabels={legLabels}
               crossedAirspaces={mapCrossings}
+              warnedObstacles={mapObstacles}
               editable
               onAddPoint={handleMapAdd}
               onMoveWaypoint={handleMapMove}
@@ -570,6 +583,8 @@ export function FlightPlanBuilder({ initialDraft, aircraft, settings, navdata, i
                   alternateLeg={shownResult.alternateLeg}
                   totalDistanceNm={shownResult.totalDistanceNm}
                   totalTimeMin={shownResult.totalTimeMin}
+                  aerodromes={shownResult.aerodromes}
+                  onOpenAerodrome={openAerodrome}
                 />
               ) : (
                 <p className="text-sm text-muted-foreground">{t("builder.results.waitingShort")}</p>
@@ -599,8 +614,19 @@ export function FlightPlanBuilder({ initialDraft, aircraft, settings, navdata, i
                   </ResultCard>
                 </div>
               </div>
+              <ResultCard title={t("aerodrome.title")}>
+                <AerodromesPanel result={shownResult} />
+              </ResultCard>
               <ResultCard title={t("results.tabs.weather")}>
-                <WeatherPanel reports={shownResult.weather} roles={roles} windSource={shownResult.windSource} columns />
+                <WeatherPanel
+                  reports={shownResult.weather}
+                  roles={roles}
+                  windSource={shownResult.windSource}
+                  columns
+                  aerodromes={shownResult.aerodromes}
+                  freezingLevels={shownResult.freezingLevels}
+                  legs={shownResult.alternateLeg ? [...shownResult.legs, shownResult.alternateLeg] : shownResult.legs}
+                />
               </ResultCard>
             </>
           )}

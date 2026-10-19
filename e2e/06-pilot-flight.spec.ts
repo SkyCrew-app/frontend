@@ -99,6 +99,10 @@ async function prepareFlightPlan(page: Page, purpose: string) {
   await route.getByRole("button", { name: /^Point tournant 1 : P1/ }).click()
   await expect(page.getByRole("textbox", { name: "Nom du point 1" })).toHaveValue("P1")
   await page.keyboard.press("Escape")
+  // Each aerodrome of the route opens its sheet (status, runways, fuel, VAC) from the strip.
+  await route.getByRole("button", { name: "Fiche terrain LFPG" }).click()
+  await expect(page.getByRole("dialog", { name: "Fiche terrain LFPG" })).toContainText("LFPG")
+  await page.keyboard.press("Escape")
 
   // The results come from the API (computeFlightPlan), whatever their verdict for this aircraft:
   // the verdict and the totals stay above the three steps.
@@ -114,6 +118,8 @@ async function prepareFlightPlan(page: Page, purpose: string) {
   await expect(log).toBeVisible()
   await expect(log.getByRole("rowheader", { name: /^P1/ })).toBeVisible()
   await expect(log.getByRole("columnheader", { name: /HE réelle/ })).toBeVisible()
+  // The aerodromes of the plan have their sheet in this step.
+  await expect(page.getByRole("article", { name: "Fiche terrain LFPO" })).toBeVisible()
 
   await page.getByRole("button", { name: "Enregistrer le plan" }).click()
   const blocking = page.getByRole("alertdialog", { name: "Enregistrer un plan bloquant ?" })

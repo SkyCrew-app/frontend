@@ -1,5 +1,5 @@
 import { gql } from '@apollo/client';
-import { NAV_POINT_FIELDS } from './fragments/navplan';
+import { AERODROME_SHEET_FIELDS, AIRSPACE_FIELDS, NAV_POINT_FIELDS } from './fragments/navplan';
 
 // Aeronautical data served by the API from the imported AIRAC cycle (SIA, OurAirports).
 // Nothing is asked to a third party from the browser.
@@ -37,46 +37,40 @@ export const NAV_POINTS_IN_BOX = gql`
 export const AIRSPACES_IN_BOX = gql`
   query AirspacesInBox($bbox: BBoxInput!, $maxFloorFt: Int) {
     airspacesInBox(bbox: $bbox, maxFloorFt: $maxFloorFt) {
-      id
-      name
-      type
-      icaoClass
-      floor {
-        ref
-        value
-        label
-      }
-      ceiling {
-        ref
-        value
-        label
-      }
-      activity
+      ...AirspaceFields
       geometry
+    }
+  }
+  ${AIRSPACE_FIELDS}
+`;
+
+export const OBSTACLES_IN_BOX = gql`
+  query ObstaclesInBox($bbox: BBoxInput!) {
+    obstaclesInBox(bbox: $bbox) {
+      ident
+      type
+      lat
+      lon
+      amslFt
+      aglFt
+      count
+      lighting
     }
   }
 `;
 
+// The aerodrome sheet (AD 2 data of the SIA) of any aerodrome of the route.
 export const AERODROME_DETAILS = gql`
   query AerodromeDetails($icao: String!) {
     aerodrome(icao: $icao) {
       point {
         ...NavPointFields
       }
-      runways {
-        designator
-        trueHeadingDeg
-        lengthM
-        widthM
-        surface
+      sheet {
+        ...AerodromeSheetFields
       }
-      frequencies {
-        service
-        callsign
-        mhz
-      }
-      circuitHeightFt
     }
   }
   ${NAV_POINT_FIELDS}
+  ${AERODROME_SHEET_FIELDS}
 `;

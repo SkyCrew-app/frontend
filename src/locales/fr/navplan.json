@@ -32,7 +32,14 @@
     "TSA": "TSA",
     "PROTECTED": "Parc ou réserve",
     "GLIDING": "Zone de vol à voile",
-    "OTHER": "Autre zone"
+    "OTHER": "Autre zone",
+    "PARACHUTING": "Parachutage",
+    "AEROBATICS": "Voltige",
+    "WINCH": "Treuillage",
+    "MODEL_AIRCRAFT": "Aéromodélisme",
+    "BALLOON": "Ballon captif",
+    "DRONE": "Drones",
+    "LOW_OVERFLIGHT": "Survol bas interdit"
   },
   "envelopeCategory": {
     "NORMAL": "Normale",
@@ -241,7 +248,8 @@
       "massBalance": "Masse et centrage",
       "fuel": "Carburant",
       "airspaces": "Zones",
-      "weather": "Météo"
+      "weather": "Météo",
+      "aerodromes": "Terrains"
     }
   },
   "log": {
@@ -301,7 +309,9 @@
       "ata": "Heure réelle de passage, à noter en vol",
       "fuelRemaining": "Carburant restant prévu au point",
       "fuelActual": "Carburant restant réel, à noter en vol"
-    }
+    },
+    "obstacleNote": "Obstacle {{amsl}} (marge {{margin}})",
+    "temperature": "{{value}} °C"
   },
   "massBalance": {
     "takeoff": "Décollage",
@@ -397,7 +407,16 @@
     },
     "check": "{{name}} ({{kind}}) : {{requirement}}",
     "moreRadios_one": "(+ {{count}} autre fréquence)",
-    "moreRadios_other": "(+ {{count}} autres fréquences)"
+    "moreRadios_other": "(+ {{count}} autres fréquences)",
+    "hours": "Horaires : {{value}}",
+    "activityLabel": "Activité : {{value}}",
+    "remarks": "Consignes du SIA",
+    "atPoint": "Publiée en un point : signalée à moins de {{radius}} de la route.",
+    "obstaclesTitle": "Obstacles proches de la route",
+    "obstaclesDescription": "Obstacles à moins de 2 NM de la route dont le sommet est à moins de 500 ft sous l'altitude prévue de la branche (SERA : 500 ft au-dessus de l'obstacle le plus haut).",
+    "obstacle": "{{type}} {{group}} — sommet {{amsl}} à {{along}} du début de branche, {{offset}} de la route — marge {{margin}}",
+    "highestObstacle": "Obstacle le plus haut à moins de 2 NM : {{value}}",
+    "noObstacleData": "Pas d'obstacle importé pour ce cycle."
   },
   "weather": {
     "none": "Aucun METAR ni TAF pour les aérodromes du plan.",
@@ -411,7 +430,20 @@
     "windSource": "Vents et températures en altitude : {{source}}.",
     "automatic": "Prévision automatique non validée par un prévisionniste.",
     "metarSource": "METAR et TAF : aviationweather.gov (NOAA/NWS).",
-    "tafValidity": "Valable du {{from}} au {{to}}"
+    "tafValidity": "Valable du {{from}} au {{to}}",
+    "freezingTitle": "Isotherme 0 °C",
+    "freezingSource": "Prévision ICON-EU (températures de 1000 à 600 hPa).",
+    "freezingPlace": {
+      "DEPARTURE": "Départ {{ident}}",
+      "ROUTE": "Mi-parcours",
+      "DESTINATION": "Arrivée {{ident}}"
+    },
+    "freezingLevel": "vers {{value}}",
+    "freezingSurface": "au sol",
+    "freezingAbove": "au-dessus de {{value}}",
+    "freezingUnknown": "pas de prévision",
+    "legTemperatures": "Températures prévues à l'altitude des branches",
+    "legTemperature": "{{leg}} à {{altitude}} : {{value}} °C"
   },
   "navdata": {
     "current": "Données aéronautiques : cycle AIRAC {{airac}}, en vigueur du {{from}} au {{to}} · {{source}}.",
@@ -433,7 +465,20 @@
     "dragPoint": "Point {{ident}} : faites-le glisser pour le déplacer",
     "insertHandle": "Insérer un point sur la branche {{leg}} : faites glisser",
     "unavailableTitle": "Carte indisponible",
-    "unavailableDescription": "La carte ne peut pas être affichée sur cet appareil. La route se modifie aussi depuis la liste des points."
+    "unavailableDescription": "La carte ne peut pas être affichée sur cet appareil. La route se modifie aussi depuis la liste des points.",
+    "layers": "Couches de la carte",
+    "layerActivities": "Zones d'activité (parachutage, voltige, treuils…)",
+    "layerModel": "Aéromodélisme et drones",
+    "layerObstacles": "Obstacles (zoom rapproché)",
+    "identify": "Identifier : cliquez sur la carte pour le détail d'une zone",
+    "identifyOff": "Cliquez sur la carte pour ajouter un point",
+    "popupTitle": "À cet endroit",
+    "popupNone": "Aucune zone ni obstacle à cet endroit.",
+    "popupMore_one": "+ {{count}} autre zone",
+    "popupMore_other": "+ {{count}} autres zones",
+    "obstacleLabel": "{{type}} {{amsl}} AMSL ({{agl}} sol)",
+    "close": "Fermer",
+    "identifyShort": "Identifier"
   },
   "detail": {
     "legacyBadge": "Ancien calcul",
@@ -777,12 +822,98 @@
     "checksTitle_one": "Point à vérifier",
     "checksTitle_other": "Points à vérifier ({{count}})",
     "showFewer": "Réduire la liste",
-    "statusPrefix": "{{status}}\u00a0:",
+    "statusPrefix": "{{status}} :",
     "showAll": "Voir les {{count}} points à vérifier",
     "zones": "Zones",
     "zonesNotChecked": "Non vérifiées",
     "zonesCrossed_zero": "Aucune traversée",
     "zonesCrossed_one": "{{count}} traversée",
     "zonesCrossed_other": "{{count}} traversées"
+  },
+  "aerodrome": {
+    "title": "Terrains",
+    "sheetOf": "Fiche terrain {{icao}}",
+    "openSheet": "Fiche terrain",
+    "fullSheet": "Voir la fiche complète",
+    "loading": "Chargement de la fiche…",
+    "unavailable": "Fiche indisponible pour {{icao}}.",
+    "noSiaData": "Terrain hors base SIA : seules les pistes et fréquences d'OurAirports sont connues. Vérifiez la documentation officielle du pays.",
+    "role": {
+      "departure": "Départ",
+      "destination": "Arrivée",
+      "alternate": "Dégagement",
+      "enroute": "En route"
+    },
+    "elevation": "Altitude {{value}}",
+    "status": {
+      "CAP": "Ouvert à la CAP",
+      "RST": "Usage restreint",
+      "PRV": "Privé",
+      "MIL": "Militaire",
+      "OFF": "Pas un aérodrome"
+    },
+    "statusHint": {
+      "CAP": "Ouvert à la circulation aérienne publique.",
+      "RST": "Usage restreint : autorisation préalable de l'exploitant (voir la VAC).",
+      "PRV": "Aérodrome privé : accord du propriétaire nécessaire.",
+      "MIL": "Aérodrome militaire : accès sur autorisation (PPR).",
+      "OFF": "Organisme ou centre de contrôle, pas un terrain : à ne pas choisir."
+    },
+    "noVfr": "Non ouvert au trafic VFR selon le SIA",
+    "noPrivate": "Vols privés non autorisés selon le SIA",
+    "variation": "Déclinaison {{value}}",
+    "variationYear": "Déclinaison {{value}} ({{year}})",
+    "logFrequency": "Sur le log : {{value}}",
+    "logFrequencyRule": "Tour, sinon AFIS, sinon A/A. Les horaires de la tour n'étant publiés qu'en texte libre, le log porte aussi l'auto-information (A/A) quand la tour n'est pas H24 : utilisez l'A/A hors horaires ATS.",
+    "frequencies": "Fréquences",
+    "hoursCode": {
+      "H24": "H24",
+      "HO": "selon besoins",
+      "HX": "horaires variables",
+      "HJ": "de jour",
+      "HN": "de nuit",
+      "NOTAM": "par NOTAM"
+    },
+    "auxiliary": "supplétive",
+    "atsHours": "Horaires ATS",
+    "fuelHours": "Horaires avitaillement",
+    "fuel": "Carburant",
+    "fuelNone": "Aucun carburant publié",
+    "fuelDetails": "Détail carburant",
+    "runways": "Pistes",
+    "runway": "Piste {{designator}}",
+    "runwaySize": "{{length}} × {{width}} m",
+    "mainRunway": "principale",
+    "qfu": "QFU {{value}}",
+    "trueBearing": "vrai {{value}}",
+    "tora": "TORA {{value}}",
+    "toda": "TODA {{value}}",
+    "asda": "ASDA {{value}}",
+    "lda": "LDA {{value}}",
+    "distancesUnknown": "distances déclarées non publiées",
+    "displaced": "seuil décalé",
+    "reduced": "Pourquoi des distances réduites",
+    "declaredHint": "TORA : distance de roulement au décollage ; LDA : distance utilisable à l'atterrissage. Ce sont elles qui comptent, pas la longueur de la piste.",
+    "vac": "Carte VAC (PDF du SIA, cycle en cours)",
+    "vacUnknown": "Carte VAC : voir le site du SIA",
+    "remarks": "Remarques du SIA",
+    "contact": "Gestionnaire : {{operator}}",
+    "phone": "Tél. {{phone}}",
+    "conditions": "D'après le METAR",
+    "noMetar": "Pas de METAR pour ce terrain : vent sur les pistes et altitude densité non calculés.",
+    "metarWind": "Vent {{wind}}",
+    "metarWindVariable": "Vent variable {{speed}} kt : pas de piste privilégiée",
+    "metarCalm": "Vent calme",
+    "densityAltitude": "Altitude densité {{value}}",
+    "pressureAltitude": "altitude-pression {{value}}",
+    "temperature": "{{value}} °C, QNH {{qnh}}",
+    "bestRunway": "piste conseillée",
+    "head": "{{value}} kt face",
+    "tail": "{{value}} kt arrière",
+    "crossRight": "travers {{value}} kt de droite",
+    "crossLeft": "travers {{value}} kt de gauche",
+    "noCross": "sans travers",
+    "gusts": "rafales : {{head}}, travers {{cross}} kt",
+    "windHint": "Composantes calculées avec le vent du METAR (vrai) et l'orientation vraie des pistes. Comparez au vent traversier démontré de votre avion."
   }
 }
