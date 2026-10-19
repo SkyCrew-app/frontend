@@ -53,7 +53,7 @@ describe("NavLogTable", () => {
 
     // P1 is reached by the RBT → P1 leg: its own figures, not those of the next one (defect of the former log).
     const p1 = cellsOf(rowOf(table, /^P1/))
-    expect(p1.slice(1, 13)).toEqual([expect.stringMatching(/^2\s500$/), "225°", "223°", "270/15", "−7°", "215°", "105", "95", expect.stringMatching(/^17,3Σ /), "11Σ 15", "09:18", ""])
+    expect(p1.slice(1, 13)).toEqual([expect.stringMatching(/^2\s500$/), "225°", "223°", "270/15+8 °C", "−7°", "215°", "105", "95", expect.stringMatching(/^17,3Σ /), "11Σ 15", "09:18", ""])
     expect(p1[13]).toBe("70")
     // Blank boxes for the actual time and fuel, written in flight.
     expect(p1[12]).toBe("")
@@ -254,9 +254,9 @@ describe("AirspaceCrossings", () => {
   it("writes the activity published by the SIA on its lines, French then English", () => {
     const crossing = { ...RESULT.legs[1].crossings[0], airspace: { ...R_ZONE_ACTIVITY } }
     render(<AirspaceCrossings legs={[{ ...RESULT.legs[1], crossings: [crossing] }]} />)
-    const activity = screen.getByText(/Activité publiée/)
+    const activity = screen.getByText(/^Activité :/)
     expect(activity).toHaveClass("whitespace-pre-line")
-    expect(activity.textContent).toBe("Activité publiée : Activités vélivoles.\nGliding activities")
+    expect(activity.textContent).toBe("Activité : Activités vélivoles.\nGliding activities")
   })
 
   it("is blocking with a prohibited area", () => {

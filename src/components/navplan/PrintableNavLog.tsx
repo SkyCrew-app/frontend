@@ -119,6 +119,7 @@ export function PrintableNavLog({ result, input, aircraft, pilot, format }: Prin
           })}
         </tbody>
       </table>
+      <PrintedAerodromes result={result} />
       {/* Not a <footer>: the application's print styles hide those. */}
       <div className="navlog-print__footer">
         <span>
@@ -131,5 +132,59 @@ export function PrintableNavLog({ result, input, aircraft, pilot, format }: Prin
       </div>
     </section>,
     document.body,
+  )
+}
+
+/** Under the log: METAR wind on the runways and density altitude of each aerodrome, the 0 °C isotherm. */
+function PrintedAerodromes({ result }: { result: FlightPlanResult }) {
+  const { t } = useTranslation("navplan")
+  const lines = (result.aerodromes ?? [])
+    .filter((aerodrome) => aerodrome.conditions)
+    .map((aerodrome) => {
+      const conditions = aerodrome.conditions!
+      const best = conditions.runways.find((runway) => runway.best)
+      const wind =
+        conditions.windSpeedKt == null
+          ? ""
+          : conditions.windDirectionDeg == null
+            ? `${conditions.windVariable ? "VRB" : "000"}/${conditions.windSpeedKt}`
+            : `${String(conditions.windDirectionDeg).padStart(3, "0")}/${conditions.windSpeedKt}${conditions.gustKt ? `G${conditions.gustKt}` : ""}`
+      const runway = best
+        ? ` → ${best.designator} : ${best.headwindKt >= 0 ? t("aerodrome.head", { value: best.headwindKt }) : t("aerodrome.tail", { value: -best.headwindKt })}, ${
+            best.crosswindKt === 0
+              ? t("aerodrome.noCross")
+              : best.crosswindKt > 0
+                ? t("aerodrome.crossRight", { value: best.crosswindKt })
+                : t("aerodrome.crossLeft", { value: -best.crosswindKt })
+          }`
+        : ""
+      const density = conditions.densityAltitudeFt != null ? ` — ${t("aerodrome.densityAltitude", { value: `${conditions.densityAltitudeFt} ft` })}` : ""
+      return `${t(`aerodrome.role.${aerodrome.role}`)} ${aerodrome.icao} : ${wind}${runway}${density}`
+    })
+  const freezing = (result.freezingLevels ?? [])
+    .map((level) =>
+      `${t(`weather.freezingPlace.${level.place}`, { ident: level.ident ?? "" })} ${
+        level.state === "LEVEL"
+          ? `${level.altitudeFt} ft`
+          : level.state === "SURFACE"
+            ? t("weather.freezingSurface")
+            : level.state === "ABOVE"
+              ? `> ${level.topFt} ft`
+              : "?"
+      }`,
+    )
+    .join(" · ")
+  if (lines.length === 0 && !freezing) return null
+  return (
+    <div className="navlog-print__aerodromes">
+      {lines.map((line) => (
+        <p key={line}>{line}</p>
+      ))}
+      {freezing && (
+        <p>
+          {t("weather.freezingTitle")} : {freezing}
+        </p>
+      )}
+    </div>
   )
 }

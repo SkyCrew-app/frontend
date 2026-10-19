@@ -84,7 +84,7 @@ const legacyWaypoints = (raw: string | null | undefined): LegacyWaypoint[] =>
     (wp) => wp && typeof wp === "object" && typeof wp.lat === "number" && typeof wp.lon === "number",
   )
 
-const toMapPoint = (point: NavPoint): AeroMapPoint => ({ ident: point.ident, type: point.type, lat: point.lat, lon: point.lon })
+const toMapPoint = (point: NavPoint): AeroMapPoint => ({ ident: point.ident, type: point.type, lat: point.lat, lon: point.lon, aerodromeIcao: point.aerodromeIcao })
 
 const BackButton = () => {
   const { t } = useTranslation("flights")
@@ -136,6 +136,7 @@ export default function FlightPlanDetails() {
       distances: legs.map((leg) => leg.distanceNm),
       labels: legs.map((leg) => `${formatCourse(leg.magneticCourseDeg)} · ${formatNm(leg.distanceNm, 0)}`),
       crossed: crossedAirspaceStatuses(plan.result.alternateLeg ? [...legs, plan.result.alternateLeg] : legs),
+      obstacles: (plan.result.alternateLeg ? [...legs, plan.result.alternateLeg] : legs).flatMap((leg) => leg.obstacles ?? []),
     }
   }, [plan])
 
@@ -336,6 +337,7 @@ export default function FlightPlanDetails() {
                 legDistancesNm={planMap?.distances}
                 legLabels={planMap?.labels}
                 crossedAirspaces={planMap?.crossed}
+                warnedObstacles={planMap?.obstacles}
               />
             </div>
             <Card className="min-w-0">

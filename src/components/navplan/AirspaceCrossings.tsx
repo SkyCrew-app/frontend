@@ -4,8 +4,9 @@ import { useTranslation } from "react-i18next"
 import { ExternalLink } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { airspaceTypeLabel, checkStatusVariant } from "@/lib/navplan/status"
-import type { AirspaceCrossing, CheckStatus, Leg, Notice, UnverifiedAirspace } from "@/lib/navplan/types"
+import type { Airspace, AirspaceCrossing, CheckStatus, Leg, Notice, UnverifiedAirspace } from "@/lib/navplan/types"
 import { formatFt, formatNm } from "@/lib/navplan/units"
+import { pointLabel } from "@/lib/navplan/aerodrome"
 
 export const SOFIA_BRIEFING_URL = "https://sofia-briefing.aviation-civile.gouv.fr"
 export const SIA_URL = "https://www.sia.aviation-civile.gouv.fr"
@@ -25,6 +26,8 @@ export function crossingsStatus(legs: Leg[], notChecked = false, unverified: Unv
   const all = legs.flatMap((leg) => leg.crossings).filter(crossed)
   if (all.some((crossing) => crossing.status === "BLOCKING")) return "BLOCKING"
   if (all.some((crossing) => crossing.status === "WARNING" || !crossing.activityKnown) || unverified.length > 0) return "WARNING"
+  // Obstacles less than 500 ft under a leg.
+  if (legs.some((leg) => (leg.obstacles ?? []).length > 0)) return "WARNING"
   return "OK"
 }
 
@@ -74,12 +77,78 @@ function UnverifiedList({ items }: { items: UnverifiedAirspace[] }) {
   )
 }
 
+/** Distance the plans look around an activity published at a point (parachuting, model aircraft…). */
+const ACTIVITY_RADIUS_NM: Partial<Record<Airspace["type"], number>> = {
+  PARACHUTING: 3,
+  AEROBATICS: 2,
+  WINCH: 2,
+  BALLOON: 2,
+  LOW_OVERFLIGHT: 2,
+  MODEL_AIRCRAFT: 1,
+  DRONE: 1,
+}
+const activityRadius = (airspace: Pick<Airspace, "type" | "radiusNm" | "outlineKnown">) =>
+  airspace.outlineKnown === true ? null : (airspace.radiusNm ?? ACTIVITY_RADIUS_NM[airspace.type] ?? null)
+
+/**
+ * Hours, activity and instructions of an area as the SIA publishes them (several lines, French
+ * then English); the instructions (bypass, PPR, phone) open in place.
+ */
+export function AirspaceDetails({ airspace }: { airspace: Pick<Airspace, "hours" | "activity" | "remarks"> }) {
+  const { t } = useTranslation("navplan")
+  return (
+    <>
+      {airspace.hours && <p className="whitespace-pre-line text-xs text-muted-foreground">{t("crossings.hours", { value: airspace.hours })}</p>}
+      {airspace.activity && airspace.activity !== airspace.hours && (
+        <p className="whitespace-pre-line text-xs text-muted-foreground">{t("crossings.activityLabel", { value: airspace.activity })}</p>
+      )}
+      {airspace.remarks && (
+        <details className="text-xs">
+          <summary className="cursor-pointer font-medium text-muted-foreground">{t("crossings.remarks")}</summary>
+          <p className="mt-1 whitespace-pre-line text-muted-foreground">{airspace.remarks}</p>
+        </details>
+      )}
+    </>
+  )
+}
+
+/** Obstacles of a leg less than 500 ft under its planned altitude, and the highest one near it. */
+function LegObstacles({ leg }: { leg: Leg }) {
+  const { t } = useTranslation("navplan")
+  const obstacles = leg.obstacles ?? []
+  if (obstacles.length === 0) return null
+  return (
+    <ul className="space-y-1 rounded-lg border border-warning/50 p-3 text-sm">
+      {obstacles.map((obstacle) => (
+        <li key={`${obstacle.alongNm}-${obstacle.amslFt}`}>
+          {t("crossings.obstacle", {
+            type: obstacle.type,
+            group: obstacle.count > 1 ? `×${obstacle.count}` : "",
+            amsl: formatFt(obstacle.amslFt),
+            along: formatNm(obstacle.alongNm),
+            offset: formatNm(obstacle.offsetNm),
+            margin: formatFt(obstacle.marginFt),
+          })}
+        </li>
+      ))}
+    </ul>
+  )
+}
+
 function CrossingItem({ crossing }: { crossing: AirspaceCrossing }) {
   const { t } = useTranslation("navplan")
   const { airspace } = crossing
   const unknownActivity = !crossing.activityKnown
   // The TMA PARIS list fifteen sectors of PARIS Contrôle: the first ones, then how many more.
-  const radios = [...new Set(airspace.frequencies.map((frequency) => [frequency.callsign ?? frequency.service, frequency.mhz].join(" ")))]
+  const radios = [
+    ...new Set(
+      airspace.frequencies.map(
+        (frequency) =>
+          `${frequency.callsign ?? frequency.service} ${frequency.mhz}${frequency.hoursCode && frequency.hoursCode !== "H24" ? ` (${t(`aerodrome.hoursCode.${frequency.hoursCode}`, { defaultValue: frequency.hoursCode })})` : ""}`,
+      ),
+    ),
+  ]
+  const radius = activityRadius(airspace)
   return (
     <li className="space-y-1 rounded-lg border p-3">
       <div className="flex flex-wrap items-center gap-2">
@@ -109,8 +178,8 @@ function CrossingItem({ crossing }: { crossing: AirspaceCrossing }) {
           {radios.length > SHOWN_RADIOS && ` ${t("crossings.moreRadios", { count: radios.length - SHOWN_RADIOS })}`}
         </p>
       )}
-      {/* The SIA writes the activity on several lines, French then English. */}
-      {airspace.activity && <p className="whitespace-pre-line text-xs text-muted-foreground">{t("crossings.activity", { value: airspace.activity })}</p>}
+      <AirspaceDetails airspace={airspace} />
+      {radius && <p className="text-xs text-muted-foreground">{t("crossings.atPoint", { radius: formatNm(radius, 0) })}</p>}
     </li>
   )
 }
@@ -167,10 +236,10 @@ export function AirspaceCrossings({
           if (items.length === 0) return null
           const isAlternate = position === legs.length
           return (
-            <section key={`${isAlternate ? "alt" : "leg"}-${leg.index}`} className="space-y-2" aria-label={`${leg.from.ident} → ${leg.to.ident}`}>
+            <section key={`${isAlternate ? "alt" : "leg"}-${leg.index}`} className="space-y-2" aria-label={`${pointLabel(leg.from)} → ${pointLabel(leg.to)}`}>
               <h3 className="text-sm font-semibold">
                 {isAlternate ? `${t("log.alternate")} ` : ""}
-                {leg.from.ident} → {leg.to.ident}
+                {pointLabel(leg.from)} → {pointLabel(leg.to)}
               </h3>
               <ul className="space-y-2">
                 {items.map((crossing) => (
@@ -182,6 +251,24 @@ export function AirspaceCrossings({
         })
       )}
 
+      {all.some((leg) => (leg.obstacles ?? []).length > 0) && (
+        <section className="space-y-2" aria-label={t("crossings.obstaclesTitle")}>
+          <h3 className="text-sm font-semibold">{t("crossings.obstaclesTitle")}</h3>
+          <p className="text-xs text-muted-foreground">{t("crossings.obstaclesDescription")}</p>
+          {all.map((leg, position) =>
+            (leg.obstacles ?? []).length > 0 ? (
+              <div key={`obstacles-${position}`} className="space-y-1">
+                <p className="text-sm font-medium">
+                  {position === legs.length ? `${t("log.alternate")} ` : ""}
+                  {pointLabel(leg.from)} → {pointLabel(leg.to)}
+                </p>
+                <LegObstacles leg={leg} />
+              </div>
+            ) : null,
+          )}
+        </section>
+      )}
+
       {all.some((leg) => leg.crossings.some((crossing) => !crossed(crossing))) && (
         <details className="text-sm">
           <summary className="cursor-pointer text-muted-foreground">{t("crossings.overUnder")}</summary>
@@ -191,7 +278,7 @@ export function AirspaceCrossings({
                 .filter((crossing) => !crossed(crossing))
                 .map((crossing) => (
                   <li key={`${leg.index}-${crossing.airspace.id}-${crossing.entryNm}`} className="text-xs text-muted-foreground">
-                    {leg.from.ident} → {leg.to.ident} : {crossing.airspace.name} ({t(`crossings.relation.${crossing.relation}`)},{" "}
+                    {pointLabel(leg.from)} → {pointLabel(leg.to)} : {crossing.airspace.name} ({t(`crossings.relation.${crossing.relation}`)},{" "}
                     {t("crossings.limits", { ceiling: crossing.airspace.ceiling.label, floor: crossing.airspace.floor.label })})
                   </li>
                 )),

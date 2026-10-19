@@ -31,6 +31,8 @@ import type { Leg, NavPoint } from "@/lib/navplan/types"
 import { formatCourse, formatFt, formatMinutes, formatNm } from "@/lib/navplan/units"
 import { cn } from "@/lib/utils"
 import { NavPointSearch } from "./NavPointSearch"
+import { AerodromeSheetPopover } from "./AerodromeSheet"
+import { pointLabel } from "@/lib/navplan/aerodrome"
 import { NumberField } from "./NumberField"
 
 interface RouteEditorProps {
@@ -45,6 +47,8 @@ interface RouteEditorProps {
   /** Fields written in the same row as the cruise altitude: before it (off-block time) and after it. */
   before?: ReactNode
   after?: ReactNode
+  /** Shows the full sheet of an aerodrome (the log step). */
+  onOpenAerodrome?: (icao: string) => void
 }
 
 const toRoutePoint = (route: RouteDraft, point: NavPoint): RoutePoint =>
@@ -69,7 +73,7 @@ const POINT_CHIP = "h-9 rounded-full px-3"
  * magnetic course, distance and time and opens on its own altitude, wind and power setting; a
  * point chip opens on its name, its place in the route and its removal.
  */
-export function RouteEditor({ route, onChange, computedLegs = [], cruiseSettings = [], normalSetting, showErrors = false, before, after }: RouteEditorProps) {
+export function RouteEditor({ route, onChange, computedLegs = [], cruiseSettings = [], normalSetting, showErrors = false, before, after, onOpenAerodrome }: RouteEditorProps) {
   const { t } = useTranslation("navplan")
   const [cruiseAltitude, setCruiseAltitude] = useState<number | null>(usualAltitude(route))
   const near = route.departure ? { lat: route.departure.lat, lon: route.departure.lon } : null
@@ -106,7 +110,7 @@ export function RouteEditor({ route, onChange, computedLegs = [], cruiseSettings
       <div className="space-y-2">
         <h3 className="sr-only">{t("route.legsTitle")}</h3>
         <ol className="flex flex-wrap items-center gap-x-1 gap-y-2" aria-label={t("route.legsTitle")}>
-          <li>
+          <li className="flex items-center">
             <Label htmlFor="route-departure" className="sr-only">
               {t("route.departure")}
             </Label>
@@ -123,6 +127,7 @@ export function RouteEditor({ route, onChange, computedLegs = [], cruiseSettings
               className={END_CHIP}
               onSelect={(point) => onChange(setDeparture(route, routePointFromNavPoint(point)))}
             />
+            {route.departure && <AerodromeSheetPopover icao={route.departure.ident} role="departure" onOpenFull={onOpenAerodrome && (() => onOpenAerodrome(route.departure!.ident))} className="ml-0.5" />}
           </li>
           {route.legs.map((leg, legIndex) => {
             const waypoint = route.waypoints[legIndex]
@@ -135,7 +140,7 @@ export function RouteEditor({ route, onChange, computedLegs = [], cruiseSettings
               <Fragment key={`leg-${legIndex}`}>
                 <LegChip
                   index={legIndex}
-                  label={`${from?.ident ?? "…"} → ${to?.ident ?? "…"}`}
+                  label={`${from ? pointLabel(from) : "…"} → ${to ? pointLabel(to) : "…"}`}
                   leg={leg}
                   computed={computed}
                   cruiseAltitude={validAltitude(cruiseAltitude) ? cruiseAltitude : null}
@@ -155,12 +160,13 @@ export function RouteEditor({ route, onChange, computedLegs = [], cruiseSettings
                     onLater={() => onChange(reorderWaypoint(route, legIndex, legIndex + 1))}
                     onRemove={() => onChange(removeWaypoint(route, legIndex))}
                     onRename={(name) => onChange(renameWaypoint(route, legIndex, name))}
+                    onOpenAerodrome={onOpenAerodrome}
                   />
                 )}
               </Fragment>
             )
           })}
-          <li>
+          <li className="flex items-center">
             <Label htmlFor="route-destination" className="sr-only">
               {t("route.destination")}
             </Label>
@@ -177,6 +183,9 @@ export function RouteEditor({ route, onChange, computedLegs = [], cruiseSettings
               className={END_CHIP}
               onSelect={(point) => onChange(setDestination(route, routePointFromNavPoint(point)))}
             />
+            {route.destination && (
+              <AerodromeSheetPopover icao={route.destination.ident} role="destination" onOpenFull={onOpenAerodrome && (() => onOpenAerodrome(route.destination!.ident))} className="ml-0.5" />
+            )}
           </li>
           <li className="ml-2">
             <Label htmlFor="route-add-point" className="sr-only">
@@ -220,6 +229,9 @@ export function RouteEditor({ route, onChange, computedLegs = [], cruiseSettings
               >
                 <X className="h-4 w-4" aria-hidden="true" />
               </Button>
+            )}
+            {route.alternate && (
+              <AerodromeSheetPopover icao={route.alternate.ident} role="alternate" onOpenFull={onOpenAerodrome && (() => onOpenAerodrome(route.alternate!.ident))} className="ml-0.5" />
             )}
           </li>
         </ol>
@@ -415,9 +427,10 @@ interface WaypointChipProps {
   onLater: () => void
   onRemove: () => void
   onRename: (name: string) => void
+  onOpenAerodrome?: (icao: string) => void
 }
 
-function WaypointChip({ point, index, count, onEarlier, onLater, onRemove, onRename }: WaypointChipProps) {
+function WaypointChip({ point, index, count, onEarlier, onLater, onRemove, onRename, onOpenAerodrome }: WaypointChipProps) {
   const { t } = useTranslation("navplan")
   const isUser = point.type === "USER"
   const [name, setName] = useState(point.ident)
@@ -436,7 +449,7 @@ function WaypointChip({ point, index, count, onEarlier, onLater, onRemove, onRen
         <PopoverTrigger asChild>
           <Button type="button" variant="outline" className={POINT_CHIP} title={`${point.lat.toFixed(4)}, ${point.lon.toFixed(4)}`}>
             <span className="sr-only">{t("route.pointChip", { position: index + 1 })} </span>
-            <span className="font-semibold">{point.ident}</span>
+            <span className="font-semibold">{pointLabel(point)}</span>
             {!isUser && <span className="text-xs text-muted-foreground">{t(`pointType.${point.type}`)}</span>}
           </Button>
         </PopoverTrigger>
@@ -460,10 +473,17 @@ function WaypointChip({ point, index, count, onEarlier, onLater, onRemove, onRen
             </div>
           ) : (
             <p className="text-sm">
-              <span className="font-semibold">{point.ident}</span>
+              <span className="font-semibold">{pointLabel(point)}</span>
               <span className="ml-2 text-xs text-muted-foreground">{t(`pointType.${point.type}`)}</span>
               {point.name && point.name !== point.ident && <span className="block text-xs text-muted-foreground">{point.name}</span>}
             </p>
+          )}
+          {point.type === "AERODROME" && (
+            <AerodromeSheetPopover icao={point.ident} role="enroute" onOpenFull={onOpenAerodrome && (() => onOpenAerodrome(point.ident))}>
+              <Button type="button" variant="outline" size="sm" className="w-full">
+                {t("aerodrome.openSheet")}
+              </Button>
+            </AerodromeSheetPopover>
           )}
           <div className="grid grid-cols-2 gap-2">
             <Button type="button" variant="outline" size="sm" disabled={index === 0} aria-label={t("route.moveUp", { ident: point.ident })} onClick={onEarlier}>

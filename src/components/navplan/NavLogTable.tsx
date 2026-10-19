@@ -1,9 +1,11 @@
 "use client"
 
 import { useTranslation } from "react-i18next"
-import type { Leg } from "@/lib/navplan/types"
+import type { Leg, PlanAerodrome } from "@/lib/navplan/types"
+import { AerodromeSheetPopover } from "./AerodromeSheet"
 import { formatFt, formatNm, formatNumber } from "@/lib/navplan/units"
 import { cn } from "@/lib/utils"
+import { pointLabel } from "@/lib/navplan/aerodrome"
 import { BLANK_COLUMNS, NAVLOG_COLUMNS, legProfileNotes, navLogCell, navLogCumulative, navLogRows, type NavLogColumn, type NavLogRow } from "./navlog-rows"
 
 export { legProfileNotes }
@@ -13,6 +15,29 @@ interface NavLogTableProps {
   alternateLeg?: Leg | null
   totalDistanceNm: number
   totalTimeMin: number
+  /** METAR figures of the departure, destination and alternate, for their sheet. */
+  aerodromes?: PlanAerodrome[]
+  /** Shows the full sheet of an aerodrome on the page. */
+  onOpenAerodrome?: (icao: string) => void
+}
+
+/** The point of a log line; an aerodrome opens its sheet. */
+function PointName({ row, aerodromes, onOpenAerodrome }: { row: NavLogRow; aerodromes?: PlanAerodrome[]; onOpenAerodrome?: (icao: string) => void }) {
+  const { t } = useTranslation("navplan")
+  if (row.point.type !== "AERODROME") return <>{row.ident}</>
+  const planned = aerodromes?.find((aerodrome) => aerodrome.icao === row.point.ident)
+  const role = row.kind === "departure" ? "departure" : row.kind === "alternate" ? "alternate" : (planned?.role ?? "enroute")
+  return (
+    <AerodromeSheetPopover icao={row.point.ident} role={role} conditions={planned?.conditions} onOpenFull={onOpenAerodrome ? () => onOpenAerodrome(row.point.ident) : undefined}>
+      <button
+        type="button"
+        className="rounded-sm font-semibold underline decoration-dotted underline-offset-4 hover:decoration-solid focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        aria-label={`${row.ident} — ${t("aerodrome.sheetOf", { icao: row.point.ident })}`}
+      >
+        {row.ident}
+      </button>
+    </AerodromeSheetPopover>
+  )
 }
 
 /** TOC, TOD and the suggested level of the leg leading to a point, in words. */
@@ -27,6 +52,12 @@ export function useRowNotes() {
       row.leg.suggestedAltitudeFt && row.leg.suggestedAltitudeFt !== row.leg.altitudeFt
         ? t("log.suggestedAltitude", { altitude: formatFt(row.leg.suggestedAltitudeFt) })
         : null,
+      // The obstacle closest to the planned altitude on the leg (all of them in the Zones step).
+      ...(row.leg.obstacles ?? [])
+        .slice()
+        .sort((a, b) => a.marginFt - b.marginFt)
+        .slice(0, 1)
+        .map((obstacle) => t("log.obstacleNote", { amsl: formatFt(obstacle.amslFt), margin: formatFt(obstacle.marginFt) })),
     ].filter((note): note is string => Boolean(note))
   }
 }
@@ -54,7 +85,7 @@ const UNIT_AFTER_VALUE: ReadonlySet<NavLogColumn> = new Set(["altitude", "tas", 
  * reaches it, the expected time over it, and blank boxes for the actual time and fuel. A table on
  * a wide screen (the printed log has the same columns); on a phone one card per leg.
  */
-export function NavLogTable({ legs, alternateLeg, totalDistanceNm, totalTimeMin }: NavLogTableProps) {
+export function NavLogTable({ legs, alternateLeg, totalDistanceNm, totalTimeMin, aerodromes, onOpenAerodrome }: NavLogTableProps) {
   const { t } = useTranslation("navplan")
   const rows = navLogRows({ legs, alternateLeg })
   const labels = { calm: t("log.calm"), noForecast: t("log.noWindForecast") }
@@ -96,7 +127,7 @@ export function NavLogTable({ legs, alternateLeg, totalDistanceNm, totalTimeMin 
                         <th key={column} scope="row" className="min-w-[6rem] max-w-[10rem] text-left align-top font-normal">
                           <span className="block font-semibold">
                             {row.kind === "alternate" && <span className="text-xs font-normal text-muted-foreground">{t("log.alternate")} </span>}
-                            {row.ident}
+                            <PointName row={row} aerodromes={aerodromes} onOpenAerodrome={onOpenAerodrome} />
                           </span>
                           {row.name && row.name !== row.ident && <span className="block truncate text-xs text-muted-foreground">{row.name}</span>}
                           {notes.length > 0 && <span className="block text-xs text-muted-foreground">{notes.join(" · ")}</span>}
@@ -143,14 +174,14 @@ export function NavLogTable({ legs, alternateLeg, totalDistanceNm, totalTimeMin 
           .filter((row) => row.leg)
           .map((row) => {
             const previous = rows[rows.indexOf(row) - 1]
-            const from = row.kind === "alternate" ? (row.leg?.from.ident ?? "") : (previous?.ident ?? "")
+            const from = row.kind === "alternate" ? (row.leg ? pointLabel(row.leg.from) : "") : (previous?.ident ?? "")
             const notes = notesOf(row)
             return (
               <li key={row.key} className="rounded-lg border p-3">
                 <div className="flex items-baseline justify-between gap-2">
                   <p className="font-semibold">
                     {row.kind === "alternate" && <span className="mr-1 text-xs font-normal text-muted-foreground">{t("log.alternate")}</span>}
-                    {from} → {row.ident}
+                    {from} → <PointName row={row} aerodromes={aerodromes} onOpenAerodrome={onOpenAerodrome} />
                   </p>
                   <p className="text-sm tabular-nums text-muted-foreground">{row.leg ? formatFt(row.leg.altitudeFt) : ""}</p>
                 </div>

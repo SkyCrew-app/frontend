@@ -35,6 +35,14 @@ export const AIRSPACE_STYLES: Record<AirspaceType, AirspaceStyle> = {
   PROTECTED: { color: "#65a30d", fillOpacity: 0.06, dashed: true },
   GLIDING: { color: "#0891b2", fillOpacity: 0.05, dashed: true },
   OTHER: { color: "#6b7280", fillOpacity: 0.05, dashed: true },
+  // Activities published at a point: a symbol and a dashed ring of the distance the plans look at.
+  PARACHUTING: { color: "#be185d", fillOpacity: 0.08, dashed: true },
+  AEROBATICS: { color: "#be185d", fillOpacity: 0.08, dashed: true },
+  WINCH: { color: "#0e7490", fillOpacity: 0.08, dashed: true },
+  BALLOON: { color: "#0e7490", fillOpacity: 0.08, dashed: true },
+  LOW_OVERFLIGHT: { color: "#b91c1c", fillOpacity: 0.06, dashed: true },
+  MODEL_AIRCRAFT: { color: "#4d7c0f", fillOpacity: 0.05, dashed: true },
+  DRONE: { color: "#4d7c0f", fillOpacity: 0.05, dashed: true },
 }
 
 /**

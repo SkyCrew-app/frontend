@@ -97,3 +97,8 @@
     font-weight: 700;
   }
 }
+
+.navlog-print__aerodromes {
+  margin-top: 2mm;
+  font-size: 7.5pt;
+}

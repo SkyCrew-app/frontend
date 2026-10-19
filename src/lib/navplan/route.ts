@@ -11,6 +11,8 @@ export interface RoutePoint {
   name?: string | null
   lat: number
   lon: number
+  /** The aerodrome of a VFR reporting point ("LFPN" for S), written before it. */
+  aerodromeIcao?: string | null
 }
 
 export interface LegDraft {
@@ -44,6 +46,7 @@ export const routePointFromNavPoint = (point: NavPoint): RoutePoint => ({
   name: point.name ?? null,
   lat: point.lat,
   lon: point.lon,
+  ...(point.type === "VRP" && point.aerodromeIcao ? { aerodromeIcao: point.aerodromeIcao } : {}),
 })
 
 /** Next free name for a point placed on the map: P1, P2… */

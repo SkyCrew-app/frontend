@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { useTranslation } from "react-i18next"
 import { Loader2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
@@ -15,8 +16,9 @@ import { MassBalancePanel } from "./MassBalancePanel"
 import { NavLogTable } from "./NavLogTable"
 import { NavdataAge, NoticesList } from "./NoticesBanner"
 import { WeatherPanel } from "./WeatherPanel"
+import { AerodromesPanel, aerodromeSheetId } from "./AerodromeSheet"
 
-export type ResultsTab = "log" | "massBalance" | "fuel" | "airspaces" | "weather"
+export type ResultsTab = "log" | "aerodromes" | "massBalance" | "fuel" | "airspaces" | "weather"
 
 interface ResultsPanelProps {
   result: FlightPlanResult
@@ -63,6 +65,13 @@ export function ResultsPanel({
   departureTime,
 }: ResultsPanelProps) {
   const { t } = useTranslation("navplan")
+  // Uncontrolled when the page does not follow the tab (a saved plan).
+  const [ownTab, setOwnTab] = useState<ResultsTab>("log")
+  const shownTab = tab ?? ownTab
+  const changeTab = (value: ResultsTab) => {
+    setOwnTab(value)
+    onTabChange?.(value)
+  }
   const notChecked = airspacesNotChecked(result.notices)
   const zones = crossingsStatus(result.alternateLeg ? [...result.legs, result.alternateLeg] : result.legs, notChecked, result.unverifiedAirspaces)
 
@@ -74,9 +83,10 @@ export function ResultsPanel({
 
       <FlightConditions result={result} departureTime={departureTime} />
 
-      <Tabs value={tab} defaultValue={tab ? undefined : "log"} onValueChange={(value) => onTabChange?.(value as ResultsTab)}>
+      <Tabs value={shownTab} onValueChange={(value) => changeTab(value as ResultsTab)}>
         <TabsList className="tabs-list h-auto w-full flex-wrap justify-start">
           <TabsTrigger value="log">{t("results.tabs.log")}</TabsTrigger>
+          <TabsTrigger value="aerodromes">{t("results.tabs.aerodromes")}</TabsTrigger>
           <TabsTrigger value="massBalance" className="gap-1.5">
             {t("results.tabs.massBalance")}
             <TabStatus status={result.massBalance.status} />
@@ -97,7 +107,15 @@ export function ResultsPanel({
             alternateLeg={result.alternateLeg}
             totalDistanceNm={result.totalDistanceNm}
             totalTimeMin={result.totalTimeMin}
+            aerodromes={result.aerodromes}
+            onOpenAerodrome={(icao) => {
+              changeTab("aerodromes")
+              setTimeout(() => document.getElementById(aerodromeSheetId(icao))?.scrollIntoView({ behavior: "smooth", block: "start" }), 120)
+            }}
           />
+        </TabsContent>
+        <TabsContent value="aerodromes" className="mt-4">
+          <AerodromesPanel result={result} />
         </TabsContent>
         <TabsContent value="massBalance" className="mt-4">
           <MassBalancePanel massBalance={result.massBalance} weighingDate={weighingDate} />
@@ -110,7 +128,14 @@ export function ResultsPanel({
           <AirspaceCrossings legs={result.legs} alternateLeg={result.alternateLeg} notChecked={notChecked} unverified={result.unverifiedAirspaces} />
         </TabsContent>
         <TabsContent value="weather" className="mt-4">
-          <WeatherPanel reports={result.weather} roles={roles} windSource={result.windSource} />
+          <WeatherPanel
+            reports={result.weather}
+            roles={roles}
+            windSource={result.windSource}
+            aerodromes={result.aerodromes}
+            freezingLevels={result.freezingLevels}
+            legs={result.alternateLeg ? [...result.legs, result.alternateLeg] : result.legs}
+          />
         </TabsContent>
       </Tabs>
 
