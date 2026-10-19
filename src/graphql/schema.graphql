@@ -84,11 +84,54 @@ type Aerodrome {
   timezone: String
 }
 
+type AerodromeConditions {
+  densityAltitudeFt: Int
+  dewpointC: Int
+  gustKt: Int
+  observedAt: DateTime
+  pressureAltitudeFt: Int
+  qnhHpa: Int
+  runways: [RunwayWind!]!
+  station: String!
+  temperatureC: Int
+  windDirectionDeg: Int
+  windSpeedKt: Int
+  windVariable: Boolean!
+}
+
 type AerodromeDetails {
   circuitHeightFt: Int
   frequencies: [RadioFrequency!]!
   point: NavPoint!
   runways: [Runway!]!
+  sheet: AerodromeSheet!
+}
+
+type AerodromeSheet {
+  atsHours: String
+  atsHoursCode: String
+  chartsUrl: String!
+  elevationFt: Int
+  frequencies: [RadioFrequency!]!
+  fuel: String
+  fuelHours: String
+  fuelRemarks: String
+  fuelTypes: [String!]!
+  icao: String!
+  ifr: Boolean
+  magneticVariationDeg: Float
+  magneticVariationYear: String
+  name: String
+  navLogFrequency: String
+  operator: String
+  phone: String
+  privateFlights: Boolean
+  remarks: String
+  runways: [Runway!]!
+  source: String!
+  status: String
+  vacUrl: String
+  vfr: Boolean
 }
 
 type AerodromeSun {
@@ -230,10 +273,13 @@ type Airspace {
   floor: AltitudeLimit!
   frequencies: [RadioFrequency!]!
   geometry: JSON!
+  hours: String
   icaoClass: String
   id: ID!
   name: String!
   outlineKnown: Boolean!
+  radiusNm: Float
+  referencePoint: GeoPoint
   remarks: String
   type: AirspaceType!
 }
@@ -260,12 +306,18 @@ enum AirspaceRelation {
 }
 
 enum AirspaceType {
+  AEROBATICS
+  BALLOON
   CTA
   CTR
   D
+  DRONE
   GLIDING
+  LOW_OVERFLIGHT
+  MODEL_AIRCRAFT
   OTHER
   P
+  PARACHUTING
   PROTECTED
   R
   RMZ
@@ -274,6 +326,7 @@ enum AirspaceType {
   TMZ
   TRA
   TSA
+  WINCH
 }
 
 type AltitudeLimit {
@@ -1183,10 +1236,12 @@ input FlightPlanInput {
 }
 
 type FlightPlanResult {
+  aerodromes: [PlanAerodrome!]!
   alternateLeg: Leg
   daylight: Daylight
   encodedPolyline: String!
   engineVersion: String!
+  freezingLevels: [FreezingLevel!]!
   fuel: FuelPlan!
   legs: [Leg!]!
   massBalance: MassBalanceResult!
@@ -1227,6 +1282,15 @@ input FlightPlanningSettingsInput {
   reserveVfrDayMin: Int!
   reserveVfrNightMin: Int!
   verticalMarginFt: Int!
+}
+
+type FreezingLevel {
+  altitudeFt: Int
+  at: DateTime!
+  ident: String
+  place: String!
+  state: String!
+  topFt: Int
 }
 
 type FuelData {
@@ -1311,6 +1375,11 @@ input GenerateFlightPlanInput {
   """Preferred departure runway (e.g. "09L")"""
   preferred_runway_dep: String
   reservation_id: Int
+}
+
+type GeoPoint {
+  lat: Float!
+  lon: Float!
 }
 
 type HoursEntry {
@@ -1409,9 +1478,11 @@ type Leg {
   fuelL: Float!
   fuelRemainingL: Float!
   groundSpeedKt: Float!
+  highestObstacleFt: Int
   index: Int!
   magneticCourseDeg: Float!
   magneticHeadingDeg: Float!
+  obstacles: [LegObstacle!]!
   segments: [PhaseSegment!]!
   suggestedAltitudeFt: Int
   tasKt: Float!
@@ -1428,6 +1499,21 @@ input LegInput {
   altitudeFt: Int!
   cruiseSetting: String
   windOverride: WindInput
+}
+
+type LegObstacle {
+  aglFt: Int
+  alongNm: Float!
+  amslFt: Int!
+  count: Int!
+  ident: String!
+  lat: Float!
+  lighting: String
+  lon: Float!
+  marginFt: Int!
+  offsetNm: Float!
+  status: CheckStatus!
+  type: String!
 }
 
 type Lesson {
@@ -1840,6 +1926,17 @@ type Notification {
   user: User!
 }
 
+type Obstacle {
+  aglFt: Int
+  amslFt: Int!
+  count: Int!
+  ident: String!
+  lat: Float!
+  lighting: String
+  lon: Float!
+  type: String!
+}
+
 type Payment {
   amount: Float!
   error_message: String
@@ -1882,6 +1979,13 @@ type PhaseSegment {
   tasKt: Float!
   timeMin: Float!
   toNm: Float!
+}
+
+type PlanAerodrome {
+  conditions: AerodromeConditions
+  icao: String!
+  role: String!
+  sheet: AerodromeSheet
 }
 
 enum PlanFeature {
@@ -2015,6 +2119,7 @@ type Query {
   navdataInfo: NavdataInfo!
   notification(id: Int!): Notification!
   notificationsByUser(userId: Int!): [Notification!]!
+  obstaclesInBox(bbox: BBoxInput!): [Obstacle!]!
   overdueAudits: [Audit!]!
   payment(id: Int!): Payment!
   payments: [Payment!]!
@@ -2052,8 +2157,12 @@ type Question {
 }
 
 type RadioFrequency {
+  auxiliary: Boolean
   callsign: String
+  hours: String
+  hoursCode: String
   mhz: String!
+  remark: String
   service: String!
 }
 
@@ -2140,10 +2249,34 @@ input RoutePointInput {
 
 type Runway {
   designator: String!
+  ends: [RunwayEnd!]!
   lengthM: Int
+  main: Boolean
   surface: String
   trueHeadingDeg: Float
   widthM: Int
+}
+
+type RunwayEnd {
+  asdaM: Int
+  designator: String!
+  displacedThreshold: Boolean!
+  ldaM: Int
+  magneticBearingDeg: Float
+  remarks: String
+  thresholdElevationFt: Int
+  todaM: Int
+  toraM: Int
+  trueBearingDeg: Float
+}
+
+type RunwayWind {
+  best: Boolean!
+  crosswindKt: Int!
+  designator: String!
+  gustCrosswindKt: Int
+  gustHeadwindKt: Int
+  headwindKt: Int!
 }
 
 type Station {

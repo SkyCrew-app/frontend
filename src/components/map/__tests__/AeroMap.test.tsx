@@ -86,6 +86,27 @@ class MockMap {
   }
 }
 
+const mockPopups: MockPopup[] = []
+class MockPopup {
+  content: HTMLElement | null = null
+  constructor() {
+    mockPopups.push(this)
+  }
+  setLngLat() {
+    return this
+  }
+  setDOMContent(content: HTMLElement) {
+    this.content = content
+    return this
+  }
+  addTo() {
+    return this
+  }
+  remove() {
+    return this
+  }
+}
+
 class MockBounds {
   points: [number, number][] = []
   extend(point: [number, number]) {
@@ -105,6 +126,7 @@ jest.mock(
         NavigationControl: class {},
         ScaleControl: class {},
         LngLatBounds: MockBounds,
+        Popup: MockPopup,
       },
     }
   },
@@ -200,7 +222,7 @@ describe("AeroMap", () => {
     expect(onAddPoint).toHaveBeenCalledWith({ lat: 48.3, lon: 1.9 })
   })
 
-  it("only shows the route when read-only", async () => {
+  it("only shows the route when read-only: a click says what is there", async () => {
     const onAddPoint = jest.fn()
     renderMap({ onAddPoint })
     const map = await loadedMap()
@@ -208,6 +230,16 @@ describe("AeroMap", () => {
     map.listeners.click({ point: { x: 1, y: 2 }, lngLat: { lat: 48.3, lng: 1.9 } })
     expect(onAddPoint).not.toHaveBeenCalled()
     expect(mockMarkers.some((marker) => marker.draggable)).toBe(false)
+    expect(mockPopups.at(-1)?.content?.textContent).toContain("Aucune zone ni obstacle à cet endroit.")
+  })
+
+  it("adds the activity and obstacle layers, and writes a VFR point with its aerodrome", async () => {
+    renderMap({ points: [points[0], { ident: "S", type: "VRP" as const, aerodromeIcao: "LFPN", lat: 48.7, lon: 2.0 }, points[2]] })
+    const map = await loadedMap()
+    expect(map.layers).toEqual(expect.arrayContaining(["aero-activities-ring", "aero-activities-point", "aero-obstacles-point"]))
+    expect(mockMarkers.map((marker) => marker.element.textContent)).toContain("LFPN S")
+    // The switches of the information layers, off by default except the obstacles.
+    expect(screen.getByRole("button", { name: /Couches de la carte/ })).toBeInTheDocument()
   })
 
   it("says so when the map cannot start, without breaking the page", async () => {

@@ -1,4 +1,5 @@
-import type { FlightPlanResult, Leg } from "@/lib/navplan/types"
+import { pointLabel } from "@/lib/navplan/aerodrome"
+import type { FlightPlanResult, Leg, NavPoint } from "@/lib/navplan/types"
 import { formatCourse, formatDrift, formatNumber, formatUtcTime, formatWind } from "@/lib/navplan/units"
 
 // The nav log as on the paper one French club pilots use: one line per point, the figures of the
@@ -32,7 +33,10 @@ export const BLANK_COLUMNS: ReadonlySet<NavLogColumn> = new Set(["ata", "fuelAct
 export interface NavLogRow {
   key: string
   kind: "departure" | "point" | "alternate"
+  /** As written on the log: a VFR point with its aerodrome ("LFPN S"). */
   ident: string
+  /** The point itself (its type, its aerodrome, for the aerodrome sheet). */
+  point: NavPoint
   name?: string | null
   /** The leg flown to reach this point; none on the departure line. */
   leg?: Leg
@@ -73,7 +77,8 @@ export function navLogRows(result: Pick<FlightPlanResult, "legs" | "alternateLeg
     {
       key: "departure",
       kind: "departure",
-      ident: first.from.ident,
+      ident: pointLabel(first.from),
+      point: first.from,
       name: first.from.name,
       frequencies: joinFrequencies(first.from.frequency),
       // Fuel when the first leg starts: what the API left after it, plus what it burns.
@@ -86,7 +91,8 @@ export function navLogRows(result: Pick<FlightPlanResult, "legs" | "alternateLeg
     rows.push({
       key: `leg-${leg.index}`,
       kind: "point",
-      ident: leg.to.ident,
+      ident: pointLabel(leg.to),
+      point: leg.to,
       name: leg.to.name,
       leg,
       frequencies: joinFrequencies(leg.to.frequency, ...zonesToContact(leg)),
@@ -99,7 +105,8 @@ export function navLogRows(result: Pick<FlightPlanResult, "legs" | "alternateLeg
     rows.push({
       key: `alternate-${alternateLeg.index}`,
       kind: "alternate",
-      ident: alternateLeg.to.ident,
+      ident: pointLabel(alternateLeg.to),
+      point: alternateLeg.to,
       name: alternateLeg.to.name,
       leg: alternateLeg,
       frequencies: joinFrequencies(alternateLeg.to.frequency, ...zonesToContact(alternateLeg)),
@@ -155,9 +162,15 @@ export function navLogCell(row: NavLogRow, column: NavLogColumn, labels: { calm:
   }
 }
 
-/** The running total written under the distance and the time, as "Σ 41,2". */
+/**
+ * The small line under a figure: the running total under the distance and the time ("Σ 41,2"),
+ * the forecast temperature at the leg altitude under the wind ("+4 °C").
+ */
 export function navLogCumulative(row: NavLogRow, column: NavLogColumn): string | null {
   if (row.kind === "departure") return null
+  const temperature = row.leg?.wind.temperatureC
+  if (column === "wind" && row.leg?.wind.source !== "NONE" && typeof temperature === "number")
+    return `${temperature > 0.5 ? "+" : ""}${formatNumber(temperature, 0)} °C`
   if (column === "distance" && row.cumulativeDistanceNm !== undefined) return `Σ ${formatNumber(row.cumulativeDistanceNm, 1)}`
   if (column === "time" && row.cumulativeTimeMin !== undefined) return `Σ ${formatNumber(row.cumulativeTimeMin, 0)}`
   return null

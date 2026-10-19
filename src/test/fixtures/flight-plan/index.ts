@@ -76,6 +76,8 @@ const leg = (overrides: Partial<Leg> & Pick<Leg, "index" | "from" | "to">): Leg 
   fuelL: 5.9,
   fuelRemainingL: 71.1,
   crossings: [],
+  obstacles: [],
+  highestObstacleFt: null,
   ...overrides,
 })
 
@@ -455,6 +457,11 @@ const TYPENAMES: Record<string, string> = {
   navdata: "NavdataInfo",
   notices: "Notice",
   unverifiedAirspaces: "UnverifiedAirspace",
+  obstacles: "LegObstacle",
+  aerodromes: "PlanAerodrome",
+  conditions: "AerodromeConditions",
+  runways: "RunwayWind",
+  freezingLevels: "FreezingLevel",
 }
 
 const annotate = (value: unknown, typename?: string): unknown => {
