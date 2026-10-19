@@ -394,7 +394,10 @@
       "UNKNOWN_VERTICAL": "Limite sol : vérifier",
       "BELOW": "Sous la zone",
       "ABOVE": "Au-dessus de la zone"
-    }
+    },
+    "check": "{{name}} ({{kind}}) : {{requirement}}",
+    "moreRadios_one": "(+ {{count}} autre fréquence)",
+    "moreRadios_other": "(+ {{count}} autres fréquences)"
   },
   "weather": {
     "none": "Aucun METAR ni TAF pour les aérodromes du plan.",
@@ -775,6 +778,11 @@
     "checksTitle_other": "Points à vérifier ({{count}})",
     "showFewer": "Réduire la liste",
     "statusPrefix": "{{status}}\u00a0:",
-    "showAll": "Voir les {{count}} points à vérifier"
+    "showAll": "Voir les {{count}} points à vérifier",
+    "zones": "Zones",
+    "zonesNotChecked": "Non vérifiées",
+    "zonesCrossed_zero": "Aucune traversée",
+    "zonesCrossed_one": "{{count}} traversée",
+    "zonesCrossed_other": "{{count}} traversées"
   }
 }

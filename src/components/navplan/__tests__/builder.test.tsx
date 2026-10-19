@@ -20,6 +20,7 @@ jest.mock("next/dynamic", () => () => {
     <div data-testid="map">
       <span>{props.points.map((point) => point.ident).join(" ")}</span>
       <span data-testid="leg-labels">{(props.legLabels ?? []).join(" | ")}</span>
+      <span data-testid="crossed-airspaces">{JSON.stringify(props.crossedAirspaces ?? {})}</span>
       <button type="button" onClick={() => props.onAddPoint?.({ lat: 48.3, lon: 1.5 })}>
         clic carte
       </button>
@@ -90,6 +91,49 @@ describe("FlightPlanBuilder", () => {
     await userEvent.click(screen.getByRole("tab", { name: /Log et dossier/ }))
     const log = screen.getByRole("table", { name: "Log de navigation, point par point" })
     expect(within(log).getByRole("rowheader", { name: /^P1/ })).toBeInTheDocument()
+  })
+
+  // Production, AIRAC 2610: the zones were on the map, but on the route step nothing said the
+  // route went through them: no highlight, no point to check, no verdict of the zones.
+  it("shows on the route step the airspaces the route goes through: on the map, in the summary and its points to check", async () => {
+    renderBuilder()
+    await screen.findByText("Bilan : À vérifier", {}, { timeout: 2000 })
+    expect(screen.getByRole("tab", { name: /Route/ })).toHaveAttribute("aria-selected", "true")
+    // The areas crossed, not the one flown under (TMA PARIS 2), by the worst status of their crossing.
+    await waitFor(() =>
+      expect(JSON.parse(screen.getByTestId("crossed-airspaces").textContent ?? "{}")).toEqual({
+        "as-tma-paris-1": "WARNING",
+        "as-r-45a": "WARNING",
+      }),
+    )
+    const summary = screen.getByRole("region", { name: "Bilan du plan" })
+    expect(summary).toHaveTextContent("Zones2 traversées")
+    await userEvent.click(within(summary).getByRole("button", { name: /Voir les \d+ points à vérifier/ }))
+    const checks = within(summary).getByRole("list", { name: /Points à vérifier/ })
+    expect(checks).toHaveTextContent("TMA PARIS 1 (TMA · classe D) : Clairance requise — contacter Paris Approche 119.850.")
+    expect(checks).toHaveTextContent(/R 45 A \(Zone réglementée\) : Zone réglementée : pénétration soumise à conditions/)
+    expect(checks).not.toHaveTextContent("TMA PARIS 2")
+  })
+
+  it("lists a prohibited area crossed among the blocking points, never folded away", async () => {
+    const prohibited = {
+      ...RESULT.legs[1].crossings[0],
+      airspace: { ...RESULT.legs[1].crossings[0].airspace, id: "as-p-23", name: "P 23 PARIS", type: "P" as const },
+      status: "BLOCKING" as const,
+      requirement: "Zone interdite : pénétration interdite.",
+      activityKnown: true,
+    }
+    const result = {
+      ...RESULT,
+      status: "BLOCKING" as const,
+      legs: RESULT.legs.map((leg, index) => (index === 1 ? { ...leg, crossings: [...leg.crossings, prohibited] } : leg)),
+    }
+    renderBuilder({ mocks: [computeMock(result)] })
+    await screen.findByText("Bilan : Bloquant", {}, { timeout: 2000 })
+    const summary = screen.getByRole("region", { name: "Bilan du plan" })
+    expect(within(summary).getByText(/P 23 PARIS \(Zone interdite\) : Zone interdite : pénétration interdite\./)).toBeInTheDocument()
+    expect(summary).toHaveTextContent("Zones3 traversées (Bloquant)")
+    await waitFor(() => expect(JSON.parse(screen.getByTestId("crossed-airspaces").textContent ?? "{}")["as-p-23"]).toBe("BLOCKING"))
   })
 
   it("goes through the three steps: route, aircraft and load, log and file", async () => {

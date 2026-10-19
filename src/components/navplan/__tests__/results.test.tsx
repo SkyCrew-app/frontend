@@ -1,6 +1,6 @@
 import { render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { AirspaceCrossings, airspacesNotChecked, crossingsStatus } from "../AirspaceCrossings"
+import { AirspaceCrossings, airspacesNotChecked, crossedAirspaces, crossingsStatus } from "../AirspaceCrossings"
 import { FuelSummary } from "../FuelSummary"
 import { ChecksList } from "../PlanSummary"
 import { MassBalanceChart, labelBelow } from "../MassBalanceChart"
@@ -20,6 +20,8 @@ global.ResizeObserver = class {
 }
 
 const LOG = "Log de navigation, point par point"
+// R 97 MONCE, AIRAC 2610: its activity as the API gives it once cleaned.
+const R_ZONE_ACTIVITY = { ...RESULT.legs[1].crossings[0].airspace, name: "R 97 MONCE", activity: "Activités vélivoles.\nGliding activities" }
 const rowOf = (table: HTMLElement, point: RegExp) => within(table).getByRole("rowheader", { name: point }).closest("tr") as HTMLElement
 const cellsOf = (row: HTMLElement) => within(row).getAllByRole("cell").map((cell) => cell.textContent)
 
@@ -229,6 +231,32 @@ describe("AirspaceCrossings", () => {
     // An area flown under is listed apart.
     expect(screen.queryByText("TMA PARIS 2")).toBeNull()
     expect(crossingsStatus(RESULT.legs)).toBe("WARNING")
+  })
+
+  it("names each area crossed once, with its worst crossing, and leaves out those flown over or under", () => {
+    const again = { ...RESULT.legs[0].crossings[0], entryNm: 0, status: "BLOCKING" as const }
+    const legs = [RESULT.legs[0], { ...RESULT.legs[1], crossings: [...RESULT.legs[1].crossings, again] }]
+    expect(crossedAirspaces(legs).map((crossing) => [crossing.airspace.name, crossing.status])).toEqual([
+      ["TMA PARIS 1", "BLOCKING"],
+      ["R 45 A", "WARNING"],
+    ])
+  })
+
+  it("names the first three frequencies of an area and how many more (TMA PARIS: fifteen sectors)", () => {
+    const frequencies = ["135.405", "135.550", "127.080", "131.180", "128.875"].map((mhz) => ({ service: "ACS", callsign: "PARIS Contrôle", mhz }))
+    const crossing = { ...RESULT.legs[0].crossings[0], airspace: { ...RESULT.legs[0].crossings[0].airspace, frequencies } }
+    render(<AirspaceCrossings legs={[{ ...RESULT.legs[0], crossings: [crossing] }]} />)
+    expect(
+      screen.getByText(/^PARIS Contrôle 135.405 · PARIS Contrôle 135.550 · PARIS Contrôle 127.080 \(\+ 2 autres fréquences\)$/),
+    ).toBeInTheDocument()
+  })
+
+  it("writes the activity published by the SIA on its lines, French then English", () => {
+    const crossing = { ...RESULT.legs[1].crossings[0], airspace: { ...R_ZONE_ACTIVITY } }
+    render(<AirspaceCrossings legs={[{ ...RESULT.legs[1], crossings: [crossing] }]} />)
+    const activity = screen.getByText(/Activité publiée/)
+    expect(activity).toHaveClass("whitespace-pre-line")
+    expect(activity.textContent).toBe("Activité publiée : Activités vélivoles.\nGliding activities")
   })
 
   it("is blocking with a prohibited area", () => {

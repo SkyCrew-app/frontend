@@ -36,7 +36,7 @@ import {
   userPoint,
   type RouteDraft,
 } from "@/lib/navplan/route"
-import { aircraftDataState, missingAircraftData } from "@/lib/navplan/status"
+import { aircraftDataState, airspaceTypeLabel, missingAircraftData } from "@/lib/navplan/status"
 import type {
   AircraftMassBalance,
   AircraftPerformance,
@@ -53,7 +53,7 @@ import { formatTime } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { isNavPoint, type AeroMapProps } from "@/components/map/types"
 import type { MapPoint } from "@/components/map/layers/route"
-import { AirspaceCrossings, airspacesNotChecked } from "./AirspaceCrossings"
+import { AirspaceCrossings, airspacesNotChecked, crossedAirspaceStatuses, crossedAirspaces } from "./AirspaceCrossings"
 import { FlightConditions, formatUtcDateTime } from "./FlightConditions"
 import { FuelSummary } from "./FuelSummary"
 import { LoadEditor } from "./LoadEditor"
@@ -194,6 +194,11 @@ export function FlightPlanBuilder({ initialDraft, aircraft, settings, navdata, i
     return matches ? legs : []
   }, [result, mapPoints])
   const legDistances = useMemo(() => mapLegs.map((leg) => leg.distanceNm), [mapLegs])
+  // The airspaces the drawn route goes through, highlighted on the map.
+  const mapCrossings = useMemo(
+    () => crossedAirspaceStatuses(mapLegs.length > 0 && result?.alternateLeg ? [...mapLegs, result.alternateLeg] : mapLegs),
+    [mapLegs, result],
+  )
   const legLabels = useMemo(() => mapLegs.map((leg) => `${formatCourse(leg.magneticCourseDeg)} · ${formatNm(leg.distanceNm, 0)}`), [mapLegs])
   const roles = useMemo(() => {
     const value: Record<string, "departure" | "destination" | "alternate"> = {}
@@ -244,7 +249,23 @@ export function FlightPlanBuilder({ initialDraft, aircraft, settings, navdata, i
           },
         ]
       : []
-    return [...own, ...checksFromNotices(shownResult.notices)]
+    // Every airspace the route goes through that asks something (clearance, activity to check,
+    // forbidden), once, with what to do.
+    const flown = shownResult.alternateLeg ? [...shownResult.legs, shownResult.alternateLeg] : shownResult.legs
+    const zones: Check[] = crossedAirspaces(flown)
+      .filter((crossing) => crossing.status !== "OK")
+      .map((crossing) => ({
+        key: `airspace-${crossing.airspace.id}`,
+        status: crossing.status,
+        message: t("crossings.check", {
+          name: crossing.airspace.name,
+          kind: [airspaceTypeLabel(crossing.airspace.type), crossing.airspace.icaoClass ? t("crossings.class", { value: crossing.airspace.icaoClass }) : null]
+            .filter(Boolean)
+            .join(" · "),
+          requirement: crossing.requirement,
+        }),
+      }))
+    return [...own, ...zones, ...checksFromNotices(shownResult.notices)]
   }, [shownResult, night, daylight, departureSun, draft.departureTime, t])
 
   const qnhInvalid = issues.some((issue) => issue.code === "QNH_INVALID")
@@ -423,6 +444,7 @@ export function FlightPlanBuilder({ initialDraft, aircraft, settings, navdata, i
               profile={mapLegs.length > 0 ? result?.profile : undefined}
               legDistancesNm={legDistances}
               legLabels={legLabels}
+              crossedAirspaces={mapCrossings}
               editable
               onAddPoint={handleMapAdd}
               onMoveWaypoint={handleMapMove}
