@@ -48,9 +48,17 @@ interface ModuleForm {
   description: string
 }
 
-export function ModuleManagement() {
+interface ModuleManagementProps {
+  /** The course shown, when the page keeps it from one tab to the next. */
+  courseId?: string
+  onCourseChange?: (courseId: string) => void
+}
+
+export function ModuleManagement({ courseId, onCourseChange }: ModuleManagementProps = {}) {
   const { t } = useTranslation("instruction")
-  const [selectedCourseId, setSelectedCourseId] = useState("")
+  const [ownCourseId, setOwnCourseId] = useState("")
+  const selectedCourseId = courseId ?? ownCourseId
+  const setSelectedCourseId = onCourseChange ?? setOwnCourseId
   const [searchTerm, setSearchTerm] = useState("")
   const [form, setForm] = useState<ModuleForm>({ id: null, courseId: "", title: "", description: "" })
   const [isFormOpen, setIsFormOpen] = useState(false)
@@ -245,7 +253,7 @@ export function ModuleManagement() {
           }
         />
       ) : (
-        <div className="overflow-x-auto rounded-xl border bg-card">
+        <div className="rounded-xl border bg-card">
           <Table>
             <TableHeader>
               <TableRow>
@@ -262,8 +270,8 @@ export function ModuleManagement() {
                   <TableCell className="text-right tabular-nums text-muted-foreground">
                     {(modules ?? []).indexOf(module) + 1}
                   </TableCell>
-                  <TableCell className="min-w-[14rem]">
-                    <p className="font-medium">{module.title}</p>
+                  <TableCell>
+                    <p className="break-words font-medium">{module.title}</p>
                     {module.description && (
                       <p className="line-clamp-1 max-w-xl text-sm text-muted-foreground">{module.description}</p>
                     )}
