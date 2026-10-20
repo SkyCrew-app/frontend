@@ -115,7 +115,7 @@ export function FlightPlanEditDialog({ isOpen, onOpenChange, flight, onSave }: F
               onChange={(e) => setWeatherConditions(e.target.value)}
               placeholder={t("planEdit.weatherPlaceholder")}
               rows={4}
-              className="font-mono text-xs"
+              className="font-mono text-xs [field-sizing:content]"
             />
           </div>
         )}
