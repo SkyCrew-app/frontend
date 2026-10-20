@@ -16,6 +16,15 @@ interface RecentFlightsWidgetProps {
   userId: number | null
 }
 
+// A plan made without a booking still has its own departure time, or the time it was closed.
+interface DatedFlight {
+  reservation?: { start_time?: string | null } | null
+  departure_time?: string | null
+  closed_at?: string | null
+}
+const flightDate = (flight: DatedFlight): string | null =>
+  flight.reservation?.start_time ?? flight.departure_time ?? flight.closed_at ?? null
+// Ordered by booking, as before: a plan without one (often prepared ahead) stays at the end.
 const startTime = (flight: any) => (flight.reservation?.start_time ? new Date(flight.reservation.start_time).getTime() : 0)
 
 export default function RecentFlightsWidget({ userId }: RecentFlightsWidgetProps) {
@@ -64,8 +73,12 @@ export default function RecentFlightsWidget({ userId }: RecentFlightsWidgetProps
             }
             meta={
               <>
-                {formatDate(flight.reservation?.start_time)}
-                {flight.flight_hours ? ` · ${formatFlightDuration(flight.flight_hours)}` : ""}
+                {[
+                  flightDate(flight) ? formatDate(flightDate(flight)) : null,
+                  flight.flight_hours ? formatFlightDuration(flight.flight_hours) : null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
               </>
             }
           />
