@@ -15,6 +15,7 @@ import { EmptyState } from "@/components/layout/EmptyState"
 import { ErrorState } from "@/components/layout/ErrorState"
 import { SidePanel } from "@/components/layout/SidePanel"
 import { toast } from "@/components/hooks/use-toast"
+import { apiRefusal } from "@/lib/api-refusal"
 import { ConfirmDeleteDialog } from "./ConfirmDeleteDialog"
 import { FormField } from "./FormField"
 import { RowActions } from "./RowActions"
@@ -123,10 +124,10 @@ export function CourseManagement() {
         title: t("admin.courses.toast.deleted.title"),
         description: t("admin.courses.toast.deleted.description"),
       })
-    } catch {
+    } catch (error) {
       toast({
         title: t("admin.courses.toast.deleteFailed.title"),
-        description: t("shared.deleteFailed"),
+        description: apiRefusal(error, t("shared.deleteFailed")),
         variant: "destructive",
       })
     }

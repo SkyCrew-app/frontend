@@ -25,6 +25,7 @@ import { ErrorState } from "@/components/layout/ErrorState"
 import { SidePanel } from "@/components/layout/SidePanel"
 import { toast } from "@/components/hooks/use-toast"
 import { optionalIdField } from "@/lib/graphql-inputs"
+import { apiRefusal } from "@/lib/api-refusal"
 import { ConfirmDeleteDialog } from "./ConfirmDeleteDialog"
 import { FormField } from "./FormField"
 import { RowActions } from "./RowActions"
@@ -243,10 +244,10 @@ export function LessonManagement({ courseId, onCourseChange }: LessonManagementP
         title: t("admin.lessons.toast.deleted.title"),
         description: t("admin.lessons.toast.deleted.description"),
       })
-    } catch {
+    } catch (error) {
       toast({
         title: t("admin.lessons.toast.deleteFailed.title"),
-        description: t("shared.deleteFailed"),
+        description: apiRefusal(error, t("shared.deleteFailed")),
         variant: "destructive",
       })
     }
