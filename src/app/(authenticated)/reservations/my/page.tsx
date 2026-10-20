@@ -348,7 +348,7 @@ export default function MyReservations() {
         description={t("my.description")}
         actions={
           <Button asChild>
-            <Link href="/reservations">
+            <Link href="/reservations?new=1">
               <Plus className="h-4 w-4" />
               {t("shared.newReservation")}
             </Link>

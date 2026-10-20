@@ -38,7 +38,7 @@ export function EmptyState({ hasFilters, onResetFilters }: EmptyStateProps) {
       description={t("my.empty.description")}
       action={
         <Button asChild>
-          <Link href="/reservations">
+          <Link href="/reservations?new=1">
             <Plus className="h-4 w-4" />
             {t("my.empty.action")}
           </Link>

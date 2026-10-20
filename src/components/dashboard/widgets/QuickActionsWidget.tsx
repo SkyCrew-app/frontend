@@ -8,7 +8,7 @@ import { WIDGET_REGISTRY } from "@/interfaces/dashboard"
 import WidgetContainer from "../WidgetContainer"
 
 const ACTIONS = [
-  { href: "/reservations", labelKey: "quickActions.book", icon: CalendarPlus },
+  { href: "/reservations?new=1", labelKey: "quickActions.book", icon: CalendarPlus },
   { href: "/reservations/flight-plans", labelKey: "quickActions.flightPlan", icon: Map },
   { href: "/logbook", labelKey: "quickActions.logbook", icon: BookOpen },
   { href: "/profile", labelKey: "quickActions.profile", icon: User },

@@ -81,6 +81,7 @@ const longDate = (date: Date) => format(date, "EEEE d MMMM yyyy", { locale: date
 
 // A reservation template sends its values in the query string ("Utiliser" in "Mes réservations"),
 // and so does a course whose aircraft is being booked ("Réserver un avion" on the course).
+// "?new=1" alone opens the empty form: the "Réserver un avion" links elsewhere lead straight to it.
 const readPrefillFromUrl = (): NewReservationPrefill | null => {
   if (typeof window === "undefined") return null
   const params = new URLSearchParams(window.location.search)
@@ -103,7 +104,7 @@ const readPrefillFromUrl = (): NewReservationPrefill | null => {
     purpose: params.get("purpose") ?? undefined,
     notes: params.get("notes") ?? undefined,
   }
-  return Object.values(prefill).some(Boolean) ? prefill : null
+  return Object.values(prefill).some(Boolean) || params.has("new") ? prefill : null
 }
 
 export default function ReservationCalendar() {
