@@ -252,7 +252,7 @@ export default function TransactionHistory() {
                     const status = paymentStatus(transaction.payment_status)
                     return (
                       <TableRow key={transaction.id}>
-                        <TableCell className="whitespace-nowrap">{formatDate(transaction.invoice_date)}</TableCell>
+                        <TableCell className="sm:whitespace-nowrap">{formatDate(transaction.invoice_date)}</TableCell>
                         <TableCell>
                           {accountLineLabel(transaction.type)}
                           {transaction.reason && (
