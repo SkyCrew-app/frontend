@@ -694,7 +694,7 @@ export default function ReservationCalendar() {
                     ref={index === currentSlotIndex ? currentHourRef : undefined}
                     aria-current={index === currentSlotIndex ? "time" : undefined}
                     className={cn(
-                      "min-w-[76px] px-2 text-center tabular-nums",
+                      "min-w-[44px] px-1 text-center tabular-nums xl:min-w-[60px]",
                       index === currentSlotIndex && "bg-primary/10 font-semibold text-primary",
                     )}
                   >

@@ -36,7 +36,7 @@ export function DateNavigator({ currentDate, setCurrentDate, isClosedDay, compac
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
-        <Button variant="outline" onClick={() => setCurrentDate(new Date())} disabled={isToday}>
+        <Button variant="outline" className="px-3 sm:px-4" onClick={() => setCurrentDate(new Date())} disabled={isToday}>
           {t("common:labels.today")}
         </Button>
         <Button
@@ -52,7 +52,7 @@ export function DateNavigator({ currentDate, setCurrentDate, isClosedDay, compac
 
       <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
         <PopoverTrigger asChild>
-          <Button variant="outline" className="min-w-0 flex-1 justify-start font-normal sm:flex-none">
+          <Button variant="outline" className="min-w-0 flex-1 justify-start px-3 font-normal sm:flex-none sm:px-4">
             <CalendarIcon className="h-4 w-4 text-muted-foreground" />
             <span className="truncate">
               {format(currentDate, compact ? "EEE d MMM" : "EEEE d MMMM yyyy", { locale: dateFnsLocale() })}
