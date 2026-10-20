@@ -282,7 +282,7 @@ export default function NotificationsPage() {
     }
 
     return (
-      <>
+      <div className="space-y-6">
         {groups.map((group) => (
           <section key={group.label} className="space-y-2">
             <h2 className="text-sm font-medium text-muted-foreground">{group.label}</h2>
@@ -378,7 +378,7 @@ export default function NotificationsPage() {
             </Button>
           </nav>
         )}
-      </>
+      </div>
     )
   }
 
