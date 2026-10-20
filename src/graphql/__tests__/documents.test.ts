@@ -38,7 +38,7 @@ const documents = readdirSync(graphqlDirectory)
 
 // The API refuses larger operations before running them
 // (backend/src/common/graphql/query-limits.rule.ts, DEFAULT_QUERY_LIMITS).
-const API_MAX_FIELDS = 400;
+const API_MAX_FIELDS = 500;
 const API_MAX_DEPTH = 10;
 
 // Fields and depth of each operation as the API receives it: fragments

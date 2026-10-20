@@ -6,6 +6,7 @@ import type {
   AircraftPerformanceInput,
   FlightPlanningSettings,
   FuelType,
+  RunwayDistanceTable,
 } from "./types"
 
 // Editor state of the aircraft data, and the checks shown to the administrator before saving.
@@ -32,6 +33,11 @@ export const DEFAULT_SETTINGS: FlightPlanningSettings = {
   clubMarginMin: 0,
   verticalMarginFt: 300,
   defaultCircuitHeightFt: 1000,
+  msaCorridorNm: 5,
+  msaMarginFt: 1000,
+  // UK CAA Safety Sense Leaflet 7 "Aeroplane Performance".
+  takeoffSafetyFactor: 1.33,
+  landingSafetyFactor: 1.43,
 }
 
 /** Drops __typename and the read-only fields Apollo returns, keeping only the input fields. */
@@ -53,9 +59,24 @@ export function emptyPerformanceInput(fuelCapacityL?: number | null, tankLabel =
     arrivalFuelL: 0,
     serviceCeilingFt: null,
     calibration: [],
+    takeoff: null,
+    landing: null,
     source: "",
   }
 }
+
+/** A distance table to fill in: no row, no correction (the generic factors apply until entered). */
+export const emptyDistanceTable = (): RunwayDistanceTable => ({
+  rows: [],
+  referenceMassKg: null,
+  speedKt: null,
+  headwindPercentPerKt: null,
+  tailwindPercentPerKt: null,
+  grassPercent: null,
+  wetGrassPercent: null,
+  slopePercentPerPercent: null,
+  source: "",
+})
 
 export function performanceInput(
   performance: AircraftPerformance | null | undefined,
@@ -63,8 +84,20 @@ export function performanceInput(
   tankLabel?: string,
 ): AircraftPerformanceInput {
   if (!performance) return emptyPerformanceInput(fuelCapacityL, tankLabel)
-  const { fuel, climb, cruise, descent, reserve, arrivalFuelL, serviceCeilingFt, calibration, source } = clean(performance)
-  return { fuel, climb, cruise, descent, reserve, arrivalFuelL, serviceCeilingFt: serviceCeilingFt ?? null, calibration, source: source ?? "" }
+  const { fuel, climb, cruise, descent, reserve, arrivalFuelL, serviceCeilingFt, calibration, takeoff, landing, source } = clean(performance)
+  return {
+    fuel,
+    climb,
+    cruise,
+    descent,
+    reserve,
+    arrivalFuelL,
+    serviceCeilingFt: serviceCeilingFt ?? null,
+    calibration,
+    takeoff: takeoff ?? null,
+    landing: landing ?? null,
+    source: source ?? "",
+  }
 }
 
 export function emptyMassBalanceInput(emptyMassKg?: number | null, mtowKg?: number | null): AircraftMassBalanceInput {
@@ -107,9 +140,17 @@ export const massBalanceForSave = (input: AircraftMassBalanceInput): AircraftMas
   weighingRef: input.weighingRef?.trim() || null,
 })
 
+/** A table without a row is no table; an empty source is none. */
+const distanceTableForSave = (table: RunwayDistanceTable | null | undefined): RunwayDistanceTable | null =>
+  table && table.rows.length > 0
+    ? { ...table, rows: table.rows.map((row) => ({ ...row, massKg: row.massKg ?? null })), source: table.source?.trim() || null }
+    : null
+
 export const performanceForSave = (input: AircraftPerformanceInput): AircraftPerformanceInput => ({
   ...input,
   source: input.source?.trim() || null,
+  takeoff: distanceTableForSave(input.takeoff),
+  landing: distanceTableForSave(input.landing),
   climb: {
     ...input.climb,
     table: input.climb.table && input.climb.table.length > 0 ? input.climb.table : null,
@@ -186,6 +227,8 @@ export type PerformanceProblem =
   | "NORMAL_SETTING"
   | "DESCENT"
   | "RESERVE"
+  | "TAKEOFF_TABLE"
+  | "LANDING_TABLE"
 
 export function performanceProblems(input: AircraftPerformanceInput): Problem<PerformanceProblem>[] {
   const problems: Problem<PerformanceProblem>[] = []
@@ -202,10 +245,38 @@ export function performanceProblems(input: AircraftPerformanceInput): Problem<Pe
   if (!input.cruise.rows.some((row) => row.setting === input.cruise.normalSetting)) problems.push({ code: "NORMAL_SETTING" })
   if (!(input.descent.iasKt > 0) || !(input.descent.rateFpm > 0) || !(input.descent.fuelFlowLph > 0)) problems.push({ code: "DESCENT" })
   if (!(input.reserve.holdingFuelFlowLph > 0) || !(input.reserve.maxContinuousFuelFlowLph > 0)) problems.push({ code: "RESERVE" })
+  if (distanceTableIssues(input.takeoff).length > 0) problems.push({ code: "TAKEOFF_TABLE", detail: distanceTableIssues(input.takeoff)[0] })
+  if (distanceTableIssues(input.landing).length > 0) problems.push({ code: "LANDING_TABLE", detail: distanceTableIssues(input.landing)[0] })
   return problems
 }
 
-export type SettingsProblem = keyof typeof AMC_RESERVES | "contingencyPercent" | "contingencyMinL" | "clubMarginMin" | "verticalMarginFt" | "defaultCircuitHeightFt"
+export type DistanceTableIssue = "VALUES" | "SHORTER_THAN_ROLL" | "DUPLICATE" | "MASS"
+
+/** What the API would refuse in a take-off or landing table (rows are checked as entered). */
+export function distanceTableIssues(table: RunwayDistanceTable | null | undefined): DistanceTableIssue[] {
+  if (!table || table.rows.length === 0) return []
+  const issues: DistanceTableIssue[] = []
+  const finite = (value: number | null | undefined) => typeof value === "number" && Number.isFinite(value)
+  if (table.rows.some((row) => !finite(row.pressureAltFt) || !finite(row.temperatureC) || !(row.groundRollM > 0) || !(row.distance15mM > 0))) issues.push("VALUES")
+  if (table.rows.some((row) => row.distance15mM < row.groundRollM)) issues.push("SHORTER_THAN_ROLL")
+  const keys = table.rows.map((row) => `${row.pressureAltFt}|${row.temperatureC}|${row.massKg ?? ""}`)
+  if (new Set(keys).size !== keys.length) issues.push("DUPLICATE")
+  const withMass = table.rows.filter((row) => row.massKg != null).length
+  if (withMass > 0 && withMass < table.rows.length && table.referenceMassKg == null) issues.push("MASS")
+  return issues
+}
+
+export type SettingsProblem =
+  | keyof typeof AMC_RESERVES
+  | "contingencyPercent"
+  | "contingencyMinL"
+  | "clubMarginMin"
+  | "verticalMarginFt"
+  | "defaultCircuitHeightFt"
+  | "msaCorridorNm"
+  | "msaMarginFt"
+  | "takeoffSafetyFactor"
+  | "landingSafetyFactor"
 
 /** Club settings may only be stricter than the AMC (the API refuses lower values too). */
 export function settingsProblems(settings: FlightPlanningSettings): SettingsProblem[] {
@@ -218,5 +289,10 @@ export function settingsProblems(settings: FlightPlanningSettings): SettingsProb
   if (!(Number.isInteger(settings.clubMarginMin) && settings.clubMarginMin >= 0)) problems.push("clubMarginMin")
   if (!(Number.isInteger(settings.verticalMarginFt) && settings.verticalMarginFt >= 0)) problems.push("verticalMarginFt")
   if (!(Number.isInteger(settings.defaultCircuitHeightFt) && settings.defaultCircuitHeightFt > 0)) problems.push("defaultCircuitHeightFt")
+  // The API bounds: corridor 1 to 10 NM, margin 500 to 3000 ft, factors 1 to 2.
+  if (!(settings.msaCorridorNm >= 1 && settings.msaCorridorNm <= 10)) problems.push("msaCorridorNm")
+  if (!(Number.isInteger(settings.msaMarginFt) && settings.msaMarginFt >= 500 && settings.msaMarginFt <= 3000)) problems.push("msaMarginFt")
+  if (!(settings.takeoffSafetyFactor >= 1 && settings.takeoffSafetyFactor <= 2)) problems.push("takeoffSafetyFactor")
+  if (!(settings.landingSafetyFactor >= 1 && settings.landingSafetyFactor <= 2)) problems.push("landingSafetyFactor")
   return problems
 }

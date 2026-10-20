@@ -72,6 +72,10 @@ export const FLIGHT_PLANNING_SETTINGS = gql`
       clubMarginMin
       verticalMarginFt
       defaultCircuitHeightFt
+      msaCorridorNm
+      msaMarginFt
+      takeoffSafetyFactor
+      landingSafetyFactor
     }
   }
 `;
@@ -88,6 +92,10 @@ export const SAVE_FLIGHT_PLANNING_SETTINGS = gql`
       clubMarginMin
       verticalMarginFt
       defaultCircuitHeightFt
+      msaCorridorNm
+      msaMarginFt
+      takeoffSafetyFactor
+      landingSafetyFactor
     }
   }
 `;

@@ -107,6 +107,21 @@ type AerodromeDetails {
   sheet: AerodromeSheet!
 }
 
+type AerodromeDistances {
+  conditionsSource: String!
+  dataMissing: Boolean!
+  kind: String!
+  massKg: Int
+  massSource: String!
+  messages: [String!]!
+  pressureAltitudeFt: Int!
+  runways: [RunwayDistance!]!
+  safetyFactor: Float!
+  status: CheckStatus!
+  tableSource: String
+  temperatureC: Float!
+}
+
 type AerodromeSheet {
   atsHours: String
   atsHoursCode: String
@@ -241,9 +256,11 @@ type AircraftPerformance {
   cruise: CruiseData!
   descent: DescentData!
   fuel: FuelData!
+  landing: RunwayDistanceTable
   reserve: ReserveData!
   serviceCeilingFt: Int
   source: String
+  takeoff: RunwayDistanceTable
   templateCode: String
   validatedAt: DateTime
   validatedBy: String
@@ -256,9 +273,11 @@ input AircraftPerformanceInput {
   cruise: CruiseDataInput!
   descent: DescentDataInput!
   fuel: FuelDataInput!
+  landing: RunwayDistanceTableInput
   reserve: ReserveDataInput!
   serviceCeilingFt: Int
   source: String
+  takeoff: RunwayDistanceTableInput
 }
 
 type AircraftTypeTemplate {
@@ -1091,6 +1110,29 @@ input DescentDataInput {
   rateFpm: Int!
 }
 
+type DistanceFactor {
+  code: String!
+  factor: Float!
+  label: String!
+  source: String!
+}
+
+type DistanceRow {
+  distance15mM: Float!
+  groundRollM: Float!
+  massKg: Float
+  pressureAltFt: Int!
+  temperatureC: Float!
+}
+
+input DistanceRowInput {
+  distance15mM: Float!
+  groundRollM: Float!
+  massKg: Float
+  pressureAltFt: Int!
+  temperatureC: Float!
+}
+
 type ELearningCourseDto {
   category: String!
   completedLessons: Int!
@@ -1253,6 +1295,8 @@ type FlightPlanResult {
   qnhSource: String
   qnhStation: String
   status: CheckStatus!
+  terrainProfile: [TerrainProfilePoint!]!
+  terrainSource: TerrainSource
   totalDistanceNm: Float!
   totalTimeMin: Float!
   unverifiedAirspaces: [UnverifiedAirspace!]!
@@ -1266,9 +1310,13 @@ type FlightPlanningSettings {
   contingencyMinL: Float!
   contingencyPercent: Float!
   defaultCircuitHeightFt: Int!
+  landingSafetyFactor: Float!
+  msaCorridorNm: Float!
+  msaMarginFt: Int!
   reserveVfrDayLocalMin: Int!
   reserveVfrDayMin: Int!
   reserveVfrNightMin: Int!
+  takeoffSafetyFactor: Float!
   verticalMarginFt: Int!
 }
 
@@ -1278,9 +1326,13 @@ input FlightPlanningSettingsInput {
   contingencyMinL: Float!
   contingencyPercent: Float!
   defaultCircuitHeightFt: Int!
+  landingSafetyFactor: Float
+  msaCorridorNm: Float
+  msaMarginFt: Int
   reserveVfrDayLocalMin: Int!
   reserveVfrDayMin: Int!
   reserveVfrNightMin: Int!
+  takeoffSafetyFactor: Float
   verticalMarginFt: Int!
 }
 
@@ -1486,6 +1538,7 @@ type Leg {
   segments: [PhaseSegment!]!
   suggestedAltitudeFt: Int
   tasKt: Float!
+  terrain: LegTerrain
   timeMin: Float!
   to: NavPoint!
   trueCourseDeg: Float!
@@ -1514,6 +1567,21 @@ type LegObstacle {
   offsetNm: Float!
   status: CheckStatus!
   type: String!
+}
+
+type LegTerrain {
+  corridorNm: Float!
+  highestObstacleFt: Int
+  highestObstacleIdent: String
+  highestTerrainAlongNm: Float
+  highestTerrainFt: Int
+  highestTerrainLat: Float
+  highestTerrainLon: Float
+  marginFt: Int!
+  marginToMsaFt: Int
+  msaFt: Int
+  state: String!
+  status: CheckStatus!
 }
 
 type Lesson {
@@ -1983,6 +2051,7 @@ type PhaseSegment {
 
 type PlanAerodrome {
   conditions: AerodromeConditions
+  distances: AerodromeDistances
   icao: String!
   role: String!
   sheet: AerodromeSheet
@@ -2257,6 +2326,50 @@ type Runway {
   widthM: Int
 }
 
+type RunwayDistance {
+  availableDistanceM: Int
+  availableRunM: Int
+  designator: String!
+  factors: [DistanceFactor!]!
+  headwindKt: Int
+  marginM: Int
+  messages: [String!]!
+  requiredDistance15mM: Int
+  requiredGroundRollM: Int
+  slopePercent: Float
+  status: CheckStatus!
+  suggested: Boolean!
+  surface: String!
+  surfaceText: String
+  tableDistance15mM: Int
+  tableGroundRollM: Int
+  wet: Boolean!
+}
+
+type RunwayDistanceTable {
+  grassPercent: Float
+  headwindPercentPerKt: Float
+  referenceMassKg: Float
+  rows: [DistanceRow!]!
+  slopePercentPerPercent: Float
+  source: String
+  speedKt: Float
+  tailwindPercentPerKt: Float
+  wetGrassPercent: Float
+}
+
+input RunwayDistanceTableInput {
+  grassPercent: Float
+  headwindPercentPerKt: Float
+  referenceMassKg: Float
+  rows: [DistanceRowInput!]!
+  slopePercentPerPercent: Float
+  source: String
+  speedKt: Float
+  tailwindPercentPerKt: Float
+  wetGrassPercent: Float
+}
+
 type RunwayEnd {
   asdaM: Int
   designator: String!
@@ -2322,6 +2435,18 @@ input TaxonomiesInput {
   flightTypes: [String!]!
   licenseTypes: [String!]!
   maintenanceTypes: [String!]!
+}
+
+type TerrainProfilePoint {
+  distanceNm: Float!
+  obstacleFt: Int
+  terrainFt: Int
+}
+
+type TerrainSource {
+  attribution: String!
+  cellArcSec: Int!
+  name: String!
 }
 
 type UnverifiedAirspace {

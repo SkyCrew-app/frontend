@@ -17,6 +17,8 @@ import { NavLogTable } from "./NavLogTable"
 import { NavdataAge, NoticesList } from "./NoticesBanner"
 import { WeatherPanel } from "./WeatherPanel"
 import { AerodromesPanel, aerodromeSheetId } from "./AerodromeSheet"
+import { RunwayDistancesSummary } from "./RunwayDistances"
+import { TerrainProfileChart } from "./TerrainProfileChart"
 
 export type ResultsTab = "log" | "aerodromes" | "massBalance" | "fuel" | "airspaces" | "weather"
 
@@ -101,7 +103,7 @@ export function ResultsPanel({
           </TabsTrigger>
           <TabsTrigger value="weather">{t("results.tabs.weather")}</TabsTrigger>
         </TabsList>
-        <TabsContent value="log" className="mt-4">
+        <TabsContent value="log" className="mt-4 space-y-6">
           <NavLogTable
             legs={result.legs}
             alternateLeg={result.alternateLeg}
@@ -113,6 +115,20 @@ export function ResultsPanel({
               setTimeout(() => document.getElementById(aerodromeSheetId(icao))?.scrollIntoView({ behavior: "smooth", block: "start" }), 120)
             }}
           />
+          <section className="space-y-2" aria-labelledby="results-profile">
+            <h3 id="results-profile" className="text-sm font-semibold">
+              {t("profile.title")}
+            </h3>
+            <TerrainProfileChart result={result} />
+          </section>
+          {(result.aerodromes ?? []).some((aerodrome) => aerodrome.distances) && (
+            <section className="space-y-2" aria-labelledby="results-distances">
+              <h3 id="results-distances" className="text-sm font-semibold">
+                {t("distances.title")}
+              </h3>
+              <RunwayDistancesSummary aerodromes={result.aerodromes} />
+            </section>
+          )}
         </TabsContent>
         <TabsContent value="aerodromes" className="mt-4">
           <AerodromesPanel result={result} />

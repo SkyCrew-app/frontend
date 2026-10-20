@@ -173,6 +173,58 @@ export interface PlanAerodrome {
   icao: string
   sheet?: AerodromeSheet | null
   conditions?: AerodromeConditions | null
+  /** Take-off (departure) or landing (destination, alternate) distances; absent from older plans. */
+  distances?: AerodromeDistances | null
+}
+
+export type RunwaySurfaceKind = "PAVED" | "GRASS" | "UNPAVED" | "UNKNOWN"
+
+/** A correction applied to the manual's distance, and where it comes from. */
+export interface DistanceFactor {
+  code?: string
+  /** Written out by the API: what it is and its source. */
+  label: string
+  factor: number
+  source?: "MANUAL" | "CAA_SSL7" | "CLUB" | string
+}
+
+/** Take-off or landing distance on one runway direction. */
+export interface RunwayDistance {
+  designator: string
+  suggested: boolean
+  surface?: RunwaySurfaceKind | string
+  surfaceText?: string | null
+  wet?: boolean
+  slopePercent?: number | null
+  headwindKt?: number | null
+  tableGroundRollM?: number | null
+  tableDistance15mM?: number | null
+  factors: DistanceFactor[]
+  requiredGroundRollM?: number | null
+  requiredDistance15mM?: number | null
+  /** Take-off: TORA; landing: none. */
+  availableRunM?: number | null
+  /** Take-off: TODA; landing: LDA. */
+  availableDistanceM?: number | null
+  marginM?: number | null
+  status: CheckStatus
+  messages: string[]
+}
+
+export interface AerodromeDistances {
+  kind: "TAKEOFF" | "LANDING" | string
+  massKg?: number | null
+  massSource?: string
+  pressureAltitudeFt: number
+  temperatureC: number
+  conditionsSource: "METAR" | "ISA" | string
+  safetyFactor: number
+  /** The aircraft has no table: to be entered from the flight manual. */
+  dataMissing: boolean
+  tableSource?: string | null
+  runways: RunwayDistance[]
+  status: CheckStatus
+  messages: string[]
 }
 
 /** The 0 °C isotherm from the winds aloft forecast. */
@@ -301,6 +353,29 @@ export interface ReserveData {
   maxContinuousFuelFlowLph: number
 }
 
+/** One line of a take-off or landing table of the flight manual. */
+export interface DistanceRow {
+  pressureAltFt: number
+  temperatureC: number
+  massKg?: number | null
+  groundRollM: number
+  /** Take-off: to 15 m (50 ft); landing: from 15 m. */
+  distance15mM: number
+}
+
+export interface RunwayDistanceTable {
+  rows: DistanceRow[]
+  referenceMassKg?: number | null
+  /** Lift-off speed (take-off) or speed at 15 m (landing), kt IAS. */
+  speedKt?: number | null
+  headwindPercentPerKt?: number | null
+  tailwindPercentPerKt?: number | null
+  grassPercent?: number | null
+  wetGrassPercent?: number | null
+  slopePercentPerPercent?: number | null
+  source?: string | null
+}
+
 export interface AircraftPerformance {
   aircraftId: number
   templateCode?: string | null
@@ -312,6 +387,8 @@ export interface AircraftPerformance {
   arrivalFuelL: number
   serviceCeilingFt?: number | null
   calibration: CalibrationRow[]
+  takeoff?: RunwayDistanceTable | null
+  landing?: RunwayDistanceTable | null
   source?: string | null
   validatedAt?: string | null
   validatedBy?: string | null
@@ -370,6 +447,8 @@ export interface AircraftPerformanceInput {
   arrivalFuelL: number
   serviceCeilingFt?: number | null
   calibration: CalibrationRow[]
+  takeoff?: RunwayDistanceTable | null
+  landing?: RunwayDistanceTable | null
   source?: string | null
 }
 
@@ -397,6 +476,12 @@ export interface FlightPlanningSettings {
   clubMarginMin: number
   verticalMarginFt: number
   defaultCircuitHeightFt: number
+  /** Minimum safe altitude: corridor either side of the track (NM) and margin above its highest point (ft). */
+  msaCorridorNm: number
+  msaMarginFt: number
+  /** Applied to the manual's take-off and landing distances. */
+  takeoffSafetyFactor: number
+  landingSafetyFactor: number
 }
 
 // ---------- Flight plan ----------
@@ -499,6 +584,35 @@ export interface Leg {
   /** Obstacles within 2 NM less than 500 ft under the leg (absent from older plans). */
   obstacles?: LegObstacle[]
   highestObstacleFt?: number | null
+  /** Minimum safe altitude of the leg (absent from older plans). */
+  terrain?: LegTerrain | null
+}
+
+/** Highest terrain or obstacle in the club's corridor plus its margin, rounded up to 100 ft. */
+export interface LegTerrain {
+  /** KNOWN, or UNKNOWN where the corridor leaves the terrain coverage. */
+  state: "KNOWN" | "UNKNOWN" | string
+  corridorNm: number
+  marginFt: number
+  highestTerrainFt?: number | null
+  highestObstacleFt?: number | null
+  msaFt?: number | null
+  /** Planned altitude minus the MSA (negative: below). */
+  marginToMsaFt?: number | null
+  status: CheckStatus
+}
+
+export interface TerrainProfilePoint {
+  distanceNm: number
+  terrainFt?: number | null
+  obstacleFt?: number | null
+}
+
+export interface TerrainSource {
+  name?: string
+  /** To be shown wherever the terrain is used. */
+  attribution: string
+  cellArcSec?: number
 }
 
 export interface ProfilePoint {
@@ -616,6 +730,9 @@ export interface FlightPlanResult {
   /** Departure, destination, alternate: AD 2 data and METAR conditions (absent from older plans). */
   aerodromes?: PlanAerodrome[]
   freezingLevels?: FreezingLevel[]
+  /** The terrain along the route (empty or absent on older plans) and its source. */
+  terrainProfile?: TerrainProfilePoint[]
+  terrainSource?: TerrainSource | null
 }
 
 export interface FlightPlan {

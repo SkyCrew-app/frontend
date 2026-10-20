@@ -33,6 +33,7 @@ describe("NavLogTable", () => {
       "Point",
       "Fréq.MHz",
       "Alt.ft",
+      "MSAft",
       "Rv",
       "Rm",
       "Vent°/kt",
@@ -53,15 +54,32 @@ describe("NavLogTable", () => {
 
     // P1 is reached by the RBT → P1 leg: its own figures, not those of the next one (defect of the former log).
     const p1 = cellsOf(rowOf(table, /^P1/))
-    expect(p1.slice(1, 13)).toEqual([expect.stringMatching(/^2\s500$/), "225°", "223°", "270/15+8 °C", "−7°", "215°", "105", "95", expect.stringMatching(/^17,3Σ /), "11Σ 15", "09:18", ""])
-    expect(p1[13]).toBe("70")
+    // No minimum safe altitude on a plan computed before them.
+    expect(p1.slice(1, 14)).toEqual([expect.stringMatching(/^2\s500$/), "", "225°", "223°", "270/15+8 °C", "−7°", "215°", "105", "95", expect.stringMatching(/^17,3Σ /), "11Σ 15", "09:18", ""])
+    expect(p1[14]).toBe("70")
     // Blank boxes for the actual time and fuel, written in flight.
-    expect(p1[12]).toBe("")
-    expect(p1[14]).toBe("")
+    expect(p1[13]).toBe("")
+    expect(p1[15]).toBe("")
     // The departure line: the fuel when the first leg starts, nothing else computed.
-    expect(cellsOf(rowOf(table, /^LFPN/))[13]).toBe("77")
+    expect(cellsOf(rowOf(table, /^LFPN/))[14]).toBe("77")
     expect(rowOf(table, /^Dégagement LFOT/)).toBeInTheDocument()
     expect(within(table).getByRole("rowheader", { name: "Total" }).closest("tr")).toHaveTextContent("45,4")
+  })
+
+  it("gives each leg its minimum safe altitude, \"?\" outside the terrain coverage", () => {
+    const [first, second, ...others] = RESULT.legs
+    const terrain = { state: "KNOWN", corridorNm: 5, marginFt: 1000, highestTerrainFt: 2300, highestObstacleFt: null, marginToMsaFt: -800, status: "WARNING" as const }
+    const legs = [
+      { ...first, terrain: { ...terrain, msaFt: 3300 } },
+      { ...second, terrain: { ...terrain, state: "UNKNOWN", msaFt: null, highestTerrainFt: null, marginToMsaFt: null } },
+      ...others,
+    ]
+    render(<NavLogTable legs={legs} totalDistanceNm={45.4} totalTimeMin={29.6} />)
+    const table = screen.getByRole("table", { name: LOG })
+    const firstCells = cellsOf(rowOf(table, new RegExp(`^${legs[0].to.ident}`)))
+    expect(firstCells[2]).toMatch(/^3\s300$/)
+    expect(cellsOf(rowOf(table, new RegExp(`^${legs[1].to.ident}`)))[2]).toBe("?")
+    expect(within(table).getByTitle(/Altitude minimale de sécurité/)).toHaveTextContent("MSA")
   })
 
   it("gives the frequency of a navaid and of the areas to contact on its line", () => {

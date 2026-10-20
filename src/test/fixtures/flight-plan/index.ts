@@ -399,6 +399,10 @@ export const SETTINGS: FlightPlanningSettings = {
   clubMarginMin: 0,
   verticalMarginFt: 300,
   defaultCircuitHeightFt: 1000,
+  msaCorridorNm: 5,
+  msaMarginFt: 1000,
+  takeoffSafetyFactor: 1.33,
+  landingSafetyFactor: 1.43,
 }
 
 export const SAVED_PLAN: FlightPlan = {
