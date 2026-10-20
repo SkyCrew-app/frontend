@@ -205,7 +205,8 @@ export default function OperatingCosts({ period, date }: OperatingCostsProps) {
           <CardDescription>{t("finance.operating.tableNote")}</CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
+          {/* Wide screens: a table; phones and tablets: one block per aircraft. */}
+          <Table className="hidden lg:table">
             <TableHeader>
               <TableRow>
                 <TableHead>{t("common:labels.aircraft")}</TableHead>
@@ -256,6 +257,36 @@ export default function OperatingCosts({ period, date }: OperatingCostsProps) {
               </TableRow>
             </TableFooter>
           </Table>
+          <ul className="divide-y lg:hidden">
+            {rows.map((row) => (
+              <li key={row.name} className="space-y-2 py-3 first:pt-0 last:pb-0">
+                <p className="font-medium">{row.name}</p>
+                <dl className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 text-sm">
+                  <dt className="text-muted-foreground">{t("finance.labels.revenue")}</dt>
+                  <dd className="text-right tabular-nums">{formatMoney(row.revenue)}</dd>
+                  <dt className="text-muted-foreground">{t("finance.labels.maintenance")}</dt>
+                  <dd className="text-right tabular-nums">{formatMoney(row.maintenanceCost)}</dd>
+                  <dt className="text-muted-foreground">{t("finance.labels.result")}</dt>
+                  <dd className={`text-right font-medium tabular-nums ${profitClass(row.profit)}`}>{formatMoney(row.profit)}</dd>
+                  <dt className="italic text-muted-foreground">{t("finance.operating.fuelEstimated")}</dt>
+                  <dd className="text-right font-normal italic tabular-nums text-muted-foreground">{row.fuelEstimate === null ? "—" : formatMoney(row.fuelEstimate)}</dd>
+                </dl>
+              </li>
+            ))}
+              <li key="total" className="space-y-2 py-3 first:pt-0 last:pb-0">
+                <p className="font-medium">{t("common:labels.total")}</p>
+                <dl className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 text-sm">
+                  <dt className="text-muted-foreground">{t("finance.labels.revenue")}</dt>
+                  <dd className="text-right tabular-nums">{formatMoney(totals.revenue)}</dd>
+                  <dt className="text-muted-foreground">{t("finance.labels.maintenance")}</dt>
+                  <dd className="text-right tabular-nums">{formatMoney(totals.maintenanceCost)}</dd>
+                  <dt className="text-muted-foreground">{t("finance.labels.result")}</dt>
+                  <dd className={`text-right font-medium tabular-nums ${profitClass(totals.profit)}`}>{formatMoney(totals.profit)}</dd>
+                  <dt className="italic text-muted-foreground">{t("finance.operating.fuelEstimated")}</dt>
+                  <dd className="text-right font-normal italic tabular-nums text-muted-foreground">{fuelPrice === null ? "—" : formatMoney(totals.fuelEstimate)}</dd>
+                </dl>
+              </li>
+          </ul>
         </CardContent>
       </Card>
     </div>

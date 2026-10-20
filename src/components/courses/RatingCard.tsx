@@ -143,7 +143,7 @@ export function RatingCard({ rating, feedback, canRate, isOwnRating, onRate }: R
                 <p className="text-sm text-destructive">{t("courses.rating.errorFeedback")}</p>
               )}
             </div>
-            <div className="flex flex-wrap justify-end gap-2">
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
               {isEditing && (
                 <Button type="button" variant="outline" onClick={() => setIsEditing(false)} disabled={saving}>
                   {t("common:actions.cancel")}

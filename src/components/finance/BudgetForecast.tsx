@@ -193,7 +193,8 @@ export default function BudgetForecast() {
           <CardTitle>{t("finance.forecast.byMonth")}</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
+          {/* Wide screens: a table; phones and tablets: one block per month. */}
+          <Table className="hidden lg:table">
             <TableHeader>
               <TableRow>
                 <TableHead>{t("finance.period.month")}</TableHead>
@@ -235,6 +236,32 @@ export default function BudgetForecast() {
               </TableRow>
             </TableFooter>
           </Table>
+          <ul className="divide-y lg:hidden">
+            {chartData.map((row) => (
+              <li key={row.month} className="space-y-2 py-3 first:pt-0 last:pb-0">
+                <p className="font-medium">{row.month}</p>
+                <dl className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 text-sm">
+                  <dt className="text-muted-foreground">{t("finance.labels.revenue")}</dt>
+                  <dd className="text-right tabular-nums">{formatMoney(row.revenus)}</dd>
+                  <dt className="text-muted-foreground">{t("finance.labels.expenses")}</dt>
+                  <dd className="text-right tabular-nums">{formatMoney(row.depenses)}</dd>
+                  <dt className="text-muted-foreground">{t("finance.labels.netResult")}</dt>
+                  <dd className={`text-right font-medium tabular-nums ${profitClass(row.resultatNet)}`}>{formatMoney(row.resultatNet)}</dd>
+                </dl>
+              </li>
+            ))}
+              <li key="total" className="space-y-2 py-3 first:pt-0 last:pb-0 font-medium">
+                <p className="font-medium">{t("common:labels.total")}</p>
+                <dl className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 text-sm">
+                  <dt className="text-muted-foreground">{t("finance.labels.revenue")}</dt>
+                  <dd className="text-right tabular-nums">{formatMoney(totals.revenus)}</dd>
+                  <dt className="text-muted-foreground">{t("finance.labels.expenses")}</dt>
+                  <dd className="text-right tabular-nums">{formatMoney(totals.depenses)}</dd>
+                  <dt className="text-muted-foreground">{t("finance.labels.netResult")}</dt>
+                  <dd className={`text-right font-medium tabular-nums ${profitClass(totals.resultatNet)}`}>{formatMoney(totals.resultatNet)}</dd>
+                </dl>
+              </li>
+          </ul>
         </CardContent>
       </Card>
     </div>

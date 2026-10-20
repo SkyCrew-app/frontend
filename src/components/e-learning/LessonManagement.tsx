@@ -85,9 +85,17 @@ const emptyForm = (moduleId: string): LessonForm => ({
 // True when the editor holds nothing to read (it leaves empty tags behind).
 const isBlankHtml = (html: string) => html.replace(/<[^>]*>/g, "").trim() === "" && !/<img\b/i.test(html)
 
-export function LessonManagement() {
+interface LessonManagementProps {
+  /** The course shown, when the page keeps it from one tab to the next. */
+  courseId?: string
+  onCourseChange?: (courseId: string) => void
+}
+
+export function LessonManagement({ courseId, onCourseChange }: LessonManagementProps = {}) {
   const { t } = useTranslation("instruction")
-  const [selectedCourseId, setSelectedCourseId] = useState("")
+  const [ownCourseId, setOwnCourseId] = useState("")
+  const selectedCourseId = courseId ?? ownCourseId
+  const setSelectedCourseId = onCourseChange ?? setOwnCourseId
   const [selectedModuleId, setSelectedModuleId] = useState("")
   const [searchTerm, setSearchTerm] = useState("")
   const [form, setForm] = useState<LessonForm>(emptyForm(""))
@@ -356,14 +364,14 @@ export function LessonManagement() {
           }
         />
       ) : (
-        <div className="overflow-x-auto rounded-xl border bg-card">
+        <div className="rounded-xl border bg-card">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="w-12 text-right">{t("admin.shared.number")}</TableHead>
                 <TableHead>{t("admin.lessons.columns.lesson")}</TableHead>
-                <TableHead>{t("admin.lessons.columns.video")}</TableHead>
-                <TableHead className="text-right">{t("admin.lessons.columns.attachments")}</TableHead>
+                <TableHead className="hidden lg:table-cell">{t("admin.lessons.columns.video")}</TableHead>
+                <TableHead className="hidden text-right lg:table-cell">{t("admin.lessons.columns.attachments")}</TableHead>
                 <TableHead className="w-24">
                   <span className="sr-only">{t("common:labels.actions")}</span>
                 </TableHead>
@@ -375,14 +383,18 @@ export function LessonManagement() {
                   <TableCell className="text-right tabular-nums text-muted-foreground">
                     {(lessons ?? []).indexOf(lesson) + 1}
                   </TableCell>
-                  <TableCell className="min-w-[14rem]">
-                    <p className="font-medium">{lesson.title}</p>
+                  <TableCell>
+                    <p className="break-words font-medium">{lesson.title}</p>
                     {lesson.description && (
                       <p className="line-clamp-1 max-w-xl text-sm text-muted-foreground">{lesson.description}</p>
                     )}
                   </TableCell>
-                  <TableCell>{lesson.video_url ? <Badge variant="info">{t("admin.lessons.columns.video")}</Badge> : "—"}</TableCell>
-                  <TableCell className="text-right tabular-nums">{lesson.attachments?.length || "—"}</TableCell>
+                  <TableCell className="hidden lg:table-cell">
+                    {lesson.video_url ? <Badge variant="info">{t("admin.lessons.columns.video")}</Badge> : "—"}
+                  </TableCell>
+                  <TableCell className="hidden text-right tabular-nums lg:table-cell">
+                    {lesson.attachments?.length || "—"}
+                  </TableCell>
                   <TableCell>
                     <RowActions
                       name={t("admin.lessons.rowName", { title: lesson.title })}
@@ -490,12 +502,11 @@ export function LessonManagement() {
             validate: validateContent,
             content: (
               <FormField label={t("admin.lessons.form.stepContent")} required error={checked.content ? errors.content : null}>
-                {/* A long text scrolls inside the editor, so the panel itself does not. */}
+                {/* The editor grows with the text: only the panel scrolls. */}
                 <WysiwygEditor
                   value={form.content}
                   onChange={(content) => setForm((previous) => ({ ...previous, content }))}
                   placeholder={t("admin.lessons.form.contentPlaceholder")}
-                  className="flex max-h-[26rem] flex-col [&>.prose]:overflow-y-auto"
                 />
               </FormField>
             ),

@@ -196,7 +196,7 @@ export default function LessonPage() {
             </Card>
           ) : html ? (
             <Card>
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 {/* Rich text written by an administrator in the lesson editor. */}
                 <RichText
                   html={html}

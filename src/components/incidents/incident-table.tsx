@@ -43,20 +43,21 @@ export function IncidentTable({
   const { t } = useTranslation("administration")
   return (
     <div className="space-y-4">
+      {/* Below desktop width each row is laid out as a card: nothing scrolls sideways. */}
       <Card className="overflow-hidden">
-        <Table>
-          <TableHeader>
+        <Table className="max-lg:block">
+          <TableHeader className="max-lg:hidden">
             <TableRow>
               <TableHead>{t("common:labels.date")}</TableHead>
               <TableHead>{t("incidents.fields.aircraft")}</TableHead>
-              <TableHead className="hidden md:table-cell">{t("common:labels.pilot")}</TableHead>
-              <TableHead className="hidden lg:table-cell">{t("common:labels.category")}</TableHead>
-              <TableHead className="hidden sm:table-cell">{t("incidents.fields.severity")}</TableHead>
+              <TableHead>{t("common:labels.pilot")}</TableHead>
+              <TableHead>{t("common:labels.category")}</TableHead>
+              <TableHead>{t("incidents.fields.severity")}</TableHead>
               <TableHead>{t("common:labels.status")}</TableHead>
-              <TableHead className="hidden xl:table-cell">{t("common:labels.description")}</TableHead>
+              <TableHead>{t("common:labels.description")}</TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody>
+          <TableBody className="max-lg:block">
             {incidents.length > 0 ? (
               incidents.map((incident) => {
                 const severity = incidentSeverity(incident.severity_level)
@@ -69,7 +70,7 @@ export function IncidentTable({
                       date: formatDate(incident.incident_date),
                       registration: incident.aircraft.registration_number,
                     })}
-                    className="cursor-pointer focus-visible:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                    className="cursor-pointer max-lg:flex max-lg:flex-wrap max-lg:items-center max-lg:gap-x-3 max-lg:gap-y-2 max-lg:p-4 focus-visible:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                     onClick={() => onSelectIncident(incident)}
                     onKeyDown={(event) => {
                       if (event.key === "Enter" || event.key === " ") {
@@ -78,27 +79,33 @@ export function IncidentTable({
                       }
                     }}
                   >
-                    <TableCell className="whitespace-nowrap">{formatDate(incident.incident_date)}</TableCell>
-                    <TableCell>
-                      <div className="font-medium">{incident.aircraft.registration_number}</div>
+                    <TableCell className="whitespace-nowrap max-lg:order-2 max-lg:p-0 max-lg:text-muted-foreground">
+                      {formatDate(incident.incident_date)}
+                    </TableCell>
+                    <TableCell className="max-lg:order-1 max-lg:flex max-lg:basis-full max-lg:flex-wrap max-lg:items-baseline max-lg:gap-x-2 max-lg:p-0">
+                      <div className="whitespace-nowrap font-medium">{incident.aircraft.registration_number}</div>
                       {incident.aircraft.model && (
                         <div className="text-xs text-muted-foreground">{incident.aircraft.model}</div>
                       )}
                     </TableCell>
-                    <TableCell className="hidden whitespace-nowrap md:table-cell">{incidentPersonName(incident.user)}</TableCell>
-                    <TableCell className="hidden lg:table-cell">{incidentCategoryLabel(incident.category)}</TableCell>
-                    <TableCell className="hidden sm:table-cell">
+                    <TableCell className="whitespace-nowrap max-lg:order-5 max-lg:p-0 max-lg:text-muted-foreground">
+                      {incidentPersonName(incident.user)}
+                    </TableCell>
+                    <TableCell className="max-lg:order-5 max-lg:p-0 max-lg:text-muted-foreground">
+                      {incidentCategoryLabel(incident.category)}
+                    </TableCell>
+                    <TableCell className="max-lg:order-3 max-lg:p-0">
                       <Badge variant={severity.variant} className="whitespace-nowrap">
                         {severity.label}
                       </Badge>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="max-lg:order-4 max-lg:p-0">
                       <Badge variant={status.variant} className="whitespace-nowrap">
                         {status.label}
                       </Badge>
                     </TableCell>
-                    <TableCell className="hidden max-w-[16rem] xl:table-cell">
-                      <p className="truncate text-muted-foreground" title={incident.description}>
+                    <TableCell className="max-w-xs max-lg:order-6 max-lg:max-w-none max-lg:basis-full max-lg:p-0">
+                      <p className="line-clamp-2 break-words text-muted-foreground" title={incident.description}>
                         {incident.description || "—"}
                       </p>
                     </TableCell>
@@ -106,8 +113,8 @@ export function IncidentTable({
                 )
               })
             ) : (
-              <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={7} className="p-4">
+              <TableRow className="hover:bg-transparent max-lg:block">
+                <TableCell colSpan={7} className="p-4 max-lg:block">
                   {hasFilters ? (
                     <EmptyState
                       icon={Search}

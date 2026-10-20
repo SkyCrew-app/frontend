@@ -15,6 +15,7 @@ import { Separator } from "@/components/ui/separator"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { EmptyState } from "@/components/layout/EmptyState"
 import { ErrorState } from "@/components/layout/ErrorState"
+import { apiRefusalMessage } from "@/lib/api-error"
 import { articleTagLabel } from "@/components/articles/article-card"
 import { ArticleImage, articleFileName, articleFileUrl } from "@/components/articles/article-image"
 import { useToast } from "@/components/hooks/use-toast"
@@ -64,7 +65,7 @@ export default function ArticlePage() {
 
   const { data, loading, error, refetch } = useQuery(GET_ARTICLE_BY_ID, {
     variables: { id: intId },
-    skip: !id,
+    skip: !id || Number.isNaN(intId),
   })
 
   const article: Article | undefined = data?.article
@@ -97,7 +98,10 @@ export default function ArticlePage() {
     )
   }
 
-  if (error) {
+  // A deleted or mistyped article is "not found", not a loading failure.
+  const notFound = Number.isNaN(intId) || (error && apiRefusalMessage(error, 404) !== undefined)
+
+  if (error && !notFound) {
     return (
       <div className="mx-auto max-w-3xl space-y-6">
         <BackLink />
@@ -106,7 +110,7 @@ export default function ArticlePage() {
     )
   }
 
-  if (!article) {
+  if (!article || notFound) {
     return (
       <div className="mx-auto max-w-3xl space-y-6">
         <BackLink />

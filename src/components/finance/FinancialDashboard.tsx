@@ -137,7 +137,7 @@ export default function FinancialDashboard() {
       />
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
+        <TabsList className="h-auto flex-wrap">
           <TabsTrigger value="financial">{t("finance.tabs.summary")}</TabsTrigger>
           <TabsTrigger value="expenses">{t("finance.tabs.expenses")}</TabsTrigger>
           <TabsTrigger value="operating">{t("finance.tabs.operating")}</TabsTrigger>

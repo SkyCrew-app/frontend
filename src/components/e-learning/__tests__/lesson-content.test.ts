@@ -23,6 +23,30 @@ describe("lessonHtml", () => {
     expect(lessonHtml("<p>Bonjour</p>")).toBe("<p>Bonjour</p>")
   })
 
+  it("rend un document de l'éditeur (format ProseMirror), sans interpréter son texte", () => {
+    const doc = {
+      type: "doc",
+      content: [
+        { type: "heading", attrs: { level: 2 }, content: [{ type: "text", text: "Les forces" }] },
+        {
+          type: "paragraph",
+          content: [
+            { type: "text", text: "La " },
+            { type: "text", text: "portance", marks: [{ type: "bold" }] },
+            { type: "text", text: " <b>", marks: [{ type: "link", attrs: { href: "https://a.fr" } }] },
+          ],
+        },
+        { type: "bulletList", content: [{ type: "listItem", content: [{ type: "paragraph", content: [{ type: "text", text: "Poids" }] }] }] },
+      ],
+    }
+    expect(lessonHtml(doc)).toBe(
+      '<h2>Les forces</h2><p>La <strong>portance</strong><a href="https://a.fr"> &lt;b&gt;</a></p><ul><li><p>Poids</p></li></ul>',
+    )
+    expect(lessonHtml(JSON.stringify(doc))).toBe(lessonHtml(doc))
+    expect(lessonEditorHtml(doc)).toBe(lessonHtml(doc))
+    expect(lessonHtml({ type: "doc", content: [{ type: "paragraph" }] })).toBeNull()
+  })
+
   it("vaut null sans texte riche", () => {
     expect(lessonHtml("  ")).toBeNull()
     expect(lessonHtml(sections)).toBeNull()

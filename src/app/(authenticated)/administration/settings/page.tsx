@@ -156,7 +156,7 @@ export default function SettingsPage() {
       ) : (
         <FormProvider {...form}>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="w-full sm:w-auto">
+            <TabsList className="h-auto w-full flex-wrap sm:w-auto">
               {FORM_TABS.map((tab) => (
                 <TabsTrigger key={tab} value={tab} className="gap-1.5">
                   {t(`settings.tabs.${tab}`)}
