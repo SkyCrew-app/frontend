@@ -162,8 +162,8 @@ export default function CourseDetailPage() {
           {totalLessons > 0 && (
             <Card>
               <CardContent className="space-y-3 p-5">
-                <div className="flex items-baseline justify-between gap-3">
-                  <p className="text-sm font-medium">{t("eLearning.course.progressTitle")}</p>
+                <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                  <p className="whitespace-nowrap text-sm font-medium">{t("eLearning.course.progressTitle")}</p>
                   {completionPending ? (
                     <Skeleton className="h-4 w-32" />
                   ) : !progressKnown ? (
