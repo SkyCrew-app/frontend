@@ -271,7 +271,11 @@ export default function CourseList({ courses, userId, isAdministrator = false, o
                   <span className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
                     {course.competencies.length > 0 && (
                       <span>
-                        {t("courses.list.validatedCount", { validated, total: course.competencies.length })}
+                        {t("courses.list.validatedCount", {
+                          count: course.competencies.length,
+                          validated,
+                          total: course.competencies.length,
+                        })}
                       </span>
                     )}
                     {course.rating && (

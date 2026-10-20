@@ -198,7 +198,7 @@ export function CompetenciesCard({
               />
               <p className="text-xs text-muted-foreground">{t("shared.optional")}</p>
             </div>
-            <div className="flex flex-wrap justify-end gap-2">
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:flex-wrap sm:justify-end">
               <Button type="button" variant="outline" onClick={closeForm} disabled={saving}>
                 {t("common:actions.cancel")}
               </Button>
