@@ -80,15 +80,23 @@ export function WysiwygEditor({
 
   const addLink = () => {
     if (linkUrl) {
-      // Correction de la méthode setLink
-      editor.chain().focus().extendMarkRange("link").updateAttributes("link", { href: linkUrl }).run()
+      const href = /^(https?:\/\/|mailto:|tel:|\/)/i.test(linkUrl) ? linkUrl : `https://${linkUrl}`
+      if (editor.state.selection.empty && !editor.isActive("link")) {
+        // Nothing selected: the address itself becomes the link text.
+        editor
+          .chain()
+          .focus()
+          .insertContent({ type: "text", text: linkUrl, marks: [{ type: "link", attrs: { href } }] })
+          .run()
+      } else {
+        editor.chain().focus().extendMarkRange("link").setLink({ href }).run()
+      }
       setLinkUrl("")
     }
   }
 
   const addImage = () => {
     if (imageUrl) {
-      // Correction de la méthode setImage
       editor.chain().focus().insertContent(`<img src="${imageUrl}" alt="${i18n.t("common:editor.imageAlt")}" />`).run()
       setImageUrl("")
     }
@@ -180,7 +188,14 @@ export function WysiwygEditor({
 
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="h-8 gap-1">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1"
+              aria-label={i18n.t("common:editor.link")}
+              title={i18n.t("common:editor.link")}
+            >
               <LinkIcon className="h-4 w-4" />
             </Button>
           </PopoverTrigger>
@@ -192,7 +207,7 @@ export function WysiwygEditor({
                 value={linkUrl}
                 onChange={(e) => setLinkUrl(e.target.value)}
               />
-              <Button size="sm" onClick={addLink}>
+              <Button type="button" size="sm" onClick={addLink}>
                 {i18n.t("common:editor.addLink")}
               </Button>
             </div>
@@ -201,7 +216,14 @@ export function WysiwygEditor({
 
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="h-8 gap-1">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1"
+              aria-label={i18n.t("common:editor.image")}
+              title={i18n.t("common:editor.image")}
+            >
               <ImageIcon className="h-4 w-4" />
             </Button>
           </PopoverTrigger>
@@ -213,7 +235,7 @@ export function WysiwygEditor({
                 value={imageUrl}
                 onChange={(e) => setImageUrl(e.target.value)}
               />
-              <Button size="sm" onClick={addImage}>
+              <Button type="button" size="sm" onClick={addImage}>
                 {i18n.t("common:editor.addImage")}
               </Button>
             </div>
@@ -222,8 +244,11 @@ export function WysiwygEditor({
 
         <div className="ml-auto flex gap-1">
           <Button
+            type="button"
             variant="outline"
             size="sm"
+            aria-label={i18n.t("common:editor.undo")}
+            title={i18n.t("common:editor.undo")}
             onClick={() => editor.chain().focus().undo().run()}
             disabled={!editor.can().undo()}
             className="h-8"
@@ -231,8 +256,11 @@ export function WysiwygEditor({
             <Undo className="h-4 w-4" />
           </Button>
           <Button
+            type="button"
             variant="outline"
             size="sm"
+            aria-label={i18n.t("common:editor.redo")}
+            title={i18n.t("common:editor.redo")}
             onClick={() => editor.chain().focus().redo().run()}
             disabled={!editor.can().redo()}
             className="h-8"
@@ -242,7 +270,11 @@ export function WysiwygEditor({
         </div>
       </div>
 
-      <EditorContent editor={editor} className="p-4 min-h-[200px] prose prose-sm max-w-none" />
+      {/* The text area fills the editor (a tap anywhere in it writes) and shows its placeholder while empty. */}
+      <EditorContent
+        editor={editor}
+        className="prose prose-sm max-w-none p-4 dark:prose-invert [&_.ProseMirror]:min-h-[168px] [&_.ProseMirror]:outline-none [&_.is-editor-empty:first-child]:before:pointer-events-none [&_.is-editor-empty:first-child]:before:float-left [&_.is-editor-empty:first-child]:before:h-0 [&_.is-editor-empty:first-child]:before:text-muted-foreground [&_.is-editor-empty:first-child]:before:content-[attr(data-placeholder)]"
+      />
 
       {editor && (
         <BubbleMenu editor={editor}>
