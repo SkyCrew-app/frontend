@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useTranslation } from "react-i18next"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { SidePanel } from "@/components/layout/SidePanel"
 import type { Flight } from "@/interfaces/flight"
@@ -107,11 +108,14 @@ export function FlightPlanEditDialog({ isOpen, onOpenChange, flight, onSave }: F
         {weatherKnown && (
           <div className="space-y-2">
             <Label htmlFor="weather-conditions">{t("planEdit.weather")}</Label>
-            <Input
+            {/* A METAR runs over several lines: it must be readable in full. */}
+            <Textarea
               id="weather-conditions"
               value={weatherConditions}
               onChange={(e) => setWeatherConditions(e.target.value)}
               placeholder={t("planEdit.weatherPlaceholder")}
+              rows={4}
+              className="font-mono text-xs"
             />
           </div>
         )}
