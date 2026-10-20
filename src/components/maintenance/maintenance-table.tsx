@@ -62,13 +62,13 @@ export function MaintenanceTable({
           <TableHeader>
             <TableRow>
               <TableHead>{t("shared.aircraft")}</TableHead>
-              <TableHead>{t("common:labels.type")}</TableHead>
+              <TableHead className="hidden sm:table-cell">{t("common:labels.type")}</TableHead>
               <TableHead>{t("common:labels.status")}</TableHead>
-              <TableHead>{t("maintenance.table.period")}</TableHead>
-              <TableHead>{t("common:labels.technician")}</TableHead>
+              <TableHead className="hidden md:table-cell">{t("maintenance.table.period")}</TableHead>
+              <TableHead className="hidden lg:table-cell">{t("common:labels.technician")}</TableHead>
               {canManage && (
                 <>
-                  <TableHead className="text-right">{t("common:labels.cost")}</TableHead>
+                  <TableHead className="hidden text-right xl:table-cell">{t("common:labels.cost")}</TableHead>
                   <TableHead className="w-12">
                     <span className="sr-only">{t("common:labels.actions")}</span>
                   </TableHead>
@@ -88,19 +88,19 @@ export function MaintenanceTable({
                     <div className="font-medium">{maintenance.aircraft.registration_number}</div>
                     <div className="text-xs text-muted-foreground">{maintenance.aircraft.model}</div>
                   </TableCell>
-                  <TableCell className="whitespace-nowrap">
+                  <TableCell className="hidden whitespace-nowrap sm:table-cell">
                     <MaintenanceTypeIcon type={maintenance.maintenance_type} />
                   </TableCell>
                   <TableCell>
                     <StatusBadge status={maintenance.status} />
                   </TableCell>
-                  <TableCell className="whitespace-nowrap">
+                  <TableCell className="hidden whitespace-nowrap md:table-cell">
                     <div>{formatDate(maintenance.start_date)}</div>
                     <div className="text-xs text-muted-foreground">
                       {t("maintenance.table.until", { date: formatDate(maintenance.end_date) })}
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="hidden lg:table-cell">
                     {maintenance.technician ? (
                       <>
                         <div>{maintenanceTechnicianName(maintenance.technician)}</div>
@@ -114,7 +114,7 @@ export function MaintenanceTable({
                   </TableCell>
                   {onEditMaintenance && onDeleteMaintenance && (
                     <>
-                      <TableCell className="whitespace-nowrap text-right tabular-nums">
+                      <TableCell className="hidden whitespace-nowrap text-right tabular-nums xl:table-cell">
                         {maintenance.maintenance_cost ? formatMoney(maintenance.maintenance_cost) : "—"}
                       </TableCell>
                       {/* The menu lives in the row: its clicks must not open the detail view. */}

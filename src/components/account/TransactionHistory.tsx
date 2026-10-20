@@ -53,6 +53,8 @@ interface PaymentRow {
 const ITEMS_PER_PAGE = 10
 const ALL = "all"
 const COLUMN_COUNT = 5
+// Narrow screens keep the date, the type and the amount; the method and the status come back as room allows.
+const COLUMN_CLASSES: (string | undefined)[] = [undefined, undefined, "hidden md:table-cell", "hidden sm:table-cell", undefined]
 
 // "+50,00 €" for money coming in, "−50,00 €" for money leaving the account.
 function signedAmount(transaction: Transaction) {
@@ -224,13 +226,13 @@ export default function TransactionHistory() {
           </div>
 
           <div className="rounded-md border">
-            <Table className="min-w-[640px]">
+            <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>{t("common:labels.date")}</TableHead>
                   <TableHead>{t("common:labels.type")}</TableHead>
-                  <TableHead>{t("history.columns.paymentMethod")}</TableHead>
-                  <TableHead>{t("common:labels.status")}</TableHead>
+                  <TableHead className={COLUMN_CLASSES[2]}>{t("history.columns.paymentMethod")}</TableHead>
+                  <TableHead className={COLUMN_CLASSES[3]}>{t("common:labels.status")}</TableHead>
                   <TableHead className="text-right">{t("history.columns.amount")}</TableHead>
                 </TableRow>
               </TableHeader>
@@ -239,7 +241,7 @@ export default function TransactionHistory() {
                   Array.from({ length: 5 }).map((_, row) => (
                     <TableRow key={row}>
                       {Array.from({ length: COLUMN_COUNT }).map((_, cell) => (
-                        <TableCell key={cell}>
+                        <TableCell key={cell} className={COLUMN_CLASSES[cell]}>
                           <Skeleton className={cn("h-5 w-24", cell === COLUMN_COUNT - 1 && "ml-auto w-20")} />
                         </TableCell>
                       ))}
@@ -257,10 +259,10 @@ export default function TransactionHistory() {
                             <span className="block text-xs text-muted-foreground">{transaction.reason}</span>
                           )}
                         </TableCell>
-                        <TableCell className="text-muted-foreground">
+                        <TableCell className={cn("text-muted-foreground", COLUMN_CLASSES[2])}>
                           {paymentMethodLabel(transaction.payment_method)}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className={COLUMN_CLASSES[3]}>
                           <Badge variant={status.variant}>{status.label}</Badge>
                         </TableCell>
                         <TableCell
@@ -314,7 +316,7 @@ export default function TransactionHistory() {
                 })}
               </p>
               {totalPages > 1 && (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between gap-2 sm:justify-end">
                   <Button
                     variant="outline"
                     size="sm"
@@ -323,7 +325,7 @@ export default function TransactionHistory() {
                   >
                     {t("common:pagination.previous")}
                   </Button>
-                  <span className="text-sm text-muted-foreground tabular-nums">
+                  <span className="whitespace-nowrap text-sm text-muted-foreground tabular-nums">
                     {t("common:pagination.pageOf", { page, total: totalPages })}
                   </span>
                   <Button

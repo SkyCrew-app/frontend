@@ -14,6 +14,7 @@ import { logbookRole } from "@/components/logbook/logbook-role"
 import { ListPager } from "@/components/reservation/list-pager"
 import { flightTypeLabel } from "@/components/flight/flight-type"
 import { formatDate, formatFlightDuration } from "@/lib/format"
+import { cn } from "@/lib/utils"
 import type { Flight } from "@/interfaces/flight"
 
 interface LogbookTableProps {
@@ -124,13 +125,23 @@ export default function LogbookTable({ flights, loading, filtered = false, onRes
     )
   }
 
-  const SortableHead = ({ label, column, align }: { label: string; column: SortKey; align?: "right" }) => {
+  const SortableHead = ({
+    label,
+    column,
+    align,
+    className,
+  }: {
+    label: string
+    column: SortKey
+    align?: "right"
+    className?: string
+  }) => {
     const active = sortKey === column
     const Icon = !active ? ArrowUpDown : sortDirection === "asc" ? ArrowUp : ArrowDown
     return (
       <TableHead
         aria-sort={active ? (sortDirection === "asc" ? "ascending" : "descending") : "none"}
-        className={align === "right" ? "text-right" : undefined}
+        className={cn(align === "right" && "text-right", className)}
       >
         <button
           type="button"
@@ -154,12 +165,12 @@ export default function LogbookTable({ flights, loading, filtered = false, onRes
             <TableRow>
               <SortableHead label={t("common:labels.date")} column="date" />
               <SortableHead label={t("common:labels.aircraft")} column="registration" />
-              <SortableHead label={t("logbook.table.departure")} column="origin" />
-              <SortableHead label={t("logbook.table.arrival")} column="destination" />
+              <SortableHead label={t("logbook.table.departure")} column="origin" className="hidden sm:table-cell" />
+              <SortableHead label={t("logbook.table.arrival")} column="destination" className="hidden sm:table-cell" />
               <SortableHead label={t("common:labels.duration")} column="hours" align="right" />
-              <SortableHead label={t("logbook.table.flightType")} column="flight_type" />
-              <TableHead>{t("logbook.table.role")}</TableHead>
-              <TableHead>{t("logbook.table.remarks")}</TableHead>
+              <SortableHead label={t("logbook.table.flightType")} column="flight_type" className="hidden lg:table-cell" />
+              <TableHead className="hidden lg:table-cell">{t("logbook.table.role")}</TableHead>
+              <TableHead className="hidden xl:table-cell">{t("logbook.table.remarks")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -173,20 +184,20 @@ export default function LogbookTable({ flights, loading, filtered = false, onRes
                   if (event.key === "Enter") openFlight(flight)
                 }}
               >
-                <TableCell className="whitespace-nowrap tabular-nums">{formatDate(dateOf(flight))}</TableCell>
-                <TableCell className="whitespace-nowrap">
+                <TableCell className="tabular-nums sm:whitespace-nowrap">{formatDate(dateOf(flight))}</TableCell>
+                <TableCell className="sm:whitespace-nowrap">
                   <span className="font-medium">{flight.reservation?.aircraft?.registration_number ?? "—"}</span>
                   {flight.reservation?.aircraft?.model && (
                     <span className="block text-xs text-muted-foreground">{flight.reservation.aircraft.model}</span>
                   )}
                 </TableCell>
-                <TableCell className="font-mono">{flight.origin_icao}</TableCell>
-                <TableCell className="font-mono">{flight.destination_icao}</TableCell>
+                <TableCell className="hidden font-mono sm:table-cell">{flight.origin_icao}</TableCell>
+                <TableCell className="hidden font-mono sm:table-cell">{flight.destination_icao}</TableCell>
                 <TableCell className="whitespace-nowrap text-right tabular-nums">
                   {formatFlightDuration(flight.flight_hours)}
                 </TableCell>
-                <TableCell className="whitespace-nowrap">{flightTypeLabel(flight.flight_type)}</TableCell>
-                <TableCell className="whitespace-nowrap">
+                <TableCell className="hidden whitespace-nowrap lg:table-cell">{flightTypeLabel(flight.flight_type)}</TableCell>
+                <TableCell className="hidden whitespace-nowrap lg:table-cell">
                   {(() => {
                     const role = logbookRole(flight)
                     if (!role) return "—"
@@ -198,7 +209,7 @@ export default function LogbookTable({ flights, loading, filtered = false, onRes
                     )
                   })()}
                 </TableCell>
-                <TableCell className="max-w-[240px] truncate text-muted-foreground" title={flight.remarks ?? undefined}>
+                <TableCell className="hidden max-w-[240px] truncate text-muted-foreground xl:table-cell" title={flight.remarks ?? undefined}>
                   {flight.remarks || "—"}
                 </TableCell>
               </TableRow>

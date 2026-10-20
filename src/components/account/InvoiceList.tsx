@@ -124,13 +124,12 @@ export default function InvoiceList() {
           />
         ) : (
           <div className="space-y-4">
-            <div className="overflow-x-auto">
+            <div>
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>{t("invoices.number")}</TableHead>
-                    <TableHead>{t("invoices.date")}</TableHead>
-                    <TableHead>{t("invoices.subject")}</TableHead>
+                    <TableHead className="hidden md:table-cell">{t("invoices.subject")}</TableHead>
                     <TableHead className="text-right">{t("invoices.amount")}</TableHead>
                     <TableHead className="w-12">
                       <span className="sr-only">{t("invoices.downloadColumn")}</span>
@@ -143,11 +142,13 @@ export default function InvoiceList() {
                     const downloading = downloadingId === String(invoice.id)
                     return (
                       <TableRow key={invoice.id}>
-                        <TableCell className="whitespace-nowrap font-medium tabular-nums">{number}</TableCell>
-                        <TableCell className="whitespace-nowrap">{formatDate(invoice.invoice_date)}</TableCell>
-                        <TableCell>{invoiceSubject(invoice)}</TableCell>
-                        <TableCell className="text-right tabular-nums">{formatMoney(invoice.amount)}</TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="whitespace-nowrap">
+                          <span className="block font-medium tabular-nums">{number}</span>
+                          <span className="block text-xs text-muted-foreground">{formatDate(invoice.invoice_date)}</span>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">{invoiceSubject(invoice)}</TableCell>
+                        <TableCell className="whitespace-nowrap text-right tabular-nums">{formatMoney(invoice.amount)}</TableCell>
+                        <TableCell className="pl-0 pr-2 text-right sm:pr-4">
                           <Button
                             variant="ghost"
                             size="icon"

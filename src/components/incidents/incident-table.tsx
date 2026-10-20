@@ -49,11 +49,11 @@ export function IncidentTable({
             <TableRow>
               <TableHead>{t("common:labels.date")}</TableHead>
               <TableHead>{t("incidents.fields.aircraft")}</TableHead>
-              <TableHead>{t("common:labels.pilot")}</TableHead>
-              <TableHead>{t("common:labels.category")}</TableHead>
-              <TableHead>{t("incidents.fields.severity")}</TableHead>
+              <TableHead className="hidden md:table-cell">{t("common:labels.pilot")}</TableHead>
+              <TableHead className="hidden lg:table-cell">{t("common:labels.category")}</TableHead>
+              <TableHead className="hidden sm:table-cell">{t("incidents.fields.severity")}</TableHead>
               <TableHead>{t("common:labels.status")}</TableHead>
-              <TableHead>{t("common:labels.description")}</TableHead>
+              <TableHead className="hidden xl:table-cell">{t("common:labels.description")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -85,9 +85,9 @@ export function IncidentTable({
                         <div className="text-xs text-muted-foreground">{incident.aircraft.model}</div>
                       )}
                     </TableCell>
-                    <TableCell className="whitespace-nowrap">{incidentPersonName(incident.user)}</TableCell>
-                    <TableCell>{incidentCategoryLabel(incident.category)}</TableCell>
-                    <TableCell>
+                    <TableCell className="hidden whitespace-nowrap md:table-cell">{incidentPersonName(incident.user)}</TableCell>
+                    <TableCell className="hidden lg:table-cell">{incidentCategoryLabel(incident.category)}</TableCell>
+                    <TableCell className="hidden sm:table-cell">
                       <Badge variant={severity.variant} className="whitespace-nowrap">
                         {severity.label}
                       </Badge>
@@ -97,7 +97,7 @@ export function IncidentTable({
                         {status.label}
                       </Badge>
                     </TableCell>
-                    <TableCell className="max-w-xs">
+                    <TableCell className="hidden max-w-[16rem] xl:table-cell">
                       <p className="truncate text-muted-foreground" title={incident.description}>
                         {incident.description || "—"}
                       </p>
