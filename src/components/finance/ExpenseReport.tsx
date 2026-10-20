@@ -159,7 +159,8 @@ export default function ExpensesReport({ period, date }: { period: string; date:
               </div>
             </div>
 
-            <Table>
+            {/* Tighter cells on a phone, so the three columns fit the card. */}
+            <Table className="[&_td]:px-2 [&_th]:px-2 sm:[&_td]:px-4 sm:[&_th]:px-4">
               <TableHeader>
                 <TableRow>
                   <TableHead>{t("common:labels.category")}</TableHead>
@@ -209,7 +210,8 @@ export default function ExpensesReport({ period, date }: { period: string; date:
           <CardDescription>{t("finance.expenses.detail.description")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Table>
+          {/* Wide screens: a table; phones and tablets: one block per expense. */}
+          <Table className="hidden lg:table">
             <TableHeader>
               <TableRow>
                 <TableHead>{t("common:labels.date")}</TableHead>
@@ -231,6 +233,18 @@ export default function ExpensesReport({ period, date }: { period: string; date:
               ))}
             </TableBody>
           </Table>
+          <ul className="divide-y lg:hidden">
+            {visibleExpenses.map((expense) => (
+              <li key={expense.id} className="space-y-1 py-3 first:pt-0 last:pb-0">
+                <div className="flex items-baseline justify-between gap-3">
+                  <p className="font-medium">{expenseCategoryLabel(expense.category)}</p>
+                  <p className="whitespace-nowrap font-medium tabular-nums">{formatMoney(expense.amount)}</p>
+                </div>
+                <p className="text-sm text-muted-foreground">{formatDate(expense.expense_date)}</p>
+                {expense.description && <p className="break-words text-sm text-muted-foreground">{expense.description}</p>}
+              </li>
+            ))}
+          </ul>
           {expenses.length > visibleCount && (
             <div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-between">
               <p className="text-xs text-muted-foreground">
