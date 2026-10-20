@@ -28,7 +28,13 @@ function PointName({ row, aerodromes, onOpenAerodrome }: { row: NavLogRow; aerod
   const planned = aerodromes?.find((aerodrome) => aerodrome.icao === row.point.ident)
   const role = row.kind === "departure" ? "departure" : row.kind === "alternate" ? "alternate" : (planned?.role ?? "enroute")
   return (
-    <AerodromeSheetPopover icao={row.point.ident} role={role} conditions={planned?.conditions} onOpenFull={onOpenAerodrome ? () => onOpenAerodrome(row.point.ident) : undefined}>
+    <AerodromeSheetPopover
+      icao={row.point.ident}
+      role={role}
+      conditions={planned?.conditions}
+      // The distances of the plan's role of this aerodrome (not of an aerodrome flown over).
+      distances={planned && planned.role === role ? planned.distances : undefined}
+      onOpenFull={onOpenAerodrome ? () => onOpenAerodrome(row.point.ident) : undefined}>
       <button
         type="button"
         className="rounded-sm font-semibold underline decoration-dotted underline-offset-4 hover:decoration-solid focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -78,7 +84,7 @@ export function NavLogHeading({ column }: { column: NavLogColumn }) {
 
 const ALIGN_LEFT: ReadonlySet<NavLogColumn> = new Set(["point", "frequency"])
 // On a phone card the figure carries its unit (there is no column heading above it).
-const UNIT_AFTER_VALUE: ReadonlySet<NavLogColumn> = new Set(["altitude", "tas", "groundSpeed", "distance", "time", "fuelRemaining"])
+const UNIT_AFTER_VALUE: ReadonlySet<NavLogColumn> = new Set(["altitude", "msa", "tas", "groundSpeed", "distance", "time", "fuelRemaining"])
 
 /**
  * The nav log in the format of the paper one: a line per point with the figures of the leg that
@@ -96,7 +102,7 @@ export function NavLogTable({ legs, alternateLeg, totalDistanceNm, totalTimeMin,
     <div className="space-y-3">
       {/* Its own scrolling region, reachable with the keyboard when the log is wider than the screen. */}
       <div
-        className="relative hidden overflow-x-auto rounded-lg border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring xl:block"
+        className="relative hidden overflow-x-auto rounded-lg border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring 2xl:block"
         tabIndex={0}
         role="region"
         aria-label={t("log.caption")}
@@ -142,6 +148,7 @@ export function NavLogTable({ legs, alternateLeg, totalDistanceNm, totalTimeMin,
                           "align-top",
                           ALIGN_LEFT.has(column) ? "text-left text-xs" : column === "wind" ? "min-w-[4.5rem] text-center" : "whitespace-nowrap text-center",
                           column === "magneticHeading" && "font-semibold",
+                          column === "msa" && row.leg?.terrain?.status === "WARNING" && "bg-warning/15 font-semibold text-warning",
                           BLANK_COLUMNS.has(column) && "min-w-[3.5rem] bg-muted/30",
                         )}
                       >
@@ -168,8 +175,8 @@ export function NavLogTable({ legs, alternateLeg, totalDistanceNm, totalTimeMin,
         </table>
       </div>
 
-      {/* Narrower screens: one card per leg, nothing to scroll sideways. */}
-      <ol className="grid gap-3 sm:grid-cols-2 xl:hidden" aria-label={t("log.caption")}>
+      {/* Narrower screens (the log has 17 columns): one card per leg, nothing to scroll sideways. */}
+      <ol className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:hidden" aria-label={t("log.caption")}>
         {rows
           .filter((row) => row.leg)
           .map((row) => {
@@ -196,12 +203,13 @@ export function NavLogTable({ legs, alternateLeg, totalDistanceNm, totalTimeMin,
                   <MobileFact column="groundSpeed" row={row} />
                   <MobileFact column="distance" row={row} />
                   <MobileFact column="eta" row={row} />
+                  {row.leg?.terrain && <MobileFact column="msa" row={row} warn={row.leg.terrain.status === "WARNING"} />}
                 </dl>
                 {row.frequencies && <p className="mt-2 text-xs text-muted-foreground">{row.frequencies}</p>}
               </li>
             )
           })}
-        <li className="flex justify-between rounded-lg bg-muted/50 px-3 py-2 text-sm font-medium tabular-nums sm:col-span-2">
+        <li className="flex justify-between rounded-lg bg-muted/50 px-3 py-2 text-sm font-medium tabular-nums sm:col-span-2 xl:col-span-3">
           <span>{t("log.total")}</span>
           <span>
             {formatNm(totalDistanceNm)} · {formatNumber(totalTimeMin, 0)} min
@@ -212,7 +220,7 @@ export function NavLogTable({ legs, alternateLeg, totalDistanceNm, totalTimeMin,
   )
 }
 
-function MobileFact({ column, row, strong = false }: { column: NavLogColumn; row: NavLogRow; strong?: boolean }) {
+function MobileFact({ column, row, strong = false, warn = false }: { column: NavLogColumn; row: NavLogRow; strong?: boolean; warn?: boolean }) {
   const { t } = useTranslation("navplan")
   const unit = t(`log.units.${column}`, { defaultValue: "" })
   const value = navLogCell(row, column, { calm: t("log.calm"), noForecast: t("log.noWindForecast") })
@@ -223,7 +231,7 @@ function MobileFact({ column, row, strong = false }: { column: NavLogColumn; row
           {t(`log.columns.${column}`)}
         </abbr>
       </dt>
-      <dd className={cn("tabular-nums", strong ? "text-base font-semibold" : "")}>
+      <dd className={cn("tabular-nums", strong ? "text-base font-semibold" : "", warn && "font-semibold text-warning")}>
         {value}
         {unit && value && UNIT_AFTER_VALUE.has(column) ? ` ${unit}` : ""}
       </dd>

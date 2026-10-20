@@ -9,7 +9,7 @@ import { formatLitres, formatMinutes, formatUtcTime } from "@/lib/navplan/units"
 import { NAVLOG_COLUMNS, navLogCell, navLogCumulative, navLogRows } from "./navlog-rows"
 import { useRowNotes } from "./NavLogTable"
 import { useQnhOrigin } from "./FlightConditions"
-import { massBalanceComputed } from "@/lib/navplan/status"
+import { checkStatusLabel, massBalanceComputed } from "@/lib/navplan/status"
 import "./navlog-print.css"
 
 interface PrintableNavLogProps {
@@ -174,12 +174,31 @@ function PrintedAerodromes({ result }: { result: FlightPlanResult }) {
       }`,
     )
     .join(" · ")
-  if (lines.length === 0 && !freezing) return null
+  // Take-off and landing on the suggested runway of each aerodrome of the plan.
+  const distances = (result.aerodromes ?? [])
+    .filter((aerodrome) => aerodrome.distances)
+    .map((aerodrome) => {
+      const value = aerodrome.distances!
+      const kind = t(value.kind === "TAKEOFF" ? "distances.takeoff" : "distances.landing")
+      if (value.dataMissing) return `${kind} ${aerodrome.icao} : ${t("distances.notEntered")}`
+      const runway = value.runways.find((candidate) => candidate.suggested)
+      if (!runway) return `${kind} ${aerodrome.icao} : ${t("distances.noRunway")}`
+      return `${kind} ${aerodrome.icao} ${runway.designator} : ${t(value.kind === "TAKEOFF" ? "distances.takeoffPrint" : "distances.landingPrint", {
+        required: runway.requiredDistance15mM ?? "?",
+        available: runway.availableDistanceM ?? "?",
+      })} — ${checkStatusLabel(runway.status)}`
+    })
+  if (lines.length === 0 && !freezing && distances.length === 0 && !result.terrainSource) return null
   return (
     <div className="navlog-print__aerodromes">
       {lines.map((line) => (
         <p key={line}>{line}</p>
       ))}
+      {distances.map((line) => (
+        <p key={line}>{line}</p>
+      ))}
+      {result.legs.some((leg) => leg.terrain) && <p>{t("profile.printNote", { corridor: result.legs.find((leg) => leg.terrain)!.terrain!.corridorNm, margin: result.legs.find((leg) => leg.terrain)!.terrain!.marginFt })}</p>}
+      {result.terrainSource && <p className="navlog-print__note">{result.terrainSource.attribution}</p>}
       {freezing && (
         <p>
           {t("weather.freezingTitle")} : {freezing}

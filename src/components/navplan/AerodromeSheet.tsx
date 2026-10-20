@@ -9,9 +9,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { AERODROME_DETAILS } from "@/graphql/navdata"
 import { currentLocale } from "@/lib/i18n"
 import { frequenciesByService, isLimitedUse, metres } from "@/lib/navplan/aerodrome"
-import type { AerodromeConditions, AerodromeDetails, AerodromeSheet as Sheet, FlightPlanResult, RunwayWind } from "@/lib/navplan/types"
+import type { AerodromeConditions, AerodromeDetails, AerodromeDistances, AerodromeSheet as Sheet, FlightPlanResult, RunwayWind } from "@/lib/navplan/types"
 import { formatCourse, formatFt } from "@/lib/navplan/units"
 import { cn } from "@/lib/utils"
+import { RunwayDistanceList } from "./RunwayDistances"
 
 export type SheetRole = "departure" | "destination" | "alternate" | "enroute"
 
@@ -236,10 +237,13 @@ export function AerodromeSheetContent({
   conditions,
   showConditions = true,
   logFrequency,
+  distances,
 }: {
   sheet: Sheet
   role?: SheetRole
   conditions?: AerodromeConditions | null
+  /** Take-off or landing distances of the plan on each runway direction. */
+  distances?: AerodromeDistances | null
   showConditions?: boolean
   /** What the plan's nav log prints for it (with the ground and ATIS of its role). */
   logFrequency?: string | null
@@ -287,6 +291,11 @@ export function AerodromeSheetContent({
           {conditions && conditions.runways.length > 0 && <p className="text-xs text-muted-foreground">{t("aerodrome.windHint")}</p>}
         </Section>
       )}
+      {distances && (
+        <Section title={t(distances.kind === "TAKEOFF" ? "distances.takeoffTitle" : "distances.landingTitle")}>
+          <RunwayDistanceList distances={distances} />
+        </Section>
+      )}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
         <VacLink sheet={sheet} />
         {sheet.phone && <span className="text-sm text-muted-foreground">{t("aerodrome.phone", { phone: sheet.phone })}</span>}
@@ -308,19 +317,21 @@ export function AerodromeSheetCard({
   conditions,
   id,
   logFrequency,
+  distances,
 }: {
   icao: string
   role?: SheetRole
   conditions?: AerodromeConditions | null
   id?: string
   logFrequency?: string | null
+  distances?: AerodromeDistances | null
 }) {
   const { t } = useTranslation("navplan")
   const { sheet, loading } = useAerodromeSheet(icao)
   return (
     <article id={id} className="scroll-mt-24 rounded-lg border p-3" aria-label={t("aerodrome.sheetOf", { icao })}>
       {sheet ? (
-        <AerodromeSheetContent sheet={sheet} role={role} conditions={conditions} logFrequency={logFrequency} />
+        <AerodromeSheetContent sheet={sheet} role={role} conditions={conditions} logFrequency={logFrequency} distances={distances} />
       ) : loading ? (
         <p className="flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
@@ -338,6 +349,7 @@ export function AerodromeSheetPopover({
   icao,
   role,
   conditions,
+  distances,
   onOpenFull,
   className,
   children,
@@ -345,6 +357,7 @@ export function AerodromeSheetPopover({
   icao: string
   role?: SheetRole
   conditions?: AerodromeConditions | null
+  distances?: AerodromeDistances | null
   /** Shows the full sheet on the page (the aerodromes step). */
   onOpenFull?: () => void
   className?: string
@@ -362,13 +375,25 @@ export function AerodromeSheetPopover({
         )}
       </PopoverTrigger>
       <PopoverContent className="w-[min(24rem,calc(100vw-2rem))] space-y-3" align="start" aria-label={t("aerodrome.sheetOf", { icao })}>
-        <PopoverSheet icao={icao} role={role} conditions={conditions} onOpenFull={onOpenFull} />
+        <PopoverSheet icao={icao} role={role} conditions={conditions} distances={distances} onOpenFull={onOpenFull} />
       </PopoverContent>
     </Popover>
   )
 }
 
-function PopoverSheet({ icao, role, conditions, onOpenFull }: { icao: string; role?: SheetRole; conditions?: AerodromeConditions | null; onOpenFull?: () => void }) {
+function PopoverSheet({
+  icao,
+  role,
+  conditions,
+  distances,
+  onOpenFull,
+}: {
+  icao: string
+  role?: SheetRole
+  conditions?: AerodromeConditions | null
+  distances?: AerodromeDistances | null
+  onOpenFull?: () => void
+}) {
   const { t } = useTranslation("navplan")
   const { sheet, loading } = useAerodromeSheet(icao)
   if (!sheet)
@@ -396,6 +421,12 @@ function PopoverSheet({ icao, role, conditions, onOpenFull }: { icao: string; ro
           {conditions.densityAltitudeFt != null && t("aerodrome.densityAltitude", { value: formatFt(conditions.densityAltitudeFt) })}
         </p>
       )}
+      {distances && (
+        <div className="space-y-1">
+          <p className="text-sm font-medium">{t(distances.kind === "TAKEOFF" ? "distances.takeoffTitle" : "distances.landingTitle")}</p>
+          <RunwayDistanceList distances={distances} compact />
+        </div>
+      )}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <VacLink sheet={sheet} />
         {onOpenFull && (
@@ -416,7 +447,7 @@ export const aerodromeSheetId = (icao: string) => `aerodrome-sheet-${icao}`
  * wind on their runways and density altitude from the METAR), then the aerodromes on the route.
  */
 export function AerodromesPanel({ result }: { result: Pick<FlightPlanResult, "aerodromes" | "legs" | "alternateLeg"> }) {
-  const roles: { icao: string; role: SheetRole; conditions?: AerodromeConditions | null }[] = []
+  const roles: { icao: string; role: SheetRole; conditions?: AerodromeConditions | null; distances?: AerodromeDistances | null }[] = []
   // The frequency each line of the nav log carries.
   const last = result.legs[result.legs.length - 1]
   const logFrequencyOf = (icao: string, role: SheetRole) =>
@@ -429,7 +460,8 @@ export function AerodromesPanel({ result }: { result: Pick<FlightPlanResult, "ae
           : result.legs.find((leg) => leg.to.ident === icao)?.to.frequency
   const planned = result.aerodromes ?? []
   if (planned.length > 0) {
-    for (const aerodrome of planned) roles.push({ icao: aerodrome.icao, role: aerodrome.role, conditions: aerodrome.conditions ?? null })
+    for (const aerodrome of planned)
+      roles.push({ icao: aerodrome.icao, role: aerodrome.role, conditions: aerodrome.conditions ?? null, distances: aerodrome.distances ?? null })
   } else if (result.legs.length > 0) {
     // A plan saved before the sheets: its aerodromes, without the METAR figures.
     roles.push({ icao: result.legs[0].from.ident, role: "departure" }, { icao: result.legs[result.legs.length - 1].to.ident, role: "destination" })
@@ -447,6 +479,7 @@ export function AerodromesPanel({ result }: { result: Pick<FlightPlanResult, "ae
           icao={entry.icao}
           role={entry.role}
           conditions={entry.conditions}
+          distances={entry.distances}
           logFrequency={logFrequencyOf(entry.icao, entry.role)}
         />
       ))}
