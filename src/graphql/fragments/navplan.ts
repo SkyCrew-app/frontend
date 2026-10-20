@@ -1,7 +1,7 @@
 import { gql } from '@apollo/client';
 
 // Fragments shared by the flight preparation documents. The API refuses an operation of more
-// than 400 fields: the plan result asks the aerodrome sheets apart (AERODROME_DETAILS). Kept out of src/graphql/*.ts:
+// than 500 fields: the plan result asks the aerodrome sheets apart (AERODROME_DETAILS). Kept out of src/graphql/*.ts:
 // every document there is validated on its own, and a lone fragment is "never used".
 
 export const NAV_POINT_FIELDS = gql`
@@ -107,6 +107,24 @@ export const AIRSPACE_FIELDS = gql`
   }
 `;
 
+const DISTANCE_TABLE = `
+  rows {
+    pressureAltFt
+    temperatureC
+    massKg
+    groundRollM
+    distance15mM
+  }
+  referenceMassKg
+  speedKt
+  headwindPercentPerKt
+  tailwindPercentPerKt
+  grassPercent
+  wetGrassPercent
+  slopePercentPerPercent
+  source
+`;
+
 export const AIRCRAFT_PERFORMANCE_FIELDS = gql`
   fragment AircraftPerformanceFields on AircraftPerformance {
     aircraftId
@@ -161,6 +179,8 @@ export const AIRCRAFT_PERFORMANCE_FIELDS = gql`
       iasKt
       casKt
     }
+    takeoff {${DISTANCE_TABLE}}
+    landing {${DISTANCE_TABLE}}
     source
     validatedAt
     validatedBy
@@ -296,6 +316,16 @@ export const LEG_FIELDS = gql`
       status
     }
     highestObstacleFt
+    terrain {
+      state
+      corridorNm
+      marginFt
+      highestTerrainFt
+      highestObstacleFt
+      msaFt
+      marginToMsaFt
+      status
+    }
   }
   ${NAV_POINT_FIELDS}
 `;
@@ -451,6 +481,33 @@ export const FLIGHT_PLAN_RESULT_FIELDS = gql`
           best
         }
       }
+      distances {
+        kind
+        massKg
+        pressureAltitudeFt
+        temperatureC
+        conditionsSource
+        safetyFactor
+        dataMissing
+        tableSource
+        status
+        messages
+        runways {
+          designator
+          suggested
+          factors {
+            label
+            factor
+          }
+          requiredGroundRollM
+          requiredDistance15mM
+          availableRunM
+          availableDistanceM
+          marginM
+          status
+          messages
+        }
+      }
     }
     freezingLevels {
       place
@@ -459,6 +516,14 @@ export const FLIGHT_PLAN_RESULT_FIELDS = gql`
       altitudeFt
       state
       topFt
+    }
+    terrainProfile {
+      distanceNm
+      terrainFt
+      obstacleFt
+    }
+    terrainSource {
+      attribution
     }
   }
   ${LEG_FIELDS}

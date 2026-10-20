@@ -1,5 +1,7 @@
 import {
   DEFAULT_SETTINGS,
+  distanceTableIssues,
+  emptyDistanceTable,
   emptyMassBalanceInput,
   makeId,
   massBalanceForSave,
@@ -124,5 +126,38 @@ describe("aircraft data state", () => {
     expect(missingAircraftData(null, { ...MASS_BALANCE, emptyArmM: null, weighingDate: null })).toEqual(
       expect.arrayContaining(["emptyArm", "weighingDate", "tanks", "cruise", "reserve"]),
     )
+  })
+})
+
+describe("take-off and landing tables", () => {
+  const row = { pressureAltFt: 0, temperatureC: 15, groundRollM: 250, distance15mM: 500 }
+
+  it("finds what the API would refuse", () => {
+    expect(distanceTableIssues(null)).toEqual([])
+    expect(distanceTableIssues({ ...emptyDistanceTable(), rows: [row] })).toEqual([])
+    expect(distanceTableIssues({ ...emptyDistanceTable(), rows: [{ ...row, distance15mM: 200 }] })).toEqual(["SHORTER_THAN_ROLL"])
+    expect(distanceTableIssues({ ...emptyDistanceTable(), rows: [row, row] })).toEqual(["DUPLICATE"])
+    expect(distanceTableIssues({ ...emptyDistanceTable(), rows: [{ ...row, groundRollM: Number.NaN }] })).toContain("VALUES")
+    expect(distanceTableIssues({ ...emptyDistanceTable(), rows: [{ ...row, massKg: 900 }, { ...row, temperatureC: 25 }] })).toEqual(["MASS"])
+    expect(performanceProblems({ ...performanceInput(PERFORMANCE), landing: { ...emptyDistanceTable(), rows: [row, row] } }).map((p) => p.code)).toEqual(["LANDING_TABLE"])
+  })
+
+  it("keeps the tables of the aircraft and sends a table without a row as none", () => {
+    const input = performanceInput({ ...PERFORMANCE, takeoff: { ...emptyDistanceTable(), rows: [row], source: " p. 5.5 " } })
+    expect(input.takeoff?.rows).toHaveLength(1)
+    expect(input.landing).toBeNull()
+    const saved = performanceForSave({ ...input, landing: emptyDistanceTable() })
+    expect(saved.takeoff).toMatchObject({ source: "p. 5.5", rows: [{ ...row, massKg: null }] })
+    expect(saved.landing).toBeNull()
+  })
+
+  it("bounds the club's minimum safe altitude rule and safety factors", () => {
+    expect(DEFAULT_SETTINGS).toMatchObject({ msaCorridorNm: 5, msaMarginFt: 1000, takeoffSafetyFactor: 1.33, landingSafetyFactor: 1.43 })
+    expect(settingsProblems({ ...DEFAULT_SETTINGS, msaCorridorNm: 0.5, msaMarginFt: 300, takeoffSafetyFactor: 0.9, landingSafetyFactor: 2.5 })).toEqual([
+      "msaCorridorNm",
+      "msaMarginFt",
+      "takeoffSafetyFactor",
+      "landingSafetyFactor",
+    ])
   })
 })

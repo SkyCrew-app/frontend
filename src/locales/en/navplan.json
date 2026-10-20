@@ -270,7 +270,8 @@
       "eta": "ETA",
       "ata": "ATA",
       "fuelRemaining": "Fuel left",
-      "fuelActual": "Actual fuel"
+      "fuelActual": "Actual fuel",
+      "msa": "MSA"
     },
     "alternate": "Alternate",
     "total": "Total",
@@ -290,7 +291,8 @@
       "eta": "UTC",
       "ata": "UTC",
       "fuelRemaining": "L",
-      "fuelActual": "L"
+      "fuelActual": "L",
+      "msa": "ft"
     },
     "long": {
       "point": "Turning point or aerodrome reached",
@@ -308,7 +310,8 @@
       "eta": "Estimated time over the point",
       "ata": "Actual time over the point, written in flight",
       "fuelRemaining": "Expected fuel left at the point",
-      "fuelActual": "Actual fuel left, written in flight"
+      "fuelActual": "Actual fuel left, written in flight",
+      "msa": "Minimum safe altitude of the leg: highest point (terrain or obstacle) near the track plus the club margin; \"?\" outside the terrain coverage"
     },
     "obstacleNote": "Obstacle {{amsl}} (margin {{margin}})",
     "temperature": "{{value}} °C"
@@ -724,7 +727,9 @@
       "CRUISE": "Each cruise row has a setting, a true airspeed and a fuel flow.",
       "NORMAL_SETTING": "Choose the normal cruise setting among those of the table.",
       "DESCENT": "Enter the descent speed, rate and fuel flow.",
-      "RESERVE": "Enter both reserve fuel flows."
+      "RESERVE": "Enter both reserve fuel flows.",
+      "TAKEOFF_TABLE": "The take-off table has an error.",
+      "LANDING_TABLE": "The landing table has an error."
     },
     "toast": {
       "saved": "Flight data saved",
@@ -737,6 +742,60 @@
       "templateFailed": "Template not applied",
       "validated": "Values of {{registration}} confirmed",
       "validationFailed": "Could not confirm"
+    },
+    "distances": {
+      "title": "Take-off and landing",
+      "description": "Tables of this aircraft's flight manual. Without a table, flight plans flag the distances as not entered.",
+      "notEntered": "Not entered — enter it from the flight manual.",
+      "takeoff": {
+        "title": "Take-off distances",
+        "enter": "Enter the take-off table",
+        "speed": "Take-off speed of the table",
+        "distance15m": "To 15 m",
+        "remove": "Remove the take-off table"
+      },
+      "landing": {
+        "title": "Landing distances",
+        "enter": "Enter the landing table",
+        "speed": "Speed at 15 m of the table",
+        "distance15m": "From 15 m",
+        "remove": "Remove the landing table"
+      },
+      "referenceMass": "Mass of the table",
+      "referenceMassHint": "That of the rows without a mass (often the maximum mass).",
+      "speedHint": "Optional: used by the generic tail wind factor.",
+      "source": "Source (manual, page)",
+      "sourcePlaceholder": "Flight manual, section 5, p. …",
+      "rows": "Rows of the table",
+      "noRow": "No row: copy those of the manual.",
+      "pressureAlt": "Pressure altitude",
+      "temperature": "Temperature",
+      "mass": "Mass",
+      "optional": "optional",
+      "groundRoll": "Ground roll",
+      "addRow": "Add a row",
+      "issue": {
+        "VALUES": "Each row needs a pressure altitude, a temperature and positive distances.",
+        "SHORTER_THAN_ROLL": "The distance at 15 m cannot be shorter than the ground roll.",
+        "DUPLICATE": "Two rows have the same conditions.",
+        "MASS": "Give each row a mass, or the mass of the table."
+      },
+      "corrections": "Corrections of the manual",
+      "correctionsHint": "Leave empty what the manual does not give: the generic factors of the UK CAA Safety Sense Leaflet 7 then apply. Only 50 % of the head wind is credited and 150 % of the tail wind applied.",
+      "correction": {
+        "headwindPercentPerKt": "Head wind",
+        "tailwindPercentPerKt": "Tail wind",
+        "grassPercent": "Dry grass",
+        "wetGrassPercent": "Wet grass",
+        "slopePercentPerPercent": "Slope"
+      },
+      "correctionUnit": {
+        "headwindPercentPerKt": "−%/kt",
+        "tailwindPercentPerKt": "+%/kt",
+        "grassPercent": "+%",
+        "wetGrassPercent": "+%",
+        "slopePercentPerPercent": "+% per %"
+      }
     }
   },
   "settings": {
@@ -762,7 +821,11 @@
       "clubMarginMin": "Club margin ({{unit}})",
       "alternateRequiredVfr": "Require an alternate in VFR",
       "verticalMarginFt": "Vertical margin to airspaces ({{unit}})",
-      "defaultCircuitHeightFt": "Circuit height ({{unit}})"
+      "defaultCircuitHeightFt": "Circuit height ({{unit}})",
+      "msaCorridorNm": "Minimum safe altitude corridor ({{unit}} either side)",
+      "msaMarginFt": "Margin above the highest point ({{unit}})",
+      "takeoffSafetyFactor": "Take-off safety factor ({{unit}})",
+      "landingSafetyFactor": "Landing safety factor ({{unit}})"
     },
     "hints": {
       "reserveVfrDayLocalMin": "At least 10 min, at maximum continuous power.",
@@ -773,7 +836,11 @@
       "clubMarginMin": "At normal cruise fuel flow.",
       "alternateRequiredVfr": "Without this option, an alternate is only counted when the pilot chooses one.",
       "verticalMarginFt": "A crossing closer to a floor or a ceiling is reported.",
-      "defaultCircuitHeightFt": "Height above the aerodrome, when the aerodrome publishes none."
+      "defaultCircuitHeightFt": "Height above the aerodrome, when the aerodrome publishes none.",
+      "msaCorridorNm": "5 NM by default. Terrain and obstacles in this corridor count.",
+      "msaMarginFt": "1000 ft by default. The altitude is rounded up to the next hundred.",
+      "takeoffSafetyFactor": "1.33 recommended by the UK CAA Safety Sense Leaflet 7.",
+      "landingSafetyFactor": "1.43 recommended by the UK CAA Safety Sense Leaflet 7."
     },
     "problems": {
       "reserveVfrDayLocalMin": "At least {{min}} min (AMC1 NCO.OP.125).",
@@ -783,7 +850,11 @@
       "contingencyMinL": "Zero or more.",
       "clubMarginMin": "A whole number of minutes, zero or more.",
       "verticalMarginFt": "A whole number of feet, zero or more.",
-      "defaultCircuitHeightFt": "A whole number of feet, above zero."
+      "defaultCircuitHeightFt": "A whole number of feet, above zero.",
+      "msaCorridorNm": "Between 1 and 10 NM.",
+      "msaMarginFt": "A whole number of feet, between 500 and 3000.",
+      "takeoffSafetyFactor": "Between 1 and 2.",
+      "landingSafetyFactor": "Between 1 and 2."
     },
     "taxiFuelNote": "Taxi fuel is set aircraft by aircraft (Administration › Fleet › Flight data), 3 L by default.",
     "unsaved": "Unsaved changes.",
@@ -794,6 +865,10 @@
       "saveFailed": "Could not save",
       "invalid": "Fix the highlighted fields.",
       "tryAgain": "Try again in a moment."
+    },
+    "terrain": {
+      "title": "Terrain and runway distances",
+      "description": "Minimum safe altitude of each leg, and factors applied to the flight manual's take-off and landing distances."
     }
   },
   "conditions": {
@@ -915,5 +990,42 @@
     "noCross": "no cross wind",
     "gusts": "gusts: {{head}}, cross {{cross}} kt",
     "windHint": "Components from the METAR wind (true) and the true bearing of the runways. Compare with your aircraft's demonstrated cross wind."
+  },
+  "profile": {
+    "title": "Vertical profile",
+    "summary": "Highest terrain near the route: {{terrain}}. Highest minimum safe altitude: {{msa}}.",
+    "belowMsa_one": "One leg is planned below its minimum safe altitude.",
+    "belowMsa_other": "{{count}} legs are planned below their minimum safe altitude.",
+    "legend": "Profile legend",
+    "planned": "Planned altitude",
+    "terrain": "Terrain (highest point near the track)",
+    "msa": "Minimum safe altitude",
+    "obstacle": "Obstacle",
+    "printNote": "MSA: highest point (terrain or obstacle) within {{corridor}} NM of the track + {{margin}} ft, rounded up to the next hundred."
+  },
+  "distances": {
+    "title": "Take-off and landing",
+    "takeoff": "Take-off",
+    "landing": "Landing",
+    "takeoffTitle": "Take-off distances",
+    "landingTitle": "Landing distances",
+    "runway": "Suggested runway {{designator}}",
+    "takeoffLine": "Ground roll {{roll}} / TORA {{tora}} · to 15 m {{distance}} / TODA {{toda}}",
+    "landingLine": "From 15 m {{distance}} / LDA {{lda}}",
+    "notComputed": "Not computed",
+    "margin": "margin {{value}}",
+    "factors": "Factors",
+    "conditions": "Mass {{mass}}, pressure altitude {{pa}}, {{temperature}} °C ({{source}}), club factor {{factor}}",
+    "conditionsSource": {
+      "METAR": "METAR",
+      "ISA": "standard atmosphere, no METAR"
+    },
+    "missing": "Not entered — enter it from the flight manual (Administration › Fleet › Flight data).",
+    "notEntered": "Not entered — enter it from the flight manual",
+    "noRunway": "Runways unknown: see the VAC.",
+    "hint": "Flight manual distances, corrected (grass, slope, wind: the manual's factors, else the generic factors of the UK CAA Safety Sense Leaflet 7), then multiplied by the club factor. The other runways are on the aerodrome sheet.",
+    "tableSource": "Table: {{source}}",
+    "takeoffPrint": "{{required}} m needed (15 m) / {{available}} m",
+    "landingPrint": "{{required}} m needed (from 15 m) / {{available}} m"
   }
 }

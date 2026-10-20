@@ -11,6 +11,7 @@ import { FUEL_DENSITY, makeId, type PerformanceProblem, type Problem } from "@/l
 import type { AircraftPerformanceInput, FuelTank, FuelType } from "@/lib/navplan/types"
 import { armFromM, armToM, roundTo, volumeFromL, volumeToL, type ArmUnit, type VolumeUnit } from "@/lib/navplan/units"
 import { EditableTable } from "./flight-data/EditableTable"
+import { DistanceTableEditor } from "./flight-data/DistanceTableEditor"
 
 interface AircraftPerformanceEditorProps {
   value: AircraftPerformanceInput
@@ -249,6 +250,19 @@ export function AircraftPerformanceEditor({ value, onChange, armUnit, volumeUnit
           {numberField("perf-mcp", t("aircraftData.reserve.maxContinuous"), vol(value.reserve.maxContinuousFuelFlowLph), (next) => onChange({ ...value, reserve: { ...value.reserve, maxContinuousFuelFlowLph: volumeToL(next ?? 0, volumeUnit) } }), flowUnit, 1, t("aircraftData.reserve.maxContinuousHint"))}
         </div>
         {problem("RESERVE")}
+      </Section>
+
+      <Section id="perf-distances" title={t("aircraftData.distances.title")} description={t("aircraftData.distances.description")}>
+        <div className="space-y-2">
+          <h4 className="text-sm font-semibold">{t("aircraftData.distances.takeoff.title")}</h4>
+          <DistanceTableEditor kind="takeoff" value={value.takeoff} onChange={(takeoff) => onChange({ ...value, takeoff })} />
+          {problem("TAKEOFF_TABLE")}
+        </div>
+        <div className="space-y-2">
+          <h4 className="text-sm font-semibold">{t("aircraftData.distances.landing.title")}</h4>
+          <DistanceTableEditor kind="landing" value={value.landing} onChange={(landing) => onChange({ ...value, landing })} />
+          {problem("LANDING_TABLE")}
+        </div>
       </Section>
 
       <Section id="perf-other" title={t("aircraftData.other.title")} description={t("aircraftData.other.description")}>
