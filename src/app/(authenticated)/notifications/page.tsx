@@ -41,6 +41,7 @@ import {
   isHighPriority,
   notificationTypeLabel,
 } from "@/interfaces/notification"
+import { notificationLink } from "@/lib/notification-link"
 
 const PAGE_SIZE = 20
 
@@ -135,7 +136,8 @@ export default function NotificationsPage() {
         await seenNotification({ variables: { id: notification.id } })
         refetchNotifications()
       }
-      if (actionUrl) router.push(actionUrl)
+      const link = notificationLink(actionUrl)
+      if (link) router.push(link)
     } catch (error) {
       console.error("Erreur lors du marquage de la notification comme vue:", error)
       toast({

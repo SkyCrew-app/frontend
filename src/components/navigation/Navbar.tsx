@@ -29,6 +29,7 @@ import LanguageToggle from "@/components/theme/LanguageToggle"
 import { roleLabel } from "./role-label"
 import { useLogout } from "@/components/hooks/useLogout"
 import { useMounted } from "@/components/hooks/useMounted"
+import { notificationLink } from "@/lib/notification-link"
 
 const PREVIEW_COUNT = 5
 
@@ -106,9 +107,8 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
         await seenNotification({ variables: { id: notification.id } })
         refetchNotifications()
       }
-      if (notification.action_url) {
-        router.push(notification.action_url)
-      }
+      const link = notificationLink(notification.action_url)
+      if (link) router.push(link)
     } catch (error) {
       console.error("Erreur lors du marquage de la notification comme vue:", error)
     }
