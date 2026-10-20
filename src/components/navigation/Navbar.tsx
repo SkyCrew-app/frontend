@@ -132,7 +132,7 @@ export default function Navbar({ onToggleMobileMenu }: NavbarProps) {
       <Button
         variant="ghost"
         size="icon"
-        className="md:hidden"
+        className="lg:hidden"
         onClick={onToggleMobileMenu}
         aria-label={t("navbar.openMenu")}
       >
