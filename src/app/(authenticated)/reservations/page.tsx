@@ -587,9 +587,13 @@ export default function ReservationCalendar() {
 
     return (
       <TableRow key={aircraft.id} className="hover:bg-transparent">
-        <TableCell className="sticky left-0 z-10 whitespace-nowrap border-r bg-background py-2">
+        <TableCell className="sticky left-0 z-10 max-w-[10rem] whitespace-nowrap border-r bg-background py-2">
           <span className="font-medium">{aircraft.registration_number}</span>
-          {aircraft.model && <span className="block text-xs text-muted-foreground">{aircraft.model}</span>}
+          {aircraft.model && (
+            <span className="block truncate text-xs text-muted-foreground" title={aircraft.model}>
+              {aircraft.model}
+            </span>
+          )}
           {aircraft.availability_status === "UNAVAILABLE" && (
             <Badge variant="neutral" className="mt-1">
               {t("calendar.aircraftUnavailable")}
