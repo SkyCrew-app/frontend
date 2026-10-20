@@ -156,7 +156,7 @@ export function AuditList({
     return sortDirection === "asc" ? order : -order
   })
 
-  const auditMenu = (audit: any) => (
+  const auditMenu = (audit: AuditListProps["audits"][number]) => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
