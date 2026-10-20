@@ -33,7 +33,8 @@ function EvaluationRow({
   return (
     <li className="flex flex-wrap items-center gap-3 px-2 py-3">
       <ClipboardCheck className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
-      <div className="min-w-0 flex-1">
+      {/* On a phone the badge and the button go under the text rather than squeezing it. */}
+      <div className="min-w-0 flex-1 basis-48">
         <p className="text-sm font-medium">{label}</p>
         <p className="text-sm text-muted-foreground">
           {attempt && attempt.score !== null
@@ -44,20 +45,22 @@ function EvaluationRow({
             : t("shared.requiredScore", { score: required })}
         </p>
       </div>
-      {passed ? (
-        <Badge variant="success">{t("shared.passed")}</Badge>
-      ) : attempt ? (
-        <Badge variant="danger">{t("shared.failed")}</Badge>
-      ) : (
-        <Badge variant="neutral">{t("shared.toTake")}</Badge>
-      )}
-      <Button variant="outline" size="sm" asChild>
+      <div className="flex items-center gap-3">
         {passed ? (
-          <Link href={learningRoutes.evaluations}>{t("shared.myResults")}</Link>
+          <Badge variant="success">{t("shared.passed")}</Badge>
+        ) : attempt ? (
+          <Badge variant="danger">{t("shared.failed")}</Badge>
         ) : (
-          <Link href={learningRoutes.evaluation(evaluation.id)}>{attempt ? t("shared.retake") : t("shared.take")}</Link>
+          <Badge variant="neutral">{t("shared.toTake")}</Badge>
         )}
-      </Button>
+        <Button variant="outline" size="sm" asChild>
+          {passed ? (
+            <Link href={learningRoutes.evaluations}>{t("shared.myResults")}</Link>
+          ) : (
+            <Link href={learningRoutes.evaluation(evaluation.id)}>{attempt ? t("shared.retake") : t("shared.take")}</Link>
+          )}
+        </Button>
+      </div>
     </li>
   )
 }

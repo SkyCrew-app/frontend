@@ -249,15 +249,15 @@ export default function AircraftHistory() {
                           <>
                             <TableHead>{t('common:labels.start')}</TableHead>
                             <TableHead>{t('common:labels.end')}</TableHead>
-                            <TableHead className="text-right">{t('common:labels.duration')}</TableHead>
+                            <TableHead className="hidden text-right sm:table-cell">{t('common:labels.duration')}</TableHead>
                             <TableHead>{t('common:labels.pilot')}</TableHead>
                           </>
                         }
                         renderRow={(reservation) => (
                           <>
-                            <TableCell className="whitespace-nowrap">{formatDateTime(reservation.start_time)}</TableCell>
-                            <TableCell className="whitespace-nowrap">{formatDateTime(reservation.end_time)}</TableCell>
-                            <TableCell className="whitespace-nowrap text-right tabular-nums">
+                            <TableCell>{formatDateTime(reservation.start_time)}</TableCell>
+                            <TableCell>{formatDateTime(reservation.end_time)}</TableCell>
+                            <TableCell className="hidden whitespace-nowrap text-right tabular-nums sm:table-cell">
                               {formatFlightDuration((time(reservation.end_time) - time(reservation.start_time)) / HOUR)}
                             </TableCell>
                             <TableCell>{fullName(reservation.user) || '—'}</TableCell>
@@ -281,7 +281,7 @@ export default function AircraftHistory() {
                             <TableHead>{t('common:labels.type')}</TableHead>
                             <TableHead>{t('common:labels.start')}</TableHead>
                             <TableHead>{t('common:labels.end')}</TableHead>
-                            <TableHead className="text-right">{t('common:labels.duration')}</TableHead>
+                            <TableHead className="hidden text-right sm:table-cell">{t('common:labels.duration')}</TableHead>
                             <TableHead>{t('common:labels.technician')}</TableHead>
                           </>
                         }
@@ -290,9 +290,9 @@ export default function AircraftHistory() {
                             <TableCell className="font-medium">
                               {maintenanceTypeLabel(maintenance.maintenance_type)}
                             </TableCell>
-                            <TableCell className="whitespace-nowrap">{formatDate(maintenance.start_date)}</TableCell>
-                            <TableCell className="whitespace-nowrap">{formatDate(maintenance.end_date)}</TableCell>
-                            <TableCell className="whitespace-nowrap text-right tabular-nums">
+                            <TableCell>{formatDate(maintenance.start_date)}</TableCell>
+                            <TableCell>{formatDate(maintenance.end_date)}</TableCell>
+                            <TableCell className="hidden whitespace-nowrap text-right tabular-nums sm:table-cell">
                               {maintenanceDuration(maintenance.start_date, maintenance.end_date)}
                             </TableCell>
                             <TableCell>

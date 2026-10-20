@@ -39,7 +39,8 @@ export function ReservationCell({ reservation, colSpan, isMine = false, onClick 
   return (
     <TableCell
       colSpan={colSpan}
-      className={cn("h-12 p-0 font-medium transition-colors", reservationBlockClass(reservation.status))}
+      // max-w-0 lets the block take the width of the hours it covers and truncate its text, instead of widening them.
+      className={cn("h-12 max-w-0 p-0 font-medium transition-colors", reservationBlockClass(reservation.status))}
     >
       <HoverCard openDelay={300}>
         <HoverCardTrigger asChild>

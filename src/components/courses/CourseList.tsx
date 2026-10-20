@@ -118,9 +118,71 @@ export default function CourseList({ courses, userId, isAdministrator = false, o
     }
   }
 
+  const courseActions = (course: InstructionCourse, href: string) =>
+    canEdit(course) ? (
+      <DropdownMenu modal={false}>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9"
+            aria-label={t("courses.list.actionsAria")}
+            title={t("common:labels.actions")}
+          >
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem asChild>
+            <Link href={href}>
+              <ChevronRight className="h-4 w-4" />
+              {t("courses.open")}
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onSelect={() => {
+              setCourseToEdit(course)
+              setIsEditOpen(true)
+            }}
+          >
+            <Pencil className="h-4 w-4" />
+            {t("common:actions.edit")}
+          </DropdownMenuItem>
+          {courseRemoval(course) && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onSelect={() => askToRemove(course)}
+              >
+                {courseRemoval(course) === "delete" ? (
+                  <>
+                    <Trash2 className="h-4 w-4" />
+                    {t("common:actions.delete")}
+                  </>
+                ) : (
+                  <>
+                    <Ban className="h-4 w-4" />
+                    {t("courses.list.cancel")}
+                  </>
+                )}
+              </DropdownMenuItem>
+            </>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    ) : (
+      <Button variant="ghost" size="icon" className="h-9 w-9" asChild>
+        <Link href={href} aria-label={t("courses.open")} title={t("courses.open")}>
+          <ChevronRight className="h-4 w-4" />
+        </Link>
+      </Button>
+    )
+
   return (
     <>
-      <div className="overflow-x-auto rounded-xl border bg-card">
+      {/* Wide screens: a table. */}
+      <div className="hidden rounded-xl border bg-card lg:block">
         <Table>
           <TableHeader>
             <TableRow>
@@ -174,65 +236,7 @@ export default function CourseList({ courses, userId, isAdministrator = false, o
                     )}
                   </TableCell>
                   <TableCell className="text-right" onClick={(event) => event.stopPropagation()}>
-                    {canEdit(course) ? (
-                      <DropdownMenu modal={false}>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-9 w-9"
-                            aria-label={t("courses.list.actionsAria")}
-                            title={t("common:labels.actions")}
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem asChild>
-                            <Link href={href}>
-                              <ChevronRight className="h-4 w-4" />
-                              {t("courses.open")}
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onSelect={() => {
-                              setCourseToEdit(course)
-                              setIsEditOpen(true)
-                            }}
-                          >
-                            <Pencil className="h-4 w-4" />
-                            {t("common:actions.edit")}
-                          </DropdownMenuItem>
-                          {courseRemoval(course) && (
-                            <>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                className="text-destructive focus:text-destructive"
-                                onSelect={() => askToRemove(course)}
-                              >
-                                {courseRemoval(course) === "delete" ? (
-                                  <>
-                                    <Trash2 className="h-4 w-4" />
-                                    {t("common:actions.delete")}
-                                  </>
-                                ) : (
-                                  <>
-                                    <Ban className="h-4 w-4" />
-                                    {t("courses.list.cancel")}
-                                  </>
-                                )}
-                              </DropdownMenuItem>
-                            </>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    ) : (
-                      <Button variant="ghost" size="icon" className="h-9 w-9" asChild>
-                        <Link href={href} aria-label={t("courses.open")} title={t("courses.open")}>
-                          <ChevronRight className="h-4 w-4" />
-                        </Link>
-                      </Button>
-                    )}
+                    {courseActions(course, href)}
                   </TableCell>
                 </TableRow>
               )
@@ -240,6 +244,54 @@ export default function CourseList({ courses, userId, isAdministrator = false, o
           </TableBody>
         </Table>
       </div>
+
+      {/* Phones and tablets: one card per course. */}
+      <ul className="space-y-3 lg:hidden" aria-label={t("courses.title")}>
+        {courses.map((course) => {
+          const { person, role } = courseCounterpart(course, userId)
+          const status = courseDisplayStatus(course)
+          const validated = course.competencies.filter((competency) => competency.validated).length
+          const href = learningRoutes.course(course.id)
+          return (
+            <li key={course.id} className="flex items-start gap-2 rounded-xl border bg-card p-4">
+              <Link
+                href={href}
+                className="min-w-0 flex-1 space-y-1.5 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <span className="font-medium">{formatDate(course.startTime)}</span>
+                  <span className="text-sm tabular-nums text-muted-foreground">{courseHours(course)}</span>
+                  <Badge variant={status.variant}>{status.label}</Badge>
+                </span>
+                <span className="block text-sm">
+                  {personName(person)}{" "}
+                  <span className="text-muted-foreground">· {counterpartRoleLabel(role)}</span>
+                </span>
+                {(course.competencies.length > 0 || course.rating) && (
+                  <span className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                    {course.competencies.length > 0 && (
+                      <span>
+                        {t("courses.list.validatedCount", {
+                          count: course.competencies.length,
+                          validated,
+                          total: course.competencies.length,
+                        })}
+                      </span>
+                    )}
+                    {course.rating && (
+                      <span className="inline-flex items-center gap-1">
+                        <Star className="h-3.5 w-3.5 fill-warning text-warning" aria-hidden="true" />
+                        {course.rating} / 5
+                      </span>
+                    )}
+                  </span>
+                )}
+              </Link>
+              {courseActions(course, href)}
+            </li>
+          )
+        })}
+      </ul>
 
       <CourseFormDialog
         open={isEditOpen}

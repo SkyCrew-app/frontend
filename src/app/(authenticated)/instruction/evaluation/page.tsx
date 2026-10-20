@@ -155,14 +155,14 @@ export default function EvaluationsPage() {
                 description={t("evaluations.page.toTake.emptyDescription")}
               />
             ) : (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
                 {toTake.map((evaluation) => {
                   const lastTry = latestAttempts.get(Number(evaluation.id))
                   return (
                     <Card key={evaluation.id} className="flex flex-col">
                       <CardHeader className="pb-3">
-                        <div className="flex items-start justify-between gap-3">
-                          <CardTitle className="text-base leading-snug">
+                        <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1.5">
+                          <CardTitle className="min-w-0 flex-1 basis-40 break-words text-base leading-snug">
                             {evaluation.module?.title ?? t("shared.evaluationFallback")}
                           </CardTitle>
                           <Badge variant={lastTry ? "warning" : "neutral"} className="shrink-0">
@@ -241,14 +241,14 @@ export default function EvaluationsPage() {
                   </Select>
                 </div>
 
-                <div className="overflow-x-auto rounded-xl border bg-card">
+                <div className="rounded-xl border bg-card">
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>{t("evaluations.page.results.columns.module")}</TableHead>
-                        <TableHead>{t("common:labels.date")}</TableHead>
+                        <TableHead className="hidden lg:table-cell">{t("common:labels.date")}</TableHead>
                         <TableHead className="text-right">{t("evaluations.page.results.columns.score")}</TableHead>
-                        <TableHead className="text-right">
+                        <TableHead className="hidden text-right lg:table-cell">
                           {t("evaluations.page.results.columns.requiredScore")}
                         </TableHead>
                         <TableHead>{t("evaluations.page.results.columns.result")}</TableHead>
@@ -273,16 +273,22 @@ export default function EvaluationsPage() {
                       ) : (
                         rows.map((attempt) => (
                           <TableRow key={attempt.id}>
-                            <TableCell className="min-w-[10rem] font-medium">
+                            <TableCell className="font-medium">
                               {attempt.evaluation?.module?.title ?? "—"}
+                              {/* Narrow screens: the date under the module, its column is hidden. */}
+                              <span className="block text-xs font-normal text-muted-foreground lg:hidden">
+                                {formatDate(attempt.completed_at)}
+                              </span>
                             </TableCell>
-                            <TableCell className="whitespace-nowrap">{formatDate(attempt.completed_at)}</TableCell>
-                            <TableCell className="text-right tabular-nums">{formatScore(attempt.score)}</TableCell>
-                            <TableCell className="text-right tabular-nums">
+                            <TableCell className="hidden whitespace-nowrap lg:table-cell">
+                              {formatDate(attempt.completed_at)}
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap text-right tabular-nums">{formatScore(attempt.score)}</TableCell>
+                            <TableCell className="hidden text-right tabular-nums lg:table-cell">
                               {formatScore(attempt.evaluation?.pass_score)}
                             </TableCell>
                             <TableCell>
-                              <Badge variant={attempt.passed ? "success" : "danger"}>
+                              <Badge variant={attempt.passed ? "success" : "danger"} className="whitespace-nowrap">
                                 {attempt.passed ? t("shared.passed") : t("shared.failed")}
                               </Badge>
                             </TableCell>

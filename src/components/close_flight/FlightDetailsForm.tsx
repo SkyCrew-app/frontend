@@ -179,7 +179,9 @@ export default function FlightDetailsForm() {
                   {t("closeFlight.details.flightType")}
                   <RequiredMark />
                 </FormLabel>
-                <Select onValueChange={field.onChange} value={field.value || undefined}>
+                {/* The select reports an empty value while the plan's own type is not yet among its
+                    options: ignoring it keeps the type the plan was prepared with. */}
+                <Select onValueChange={(value) => value && field.onChange(value)} value={field.value || undefined}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder={t("closeFlight.details.flightTypePlaceholder")} />
@@ -231,7 +233,13 @@ export default function FlightDetailsForm() {
           <FormItem>
             <FormLabel>{t("closeFlight.details.weather")}</FormLabel>
             <FormControl>
-              <Textarea rows={2} placeholder={t("closeFlight.details.weatherPlaceholder")} {...field} />
+              <Textarea
+                rows={2}
+                // Grows with the weather report instead of scrolling inside the field.
+                className="[field-sizing:content]"
+                placeholder={t("closeFlight.details.weatherPlaceholder")}
+                {...field}
+              />
             </FormControl>
             <FormMessage />
           </FormItem>

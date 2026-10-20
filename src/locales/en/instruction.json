@@ -105,6 +105,8 @@
     "list": {
       "with": "With",
       "validatedCompetencies": "Competencies validated",
+      "validatedCount_one": "{{validated}} / {{total}} competency validated",
+      "validatedCount_other": "{{validated}} / {{total}} competencies validated",
       "rating": "Rating",
       "actionsAria": "Session actions",
       "toast": {

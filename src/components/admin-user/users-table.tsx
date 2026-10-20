@@ -110,10 +110,10 @@ export function UsersTable({
         <TableHeader>
           <TableRow>
             <TableHead>{t("users.table.member")}</TableHead>
-            <TableHead className="hidden lg:table-cell">{t("users.fields.dateOfBirth")}</TableHead>
-            <TableHead className="hidden md:table-cell">{t("users.fields.role")}</TableHead>
-            <TableHead className="hidden md:table-cell">{t("users.table.account")}</TableHead>
-            <TableHead className="hidden lg:table-cell">{t("users.table.twoFactor")}</TableHead>
+            <TableHead className="hidden xl:table-cell">{t("users.fields.dateOfBirth")}</TableHead>
+            <TableHead className="hidden lg:table-cell">{t("users.fields.role")}</TableHead>
+            <TableHead className="hidden lg:table-cell">{t("users.table.account")}</TableHead>
+            <TableHead className="hidden xl:table-cell">{t("users.table.twoFactor")}</TableHead>
             <TableHead className="w-12">
               <span className="sr-only">{t("common:labels.actions")}</span>
             </TableHead>
@@ -138,27 +138,27 @@ export function UsersTable({
                     <div className="min-w-0">
                       <p className="truncate font-medium">{fullName}</p>
                       <p className="truncate text-xs text-muted-foreground">{user.email}</p>
-                      <div className="mt-1 flex flex-wrap gap-1 md:hidden">
+                      <div className="mt-1 flex flex-wrap gap-1 lg:hidden">
                         <Badge variant="neutral">{roleLabel(user.role?.role_name) ?? t("users.noRole")}</Badge>
                         {(isDeactivated(user) || !user.isEmailConfirmed) && <AccountBadge user={user} />}
                       </div>
                     </div>
                   </div>
                 </TableCell>
-                <TableCell className="hidden whitespace-nowrap lg:table-cell">
+                <TableCell className="hidden whitespace-nowrap xl:table-cell">
                   {formatDate(user.date_of_birth)}
                 </TableCell>
-                <TableCell className="hidden md:table-cell">
+                <TableCell className="hidden lg:table-cell">
                   {user.role ? (
                     <Badge variant="outline">{roleLabel(user.role.role_name)}</Badge>
                   ) : (
                     <span className="text-muted-foreground">{t("users.noRole")}</span>
                   )}
                 </TableCell>
-                <TableCell className="hidden md:table-cell">
+                <TableCell className="hidden lg:table-cell">
                   <AccountBadge user={user} />
                 </TableCell>
-                <TableCell className="hidden lg:table-cell">
+                <TableCell className="hidden xl:table-cell">
                   {user.is2FAEnabled ? (
                     <Badge variant="success">{t("users.twoFactor.enabled")}</Badge>
                   ) : (

@@ -13,6 +13,7 @@ export const GET_USER_FLIGHT_PLANS = gql`
   query GetFlightsByUser($userId: Int!) {
     getFlightsByUser(userId: $userId) {
       closed_at
+      departure_time
       id
       flight_hours
       flight_type

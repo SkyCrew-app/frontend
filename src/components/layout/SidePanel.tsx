@@ -90,7 +90,8 @@ export function SidePanel({
     if (field?.getAttribute("role") === "combobox") {
       field = visible.find((element) => element.isContentEditable) ?? field
     }
-    field?.focus()
+    // Without scrolling: a panel that shows information before its first field stays at its top.
+    field?.focus({ preventScroll: true })
     return !!field
   }
 

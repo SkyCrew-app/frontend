@@ -160,7 +160,7 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
 
   React.useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth > 768 && isMobileOpen) {
+      if (window.innerWidth >= 1024 && isMobileOpen) {
         onCloseMobileMenu()
       }
     }
@@ -207,7 +207,7 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
       {/* Mobile sidebar overlay */}
       {isMobileOpen && (
         <div
-          className="md:hidden fixed inset-0 bg-primary/30 z-40 backdrop-blur-sm transition-opacity"
+          className="lg:hidden fixed inset-0 bg-primary/30 z-40 backdrop-blur-sm transition-opacity"
           onClick={onCloseMobileMenu}
           aria-hidden="true"
         />
@@ -217,8 +217,8 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
       <nav
         aria-label={t("sidebar.label")}
         className={cn(
-          "fixed md:sticky top-0 left-0 h-screen w-64 bg-sidebar text-sidebar-foreground border-r border-sidebar-border flex flex-col overflow-hidden z-50 transition-[transform,visibility] duration-300 ease-in-out",
-          isMobileOpen ? "translate-x-0" : "invisible -translate-x-full md:visible md:translate-x-0",
+          "fixed lg:sticky top-0 left-0 h-screen w-64 bg-sidebar text-sidebar-foreground border-r border-sidebar-border flex flex-col overflow-hidden z-50 transition-[transform,visibility] duration-300 ease-in-out",
+          isMobileOpen ? "translate-x-0" : "invisible -translate-x-full lg:visible lg:translate-x-0",
         )}
       >
         {/* Logo */}

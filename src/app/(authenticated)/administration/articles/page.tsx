@@ -190,7 +190,7 @@ const RichTextEditor = ({
     },
     editorProps: {
       attributes: {
-        class: "prose prose-sm sm:prose max-w-full p-4 focus:outline-none min-h-[200px] dark:prose-invert",
+        class: "prose prose-sm sm:prose max-w-full p-4 focus:outline-none min-h-[250px] dark:prose-invert",
       },
     },
   })
@@ -333,8 +333,7 @@ const RichTextEditor = ({
       </div>
       <EditorContent
         editor={editor}
-        className="overflow-y-auto bg-background"
-        style={{ minHeight: "250px", maxHeight: "400px" }}
+        className="bg-background"
         aria-labelledby={labelledBy}
         aria-describedby={describedBy}
       />
@@ -780,6 +779,47 @@ export default function ArticlesAdminPage() {
     </div>
   )
 
+  const articleTags = (article: (typeof filteredArticles)[number]) =>
+    article.tags?.length ? (
+      <div className="flex min-w-[8rem] flex-wrap gap-1">
+        {article.tags.map((tag) => (
+          <Badge key={tag} variant="secondary">
+            {articleTagLabel(tag)}
+          </Badge>
+        ))}
+      </div>
+    ) : (
+      <span className="text-muted-foreground">{t("common:labels.missing")}</span>
+    )
+
+  const articleActions = (article: (typeof filteredArticles)[number]) => (
+    <div className="flex justify-end gap-1">
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-9 w-9"
+        onClick={() => openEdit(article)}
+        aria-label={t("admin.table.editLabel", { title: article.title })}
+        title={t("common:actions.edit")}
+      >
+        <Pencil className="h-4 w-4" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-9 w-9 text-destructive hover:text-destructive"
+        onClick={() => {
+          setArticleToDelete(article)
+          setIsDeleteOpen(true)
+        }}
+        aria-label={t("admin.table.deleteLabel", { title: article.title })}
+        title={t("common:actions.delete")}
+      >
+        <Trash2 className="h-4 w-4" />
+      </Button>
+    </div>
+  )
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -859,89 +899,98 @@ export default function ArticlesAdminPage() {
           }
         />
       ) : (
-        <Card>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t("admin.table.article")}</TableHead>
-                  <TableHead>{t("shared.themes")}</TableHead>
-                  <TableHead>{t("admin.table.publishedOn")}</TableHead>
-                  <TableHead>{t("shared.event")}</TableHead>
-                  <TableHead className="text-right">{t("common:labels.actions")}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredArticles.map((article) => (
-                  <TableRow key={article.id}>
-                    <TableCell>
-                      <div className="flex min-w-[16rem] items-center gap-3">
-                        <ArticleImage
-                          src={article.photo_url}
-                          alt=""
-                          className="aspect-video w-20 shrink-0 rounded-md"
-                          iconClassName="h-5 w-5"
-                        />
-                        <div className="min-w-0">
-                          <Link
-                            href={`/articles/${article.id}`}
-                            className="line-clamp-1 font-medium hover:underline focus-visible:underline focus-visible:outline-none"
-                            title={t("admin.table.viewAsMember")}
-                          >
-                            {article.title}
-                          </Link>
-                          <p className="line-clamp-1 text-sm text-muted-foreground">{article.description}</p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {article.tags?.length ? (
-                        <div className="flex min-w-[8rem] flex-wrap gap-1">
-                          {article.tags.map((tag) => (
-                            <Badge key={tag} variant="secondary">
-                              {articleTagLabel(tag)}
-                            </Badge>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground">{t("common:labels.missing")}</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="whitespace-nowrap">{formatDate(article.createdAt)}</TableCell>
-                    <TableCell className="whitespace-nowrap">{formatDate(article.eventDate)}</TableCell>
-                    <TableCell>
-                      <div className="flex justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-9 w-9"
-                          onClick={() => openEdit(article)}
-                          aria-label={t("admin.table.editLabel", { title: article.title })}
-                          title={t("common:actions.edit")}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-9 w-9 text-destructive hover:text-destructive"
-                          onClick={() => {
-                            setArticleToDelete(article)
-                            setIsDeleteOpen(true)
-                          }}
-                          aria-label={t("admin.table.deleteLabel", { title: article.title })}
-                          title={t("common:actions.delete")}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+        <>
+          {/* Wide screens: a table. */}
+          <Card className="hidden lg:block">
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t("admin.table.article")}</TableHead>
+                    <TableHead>{t("shared.themes")}</TableHead>
+                    <TableHead>{t("admin.table.publishedOn")}</TableHead>
+                    <TableHead>{t("shared.event")}</TableHead>
+                    <TableHead className="text-right">{t("common:labels.actions")}</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+                </TableHeader>
+                <TableBody>
+                  {filteredArticles.map((article) => (
+                    <TableRow key={article.id}>
+                      <TableCell>
+                        <div className="flex min-w-[16rem] items-center gap-3">
+                          <ArticleImage
+                            src={article.photo_url}
+                            alt=""
+                            className="aspect-video w-20 shrink-0 rounded-md"
+                            iconClassName="h-5 w-5"
+                          />
+                          <div className="min-w-0">
+                            <Link
+                              href={`/articles/${article.id}`}
+                              className="line-clamp-1 font-medium hover:underline focus-visible:underline focus-visible:outline-none"
+                              title={t("admin.table.viewAsMember")}
+                            >
+                              {article.title}
+                            </Link>
+                            <p className="line-clamp-1 text-sm text-muted-foreground">{article.description}</p>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {articleTags(article)}
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">{formatDate(article.createdAt)}</TableCell>
+                      <TableCell className="whitespace-nowrap">{formatDate(article.eventDate)}</TableCell>
+                      <TableCell>
+                        {articleActions(article)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+
+          {/* Phones and tablets: one card per article. */}
+          <ul className="space-y-3 lg:hidden" aria-label={t("admin.title")}>
+            {filteredArticles.map((article) => (
+              <li key={article.id}>
+                <Card>
+                  <CardContent className="space-y-3 p-4">
+                    <div className="flex items-start gap-3">
+                      <ArticleImage
+                        src={article.photo_url}
+                        alt=""
+                        className="aspect-video w-20 shrink-0 rounded-md"
+                        iconClassName="h-5 w-5"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <Link
+                          href={`/articles/${article.id}`}
+                          className="line-clamp-2 break-words font-medium hover:underline focus-visible:underline focus-visible:outline-none"
+                          title={t("admin.table.viewAsMember")}
+                        >
+                          {article.title}
+                        </Link>
+                        <p className="line-clamp-2 text-sm text-muted-foreground">{article.description}</p>
+                      </div>
+                    </div>
+                    {article.tags?.length ? articleTags(article) : null}
+                    <div className="flex flex-wrap items-end justify-between gap-2">
+                      <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
+                        <dt className="text-muted-foreground">{t("admin.table.publishedOn")}</dt>
+                        <dd>{formatDate(article.createdAt)}</dd>
+                        <dt className="text-muted-foreground">{t("shared.event")}</dt>
+                        <dd>{formatDate(article.eventDate)}</dd>
+                      </dl>
+                      {articleActions(article)}
+                    </div>
+                  </CardContent>
+                </Card>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
 
       <SidePanel

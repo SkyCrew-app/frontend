@@ -105,6 +105,8 @@
     "list": {
       "with": "Avec",
       "validatedCompetencies": "Compétences validées",
+      "validatedCount_one": "{{validated}} / {{total}} compétence validée",
+      "validatedCount_other": "{{validated}} / {{total}} compétences validées",
       "rating": "Note",
       "actionsAria": "Actions du cours",
       "toast": {

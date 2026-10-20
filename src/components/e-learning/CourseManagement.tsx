@@ -15,6 +15,7 @@ import { EmptyState } from "@/components/layout/EmptyState"
 import { ErrorState } from "@/components/layout/ErrorState"
 import { SidePanel } from "@/components/layout/SidePanel"
 import { toast } from "@/components/hooks/use-toast"
+import { apiRefusal } from "@/lib/api-refusal"
 import { ConfirmDeleteDialog } from "./ConfirmDeleteDialog"
 import { FormField } from "./FormField"
 import { RowActions } from "./RowActions"
@@ -123,10 +124,10 @@ export function CourseManagement() {
         title: t("admin.courses.toast.deleted.title"),
         description: t("admin.courses.toast.deleted.description"),
       })
-    } catch {
+    } catch (error) {
       toast({
         title: t("admin.courses.toast.deleteFailed.title"),
-        description: t("shared.deleteFailed"),
+        description: apiRefusal(error, t("shared.deleteFailed")),
         variant: "destructive",
       })
     }
@@ -219,13 +220,13 @@ export function CourseManagement() {
           }
         />
       ) : (
-        <div className="overflow-x-auto rounded-xl border bg-card">
+        <div className="rounded-xl border bg-card">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>{t("admin.shared.course")}</TableHead>
-                <TableHead>{t("common:labels.category")}</TableHead>
-                <TableHead>{t("admin.courses.requiredLicence")}</TableHead>
+                <TableHead className="hidden lg:table-cell">{t("common:labels.category")}</TableHead>
+                <TableHead className="hidden lg:table-cell">{t("admin.courses.requiredLicence")}</TableHead>
                 <TableHead className="w-24">
                   <span className="sr-only">{t("common:labels.actions")}</span>
                 </TableHead>
@@ -234,14 +235,20 @@ export function CourseManagement() {
             <TableBody>
               {filteredCourses.map((course) => (
                 <TableRow key={course.id}>
-                  <TableCell className="min-w-[14rem]">
-                    <p className="font-medium">{course.title}</p>
+                  <TableCell>
+                    <p className="break-words font-medium">{course.title}</p>
                     {course.description && (
                       <p className="line-clamp-1 max-w-xl text-sm text-muted-foreground">{course.description}</p>
                     )}
+                    {/* Phones: category and licence under the title, their columns are hidden. */}
+                    {(course.category || course.required_license) && (
+                      <p className="mt-1 text-xs text-muted-foreground lg:hidden">
+                        {[course.category, course.required_license].filter(Boolean).join(" · ")}
+                      </p>
+                    )}
                   </TableCell>
-                  <TableCell>{course.category || "—"}</TableCell>
-                  <TableCell>{course.required_license || "—"}</TableCell>
+                  <TableCell className="hidden lg:table-cell">{course.category || "—"}</TableCell>
+                  <TableCell className="hidden lg:table-cell">{course.required_license || "—"}</TableCell>
                   <TableCell>
                     <RowActions
                       name={t("admin.courses.rowName", { title: course.title })}

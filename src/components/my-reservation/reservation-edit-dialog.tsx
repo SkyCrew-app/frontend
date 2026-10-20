@@ -70,8 +70,9 @@ export function ReservationEditDialog({
         canCancelReservation(reservation) ? (
           <Button
             type="button"
-            variant="ghost"
-            className="text-destructive hover:text-destructive"
+            variant="outline"
+            // A destructive action of its own: outlined in red, on its own row on a phone.
+            className="w-full border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive sm:w-auto"
             disabled={isSubmitting}
             onClick={() => onCancelReservation(reservation)}
           >

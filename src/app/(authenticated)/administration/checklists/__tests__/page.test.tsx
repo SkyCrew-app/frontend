@@ -58,7 +58,10 @@ const renderPage = (mocks: MockedResponse[], role = 'Administrateur') =>
     </MockedProvider>,
   );
 
-const deleteButton = (name: string) => screen.findByRole('button', { name: `Supprimer le modèle ${name}` });
+// Phones get the same templates as cards: the assertions read the table.
+const table = () => within(screen.getByRole('table'));
+const deleteButton = async (name: string) =>
+  within(await screen.findByRole('table')).findByRole('button', { name: `Supprimer le modèle ${name}` });
 
 describe('AdminChecklistsPage — suppression d’un modèle', () => {
   beforeEach(() => {
@@ -95,8 +98,8 @@ describe('AdminChecklistsPage — suppression d’un modèle', () => {
     await user.click(dialog.getByRole('button', { name: 'Supprimer le modèle' }));
 
     await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
-    expect(screen.queryByText('Prévol DR400')).not.toBeInTheDocument();
-    expect(screen.getByText('Prévol C172')).toBeInTheDocument();
+    expect(table().queryByText('Prévol DR400')).not.toBeInTheDocument();
+    expect(table().getByText('Prévol C172')).toBeInTheDocument();
     expect(mockToast).toHaveBeenCalledWith({
       title: 'Modèle supprimé',
       description: '« Prévol DR400 » a été supprimé.',
@@ -113,7 +116,7 @@ describe('AdminChecklistsPage — suppression d’un modèle', () => {
 
     await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
     expect(deleted).not.toHaveBeenCalled();
-    expect(screen.getByText('Prévol DR400')).toBeInTheDocument();
+    expect(table().getByText('Prévol DR400')).toBeInTheDocument();
     expect(mockToast).not.toHaveBeenCalled();
   });
 
@@ -140,8 +143,8 @@ describe('AdminChecklistsPage — suppression d’un modèle', () => {
       expect(mockToast).toHaveBeenCalledWith({ title: 'Modèle désactivé, non supprimé', description: message }),
     );
     // Le modèle reste dans la liste, désormais inactif.
-    expect(screen.getByText('Prévol DR400')).toBeInTheDocument();
-    expect(await screen.findByText('Inactif')).toBeInTheDocument();
+    expect(table().getByText('Prévol DR400')).toBeInTheDocument();
+    expect(await within(screen.getByRole('table')).findByText('Inactif')).toBeInTheDocument();
   });
 
   it('signale un échec et laisse la confirmation ouverte', async () => {
@@ -164,7 +167,7 @@ describe('AdminChecklistsPage — suppression d’un modèle', () => {
   it("ne propose pas la suppression à un membre qui n'est pas administrateur", async () => {
     renderPage([templatesMock([template(4, 'Prévol DR400')])], 'Instructeur');
 
-    expect(await screen.findByRole('button', { name: 'Modifier le modèle Prévol DR400' })).toBeInTheDocument();
+    expect(await within(await screen.findByRole('table')).findByRole('button', { name: 'Modifier le modèle Prévol DR400' })).toBeInTheDocument();
     // Laisse le temps au profil d'arriver : le bouton ne doit pas apparaître ensuite.
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(screen.queryByRole('button', { name: /Supprimer le modèle/ })).not.toBeInTheDocument();

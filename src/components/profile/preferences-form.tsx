@@ -167,7 +167,7 @@ export function PreferencesForm({ userData, userId, refetch }: PreferencesFormPr
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-1.5">
+          <div className="min-w-0 space-y-1.5">
             <p id="preferred_aerodrome_label" className="text-sm font-medium leading-none">
               {t("preferences.aerodrome")}
             </p>
@@ -180,7 +180,7 @@ export function PreferencesForm({ userData, userId, refetch }: PreferencesFormPr
             </div>
           </div>
 
-          <div className="space-y-1.5">
+          <div className="min-w-0 space-y-1.5">
             <p id="timezone_label" className="text-sm font-medium leading-none">
               {t("preferences.timezone")}
             </p>

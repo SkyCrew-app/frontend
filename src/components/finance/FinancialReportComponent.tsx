@@ -182,7 +182,8 @@ export default function FinancialReportComponent() {
           <CardDescription>{t("finance.summary.reports.description")}</CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
+          {/* Wide screens: a table; phones and tablets: one block per report. */}
+          <Table className="hidden lg:table">
             <TableHeader>
               <TableRow>
                 <TableHead>{t("common:labels.date")}</TableHead>
@@ -226,6 +227,36 @@ export default function FinancialReportComponent() {
               ))}
             </TableBody>
           </Table>
+          <ul className="divide-y lg:hidden">
+            {rows.map(({ report, change }) => (
+              <li key={report.id} className="space-y-2 py-3 first:pt-0 last:pb-0">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="font-medium">{formatDate(report.report_date)}</p>
+                  {change !== null && (
+                    <Badge variant={change >= 0 ? "success" : "danger"} className="tabular-nums">
+                      {formatPercentChange(change)}
+                    </Badge>
+                  )}
+                </div>
+                <dl className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 text-sm">
+                  <dt className="text-muted-foreground">{t("finance.labels.revenue")}</dt>
+                  <dd className="text-right tabular-nums">{formatMoney(report.total_revenue)}</dd>
+                  <dt className="text-muted-foreground">{t("finance.labels.expenses")}</dt>
+                  <dd className="text-right tabular-nums">{formatMoney(report.total_expense)}</dd>
+                  <dt className="text-muted-foreground">{t("finance.labels.netResult")}</dt>
+                  <dd
+                    className={`text-right font-medium tabular-nums ${
+                      report.net_profit >= 0 ? "text-success" : "text-destructive"
+                    }`}
+                  >
+                    {formatMoney(report.net_profit)}
+                  </dd>
+                  <dt className="text-muted-foreground">{t("finance.labels.averageRevenuePerMember")}</dt>
+                  <dd className="text-right tabular-nums">{formatMoney(report.average_revenue_per_member)}</dd>
+                </dl>
+              </li>
+            ))}
+          </ul>
         </CardContent>
       </Card>
 

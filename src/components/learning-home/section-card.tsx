@@ -17,17 +17,16 @@ interface SectionCardProps {
 export function SectionCard({ title, description, href, linkLabel, children }: SectionCardProps) {
   return (
     <Card className="flex flex-col">
-      <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0">
-        <div className="min-w-0 space-y-1.5">
-          <CardTitle className="text-lg">{title}</CardTitle>
-          {description && <CardDescription>{description}</CardDescription>}
-        </div>
-        <Button variant="ghost" size="sm" asChild className="shrink-0">
+      {/* The link sits beside the title; the description takes the whole width under them. */}
+      <CardHeader className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1.5 space-y-0">
+        <CardTitle className="min-w-0 text-lg">{title}</CardTitle>
+        <Button variant="ghost" size="sm" asChild className="-mr-3">
           <Link href={href}>
             {linkLabel}
             <ChevronRight className="h-4 w-4" />
           </Link>
         </Button>
+        {description && <CardDescription className="col-span-2">{description}</CardDescription>}
       </CardHeader>
       <CardContent className="flex-1">{children}</CardContent>
     </Card>

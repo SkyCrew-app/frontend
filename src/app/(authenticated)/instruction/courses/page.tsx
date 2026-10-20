@@ -93,8 +93,8 @@ export default function InstructionDashboard() {
 
       {/* One Tabs root around the toolbar and the content: the view switch controls the panel below it. */}
       <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as "list" | "calendar")} className="space-y-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="relative w-full sm:max-w-xs">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+          <div className="relative w-full sm:min-w-[12rem] sm:max-w-xs sm:flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="search"
@@ -127,7 +127,7 @@ export default function InstructionDashboard() {
               ))}
             </SelectContent>
           </Select>
-          <TabsList aria-label={t("courses.page.viewAria")} className="sm:ml-auto">
+          <TabsList aria-label={t("courses.page.viewAria")} className="shrink-0 self-start sm:ml-auto sm:self-auto">
             <TabsTrigger value="list" className="gap-2">
               <List className="h-4 w-4" />
               {t("courses.page.viewList")}

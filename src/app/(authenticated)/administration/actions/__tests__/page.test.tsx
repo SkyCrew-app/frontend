@@ -144,11 +144,12 @@ describe('Journal des actions', () => {
       actionsMock({}, [entry()], 30),
       { request: { query: GET_ADMIN_ACTIONS, variables: { memberId: null, action: null, page: 2, pageSize: 25 } }, result: secondPage },
     ]);
-    await screen.findByText('Anne Martin');
+    await screen.findAllByText('Anne Martin');
 
     await user.click(screen.getByRole('button', { name: 'Suivant' }));
 
-    expect(await screen.findByText('Paul Durand')).toBeInTheDocument();
+    // The table (wide screens) and the cards (phones) both show it.
+    expect((await screen.findAllByText('Paul Durand')).length).toBeGreaterThan(0);
     expect(secondPage).toHaveBeenCalledTimes(1);
   });
 
