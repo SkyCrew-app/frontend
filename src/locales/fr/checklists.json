@@ -124,6 +124,8 @@
         "offered": "Proposé aux pilotes"
       },
       "emptyTemplate": "Vide",
+      "itemCount_one": "{{count}} point",
+      "itemCount_other": "{{count}} points",
       "deactivateLabel": "Désactiver le modèle {{name}}",
       "activateLabel": "Activer le modèle {{name}}",
       "editLabel": "Modifier le modèle {{name}}",
