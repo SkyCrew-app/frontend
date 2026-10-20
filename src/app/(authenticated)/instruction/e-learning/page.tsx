@@ -123,7 +123,7 @@ export default function ELearningPage() {
         </div>
         {categories.length > 1 && (
           <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger className="w-full sm:w-56" aria-label={t("eLearning.catalogue.filterCategoryAria")}>
+            <SelectTrigger className="w-full sm:w-56 sm:shrink-0" aria-label={t("eLearning.catalogue.filterCategoryAria")}>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -139,7 +139,7 @@ export default function ELearningPage() {
       </div>
 
       {loading && !courses ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: 6 }).map((_, index) => (
             <Card key={index}>
               <CardHeader className="pb-3">
@@ -182,7 +182,7 @@ export default function ELearningPage() {
           }
         />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
           {visibleCourses.map((course) => (
             <CourseCatalogCard key={course.id} course={course} progress={progressByCourse.get(Number(course.id))} />
           ))}
