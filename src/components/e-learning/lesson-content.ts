@@ -94,6 +94,14 @@ const nodeHtml = (node: DocNode): string => {
   }
 }
 
+// True when a document holds some text or an image.
+const hasContent = (node: DocNode): boolean => {
+  if (!node || typeof node !== "object") return false
+  if (node.type === "text") return typeof node.text === "string" && node.text.trim() !== ""
+  if (node.type === "image") return typeof node.attrs?.src === "string"
+  return Array.isArray(node.content) && (node.content as DocNode[]).some(hasContent)
+}
+
 const isDocument = (value: unknown): value is DocNode =>
   !!value && typeof value === "object" && (value as DocNode).type === "doc"
 
@@ -101,8 +109,7 @@ const isDocument = (value: unknown): value is DocNode =>
 export function lessonHtml(content: unknown): string | null {
   const value = parse(content)
   if (isDocument(value)) {
-    const html = nodeHtml(value)
-    return html.replace(/<[^>]*>/g, "").trim() !== "" || /<img\b/.test(html) ? html : null
+    return hasContent(value) ? nodeHtml(value) : null
   }
   return typeof value === "string" && value.trim() !== "" ? value : null
 }
