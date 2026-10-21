@@ -11,6 +11,12 @@ const config: Config = {
   ],
   theme: {
   	extend: {
+  		screens: {
+  			// A window of little height (a laptop, a phone): the side menu tightens up so that it
+  			// fits without scrolling, a little more on the shortest ones.
+  			short: { raw: '(max-height: 1000px)' },
+  			shorter: { raw: '(max-height: 719px)' },
+  		},
   		fontFamily: {
   			sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
   			mono: ['var(--font-jetbrains-mono)', 'ui-monospace', 'monospace'],

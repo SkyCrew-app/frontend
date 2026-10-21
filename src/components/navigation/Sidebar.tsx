@@ -117,10 +117,8 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
   const handleLogout = useLogout()
   const pathname = usePathname()
   const mounted = useMounted()
-  const [openMenus, setOpenMenus] = React.useState<string[]>(() => {
-    const current = sectionOf(pathname)
-    return current ? [current] : []
-  })
+  // One section open at a time, so that the menu fits the height of the screen without scrolling.
+  const [openMenu, setOpenMenu] = React.useState<string | undefined>(() => sectionOf(pathname))
   const userEmail = useCurrentUser()
   const { plan } = usePlan()
 
@@ -153,9 +151,7 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
   // Arriving in a section opens it. Only on navigation, so the member can still fold it afterwards.
   React.useEffect(() => {
     const current = sectionOf(pathname)
-    if (current) {
-      setOpenMenus((prev) => (prev.includes(current) ? prev : [...prev, current]))
-    }
+    if (current) setOpenMenu(current)
   }, [pathname])
 
   React.useEffect(() => {
@@ -191,7 +187,7 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
   }, [isMobileOpen])
 
   const toggleMenu = (path: string) => {
-    setOpenMenus((prev) => (prev.includes(path) ? prev.filter((p) => p !== path) : [...prev, path]))
+    setOpenMenu((prev) => (prev === path ? undefined : path))
   }
 
   const openCommandPalette = () => {
@@ -213,16 +209,18 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
         />
       )}
 
-      {/* Sidebar. Off screen on mobile it is also hidden from the keyboard and screen readers. */}
+      {/* Sidebar. Off screen on mobile it is also hidden from the keyboard and screen readers.
+          It fits the screen (see below); on a screen too short even for that, such as a phone held
+          sideways, the whole menu scrolls as one column, never a box inside it. */}
       <nav
         aria-label={t("sidebar.label")}
         className={cn(
-          "fixed lg:sticky top-0 left-0 h-screen w-64 bg-sidebar text-sidebar-foreground border-r border-sidebar-border flex flex-col overflow-hidden z-50 transition-[transform,visibility] duration-300 ease-in-out",
+          "fixed lg:sticky top-0 left-0 h-screen w-64 bg-sidebar text-sidebar-foreground border-r border-sidebar-border flex flex-col overflow-y-auto overscroll-contain z-50 transition-[transform,visibility] duration-300 ease-in-out",
           isMobileOpen ? "translate-x-0" : "invisible -translate-x-full lg:visible lg:translate-x-0",
         )}
       >
         {/* Logo */}
-        <div className="px-6 h-16 shrink-0 border-b border-sidebar-border flex items-center">
+        <div className="px-6 h-16 shrink-0 border-b border-sidebar-border flex items-center justify-between short:h-12 short:pr-3">
           <Link
             href="/dashboard"
             onClick={onCloseMobileMenu}
@@ -231,31 +229,70 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
           >
             <SkycrewLogo className="text-sidebar-foreground" />
           </Link>
+          {/* On a short screen the search is a button next to the logo rather than a full row. */}
+          <button
+            type="button"
+            onClick={openCommandPalette}
+            aria-label={t("common:actions.search")}
+            title={`${t("common:actions.search")} (${isMac ? "⌘K" : "Ctrl K"})`}
+            className={cn(
+              "hidden h-9 w-9 items-center justify-center rounded-md text-sidebar-foreground/60 transition-colors duration-150 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground short:flex",
+              FOCUS_RING,
+            )}
+          >
+            <Search className="h-4 w-4" aria-hidden="true" />
+          </button>
         </div>
 
-        {/* User profile */}
-        <div className="p-4 border-b border-sidebar-border">
-          <div className="flex items-center space-x-3">
-            <Avatar className="h-10 w-10 border-2 border-sidebar-border">
+        {/* The member: their profile, and signing out. At the top rather than in a footer, so that
+            the whole menu is one column that fits the screen. */}
+        <div className="flex shrink-0 items-center gap-1 border-b border-sidebar-border px-3 py-3 short:py-2">
+          <Link
+            href="/profile"
+            onClick={onCloseMobileMenu}
+            aria-current={isWithin(pathname, "/profile") ? "page" : undefined}
+            className={cn(
+              "flex min-w-0 flex-1 items-center gap-3 rounded-lg p-1 transition-colors duration-150 hover:bg-sidebar-accent/60",
+              isWithin(pathname, "/profile") && "bg-sidebar-accent",
+              FOCUS_RING,
+            )}
+          >
+            <Avatar className="h-10 w-10 border-2 border-sidebar-border short:h-8 short:w-8">
               {profilePicture && <AvatarImage src={`${getBackendBaseUrl()}${profilePicture}`} alt="" />}
               <AvatarFallback className="bg-sidebar-primary font-semibold text-sidebar">
                 {initials || <User className="h-4 w-4" aria-hidden="true" />}
               </AvatarFallback>
             </Avatar>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate text-sidebar-foreground">{userName || t("account.fallbackName")}</p>
-              {userRole && <p className="text-xs text-sidebar-foreground/60 truncate">{roleLabel(userRole)}</p>}
-            </div>
-          </div>
+            <span className="min-w-0 flex-1">
+              <span className="sr-only">{t("pages.profile")} : </span>
+              <span className="block truncate text-sm font-medium text-sidebar-foreground">
+                {userName || t("account.fallbackName")}
+              </span>
+              {userRole && <span className="block truncate text-xs text-sidebar-foreground/60">{roleLabel(userRole)}</span>}
+            </span>
+          </Link>
+          <button
+            type="button"
+            onClick={handleLogout}
+            aria-label={t("account.signOut")}
+            title={t("account.signOut")}
+            className={cn(
+              "flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-sidebar-foreground/60 transition-colors duration-150 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+              FOCUS_RING,
+            )}
+          >
+            <LogOut className="h-4 w-4" aria-hidden="true" />
+          </button>
         </div>
 
-        {/* Navigation */}
-        <div className="flex-1 overflow-y-auto py-4 px-3">
+        {/* Navigation. No scrolling of its own: one section open at a time, and tighter rows on
+            a short screen, keep it within the height of the screen. */}
+        <div className="flex-1 px-3 py-4 short:py-2">
           <button
             type="button"
             onClick={openCommandPalette}
             className={cn(
-              "mb-3 flex w-full items-center gap-2 rounded-lg border border-sidebar-border px-2.5 py-2 text-sm text-sidebar-foreground/60 transition-colors duration-150 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
+              "mb-3 flex w-full items-center gap-2 rounded-lg border border-sidebar-border px-2.5 py-2 short:hidden text-sm text-sidebar-foreground/60 transition-colors duration-150 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
               FOCUS_RING,
             )}
           >
@@ -266,11 +303,11 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
             </kbd>
           </button>
 
-          <ul className="space-y-1">
+          <ul className="space-y-1 short:space-y-0.5">
             {visibleItems.map((item) => {
               const isExact = pathname === item.path
               const inSection = isWithin(pathname, item.path)
-              const isOpen = openMenus.includes(item.path)
+              const isOpen = openMenu === item.path
               const subMenuId = `sidebar-submenu-${item.path.slice(1)}`
               const itemName = t(item.labelKey)
 
@@ -290,11 +327,11 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
                       href={item.href}
                       onClick={onCloseMobileMenu}
                       aria-current={isExact ? "page" : undefined}
-                      className={cn("flex min-w-0 flex-1 items-center rounded-lg px-2.5 py-2 text-sm font-medium", FOCUS_RING)}
+                      className={cn("flex min-w-0 flex-1 items-center rounded-lg px-2.5 py-2 text-sm font-medium short:py-1 shorter:py-0.5", FOCUS_RING)}
                     >
                       <span
                         className={cn(
-                          "flex items-center justify-center h-7 w-7 shrink-0 rounded-md mr-3 transition-colors duration-150",
+                          "flex items-center justify-center h-7 w-7 shrink-0 rounded-md mr-3 transition-colors duration-150 short:h-6 short:w-6",
                           inSection ? "bg-sidebar-primary text-sidebar-primary-foreground" : "bg-transparent",
                         )}
                       >
@@ -337,13 +374,13 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
                             const isSubActive = isWithin(pathname, subItem.path)
 
                             return (
-                              <li key={subItem.path} className="py-0.5 first:pt-1.5">
+                              <li key={subItem.path} className="py-0.5 first:pt-1.5 short:py-0 short:first:pt-0.5">
                                 <Link
                                   href={subItem.path}
                                   onClick={onCloseMobileMenu}
                                   aria-current={isSubActive ? "page" : undefined}
                                   className={cn(
-                                    "block py-1.5 px-3 rounded-md text-sm transition-colors duration-150",
+                                    "block py-1.5 px-3 rounded-md text-sm transition-colors duration-150 short:py-1 shorter:py-[3px]",
                                     FOCUS_RING,
                                     isSubActive
                                       ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
@@ -365,35 +402,6 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
           </ul>
         </div>
 
-        {/* Footer */}
-        <div className="p-3 border-t border-sidebar-border">
-          <Link
-            href="/profile"
-            onClick={onCloseMobileMenu}
-            aria-current={isWithin(pathname, "/profile") ? "page" : undefined}
-            className={cn(
-              "flex items-center px-4 py-2 text-sm rounded-lg transition-colors duration-150",
-              FOCUS_RING,
-              isWithin(pathname, "/profile")
-                ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-            )}
-          >
-            <User className="h-4 w-4 mr-3" aria-hidden="true" />
-            <span>{t("pages.profile")}</span>
-          </Link>
-          <button
-            type="button"
-            onClick={handleLogout}
-            className={cn(
-              "flex w-full items-center px-4 py-2 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-lg transition-colors duration-150 mt-1",
-              FOCUS_RING,
-            )}
-          >
-            <LogOut className="h-4 w-4 mr-3" aria-hidden="true" />
-            <span>{t("account.signOut")}</span>
-          </button>
-        </div>
       </nav>
     </>
   )
