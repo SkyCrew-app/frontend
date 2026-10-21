@@ -104,7 +104,7 @@ export function DeactivateMemberDialog({
 
   return (
     <AlertDialog open={open} onOpenChange={(next) => !pending && onOpenChange(next)}>
-      <AlertDialogContent className="max-h-[90vh] overflow-y-auto">
+      <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
             {t("users.accountActions.deactivateConfirm.title", { name: member?.name ?? "" })}
