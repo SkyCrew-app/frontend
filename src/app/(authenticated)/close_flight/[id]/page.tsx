@@ -30,7 +30,7 @@ import IncidentForm from "@/components/close_flight/IncidentForm"
 import FlightNotesForm from "@/components/close_flight/FlightNotesForm"
 import WaypointsDisplay from "@/components/close_flight/WaypointDisplay"
 import { StepIndicator } from "@/components/close_flight/StepIndicator"
-import { flightTypeLabel } from "@/components/flight/flight-type"
+import { defaultFlightType, flightTypeLabel } from "@/components/flight/flight-type"
 import {
   EXPORT_FLIGHT_RECAP_PDF,
   GET_FLIGHT_PLAN_BY_ID,
@@ -142,7 +142,8 @@ export default function FlightRecap() {
       const flight = data.getFlightById
       methods.reset({
         flight_hours: flight.flight_hours,
-        flight_type: flight.flight_type,
+        // The category of the flight: the plan's own, else the reservation's.
+        flight_type: defaultFlightType(flight.flight_type, flight.reservation?.flight_category),
         origin_icao: flight.origin_icao,
         destination_icao: flight.destination_icao,
         weather_conditions: flight.weather_conditions || "",

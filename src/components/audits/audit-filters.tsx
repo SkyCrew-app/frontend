@@ -96,7 +96,7 @@ export function AuditFilters({ filters, onFilterChange, onClearFilters, enumsDat
             )}
           </Button>
         </SheetTrigger>
-        <SheetContent side="right" className="flex w-full flex-col gap-6 overflow-y-auto sm:max-w-md">
+        <SheetContent side="right" className="flex w-full flex-col gap-6 sm:max-w-md">
           <SheetHeader>
             <SheetTitle>{t("audits.filters.title")}</SheetTitle>
             <SheetDescription>{t("audits.filters.description")}</SheetDescription>

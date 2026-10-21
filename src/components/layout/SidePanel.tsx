@@ -2,9 +2,9 @@
 
 import i18n from "@/lib/i18n"
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react"
-import { ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react"
+import { ArrowLeft, ArrowRight, Check, Loader2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
+import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
 
 export interface SidePanelStep {
@@ -96,7 +96,10 @@ export function SidePanel({
   }
 
   useEffect(() => {
-    if (open && current > 0) focusFirstField()
+    if (!open) return
+    // The panel scrolls with its backdrop: a new step starts at the top of the panel.
+    bodyRef.current?.closest("[data-scroll-overlay]")?.scrollTo?.({ top: 0 })
+    if (current > 0) focusFirstField()
   }, [open, current])
 
   // The panel can be opened from a control that takes the focus back for an instant
@@ -134,55 +137,51 @@ export function SidePanel({
     await onSubmit?.()
   }
 
+  const stepper = hasSteps && steps && (
+    <ol className="flex items-center gap-2 border-b px-6 py-3" aria-label={i18n.t("common:panel.steps")}>
+      {steps.map((step, index) => {
+        const done = index < current
+        const active = index === current
+        return (
+          <li key={step.title} className={cn("flex items-center gap-2", index < stepCount - 1 && "flex-1")}>
+            <button
+              type="button"
+              // Going back is always allowed; going forward goes through the checks of each step.
+              disabled={index > current}
+              onClick={() => setCurrent(index)}
+              aria-current={active ? "step" : undefined}
+              className="flex min-w-0 items-center gap-2 rounded-md text-left text-sm disabled:cursor-default"
+            >
+              <span
+                className={cn(
+                  "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium",
+                  active && "bg-primary text-primary-foreground",
+                  done && "bg-success/15 text-success",
+                  !active && !done && "bg-muted text-muted-foreground",
+                )}
+              >
+                {done ? <Check className="h-3.5 w-3.5" aria-hidden="true" /> : index + 1}
+              </span>
+              <span
+                className={cn(
+                  "truncate",
+                  active ? "font-medium text-foreground" : "hidden text-muted-foreground md:inline",
+                )}
+              >
+                {step.title}
+              </span>
+            </button>
+            {index < stepCount - 1 && <span className="h-px min-w-3 flex-1 bg-border" aria-hidden="true" />}
+          </li>
+        )
+      })}
+    </ol>
+  )
+
   const body = (
     <>
-      {hasSteps && steps && (
-        <ol className="flex items-center gap-2 border-b px-6 py-3" aria-label={i18n.t("common:panel.steps")}>
-          {steps.map((step, index) => {
-            const done = index < current
-            const active = index === current
-            return (
-              <li key={step.title} className={cn("flex items-center gap-2", index < stepCount - 1 && "flex-1")}>
-                <button
-                  type="button"
-                  // Going back is always allowed; going forward goes through the checks of each step.
-                  disabled={index > current}
-                  onClick={() => setCurrent(index)}
-                  aria-current={active ? "step" : undefined}
-                  className="flex min-w-0 items-center gap-2 rounded-md text-left text-sm disabled:cursor-default"
-                >
-                  <span
-                    className={cn(
-                      "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium",
-                      active && "bg-primary text-primary-foreground",
-                      done && "bg-success/15 text-success",
-                      !active && !done && "bg-muted text-muted-foreground",
-                    )}
-                  >
-                    {done ? <Check className="h-3.5 w-3.5" aria-hidden="true" /> : index + 1}
-                  </span>
-                  <span
-                    className={cn(
-                      "truncate",
-                      active ? "font-medium text-foreground" : "hidden text-muted-foreground md:inline",
-                    )}
-                  >
-                    {step.title}
-                  </span>
-                </button>
-                {index < stepCount - 1 && <span className="h-px min-w-3 flex-1 bg-border" aria-hidden="true" />}
-              </li>
-            )
-          })}
-        </ol>
-      )}
-
-      <div
-        ref={bodyRef}
-        // A panel that only shows information may have nothing to focus: the keyboard still scrolls it.
-        tabIndex={footer ? 0 : undefined}
-        className="flex-1 overflow-y-auto px-6 py-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-      >
+      {/* No scrolling of its own: a long panel scrolls with its backdrop, as one page. */}
+      <div ref={bodyRef} className="flex-1 px-6 py-5">
         {steps
           ? steps.map((step, index) => (
               // Every step stays mounted so that fields keep their value; only the current one shows.
@@ -194,9 +193,11 @@ export function SidePanel({
           : children}
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 border-t px-6 py-4">
-        {footerStart}
-        <div className="ml-auto flex flex-wrap items-center gap-2">
+      {/* Stays at the bottom of the screen while the panel scrolls. On a phone the buttons fill
+          the width: side by side when their labels fit, otherwise on the next row. */}
+      <div className="sticky bottom-0 z-10 flex flex-wrap items-center gap-2 border-t bg-card px-4 py-3 sm:px-6 sm:py-4">
+        {footerStart && <div className="flex flex-wrap items-center gap-2 max-sm:w-full max-sm:[&>*]:grow">{footerStart}</div>}
+        <div className="flex flex-wrap items-center gap-2 max-sm:w-full max-sm:[&>*]:grow sm:ml-auto">
           {footer ?? (
             <>
               {hasSteps && current > 0 ? (
@@ -232,25 +233,32 @@ export function SidePanel({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className={cn("flex h-full w-full flex-col gap-0 p-0", SIZES[size])}
+        closeButton={false}
+        className={cn("flex w-full flex-col gap-0 p-0", SIZES[size])}
         onOpenAutoFocus={(event) => {
           if (focusFirstField()) event.preventDefault()
         }}
       >
-        <SheetHeader className="space-y-1 border-b px-6 py-4 pr-12 text-left">
+        {/* The title and the close button stay at the top of the screen while the panel scrolls. */}
+        <SheetHeader className="sticky top-0 z-10 space-y-1 border-b bg-card px-6 py-4 pr-12 text-left">
           <SheetTitle className="text-lg">{title}</SheetTitle>
           {description ? (
             <SheetDescription>{description}</SheetDescription>
           ) : (
             <SheetDescription className="sr-only">{title}</SheetDescription>
           )}
+          <SheetClose className="absolute right-4 top-4 !mt-0 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+            <X className="h-4 w-4" aria-hidden="true" />
+            <span className="sr-only">{i18n.t("common:actions.close")}</span>
+          </SheetClose>
         </SheetHeader>
+        {stepper}
         {onSubmit || hasSteps ? (
-          <form onSubmit={handleSubmit} noValidate className="flex min-h-0 flex-1 flex-col">
+          <form onSubmit={handleSubmit} noValidate className="flex flex-1 flex-col">
             {body}
           </form>
         ) : (
-          <div className="flex min-h-0 flex-1 flex-col">{body}</div>
+          <div className="flex flex-1 flex-col">{body}</div>
         )}
       </SheetContent>
     </Sheet>
