@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.19.1](https://github.com/SkyCrew-app/frontend/compare/2.19.0...2.19.1) (2026-10-21)
+
+
+### Bug Fixes
+
+* **ui:** :lipstick: keep dialogs, panels and the side menu free of inner scrolling ([#222](https://github.com/SkyCrew-app/frontend/issues/222)) ([562b0dd](https://github.com/SkyCrew-app/frontend/commit/562b0dd0844df9d72b61f2a9cccdea88e8ba6f21))
+
 ## [2.19.0](https://github.com/SkyCrew-app/frontend/compare/2.18.0...2.19.0) (2026-10-21)
 
 
