@@ -193,10 +193,11 @@ export function SidePanel({
           : children}
       </div>
 
-      {/* Stays at the bottom of the screen while the panel scrolls. */}
-      <div className="sticky bottom-0 z-10 flex flex-wrap items-center gap-2 border-t bg-card px-6 py-4">
-        {footerStart}
-        <div className="ml-auto flex flex-wrap items-center gap-2">
+      {/* Stays at the bottom of the screen while the panel scrolls. On a phone the buttons fill
+          the width: side by side when their labels fit, otherwise on the next row. */}
+      <div className="sticky bottom-0 z-10 flex flex-wrap items-center gap-2 border-t bg-card px-4 py-3 sm:px-6 sm:py-4">
+        {footerStart && <div className="flex flex-wrap items-center gap-2 max-sm:w-full max-sm:[&>*]:grow">{footerStart}</div>}
+        <div className="flex flex-wrap items-center gap-2 max-sm:w-full max-sm:[&>*]:grow sm:ml-auto">
           {footer ?? (
             <>
               {hasSteps && current > 0 ? (
