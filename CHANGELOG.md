@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.19.0](https://github.com/SkyCrew-app/frontend/compare/2.18.0...2.19.0) (2026-10-21)
+
+
+### Features
+
+* **navplan:** :sparkles: show minimum safe altitudes and runway distances ([#215](https://github.com/SkyCrew-app/frontend/issues/215)) ([e7ca57b](https://github.com/SkyCrew-app/frontend/commit/e7ca57b52dbd52d59ed7cbc98ca939b1a4faa620))
+
+
+### Bug Fixes
+
+* **e-learning:** :lock: tell an empty lesson from its document ([#218](https://github.com/SkyCrew-app/frontend/issues/218)) ([ae5eea2](https://github.com/SkyCrew-app/frontend/commit/ae5eea2aa99b67006263da7cd3358d7424df1f26))
+* **ui:** :lipstick: polish every page on phone, tablet and desktop ([#216](https://github.com/SkyCrew-app/frontend/issues/216)) ([e1cae99](https://github.com/SkyCrew-app/frontend/commit/e1cae99b4fb492f79c3d475f0fbb5cae3ad48b2b))
+
 ## [2.18.0](https://github.com/SkyCrew-app/frontend/compare/2.17.1...2.18.0) (2026-10-19)
 
 
