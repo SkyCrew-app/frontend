@@ -13,7 +13,7 @@ import LogbookStats from "@/components/logbook/LogbookStats"
 import LogbookFilters from "@/components/logbook/LogbookFilters"
 import LogbookTable from "@/components/logbook/LogbookTable"
 import ExportPDFButton from "@/components/logbook/ExportPDFButton"
-import { FLIGHT_RULE_OPTIONS } from "@/components/flight/flight-type"
+import { FLIGHT_TYPES } from "@/components/flight/flight-type"
 
 // Placeholder the API uses for flights without a type.
 const UNKNOWN_TYPE = "Inconnu"
@@ -22,7 +22,7 @@ export default function LogbookPage() {
   const { t } = useTranslation("flights")
   const [filter, setFilter] = useState<LogbookFilter>({})
   // Types met in the logbook so far, kept when a filter narrows the statistics.
-  const [knownTypes, setKnownTypes] = useState<string[]>(FLIGHT_RULE_OPTIONS.map((option) => option.value))
+  const [knownTypes, setKnownTypes] = useState<string[]>(FLIGHT_TYPES)
 
   const graphqlFilter = useMemo(() => {
     const f: Record<string, unknown> = {}

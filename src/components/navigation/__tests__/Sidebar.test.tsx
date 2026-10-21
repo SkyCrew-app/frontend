@@ -1,5 +1,6 @@
 import React from "react"
 import { render, screen, waitFor, within } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 import { MockedProvider } from "@apollo/client/testing"
 import AppSidebar from "../Sidebar"
 import { GET_ME, GET_USER_PROFILE } from "@/graphql/user"
@@ -111,5 +112,28 @@ describe("Sidebar: the plan of the club", () => {
     const sidebar = await sidebarOf()
 
     expect(await sidebar.findByRole("link", { name: "Instruction" })).toHaveAttribute("href", "/instruction")
+  })
+})
+
+describe("Sidebar: fits the height of the screen", () => {
+  it("opens one section at a time", async () => {
+    const user = userEvent.setup()
+    renderSidebar("Administrateur")
+    const sidebar = await sidebarOf()
+
+    await user.click(sidebar.getByRole("button", { name: "Déplier le menu Flotte" }))
+    expect(sidebar.getByRole("button", { name: "Replier le menu Flotte" })).toHaveAttribute("aria-expanded", "true")
+
+    await user.click(sidebar.getByRole("button", { name: "Déplier le menu Réservations" }))
+    expect(sidebar.getByRole("button", { name: "Replier le menu Réservations" })).toHaveAttribute("aria-expanded", "true")
+    expect(sidebar.getByRole("button", { name: "Déplier le menu Flotte" })).toHaveAttribute("aria-expanded", "false")
+  })
+
+  it("keeps the profile and signing out at the top, with the member's name", async () => {
+    renderSidebar("Pilote")
+    const sidebar = await sidebarOf()
+
+    expect(sidebar.getByRole("link", { name: /Mon profil/ })).toHaveAttribute("href", "/profile")
+    expect(sidebar.getByRole("button", { name: "Se déconnecter" })).toBeInTheDocument()
   })
 })

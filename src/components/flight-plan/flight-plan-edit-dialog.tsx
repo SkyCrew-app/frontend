@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { SidePanel } from "@/components/layout/SidePanel"
 import type { Flight } from "@/interfaces/flight"
-import { FLIGHT_RULE_OPTIONS, flightTypeLabel } from "@/components/flight/flight-type"
+import { defaultFlightType, flightTypeOptions } from "@/components/flight/flight-type"
 
 interface FlightPlanEditDialogProps {
   isOpen: boolean
@@ -34,17 +34,14 @@ export function FlightPlanEditDialog({ isOpen, onOpenChange, flight, onSave }: F
 
   useEffect(() => {
     if (flight && isOpen) {
-      setFlightType(flight.flight_type || "")
+      // The category of the flight: the plan's own, else the reservation's.
+      setFlightType(defaultFlightType(flight.flight_type, flight.reservation?.flight_category))
       setWeatherConditions(flight.weather_conditions || "")
       setNumberOfPassengers(flight.number_of_passengers)
     }
   }, [flight, isOpen])
 
   if (!flight) return null
-
-  const typeOptions = FLIGHT_RULE_OPTIONS.some((option) => option.value === flight.flight_type)
-    ? FLIGHT_RULE_OPTIONS
-    : [...FLIGHT_RULE_OPTIONS, { value: flight.flight_type, label: flightTypeLabel(flight.flight_type) }]
 
   const handleSubmit = async () => {
     setIsSubmitting(true)
@@ -77,7 +74,7 @@ export function FlightPlanEditDialog({ isOpen, onOpenChange, flight, onSave }: F
                 <SelectValue placeholder={t("planEdit.typePlaceholder")} />
               </SelectTrigger>
               <SelectContent>
-                {typeOptions.map((option) => (
+                {flightTypeOptions().map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>

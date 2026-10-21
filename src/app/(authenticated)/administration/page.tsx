@@ -14,6 +14,7 @@ import { PageHeader } from "@/components/layout/PageHeader"
 import { StatCard } from "@/components/layout/StatCard"
 import { EmptyState } from "@/components/layout/EmptyState"
 import { ErrorState } from "@/components/layout/ErrorState"
+import { flightTypeLabel } from "@/components/flight/flight-type"
 import {
   GET_ADMIN_DASHBOARD_STATS,
   GET_RECENT_RESERVATIONS,
@@ -346,7 +347,7 @@ export default function AdminHomePage() {
                         {formatDate(flightDate(flight))}
                         {" · "}
                         {flight.user?.first_name} {flight.user?.last_name}
-                        {flight.flight_type ? ` · ${flight.flight_type}` : ""}
+                        {flight.flight_type ? ` · ${flightTypeLabel(flight.flight_type)}` : ""}
                       </p>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">

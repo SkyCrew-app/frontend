@@ -6,7 +6,7 @@ import { FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessa
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { FLIGHT_RULE_OPTIONS, flightTypeLabel } from "@/components/flight/flight-type"
+import { flightTypeOptions } from "@/components/flight/flight-type"
 
 const RequiredMark = () => (
   <span className="text-destructive" aria-hidden="true">
@@ -166,39 +166,30 @@ export default function FlightDetailsForm() {
         <FormField
           control={control}
           name="flight_type"
-          render={({ field }) => {
-            // Keep whatever type the plan already has, next to the standard flight rules.
-            const options =
-              !field.value || FLIGHT_RULE_OPTIONS.some((option) => option.value === field.value)
-                ? FLIGHT_RULE_OPTIONS
-                : [...FLIGHT_RULE_OPTIONS, { value: field.value, label: flightTypeLabel(field.value) }]
-
-            return (
-              <FormItem>
-                <FormLabel>
-                  {t("closeFlight.details.flightType")}
-                  <RequiredMark />
-                </FormLabel>
-                {/* The select reports an empty value while the plan's own type is not yet among its
-                    options: ignoring it keeps the type the plan was prepared with. */}
-                <Select onValueChange={(value) => value && field.onChange(value)} value={field.value || undefined}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder={t("closeFlight.details.flightTypePlaceholder")} />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {options.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )
-          }}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                {t("closeFlight.details.flightType")}
+                <RequiredMark />
+              </FormLabel>
+              {/* The flight category, the same list as the reservation category. */}
+              <Select onValueChange={(value) => value && field.onChange(value)} value={field.value || undefined}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("closeFlight.details.flightTypePlaceholder")} />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {flightTypeOptions().map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
         />
 
         <FormField
