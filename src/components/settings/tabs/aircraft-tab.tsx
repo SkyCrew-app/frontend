@@ -107,21 +107,27 @@ export function AircraftTab() {
             action={manageAircrafts}
           />
         ) : (
-          <div className="overflow-x-auto rounded-md border">
+          <div className="rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>{t("settings.aircraft.rates.registration")}</TableHead>
-                  <TableHead>{t("settings.aircraft.rates.model")}</TableHead>
+                  <TableHead className="hidden sm:table-cell">{t("settings.aircraft.rates.model")}</TableHead>
                   <TableHead className="text-right">{t("settings.aircraft.rates.hourlyRate")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {aircrafts.map((aircraft) => (
                   <TableRow key={aircraft.id}>
-                    <TableCell className="font-medium">{aircraft.registration_number}</TableCell>
-                    <TableCell>{aircraft.model || "—"}</TableCell>
-                    <TableCell className="text-right tabular-nums">
+                    <TableCell className="font-medium">
+                      {aircraft.registration_number}
+                      {/* Phones: the model under the registration, its column is hidden. */}
+                      {aircraft.model && (
+                        <span className="block text-xs font-normal text-muted-foreground sm:hidden">{aircraft.model}</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell">{aircraft.model || "—"}</TableCell>
+                    <TableCell className="whitespace-nowrap text-right tabular-nums">
                       {aircraft.hourly_cost === null || aircraft.hourly_cost === undefined
                         ? "—"
                         : t("settings.aircraft.rates.perHour", { amount: formatMoney(aircraft.hourly_cost) })}

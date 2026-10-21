@@ -28,12 +28,12 @@ export function ListPagination({ page, pageSize, totalItems, onPageChange, items
           : t("common:pagination.range", { from: first, to: last, total: totalItems })}
       </p>
       {totalPages > 1 && (
-        <nav className="flex items-center gap-2" aria-label={t("pagination.label")}>
+        <nav className="flex items-center justify-between gap-2 sm:justify-end" aria-label={t("pagination.label")}>
           <Button variant="outline" size="sm" onClick={() => onPageChange(page - 1)} disabled={page <= 1}>
             <ChevronLeft className="h-4 w-4" aria-hidden="true" />
             {t("common:pagination.previous")}
           </Button>
-          <span className="text-sm text-muted-foreground tabular-nums">
+          <span className="whitespace-nowrap text-sm text-muted-foreground tabular-nums">
             {t("common:pagination.pageOf", { page, total: totalPages })}
           </span>
           <Button variant="outline" size="sm" onClick={() => onPageChange(page + 1)} disabled={page >= totalPages}>

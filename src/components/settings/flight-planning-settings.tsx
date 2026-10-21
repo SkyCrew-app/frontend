@@ -29,6 +29,10 @@ const clean = (settings: FlightPlanningSettings): FlightPlanningSettings => ({
   clubMarginMin: settings.clubMarginMin,
   verticalMarginFt: settings.verticalMarginFt,
   defaultCircuitHeightFt: settings.defaultCircuitHeightFt,
+  msaCorridorNm: settings.msaCorridorNm,
+  msaMarginFt: settings.msaMarginFt,
+  takeoffSafetyFactor: settings.takeoffSafetyFactor,
+  landingSafetyFactor: settings.landingSafetyFactor,
 })
 
 /** Fuel policy of the club for the flight preparation, never below the AMC to Part-NCO. */
@@ -152,6 +156,21 @@ export function FlightPlanningSettingsForm() {
           {numberField("verticalMarginFt", "ft", 0, t("settings.hints.verticalMarginFt"))}
           {numberField("defaultCircuitHeightFt", "ft", 0, t("settings.hints.defaultCircuitHeightFt"))}
           <p className="text-sm text-muted-foreground sm:col-span-3">{t("settings.taxiFuelNote")}</p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">
+            <h2>{t("settings.terrain.title")}</h2>
+          </CardTitle>
+          <CardDescription>{t("settings.terrain.description")}</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {numberField("msaCorridorNm", "NM", 1, t("settings.hints.msaCorridorNm"))}
+          {numberField("msaMarginFt", "ft", 0, t("settings.hints.msaMarginFt"))}
+          {numberField("takeoffSafetyFactor", "×", 2, t("settings.hints.takeoffSafetyFactor"))}
+          {numberField("landingSafetyFactor", "×", 2, t("settings.hints.landingSafetyFactor"))}
         </CardContent>
       </Card>
 

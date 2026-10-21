@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { useMediaQuery } from "@/hooks/use-media-query"
 
 export interface DateRangePickerProps {
   dateRange: DateRange | undefined
@@ -34,6 +35,8 @@ export function DateRangePicker({
   variant = "outline",
 }: DateRangePickerProps) {
   const [open, setOpen] = React.useState(false)
+  // Two months side by side do not fit a phone: one at a time there.
+  const wide = useMediaQuery("(min-width: 640px)")
 
   const handleSelect = (range: DateRange | undefined) => {
     onSelect(range)
@@ -138,7 +141,7 @@ export function DateRangePicker({
             {hasValidRange ? <span className="flex-1">{formatDateRange(dateRange)}</span> : <span>{placeholder ?? i18n.t("common:datePicker.rangePlaceholder")}</span>}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0 shadow-md" align={align} sideOffset={5}>
+        <PopoverContent className="w-auto max-w-[calc(100vw-1rem)] p-0 shadow-md" align={align} sideOffset={5}>
           <div className="p-3 border-b border-border/10 bg-muted/30">
             <div className="text-xs font-medium text-center text-muted-foreground">
               {hasValidRange ? (
@@ -157,7 +160,7 @@ export function DateRangePicker({
             defaultMonth={dateRange?.from}
             selected={dateRange}
             onSelect={handleSelect}
-            numberOfMonths={2}
+            numberOfMonths={wide ? 2 : 1}
             initialFocus
             classNames={{
               months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
@@ -194,7 +197,7 @@ export function DateRangePicker({
                   onSelect(range)
                   setOpen(false)
                 }}
-                className="text-xs font-normal h-8"
+                className="h-auto min-h-8 whitespace-normal text-xs font-normal"
               >
                 {preset.label}
               </Button>

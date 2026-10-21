@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
+import { usePathname } from "next/navigation"
 import type { ReactNode } from "react"
 import { useTranslation } from "react-i18next"
 import Navbar from "./navigation/Navbar"
@@ -26,6 +27,13 @@ export default function MainLayout({ children }: MainLayoutProps) {
   // otherwise the server render and the browser render differ.
   const mounted = useMounted()
   const { isCommandPaletteOpen, setCommandPaletteOpen } = useKeyboardShortcuts()
+  const pathname = usePathname()
+  const mainRef = useRef<HTMLElement>(null)
+
+  // The page scrolls inside <main>, which the router does not reset: a new page starts at its top.
+  useEffect(() => {
+    mainRef.current?.scrollTo?.({ top: 0 })
+  }, [pathname])
 
   const handleToggleMobileMenu = () => {
     setIsMobileOpen((prev) => !prev)
@@ -56,7 +64,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
           <DemoBanner />
           <Navbar onToggleMobileMenu={handleToggleMobileMenu} />
           <OfflineIndicator />
-          <main id="main-content" role="main" aria-label={t("layout.mainContent")} className="flex-1 overflow-y-auto overflow-x-hidden" tabIndex={-1}>
+          <main ref={mainRef} id="main-content" role="main" aria-label={t("layout.mainContent")} className="flex-1 overflow-y-auto overflow-x-hidden" tabIndex={-1}>
             <div className="mx-auto w-full max-w-[1440px] p-4 md:p-6 lg:p-8">
               <Breadcrumbs />
               {mounted ? <PlanGate>{children}</PlanGate> : null}

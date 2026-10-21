@@ -270,7 +270,8 @@
       "eta": "HE prévue",
       "ata": "HE réelle",
       "fuelRemaining": "Carb. restant",
-      "fuelActual": "Carb. réel"
+      "fuelActual": "Carb. réel",
+      "msa": "MSA"
     },
     "alternate": "Dégagement",
     "total": "Total",
@@ -290,7 +291,8 @@
       "eta": "UTC",
       "ata": "UTC",
       "fuelRemaining": "L",
-      "fuelActual": "L"
+      "fuelActual": "L",
+      "msa": "ft"
     },
     "long": {
       "point": "Point tournant ou aérodrome atteint",
@@ -308,7 +310,8 @@
       "eta": "Heure estimée de passage",
       "ata": "Heure réelle de passage, à noter en vol",
       "fuelRemaining": "Carburant restant prévu au point",
-      "fuelActual": "Carburant restant réel, à noter en vol"
+      "fuelActual": "Carburant restant réel, à noter en vol",
+      "msa": "Altitude minimale de sécurité de la branche : point culminant (relief ou obstacle) près de la route plus la marge du club ; « ? » hors de la couverture du relief"
     },
     "obstacleNote": "Obstacle {{amsl}} (marge {{margin}})",
     "temperature": "{{value}} °C"
@@ -724,7 +727,9 @@
       "CRUISE": "Chaque ligne de croisière a un régime, une vitesse vraie et un débit.",
       "NORMAL_SETTING": "Choisissez le régime de croisière normal parmi ceux de la table.",
       "DESCENT": "Indiquez la vitesse, le taux et le débit de descente.",
-      "RESERVE": "Indiquez les deux débits de réserve."
+      "RESERVE": "Indiquez les deux débits de réserve.",
+      "TAKEOFF_TABLE": "Le tableau de décollage contient une erreur.",
+      "LANDING_TABLE": "Le tableau d'atterrissage contient une erreur."
     },
     "toast": {
       "saved": "Données de vol enregistrées",
@@ -737,6 +742,60 @@
       "templateFailed": "Gabarit non appliqué",
       "validated": "Valeurs de {{registration}} confirmées",
       "validationFailed": "Confirmation impossible"
+    },
+    "distances": {
+      "title": "Décollage et atterrissage",
+      "description": "Tableaux du manuel de vol de cet avion. Sans tableau, les plans de vol signalent les distances comme non renseignées.",
+      "notEntered": "Non renseigné — à saisir depuis le manuel de vol.",
+      "takeoff": {
+        "title": "Distances de décollage",
+        "enter": "Saisir le tableau de décollage",
+        "speed": "Vitesse de décollage du tableau",
+        "distance15m": "Passage des 15 m",
+        "remove": "Retirer le tableau de décollage"
+      },
+      "landing": {
+        "title": "Distances d'atterrissage",
+        "enter": "Saisir le tableau d'atterrissage",
+        "speed": "Vitesse à 15 m du tableau",
+        "distance15m": "Depuis 15 m",
+        "remove": "Retirer le tableau d'atterrissage"
+      },
+      "referenceMass": "Masse du tableau",
+      "referenceMassHint": "Celle des lignes sans masse (souvent la masse maximale).",
+      "speedHint": "Facultatif : sert au facteur générique de vent arrière.",
+      "source": "Source (manuel, page)",
+      "sourcePlaceholder": "Manuel de vol, section 5, p. …",
+      "rows": "Lignes du tableau",
+      "noRow": "Aucune ligne : recopiez celles du manuel.",
+      "pressureAlt": "Altitude-pression",
+      "temperature": "Température",
+      "mass": "Masse",
+      "optional": "facultatif",
+      "groundRoll": "Roulement",
+      "addRow": "Ajouter une ligne",
+      "issue": {
+        "VALUES": "Chaque ligne doit avoir une altitude-pression, une température et des distances positives.",
+        "SHORTER_THAN_ROLL": "La distance à 15 m ne peut être plus courte que le roulement.",
+        "DUPLICATE": "Deux lignes ont les mêmes conditions.",
+        "MASS": "Donnez une masse à chaque ligne, ou la masse du tableau."
+      },
+      "corrections": "Corrections du manuel",
+      "correctionsHint": "Laissez vide ce que le manuel ne donne pas : les facteurs génériques du UK CAA Safety Sense Leaflet 7 s'appliquent alors. Seuls 50 % du vent de face sont crédités et 150 % du vent arrière appliqués.",
+      "correction": {
+        "headwindPercentPerKt": "Vent de face",
+        "tailwindPercentPerKt": "Vent arrière",
+        "grassPercent": "Herbe sèche",
+        "wetGrassPercent": "Herbe mouillée",
+        "slopePercentPerPercent": "Pente"
+      },
+      "correctionUnit": {
+        "headwindPercentPerKt": "−%/kt",
+        "tailwindPercentPerKt": "+%/kt",
+        "grassPercent": "+%",
+        "wetGrassPercent": "+%",
+        "slopePercentPerPercent": "+% par %"
+      }
     }
   },
   "settings": {
@@ -762,7 +821,11 @@
       "clubMarginMin": "Marge du club ({{unit}})",
       "alternateRequiredVfr": "Exiger un dégagement en VFR",
       "verticalMarginFt": "Marge verticale des zones ({{unit}})",
-      "defaultCircuitHeightFt": "Hauteur du tour de piste ({{unit}})"
+      "defaultCircuitHeightFt": "Hauteur du tour de piste ({{unit}})",
+      "msaCorridorNm": "Couloir de l'altitude minimale de sécurité ({{unit}} de part et d'autre)",
+      "msaMarginFt": "Marge au-dessus du point culminant ({{unit}})",
+      "takeoffSafetyFactor": "Coefficient de sécurité au décollage ({{unit}})",
+      "landingSafetyFactor": "Coefficient de sécurité à l'atterrissage ({{unit}})"
     },
     "hints": {
       "reserveVfrDayLocalMin": "Au moins 10 min, à la puissance maximale continue.",
@@ -773,7 +836,11 @@
       "clubMarginMin": "Au débit de croisière normale.",
       "alternateRequiredVfr": "Sans cette option, le dégagement n'est compté que si le pilote en choisit un.",
       "verticalMarginFt": "Une traversée plus proche d'un plancher ou d'un plafond est signalée.",
-      "defaultCircuitHeightFt": "Hauteur au-dessus du terrain, quand l'aérodrome n'en publie pas."
+      "defaultCircuitHeightFt": "Hauteur au-dessus du terrain, quand l'aérodrome n'en publie pas.",
+      "msaCorridorNm": "5 NM par défaut. Relief et obstacles dans ce couloir comptent.",
+      "msaMarginFt": "1000 ft par défaut. L'altitude est arrondie à la centaine supérieure.",
+      "takeoffSafetyFactor": "1,33 recommandé par le UK CAA Safety Sense Leaflet 7.",
+      "landingSafetyFactor": "1,43 recommandé par le UK CAA Safety Sense Leaflet 7."
     },
     "problems": {
       "reserveVfrDayLocalMin": "Au moins {{min}} min (AMC1 NCO.OP.125).",
@@ -783,7 +850,11 @@
       "contingencyMinL": "Zéro ou plus.",
       "clubMarginMin": "Un nombre entier de minutes, zéro ou plus.",
       "verticalMarginFt": "Un nombre entier de pieds, zéro ou plus.",
-      "defaultCircuitHeightFt": "Un nombre entier de pieds, supérieur à zéro."
+      "defaultCircuitHeightFt": "Un nombre entier de pieds, supérieur à zéro.",
+      "msaCorridorNm": "Entre 1 et 10 NM.",
+      "msaMarginFt": "Un nombre entier de pieds, entre 500 et 3000.",
+      "takeoffSafetyFactor": "Entre 1 et 2.",
+      "landingSafetyFactor": "Entre 1 et 2."
     },
     "taxiFuelNote": "Le carburant de roulage se règle avion par avion (Administration › Flotte › Données de vol), 3 L par défaut.",
     "unsaved": "Modifications non enregistrées.",
@@ -794,6 +865,10 @@
       "saveFailed": "Enregistrement impossible",
       "invalid": "Corrigez les champs signalés.",
       "tryAgain": "Réessayez dans un instant."
+    },
+    "terrain": {
+      "title": "Relief et distances de piste",
+      "description": "Altitude minimale de sécurité de chaque branche, et coefficients appliqués aux distances de décollage et d'atterrissage du manuel de vol."
     }
   },
   "conditions": {
@@ -915,5 +990,42 @@
     "noCross": "sans travers",
     "gusts": "rafales : {{head}}, travers {{cross}} kt",
     "windHint": "Composantes calculées avec le vent du METAR (vrai) et l'orientation vraie des pistes. Comparez au vent traversier démontré de votre avion."
+  },
+  "profile": {
+    "title": "Profil vertical",
+    "summary": "Relief le plus haut près de la route : {{terrain}}. Altitude minimale de sécurité la plus haute : {{msa}}.",
+    "belowMsa_one": "Une branche est prévue sous son altitude minimale de sécurité.",
+    "belowMsa_other": "{{count}} branches sont prévues sous leur altitude minimale de sécurité.",
+    "legend": "Légende du profil",
+    "planned": "Altitude prévue",
+    "terrain": "Relief (point le plus haut près de la route)",
+    "msa": "Altitude minimale de sécurité",
+    "obstacle": "Obstacle",
+    "printNote": "MSA : point culminant (relief ou obstacle) à moins de {{corridor}} NM de la route + {{margin}} ft, arrondi à la centaine supérieure."
+  },
+  "distances": {
+    "title": "Décollage et atterrissage",
+    "takeoff": "Décollage",
+    "landing": "Atterrissage",
+    "takeoffTitle": "Distances de décollage",
+    "landingTitle": "Distances d'atterrissage",
+    "runway": "Piste conseillée {{designator}}",
+    "takeoffLine": "Roulement {{roll}} / TORA {{tora}} · passage des 15 m {{distance}} / TODA {{toda}}",
+    "landingLine": "Depuis 15 m {{distance}} / LDA {{lda}}",
+    "notComputed": "Non calculé",
+    "margin": "marge {{value}}",
+    "factors": "Facteurs",
+    "conditions": "Masse {{mass}}, altitude-pression {{pa}}, {{temperature}} °C ({{source}}), coefficient du club {{factor}}",
+    "conditionsSource": {
+      "METAR": "METAR",
+      "ISA": "atmosphère standard, pas de METAR"
+    },
+    "missing": "Non renseigné — à saisir depuis le manuel de vol (Administration › Flotte › Données de vol).",
+    "notEntered": "Non renseigné — à saisir depuis le manuel de vol",
+    "noRunway": "Pistes inconnues : voir la VAC.",
+    "hint": "Distances du manuel de vol, corrigées (herbe, pente, vent : facteurs du manuel, sinon facteurs génériques du UK CAA Safety Sense Leaflet 7) puis multipliées par le coefficient du club. Les autres pistes sont sur la fiche terrain.",
+    "tableSource": "Tableau : {{source}}",
+    "takeoffPrint": "{{required}} m nécessaires (15 m) / {{available}} m",
+    "landingPrint": "{{required}} m nécessaires (depuis 15 m) / {{available}} m"
   }
 }

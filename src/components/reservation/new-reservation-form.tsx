@@ -266,6 +266,8 @@ export function NewReservationForm({
       description={editing ? t("form.editDescription") : t("form.newDescription")}
       onSubmit={handleSubmit}
       submitLabel={editing ? t("common:actions.save") : t("form.submitCreate")}
+      // Next to "Annuler la réservation", a plain "Annuler" would read as cancelling the booking.
+      cancelLabel={editing ? t("common:actions.close") : undefined}
       submitting={isSubmitting}
       // Nothing to send: the note above says why.
       submitDisabled={licenceMissing}

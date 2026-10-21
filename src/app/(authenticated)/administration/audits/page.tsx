@@ -157,7 +157,8 @@ export default function SecurityAuditsPage() {
             </div>
 
             <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as AuditStatusTab)}>
-              <TabsList>
+              {/* The tabs wrap on narrow screens: nothing scrolls sideways. */}
+              <TabsList className="h-auto flex-wrap">
                 {STATUS_TABS.map((tab) => (
                   <TabsTrigger key={tab.value} value={tab.value} className="gap-1.5">
                     {t(`audits.statusTabs.${tab.value}`)}

@@ -213,12 +213,12 @@ export function EvaluationManagement() {
           }
         />
       ) : (
-        <div className="overflow-x-auto rounded-xl border bg-card">
+        <div className="rounded-xl border bg-card">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>{t("admin.evaluations.columns.module")}</TableHead>
-                <TableHead className="text-right">{t("admin.evaluations.columns.passScore")}</TableHead>
+                <TableHead className="hidden text-right sm:table-cell">{t("admin.evaluations.columns.passScore")}</TableHead>
                 <TableHead className="text-right">{t("admin.evaluations.columns.questions")}</TableHead>
                 <TableHead className="w-12">
                   <span className="sr-only">{t("common:labels.actions")}</span>
@@ -230,7 +230,7 @@ export function EvaluationManagement() {
                 const openQuestions = () => setQuestionsOf(String(evaluation.id))
                 return (
                   <TableRow key={evaluation.id} className="cursor-pointer" onClick={openQuestions}>
-                    <TableCell className="min-w-[12rem] font-medium">
+                    <TableCell className="font-medium">
                       {/* The button keeps the row reachable from the keyboard. */}
                       <button
                         type="button"
@@ -243,7 +243,7 @@ export function EvaluationManagement() {
                         {evaluation.module?.title ?? "—"}
                       </button>
                     </TableCell>
-                    <TableCell className="text-right tabular-nums">
+                    <TableCell className="hidden text-right tabular-nums sm:table-cell">
                       {t("shared.percent", { value: Math.round(evaluation.pass_score) })}
                     </TableCell>
                     <TableCell className="text-right tabular-nums">

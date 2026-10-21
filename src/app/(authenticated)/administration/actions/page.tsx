@@ -74,6 +74,27 @@ export default function AdminActionsPage() {
     setPage(1)
   }
 
+  const empty = hasFilters ? (
+    <EmptyState
+      icon={Search}
+      title={t("actionLog.noMatch.title")}
+      description={t("actionLog.noMatch.description")}
+      action={
+        <Button variant="outline" onClick={resetFilters}>
+          {t("common:actions.clearFilters")}
+        </Button>
+      }
+      className="border-0"
+    />
+  ) : (
+    <EmptyState
+      icon={ClipboardList}
+      title={t("actionLog.empty.title")}
+      description={t("actionLog.empty.description")}
+      className="border-0"
+    />
+  )
+
   // The page being left stays on screen while the next one loads.
   const shown = (data ?? previousData)?.adminActions
   const items = shown?.items ?? []
@@ -122,69 +143,91 @@ export default function AdminActionsPage() {
         <ErrorState onRetry={() => refetch().catch(() => undefined)} />
       ) : (
         <>
-          <Card>
+          {/* Wide screens: a table that fits the page (long values wrap, nothing scrolls inside it). */}
+          <Card className="hidden lg:block">
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{t("actionLog.table.date")}</TableHead>
-                      <TableHead>{t("actionLog.table.actor")}</TableHead>
-                      <TableHead>{t("actionLog.table.action")}</TableHead>
-                      <TableHead>{t("actionLog.table.target")}</TableHead>
-                      <TableHead>{t("actionLog.table.details")}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {items.length > 0 ? (
-                      items.map((entry) => (
-                        <TableRow key={entry.id}>
-                          <TableCell className="whitespace-nowrap tabular-nums">
-                            {formatDateTime(entry.created_at)}
-                          </TableCell>
-                          <TableCell className="whitespace-nowrap">{entry.actor_label || "—"}</TableCell>
-                          <TableCell className="font-medium">{adminActionLabel(entry.action)}</TableCell>
-                          <TableCell>{adminTargetLabel(entry)}</TableCell>
-                          <TableCell className="max-w-md text-muted-foreground">
-                            {adminActionDetails(entry.summary).map((line) => (
-                              <span key={line} className="block break-words">
-                                {line}
-                              </span>
-                            ))}
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow className="hover:bg-transparent">
-                        <TableCell colSpan={5} className="p-4">
-                          {hasFilters ? (
-                            <EmptyState
-                              icon={Search}
-                              title={t("actionLog.noMatch.title")}
-                              description={t("actionLog.noMatch.description")}
-                              action={
-                                <Button variant="outline" onClick={resetFilters}>
-                                  {t("common:actions.clearFilters")}
-                                </Button>
-                              }
-                              className="border-0"
-                            />
-                          ) : (
-                            <EmptyState
-                              icon={ClipboardList}
-                              title={t("actionLog.empty.title")}
-                              description={t("actionLog.empty.description")}
-                              className="border-0"
-                            />
-                          )}
+              <Table className="table-fixed">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-44">{t("actionLog.table.date")}</TableHead>
+                    <TableHead className="w-40">{t("actionLog.table.actor")}</TableHead>
+                    <TableHead className="w-56">{t("actionLog.table.action")}</TableHead>
+                    <TableHead className="w-48">{t("actionLog.table.target")}</TableHead>
+                    <TableHead>{t("actionLog.table.details")}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {items.length > 0 ? (
+                    items.map((entry) => (
+                      <TableRow key={entry.id}>
+                        <TableCell className="tabular-nums">{formatDateTime(entry.created_at)}</TableCell>
+                        <TableCell className="break-words">{entry.actor_label || "—"}</TableCell>
+                        <TableCell className="break-words font-medium">{adminActionLabel(entry.action)}</TableCell>
+                        <TableCell className="break-words">{adminTargetLabel(entry)}</TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {adminActionDetails(entry.summary).map((line) => (
+                            <span key={line} className="block break-words">
+                              {line}
+                            </span>
+                          ))}
                         </TableCell>
                       </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
+                    ))
+                  ) : (
+                    <TableRow className="hover:bg-transparent">
+                      <TableCell colSpan={5} className="p-4">
+                        {empty}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
             </CardContent>
           </Card>
+
+          {/* Phones and tablets: one card per action. */}
+          <div className="lg:hidden">
+            {items.length > 0 ? (
+              <ul className="space-y-3" aria-label={t("actionLog.title")}>
+                {items.map((entry) => {
+                  const details = adminActionDetails(entry.summary)
+                  return (
+                    <li key={entry.id}>
+                      <Card>
+                        <CardContent className="space-y-2 p-4">
+                          <div className="flex flex-wrap items-start justify-between gap-2">
+                            <p className="min-w-0 break-words font-medium">{adminActionLabel(entry.action)}</p>
+                            <p className="text-sm tabular-nums text-muted-foreground">
+                              {formatDateTime(entry.created_at)}
+                            </p>
+                          </div>
+                          <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
+                            <dt className="text-muted-foreground">{t("actionLog.table.actor")}</dt>
+                            <dd className="min-w-0 break-words">{entry.actor_label || "—"}</dd>
+                            <dt className="text-muted-foreground">{t("actionLog.table.target")}</dt>
+                            <dd className="min-w-0 break-words">{adminTargetLabel(entry)}</dd>
+                          </dl>
+                          {details.length > 0 && (
+                            <div className="text-sm text-muted-foreground">
+                              {details.map((line) => (
+                                <span key={line} className="block break-words">
+                                  {line}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </li>
+                  )
+                })}
+              </ul>
+            ) : (
+              <Card>
+                <CardContent className="p-4">{empty}</CardContent>
+              </Card>
+            )}
+          </div>
 
           <PaginationControls
             currentPage={shown?.page ?? page}

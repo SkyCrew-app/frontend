@@ -55,6 +55,8 @@ const renderList = (props: Partial<React.ComponentProps<typeof AuditList>> = {},
 };
 
 const bodyRows = () => screen.getAllByRole('row').slice(1);
+// Phones get the same audits as cards: the assertions read the table.
+const table = () => within(screen.getByRole('table'));
 
 describe('AuditList', () => {
   beforeEach(() => toast.mockClear());
@@ -62,10 +64,10 @@ describe('AuditList', () => {
   it('affiche des libellés français, jamais les codes', () => {
     renderList();
 
-    expect(screen.getByText('Conforme')).toBeInTheDocument();
-    expect(screen.getByText('Non conforme')).toBeInTheDocument();
-    expect(screen.getByText('En retard')).toBeInTheDocument();
-    expect(screen.getByText('En cours')).toBeInTheDocument();
+    expect(table().getByText('Conforme')).toBeInTheDocument();
+    expect(table().getByText('Non conforme')).toBeInTheDocument();
+    expect(table().getByText('En retard')).toBeInTheDocument();
+    expect(table().getByText('En cours')).toBeInTheDocument();
     expect(screen.queryByText('NON_CONFORME')).not.toBeInTheDocument();
   });
 
@@ -84,7 +86,7 @@ describe('AuditList', () => {
     renderList({ searchTerm: 'bruno' });
 
     expect(bodyRows()).toHaveLength(1);
-    expect(screen.getByText('F-HXYZ')).toBeInTheDocument();
+    expect(table().getByText('F-HXYZ')).toBeInTheDocument();
   });
 
   it("propose de créer un audit quand la liste est vide et qu'aucun filtre n'est actif", async () => {
@@ -108,7 +110,7 @@ describe('AuditList', () => {
     const user = userEvent.setup();
     renderList();
 
-    await user.click(screen.getByText('F-GABC'));
+    await user.click(table().getByText('F-GABC'));
 
     expect(screen.getByTestId('audit-details')).toHaveTextContent('détail 1');
   });
@@ -119,7 +121,7 @@ describe('AuditList', () => {
       { request: { query: DELETE_AUDIT, variables: { id: 1 } }, result: { data: { deleteAudit: true } } },
     ]);
 
-    await user.click(screen.getByRole('button', { name: /Actions pour l'audit du 10 mars 2026/ }));
+    await user.click(table().getByRole('button', { name: /Actions pour l'audit du 10 mars 2026/ }));
     await user.click(await screen.findByRole('menuitem', { name: 'Supprimer' }));
 
     const dialog = await screen.findByRole('alertdialog');

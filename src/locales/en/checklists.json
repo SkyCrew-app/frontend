@@ -124,6 +124,8 @@
         "offered": "Offered to pilots"
       },
       "emptyTemplate": "Empty",
+      "itemCount_one": "{{count}} item",
+      "itemCount_other": "{{count}} items",
       "deactivateLabel": "Deactivate the template {{name}}",
       "activateLabel": "Activate the template {{name}}",
       "editLabel": "Edit the template {{name}}",

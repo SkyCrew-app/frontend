@@ -41,6 +41,7 @@ import {
   isHighPriority,
   notificationTypeLabel,
 } from "@/interfaces/notification"
+import { notificationLink } from "@/lib/notification-link"
 
 const PAGE_SIZE = 20
 
@@ -135,7 +136,8 @@ export default function NotificationsPage() {
         await seenNotification({ variables: { id: notification.id } })
         refetchNotifications()
       }
-      if (actionUrl) router.push(actionUrl)
+      const link = notificationLink(actionUrl)
+      if (link) router.push(link)
     } catch (error) {
       console.error("Erreur lors du marquage de la notification comme vue:", error)
       toast({
@@ -280,7 +282,7 @@ export default function NotificationsPage() {
     }
 
     return (
-      <>
+      <div className="space-y-6">
         {groups.map((group) => (
           <section key={group.label} className="space-y-2">
             <h2 className="text-sm font-medium text-muted-foreground">{group.label}</h2>
@@ -376,7 +378,7 @@ export default function NotificationsPage() {
             </Button>
           </nav>
         )}
-      </>
+      </div>
     )
   }
 

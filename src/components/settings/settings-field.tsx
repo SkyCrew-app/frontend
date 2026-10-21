@@ -19,8 +19,9 @@ interface SettingsSectionProps {
 export function SettingsSection({ title, description, action, className, children }: SettingsSectionProps) {
   return (
     <Card className={className}>
-      <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
-        <div className="min-w-0 space-y-1.5">
+      {/* With a description, the action goes under the text when the card is too narrow for both. */}
+      <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-x-4 gap-y-3 space-y-0">
+        <div className={cn("min-w-0 flex-1 space-y-1.5", description && "basis-64")}>
           <CardTitle className="text-lg">{title}</CardTitle>
           {description && <CardDescription>{description}</CardDescription>}
         </div>

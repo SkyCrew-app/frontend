@@ -16,6 +16,8 @@ import { learningRoutes } from "@/lib/learning-navigation"
 export default function AdminELearningPage() {
   const { t } = useTranslation("instruction")
   const [activeTab, setActiveTab] = useState("courses")
+  // The course chosen on the Modules tab is still the one shown on the Lessons tab, and back.
+  const [courseId, setCourseId] = useState("")
 
   return (
     <div className="space-y-6">
@@ -34,7 +36,7 @@ export default function AdminELearningPage() {
       />
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
+        <TabsList className="h-auto flex-wrap">
           <TabsTrigger value="courses">{t("admin.tabs.courses")}</TabsTrigger>
           <TabsTrigger value="modules">{t("admin.tabs.modules")}</TabsTrigger>
           <TabsTrigger value="lessons">{t("admin.tabs.lessons")}</TabsTrigger>
@@ -45,10 +47,10 @@ export default function AdminELearningPage() {
           <CourseManagement />
         </TabsContent>
         <TabsContent value="modules">
-          <ModuleManagement />
+          <ModuleManagement courseId={courseId} onCourseChange={setCourseId} />
         </TabsContent>
         <TabsContent value="lessons">
-          <LessonManagement />
+          <LessonManagement courseId={courseId} onCourseChange={setCourseId} />
         </TabsContent>
         <TabsContent value="evaluations">
           <EvaluationManagement />

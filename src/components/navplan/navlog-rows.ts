@@ -10,6 +10,7 @@ export const NAVLOG_COLUMNS = [
   "point",
   "frequency",
   "altitude",
+  "msa",
   "trueCourse",
   "magneticCourse",
   "wind",
@@ -136,6 +137,10 @@ export function navLogCell(row: NavLogRow, column: NavLogColumn, labels: { calm:
   switch (column) {
     case "altitude":
       return formatNumber(leg.altitudeFt, 0)
+    case "msa":
+      // "?" outside the terrain coverage, nothing on a plan computed before the MSA.
+      if (!leg.terrain) return ""
+      return typeof leg.terrain.msaFt === "number" ? formatNumber(leg.terrain.msaFt, 0) : "?"
     case "trueCourse":
       return formatCourse(leg.trueCourseDeg)
     case "magneticCourse":

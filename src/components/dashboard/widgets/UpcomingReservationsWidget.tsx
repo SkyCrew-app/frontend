@@ -42,7 +42,7 @@ export default function UpcomingReservationsWidget({ userId }: UpcomingReservati
           title={t("upcomingReservations.empty")}
           action={
             <Button asChild variant="outline" size="sm">
-              <Link href="/reservations">
+              <Link href="/reservations?new=1">
                 <CalendarPlus className="h-4 w-4" />
                 {t("quickActions.book")}
               </Link>

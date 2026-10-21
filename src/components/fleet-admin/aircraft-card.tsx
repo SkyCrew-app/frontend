@@ -40,7 +40,7 @@ export function AircraftCard({ aircraft, onEdit, onDelete, onViewDetails }: Airc
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <h2 className="truncate text-base font-semibold">{aircraft.registration_number}</h2>
+          <h2 className="whitespace-nowrap text-base font-semibold">{aircraft.registration_number}</h2>
           <p className="truncate text-sm text-muted-foreground">{aircraft.model}</p>
         </div>
         <StatusBadge status={aircraft.availability_status} type="availability" className="shrink-0" />
@@ -67,30 +67,35 @@ export function AircraftCard({ aircraft, onEdit, onDelete, onViewDetails }: Airc
         </div>
       )}
 
-      <div className="mt-auto flex flex-wrap items-center justify-end gap-2 p-4">
-        <Button variant="ghost" size="sm" onClick={() => onViewDetails(aircraft)}>
-          {t("common:actions.details")}
-        </Button>
-        <Button variant="outline" size="sm" asChild>
-          <Link href={`/administration/planes/${aircraft.id}/flight-data`}>
-            <Gauge className="h-4 w-4" aria-hidden="true" />
-            {t("navplan:aircraftData.cardAction")}
-          </Link>
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => onEdit(aircraft)}>
-          <Pencil className="h-4 w-4" aria-hidden="true" />
-          {t("common:actions.edit")}
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-9 w-9 text-destructive hover:text-destructive"
-          onClick={() => onDelete(aircraft)}
-          aria-label={t("admin.deleteLabel", { registration: aircraft.registration_number })}
-          title={t("common:actions.delete")}
-        >
-          <Trash2 className="h-4 w-4" aria-hidden="true" />
-        </Button>
+      {/* Two groups (look, change) that wrap as a whole on a narrow card. */}
+      <div className="mt-auto flex flex-wrap items-center justify-between gap-2 p-4">
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={() => onViewDetails(aircraft)}>
+            {t("common:actions.details")}
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <Link href={`/administration/planes/${aircraft.id}/flight-data`}>
+              <Gauge className="h-4 w-4" aria-hidden="true" />
+              {t("navplan:aircraftData.cardAction")}
+            </Link>
+          </Button>
+        </div>
+        <div className="ml-auto flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => onEdit(aircraft)}>
+            <Pencil className="h-4 w-4" aria-hidden="true" />
+            {t("common:actions.edit")}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 text-destructive hover:text-destructive"
+            onClick={() => onDelete(aircraft)}
+            aria-label={t("admin.deleteLabel", { registration: aircraft.registration_number })}
+            title={t("common:actions.delete")}
+          >
+            <Trash2 className="h-4 w-4" aria-hidden="true" />
+          </Button>
+        </div>
       </div>
     </Card>
   )

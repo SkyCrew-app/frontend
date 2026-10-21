@@ -156,6 +156,40 @@ export function AuditList({
     return sortDirection === "asc" ? order : -order
   })
 
+  const auditMenu = (audit: AuditListProps["audits"][number]) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9"
+          aria-label={t("audits.list.actionsFor", { date: formatDate(audit.audit_date) })}
+          title={t("common:labels.actions")}
+        >
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem className="gap-2" onSelect={() => handleViewDetails(audit)}>
+          <Eye className="h-4 w-4" />
+          {t("audits.list.viewDetails")}
+        </DropdownMenuItem>
+        <DropdownMenuItem className="gap-2" onSelect={() => handleEdit(audit)}>
+          <Pencil className="h-4 w-4" />
+          {t("common:actions.edit")}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          className="gap-2 text-destructive focus:text-destructive"
+          onSelect={() => setAuditToDelete(audit)}
+        >
+          <Trash2 className="h-4 w-4" />
+          {t("common:actions.delete")}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+
   if (loading && audits.length === 0) {
     return (
       <Card className="space-y-3 p-4">
@@ -193,8 +227,9 @@ export function AuditList({
           />
         )
       ) : (
-        <Card className="overflow-hidden">
-          <div className="overflow-x-auto">
+        <>
+          {/* Wide screens: a sortable table. */}
+          <Card className="hidden overflow-hidden lg:block">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -235,10 +270,12 @@ export function AuditList({
                   return (
                     <TableRow key={audit.id} className="cursor-pointer" onClick={() => handleViewDetails(audit)}>
                       <TableCell className="whitespace-nowrap font-medium">{formatDate(audit.audit_date)}</TableCell>
-                      <TableCell className="whitespace-nowrap">
-                        <span className="font-medium">{audit.aircraft?.registration_number ?? "—"}</span>
+                      <TableCell>
+                        <span className="block whitespace-nowrap font-medium">
+                          {audit.aircraft?.registration_number ?? "—"}
+                        </span>
                         {audit.aircraft?.model && (
-                          <span className="ml-2 hidden text-muted-foreground sm:inline">{audit.aircraft.model}</span>
+                          <span className="block text-xs text-muted-foreground">{audit.aircraft.model}</span>
                         )}
                       </TableCell>
                       <TableCell className="hidden whitespace-nowrap md:table-cell">
@@ -260,45 +297,57 @@ export function AuditList({
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-9 w-9"
-                              aria-label={t("audits.list.actionsFor", { date: formatDate(audit.audit_date) })}
-                              title={t("common:labels.actions")}
-                            >
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem className="gap-2" onSelect={() => handleViewDetails(audit)}>
-                              <Eye className="h-4 w-4" />
-                              {t("audits.list.viewDetails")}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="gap-2" onSelect={() => handleEdit(audit)}>
-                              <Pencil className="h-4 w-4" />
-                              {t("common:actions.edit")}
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              className="gap-2 text-destructive focus:text-destructive"
-                              onSelect={() => setAuditToDelete(audit)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                              {t("common:actions.delete")}
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        {auditMenu(audit)}
                       </TableCell>
                     </TableRow>
                   )
                 })}
               </TableBody>
             </Table>
-          </div>
-        </Card>
+          </Card>
+
+          {/* Phones and tablets: one card per audit, newest first. */}
+          <ul className="space-y-3 lg:hidden" aria-label={t("audits.tabs.audits")}>
+            {sortedAudits.map((audit) => {
+              const result = auditResult(audit.audit_result)
+              const status = auditStatus(audit)
+              const overdue = isAuditOverdue(audit)
+              return (
+                <li key={audit.id}>
+                  <Card className="flex items-start gap-2 p-4">
+                    <button
+                      type="button"
+                      onClick={() => handleViewDetails(audit)}
+                      className="min-w-0 flex-1 space-y-2 rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <span className="flex flex-wrap items-baseline gap-x-2">
+                        <span className="font-medium">{audit.aircraft?.registration_number ?? "—"}</span>
+                        {audit.aircraft?.model && (
+                          <span className="text-sm text-muted-foreground">{audit.aircraft.model}</span>
+                        )}
+                      </span>
+                      <span className="block text-sm text-muted-foreground">
+                        {formatDate(audit.audit_date)}
+                        {auditorName(audit) && ` · ${auditorName(audit)}`}
+                      </span>
+                      <span className="flex flex-wrap gap-1.5">
+                        <Badge variant={result.variant}>{result.label}</Badge>
+                        <Badge variant={status.variant}>{status.label}</Badge>
+                      </span>
+                      {audit.next_audit_date && (
+                        <span className="block text-sm">
+                          <span className="text-muted-foreground">{t("audits.list.columns.next_audit_date")}</span>{" "}
+                          <span className={cn(overdue && "text-destructive")}>{formatDate(audit.next_audit_date)}</span>
+                        </span>
+                      )}
+                    </button>
+                    {auditMenu(audit)}
+                  </Card>
+                </li>
+              )
+            })}
+          </ul>
+        </>
       )}
 
       {selectedAudit && (

@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useQuery, useMutation } from "@apollo/client"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -164,6 +165,50 @@ export default function AdminChecklistsPage() {
     }
   }
 
+  const offeredSwitch = (template: (typeof templates)[number]) => (
+    <div className="flex items-center gap-2">
+      <Switch
+        checked={template.is_active}
+        disabled={togglingId === template.id}
+        onCheckedChange={() => handleToggleActive(template)}
+        aria-label={
+          template.is_active
+            ? t("admin.list.deactivateLabel", { name: template.name })
+            : t("admin.list.activateLabel", { name: template.name })
+        }
+      />
+      <Badge variant={template.is_active ? "success" : "neutral"}>
+        {template.is_active ? t("admin.active") : t("admin.inactive")}
+      </Badge>
+    </div>
+  )
+
+  const templateActions = (template: (typeof templates)[number]) => (
+    <div className="flex justify-end gap-1">
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => router.push(`/administration/checklists/${template.id}`)}
+        aria-label={t("admin.list.editLabel", { name: template.name })}
+        title={t("common:actions.edit")}
+      >
+        <Pencil className="h-4 w-4" />
+      </Button>
+      {canDelete && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-destructive hover:text-destructive"
+          onClick={() => setTemplateToDelete(template)}
+          aria-label={t("admin.list.deleteLabel", { name: template.name })}
+          title={t("common:actions.delete")}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      )}
+    </div>
+  )
+
   const createButton = (
     <Button onClick={() => setIsCreateOpen(true)}>
       <Plus className="h-4 w-4" />
@@ -201,86 +246,85 @@ export default function AdminChecklistsPage() {
           action={createButton}
         />
       ) : (
-        <Card className="overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t("admin.list.columns.template")}</TableHead>
-                <TableHead>{t("common:labels.aircraft")}</TableHead>
-                <TableHead className="text-right">{t("admin.list.columns.items")}</TableHead>
-                <TableHead>{t("admin.list.columns.offered")}</TableHead>
-                <TableHead className="w-24">
-                  <span className="sr-only">{t("common:labels.actions")}</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {templates.map((template) => {
-                const itemCount = template.items?.length || 0
-                return (
-                  <TableRow
-                    key={template.id}
-                    className="cursor-pointer"
-                    onClick={() => router.push(`/administration/checklists/${template.id}`)}
-                  >
-                    <TableCell>
-                      <p className="font-medium">{template.name}</p>
-                      {template.description && (
-                        <p className="max-w-md truncate text-xs text-muted-foreground">{template.description}</p>
-                      )}
-                    </TableCell>
-                    <TableCell className="whitespace-nowrap">{template.aircraft_model}</TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {itemCount === 0 ? <Badge variant="warning">{t("admin.list.emptyTemplate")}</Badge> : itemCount}
-                    </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center gap-2">
-                        <Switch
-                          checked={template.is_active}
-                          disabled={togglingId === template.id}
-                          onCheckedChange={() => handleToggleActive(template)}
-                          aria-label={
-                            template.is_active
-                              ? t("admin.list.deactivateLabel", { name: template.name })
-                              : t("admin.list.activateLabel", { name: template.name })
-                          }
-                        />
-                        <Badge variant={template.is_active ? "success" : "neutral"}>
-                          {template.is_active ? t("admin.active") : t("admin.inactive")}
-                        </Badge>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => router.push(`/administration/checklists/${template.id}`)}
-                          aria-label={t("admin.list.editLabel", { name: template.name })}
-                          title={t("common:actions.edit")}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        {canDelete && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-destructive hover:text-destructive"
-                            onClick={() => setTemplateToDelete(template)}
-                            aria-label={t("admin.list.deleteLabel", { name: template.name })}
-                            title={t("common:actions.delete")}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+        <>
+          {/* Wide screens: a table. */}
+          <Card className="hidden overflow-hidden lg:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t("admin.list.columns.template")}</TableHead>
+                  <TableHead>{t("common:labels.aircraft")}</TableHead>
+                  <TableHead className="text-right">{t("admin.list.columns.items")}</TableHead>
+                  <TableHead>{t("admin.list.columns.offered")}</TableHead>
+                  <TableHead className="w-24">
+                    <span className="sr-only">{t("common:labels.actions")}</span>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {templates.map((template) => {
+                  const itemCount = template.items?.length || 0
+                  return (
+                    <TableRow
+                      key={template.id}
+                      className="cursor-pointer"
+                      onClick={() => router.push(`/administration/checklists/${template.id}`)}
+                    >
+                      <TableCell>
+                        <p className="font-medium">{template.name}</p>
+                        {template.description && (
+                          <p className="line-clamp-1 max-w-md text-xs text-muted-foreground">{template.description}</p>
                         )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                )
-              })}
-            </TableBody>
-          </Table>
-        </Card>
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">{template.aircraft_model}</TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {itemCount === 0 ? <Badge variant="warning">{t("admin.list.emptyTemplate")}</Badge> : itemCount}
+                      </TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        {offeredSwitch(template)}
+                      </TableCell>
+                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                        {templateActions(template)}
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
+              </TableBody>
+            </Table>
+          </Card>
+
+          {/* Phones and tablets: one card per template. */}
+          <ul className="space-y-3 lg:hidden" aria-label={t("admin.list.title")}>
+            {templates.map((template) => {
+              const itemCount = template.items?.length || 0
+              return (
+                <li key={template.id}>
+                  <Card className="space-y-3 p-4">
+                    <Link
+                      href={`/administration/checklists/${template.id}`}
+                      className="block rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <p className="break-words font-medium">{template.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {template.aircraft_model} ·{" "}
+                        {itemCount === 0
+                          ? t("admin.list.emptyTemplate")
+                          : t("admin.list.itemCount", { count: itemCount })}
+                      </p>
+                      {template.description && (
+                        <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{template.description}</p>
+                      )}
+                    </Link>
+                    <div className="flex items-center justify-between gap-2">
+                      {offeredSwitch(template)}
+                      {templateActions(template)}
+                    </div>
+                  </Card>
+                </li>
+              )
+            })}
+          </ul>
+        </>
       )}
 
       <AlertDialog

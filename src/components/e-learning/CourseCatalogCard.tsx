@@ -73,8 +73,9 @@ export function CourseCatalogCard({ course, progress }: CourseCatalogCardProps) 
     >
       <Card className="flex h-full flex-col transition-shadow group-hover:shadow-md">
         <CardHeader className="pb-3">
-          <div className="flex items-start justify-between gap-3">
-            <CardTitle className="text-base leading-snug">{course.title}</CardTitle>
+          {/* The badge goes under the title when the card is too narrow for both. */}
+          <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1.5">
+            <CardTitle className="min-w-0 flex-1 basis-40 break-words text-base leading-snug">{course.title}</CardTitle>
             {status && (
               <Badge variant={status.variant} className="shrink-0">
                 {status.label}

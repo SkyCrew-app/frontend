@@ -33,7 +33,8 @@ export function ChecklistItemRow({
 }: ChecklistItemRowProps) {
   const { t } = useTranslation("checklists")
   const [showNote, setShowNote] = useState(!!note)
-  const noteVisible = showNote || (disabled && !!note)
+  // A read-only checklist only shows the notes that were written.
+  const noteVisible = disabled ? !!note : showNote
 
   return (
     <div

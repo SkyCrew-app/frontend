@@ -171,7 +171,11 @@
     "addImage": "Ajouter l'image",
     "linkPlaceholder": "https://exemple.com",
     "imagePlaceholder": "https://exemple.com/image.jpg",
-    "imageAlt": "Image"
+    "imageAlt": "Image",
+    "link": "Lien",
+    "image": "Image",
+    "undo": "Annuler",
+    "redo": "Rétablir"
   },
   "plan": {
     "name": {

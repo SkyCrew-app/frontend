@@ -59,6 +59,8 @@ import { FuelSummary } from "./FuelSummary"
 import { LoadEditor } from "./LoadEditor"
 import { MassBalancePanel } from "./MassBalancePanel"
 import { NavLogTable } from "./NavLogTable"
+import { RunwayDistancesSummary } from "./RunwayDistances"
+import { TerrainProfileChart } from "./TerrainProfileChart"
 import { NavdataAge, PreparationDisclaimer, WARNING_ALERT } from "./NoticesBanner"
 import { NumberField } from "./NumberField"
 import { PlanSummary, checksFromNotices, type Check } from "./PlanSummary"
@@ -595,6 +597,14 @@ export function FlightPlanBuilder({ initialDraft, aircraft, settings, navdata, i
 
           {shownResult && (
             <>
+              <ResultCard title={t("profile.title")}>
+                <TerrainProfileChart result={shownResult} />
+              </ResultCard>
+              {(shownResult.aerodromes ?? []).some((aerodrome) => aerodrome.distances) && (
+                <ResultCard title={t("distances.title")}>
+                  <RunwayDistancesSummary aerodromes={shownResult.aerodromes} />
+                </ResultCard>
+              )}
               <div className="grid items-start gap-4 xl:grid-cols-2">
                 <ResultCard title={t("results.tabs.fuel")}>
                   {/* The API applies the night reserve to a flight partly at night, whatever was chosen. */}

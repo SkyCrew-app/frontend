@@ -306,7 +306,7 @@ export default function TopUpAccount() {
               id="amount"
               type="number"
               inputMode="decimal"
-              placeholder="50"
+              placeholder="0"
               value={amount}
               onChange={handleAmountChange}
               className="tabular-nums"

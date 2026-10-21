@@ -164,7 +164,7 @@ export default function FleetDashboard() {
               ))}
             </div>
           ) : (
-            <div className={cn("grid grid-cols-2 gap-4", reservedCount > 0 ? "lg:grid-cols-4" : "lg:grid-cols-3")}>
+            <div className={cn("grid grid-cols-2 gap-4", reservedCount > 0 ? "lg:grid-cols-4" : "sm:grid-cols-3")}>
               <StatCard label={t("shared.aircraftPlural")} value={totalAircrafts} icon={Plane} tone="primary" />
               <StatCard
                 label={t("overview.stats.available")}
@@ -335,12 +335,11 @@ export default function FleetDashboard() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>{t("shared.registration")}</TableHead>
-                    <TableHead>{t("shared.model")}</TableHead>
+                    <TableHead>{t("shared.aircraft")}</TableHead>
                     <TableHead>{t("shared.availability")}</TableHead>
-                    <TableHead>{t("overview.table.maintenance")}</TableHead>
-                    <TableHead className="text-right">{t("shared.flightHours")}</TableHead>
-                    <TableHead className="text-right">{t("shared.hourlyCost")}</TableHead>
+                    <TableHead className="hidden sm:table-cell">{t("overview.table.maintenance")}</TableHead>
+                    <TableHead className="hidden text-right xl:table-cell">{t("shared.flightHours")}</TableHead>
+                    <TableHead className="hidden text-right xl:table-cell">{t("shared.hourlyCost")}</TableHead>
                     <TableHead className="w-12">
                       <span className="sr-only">{t("common:actions.details")}</span>
                     </TableHead>
@@ -350,7 +349,7 @@ export default function FleetDashboard() {
                   {loading && !data ? (
                     Array.from({ length: 5 }).map((_, index) => (
                       <TableRow key={index}>
-                        <TableCell colSpan={7}>
+                        <TableCell colSpan={6}>
                           <Skeleton className="h-8 w-full" />
                         </TableCell>
                       </TableRow>
@@ -362,18 +361,22 @@ export default function FleetDashboard() {
                         className="cursor-pointer"
                         onClick={() => handleAircraftClick(aircraft)}
                       >
-                        <TableCell className="font-medium">{aircraft.registration_number}</TableCell>
-                        <TableCell>{aircraft.model}</TableCell>
+                        <TableCell className="font-medium">
+                          {aircraft.registration_number}
+                          <span className="block text-xs font-normal text-muted-foreground">{aircraft.model}</span>
+                        </TableCell>
                         <TableCell>
                           <StatusBadge status={aircraft.availability_status} type="availability" />
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="hidden sm:table-cell">
                           <StatusBadge status={aircraft.maintenance_status} type="maintenance" />
                         </TableCell>
-                        <TableCell className="text-right tabular-nums">
+                        <TableCell className="hidden text-right tabular-nums xl:table-cell">
                           {formatFlightDuration(aircraft.total_flight_hours)}
                         </TableCell>
-                        <TableCell className="text-right tabular-nums">{formatMoney(aircraft.hourly_cost)}</TableCell>
+                        <TableCell className="hidden text-right tabular-nums xl:table-cell">
+                          {formatMoney(aircraft.hourly_cost)}
+                        </TableCell>
                         <TableCell className="text-right">
                           <Button
                             variant="ghost"
@@ -395,7 +398,7 @@ export default function FleetDashboard() {
                     ))
                   ) : (
                     <TableRow className="hover:bg-transparent">
-                      <TableCell colSpan={7} className="p-4">
+                      <TableCell colSpan={6} className="p-4">
                         {hasFilters ? (
                           <EmptyState
                             icon={Search}
