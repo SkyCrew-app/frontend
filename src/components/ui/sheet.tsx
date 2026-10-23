@@ -8,6 +8,7 @@ import { X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { SCROLL_OVERLAY, keepOpenOnScrollbar } from "@/components/ui/scroll-overlay"
+import { useReturnFocus } from "@/components/ui/return-focus"
 
 const Sheet = SheetPrimitive.Root
 
@@ -63,7 +64,7 @@ interface SheetContentProps
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   SheetContentProps
->(({ side = "right", className, children, closeButton = true, onPointerDownOutside, ...props }, ref) => (
+>(({ side = "right", className, children, closeButton = true, onPointerDownOutside, onOpenAutoFocus, onCloseAutoFocus, ...props }, ref) => (
   <SheetPortal>
     <SheetOverlay {...SCROLL_OVERLAY} className="flex flex-col overflow-y-auto">
       <SheetPrimitive.Content
@@ -71,10 +72,11 @@ const SheetContent = React.forwardRef<
         className={cn(sheetVariants({ side }), className)}
         onPointerDownOutside={keepOpenOnScrollbar(onPointerDownOutside)}
         {...props}
+        {...useReturnFocus({ onOpenAutoFocus, onCloseAutoFocus })}
       >
         {children}
         {closeButton && (
-          <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
+          <SheetPrimitive.Close className="absolute right-2.5 top-2.5 inline-flex h-8 w-8 items-center justify-center rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
             <X className="h-4 w-4" />
             <span className="sr-only">{i18n.t("common:actions.close")}</span>
           </SheetPrimitive.Close>

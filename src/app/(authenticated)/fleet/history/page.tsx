@@ -357,7 +357,8 @@ function HistoryTable<T extends { id: string | number }>({
   return (
     <div className="space-y-3 pt-2">
       <div className="rounded-md border">
-        <Table>
+        {/* Tighter cells on a phone: the maintenance table then fits the screen, with no hidden part to scroll to. */}
+        <Table className="[&_td]:px-2 [&_th]:px-2 sm:[&_td]:px-4 sm:[&_th]:px-4">
           <TableHeader>
             <TableRow>{head}</TableRow>
           </TableHeader>

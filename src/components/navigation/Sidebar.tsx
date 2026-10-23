@@ -203,7 +203,7 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
       {/* Mobile sidebar overlay */}
       {isMobileOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-primary/30 z-40 backdrop-blur-sm transition-opacity"
+          className="lg:hidden fixed inset-0 bg-primary/30 dark:bg-black/60 z-40 backdrop-blur-sm transition-opacity"
           onClick={onCloseMobileMenu}
           aria-hidden="true"
         />
@@ -268,7 +268,7 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
               <span className="block truncate text-sm font-medium text-sidebar-foreground">
                 {userName || t("account.fallbackName")}
               </span>
-              {userRole && <span className="block truncate text-xs text-sidebar-foreground/60">{roleLabel(userRole)}</span>}
+              {userRole && <span className="block truncate text-xs text-sidebar-foreground/75">{roleLabel(userRole)}</span>}
             </span>
           </Link>
           <button

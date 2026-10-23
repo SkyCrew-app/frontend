@@ -7,6 +7,7 @@ import { formatUtcTime } from "@/lib/navplan/units"
 import { cn } from "@/lib/utils"
 
 const ROLES = ["departure", "destination", "alternate"] as const
+const SUN_TIMES = ["civilDawn", "sunrise", "sunset", "civilDusk"] as const
 
 /** "16/10 17:30Z" — the date is written when it is not the reference day. */
 export const formatUtcDateTime = (iso: string | null | undefined, reference?: string | null) => {
@@ -39,6 +40,7 @@ export function FlightConditions({ result, departureTime, bare = false }: { resu
   const qnh = useQnhOrigin(result, departureTime)
   if (!daylight && !qnh) return null
   const Icon = daylight?.night ? Moon : Sun
+  const roleLabel = (role: string) => (ROLES.includes(role as (typeof ROLES)[number]) ? t(`weather.role.${role}`) : role)
 
   return (
     <section className={cn("space-y-2 text-sm", !bare && "rounded-lg border p-3")} aria-labelledby={bare ? undefined : "flight-conditions-title"}>
@@ -58,8 +60,28 @@ export function FlightConditions({ result, departureTime, bare = false }: { resu
       )}
       {daylight && daylight.aerodromes.length > 0 && (
         <div>
-          {/* Wraps rather than scrolls on a phone. */}
-          <table className="w-full text-xs [&_td]:px-2 [&_td]:py-1 [&_th]:px-2 [&_th]:py-1">
+          {/* Phone: one block per aerodrome, its four times side by side. Wider: the table. */}
+          <ul className="space-y-2 sm:hidden" aria-label={t("conditions.caption")}>
+            {daylight.aerodromes.map((aerodrome) => (
+              <li key={`${aerodrome.role}-${aerodrome.icao}`} className="rounded-md border p-2 text-xs">
+                <p className="font-medium">
+                  {aerodrome.icao}{" "}
+                  <span className="font-normal text-muted-foreground">
+                    {roleLabel(aerodrome.role)} · {formatUtcDateTime(aerodrome.at)}
+                  </span>
+                </p>
+                <dl className="mt-1 grid grid-cols-2 gap-x-3 gap-y-1">
+                  {SUN_TIMES.map((key) => (
+                    <div key={key} className="flex justify-between gap-2">
+                      <dt className="text-muted-foreground">{t(`conditions.columns.${key}`)}</dt>
+                      <dd className="tabular-nums">{formatUtcTime(aerodrome[key])}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </li>
+            ))}
+          </ul>
+          <table className="hidden w-full text-xs sm:table [&_td]:px-2 [&_td]:py-1 [&_th]:px-2 [&_th]:py-1">
             <caption className="sr-only">{t("conditions.caption")}</caption>
             <thead className="text-muted-foreground">
               <tr className="border-b">
@@ -86,7 +108,7 @@ export function FlightConditions({ result, departureTime, bare = false }: { resu
                   <th scope="row" className="text-left font-medium">
                     {aerodrome.icao}{" "}
                     <span className="font-normal text-muted-foreground">
-                      {ROLES.includes(aerodrome.role as (typeof ROLES)[number]) ? t(`weather.role.${aerodrome.role}`) : aerodrome.role} ·{" "}
+                      {roleLabel(aerodrome.role)} ·{" "}
                       {formatUtcDateTime(aerodrome.at)}
                     </span>
                   </th>

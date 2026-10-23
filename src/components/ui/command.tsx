@@ -50,7 +50,7 @@ const CommandInput = React.forwardRef<
     <CommandPrimitive.Input
       ref={ref}
       className={cn(
-        "flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
+        "flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50",
         className
       )}
       {...props}
@@ -109,6 +109,8 @@ const CommandSeparator = React.forwardRef<
   <CommandPrimitive.Separator
     ref={ref}
     className={cn("-mx-1 h-px bg-border", className)}
+    // A list of suggestions may only hold groups and options: the line between groups is decoration.
+    aria-hidden="true"
     {...props}
   />
 ))

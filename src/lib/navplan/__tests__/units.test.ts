@@ -65,6 +65,8 @@ describe("nav log formats", () => {
     expect(formatMinutes(35)).toBe("35 min")
     expect(formatMinutes(80)).toBe("1 h 20")
     expect(formatMinutes(65.4)).toBe("1 h 05")
+    expect(formatMinutes(-65)).toBe("-1 h 05")
+    expect(formatMinutes(-5)).toBe("-5 min")
     expect(formatUtcTime("2026-10-17T09:07:12.000Z")).toBe("09:07Z")
   })
 

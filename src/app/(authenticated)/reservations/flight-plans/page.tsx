@@ -19,6 +19,7 @@ import { EmptyState } from "@/components/flight-plan/empty-state"
 import { StatsCards } from "@/components/flight-plan/stats-cards"
 import { ListPager } from "@/components/reservation/list-pager"
 import type { Flight } from "@/interfaces/flight"
+import { flightTypeKey, flightTypeLabel } from "@/components/flight/flight-type"
 
 const ITEMS_PER_PAGE = 6
 
@@ -63,8 +64,13 @@ export default function MyFlightPlans() {
 
   const allFlightPlans: Flight[] = useMemo(() => data?.getFlightsByUser ?? [], [data])
 
+  // `flight_type` is the booking category: one option per category, whatever its stored case,
+  // ordered by the label shown.
   const flightTypes = useMemo(
-    () => Array.from(new Set(allFlightPlans.map((flight) => flight.flight_type).filter(Boolean))).sort((a, b) => a.localeCompare(b)),
+    () =>
+      Array.from(new Set(allFlightPlans.map((flight) => flightTypeKey(flight.flight_type)).filter(Boolean))).sort((a, b) =>
+        flightTypeLabel(a).localeCompare(flightTypeLabel(b)),
+      ),
     [allFlightPlans],
   )
 
@@ -76,7 +82,7 @@ export default function MyFlightPlans() {
         .join(" ")
         .toLowerCase()
 
-      return haystack.includes(search) && (flightTypeFilter === "ALL" || flight.flight_type === flightTypeFilter)
+      return haystack.includes(search) && (flightTypeFilter === "ALL" || flightTypeKey(flight.flight_type) === flightTypeFilter)
     })
     .sort((a, b) => (sortOrder === "newest" ? startTimeOf(b) - startTimeOf(a) : startTimeOf(a) - startTimeOf(b)))
 

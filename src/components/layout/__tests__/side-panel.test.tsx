@@ -34,4 +34,29 @@ describe('SidePanel', () => {
     await user.click(close);
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
+
+  it('rend le focus à ce qui l’avait avant de s’ouvrir, même ouvert sans déclencheur', async () => {
+    const user = userEvent.setup();
+    // A free cell of the calendar opens the panel from code: Radix has no trigger to go back to.
+    function Calendar() {
+      const [open, setOpen] = React.useState(false);
+      return (
+        <>
+          <button type="button" onClick={() => setOpen(true)}>Réserver F-GABC à 10:00</button>
+          <SidePanel open={open} onOpenChange={setOpen} title="Créer une réservation" onSubmit={() => {}}>
+            <input aria-label="But" />
+          </SidePanel>
+        </>
+      );
+    }
+    render(<Calendar />);
+    const cell = screen.getByRole('button', { name: 'Réserver F-GABC à 10:00' });
+    cell.focus();
+    await user.keyboard('{Enter}');
+    expect(await screen.findByRole('textbox', { name: 'But' })).toHaveFocus();
+
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(cell).toHaveFocus();
+  });
 });

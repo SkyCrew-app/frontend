@@ -1,15 +1,15 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { pointLabel } from "@/lib/navplan/aerodrome"
 import type { FlightPlanResult } from "@/lib/navplan/types"
 import { formatFt, formatNumber } from "@/lib/navplan/units"
+import { useElementWidth } from "./useElementWidth"
 
 type ProfileResult = Pick<FlightPlanResult, "legs" | "profile" | "terrainProfile" | "terrainSource" | "totalDistanceNm">
 
 const HEIGHT = 220
-const PAD = { top: 12, right: 12, bottom: 34, left: 48 }
+const PAD = { top: 12, right: 12, bottom: 34, left: 56 }
 
 /** A round step for about `count` ticks between 0 and `max`. */
 export function tickStep(max: number, count = 4): number {
@@ -19,22 +19,6 @@ export function tickStep(max: number, count = 4): number {
   return step
 }
 
-/** Width of the element, followed on resize (the chart is drawn at its real size, text stays legible). */
-function useWidth<T extends HTMLElement>(initial: number) {
-  const ref = useRef<T>(null)
-  const [width, setWidth] = useState(initial)
-  useEffect(() => {
-    const element = ref.current
-    if (!element) return
-    setWidth(element.clientWidth || initial)
-    if (typeof ResizeObserver === "undefined") return
-    const observer = new ResizeObserver(([entry]) => setWidth(Math.round(entry.contentRect.width) || initial))
-    observer.observe(element)
-    return () => observer.disconnect()
-  }, [initial])
-  return [ref, width] as const
-}
-
 /**
  * The vertical profile of the route: the planned altitude over the terrain (highest point near
  * the track, every half nautical mile) and the obstacles, with the minimum safe altitude of each
@@ -42,7 +26,7 @@ function useWidth<T extends HTMLElement>(initial: number) {
  */
 export function TerrainProfileChart({ result }: { result: ProfileResult }) {
   const { t } = useTranslation("navplan")
-  const [ref, width] = useWidth<HTMLDivElement>(640)
+  const [ref, width] = useElementWidth<HTMLDivElement>(640)
   const terrain = result.terrainProfile ?? []
   if (result.legs.length === 0 || (terrain.length === 0 && result.profile.length === 0)) return null
 
@@ -110,20 +94,20 @@ export function TerrainProfileChart({ result }: { result: ProfileResult }) {
           {yTicks.map((value) => (
             <g key={`y${value}`}>
               <line x1={PAD.left} x2={PAD.left + innerWidth} y1={y(value)} y2={y(value)} className="stroke-border" strokeWidth={1} />
-              <text x={PAD.left - 6} y={y(value) + 4} textAnchor="end" className="fill-muted-foreground text-[10px] tabular-nums">
+              <text x={PAD.left - 6} y={y(value) + 4} textAnchor="end" className="fill-muted-foreground text-[11px] tabular-nums">
                 {formatNumber(value, 0)}
               </text>
             </g>
           ))}
-          <text x={4} y={PAD.top + 4} className="fill-muted-foreground text-[10px]">
+          <text x={4} y={PAD.top + 4} className="fill-muted-foreground text-[11px]">
             ft
           </text>
           {xTicks.map((value) => (
-            <text key={`x${value}`} x={x(value)} y={HEIGHT - PAD.bottom + 13} textAnchor="middle" className="fill-muted-foreground text-[10px] tabular-nums">
+            <text key={`x${value}`} x={x(value)} y={HEIGHT - PAD.bottom + 13} textAnchor="middle" className="fill-muted-foreground text-[11px] tabular-nums">
               {formatNumber(value, 0)}
             </text>
           ))}
-          <text x={PAD.left + innerWidth} y={floor - 4} textAnchor="end" className="fill-muted-foreground text-[10px]">
+          <text x={PAD.left + innerWidth} y={floor - 4} textAnchor="end" className="fill-muted-foreground text-[11px]">
             NM
           </text>
           {closed.map((path) => (
@@ -154,7 +138,7 @@ export function TerrainProfileChart({ result }: { result: ProfileResult }) {
                   strokeDasharray="6 4"
                 />
                 {x(legStarts[i] + leg.distanceNm) - x(legStarts[i]) > 70 && (
-                  <text x={x(legStarts[i]) + 4} y={y(msa) - 4} className={warn ? "fill-destructive text-[10px] font-semibold" : "fill-muted-foreground text-[10px]"}>
+                  <text x={x(legStarts[i]) + 4} y={y(msa) - 4} className={warn ? "fill-destructive text-[11px] font-semibold" : "fill-muted-foreground text-[11px]"}>
                     MSA {formatNumber(msa, 0)}
                   </text>
                 )}
@@ -164,7 +148,7 @@ export function TerrainProfileChart({ result }: { result: ProfileResult }) {
           {planned && <polyline points={planned} fill="none" className="stroke-primary" strokeWidth={2} strokeLinejoin="round" />}
           <line x1={PAD.left} x2={PAD.left + innerWidth} y1={floor} y2={floor} className="stroke-muted-foreground" strokeWidth={1} />
           {names.map((name) => (
-            <text key={`n${name.at}`} x={name.at} y={HEIGHT - 4} textAnchor={name.at < PAD.left + 20 ? "start" : name.at > width - 40 ? "end" : "middle"} className="fill-foreground text-[10px] font-medium">
+            <text key={`n${name.at}`} x={name.at} y={HEIGHT - 4} textAnchor={name.at < PAD.left + 20 ? "start" : name.at > width - 40 ? "end" : "middle"} className="fill-foreground text-[11px] font-medium">
               {name.label}
             </text>
           ))}
