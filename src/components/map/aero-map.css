@@ -25,8 +25,9 @@
   cursor: grab;
 }
 .aero-marker--handle {
-  min-width: 1.25rem;
-  height: 1.25rem;
+  /* 24 px: big enough to catch with a finger. */
+  min-width: 1.5rem;
+  height: 1.5rem;
   padding: 0;
   opacity: 0.75;
   cursor: copy;
@@ -70,4 +71,62 @@
 }
 .aero-popup__muted {
   color: #475569;
+}
+
+/* Dark base map: MapLibre's own controls, credits, scale and popups follow the theme. */
+.aero-map--dark .maplibregl-ctrl-group,
+.aero-map--dark .maplibregl-ctrl-attrib,
+.aero-map--dark .maplibregl-ctrl-attrib.maplibregl-compact {
+  background: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+}
+.aero-map--dark .maplibregl-ctrl-group:not(:empty) {
+  box-shadow: 0 0 0 1px hsl(var(--border));
+}
+.aero-map--dark .maplibregl-ctrl-group button + button {
+  border-top-color: hsl(var(--border));
+}
+.aero-map--dark .maplibregl-ctrl-group button:not(:disabled):hover {
+  background-color: hsl(var(--muted));
+}
+.aero-map--dark .maplibregl-ctrl-icon,
+.aero-map--dark .maplibregl-ctrl-attrib-button {
+  filter: invert(1);
+}
+.aero-map--dark .maplibregl-ctrl-attrib a {
+  color: hsl(var(--card-foreground));
+}
+.aero-map--dark .maplibregl-ctrl-scale {
+  background: hsl(var(--card) / 0.8);
+  border-color: hsl(var(--muted-foreground));
+  color: hsl(var(--card-foreground));
+}
+.aero-map--dark .maplibregl-popup-content {
+  background: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+}
+.aero-map--dark .aero-popup {
+  color: hsl(var(--card-foreground));
+}
+.aero-map--dark .aero-popup__muted {
+  color: hsl(var(--muted-foreground));
+}
+.aero-map--dark .maplibregl-popup-close-button {
+  color: hsl(var(--card-foreground));
+}
+.aero-map--dark .maplibregl-popup-anchor-top .maplibregl-popup-tip,
+.aero-map--dark .maplibregl-popup-anchor-top-left .maplibregl-popup-tip,
+.aero-map--dark .maplibregl-popup-anchor-top-right .maplibregl-popup-tip {
+  border-bottom-color: hsl(var(--card));
+}
+.aero-map--dark .maplibregl-popup-anchor-bottom .maplibregl-popup-tip,
+.aero-map--dark .maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,
+.aero-map--dark .maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip {
+  border-top-color: hsl(var(--card));
+}
+.aero-map--dark .maplibregl-popup-anchor-left .maplibregl-popup-tip {
+  border-right-color: hsl(var(--card));
+}
+.aero-map--dark .maplibregl-popup-anchor-right .maplibregl-popup-tip {
+  border-left-color: hsl(var(--card));
 }

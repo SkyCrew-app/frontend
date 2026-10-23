@@ -70,10 +70,12 @@ export const formatMoment = (kgm: number | null | undefined) => (isNumber(kgm) ?
 export const formatMinutes = (minutes: number | null | undefined) => {
   if (!isNumber(minutes)) return "—"
   const total = Math.round(minutes)
-  const h = Math.floor(total / 60)
-  const m = total % 60
-  if (h === 0) return `${m} min`
-  return `${h} h ${String(m).padStart(2, "0")}`
+  // A shortfall (negative endurance) keeps one sign in front: "-1 h 05", not "-2 h -55".
+  const sign = total < 0 ? "-" : ""
+  const h = Math.floor(Math.abs(total) / 60)
+  const m = Math.abs(total) % 60
+  if (h === 0) return `${sign}${m} min`
+  return `${sign}${h} h ${String(m).padStart(2, "0")}`
 }
 
 /** UTC clock time of an ETA: "14:05Z". Nav logs are kept in UTC. */

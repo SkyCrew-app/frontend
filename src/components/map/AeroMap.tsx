@@ -190,7 +190,7 @@ function AeroMapCanvas({
       add("p", t("map.obstacleLabel", { type: String(obstacle.type), amsl: `${obstacle.amslFt} ft`, agl: obstacle.aglFt != null ? `${obstacle.aglFt} ft` : "?" }), "aero-popup__name")
     }
     popupRef.current?.remove()
-    popupRef.current = new maplibregl.Popup({ closeButton: true, closeOnClick: true, maxWidth: "18rem" }).setLngLat(lngLat).setDOMContent(root).addTo(map)
+    popupRef.current = new maplibregl.Popup({ closeButton: true, closeOnClick: true, maxWidth: "min(18rem, calc(100vw - 4rem))" }).setLngLat(lngLat).setDOMContent(root).addTo(map)
   }
 
   // Build the map once.
@@ -371,7 +371,7 @@ function AeroMapCanvas({
   }, [state, points, alternate, editable, onInsertPoint, t, theme])
 
   return (
-    <div className={cn("relative h-full w-full overflow-hidden bg-muted", className)}>
+    <div className={cn("relative h-full w-full overflow-hidden bg-muted", theme === "dark" && "aero-map--dark", className)}>
       <div
         ref={containerRef}
         // Sized by height, not by position: MapLibre's own class sets "position: relative" on it.

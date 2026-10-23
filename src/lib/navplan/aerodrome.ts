@@ -8,7 +8,7 @@ export const pointLabel = (point: Pick<NavPoint, "type" | "ident"> & { aerodrome
   point.type === "VRP" && point.aerodromeIcao ? `${point.aerodromeIcao} ${point.ident}` : point.ident
 
 /** Statuses a pilot must notice before choosing an aerodrome. */
-export const isLimitedUse = (status: string | null | undefined) => status === "RST" || status === "PRV" || status === "MIL" || status === "OFF"
+export const isLimitedUse = (status: string | null | undefined) => status === "RST" || status === "PRV" || status === "MIL" || status === "OFF" || status === "closed"
 
 // Order of the services on the sheet: what is heard before taxiing first, then the circuit, then
 // the units around. VDF (direction finding) is not a frequency to call.

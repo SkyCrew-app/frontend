@@ -142,7 +142,7 @@ export function DateRangePicker({
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto max-w-[calc(100vw-1rem)] p-0 shadow-md" align={align} sideOffset={5}>
-          <div className="p-3 border-b border-border/10 bg-muted/30">
+          <div className="p-3 border-b border-border bg-muted/30">
             <div className="text-xs font-medium text-center text-muted-foreground">
               {hasValidRange ? (
                 <span>
@@ -180,13 +180,13 @@ export function DateRangePicker({
               day_selected:
                 "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground focus:bg-primary/90 focus:text-primary-foreground",
               day_today: "bg-accent/70 text-accent-foreground font-medium",
-              day_outside: "text-muted-foreground opacity-50",
+              day_outside: "text-muted-foreground opacity-50 dark:opacity-80",
               day_disabled: "text-muted-foreground opacity-50",
               day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
               day_hidden: "invisible",
             }}
           />
-          <div className="p-3 border-t border-border/10 bg-muted/30 grid grid-cols-3 gap-2">
+          <div className="p-3 border-t border-border bg-muted/30 grid grid-cols-3 gap-2">
             {presets.map((preset, index) => (
               <Button
                 key={index}

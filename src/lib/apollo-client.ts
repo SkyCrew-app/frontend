@@ -35,6 +35,11 @@ export const languageLink = setContext((_operation, { headers }) => ({
 
 const cache = new InMemoryCache({
   typePolicies: {
+    // A nav point of a plan carries what the plan computed for it (the frequencies to write on the
+    // log); the same point around the map does not. Stored inside its parent, never merged by id.
+    NavPoint: {
+      keyFields: false,
+    },
     Query: {
       fields: {
         paginatedData: {
