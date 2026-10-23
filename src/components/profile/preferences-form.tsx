@@ -174,6 +174,7 @@ export function PreferencesForm({ userData, userId, refetch }: PreferencesFormPr
             <div role="group" aria-labelledby="preferred_aerodrome_label">
               <AerodromeCombobox
                 key={resetCount}
+                aria-labelledby="preferred_aerodrome_label"
                 onAerodromeChange={(value) => handlePreferenceChange("preferred_aerodrome", value)}
                 defaultValue={preferences.preferred_aerodrome}
               />
@@ -186,6 +187,7 @@ export function PreferencesForm({ userData, userId, refetch }: PreferencesFormPr
             </p>
             <div role="group" aria-labelledby="timezone_label">
               <TimezoneCombobox
+                aria-labelledby="timezone_label"
                 onTimezoneChange={(value) => handlePreferenceChange("timezone", value)}
                 selectedTimezone={preferences.timezone}
               />

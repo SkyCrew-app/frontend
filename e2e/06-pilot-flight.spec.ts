@@ -114,10 +114,13 @@ async function prepareFlightPlan(page: Page, purpose: string) {
   await page.getByRole("tab", { name: /Avion et chargement/ }).click()
   await expect(page.getByRole("heading", { name: "Chargement" })).toBeVisible()
   await page.getByRole("tab", { name: /Log et dossier/ }).click()
-  const log = page.getByRole("table", { name: "Log de navigation, point par point" })
+  // Below 1536 px wide the paper log is one card per leg (the full table only fits wider screens).
+  const log = page.getByRole("list", { name: "Log de navigation, point par point" })
   await expect(log).toBeVisible()
-  await expect(log.getByRole("rowheader", { name: /^P1/ })).toBeVisible()
-  await expect(log.getByRole("columnheader", { name: /HE réelle/ })).toBeVisible()
+  const firstLeg = log.getByRole("listitem").filter({ hasText: /^LFPG → P1/ })
+  await expect(firstLeg).toBeVisible()
+  await expect(firstLeg.getByRole("term").filter({ hasText: "HE prévue" })).toBeVisible()
+  await expect(log.getByRole("listitem").filter({ hasText: /^P1 →/ })).toContainText("LFPO")
   // The aerodromes of the plan have their sheet in this step.
   await expect(page.getByRole("article", { name: "Fiche terrain LFPO" })).toBeVisible()
 
@@ -238,7 +241,9 @@ test("le pilote clôture un vol dont la réservation a commencé et le retrouve 
     await expect(flown.getByText("Indiquez un temps de vol supérieur à zéro")).toBeVisible()
 
     await flown.getByRole("spinbutton", { name: "Minutes de vol" }).fill("25")
-    await choose(page, flown.getByRole("combobox", { name: "Type de vol" }), "VFR")
+    // The type of flight is the category of the booking (local by default): LFPG → LFPO is a navigation.
+    await expect(flown.getByRole("combobox", { name: "Type de vol" })).toHaveText("Local")
+    await choose(page, flown.getByRole("combobox", { name: "Type de vol" }), "Navigation")
     await page.getByRole("button", { name: "Suivant" }).click()
 
     const incident = page.getByRole("group", { name: "Incident" })
@@ -261,7 +266,7 @@ test("le pilote clôture un vol dont la réservation a commencé et le retrouve 
     const row = page.getByRole("row").filter({ hasText: remark })
     await expect(row).toBeVisible()
     await expect(row).toContainText("25 min")
-    await expect(row).toContainText("VFR")
+    await expect(row).toContainText("Navigation")
     // Flown without an instructor: the pilot was in command.
     await expect(row).toContainText("Commandant de bord")
   })

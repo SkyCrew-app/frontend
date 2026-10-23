@@ -92,6 +92,7 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@babel/preset-typescript": "^7.25.9",
     "@commitlint/cli": "^19.8.1",
     "@playwright/test": "^1.64.0",

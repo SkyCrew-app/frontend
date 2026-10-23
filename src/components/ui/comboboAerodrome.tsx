@@ -16,9 +16,12 @@ const SEARCH_DELAY_MS = 300
 interface AerodromeComboboxProps {
   onAerodromeChange: (aerodromeId: string) => void
   defaultValue?: string
+  /** Id of the visible label: a combobox is not named by its text, it is named by the label and its value. */
+  "aria-labelledby"?: string
 }
 
-export function AerodromeCombobox({ onAerodromeChange, defaultValue }: AerodromeComboboxProps) {
+export function AerodromeCombobox({ onAerodromeChange, defaultValue, "aria-labelledby": labelledBy }: AerodromeComboboxProps) {
+  const valueId = React.useId()
   const [open, setOpen] = React.useState(false)
   const [value, setValue] = React.useState(defaultValue || "")
   const [aerodromes, setAerodromes] = React.useState<{ id: string; name: string }[]>([])
@@ -114,8 +117,14 @@ export function AerodromeCombobox({ onAerodromeChange, defaultValue }: Aerodrome
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" role="combobox" aria-expanded={open} className="w-full min-w-0 justify-between">
-          <span className="truncate">{displayValue || value || i18n.t("common:combobox.searchAerodrome")}</span>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          aria-labelledby={labelledBy ? `${labelledBy} ${valueId}` : undefined}
+          className="w-full min-w-0 justify-between"
+        >
+          <span id={valueId} className="truncate">{displayValue || value || i18n.t("common:combobox.searchAerodrome")}</span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
