@@ -73,37 +73,37 @@ export function FuelSummary({ fuel, reserveCase, settings }: FuelSummaryProps) {
               {line.label}
               {line.note && <span className="block text-xs text-muted-foreground">{line.note}</span>}
             </dt>
-            <dd className="shrink-0 tabular-nums">{formatLitres(line.value)}</dd>
+            <dd className="shrink-0 whitespace-nowrap tabular-nums">{formatLitres(line.value)}</dd>
           </div>
         ))}
         <div className="flex justify-between gap-4 bg-muted/50 px-3 py-2 font-semibold">
           <dt>{t("fuel.minimumBlock")}</dt>
-          <dd className="tabular-nums">{formatLitres(fuel.minimumBlockL)}</dd>
+          <dd className="shrink-0 whitespace-nowrap tabular-nums">{formatLitres(fuel.minimumBlockL)}</dd>
         </div>
         <div className="flex justify-between gap-4 px-3 py-2">
           <dt>{t("fuel.loaded")}</dt>
-          <dd className="tabular-nums">
-            {formatLitres(fuel.loadedL)}
-            <span className="ml-1 text-xs text-muted-foreground">{t("fuel.usableOf", { usable: formatLitres(fuel.usableL) })}</span>
+          <dd className="text-right tabular-nums">
+            <span className="whitespace-nowrap">{formatLitres(fuel.loadedL)}</span>
+            <span className="ml-1 inline-block whitespace-nowrap text-xs text-muted-foreground">{t("fuel.usableOf", { usable: formatLitres(fuel.usableL) })}</span>
           </dd>
         </div>
         <div className={cn("flex justify-between gap-4 px-3 py-2", fuel.extraL < 0 && "text-destructive")}>
           <dt>{fuel.extraL < 0 ? t("fuel.missing") : t("fuel.extra")}</dt>
-          <dd className="font-medium tabular-nums">{formatLitres(Math.abs(fuel.extraL))}</dd>
+          <dd className="shrink-0 whitespace-nowrap font-medium tabular-nums">{formatLitres(Math.abs(fuel.extraL))}</dd>
         </div>
         <div className={cn("flex justify-between gap-4 px-3 py-2", fuel.landingL < fuel.finalReserveL && "text-destructive")}>
           <dt>{t("fuel.landing")}</dt>
-          <dd className="font-medium tabular-nums">{formatLitres(fuel.landingL)}</dd>
+          <dd className="shrink-0 whitespace-nowrap font-medium tabular-nums">{formatLitres(fuel.landingL)}</dd>
         </div>
         {fuel.landingAtAlternateL !== null && fuel.landingAtAlternateL !== undefined && (
           <div className="flex justify-between gap-4 px-3 py-2">
             <dt>{t("fuel.landingAtAlternate")}</dt>
-            <dd className="tabular-nums">{formatLitres(fuel.landingAtAlternateL)}</dd>
+            <dd className="shrink-0 whitespace-nowrap tabular-nums">{formatLitres(fuel.landingAtAlternateL)}</dd>
           </div>
         )}
         <div className="flex justify-between gap-4 px-3 py-2">
           <dt>{t("fuel.endurance")}</dt>
-          <dd className="tabular-nums">{formatMinutes(fuel.enduranceMin)}</dd>
+          <dd className="shrink-0 whitespace-nowrap tabular-nums">{formatMinutes(fuel.enduranceMin)}</dd>
         </div>
       </dl>
 
