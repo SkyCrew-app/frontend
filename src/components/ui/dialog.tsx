@@ -7,6 +7,7 @@ import { X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { SCROLL_OVERLAY, keepOpenOnScrollbar } from "@/components/ui/scroll-overlay"
+import { useReturnFocus } from "@/components/ui/return-focus"
 
 const Dialog = DialogPrimitive.Root
 
@@ -34,7 +35,7 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, onPointerDownOutside, ...props }, ref) => (
+>(({ className, children, onPointerDownOutside, onOpenAutoFocus, onCloseAutoFocus, ...props }, ref) => (
   <DialogPortal>
     {/* The window sits inside its backdrop, which scrolls: a tall window moves as one page. */}
     <DialogOverlay {...SCROLL_OVERLAY} className="flex overflow-y-auto p-4 sm:p-6">
@@ -46,6 +47,7 @@ const DialogContent = React.forwardRef<
         )}
         onPointerDownOutside={keepOpenOnScrollbar(onPointerDownOutside)}
         {...props}
+        {...useReturnFocus({ onOpenAutoFocus, onCloseAutoFocus })}
       >
         {children}
         <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">

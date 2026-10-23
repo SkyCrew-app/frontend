@@ -8,6 +8,7 @@ import { X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { SCROLL_OVERLAY, keepOpenOnScrollbar } from "@/components/ui/scroll-overlay"
+import { useReturnFocus } from "@/components/ui/return-focus"
 
 const Sheet = SheetPrimitive.Root
 
@@ -63,7 +64,7 @@ interface SheetContentProps
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   SheetContentProps
->(({ side = "right", className, children, closeButton = true, onPointerDownOutside, ...props }, ref) => (
+>(({ side = "right", className, children, closeButton = true, onPointerDownOutside, onOpenAutoFocus, onCloseAutoFocus, ...props }, ref) => (
   <SheetPortal>
     <SheetOverlay {...SCROLL_OVERLAY} className="flex flex-col overflow-y-auto">
       <SheetPrimitive.Content
@@ -71,6 +72,7 @@ const SheetContent = React.forwardRef<
         className={cn(sheetVariants({ side }), className)}
         onPointerDownOutside={keepOpenOnScrollbar(onPointerDownOutside)}
         {...props}
+        {...useReturnFocus({ onOpenAutoFocus, onCloseAutoFocus })}
       >
         {children}
         {closeButton && (

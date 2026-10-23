@@ -5,6 +5,7 @@ import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog"
 
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
+import { useReturnFocus } from "@/components/ui/return-focus"
 
 const AlertDialog = AlertDialogPrimitive.Root
 
@@ -30,7 +31,7 @@ AlertDialogOverlay.displayName = AlertDialogPrimitive.Overlay.displayName
 const AlertDialogContent = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content>
->(({ className, ...props }, ref) => (
+>(({ className, onOpenAutoFocus, onCloseAutoFocus, ...props }, ref) => (
   <AlertDialogPortal>
     {/* The window sits inside its backdrop, which scrolls: a tall window moves as one page. */}
     <AlertDialogOverlay className="flex overflow-y-auto p-4 sm:p-6">
@@ -41,6 +42,7 @@ const AlertDialogContent = React.forwardRef<
           className
         )}
         {...props}
+        {...useReturnFocus({ onOpenAutoFocus, onCloseAutoFocus })}
       />
     </AlertDialogOverlay>
   </AlertDialogPortal>
