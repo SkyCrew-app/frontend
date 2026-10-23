@@ -109,6 +109,8 @@ const CommandSeparator = React.forwardRef<
   <CommandPrimitive.Separator
     ref={ref}
     className={cn("-mx-1 h-px bg-border", className)}
+    // A list of suggestions may only hold groups and options: the line between groups is decoration.
+    aria-hidden="true"
     {...props}
   />
 ))
