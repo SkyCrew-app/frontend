@@ -126,7 +126,8 @@
     --accent-foreground: 210 35% 96%;
     --brand: 25 85% 58%;
     --brand-foreground: 218 50% 8%;
-    --destructive: 2 74% 66%;
+    /* Light enough for small text on its own 15 % tint over muted surfaces (WCAG AA 4.5:1). */
+    --destructive: 2 85% 72%;
     --destructive-foreground: 218 50% 8%;
     --success: 150 52% 54%;
     --success-foreground: 218 50% 8%;
