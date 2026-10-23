@@ -203,7 +203,7 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
       {/* Mobile sidebar overlay */}
       {isMobileOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-primary/30 z-40 backdrop-blur-sm transition-opacity"
+          className="lg:hidden fixed inset-0 bg-primary/30 dark:bg-black/60 z-40 backdrop-blur-sm transition-opacity"
           onClick={onCloseMobileMenu}
           aria-hidden="true"
         />
