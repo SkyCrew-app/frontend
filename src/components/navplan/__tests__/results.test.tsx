@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event"
 import { AirspaceCrossings, airspacesNotChecked, crossedAirspaces, crossingsStatus } from "../AirspaceCrossings"
 import { FuelSummary } from "../FuelSummary"
 import { ChecksList } from "../PlanSummary"
-import { MassBalanceChart, labelBelow } from "../MassBalanceChart"
+import { MassBalanceChart, labelBelow, sharedLabels } from "../MassBalanceChart"
 import { PrintableNavLog, printedQnh } from "../PrintableNavLog"
 import { MassBalancePanel } from "../MassBalancePanel"
 import { NavLogTable, legProfileNotes } from "../NavLogTable"
@@ -167,6 +167,22 @@ describe("labels of the envelope chart", () => {
     expect(labelBelow([[100, 100]], [108, 104])).toBe(true)
     expect(labelBelow([[100, 100]], [200, 100])).toBe(false)
     expect(labelBelow([], [100, 100])).toBe(false)
+  })
+
+  it("writes one label for points at the same spot, so a flight without fuel does not stack DÉC, ATT and ZF", () => {
+    expect(
+      sharedLabels([
+        { label: "DÉC", at: [100, 100] },
+        { label: "ATT", at: [101, 100] },
+        { label: "ZF", at: [100, 101] },
+      ]),
+    ).toEqual(["DÉC · ATT · ZF", null, null])
+    expect(
+      sharedLabels([
+        { label: "DÉC", at: [100, 100] },
+        { label: "ATT", at: [150, 140] },
+      ]),
+    ).toEqual(["DÉC", "ATT"])
   })
 })
 
