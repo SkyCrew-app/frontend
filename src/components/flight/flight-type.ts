@@ -16,6 +16,9 @@ export const toFlightType = (value: string | null | undefined): string | undefin
   return type && FLIGHT_TYPES.includes(type) ? type : undefined
 }
 
+/** One key per type, whatever its case: the category in lower case, else the trimmed legacy value. */
+export const flightTypeKey = (value: string | null | undefined): string => toFlightType(value) ?? value?.trim() ?? ""
+
 /** The type a flight is closed with: the plan's own, else the reservation's category, else local. */
 export const defaultFlightType = (planType?: string | null, reservationCategory?: string | null): string =>
   toFlightType(planType) ?? toFlightType(reservationCategory) ?? "local"
