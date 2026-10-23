@@ -925,14 +925,22 @@
       "RST": "Restricted use",
       "PRV": "Private",
       "MIL": "Military",
-      "OFF": "Not an aerodrome"
+      "OFF": "Not an aerodrome",
+      "small_airport": "Small aerodrome",
+      "medium_airport": "Medium aerodrome",
+      "large_airport": "Large airport",
+      "heliport": "Heliport",
+      "seaplane_base": "Seaplane base",
+      "balloonport": "Balloon port",
+      "closed": "Closed"
     },
     "statusHint": {
       "CAP": "Open to public air traffic.",
       "RST": "Restricted use: prior permission of the operator (see the VAC).",
       "PRV": "Private aerodrome: the owner's permission is needed.",
       "MIL": "Military aerodrome: access by permission (PPR).",
-      "OFF": "An agency or control centre, not an aerodrome: do not choose it."
+      "OFF": "An agency or control centre, not an aerodrome: do not choose it.",
+      "closed": "Closed aerodrome according to OurAirports: check the VAC and the NOTAMs."
     },
     "noVfr": "Not open to VFR traffic according to the SIA",
     "noPrivate": "Private flights not allowed according to the SIA",

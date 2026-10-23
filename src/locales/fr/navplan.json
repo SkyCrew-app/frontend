@@ -925,14 +925,22 @@
       "RST": "Usage restreint",
       "PRV": "Privé",
       "MIL": "Militaire",
-      "OFF": "Pas un aérodrome"
+      "OFF": "Pas un aérodrome",
+      "small_airport": "Petit aérodrome",
+      "medium_airport": "Aérodrome moyen",
+      "large_airport": "Grand aéroport",
+      "heliport": "Hélistation",
+      "seaplane_base": "Hydrobase",
+      "balloonport": "Aire de ballons",
+      "closed": "Fermé"
     },
     "statusHint": {
       "CAP": "Ouvert à la circulation aérienne publique.",
       "RST": "Usage restreint : autorisation préalable de l'exploitant (voir la VAC).",
       "PRV": "Aérodrome privé : accord du propriétaire nécessaire.",
       "MIL": "Aérodrome militaire : accès sur autorisation (PPR).",
-      "OFF": "Organisme ou centre de contrôle, pas un terrain : à ne pas choisir."
+      "OFF": "Organisme ou centre de contrôle, pas un terrain : à ne pas choisir.",
+      "closed": "Aérodrome fermé d'après OurAirports : vérifiez la carte VAC et les NOTAM."
     },
     "noVfr": "Non ouvert au trafic VFR selon le SIA",
     "noPrivate": "Vols privés non autorisés selon le SIA",
