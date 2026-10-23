@@ -67,7 +67,7 @@ export function PlanSummary({ result, pending = false, checks }: { result: Fligh
       <h2 id="plan-summary-title" className="sr-only">
         {t("summary.title")}
       </h2>
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-6">
+      <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:gap-6">
         <div className="flex shrink-0 items-center gap-2">
           <Badge variant={checkStatusVariant(result.status)} className="whitespace-nowrap">
             {t("results.overall", { status: checkStatusLabel(result.status) })}
@@ -79,7 +79,7 @@ export function PlanSummary({ result, pending = false, checks }: { result: Fligh
             </span>
           )}
         </div>
-        <dl className="grid flex-1 grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-5">
+        <dl className="grid flex-1 grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3 md:grid-cols-5">
           <Figure label={t("results.distance")} value={formatNm(result.totalDistanceNm)} />
           <Figure label={t("results.time")} value={formatMinutes(result.totalTimeMin)} />
           <Figure

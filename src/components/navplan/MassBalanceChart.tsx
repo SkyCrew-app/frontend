@@ -78,7 +78,7 @@ export function MassBalanceChart({ envelope, points = [], showPath = false, clas
     <figure ref={boxRef} className={cn("w-full", className)}>
       <svg
         viewBox={`0 0 ${width} ${height}`}
-        className="h-auto w-full"
+        className="mx-auto h-auto w-full max-w-lg"
         role="img"
         aria-label={title ?? t("massBalance.chart.title")}
         aria-describedby={descriptionId}

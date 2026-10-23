@@ -9,7 +9,7 @@ import { useElementWidth } from "./useElementWidth"
 type ProfileResult = Pick<FlightPlanResult, "legs" | "profile" | "terrainProfile" | "terrainSource" | "totalDistanceNm">
 
 const HEIGHT = 220
-const PAD = { top: 12, right: 12, bottom: 34, left: 48 }
+const PAD = { top: 12, right: 12, bottom: 34, left: 56 }
 
 /** A round step for about `count` ticks between 0 and `max`. */
 export function tickStep(max: number, count = 4): number {
