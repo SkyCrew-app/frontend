@@ -268,7 +268,7 @@ export default function AppSidebar({ isMobileOpen, onCloseMobileMenu }: SidebarP
               <span className="block truncate text-sm font-medium text-sidebar-foreground">
                 {userName || t("account.fallbackName")}
               </span>
-              {userRole && <span className="block truncate text-xs text-sidebar-foreground/60">{roleLabel(userRole)}</span>}
+              {userRole && <span className="block truncate text-xs text-sidebar-foreground/75">{roleLabel(userRole)}</span>}
             </span>
           </Link>
           <button
