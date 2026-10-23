@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.19.2](https://github.com/SkyCrew-app/frontend/compare/2.19.1...2.19.2) (2026-10-23)
+
+
+### Bug Fixes
+
+* **a11y:** :wheelchair: pass the full browser suite and an axe audit ([#228](https://github.com/SkyCrew-app/frontend/issues/228)) ([52fbe5c](https://github.com/SkyCrew-app/frontend/commit/52fbe5cdd2652166f7c5d85436c244d038e6126a))
+* **deps:** :lock: upgrade Next.js to 16.4.2 ([#226](https://github.com/SkyCrew-app/frontend/issues/226)) ([76b393d](https://github.com/SkyCrew-app/frontend/commit/76b393df6797cc978edca0fdd9f29af2abf50863))
+* **navplan:** :lipstick: polish the flight-plan screens and dark mode ([#227](https://github.com/SkyCrew-app/frontend/issues/227)) ([649fbcd](https://github.com/SkyCrew-app/frontend/commit/649fbcdc292a834c7e80240966f20dc5914c2375))
+
 ## [2.19.1](https://github.com/SkyCrew-app/frontend/compare/2.19.0...2.19.1) (2026-10-21)
 
 
