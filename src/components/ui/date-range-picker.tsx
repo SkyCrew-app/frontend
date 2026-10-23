@@ -180,7 +180,7 @@ export function DateRangePicker({
               day_selected:
                 "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground focus:bg-primary/90 focus:text-primary-foreground",
               day_today: "bg-accent/70 text-accent-foreground font-medium",
-              day_outside: "text-muted-foreground opacity-50",
+              day_outside: "text-muted-foreground opacity-50 dark:opacity-80",
               day_disabled: "text-muted-foreground opacity-50",
               day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
               day_hidden: "invisible",
